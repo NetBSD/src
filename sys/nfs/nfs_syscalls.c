@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.164 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.164.2.1 2026/06/27 09:46:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.164 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.164.2.1 2026/06/27 09:46:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -931,6 +931,7 @@ nfsrv_zapsock(struct nfssvc_sock *slp)
 	sounlock(so);
 
 	m_freem(slp->ns_raw);
+	m_freem(slp->ns_frag);
 	m = slp->ns_rec;
 	while (m != NULL) {
 		struct mbuf *n;
@@ -939,7 +940,6 @@ nfsrv_zapsock(struct nfssvc_sock *slp)
 		m_freem(m);
 		m = n;
 	}
-	/* XXX what about freeing ns_frag ? */
 	for (nuidp = TAILQ_FIRST(&slp->ns_uidlruhead); nuidp != 0;
 	    nuidp = nnuidp) {
 		nnuidp = TAILQ_NEXT(nuidp, nu_lru);

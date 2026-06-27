@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.81 2024/12/07 02:05:55 riastradh Exp $	*/
+/*	$NetBSD: nfs.h,v 1.81.2.1 2026/06/27 09:46:05 martin Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -451,6 +451,8 @@ struct nfssvc_sock {
 	int		ns_sflags;		/* b: */
 	int		ns_cc;			/* b: */
 	int		ns_reclen;		/* b: */
+	int		ns_frag_count;		/* b: */
+	int		ns_streamlen;		/* b: */
 	int		ns_numuids;
 	u_int32_t	ns_sref;		/* g: */
 	SIMPLEQ_HEAD(, nfsrv_descript) ns_sendq; /* s: send reply list */

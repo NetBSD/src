@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsocket.c,v 1.6 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: nfs_srvsocket.c,v 1.6.2.1 2026/06/27 09:46:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.6 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsocket.c,v 1.6.2.1 2026/06/27 09:46:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,6 +269,9 @@ done:
 	return error;
 }
 
+#define	NFS_MAX_FRAG	64	/* Maximum number of pending fragments */
+#define	NFS_MAX_STREAM	(1024 * 1014)	/* Max streaming packet length */
+
 /*
  * Try and extract an RPC request from the mbuf data list received on a
  * stream socket. The "waitflag" argument indicates whether or not it
@@ -296,9 +299,24 @@ nfsrv_getstream(struct nfssvc_sock *slp, int waitflag)
 			slp->ns_reclen = recmark & ~0x80000000;
 			if (recmark & 0x80000000)
 				slp->ns_sflags |= SLP_S_LASTFRAG;
-			else
+			else {
 				slp->ns_sflags &= ~SLP_S_LASTFRAG;
+				slp->ns_frag_count++;
+				if (slp->ns_frag_count > NFS_MAX_FRAG) {
+					printf("%s: frag count exceeded\n",
+					    __func__);
+					error = EPERM;
+					break;
+				}
+			}
 			if (slp->ns_reclen > NFS_MAXPACKET) {
+				error = EPERM;
+				break;
+			}
+			slp->ns_streamlen += slp->ns_reclen;
+			if (slp->ns_streamlen > NFS_MAX_STREAM) {
+				printf("%s: stream length exceeded\n",
+				    __func__);
 				error = EPERM;
 				break;
 			}
@@ -346,6 +364,8 @@ nfsrv_getstream(struct nfssvc_sock *slp, int waitflag)
 				slp->ns_rec = slp->ns_frag;
 			slp->ns_recend = slp->ns_frag;
 			slp->ns_frag = NULL;
+			slp->ns_frag_count = 0;
+			slp->ns_streamlen = 0;
 		}
 	}
 
