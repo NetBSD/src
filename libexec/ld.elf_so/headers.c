@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.70.2.1 2026/03/04 19:21:25 martin Exp $	 */
+/*	$NetBSD: headers.c,v 1.70.2.2 2026/06/27 19:55:34 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.70.2.1 2026/03/04 19:21:25 martin Exp $");
+__RCSID("$NetBSD: headers.c,v 1.70.2.2 2026/06/27 19:55:34 martin Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -501,14 +501,18 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 			break;
 
 		case PT_LOAD:
-			size = round_up(vaddr + ph->p_memsz) - obj->vaddrbase;
 			if (first_seg) {	/* First load segment */
 				obj->vaddrbase = round_down(vaddr);
-				obj->mapbase = (caddr_t)(uintptr_t)obj->vaddrbase;
+				obj->mapbase =
+				    (caddr_t)(uintptr_t)obj->vaddrbase;
+				size = round_up(vaddr + ph->p_memsz) -
+				    obj->vaddrbase;
 				obj->textsize = size;
 				obj->mapsize = size;
 				first_seg = false;
 			} else {		/* Last load segment */
+				size = round_up(vaddr + ph->p_memsz) -
+				    obj->vaddrbase;
 				obj->mapsize = MAX(obj->mapsize, size);
 			}
 			dbg(("headers: %s %p phsize %" PRImemsz,

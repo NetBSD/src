@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12.4.2 2023/08/01 17:03:53 martin Exp $
+# $NetBSD: Makefile,v 1.12.4.3 2026/06/27 19:55:35 martin Exp $
 #
 
 NOMAN=		# defined
@@ -27,6 +27,7 @@ SUBDIR+=	helper_use_static
 
 TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
 
+TESTS_C+=	t_dladdr
 TESTS_C+=	t_dlerror-cleared t_dlerror-false t_dlinfo t_dlvsym t_ifunc
 TESTS_C+=	t_rtld_r_debug
 TESTS_C+=	t_tls_extern
@@ -44,6 +45,7 @@ LDADD.t_dlvsym=		-Wl,-rpath,${TESTSDIR}/h_helper_symver_dso2
 LDADD.t_ifunc=		-Wl,-rpath,${TESTSDIR} -lutil
 DPADD.t_ifunc=		${LIBUTIL}
 LDADD.t_tls_extern+=	-Wl,-rpath,${TESTSDIR}
+LDADD.t_dladdr+=	-Wl,-export-dynamic
 
 TESTS_SH+=		t_df_1_noopen t_dl_symver t_thread_local_dtor
 
