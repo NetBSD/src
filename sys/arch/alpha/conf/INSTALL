@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.120 2024/03/06 13:37:35 thorpej Exp $
+# $NetBSD: INSTALL,v 1.120.4.1 2026/06/27 14:18:59 martin Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -177,6 +177,7 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #options 	SCSI_ADW_SDTR_DISABLE		# 	disable SDTR
 #options 	SCSI_ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
+bge*	at	pci? dev ? function ?		# Broadcom 570x gigabit Ethernet
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
