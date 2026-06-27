@@ -177,14 +177,18 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
                           const unsigned char *in, size_t inlen,
                           EVP_CIPHER_CTX *ctx)
 {
-    size_t blocklen = EVP_CIPHER_CTX_block_size(ctx);
+    int blocklen = EVP_CIPHER_CTX_block_size(ctx);
     unsigned char *tmp;
     int outl, rv = 0;
-    if (inlen < 2 * blocklen) {
+
+    if (blocklen < 4)
+        return 0;
+
+    if (inlen < 2 * (size_t)blocklen) {
         /* too small */
         return 0;
     }
-    if (inlen % blocklen) {
+    if (inlen > INT_MAX || inlen % blocklen) {
         /* Invalid size */
         return 0;
     }
@@ -215,7 +219,7 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
         /* Check byte failure */
         goto err;
     }
-    if (inlen < (size_t)(tmp[0] - 4)) {
+    if (inlen < 4 + (size_t)tmp[0]) {
         /* Invalid length value */
         goto err;
     }
@@ -336,6 +340,12 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 
     /* Finish password based key derivation to setup key in "ctx" */
 
+    if (algtmp == NULL) {
+        CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT,
+               CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER);
+        ERR_add_error_data(1, "Missing KeyDerivationAlgorithm");
+        goto err;
+    }
     if (EVP_PBE_CipherInit(algtmp->algorithm,
                            (char *)pwri->pass, pwri->passlen,
                            algtmp->parameter, kekctx, en_de) < 0) {
