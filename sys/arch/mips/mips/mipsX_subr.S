@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.117 2026/06/23 08:10:17 andvar Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.118 2026/06/27 07:44:56 kbowling Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.117 2026/06/23 08:10:17 andvar Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.118 2026/06/27 07:44:56 kbowling Exp $")
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1029,8 +1029,8 @@ NESTED_NOPROFILE(MIPSX(kern_nonmaskable_intr), KERNFRAME_SIZ, ra)
 	/*
 	 * Clear exception level.
 	 */
-	li	v0, ~(MIPS_SR_EXL|MIPS3_SR_NMI)
-	and	v0, a0				# zero NMI/EXL bits
+	li	v0, ~(MIPS_SR_EXL|MIPS3_SR_ERL|MIPS3_SR_NMI)
+	and	v0, a0				# zero EXL/ERL/NMI bits
 	mtc0	v0, MIPS_COP_0_STATUS		# update.
 	COP0_SYNC
 #ifdef MIPS3
@@ -1367,7 +1367,7 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
 	 * Save all the registers except the kernel temporaries onto the stack.
 	 */
 	KERN_ENTRY_ERRATA
-	/* K1 already has CURLWP */
+	/* K1 already has CURLWP (loaded by exception vector from ci_curlwp) */
 	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
 	REG_S	AT, CALLFRAME_SIZ+TF_REG_AST(k0)
