@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf8.c,v 1.19 2026/06/26 11:58:57 wiz Exp $	*/
+/*	$NetBSD: citrus_utf8.c,v 1.20 2026/06/28 22:26:51 kre Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf8.c,v 1.19 2026/06/26 11:58:57 wiz Exp $");
+__RCSID("$NetBSD: citrus_utf8.c,v 1.20 2026/06/28 22:26:51 kre Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -88,10 +88,16 @@ __RCSID("$NetBSD: citrus_utf8.c,v 1.19 2026/06/26 11:58:57 wiz Exp $");
 static int _UTF8_count_array[256];
 static int const *_UTF8_count = NULL;
 
+static struct __UTF_B2 {
+	unsigned char low;
+	unsigned char high;
+} _UTF8_Byte2_array[256];
+static const struct __UTF_B2 *_UTF8_Byte2;
+
 static const u_int32_t _UTF8_range[] = {
 	0,	/*dummy*/
 	0x00000000, 0x00000080, 0x00000800, 0x00010000, 
-	0x00200000, 0x04000000, 0x80000000,
+	0x00110000,
 };
 
 typedef struct {
@@ -135,17 +141,53 @@ static __inline void
 _UTF8_init_count(void)
 {
 	int i;
+
 	if (!_UTF8_count) {
 		memset(_UTF8_count_array, 0, sizeof(_UTF8_count_array));
+		memset(_UTF8_Byte2_array, 0, sizeof(_UTF8_Byte2_array));
+
+		/*
+		 * Values from Unicode standard rev 17, Table 3.7
+		 */
 		for (i = 0; i <= 0x7f; i++)
 			_UTF8_count_array[i] = 1;
-		for (i = 0xc2; i <= 0xdf; i++)
+		for (i = 0xc2; i <= 0xdf; i++) {
 			_UTF8_count_array[i] = 2;
-		for (i = 0xe0; i <= 0xef; i++)
+			_UTF8_Byte2_array[2].low = 0x80;
+			_UTF8_Byte2_array[2].high = 0xBF;
+		}
+		for (i = 0xe0; i <= 0xe0; i++) {
 			_UTF8_count_array[i] = 3;
-		for (i = 0xf0; i <= 0xf4; i++)
+			_UTF8_Byte2_array[i].low = 0xA0;
+			_UTF8_Byte2_array[i].high = 0xBF;
+		}
+		for (i = 0xe1; i <= 0xef; i++) {
+			_UTF8_count_array[i] = 3;
+			/*
+			 * This range includes the surrogate chars (0xeD),
+			 * which could be excluded here, but those are
+			 * tested separately, so no need to bother
+			 */
+			_UTF8_Byte2_array[i].low = 0x80;
+			_UTF8_Byte2_array[i].high = 0xBF;
+		}
+		for (i = 0xf0; i <= 0xf0; i++) {
 			_UTF8_count_array[i] = 4;
+			_UTF8_Byte2_array[i].low = 0x90;
+			_UTF8_Byte2_array[i].high = 0xBF;
+		}
+		for (i = 0xf1; i <= 0xf3; i++) {
+			_UTF8_count_array[i] = 4;
+			_UTF8_Byte2_array[i].low = 0x80;
+			_UTF8_Byte2_array[i].high = 0xBF;
+		}
+		for (i = 0xf4; i <= 0xf4; i++) {
+			_UTF8_count_array[i] = 4;
+			_UTF8_Byte2_array[i].low = 0x80;
+			_UTF8_Byte2_array[i].high = 0x8F;
+		}
 		_UTF8_count = _UTF8_count_array;
+		_UTF8_Byte2 = _UTF8_Byte2_array;
 	}
 }
 
@@ -200,6 +242,7 @@ _citrus_UTF8_mbrtowc_priv(_UTF8EncodingInfo *ei, wchar_t *pwc, const char **s,
 	const char *s0;
 	int c;
 	int i;
+	unsigned char ch;
 
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
@@ -220,13 +263,18 @@ _citrus_UTF8_mbrtowc_priv(_UTF8EncodingInfo *ei, wchar_t *pwc, const char **s,
 		psenc->ch[psenc->chlen++] = *s0++;
 	}
 
-	c = _UTF8_count[psenc->ch[0] & 0xff];
+	c = _UTF8_count[ch = (unsigned char)psenc->ch[0]];
 	if (c < 1 || c < psenc->chlen)
 		goto ilseq;
 
 	if (c == 1)
-		wchar = psenc->ch[0] & 0xff;
+		wchar = ch;
 	else {
+		if (psenc->chlen == 1 && n >= 1 &&
+		    (_UTF8_Byte2[ch].low > (unsigned char)*s0 ||
+		    _UTF8_Byte2[ch].high < (unsigned char)*s0) )
+			goto ilseq;
+
 		while (psenc->chlen < c) {
 			if (n-- < 1)
 				goto restart;
@@ -275,7 +323,7 @@ _citrus_UTF8_wcrtomb_priv(_UTF8EncodingInfo *ei, char *s, size_t n, wchar_t wc,
 		goto err;
 	}
 	cnt = _UTF8_findlen(wc);
-	if (cnt <= 0 || cnt > 6) {
+	if (cnt <= 0 || cnt > 4) {
 		/* invalid UCS4 value */
 		ret = EILSEQ;
 		goto err;
