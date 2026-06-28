@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.105 2026/06/27 20:59:31 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.106 2026/06/28 10:49:00 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1432,4 +1432,29 @@ lib/libnvmm/libnvmm.c				1.21 (patch)
 
 	libnvmm(3): check return value of malloc.
 	[nia, ticket #2004]
+
+sys/uvm/uvm_km.c				1.168
+
+	uvm_km_pgremove: PR 60376: pmap_update before freeing pages.
+	[kbowling, ticket #2023]
+
+distrib/sets/lists/base/shl.mi					(apply patch)
+distrib/sets/lists/debug/shl.mi					(apply patch)
+external/bsd/jemalloc/dist/src/jemalloc.c			(apply patch)
+external/cddl/osnet/dist/lib/libuutil/common/libuutil_impl.h	(apply patch)
+external/cddl/osnet/dist/lib/libuutil/common/uu_avl.c		(apply patch)
+external/cddl/osnet/dist/lib/libuutil/common/uu_list.c		(apply patch)
+external/cddl/osnet/dist/lib/libuutil/common/uu_misc.c		(apply patch)
+lib/libc/gen/arc4random.c					(apply patch)
+lib/libc/gen/pthread_atfork.c					(apply patch)
+lib/libc/include/extern.h					(apply patch)
+lib/libc/shlib_version						(apply patch)
+lib/libc/stdlib/jemalloc.c					(apply patch)
+lib/libc/stdlib/malloc.c					(apply patch)
+
+	libc, libuutil (zfs stuff): PR 59237: postfork mutex audit.
+	Fix postfork mutex actions to reinitialize the mutex instead
+	of unlocking it.  Avoids potential deadlocks after fork in case
+	other threads are waiting for a mutex.
+	[riastradh, ticket #2018]
 
