@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.103 2026/06/27 20:15:49 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.104 2026/06/28 09:32:03 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5387,4 +5387,9 @@ sys/uvm/uvm_km.c				1.167
 
 	uvm_km_pgremove_intrsafe: drain TLB shootdown before freeing pages.
 	[kbowling, ticket #1292]
+
+sys/uvm/uvm_km.c				1.168
+
+	uvm_km_pgremove: PR 60376: pmap_update before freeing pages.
+	[kbowling, ticket #1293]
 
