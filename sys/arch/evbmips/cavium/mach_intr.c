@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_intr.c,v 1.5 2026/06/28 08:04:08 kbowling Exp $	*/
+/*	$NetBSD: mach_intr.c,v 1.6 2026/06/28 11:38:58 kbowling Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * Platform-specific interrupt support for the  parts.
+ * Platform-specific interrupt support for the Octeon parts.
  *
  * These boards just use the interrupt controller built into the
  * Octeon processors, so we just provide evbmips-compliant wrapper
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.5 2026/06/28 08:04:08 kbowling Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.6 2026/06/28 11:38:58 kbowling Exp $");
 
 #include "opt_ddb.h"
 
