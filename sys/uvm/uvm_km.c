@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.167 2026/06/27 09:39:57 kbowling Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.168 2026/06/28 03:31:31 kbowling Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.167 2026/06/27 09:39:57 kbowling Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.168 2026/06/28 03:31:31 kbowling Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -465,6 +465,7 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 
 	rw_enter(uobj->vmobjlock, RW_WRITER);
 	pmap_remove(pmap_kernel(), startva, endva);
+	pmap_update(pmap_kernel());
 	for (curoff = start; curoff < end; curoff = nextoff) {
 		nextoff = curoff + PAGE_SIZE;
 		pg = uvm_pagelookup(uobj, curoff);
@@ -774,8 +775,9 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 	}
 
 	/*
-	 * Note: uvm_unmap_remove() calls pmap_update() for us, before
-	 * KVA becomes globally available.
+	 * Note: pmap_update() for the mappings was done inside
+	 * uvm_km_pgremove*() above (before any page frees).
+	 * VAONLY below tells uvm_unmap_remove() to skip pmap work.
 	 */
 
 	uvm_unmap1(map, addr, addr + size, UVM_FLAG_VAONLY);
