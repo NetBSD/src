@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.107 2026/06/27 20:12:57 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.108 2026/06/28 09:38:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11778,4 +11778,15 @@ sys/uvm/uvm_km.c				1.167
 
 	uvm_km_pgremove_intrsafe: drain TLB shootdown before freeing pages.
 	[kbowling, ticket #345]
+
+sys/uvm/uvm_km.c				1.168
+
+	uvm_km_pgremove: PR 60376: pmap_update before freeing pages.
+	[kbowling, ticket #346]
+
+sys/arch/virt68k/virt68k/bus_dma.c		1.5
+
+	virt68k: PR 60144: implement bus_dmamap_sync() for 68030,
+	this helps the "nono" emulator which implements 68030 with caches.
+	[isaki, ticket #347]
 
