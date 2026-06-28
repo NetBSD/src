@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.25.16.1 2024/08/22 19:40:50 martin Exp $	*/
+/*	$NetBSD: extern.h,v 1.25.16.2 2026/06/28 10:43:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -75,6 +75,7 @@ void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *,
 
 void	_malloc_prefork(void);
 void	_malloc_postfork(void);
+void	_malloc_postfork_child(void);
 
 int	_sys_setcontext(const ucontext_t *);
 

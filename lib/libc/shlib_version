@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.284 2019/06/04 08:44:08 hannken Exp $
+#	$NetBSD: shlib_version,v 1.284.2.1 2026/06/28 10:43:56 martin Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -55,3 +55,4 @@
 # - the syscall stubs for the (obsolete) lfs syscalls should be removed
 major=12
 minor=213
+teeny=1
