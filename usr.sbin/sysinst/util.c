@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.84 2026/06/25 15:54:22 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.85 2026/06/28 11:03:14 gson Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -195,6 +195,8 @@ static bool have_warned_compat_missing;
 /* flags whether to offer the respective options (depending on helper
    programs available on install media */
 int have_raid, have_vnd, have_cgd, have_lvm, have_gpt, have_dk;
+
+int console_tty = -1;	/* tty where console is currently redirected */
 
 /*
  * local prototypes
@@ -2743,3 +2745,48 @@ may_swap_if_not_sdmmc(const char *disk)
 	return strncmp(parent, "sdmmc", 5) != 0;
 }
 #endif
+
+/*
+ * Redirect console output to the pty associated with master/slave
+ */
+void
+redirect_console(int master, int slave) {
+	static int do_tioccons = 2;
+	/* Try to get console output into our pipe */
+	if (do_tioccons) {
+		/* Turn off any existing console redirection */
+		if (console_tty != -1) {
+			int off = 0;
+			ioctl(console_tty, TIOCCONS, &off);
+			console_tty = -1;
+		}
+		if (ioctl(slave, TIOCCONS, &do_tioccons) == 0) {
+			console_tty = slave;
+			if (do_tioccons == 2) {
+				/* test our output - we don't want it grabbed */
+				write(1, " \b", 2);
+				ioctl(master, FIONREAD, &do_tioccons);
+				if (do_tioccons != 0) {
+					do_tioccons = 0;
+					ioctl(slave, TIOCCONS, &do_tioccons);
+					console_tty = -1;
+				} else
+					do_tioccons = 1;
+			}
+		}
+	}
+}
+
+/*
+ * Redirect console output to nowhere
+ */
+void
+discard_console_output(void) {
+	static int master = -1, slave = -1;
+	if (slave == -1)
+		/* Return value ignored */
+		openpty(&master, &slave, NULL, NULL, NULL);
+	if (slave == -1)
+		return;
+	redirect_console(master, slave);
+}

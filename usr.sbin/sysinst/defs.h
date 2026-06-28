@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.97 2026/06/26 19:03:49 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.98 2026/06/28 11:03:14 gson Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -918,6 +918,8 @@ bool	install_desc_from_parts(struct install_partition_desc *,
 	    struct disk_partitions*);
 void	free_install_desc(struct install_partition_desc*);
 bool	may_swap_if_not_sdmmc(const char*);
+void	redirect_console(int, int);
+void	discard_console_output(void);
 
 /* from target.c */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)
