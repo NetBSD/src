@@ -1,4 +1,4 @@
-/*	$NetBSD: egetopt.c,v 1.10 2026/06/28 10:25:20 rillig Exp $	*/
+/*	$NetBSD: egetopt.c,v 1.11 2026/06/28 10:47:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -34,13 +34,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93";
-#else
-__RCSID("$NetBSD: egetopt.c,v 1.10 2026/06/28 10:25:20 rillig Exp $");
-#endif
-#endif /* not lint */
+/*	From:	"@(#)egetopt.c	8.1 (Berkeley) 6/6/93"	*/
+__RCSID("$NetBSD: egetopt.c,v 1.11 2026/06/28 10:47:54 rillig Exp $");
 
 #include <ctype.h>
 #include <stdio.h>
@@ -66,14 +61,13 @@ int	eoptind = 1;		/* index into parent argv vector */
 int	eoptopt;		/* character checked for validity */
 char	*eoptarg;		/* argument associated with option */
 
-#define	BADCH	(int)'?'
 static char EMSG[1] = { '\0' };
 
 int
 egetopt(int nargc, char * const *nargv, const char *ostr)
 {
 	static char *place = EMSG;	/* option letter processing */
-	char *oli;			/* option letter list index */
+	const char *oli;		/* option letter list index */
 	static int delim;		/* which option delimiter */
 	char *p;
 	static char savec = '\0';
@@ -87,36 +81,36 @@ egetopt(int nargc, char * const *nargv, const char *ostr)
 		/*
 		 * update scanning pointer
 		 */
-		if ((eoptind >= nargc) ||
-		    ((*(place = nargv[eoptind]) != '-') && (*place != '+'))) {
+		if (eoptind >= nargc ||
+		    (*(place = nargv[eoptind]) != '-' && *place != '+')) {
 			place = EMSG;
-			return (-1);
+			return -1;
 		}
 
-		delim = (int)*place;
+		delim = *place;
 		if (place[1] && *++place == '-' && !place[1]) {
 			/*
 			 * found "--"
 			 */
 			++eoptind;
 			place = EMSG;
-			return (-1);
+			return -1;
 		}
 	}
 
 	/*
 	 * check option letter
 	 */
-	if ((eoptopt = (unsigned char)*place++) == (int)':' || (eoptopt == (int)'?') ||
+	if ((eoptopt = (unsigned char)*place++) == ':' || eoptopt == '?' ||
 	    !(oli = strchr(ostr, eoptopt))) {
 		/*
 		 * if the user didn't specify '-' as an option,
 		 * assume it means -1 when by itself.
 		 */
-		if ((eoptopt == (int)'-') && !*place)
-			return (-1);
+		if (eoptopt == '-' && !*place)
+			return -1;
 		if (strchr(ostr, '#') && (isdigit(eoptopt) ||
-		    (((eoptopt == (int)'-') || (eoptopt == (int)'+')) &&
+		    ((eoptopt == '-' || eoptopt == '+') &&
 		      isdigit((unsigned char)*place)))) {
 			/*
 			 * # option: +/- with a number is ok
@@ -125,7 +119,7 @@ egetopt(int nargc, char * const *nargv, const char *ostr)
 				if (!isdigit((unsigned char)*p))
 					break;
 			}
-			eoptarg = place-1;
+			eoptarg = place - 1;
 
 			if (*p == '\0') {
 				place = EMSG;
@@ -135,7 +129,7 @@ egetopt(int nargc, char * const *nargv, const char *ostr)
 				savec = *p;
 				*place = '\0';
 			}
-			return (delim);
+			return delim;
 		}
 
 		if (!*place)
@@ -148,9 +142,9 @@ egetopt(int nargc, char * const *nargv, const char *ostr)
 			(void)fprintf(stderr, "%s: illegal option -- %c\n",
 			    p, eoptopt);
 		}
-		return (BADCH);
+		return '?';
 	}
-	if (delim == (int)'+') {
+	if (delim == '+') {
 		/*
 		 * '+' is only allowed with numbers
 		 */
@@ -165,17 +159,17 @@ egetopt(int nargc, char * const *nargv, const char *ostr)
 				"%s: illegal '+' delimiter with option -- %c\n",
 				p, eoptopt);
 		}
-		return (BADCH);
+		return '?';
 	}
 	++oli;
-	if ((*oli != ':') && (*oli != '?')) {
+	if (*oli != ':' && *oli != '?') {
 		/*
 		 * don't need argument
 		 */
 		eoptarg = NULL;
 		if (!*place)
 			++eoptind;
-		return (eoptopt);
+		return eoptopt;
 	}
 
 	if (*place) {
@@ -202,7 +196,7 @@ egetopt(int nargc, char * const *nargv, const char *ostr)
 			    "%s: option requires an argument -- %c\n", p,
 			    eoptopt);
 		}
-		return (BADCH);
+		return '?';
 	} else {
 		/*
 		 * arg has white space
@@ -211,5 +205,5 @@ egetopt(int nargc, char * const *nargv, const char *ostr)
 	}
 	place = EMSG;
 	++eoptind;
-	return (eoptopt);
+	return eoptopt;
 }
