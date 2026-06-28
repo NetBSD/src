@@ -1,4 +1,4 @@
-/*	$NetBSD: egetopt.c,v 1.9 2011/09/06 18:26:06 joerg Exp $	*/
+/*	$NetBSD: egetopt.c,v 1.10 2026/06/28 10:25:20 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: egetopt.c,v 1.9 2011/09/06 18:26:06 joerg Exp $");
+__RCSID("$NetBSD: egetopt.c,v 1.10 2026/06/28 10:25:20 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ egetopt(int nargc, char * const *nargv, const char *ostr)
 	/*
 	 * check option letter
 	 */
-	if ((eoptopt = (int)*place++) == (int)':' || (eoptopt == (int)'?') ||
+	if ((eoptopt = (unsigned char)*place++) == (int)':' || (eoptopt == (int)'?') ||
 	    !(oli = strchr(ostr, eoptopt))) {
 		/*
 		 * if the user didn't specify '-' as an option,
