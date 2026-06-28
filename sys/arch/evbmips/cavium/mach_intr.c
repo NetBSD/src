@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_intr.c,v 1.4 2023/12/20 14:12:25 thorpej Exp $	*/
+/*	$NetBSD: mach_intr.c,v 1.5 2026/06/28 08:04:08 kbowling Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,15 +30,15 @@
  */
 
 /*
- * Platform-specific interrupt support for the Alchemy parts.
+ * Platform-specific interrupt support for the  parts.
  *
  * These boards just use the interrupt controller built into the
- * Alchemy processors, so we just provide evbmips-compliant wrapper
+ * Octeon processors, so we just provide evbmips-compliant wrapper
  * routines.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.4 2023/12/20 14:12:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.5 2026/06/28 08:04:08 kbowling Exp $");
 
 #include "opt_ddb.h"
 
