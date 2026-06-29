@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.64 2026/06/29 10:02:37 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.65 2026/06/29 10:56:06 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.64 2026/06/29 10:02:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.65 2026/06/29 10:56:06 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,7 @@ static void	tcx_init_screen(void *, struct vcons_screen *, int, long *);
 static void	tcx_clearscreen(struct tcx_softc *, int);
 static void	tcx_copyrows(void *, int, int, int);
 static void	tcx_eraserows(void *, int, int, long);
+static void	tcx_erasecols(void *, int, int, int, long);
 static void	tcx_putchar(void *, int, int, u_int, long);
 static void	tcx_set_video(struct tcx_softc *, int);
 static int	tcx_do_cursor(struct tcx_softc *, struct wsdisplay_cursor *);
@@ -829,7 +830,7 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			break;	/* shouldn't ever get here */
 		case WSDISPLAYIO_SET_DEPTH:
 			int new_depth = *(int*)data;
-
+			printf("new depth %d\n", new_depth);
 			if (sc->sc_8bit) {
 				return ( new_depth == 8) ? 0 : EINVAL;
 			} else if ((new_depth == 8) || (new_depth == 32)) {
@@ -915,14 +916,15 @@ tcx_init_screen(void *cookie, struct vcons_screen *scr,
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 		    ri->ri_width / ri->ri_font->fontwidth);
 
+	scr->scr_flags |= VCONS_NO_COPYCOLS | VCONS_NO_CURSOR;
 	/* enable acceleration */
 	ri->ri_ops.copyrows  = tcx_copyrows;
 	ri->ri_ops.eraserows = tcx_eraserows;
+	if (0) ri->ri_ops.erasecols = tcx_erasecols;
 	ri->ri_ops.putchar   = tcx_putchar;
 #if 0
 	ri->ri_ops.cursor    = tcx_cursor;
 	ri->ri_ops.copycols  = tcx_copycols;
-	ri->ri_ops.erasecols = tcx_erasecols;
 #endif
 }
 
@@ -949,6 +951,17 @@ tcx_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct tcx_softc *sc = scr->scr_cookie;
 	int i, last, first, len, dest, leftover;
+
+	if ((ri->ri_crow >= srcrow && ri->ri_crow < (srcrow + nrows)) &&
+	   (ri->ri_flg & RI_CURSOR)) {
+		int ofs = ri->ri_crow * ri->ri_cols + ri->ri_ccol;
+		tcx_putchar(cookie, ri->ri_crow, ri->ri_ccol,
+		    scr->scr_chars[ofs], scr->scr_attrs[ofs]);
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+
+	if (ri->ri_crow >= dstrow && ri->ri_crow < (dstrow + nrows))
+		ri->ri_flg &= ~RI_CURSOR;
 
 	i = ri->ri_width * ri->ri_font->fontheight * nrows;
 	len = i & 0xffffe0;
@@ -996,6 +1009,9 @@ tcx_eraserows(void *cookie, int start, int nrows, long attr)
 	volatile uint64_t temp;
 	int i, last, first, len, leftover;
 
+	if (ri->ri_crow >= start && ri->ri_crow < (start + nrows))
+		ri->ri_flg &= ~RI_CURSOR;
+
 	i = ri->ri_width * ri->ri_font->fontheight * nrows;
 	len = i & 0xffffe0;
 	leftover = i & 0x1f;
@@ -1013,6 +1029,36 @@ tcx_eraserows(void *cookie, int start, int nrows, long attr)
 		sc->sc_rstip[i] = temp;
 	}
 }
+
+static void
+tcx_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
+{
+#if 0
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct tcx_softc *sc = scr->scr_cookie;
+	volatile uint64_t temp;
+	int i, last, first, len, leftover;
+
+	i = ri->ri_width * ri->ri_font->fontheight;
+	len = i & 0xffffe0;
+	leftover = i & 0x1f;
+	first = ri->ri_width * 
+	    (ri->ri_font->fontheight * start + ri->ri_yorigin);
+	last = first + len;
+	temp = 0x30000000ffffffffLL | 
+	    ((uint64_t)((ri->ri_devcmap[(attr >> 16) & 0xff]) & 0xff) << 32);
+
+	for (i = first; i < last; i+= 32)
+		sc->sc_rstip[i] = temp;
+
+	if (leftover > 0) {
+		temp &= 0xffffffffffffffffLL << (32 - leftover);
+		sc->sc_rstip[i] = temp;
+	}
+#endif
+}
+
 /*
  * The stipple engine is 100% stupid. All drawing operations have to start 
  * at 32 pixel boundaries so we'll have to deal with characters being split.
