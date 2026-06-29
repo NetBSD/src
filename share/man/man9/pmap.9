@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.48 2020/08/16 16:48:08 thorpej Exp $
+.\"	$NetBSD: pmap.9,v 1.49 2026/06/29 15:52:17 riastradh Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -543,12 +543,36 @@ The
 .Fn pmap_enter
 function returns 0 on success or an error code indicating the mode
 of failure.
+.Pp
+After
+.Fn pmap_enter ,
+the caller
+.Sy MUST
+call
+.Fn pmap_update
+on the same pmap before any loads or stores in the page at
+.Fa va .
 .It void Fn "pmap_remove" "pmap_t pmap" "vaddr_t sva" "vaddr_t eva"
 Remove mappings from the virtual address range
 .Fa sva
 to
 .Fa eva
 from the specified physical map.
+.Pp
+After
+.Fn pmap_remove ,
+the caller
+.Sy MUST
+call
+.Fn pmap_update
+or
+.Fn pmap_destroy
+on the same pmap before any virtual addresses from
+.Fa sva
+to
+.Fa eva
+may be freed or reused, and before any physical pages they were
+previously mapped to may be freed or reused.
 .It bool Fn "pmap_remove_all" "pmap_t pmap"
 This function is a hint to the
 .Nm pmap
@@ -582,7 +606,7 @@ or to use the knowledge of the upcoming
 .Fn pmap_remove
 calls to optimize the removals (or to just ignore this call).
 .Pp
-If  all mappings in the address space have been removed,
+If all mappings in the address space have been removed,
 .Fn pmap_remove_all
 should return
 .Dv true
@@ -603,6 +627,18 @@ Set the protection of the mappings in the virtual address range
 to
 .Fa eva
 in the specified physical map.
+.Pp
+After
+.Fn pmap_protect ,
+the caller
+.Sy MUST
+call
+.Fn pmap_update
+before any loads or stores at virtual addresses from
+.Fa sva
+to
+.Fa eva
+are guaranteed to observe the updated permissions.
 .It void Fn "pmap_unwire" "pmap_t pmap" "vaddr_t va"
 Clear the
 .Dq wired
@@ -718,6 +754,21 @@ All mappings that are removed must be the
 type created with
 .Fn pmap_kenter_pa .
 The implementation may assert this.
+.Pp
+After
+.Fn pmap_kremove ,
+the caller
+.Sy MUST
+call
+.Fn pmap_update
+or
+.Fn pmap_destroy
+on the same pmap before any virtual addresses from
+.Fa sva
+to
+.Fa eva
+may be freed or reused, and before any physical pages they were
+previously mapped to may be freed or reused.
 .It void Fn "pmap_copy" "pmap_t dst_map" "pmap_t src_map" "vaddr_t dst_addr" \
     "vsize_t len" "vaddr_t src_addr"
 This function copies the mappings starting at
