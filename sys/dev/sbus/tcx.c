@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.62 2025/06/02 14:27:09 jdc Exp $ */
+/*	$NetBSD: tcx.c,v 1.63 2026/06/29 06:28:43 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.62 2025/06/02 14:27:09 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.63 2026/06/29 06:28:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ tcxattach(device_t parent, device_t self, void *args)
 			return;
 		}
 		sc->sc_rblit = bus_space_vaddr(sa->sa_bustag, bh);
-	
+
 		/* STIP space */
 		if (sbus_bus_map(sa->sa_bustag,
 			 sc->sc_physaddr[TCX_REG_STIP].oa_space,
@@ -352,7 +352,7 @@ tcxattach(device_t parent, device_t self, void *args)
 			return;
 		}
 		sc->sc_rblit = bus_space_vaddr(sa->sa_bustag, bh);
-	
+
 		/* RSTIP space */
 		if (sbus_bus_map(sa->sa_bustag,
 			 sc->sc_physaddr[TCX_REG_RSTIP].oa_space,
@@ -823,6 +823,35 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 				return tcx_do_cursor(sc, cursor);
 			}
+			break;	/* shouldn't ever get here */
+		case WSDISPLAYIO_GET_FBINFO:
+		{
+			struct wsdisplayio_fbinfo *fbi = data;
+
+			if (sc->sc_8bit) {
+				fbi->fbi_fbsize = sc->sc_fbsize;
+				fbi->fbi_stride = sc->sc_fb.fb_type.fb_width;
+				fbi->fbi_bitsperpixel = 8;
+				fbi->fbi_pixeltype = WSFB_CI;
+			} else {
+				fbi->fbi_fbsize = sc->sc_fbsize * 4;
+				fbi->fbi_stride = sc->sc_fb.fb_type.fb_width * 4;
+				fbi->fbi_bitsperpixel = 32;
+				fbi->fbi_pixeltype = WSFB_RGB;
+			}
+			fbi->fbi_width = sc->sc_fb.fb_type.fb_width;
+			fbi->fbi_height = sc->sc_fb.fb_type.fb_height;
+			fbi->fbi_subtype.fbi_rgbmasks.red_offset = 0;
+			fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 16;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.alpha_offset = 0;
+			fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
+			return 0;
+		}
+
 	}
 	return EPASSTHROUGH;
 }
@@ -971,7 +1000,7 @@ tcx_eraserows(void *cookie, int start, int nrows, long attr)
 	}
 }
 /*
- * The stipple engine is 100% retarded. All drawing operations have to start 
+ * The stipple engine is 100% stupid. All drawing operations have to start 
  * at 32 pixel boundaries so we'll have to deal with characters being split.
  */
 
@@ -1100,7 +1129,6 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 				addr += ri->ri_width;
 			}
 		}
-		
 	}
 }
 
