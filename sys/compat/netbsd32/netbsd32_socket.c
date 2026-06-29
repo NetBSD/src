@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.56 2021/01/19 03:41:22 simonb Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.56.18.1 2026/06/29 20:04:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.56 2021/01/19 03:41:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.56.18.1 2026/06/29 20:04:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,8 +182,9 @@ msg_recv_copyin(struct lwp *l, const struct netbsd32_msghdr *msg32,
 
 	netbsd32_to_msghdr(msg32, msg);
 	msg->msg_iov = iov;
+	error = 0;
 out:
-	if (iov != aiov)
+	if (error && iov != aiov)
 		kmem_free(iov, iovsz);
 	return error;
 }
