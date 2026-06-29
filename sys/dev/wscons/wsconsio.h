@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.131 2025/12/24 20:37:04 andvar Exp $ */
+/* $NetBSD: wsconsio.h,v 1.132 2026/06/29 10:00:18 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -746,5 +746,11 @@ struct wsdisplay_getfont {
  */
 
 #define WSDISPLAYIO_GFONT	_IOWR('W', 108, struct wsdisplay_getfont)
+
+/*
+ * set colour depth for fb mode, in bits per pixel 
+ * returns EINVAL if depth is unsupported
+ */
+#define WSDISPLAYIO_SET_DEPTH	_IOW('W', 109, int)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */
