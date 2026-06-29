@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.63 2026/06/29 06:28:43 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.64 2026/06/29 10:02:37 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.63 2026/06/29 06:28:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.64 2026/06/29 10:02:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,7 @@ struct tcx_softc {
 	short		sc_8bit;	/* true if 8-bit hardware */
 	short		sc_blanked;	/* true if blanked */
 	uint32_t	sc_fbsize;	/* size of the 8bit fb */
+	int		sc_depth;	/* depth of the fb we mmap() */
 	u_char		sc_cmap_red[256];
 	u_char		sc_cmap_green[256];
 	u_char		sc_cmap_blue[256];
@@ -246,10 +247,12 @@ tcxattach(device_t parent, device_t self, void *args)
 		aprint_normal(" (8-bit only TCX)\n");
 		/* at least the SS4 can have 2MB with a VSIMM */
 		sc->sc_fbsize = 0x100000 * prom_getpropint(node, "vram", 1);
+		sc->sc_depth = 8;
 	} else {
 		aprint_normal(" (S24)\n");
 		/* all S24 I know of have 4MB, non-expandable */
 		sc->sc_fbsize = 0x100000;
+		sc->sc_depth = 32;
 	}
 
 	fb->fb_type.fb_cmsize = 256;
@@ -824,11 +827,22 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				return tcx_do_cursor(sc, cursor);
 			}
 			break;	/* shouldn't ever get here */
+		case WSDISPLAYIO_SET_DEPTH:
+			int new_depth = *(int*)data;
+
+			if (sc->sc_8bit) {
+				return ( new_depth == 8) ? 0 : EINVAL;
+			} else if ((new_depth == 8) || (new_depth == 32)) {
+				sc->sc_depth = new_depth;
+				return 0;
+			}
+			return EINVAL;
+
 		case WSDISPLAYIO_GET_FBINFO:
 		{
 			struct wsdisplayio_fbinfo *fbi = data;
 
-			if (sc->sc_8bit) {
+			if (sc->sc_depth == 8) {
 				fbi->fbi_fbsize = sc->sc_fbsize;
 				fbi->fbi_stride = sc->sc_fb.fb_type.fb_width;
 				fbi->fbi_bitsperpixel = 8;
@@ -863,7 +877,7 @@ tcx_mmap(void *v, void *vs, off_t offset, int prot)
 	struct tcx_softc *sc = vd->cookie;
 
 	/* 'regular' framebuffer mmap()ing */
-	if (sc->sc_8bit) {
+	if (sc->sc_depth == 8) {
 		/* on 8Bit boards hand over the 8 bit aperture */
 		if (offset > sc->sc_fbsize)
 			return -1;
