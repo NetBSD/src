@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.106 2026/06/28 10:49:00 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.107 2026/06/29 20:15:37 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1457,4 +1457,26 @@ lib/libc/stdlib/malloc.c					(apply patch)
 	of unlocking it.  Avoids potential deadlocks after fork in case
 	other threads are waiting for a mutex.
 	[riastradh, ticket #2018]
+
+distrib/sets/lists/debug/mi			1.514
+distrib/sets/lists/tests/mi			1.1422
+etc/MAKEDEV.tmpl				1.239
+sys/modules/lua/lua.c				1.29
+sys/sys/lua.h					1.10
+tests/kernel/Makefile				1.97
+tests/kernel/t_lua.c				1.1
+
+	MAKEDEV(8): PR 60375: fix and enforce permissions on /dev/lua.
+	[riastradh, ticket #2024]
+
+sys/compat/netbsd32/netbsd32_socket.c		1.57
+
+	compat32: PR 60373: fix broken error branch in netbsd32_recvmsg(2).
+	[riastradh, ticket #2025]
+
+sys/dev/mm.c					1.26
+
+	mm(4): PR 60374: only grant kva exposure if user opens /dev/kmem,
+	not if they open, e.g., /dev/null or /dev/zero.
+	[riastradh, ticket #2026]
 
