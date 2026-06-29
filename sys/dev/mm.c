@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.25 2024/08/25 11:29:38 uwe Exp $	*/
+/*	$NetBSD: mm.c,v 1.25.2.1 2026/06/29 20:08:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.25 2024/08/25 11:29:38 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.25.2.1 2026/06/29 20:08:40 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -98,7 +98,10 @@ mm_open(dev_t dev, int flag, int mode, struct lwp *l)
 	if ((error = mm_md_open(dev, flag, mode, l)) != 0)
 		return error;
 #endif
-	l->l_proc->p_flag |= PK_KMEM;
+	switch (minor(dev)) {
+	case DEV_KMEM:
+		l->l_proc->p_flag |= PK_KMEM;
+	}
 	return 0;
 }
 
