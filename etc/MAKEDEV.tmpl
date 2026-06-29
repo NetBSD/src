@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.205.2.3 2020/03/19 19:08:31 martin Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.205.2.4 2026/06/29 20:00:05 martin Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1554,7 +1554,7 @@ gpiopps[0-9]*)
 
 lua[0-9]*)
 	unit=${i#lua}
-	mkdev lua$unit c %lua_chr% $unit 664
+	mkdev lua$unit c %lua_chr% $unit 600
 	;;
 
 rmidi[0-9]*)
