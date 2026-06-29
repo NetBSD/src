@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.65 2026/06/29 10:56:06 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.66 2026/06/29 11:45:19 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.65 2026/06/29 10:56:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.66 2026/06/29 11:45:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -761,13 +761,36 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				    ms->scr_ri.ri_width << 2;
 			}
 			return 0;
-#if 0
+
 		case WSDISPLAYIO_GETCMAP:
-			return tcx_getcmap(sc, (struct wsdisplay_cmap *)data);
+#define	p ((struct wsdisplay_cmap *)data)
+		if (p->index > 256 || p->count > 256 - p->index)
+			return EINVAL;
+		if (copyout(&sc->sc_cmap_red[p->index], p->red, p->count) != 0)
+			return EINVAL;
+		if (copyout(&sc->sc_cmap_green[p->index], p->green, p->count)
+		    != 0)
+			return EINVAL;
+		if (copyout(&sc->sc_cmap_blue[p->index], p->blue, p->count)
+		    != 0)
+			return EINVAL;
+		return 0;
 
 		case WSDISPLAYIO_PUTCMAP:
-			return tcx_putcmap(sc, (struct wsdisplay_cmap *)data);
-#endif
+		/* copy to software map */
+		if (p->index > 256 || p->count > 256 - p->index)
+			return EINVAL;
+		if (copyin(p->red, &sc->sc_cmap_red[p->index], p->count) != 0)
+			return EINVAL;
+		if (copyin(p->green, &sc->sc_cmap_green[p->index], p->count)
+		    != 0)
+			return EINVAL;
+		if (copyin(p->blue, &sc->sc_cmap_blue[p->index], p->count) != 0)
+			return EINVAL;
+		tcx_loadcmap(sc, p->index, p->count);
+		return 0;
+#undef p
+
 		case WSDISPLAYIO_SMODE:
 			{
 				int new_mode = *(int*)data;
@@ -779,8 +802,14 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 						tcx_init_cmap(sc);
 						tcx_clearscreen(sc, 0);
 						vcons_redraw_screen(ms);
-					} else if (!sc->sc_8bit)
+					} else if (sc->sc_depth == 32) {
+						/*
+						 * make sure we set the control
+						 * bits correctly
+						 */
 						tcx_clearscreen(sc, 3);
+					} else
+						tcx_clearscreen(sc, 0);
 				}
 			}
 			return 0;
@@ -830,7 +859,6 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			break;	/* shouldn't ever get here */
 		case WSDISPLAYIO_SET_DEPTH:
 			int new_depth = *(int*)data;
-			printf("new depth %d\n", new_depth);
 			if (sc->sc_8bit) {
 				return ( new_depth == 8) ? 0 : EINVAL;
 			} else if ((new_depth == 8) || (new_depth == 32)) {
