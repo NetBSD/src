@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.109 2026/06/28 15:29:02 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.110 2026/06/29 18:27:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11795,4 +11795,9 @@ usr.sbin/npf/npftest/libnpftest/npf_rid_test.c	1.4
 	npf: fix softnet_lock around npf_rule_match_rid in order to
 	make the test suite pass.
 	[riastradh, ticket #348]
+
+crypto/external/bsd/openssh/dist/sshd-auth.c	1.7
+
+	sshd(8): PR 60367: restore rlimit sandbox from portable openssh.
+	[nia, ticket #349]
 
