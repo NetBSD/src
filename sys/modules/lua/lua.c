@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.28 2022/03/31 19:30:17 pgoyette Exp $ */
+/*	$NetBSD: lua.c,v 1.28.12.1 2026/06/29 19:52:22 martin Exp $ */
 
 /*
  * Copyright (c) 2011 - 2017 by Marc Balmer <mbalmer@NetBSD.org>.
@@ -300,6 +300,8 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case LUAINFO:
+		if (!(flag & FREAD))
+			return EACCES;
 		info = data;
 		if (info->states == NULL) {
 			info->num_states = 0;
@@ -313,6 +315,8 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				n++;
 			}
 			info->num_states = n;
+			if (n == 0)
+				break;
 			states = kmem_alloc(sizeof(*states) * n, KM_SLEEP);
 			if (copyin(info->states, states, sizeof(*states) * n)
 			    == 0) {
@@ -332,6 +336,8 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 		break;
 	case LUACREATE:
+		if (!(flag & FWRITE))
+			return EACCES;
 		create = data;
 
 		if (*create->name == '_') {
@@ -360,6 +366,8 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			    create->name);
 		break;
 	case LUADESTROY:
+		if (!(flag & FWRITE))
+			return EACCES;
 		create = data;
 
 		K = klua_find(create->name);
@@ -370,6 +378,8 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 		return EBUSY;
 	case LUAREQUIRE:	/* 'require' a module in a State */
+		if (!(flag & FWRITE))
+			return EACCES;
 		require = data;
 		LIST_FOREACH(s, &lua_states, lua_next)
 			if (!strcmp(s->lua_name, require->state)) {
@@ -402,6 +412,8 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			}
 		return ENXIO;
 	case LUALOAD:
+		if (!(flag & FWRITE))
+			return EACCES;
 		load = data;
 		if (strrchr(load->path, '/') == NULL)
 			return ENXIO;
