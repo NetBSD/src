@@ -1,6 +1,6 @@
-$NetBSD: README,v 1.3 2026/06/29 09:22:29 andvar Exp $
+$NetBSD: README,v 1.4 2026/06/29 09:28:08 andvar Exp $
 
-Larn is a dungeon type game program.  Larn is a adventure/action game similar
+Larn is a dungeon type game program.  Larn is an adventure/action game similar
 in concept to rogue or hack, but with a much different feel. 
 Try it, you'll like it!
 
