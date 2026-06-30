@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.10.26.1 2024/06/17 16:48:57 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.10.26.2 2026/06/30 09:34:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ static __inline void *
 __lwp_getprivate_fast(void)
 {
 	register void *tcb __asm("r0");
-	__asm("chmk %0" :: "i"(SYS__lwp_getprivate) : "r0");
+	__asm("chmk %1" : "=r"(tcb) : "i"(SYS__lwp_getprivate));
 	return tcb;
 }
 __END_DECLS
