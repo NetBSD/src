@@ -1,4 +1,4 @@
-/*	$NetBSD: t_iconv.c,v 1.3 2026/06/30 23:15:52 riastradh Exp $	*/
+/*	$NetBSD: t_iconv.c,v 1.4 2026/06/30 23:16:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_iconv.c,v 1.3 2026/06/30 23:15:52 riastradh Exp $");
+__RCSID("$NetBSD: t_iconv.c,v 1.4 2026/06/30 23:16:08 riastradh Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -69,7 +69,7 @@ static const struct sample {
 	/* LATIN SMALL LETTER O, TILDE */
 	[3] = { "UTF-8", 2, (const char[2]){0x4f,0x7e},
 		"VIQR", 3, (const char[3]){0x4f,0x5c,0x7e},
-		0, 0, "PR 59019: various libiconv issues" },
+		0, 0, NULL },
 	/* LEFT CURLY BRACKET (optionally encoded in UTF-7) */
 	[4] = { "UTF-7", 1, (const char[1]){0x7b},
 		"UTF-8", 1, (const char[1]){0x7b},
