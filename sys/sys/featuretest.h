@@ -1,4 +1,4 @@
-/*	$NetBSD: featuretest.h,v 1.14 2026/06/30 14:59:56 riastradh Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.15 2026/06/30 15:03:08 riastradh Exp $	*/
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.org>, February 2, 1998.
@@ -194,7 +194,7 @@
  * Single UNIX Specification, Version 2, `The Compilation Environment'
  * https://pubs.opengroup.org/onlinepubs/007908799/xsh/compilation.html
  */
-#elif (_XOPEN_SOURCE - 0) == 500
+#elif (_XOPEN_SOURCE - 0) >= 500
 #define	_POSIX_C_SOURCE	199506L
 #endif
 
