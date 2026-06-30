@@ -1,4 +1,4 @@
-/*	$NetBSD: t_iconv.c,v 1.1 2026/06/30 23:14:39 riastradh Exp $	*/
+/*	$NetBSD: t_iconv.c,v 1.2 2026/06/30 23:15:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_iconv.c,v 1.1 2026/06/30 23:14:39 riastradh Exp $");
+__RCSID("$NetBSD: t_iconv.c,v 1.2 2026/06/30 23:15:31 riastradh Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -314,9 +314,7 @@ ATF_TC_BODY(iconv_pr59019_hz8, tc)
 	dst = dst0 = out + 1;
 	dstleft = dstleft0 = sizeof(out) - 2;
 
-	atf_tc_expect_signal(SIGSEGV, "PR 59019: various libiconv issues");
 	ninval = iconv(C, &src, &srcleft, &dst, &dstleft);
-	atf_tc_expect_pass();
 
 	/*
 	 * XXX Not actually 100% sure this is the correct result -- I

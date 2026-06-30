@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_hz.c,v 1.4 2014/06/24 22:24:18 spz Exp $ */
+/* $NetBSD: citrus_hz.c,v 1.5 2026/06/30 23:15:31 riastradh Exp $ */
 
 /*-
  * Copyright (c)2004, 2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_hz.c,v 1.4 2014/06/24 22:24:18 spz Exp $");
+__RCSID("$NetBSD: citrus_hz.c,v 1.5 2026/06/30 23:15:31 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -292,6 +292,8 @@ _citrus_HZ_mbrtowc_priv(_HZEncodingInfo * __restrict ei,
 				tail = psenc->chlen = 0;
 				continue;
 			}
+			if (graphic == NULL)
+				break;
 		} else if (ch & 0x80) {
 			if (graphic != GR(psenc->inuse))
 				break;
