@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.112 2026/06/30 10:03:38 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.113 2026/06/30 14:30:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11857,4 +11857,9 @@ crypto/external/bsd/openssh/dist/sshd_config	1.30
 	sshd_config(5): PR 32313: fix comment to explain disabling
 	password auth.
 	[riastradh, ticket #357]
+
+xsrc/external/mit/libdrm/dist/configure		1.8
+
+	libdrm: bump version to 2.4.134.
+	[kikadf, ticket #358]
 
