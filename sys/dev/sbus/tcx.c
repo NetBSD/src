@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.66 2026/06/29 11:45:19 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.67 2026/06/30 06:44:55 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.66 2026/06/29 11:45:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.67 2026/06/30 06:44:55 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,8 @@ struct wsscreen_descr tcx_defscreendesc = {
 	0, 0,
 	NULL,
 	8, 16,
-	WSSCREEN_WSCOLORS,
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+	WSSCREEN_REVERSE | WSSCREEN_RESIZE,
 };
 
 const struct wsscreen_descr *_tcx_scrlist[] = {
@@ -171,6 +172,8 @@ static void	tcx_copyrows(void *, int, int, int);
 static void	tcx_eraserows(void *, int, int, long);
 static void	tcx_erasecols(void *, int, int, int, long);
 static void	tcx_putchar(void *, int, int, u_int, long);
+static int	tcx_allocattr(void *, int, int, int, long *);
+
 static void	tcx_set_video(struct tcx_softc *, int);
 static int	tcx_do_cursor(struct tcx_softc *, struct wsdisplay_cursor *);
 static void	tcx_set_cursor(struct tcx_softc *);
@@ -940,16 +943,18 @@ tcx_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_bits = sc->sc_fbaddr;
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		      WSSCREEN_REVERSE | WSSCREEN_RESIZE;
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 		    ri->ri_width / ri->ri_font->fontwidth);
 
-	scr->scr_flags |= VCONS_NO_COPYCOLS | VCONS_NO_CURSOR;
+	scr->scr_flags |= VCONS_NO_COPYCOLS | VCONS_NO_CURSOR | VCONS_LOADFONT;
 	/* enable acceleration */
 	ri->ri_ops.copyrows  = tcx_copyrows;
 	ri->ri_ops.eraserows = tcx_eraserows;
 	if (0) ri->ri_ops.erasecols = tcx_erasecols;
 	ri->ri_ops.putchar   = tcx_putchar;
+	ri->ri_ops.allocattr   = tcx_allocattr;
 #if 0
 	ri->ri_ops.cursor    = tcx_cursor;
 	ri->ri_ops.copycols  = tcx_copycols;
@@ -1102,8 +1107,9 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 	volatile uint64_t bg, fg, temp, mask;
 	int addr, i, uc, shift;
 	uint32_t fmask;
-	uint8_t *cdata;
-	uint16_t *wdata;
+	uint8_t *cdata, cc;
+	uint16_t *wdata, w;
+	int bold = (attr & WSATTR_HILIT) != 0;
 
 	addr = ri->ri_xorigin + col * font->fontwidth +
 	    (ri->ri_yorigin + row * font->fontheight) * ri->ri_width;
@@ -1129,38 +1135,74 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 		if (font->fontwidth < 9) {
 			/* byte by byte */
-			for (i = 0; i < font->fontheight; i++) {
+			for (i = 0; i < font->fontheight - 1; i++) {
 				sc->sc_rstip[addr] = bg;
-				if (*cdata != 0) {
+				cc = *cdata;
+				if (cc != 0) {
+					if (bold) cc |= cc >> 1;
 					if (shift > 24) {
-						fg = (uint64_t)*cdata >>
-					  	  (shift - 24);
+						fg = (uint64_t)(cc >>
+					  	  (shift - 24));
 					} else {
-						fg = (uint64_t)*cdata <<
-					  	  (24 - shift);
+						fg = (uint64_t)(cc <<
+					  	  (24 - shift));
 					}
 					sc->sc_rstip[addr] = fg | temp;
 				}
 				cdata++;
 				addr += ri->ri_width;
 			}
+			if (attr & WSATTR_UNDERLINE) {
+				sc->sc_rstip[addr] = temp | mask;
+			} else {
+				sc->sc_rstip[addr] = bg;
+				cc = *cdata;
+				if (cc != 0) {
+					if (bold) cc |= cc >> 1;
+					if (shift > 24) {
+						fg = (uint64_t)(cc >> (shift - 24));
+					} else {
+						fg = (uint64_t)(cc << (24 - shift));
+					}
+					sc->sc_rstip[addr] = fg | temp;
+				}
+			}
 		} else if (font->fontwidth < 17) {
 			/* short by short */
 			wdata = (uint16_t *)cdata;
-			for (i = 0; i < font->fontheight; i++) {
+			for (i = 0; i < font->fontheight - 1; i++) {
 				sc->sc_rstip[addr] = bg;
-				if (*wdata != 0) {
+				w = *wdata;
+				if (w != 0) {
+					if (bold) w |= w >> 1;
 					if (shift > 16) {
-						fg = temp | (uint64_t)*wdata >> 
-					  	  (shift - 16);
+						fg = temp | (uint64_t)(w >> 
+					  	  (shift - 16));
 					} else {
-						fg = temp | (uint64_t)*wdata << 
-					  	  (16 - shift);
+						fg = temp | (uint64_t)(w << 
+					  	  (16 - shift));
 					}
 					sc->sc_rstip[addr] = fg;
 				}
 				wdata++;
 				addr += ri->ri_width;
+			}
+			if (attr & WSATTR_UNDERLINE) {
+				sc->sc_rstip[addr] = temp | mask;
+			} else {
+				sc->sc_rstip[addr] = bg;
+				w = *wdata;
+				if (w != 0) {
+					if (bold) w |= w >> 1;
+					if (shift > 16) {
+						fg = temp | (uint64_t)(w >> 
+					  	  (shift - 16));
+					} else {
+						fg = temp | (uint64_t)(w << 
+					  	  (16 - shift));
+					}
+					sc->sc_rstip[addr] = fg;
+				}
 			}
 		}
 	} else {
@@ -1187,11 +1229,12 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 		if (font->fontwidth < 9) {
 			/* byte by byte */
-			for (i = 0; i < font->fontheight; i++) {
+			for (i = 0; i < font->fontheight - 1; i++) {
 				sc->sc_rstip[addr] = bg;
 				sc->sc_rstip[addr + 32] = bgr;
 				bork = *cdata;
 				if (bork != 0) {
+					if (bold) bork |= bork >> 1;
 					fg = (uint64_t)bork >> (shift - 24);
 					sc->sc_rstip[addr] = fg | temp;
 					fgr = (uint64_t)(bork << (52 - shift));
@@ -1200,14 +1243,30 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 				cdata++;
 				addr += ri->ri_width;
 			}
+			if (attr & WSATTR_UNDERLINE) {
+				sc->sc_rstip[addr] = temp | mask;
+				sc->sc_rstip[addr + 32] = temp | maskr;
+			} else {
+				sc->sc_rstip[addr] = bg;
+				sc->sc_rstip[addr + 32] = bgr;
+				bork = *cdata;
+				if (bork != 0) {
+					if (bold) bork |= bork >> 1;
+					fg = (uint64_t)bork >> (shift - 24);
+					sc->sc_rstip[addr] = fg | temp;
+					fgr = (uint64_t)(bork << (52 - shift));
+					sc->sc_rstip[addr] = fgr | temp;
+				}
+			}
 		} else if (font->fontwidth < 17) {
 			/* short by short */
 			wdata = (uint16_t *)cdata;
-			for (i = 0; i < font->fontheight; i++) {
+			for (i = 0; i < font->fontheight - 1; i++) {
 				sc->sc_rstip[addr] = bg;
 				sc->sc_rstip[addr + 32] = bgr;
 				bork = *wdata;
 				if (bork != 0) {
+					if (bold) bork |= bork >> 1;
 					fg = (uint64_t)bork >> (shift - 16);
 					sc->sc_rstip[addr] = fg | temp;
 					fgr = (uint64_t)(bork << (48 - shift));
@@ -1216,8 +1275,40 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 				wdata++;
 				addr += ri->ri_width;
 			}
+			if (attr & WSATTR_UNDERLINE) {
+				sc->sc_rstip[addr] = temp | mask;
+				sc->sc_rstip[addr + 32] = temp | maskr;
+			} else {
+				sc->sc_rstip[addr] = bg;
+				sc->sc_rstip[addr + 32] = bgr;
+				bork = *wdata;
+				if (bork != 0) {
+					if (bold) bork |= bork >> 1;
+					fg = (uint64_t)bork >> (shift - 16);
+					sc->sc_rstip[addr] = fg | temp;
+					fgr = (uint64_t)(bork << (48 - shift));
+					sc->sc_rstip[addr + 32] = fgr | temp;
+				}
+			}
 		}
 	}
+}
+
+static int
+tcx_allocattr(void *cookie, int fg0, int bg0, int flg, long *attrp)
+{
+	int fg = fg0, bg = bg0;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return EINVAL;
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = bg0;
+		bg = fg0;
+	}
+
+	*attrp = (bg << 16) | (fg << 24) | flg;
+	return 0;
 }
 
 static int
