@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf8.c,v 1.20 2026/06/28 22:26:51 kre Exp $	*/
+/*	$NetBSD: citrus_utf8.c,v 1.21 2026/06/30 02:30:04 kre Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf8.c,v 1.20 2026/06/28 22:26:51 kre Exp $");
+__RCSID("$NetBSD: citrus_utf8.c,v 1.21 2026/06/30 02:30:04 kre Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -153,8 +153,8 @@ _UTF8_init_count(void)
 			_UTF8_count_array[i] = 1;
 		for (i = 0xc2; i <= 0xdf; i++) {
 			_UTF8_count_array[i] = 2;
-			_UTF8_Byte2_array[2].low = 0x80;
-			_UTF8_Byte2_array[2].high = 0xBF;
+			_UTF8_Byte2_array[i].low = 0x80;
+			_UTF8_Byte2_array[i].high = 0xBF;
 		}
 		for (i = 0xe0; i <= 0xe0; i++) {
 			_UTF8_count_array[i] = 3;
