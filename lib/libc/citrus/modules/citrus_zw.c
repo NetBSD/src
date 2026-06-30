@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_zw.c,v 1.6 2022/04/19 20:32:14 rillig Exp $ */
+/* $NetBSD: citrus_zw.c,v 1.7 2026/06/30 23:16:34 riastradh Exp $ */
 
 /*-
  * Copyright (c)2004, 2006 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_zw.c,v 1.6 2022/04/19 20:32:14 rillig Exp $");
+__RCSID("$NetBSD: citrus_zw.c,v 1.7 2026/06/30 23:16:34 riastradh Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <sys/types.h>
@@ -302,6 +302,9 @@ _citrus_ZW_wcrtomb_priv(_ZWEncodingInfo * __restrict ei,
 		switch (psenc->charset) {
 		case NONE:
 			if (ch == '\0' || ch == '\n') {
+				if (n < 1)
+					return E2BIG;
+				n -= 1;
 				psenc->ch[psenc->chlen++] = ch;
 			} else {
 				if (n < 4)
