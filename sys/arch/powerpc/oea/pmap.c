@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.123 2025/12/10 21:33:03 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.124 2026/06/30 22:30:30 rkujawa Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2025/12/10 21:33:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2026/06/30 22:30:30 rkujawa Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -2148,7 +2148,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	 */
 	if (pm == pmap_kernel() &&
 	    (va < VM_MIN_KERNEL_ADDRESS ||
-	     (KERNEL2_SR < 15 && VM_MAX_KERNEL_ADDRESS <= va))) {
+	     (KERNEL2_SR < NSEGREG - 1 && VM_MAX_KERNEL_ADDRESS <= va))) {
 		KASSERT((va >> ADDR_SR_SHFT) != USER_SR);
 #if defined(PMAP_OEA)
 #ifdef PPC_OEA601

@@ -110,6 +110,7 @@
  */
 #define	SEGMENT_LENGTH	( 0x10000000L)
 #define	SEGMENT_MASK	(~0x0fffffffL)
+#define	NSEGREG		16	/* number of PowerPC segment registers */
 
 /*
  * Macros to manipulate VSIDs
