@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12 2026/06/30 13:13:25 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13 2026/06/30 13:14:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,8 +96,8 @@ extern vaddr_t m68k_usrstack;
 #define	__M68K_DFLT_DFLSSIZ	(512*1024)
 #define	__M68K_DFLT_MAXSSIZ	(4*1024*1024)
 #else
-#define	__M68K_DFLT_MAXTSIZ	(32*1024*1024)
-#define	__M68K_DFLT_DFLDSIZ	(32*1024*1024)
+#define	__M68K_DFLT_MAXTSIZ	(64*1024*1024)
+#define	__M68K_DFLT_DFLDSIZ	(64*1024*1024)
 #define	__M68K_DFLT_MAXDSIZ	(256*1024*1024)
 #define	__M68K_DFLT_DFLSSIZ	(2*1024*1024)
 #define	__M68K_DFLT_MAXSSIZ	(64*1024*1024)
