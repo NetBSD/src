@@ -1,4 +1,4 @@
-/*	$NetBSD: fecreg.h,v 1.1 2026/06/27 13:28:34 rkujawa Exp $	*/
+/*	$NetBSD: fecreg.h,v 1.2 2026/06/30 21:31:31 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -104,9 +104,29 @@
 #define	FEC_R_CNTRL_LOOP	__BIT(0)	/* internal loopback	*/
 
 /* Transmit control (FEC_X_CNTRL). */
+#define	FEC_X_CNTRL_RFC_PAUSE	__BIT(4)	/* (RO) paused by rx PAUSE */
+#define	FEC_X_CNTRL_TFC_PAUSE	__BIT(3)	/* transmit a PAUSE frame */
 #define	FEC_X_CNTRL_FDEN	__BIT(2)	/* full duplex enable	*/
 #define	FEC_X_CNTRL_HBC		__BIT(1)	/* heartbeat control	*/
 #define	FEC_X_CNTRL_GTS		__BIT(0)	/* graceful transmit stop */
+
+/*
+ * MIB control (FEC_MIB_CONTROL). 
+ */
+#define	FEC_MIB_CONTROL_MIB_DISABLE	__BIT(31)	/* freeze the counters	*/
+#define	FEC_MIB_CONTROL_MIB_IDLE	__BIT(30)	/* (RO) block is idle	*/
+
+/*
+ * On-chip MIB statistics counters.
+ */
+#define	FEC_RMON_T_COL		0x224	/* Tx collision count		*/
+#define	FEC_IEEE_T_LCOL		0x25c	/* Tx late collisions		*/
+#define	FEC_IEEE_T_EXCOL	0x260	/* Tx excessive collisions	*/
+#define	FEC_IEEE_T_MACERR	0x264	/* Tx frames with FIFO underrun	*/
+#define	FEC_IEEE_R_DROP		0x2c8	/* Rx frames not counted (drop)	*/
+#define	FEC_IEEE_R_CRC		0x2d0	/* Rx frames with CRC error	*/
+#define	FEC_IEEE_R_ALIGN	0x2d4	/* Rx frames with alignment err	*/
+#define	FEC_IEEE_R_MACERR	0x2d8	/* Rx FIFO overflow count	*/
 
 /*
  * MII management frame (FEC_MII_DATA).

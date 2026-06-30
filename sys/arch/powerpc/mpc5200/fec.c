@@ -1,4 +1,4 @@
-/*	$NetBSD: fec.c,v 1.1 2026/06/27 13:28:34 rkujawa Exp $	*/
+/*	$NetBSD: fec.c,v 1.2 2026/06/30 21:31:31 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2026 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fec.c,v 1.1 2026/06/27 13:28:34 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fec.c,v 1.2 2026/06/30 21:31:31 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ static void	fec_tick(void *);
 
 static void	fec_reset(struct fec_softc *);
 static void	fec_mac_setup(struct fec_softc *);
+static void	fec_set_filter(struct fec_softc *);
+static void	fec_mib_sync(struct fec_softc *, bool);
 static int	fec_newbuf(struct fec_softc *, u_int);
 static int	fec_intr(void *);
 static int	fec_rxintr(void *);
@@ -168,13 +170,18 @@ fec_attach(device_t parent, device_t self, void *aux)
 	mii->mii_statchg = fec_miibus_statchg;
 	sc->sc_ec.ec_mii = mii;
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
-	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	/* MIIF_DOPAUSE: advertise 802.3 PAUSE so we can honour rx flow control. */
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY,
+	    MIIF_DOPAUSE);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found\n");
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
+
+	/* The controller accepts VLAN-sized frames (see fec_mac_setup()). */
+	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -258,7 +265,7 @@ static void
 fec_miibus_statchg(struct ifnet *ifp)
 {
 	struct fec_softc *sc = ifp->if_softc;
-	uint32_t xcr;
+	uint32_t xcr, rcr;
 
 	xcr = FEC_READ(sc, FEC_X_CNTRL);
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
@@ -266,6 +273,13 @@ fec_miibus_statchg(struct ifnet *ifp)
 	else
 		xcr &= ~FEC_X_CNTRL_FDEN;
 	FEC_WRITE(sc, FEC_X_CNTRL, xcr);
+
+	rcr = FEC_READ(sc, FEC_R_CNTRL);
+	if (sc->sc_mii.mii_media_active & IFM_ETH_RXPAUSE)
+		rcr |= FEC_R_CNTRL_FCE;
+	else
+		rcr &= ~FEC_R_CNTRL_FCE;
+	FEC_WRITE(sc, FEC_R_CNTRL, rcr);
 }
 
 static void
@@ -276,6 +290,8 @@ fec_tick(void *arg)
 
 	s = splnet();
 	mii_tick(&sc->sc_mii);
+	if (sc->sc_if.if_flags & IFF_RUNNING)
+		fec_mib_sync(sc, false);	/* fold hw counters into if_stats */
 	splx(s);
 
 	/*
@@ -307,12 +323,11 @@ fec_mac_setup(struct fec_softc *sc)
 	FEC_WRITE(sc, FEC_IADDR1, 0);
 	FEC_WRITE(sc, FEC_IADDR2, 0);
 	/*
-	 * XXX: Accept all multicast groups via the hash filter.
+	 * Allow VLAN-tagged frames (ETHERCAP_VLAN_MTU)
 	 */
-	FEC_WRITE(sc, FEC_GADDR1, 0xffffffff);
-	FEC_WRITE(sc, FEC_GADDR2, 0xffffffff);
 	FEC_WRITE(sc, FEC_R_CNTRL,
-	    FEC_R_CNTRL_MAX_FL(ETHER_MAX_LEN) | FEC_R_CNTRL_MII_MODE);
+	    FEC_R_CNTRL_MAX_FL(ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN) |
+	    FEC_R_CNTRL_MII_MODE);
 	FEC_WRITE(sc, FEC_X_CNTRL, FEC_X_CNTRL_FDEN);
 
 	/*
@@ -328,6 +343,99 @@ fec_mac_setup(struct fec_softc *sc)
 	 * fewer than "alarm" bytes!
 	 */
 	FEC_WRITE(sc, FEC_TFIFO_ALARM, 0x80);
+}
+
+/*
+ * Program the receive address filter
+ */
+static void
+fec_set_filter(struct fec_softc *sc)
+{
+	struct ethercom *ec = &sc->sc_ec;
+	struct ifnet *ifp = &sc->sc_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint32_t gaddr[2] = { 0, 0 };
+	uint32_t rcr;
+	u_int h;
+
+	rcr = FEC_READ(sc, FEC_R_CNTRL) & ~FEC_R_CNTRL_PROM;
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		rcr |= FEC_R_CNTRL_PROM;
+		gaddr[0] = gaddr[1] = 0xffffffff;
+		goto done;
+	}
+
+	ETHER_LOCK(ec);
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+		    ETHER_ADDR_LEN) != 0) {
+			/*
+			 * A range of addresses
+			 */
+			ec->ec_flags |= ETHER_F_ALLMULTI;
+			gaddr[0] = gaddr[1] = 0xffffffff;
+			break;
+		}
+		h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
+		gaddr[h >> 5] |= 1U << (h & 0x1f);
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ETHER_UNLOCK(ec);
+
+done:
+	FEC_WRITE(sc, FEC_GADDR1, gaddr[1]);	/* buckets 32..63 */
+	FEC_WRITE(sc, FEC_GADDR2, gaddr[0]);	/* buckets  0..31 */
+	FEC_WRITE(sc, FEC_R_CNTRL, rcr);
+}
+
+/*
+ * On-chip counters we dump into the interface stats.
+ */
+static const struct fec_mibcnt {
+	bus_size_t	reg;
+	if_stat_t	stat;
+} fec_mibtab[] = {
+	{ FEC_RMON_T_COL,    if_collisions },
+	{ FEC_IEEE_T_LCOL,   if_oerrors },
+	{ FEC_IEEE_T_EXCOL,  if_oerrors },
+	{ FEC_IEEE_T_MACERR, if_oerrors },	/* Tx FIFO underrun	*/
+	{ FEC_IEEE_R_DROP,   if_iqdrops },
+	{ FEC_IEEE_R_CRC,    if_ierrors },
+	{ FEC_IEEE_R_ALIGN,  if_ierrors },
+	{ FEC_IEEE_R_MACERR, if_iqdrops },	/* Rx FIFO overflow	*/
+};
+__CTASSERT(__arraycount(fec_mibtab) == FEC_NMIB);
+
+/*
+ * Harvest the on-chip MIB counters.
+ */
+static void
+fec_mib_sync(struct fec_softc *sc, bool prime)
+{
+	struct ifnet *ifp = &sc->sc_if;
+	net_stat_ref_t nsr;
+	u_int i;
+
+	if (prime) {
+		for (i = 0; i < FEC_NMIB; i++)
+			sc->sc_mib_prev[i] = FEC_READ(sc, fec_mibtab[i].reg);
+		return;
+	}
+
+	nsr = IF_STAT_GETREF(ifp);
+	for (i = 0; i < FEC_NMIB; i++) {
+		uint32_t cur = FEC_READ(sc, fec_mibtab[i].reg);
+		uint32_t delta = cur - sc->sc_mib_prev[i];	/* wraps mod 2^32 */
+
+		if (delta != 0)
+			if_statadd_ref(ifp, nsr, fec_mibtab[i].stat, delta);
+		sc->sc_mib_prev[i] = cur;
+	}
+	IF_STAT_PUTREF(ifp);
 }
 
 /* Allocate a cluster for receive descriptor idx and hand it to the engine. */
@@ -366,6 +474,9 @@ fec_init(struct ifnet *ifp)
 	struct fec_softc *sc = ifp->if_softc;
 	u_int i;
 	int error;
+	bool link_up;
+
+	link_up = (sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0;
 
 	fec_stop(ifp, 0);
 
@@ -376,6 +487,13 @@ fec_init(struct ifnet *ifp)
 
 	fec_reset(sc);
 	fec_mac_setup(sc);
+	fec_set_filter(sc);
+
+	/*
+	 * Enable the on-chip MIB counter block
+	 */
+	FEC_WRITE(sc, FEC_MIB_CONTROL, 0);
+	fec_mib_sync(sc, true);
 
 	if (bestcomm_bd_setup(&sc->sc_rxring, FEC_RX_TASK, &fec_rx_layout,
 	    sc->sc_pa + FEC_RFIFO_DATA, FEC_NRXDESC, MCLBYTES, 4,
@@ -384,22 +502,27 @@ fec_init(struct ifnet *ifp)
 	    sc->sc_pa + FEC_TFIFO_DATA, FEC_NTXDESC, MCLBYTES, 4,
 	    FEC_TX_INITIATOR, 5) != 0) {
 		aprint_error_ifnet(ifp, "cannot set up SDMA rings\n");
-		return ENOMEM;
+		error = ENOMEM;
+		goto fail;
 	}
 
 	for (i = 0; i < FEC_NRXDESC; i++) {
 		if (sc->sc_rxmap[i] == NULL &&
 		    bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
-		    BUS_DMA_NOWAIT, &sc->sc_rxmap[i]) != 0)
-			return ENOMEM;
+		    BUS_DMA_NOWAIT, &sc->sc_rxmap[i]) != 0) {
+			error = ENOMEM;
+			goto fail;
+		}
 		if ((error = fec_newbuf(sc, i)) != 0)
-			return error;
+			goto fail;
 	}
 	for (i = 0; i < FEC_NTXDESC; i++) {
 		if (sc->sc_txmap[i] == NULL &&
 		    bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
-		    BUS_DMA_NOWAIT, &sc->sc_txmap[i]) != 0)
-			return ENOMEM;
+		    BUS_DMA_NOWAIT, &sc->sc_txmap[i]) != 0) {
+			error = ENOMEM;
+			goto fail;
+		}
 	}
 	sc->sc_rxptr = 0;
 	sc->sc_txnext = sc->sc_txdirty = sc->sc_txbusy = 0;
@@ -414,11 +537,13 @@ fec_init(struct ifnet *ifp)
 	 * Bring the link up before enabling the controller.
 	 */
 	mii_mediachg(&sc->sc_mii);
-	for (i = 0; i < 500; i++) {
-		mii_pollstat(&sc->sc_mii);
-		if (sc->sc_mii.mii_media_status & IFM_ACTIVE)
-			break;
-		DELAY(10000);
+	if (!link_up) {
+		for (i = 0; i < 500; i++) {
+			mii_pollstat(&sc->sc_mii);
+			if (sc->sc_mii.mii_media_status & IFM_ACTIVE)
+				break;
+			DELAY(10000);
+		}
 	}
 
 	FEC_WRITE(sc, FEC_ECNTRL, FEC_ECNTRL_ETHER_EN);
@@ -430,6 +555,11 @@ fec_init(struct ifnet *ifp)
 
 	callout_schedule(&sc->sc_tick_ch, hz);
 	return 0;
+
+fail:
+	/* Unwind any partial setup so we leave a clean, fully-stopped state. */
+	fec_stop(ifp, 1);
+	return error;
 }
 
 static void
@@ -440,10 +570,13 @@ fec_stop(struct ifnet *ifp, int disable)
 
 	callout_stop(&sc->sc_tick_ch);
 
-	if (ifp->if_flags & IFF_RUNNING) {
-		bestcomm_task_stop(FEC_RX_TASK);
-		bestcomm_task_stop(FEC_TX_TASK);
-	}
+	/*
+	 * Stop the SDMA tasks and release their buffer-descriptor rings back
+	 * to the on-chip SRAM pool.
+	 */
+	bestcomm_bd_teardown(&sc->sc_rxring);
+	bestcomm_bd_teardown(&sc->sc_txring);
+
 	FEC_WRITE(sc, FEC_ECNTRL, 0);
 
 	if (sc->sc_rxih != NULL) {
@@ -618,14 +751,17 @@ fec_txintr(void *arg)
 static int
 fec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+	struct fec_softc *sc = ifp->if_softc;
 	int s, error;
 
 	s = splnet();
 	error = ether_ioctl(ifp, cmd, data);
 	if (error == ENETRESET) {
 		/*
-		 * XXX: Just acknowledge it.
+		 * The multicast list or the promiscuous flag changed.
 		 */
+		if (ifp->if_flags & IFF_RUNNING)
+			fec_set_filter(sc);
 		error = 0;
 	}
 	splx(s);

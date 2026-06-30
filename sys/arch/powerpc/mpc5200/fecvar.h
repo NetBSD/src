@@ -1,4 +1,4 @@
-/*	$NetBSD: fecvar.h,v 1.1 2026/06/27 13:28:34 rkujawa Exp $	*/
+/*	$NetBSD: fecvar.h,v 1.2 2026/06/30 21:31:32 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #define	FEC_NRXDESC	256	/* receive buffer descriptors	*/
 #define	FEC_NTXDESC	32	/* transmit buffer descriptors	*/
 
+#define	FEC_NMIB	8	/* on-chip MIB counters we harvest */
+
 struct fec_softc {
 	device_t		sc_dev;
 	struct ethercom		sc_ec;		/* Ethernet common	*/
@@ -77,6 +79,8 @@ struct fec_softc {
 	u_int			sc_txbusy;	/* tx BDs in flight	*/
 	void			*sc_rxih;	/* rx completion intr	*/
 	void			*sc_txih;	/* tx completion intr	*/
+
+	uint32_t		sc_mib_prev[FEC_NMIB];	/* last MIB snapshot */
 };
 
 #endif /* _POWERPC_MPC5200_FECVAR_H_ */
