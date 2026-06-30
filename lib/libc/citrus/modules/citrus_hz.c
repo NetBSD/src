@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_hz.c,v 1.6 2026/06/30 23:17:48 riastradh Exp $ */
+/* $NetBSD: citrus_hz.c,v 1.7 2026/06/30 23:18:09 riastradh Exp $ */
 
 /*-
  * Copyright (c)2004, 2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_hz.c,v 1.6 2026/06/30 23:17:48 riastradh Exp $");
+__RCSID("$NetBSD: citrus_hz.c,v 1.7 2026/06/30 23:18:09 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: citrus_hz.c,v 1.6 2026/06/30 23:17:48 riastradh Exp $");
  */
 
 #define ESCAPE_CHAR	'~'
+#define ESCAPE_LEN	2	/* `~{' or `~}' */
 
 typedef enum {
 	CTRL = 0, ASCII = 1, GB2312 = 2, CS94 = 3, CS96 = 4
@@ -129,10 +130,12 @@ typedef struct {
 #define INIT1(ei)	(TAILQ_FIRST(E1SET(ei)))
 
 typedef struct {
-	int chlen;
-	char ch[ROWCOL_MAX];
+	unsigned char chlen;
+	char ch[2*ESCAPE_LEN + ROWCOL_MAX];
 	escape_t *inuse;
 } _HZState;
+
+__CTASSERT(__arraycount(((_HZState *)0)->ch) <= CHAR_MAX);
 
 typedef struct {
 	_HZEncodingInfo		ei;
@@ -221,19 +224,23 @@ _citrus_HZ_mbrtowc_priv(_HZEncodingInfo * __restrict ei,
 		return 0;
 	}
 	s0 = *s;
-	if (psenc->chlen < 0 || psenc->inuse == NULL)
+	if (psenc->chlen > __arraycount(psenc->ch) || psenc->inuse == NULL)
 		return EINVAL;
 
 	wc = (wchar_t)0;
 	bit = head = tail = 0;
 	graphic = NULL;
 	for (len = 0; len <= MB_LEN_MAX; /**/) {
+		_DIAGASSERT(tail < __arraycount(psenc->ch));
+		_DIAGASSERT(tail <= psenc->chlen);
+		_DIAGASSERT(psenc->chlen <= __arraycount(psenc->ch));
 		if (psenc->chlen == tail) {
 			if (n-- < 1) {
 				*s = s0;
 				*nresult = (size_t)-2;
 				return 0;
 			}
+			_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 			psenc->ch[psenc->chlen++] = *s0++;
 			++len;
 		}
@@ -404,13 +411,17 @@ _citrus_HZ_wcrtomb_priv(_HZEncodingInfo * __restrict ei,
 			if (n < 2)
 				return E2BIG;
 			n -= 2;
+			_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 			psenc->ch[psenc->chlen++] = ESCAPE_CHAR;
+			_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 			psenc->ch[psenc->chlen++] = ESC(init);
 		}
 		if (n < 2)
 			return E2BIG;
 		n -= 2;
+		_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 		psenc->ch[psenc->chlen++] = ESCAPE_CHAR;
+		_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 		psenc->ch[psenc->chlen++] = ESC(candidate);
 		psenc->inuse = candidate;
 	}
@@ -420,8 +431,10 @@ _citrus_HZ_wcrtomb_priv(_HZEncodingInfo * __restrict ei,
 		ch = (wc >> (len * 8)) & 0xFF;
 		if (range->start > ch || range->end < ch)
 			goto ilseq;
+		_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 		psenc->ch[psenc->chlen++] = ch | bit;
 	}
+	_DIAGASSERT(psenc->chlen <= sizeof(psenc->ch));
 	memcpy(s, psenc->ch, psenc->chlen);
 	*nresult = psenc->chlen;
 	psenc->chlen = 0;
@@ -452,11 +465,14 @@ _citrus_HZ_put_state_reset(_HZEncodingInfo * __restrict ei,
 		if (n < 2)
 			return E2BIG;
 		n -= 2;
+		_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 		psenc->ch[psenc->chlen++] = ESCAPE_CHAR;
+		_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 		psenc->ch[psenc->chlen++] = ESC(candidate);
 	}
 	if (n < 1)
 		return E2BIG;
+	_DIAGASSERT(psenc->chlen <= sizeof(psenc->ch));
 	if (psenc->chlen > 0)
 		memcpy(s, psenc->ch, psenc->chlen);
 	*nresult = psenc->chlen;
@@ -473,7 +489,7 @@ _citrus_HZ_stdenc_get_state_desc_generic(_HZEncodingInfo * __restrict ei,
 	_DIAGASSERT(psenc != NULL);
 	_DIAGASSERT(rstate != NULL);
 
-	if (psenc->chlen < 0 || psenc->inuse == NULL)
+	if (psenc->chlen > __arraycount(psenc->ch) || psenc->inuse == NULL)
 		return EINVAL;
 	*rstate = (psenc->chlen == 0)
 	    ? ((psenc->inuse == INIT0(ei))
