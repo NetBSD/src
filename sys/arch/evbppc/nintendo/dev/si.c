@@ -84,7 +84,6 @@ static usbd_status si_write(void *, void *, int);
 static void			tcint_handler(struct work *, void *);
 static void			txn_softintr(void *);
 
-static kmutex_t 		sicomcsr_lock;
 static kmutex_t			sicomcsr_qlock;
 static void			*txn_si;
 static struct work		sicomcsr_work;
@@ -125,7 +124,6 @@ si_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
-	mutex_init(&sicomcsr_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&sicomcsr_qlock, MUTEX_DEFAULT, IPL_VM);
 
 	err = workqueue_create(&sicomcsr_wqp, "si_tcint", tcint_handler,
@@ -466,7 +464,6 @@ txn_softintr(void *arg)
 	mutex_enter(&sicomcsr_qlock);
 	txn = TAILQ_FIRST(&txn_head);
 	pk = txn->pk;
-	mutex_enter(&sicomcsr_lock);
 	if(pk != NULL) {
 		SIIOBUF_CLEAR(sc);
 
@@ -482,7 +479,6 @@ txn_softintr(void *arg)
 	    SICOMCSR_TCINTMSK |
 	    SICOMCSR_RDSTINTMSK |
 	    SICOMCSR_TSTART);
-	mutex_exit(&sicomcsr_lock);
 	mutex_exit(&sicomcsr_qlock);
 }
 
