@@ -1,4 +1,4 @@
-/*	$NetBSD: t_iconv.c,v 1.7 2026/06/30 23:17:14 riastradh Exp $	*/
+/*	$NetBSD: t_iconv.c,v 1.8 2026/06/30 23:17:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_iconv.c,v 1.7 2026/06/30 23:17:14 riastradh Exp $");
+__RCSID("$NetBSD: t_iconv.c,v 1.8 2026/06/30 23:17:31 riastradh Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -213,15 +213,15 @@ test_sample_bounded(const char *title, const struct sample *S,
 		atf_tc_fail_nonfatal("[%s] iconv: bad conv", title);
 		fprintf(stderr, "[%s] input:    ", title);
 		for (k = 0; k < nsrc; k++)
-			fprintf(stderr, " %02x", S->src[k]);
+			fprintf(stderr, " %02x", (unsigned char)S->src[k]);
 		fprintf(stderr, "\n");
 		fprintf(stderr, "[%s] expected: ", title);
 		for (k = 0; k < ndst; k++)
-			fprintf(stderr, " %02x", S->dst[k]);
+			fprintf(stderr, " %02x", (unsigned char)S->dst[k]);
 		fprintf(stderr, "\n");
 		fprintf(stderr, "[%s] got:      ", title);
 		for (k = 0; k < ndst; k++)
-			fprintf(stderr, " %02x", dst0[k]);
+			fprintf(stderr, " %02x", (unsigned char)dst0[k]);
 		fprintf(stderr, "\n");
 	}
 
