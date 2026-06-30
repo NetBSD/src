@@ -1,4 +1,4 @@
-/*	$NetBSD: featuretest.h,v 1.15 2026/06/30 15:03:08 riastradh Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.16 2026/06/30 20:05:54 riastradh Exp $	*/
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.org>, February 2, 1998.
@@ -53,7 +53,7 @@
  * _XOPEN_SOURCE == 700
  *	IEEE Std 1003.1-2008 (Issue 7), XSI option [POSIX.1-2008]
  * _XOPEN_SOURCE == 800
- *	IEEE Std 1003.1-2024 (Issue 7), XSI option [POSIX.1-2024]
+ *	IEEE Std 1003.1-2024 (Issue 8), XSI option [POSIX.1-2024]
  *
  * References:
  *
