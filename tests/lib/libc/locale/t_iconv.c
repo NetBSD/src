@@ -1,4 +1,4 @@
-/*	$NetBSD: t_iconv.c,v 1.6 2026/06/30 23:16:53 riastradh Exp $	*/
+/*	$NetBSD: t_iconv.c,v 1.7 2026/06/30 23:17:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_iconv.c,v 1.6 2026/06/30 23:16:53 riastradh Exp $");
+__RCSID("$NetBSD: t_iconv.c,v 1.7 2026/06/30 23:17:14 riastradh Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -119,9 +119,24 @@ static const struct sample {
 		0, 0, NULL },
 	/* 馬 from CNS 11643-1 */
 	[9] = { "UTF-8", 3, (const char[3]){0xe9,0xa6,0xac},
-		"ISO-2022-CN", 7,
-		(const char[7]){0x1b,0x24,0x29,0x47,0x0e,0x58,0x6b},
+		"ISO-2022-CN", 8,
+		(const char[8]){0x1b,0x24,0x29,0x47,0x0e,0x58,0x6b,0x0f},
 		0, 0, NULL },
+	/* 馬毦 shifting from CNS 11643-1 to CNS 11643-2 */
+	[10] = { "UTF-8", 6, (const char[6]){0xe9,0xa6,0xac,0xe6,0xaf,0xa6},
+		"ISO-2022-CN", 16,
+		(const char[16]){
+			/* ESC $ ) G (shift G1 to CNS 11643 plane 1) */
+			0x1b,0x24,0x29,0x47,
+			0x0e,	   /* GL is G1 from now on */
+			0x58,0x6b, /* 馬 */
+			/* ESC $ * H (shift G2 to CNS 11643 plane 2) */
+			0x1b,0x24,0x2a,0x48,
+			0x1b,0x4e, /* GL is G2 for next char */
+			0x30,0x21, /* 毦 */
+			0x0f,	   /* GL is G0 from now on */
+		},
+		0, 0, "PR lib/59019: various iconv issues ([case 10: ISO-2022-CN to UTF-8 14/6] iconv: Illegal byte sequence (85))" },
 };
 
 #define	MIN(x, y)	((x) < (y) ? (x) : (y))
