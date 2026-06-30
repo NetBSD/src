@@ -1,4 +1,4 @@
-/*	$NetBSD: featuretest.h,v 1.13 2024/09/09 15:05:39 riastradh Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.14 2026/06/30 14:59:56 riastradh Exp $	*/
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.org>, February 2, 1998.
@@ -14,6 +14,14 @@
  * Feature-test macros are defined by several standards, and allow an
  * application to specify what symbols they want the system headers to
  * expose, and hence what standard they want them to conform to.
+ *
+ * A header file MUST NOT expose symbols that are not requested by a
+ * feature test macro, unless they appear in the earliest revision of
+ * the standard introducing the header file, or the header file is
+ * entirely NetBSD-specific.  In the absence of any _ANSI_*, _POSIX_*,
+ * or _XOPEN_*, feature test macros, we define _NETBSD_SOURCE by
+ * default.
+ *
  * There are two classes of feature-test macros.  The first class
  * specify complete standards, and if one of these is defined, header
  * files will try to conform to the relevant standard.  They are:
@@ -22,37 +30,78 @@
  * _ANSI_SOURCE			ANSI C89
  *
  * POSIX macros:
- * _POSIX_SOURCE == 1		IEEE Std 1003.1 (version?)
- * _POSIX_C_SOURCE == 1		IEEE Std 1003.1-1990
- * _POSIX_C_SOURCE == 2		IEEE Std 1003.2-1992
- * _POSIX_C_SOURCE == 199309L	IEEE Std 1003.1b-1993
- * _POSIX_C_SOURCE == 199506L	ISO/IEC 9945-1:1996
- * _POSIX_C_SOURCE == 200112L	IEEE Std 1003.1-2001
- * _POSIX_C_SOURCE == 200809L   IEEE Std 1003.1-2008
- * _POSIX_C_SOURCE == 202405L   IEEE Std 1003.1-2024
- *
- * Reference:
- *
- *	The Open Group Base Specifications Issue 8, IEEE Std
- *	1003.1-2024, IEEE and The Open Group, 2024, Sec. 2.2.1.1 `The
- *	_POSIX_C_SOURCE Feature Test Macro'.
- *	https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/functions/V2_chap02.html#tag_16_02_01_01
+ * _POSIX_SOURCE == 1		IEEE Std 1003.1 [POSIX.1-1990]
+ * _POSIX_C_SOURCE == 1		IEEE Std 1003.1-1990 [citation needed]
+ * _POSIX_C_SOURCE == 2		IEEE Std 1003.2-1992 [citation needed]
+ * _POSIX_C_SOURCE == 199309L	IEEE Std 1003.1b-1993 [citation needed]
+ * _POSIX_C_SOURCE == 199506L	ISO/IEC 9945-1:1996 [POSIX.1-1995]
+ * _POSIX_C_SOURCE == 200112L	IEEE Std 1003.1-2001 (Issue 6) [POSIX.1-2001]
+ * _POSIX_C_SOURCE == 200809L   IEEE Std 1003.1-2008 (Issue 7) [POSIX.1-2008]
+ * _POSIX_C_SOURCE == 202405L   IEEE Std 1003.1-2024 (Issue 8) [POSIX.1-2024]
  *
  * X/Open macros:
- * _XOPEN_SOURCE		System Interfaces and Headers, Issue 4, Ver 2
- * _XOPEN_SOURCE_EXTENDED == 1	XSH4.2 UNIX extensions
- * _XOPEN_SOURCE == 500		System Interfaces and Headers, Issue 5
- * _XOPEN_SOURCE == 520		Networking Services (XNS), Issue 5.2
- * _XOPEN_SOURCE == 600		IEEE Std 1003.1-2001, XSI option
- * _XOPEN_SOURCE == 700		IEEE Std 1003.1-2008, XSI option
- * _XOPEN_SOURCE == 800		IEEE Std 1003.1-2024, XSI option
+ * _XOPEN_SOURCE
+ *	X/Open System Interfaces & Headers, Issue 4, Ver 2 [XOPEN4.2-XSH]
+ * _XOPEN_SOURCE_EXTENDED == 1
+ *	X/Open XSH4.2 UNIX extensions [XOPEN4.2-XSH]
+ * _XOPEN_SOURCE == 500
+ *	SUSv2 System Interfaces & Headers, Issue 5 [SUSv2-1997]
+ * _XOPEN_SOURCE == 520
+ *	Networking Services (XNS), Issue 5.2 [XOPEN5.2-XNS]
+ * _XOPEN_SOURCE == 600
+ *	IEEE Std 1003.1-2001 (Issue 6), XSI option [POSIX.1-2001]
+ * _XOPEN_SOURCE == 700
+ *	IEEE Std 1003.1-2008 (Issue 7), XSI option [POSIX.1-2008]
+ * _XOPEN_SOURCE == 800
+ *	IEEE Std 1003.1-2024 (Issue 7), XSI option [POSIX.1-2024]
  *
- * Reference:
+ * References:
  *
- *	The Open Group Base Specifications Issue 8, IEEE Std
- *	1003.1-2024, IEEE and The Open Group, 2024, Sec. 2.2.1.2 `The
- *	_XOPEN_SOURCE Feature Test Macro'.
- *	https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/functions/V2_chap02.html#tag_16_02_01_02
+ *	[POSIX.1-1990] Portable Operating System Interface (POSIX) --
+ *	    Part 1: System Application Program Interface (API) [C
+ *	    Language], IEEE Std 1003.1, First Edition, 1990-12-07, ISBN
+ *	    1-55937-061-0, Sec. 2.7.1 `POSIX.1 Symbols', p. 31.
+ *	    https://nvlpubs.nist.gov/nistpubs/Legacy/FIPS/fipspub151-2.pdf#page=52
+ *	    https://web.archive.org/web/20260330002540/https://nvlpubs.nist.gov/nistpubs/Legacy/FIPS/fipspub151-2.pdf
+ *
+ *	[XOPEN4.2-XSH] X/Open CAE Specification, Volume XSH: System
+ *	    Interfaces and Headers Issue 4, Version 2, The Open Group,
+ *	    1994, Document Number: C435, ISBN 1-85912-037-7, Sec. 2.2
+ *	    `The Compilation Environment', pp. 17-18.
+ *	    https://pubs.opengroup.org/onlinepubs/9695969499/toc.pdf#page=45
+ *
+ *	[POSIX.1-1995] Portable Operating System Interface (POSIX) --
+ *	    Part 1: System Application Program Interface (API) [C
+ *	    Language], IEEE Std. 1003.1, 1996 Edition, 1996-07-12, ISBN
+ *	    1-55937-573-6, Sec 2.7.2 `POSIX.1 Symbols', p. 30.
+ *
+ *	[SUSv2-1997] The Single UNIX Specification, Version 2, Volume
+ *	    XSH: System Interfaces, The Open Group, 1997, Sec. `The
+ *	    Compilation Environment'.
+ *	    https://pubs.opengroup.org/onlinepubs/7990989775/xsh/compilation.html
+ *
+ *	[XOPEN5.2-XNS] Networking Services (XNS), Issue 5.2, The Open
+ *	    Group, 1999, Document Number: C808, ISBN 1-85912-241-8,
+ *	    Sec. `The Compilation Environment'.
+ *	    https://pubs.opengroup.org/onlinepubs/009619199/chap1.htm#tagcjh_02_03
+ *
+ *	[POSIX.1-2001] The Open Group Base Specifications Issue 6,
+ *	    Volume XSH: System Interfaces, IEEE Std 1003.1, 2004
+ *	    Edition, The IEEE and The Open Group, 2004 Sec. 2.2 `The
+ *	    Compilation Environment'.
+ *	    https://pubs.opengroup.org/onlinepubs/009695399/functions/xsh_chap02_02.html
+ *
+ *	[POSIX.1-2008] The Open Group Base Specifications Issue 7,
+ *	    Volume XSH: System Interfaces, IEEE Std 1003.1-2017
+ *	    (Revision of IEEE Std 1003.1-2008), The IEEE and The Open
+ *	    Group, Sec. 2.2 `The Compilation Environment'.
+ *	    https://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_02_01
+ *
+ *	[POSIX.1-2024] The Open Group Base Specifications Issue 8,
+ *	    Volume XSH: System Interfaces, IEEE Std 1003.1-2024, The
+ *	    IEEE and The Open Group, 2024, System Interfaces Sec. 2.2
+ *	    `The Compilation Environment'.
+ *	    https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/functions/V2_chap02.html#tag_16_02
  *
  * NetBSD macros:
  * _NETBSD_SOURCE == 1		Make all NetBSD features available.
