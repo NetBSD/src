@@ -1,6 +1,14 @@
-#	$NetBSD: files.ofw,v 1.6 2007/10/17 19:56:39 garbled Exp $
+#	$NetBSD: files.ofw,v 1.7 2026/06/30 23:59:47 rkujawa Exp $
 
 defflag opt_ofwoea.h OFWOEA_DEBUG
+
+# Use an MPC5200 PSC as the OpenFirmware serial console (e.g. EFIKA 5200B).
+defflag opt_pscons.h PSC_CONSOLE
+
+# Contain the EFIKA 5200B / SmartFirmware bring-up workarounds:
+# XXX: These still need a proper per-firmware refactor.
+defflag opt_efika.h EFIKA_OFW_WORKAROUNDS
+
 file	arch/powerpc/powerpc/ofw_machdep.c
 file	arch/powerpc/powerpc/ofwmagic.S
 file	arch/powerpc/powerpc/openfirm.c

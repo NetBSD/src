@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.20 2021/02/28 19:01:11 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.21 2026/06/30 23:59:47 rkujawa Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
+#include "opt_efika.h"
 #endif
 
 	/* Stack used to call into OpenFirmware. */
@@ -165,11 +166,21 @@ ENTRY_NOPROFILE(openfirmware_trampoline)
 	isync
 
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+#ifdef EFIKA_OFW_WORKAROUNDS
+	/*
+	 * EFIKA 5200B / CodeGen SmartFirmware call workarounds.
+	 *
+	 * Save SDR1.
+	 */
+	mfsdr1	%r4
+	stw	%r4,12(%r1)
+#else
 	/* clear BAT translations */
 	mtdbatu	2,%r0
 	mtdbatu	3,%r0
 	mtibatu	2,%r0
 	mtibatu	3,%r0
+#endif /* EFIKA_OFW_WORKAROUNDS */
 #endif /* PPC_OEA */
 
 	lis	%r4,clsrsave@ha		/* save current SRs */
@@ -231,6 +242,42 @@ ENTRY_NOPROFILE(openfirmware_trampoline)
 	addis	%r5,%r5,0x10000000@h
 	cmpwi	%r5,0
 	bne	1b
+
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+#ifdef EFIKA_OFW_WORKAROUNDS
+	/*
+	 * EFIKA 5200B / SmartFirmware: undo the firmware's leftover SDR1 zero
+	 * and user-valid BATs after the call.
+	 */
+	lwz	%r4,12(%r1)		/* restore kernel SDR1 (see save above) */
+	sync
+	mtsdr1	%r4
+	isync
+
+	mfibatu	%r4,0
+	clrrwi	%r4,%r4,1		/* clear Vp (BAT_Vu, bit 31) */
+	mtibatu	0,%r4
+	li	%r4,0
+	mtibatu	1,%r4
+	mtibatu	2,%r4
+	mtibatu	3,%r4
+	isync
+
+	mfdbatu	%r4,0
+	clrrwi	%r4,%r4,1
+	mtdbatu	0,%r4
+	mfdbatu	%r4,1
+	clrrwi	%r4,%r4,1
+	mtdbatu	1,%r4
+	mfdbatu	%r4,2
+	clrrwi	%r4,%r4,1
+	mtdbatu	2,%r4
+	mfdbatu	%r4,3
+	clrrwi	%r4,%r4,1
+	mtdbatu	3,%r4
+	isync
+#endif /* EFIKA_OFW_WORKAROUNDS */
+#endif /* PPC_OEA */
 
 	lwz	%r4,8(%r1)		/* restore msr */
 	mtmsr	%r4
