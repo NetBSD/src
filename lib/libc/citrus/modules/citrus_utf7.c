@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf7.c,v 1.8 2026/06/30 23:15:52 riastradh Exp $	*/
+/*	$NetBSD: citrus_utf7.c,v 1.9 2026/06/30 23:18:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2004, 2005 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf7.c,v 1.8 2026/06/30 23:15:52 riastradh Exp $");
+__RCSID("$NetBSD: citrus_utf7.c,v 1.9 2026/06/30 23:18:22 riastradh Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <assert.h>
@@ -66,9 +66,11 @@ typedef struct {
 		bits: 4,	/* need to hold 0 - 15 */
 		cache: 22,	/* 22 = BASE64_BIT + UTF16_BIT */
 		surrogate: 1;	/* whether surrogate pair or not */
-	int chlen;
+	unsigned char chlen;
 	char ch[4]; /* BASE64_IN, 3 * 6 = 18, most closed to UTF16_BIT */
 } _UTF7State;
+
+__CTASSERT(__arraycount(((_UTF7State *)0)->ch) <= CHAR_MAX);
 
 typedef struct {
 	_UTF7EncodingInfo	ei;
@@ -183,7 +185,7 @@ _citrus_UTF7_mbtoutf16(_UTF7EncodingInfo * __restrict ei,
 	_UTF7State sv;
 	const char *s0;
 	int i, done, len;
- 
+
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(s != NULL && *s != NULL);
 	_DIAGASSERT(psenc != NULL);
@@ -192,7 +194,9 @@ _citrus_UTF7_mbtoutf16(_UTF7EncodingInfo * __restrict ei,
 	sv = *psenc;
 
 	for (i = 0, done = 0; done == 0; i++) {
+		_DIAGASSERT(i < __arraycount(psenc->ch));
 		_DIAGASSERT(i <= psenc->chlen);
+		_DIAGASSERT(psenc->chlen <= __arraycount(psenc->ch));
 		if (i == psenc->chlen) {
 			if (n-- < 1) {
 				*nresult = (size_t)-2;
@@ -201,6 +205,7 @@ _citrus_UTF7_mbtoutf16(_UTF7EncodingInfo * __restrict ei,
 				*psenc = sv;
 				return 0;
 			}
+			_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 			psenc->ch[psenc->chlen++] = *s0++;
 		}
 		if (SHIFT7BIT((int)psenc->ch[i]))
@@ -355,22 +360,31 @@ _citrus_UTF7_utf16tomb(_UTF7EncodingInfo * __restrict ei,
 			if (psenc->bits > 0) {
 				bits = BASE64_BIT - psenc->bits;
 				i = (psenc->cache << bits) & BASE64_MAX;
+				_DIAGASSERT(psenc->chlen <
+				    __arraycount(psenc->ch));
 				psenc->ch[psenc->chlen++] = base64[i];
 				psenc->bits = psenc->cache = 0;
 			}
-			if (u16 == BASE64_OUT || FINDLEN(ei, u16) >= 0)
+			if (u16 == BASE64_OUT || FINDLEN(ei, u16) >= 0) {
+				_DIAGASSERT(psenc->chlen <
+				    __arraycount(psenc->ch));
 				psenc->ch[psenc->chlen++] = BASE64_OUT;
+			}
 			psenc->mode = 0;
 		}
 		if (psenc->bits != 0)
 			return EINVAL;
+		_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 		psenc->ch[psenc->chlen++] = (char)u16;
-		if (u16 == BASE64_IN)
+		if (u16 == BASE64_IN) {
+			_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 			psenc->ch[psenc->chlen++] = BASE64_OUT;
+		}
 	} else {
 		if (!psenc->mode) {
 			if (psenc->bits > 0)
 				return EINVAL;
+			_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 			psenc->ch[psenc->chlen++] = BASE64_IN;
 			psenc->mode = 1;
 		}
@@ -379,11 +393,13 @@ _citrus_UTF7_utf16tomb(_UTF7EncodingInfo * __restrict ei,
 		psenc->bits = bits % BASE64_BIT;
 		while ((bits -= BASE64_BIT) >= 0) {
 			i = (psenc->cache >> bits) & BASE64_MAX;
+			_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 			psenc->ch[psenc->chlen++] = base64[i];
 		}
 	}
 	if (n < (size_t)psenc->chlen)
 		return E2BIG;
+	_DIAGASSERT(psenc->chlen <= sizeof(psenc->ch));
 	memcpy(s, psenc->ch, psenc->chlen);
 	*nresult = psenc->chlen;
 	psenc->chlen = 0;
@@ -435,6 +451,7 @@ _citrus_UTF7_wcrtomb_priv(_UTF7EncodingInfo * __restrict ei,
 		n -= nr;
 		siz += nr;
 	}
+	_DIAGASSERT(siz <= sizeof(buf));
 	memcpy(s, buf, siz);
 	*nresult = siz;
 
@@ -463,7 +480,9 @@ _citrus_UTF7_put_state_reset(_UTF7EncodingInfo * __restrict ei,
 				return E2BIG;
 			bits = BASE64_BIT - psenc->bits;
 			pos = (psenc->cache << bits) & BASE64_MAX;
+			_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 			psenc->ch[psenc->chlen++] = base64[pos];
+			_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 			psenc->ch[psenc->chlen++] = BASE64_OUT;
 			psenc->bits = psenc->cache = 0;
 		}
@@ -476,6 +495,7 @@ _citrus_UTF7_put_state_reset(_UTF7EncodingInfo * __restrict ei,
 
 	_DIAGASSERT(n >= psenc->chlen);
 	*nresult = (size_t)psenc->chlen;
+	_DIAGASSERT(psenc->chlen <= sizeof(psenc->ch));
 	if (psenc->chlen > 0) {
 		memcpy(s, psenc->ch, psenc->chlen);
 		psenc->chlen = 0;
