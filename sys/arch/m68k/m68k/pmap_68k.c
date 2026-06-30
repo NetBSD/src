@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.72 2026/05/19 21:39:08 andvar Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.73 2026/06/30 13:23:05 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.72 2026/05/19 21:39:08 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.73 2026/06/30 13:23:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2944,9 +2944,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #endif
 	}
 
+	/* There must not be a valid PTE here. */
+	KASSERT(! pte_valid_p(pte_load(ptep)));
+
 	/* Set the new PTE. */
-	const pt_entry_t opte = pte_load(ptep);
 	pte_store(ptep, npte);
+
+	pmap_stat_update(pmap, resident_count, 1);
+	pmap_stat_update(pmap, wired_count, 1);
 
 	/*
 	 * See comments in pmap_pv_enter() as for why we hit the ATC here.
@@ -2955,26 +2960,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * VA, but we're erring on the side of caution for now.
 	 */
 	TBIS(va);
-
-	/*
-	 * There should not have been anything here, previously,
-	 * so we can skip ATC invalidation in the common case.
-	 */
-	if (__predict_false(pte_valid_p(opte))) {
-		if (__predict_false(pte_managed_p(opte))) {
-			/*
-			 * Can't handle this case and it's a legitimate
-			 * error if it happens.
-			 */
-			panic("%s: old mapping was managed", __func__);
-		}
-		if (__predict_false(! pte_wired_p(opte))) {
-			pmap_stat_update(pmap, wired_count, 1);
-		}
-	} else {
-		pmap_stat_update(pmap, resident_count, 1);
-		pmap_stat_update(pmap, wired_count, 1);
-	}
 }
 
 /*
