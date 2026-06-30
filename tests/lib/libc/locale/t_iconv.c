@@ -1,4 +1,4 @@
-/*	$NetBSD: t_iconv.c,v 1.2 2026/06/30 23:15:31 riastradh Exp $	*/
+/*	$NetBSD: t_iconv.c,v 1.3 2026/06/30 23:15:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_iconv.c,v 1.2 2026/06/30 23:15:31 riastradh Exp $");
+__RCSID("$NetBSD: t_iconv.c,v 1.3 2026/06/30 23:15:52 riastradh Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -73,16 +73,16 @@ static const struct sample {
 	/* LEFT CURLY BRACKET (optionally encoded in UTF-7) */
 	[4] = { "UTF-7", 1, (const char[1]){0x7b},
 		"UTF-8", 1, (const char[1]){0x7b},
-		0, IRREVERSIBLE, "PR 59019: various libiconv issues" },
+		0, IRREVERSIBLE, NULL },
 	[5] = { "UTF-7", 4, "+AHs-",
 		"UTF-8", 1, (const char[1]){0x7b},
-		0, 0, "PR 59019: various libiconv issues" },
+		0, 0, NULL },
 	/* éclair */
 	[6] = { "UTF-7", 10, "+AOk-clair",
 		"UTF-8", 7, (const char[7]){
 			0xc3,0xa9,0x63,0x6c,0x61,0x69,0x72,
 		},
-		0, 0, "PR 59019: various libiconv issues" },
+		0, 0, NULL },
 	[7] = { "HZ", 55,	/* RFC 1843, Sec. 4, Example 1 */
 		"The next sentence is in GB.~{<:Ky2;S{#,NpJ)l6HK!#~}Bye.",
 		"UTF-8", 61, (const char[61]) {

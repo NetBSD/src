@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf7.c,v 1.7 2022/04/19 20:32:14 rillig Exp $	*/
+/*	$NetBSD: citrus_utf7.c,v 1.8 2026/06/30 23:15:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2004, 2005 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf7.c,v 1.7 2022/04/19 20:32:14 rillig Exp $");
+__RCSID("$NetBSD: citrus_utf7.c,v 1.8 2026/06/30 23:15:52 riastradh Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <assert.h>
@@ -382,6 +382,8 @@ _citrus_UTF7_utf16tomb(_UTF7EncodingInfo * __restrict ei,
 			psenc->ch[psenc->chlen++] = base64[i];
 		}
 	}
+	if (n < (size_t)psenc->chlen)
+		return E2BIG;
 	memcpy(s, psenc->ch, psenc->chlen);
 	*nresult = psenc->chlen;
 	psenc->chlen = 0;
@@ -398,6 +400,8 @@ _citrus_UTF7_wcrtomb_priv(_UTF7EncodingInfo * __restrict ei,
 	uint16_t u16[2];
 	int err, len, i;
 	size_t siz, nr;
+	char buf[8], *bufp = buf;
+	_UTF7State psenc_save = *psenc;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(s != NULL);
@@ -418,14 +422,20 @@ _citrus_UTF7_wcrtomb_priv(_UTF7EncodingInfo * __restrict ei,
 		return EILSEQ;
 	}
 	siz = 0;
+	if (n > sizeof(buf))	/* paranoia */
+		n = sizeof(buf);
 	for (i = 0; i < len; ++i) {
-		err = _citrus_UTF7_utf16tomb(ei, s, n, u16[i], psenc, &nr);
-		if (err != 0)
-			return err; /* XXX: state has been modified */
-		s += nr;
+		err = _citrus_UTF7_utf16tomb(ei, bufp, n, u16[i], psenc, &nr);
+		if (err != 0) {
+			*nresult = (size_t)-1;
+			*psenc = psenc_save; /* restore state */
+			return err;
+		}
+		bufp += nr;
 		n -= nr;
 		siz += nr;
 	}
+	memcpy(s, buf, siz);
 	*nresult = siz;
 
 	return 0;
