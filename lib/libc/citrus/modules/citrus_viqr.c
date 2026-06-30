@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_viqr.c,v 1.8 2026/06/30 23:17:48 riastradh Exp $ */
+/* $NetBSD: citrus_viqr.c,v 1.9 2026/06/30 23:18:40 riastradh Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_viqr.c,v 1.8 2026/06/30 23:17:48 riastradh Exp $");
+__RCSID("$NetBSD: citrus_viqr.c,v 1.9 2026/06/30 23:18:40 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -234,9 +234,11 @@ typedef struct {
 } _VIQREncodingInfo;
 
 typedef struct {
-	int chlen;
+	unsigned char chlen;
 	char ch[MB_LEN_MAX];
 } _VIQRState;
+
+__CTASSERT(__arraycount(((_VIQRState *)0)->ch) <= CHAR_MAX);
 
 typedef struct {
 	_VIQREncodingInfo	ei;
@@ -328,12 +330,15 @@ _citrus_VIQR_mbrtowc_priv(_VIQREncodingInfo * __restrict ei,
 	i = 0;
 	m = ei->mroot;
 	for (escape = 0;;) {
+		_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
+		_DIAGASSERT(i <= psenc->chlen);
 		if (psenc->chlen == i) {
 			if (n-- < 1) {
 				*s = s0;
 				*nresult = (size_t)-2;
 				return 0;
 			}
+			_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 			psenc->ch[psenc->chlen++] = *s0++;
 		}
 		ch = (unsigned char)psenc->ch[i++];
@@ -358,6 +363,8 @@ _citrus_VIQR_mbrtowc_priv(_VIQREncodingInfo * __restrict ei,
 	}
 	if (ch == ESCAPE && m != ei->mroot)
 		++i;
+	_DIAGASSERT(i <= psenc->chlen);
+	_DIAGASSERT(psenc->chlen <= sizeof(psenc->ch));
 	psenc->chlen -= i;
 	memmove(&psenc->ch[0], &psenc->ch[i], psenc->chlen);
 	wc = (m == ei->mroot) ? (wchar_t)ch : m->value;
@@ -412,6 +419,7 @@ _citrus_VIQR_wcrtomb_priv(_VIQREncodingInfo * __restrict ei,
 			psenc->chlen = 0;
 			m = NULL;
 		}
+		_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 		psenc->ch[psenc->chlen++] = ch;
 	} else {
 		p = mnemonic_ext_find(wc, &mnemonic_ext[0], mnemonic_ext_size);
@@ -424,10 +432,13 @@ mnemonic_found:
 			while (*p != '\0') {
 				if (n-- < 1)
 					goto e2big;
+				_DIAGASSERT(psenc->chlen <
+				    __arraycount(psenc->ch));
 				psenc->ch[psenc->chlen++] = *p++;
 			}
 		}
 	}
+	_DIAGASSERT(psenc->chlen <= sizeof(psenc->ch));
 	memcpy(s, psenc->ch, psenc->chlen);
 	*nresult = psenc->chlen;
 	if (m == ei->mroot) {
