@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.231 2023/06/24 05:31:04 msaitoh Exp $	*/
+/*	$NetBSD: locore.S,v 1.232 2026/06/30 12:24:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.231 2023/06/24 05:31:04 msaitoh Exp $")
+RCSID("$NetBSD: locore.S,v 1.232 2026/06/30 12:24:48 skrll Exp $")
 
 #include "assym.h"
 
@@ -278,9 +278,10 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, CALLFRAME_SIZ
 	REG_S	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
-/*
- * Switch to new context.
- */
+
+	/*
+	 * Switch to new context.
+	 */
 	jal	_C_LABEL(mips_cpu_switch_resume)
 	 move	a0, MIPS_CURLWP
 
