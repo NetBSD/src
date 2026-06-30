@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog64.S,v 1.3.50.1 2023/05/13 13:26:57 martin Exp $	*/
+/*	$NetBSD: startprog64.S,v 1.3.50.2 2026/06/30 10:27:32 martin Exp $	*/
 /*	NetBSD: startprog.S,v 1.3 2003/02/01 14:48:18 dsl Exp	*/
 
 /* starts program in protected mode / flat space
@@ -66,10 +66,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	DATA_SEGMENT	0x10
 
 	.align	16
-	.globl _C_LABEL(startprog64)
-_C_LABEL(startprog64):
-	.quad 0
-
 	.globl _C_LABEL(startprog64_size)
 _C_LABEL(startprog64_size):
 	.long startprog64_end - _C_LABEL(startprog64_start)

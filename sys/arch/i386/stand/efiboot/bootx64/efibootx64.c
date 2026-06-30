@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootx64.c,v 1.5.26.1 2023/05/13 13:26:57 martin Exp $	*/
+/*	$NetBSD: efibootx64.c,v 1.5.26.2 2026/06/30 10:27:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -32,12 +32,12 @@
 
 void startprog64_start(physaddr_t, physaddr_t, physaddr_t, u_long,
     void *, physaddr_t);
-extern void (*startprog64)(physaddr_t, physaddr_t, physaddr_t, u_long,
+void (*startprog64)(physaddr_t, physaddr_t, physaddr_t, u_long,
     void *, physaddr_t);
 extern u_int startprog64_size;
 
 void multiboot64_start(physaddr_t, physaddr_t, uint32_t);
-extern void (*multiboot64)(physaddr_t, physaddr_t, uint32_t);
+void (*multiboot64)(physaddr_t, physaddr_t, uint32_t);
 extern u_int multiboot64_size;
 
 void
