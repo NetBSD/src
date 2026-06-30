@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2011/06/17 23:36:17 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.17 2026/06/30 22:32:04 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <powerpc/pic/ipivar.h>
 #endif
 
-#define ICU_LEN		32
+#define ICU_LEN		128
 #define IRQ_SLAVE	2
 
 #endif
