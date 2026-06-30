@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.41.2.2 2023/12/19 12:26:01 martin Exp $	   */
+/*	$NetBSD: subr.S,v 1.41.2.3 2026/06/30 09:42:40 martin Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -275,7 +275,7 @@ _C_LABEL(setjmp):.word	0
 
 _C_LABEL(longjmp):.word	0
 	movl	4(%ap), %r1
-	movl	8(%ap), %r0
+	movl	$1, %r0
 	movl	(%r1), %ap
 	movl	4(%r1), %fp
 	movl	12(%r1), %sp
