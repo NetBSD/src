@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.138 2026/06/23 04:12:48 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.139 2026/06/30 20:05:11 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.138 2026/06/23 04:12:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.139 2026/06/30 20:05:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -665,13 +665,6 @@ struct wg_peer {
 	uint8_t			wgp_latest_cookie[WG_COOKIE_LEN];
 	uint8_t			wgp_last_sent_mac1[WG_MAC_LEN];
 	bool			wgp_last_sent_mac1_valid;
-	uint8_t			wgp_last_sent_cookie[WG_COOKIE_LEN];
-	bool			wgp_last_sent_cookie_valid;
-
-	time_t			wgp_last_msg_received_time[WG_MSG_TYPE_MAX];
-
-	time_t			wgp_last_cookiesecret_time;
-	uint8_t			wgp_cookiesecret[WG_COOKIESECRET_LEN];
 
 	struct wg_ppsratecheck	wgp_ppsratecheck;
 
@@ -696,6 +689,7 @@ struct wg_softc {
 
 	uint8_t		wg_privkey[WG_STATIC_KEY_LEN];
 	uint8_t		wg_pubkey[WG_STATIC_KEY_LEN];
+	uint8_t		wg_cookiesecret[WG_COOKIESECRET_LEN];
 
 	int		wg_npeers;
 	struct pslist_head	wg_peers;
@@ -752,9 +746,15 @@ static unsigned wg_keepalive_timeout = WG_KEEPALIVE_TIMEOUT;
 static struct mbuf *
 		wg_get_mbuf(size_t, size_t);
 
+static void	wg_bake_cookie(struct wg_softc *,
+		    uint8_t[static WG_COOKIE_LEN],
+		    uint8_t[static WG_COOKIE_LEN],
+		    const struct sockaddr *);
+
 static void	wg_send_data_msg(struct wg_peer *, struct wg_session *,
 		    struct mbuf *);
-static void	wg_send_cookie_msg(struct wg_softc *, struct wg_peer *,
+static void	wg_send_cookie_msg(struct wg_softc *,
+		    const uint8_t[static WG_COOKIE_LEN],
 		    const uint32_t, const uint8_t[static WG_MAC_LEN],
 		    const struct sockaddr *);
 static void	wg_send_handshake_msg_resp(struct wg_softc *, struct wg_peer *,
@@ -777,7 +777,7 @@ static void	wg_update_endpoint_if_necessary(struct wg_peer *,
 
 static void	wg_schedule_session_dtor_timer(struct wg_peer *);
 
-static bool	wg_is_underload(struct wg_softc *, struct wg_peer *, int);
+static bool	wg_is_underload(struct wg_softc *, int);
 static void	wg_calculate_keys(struct wg_session *, const bool);
 
 static void	wg_clear_states(struct wg_session *);
@@ -785,6 +785,8 @@ static void	wg_clear_states(struct wg_session *);
 static void	wg_get_peer(struct wg_peer *, struct psref *);
 static void	wg_put_peer(struct wg_peer *, struct psref *);
 
+static int	wg_send_cookie(struct wg_softc *, const struct sockaddr *,
+		    struct mbuf *);
 static int	wg_send_hs(struct wg_peer *, struct mbuf *);
 static int	wg_send_data(struct wg_peer *, struct mbuf *);
 static int	wg_output(struct ifnet *, struct mbuf *,
@@ -807,6 +809,8 @@ static int	wg_clone_create(struct if_clone *, int);
 static int	wg_clone_destroy(struct ifnet *);
 
 struct wg_ops {
+	int (*send_cookie)(struct wg_softc *, const struct sockaddr *,
+	    struct mbuf *);
 	int (*send_hs_msg)(struct wg_peer *, struct mbuf *);
 	int (*send_data_msg)(struct wg_peer *, struct mbuf *);
 	void (*input)(struct ifnet *, struct mbuf *, const int);
@@ -814,6 +818,7 @@ struct wg_ops {
 };
 
 struct wg_ops wg_ops_rumpkernel = {
+	.send_cookie	= wg_send_cookie,
 	.send_hs_msg	= wg_send_hs,
 	.send_data_msg	= wg_send_data,
 	.input		= wg_input,
@@ -824,12 +829,15 @@ struct wg_ops wg_ops_rumpkernel = {
 static bool	wg_user_mode(struct wg_softc *);
 static int	wg_ioctl_linkstr(struct wg_softc *, struct ifdrv *);
 
+static int	wg_send_cookie_user(struct wg_softc *, const struct sockaddr *,
+		    struct mbuf *);
 static int	wg_send_hs_user(struct wg_peer *, struct mbuf *);
 static int	wg_send_data_user(struct wg_peer *, struct mbuf *);
 static void	wg_input_user(struct ifnet *, struct mbuf *, const int);
 static int	wg_bind_port_user(struct wg_softc *, const uint16_t);
 
 struct wg_ops wg_ops_rumpuser = {
+	.send_cookie	= wg_send_cookie_user,
 	.send_hs_msg	= wg_send_hs_user,
 	.send_data_msg	= wg_send_data_user,
 	.input		= wg_input_user,
@@ -1683,6 +1691,37 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	}
 
 	/*
+	 * [W] 5.4.7: Under Load: Cookie Reply Message
+	 */
+	if (wg_is_underload(wg, WG_MSG_TYPE_INIT)) {
+		uint8_t cookie0[WG_COOKIE_LEN], cookie1[WG_COOKIE_LEN];
+		uint8_t mac2_0[WG_MAC_LEN], mac2_1[WG_MAC_LEN];
+
+		WG_TRACE("under load");
+
+		wg_bake_cookie(wg, cookie0, cookie1, src);
+		wg_algo_mac(mac2_0, sizeof(mac2_0),
+		    cookie0, sizeof(cookie0),
+		    (const uint8_t *)wgmi,
+		    offsetof(struct wg_msg_init, wgmi_mac2),
+		    NULL, 0);
+		wg_algo_mac(mac2_1, sizeof(mac2_1),
+		    cookie1, sizeof(cookie1),
+		    (const uint8_t *)wgmi,
+		    offsetof(struct wg_msg_init, wgmi_mac2),
+		    NULL, 0);
+		if (!(consttime_memequal(mac2_0, wgmi->wgmi_mac2,
+			    sizeof(mac2_0)) |
+			consttime_memequal(mac2_1, wgmi->wgmi_mac2,
+			    sizeof(mac2_1)))) {
+			WG_DLOG("mac2 is invalid, sending a cookie\n");
+			wg_send_cookie_msg(wg, cookie1, wgmi->wgmi_sender,
+			    wgmi->wgmi_mac1, src);
+			return;
+		}
+	}
+
+	/*
 	 * [W] 5.4.2: First Message: Initiator to Responder
 	 * "When the responder receives this message, it does the same
 	 *  operations so that its final state variables are identical,
@@ -1726,57 +1765,25 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	/* Hi := HASH(Hi || msg.static) */
 	wg_algo_hash(hash, wgmi->wgmi_static, sizeof(wgmi->wgmi_static));
 
+	/*
+	 * Look up the peer.  Once we find a peer, wgp->wgp_pubkey is
+	 * stable as long as we hold a passive reference, but for just
+	 * about anything else we must lock the peer.
+	 */
 	wgp = wg_lookup_peer_by_pubkey(wg, peer_pubkey, &psref_peer);
 	if (wgp == NULL) {
 		WG_DLOG("peer not found\n");
 		return;
 	}
 
-	/*
-	 * Lock the peer to serialize access to cookie state.
-	 *
-	 * XXX Can we safely avoid holding the lock across DH?  Take it
-	 * just to verify mac2 and then unlock/DH/lock?
-	 */
-	mutex_enter(wgp->wgp_lock);
-
-	if (__predict_false(wg_is_underload(wg, wgp, WG_MSG_TYPE_INIT))) {
-		WG_TRACE("under load");
-		/*
-		 * [W] 5.3: Denial of Service Mitigation & Cookies
-		 * "the responder, ..., and when under load may reject messages
-		 *  with an invalid msg.mac2.  If the responder receives a
-		 *  message with a valid msg.mac1 yet with an invalid msg.mac2,
-		 *  and is under load, it may respond with a cookie reply
-		 *  message"
-		 */
-		uint8_t zero[WG_MAC_LEN] = {0};
-		if (consttime_memequal(wgmi->wgmi_mac2, zero, sizeof(zero))) {
-			WG_TRACE("sending a cookie message: no cookie included");
-			wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
-			    wgmi->wgmi_mac1, src);
-			goto out;
-		}
-		if (!wgp->wgp_last_sent_cookie_valid) {
-			WG_TRACE("sending a cookie message: no cookie sent ever");
-			wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
-			    wgmi->wgmi_mac1, src);
-			goto out;
-		}
-		uint8_t mac2[WG_MAC_LEN];
-		wg_algo_mac(mac2, sizeof(mac2), wgp->wgp_last_sent_cookie,
-		    WG_COOKIE_LEN, (const uint8_t *)wgmi,
-		    offsetof(struct wg_msg_init, wgmi_mac2), NULL, 0);
-		if (!consttime_memequal(mac2, wgmi->wgmi_mac2, sizeof(mac2))) {
-			WG_DLOG("mac2 is invalid\n");
-			goto out;
-		}
-		WG_TRACE("under load, but continue to sending");
-	}
-
 	/* [N] 2.2: "ss" */
 	/* Ci, k := KDF2(Ci, DH(Si^priv, Sr^pub)) */
 	wg_algo_dh_kdf(ckey, cipher_key, wg->wg_privkey, wgp->wgp_pubkey);
+
+	/*
+	 * Lock the peer to serialize access to handshake state.
+	 */
+	mutex_enter(wgp->wgp_lock);
 
 	/* msg.timestamp := AEAD(k, TIMESTAMP(), Hi) */
 	wg_timestamp_t timestamp;
@@ -1959,6 +1966,25 @@ wg_put_sa(struct wg_peer *wgp, struct wg_sockaddr *wgsa, struct psref *psref)
 {
 
 	psref_release(psref, &wgsa->wgsa_psref, wg_psref_class);
+}
+
+static int
+wg_send_cookie(struct wg_softc *wg, const struct sockaddr *src, struct mbuf *m)
+{
+	struct socket *const so = wg_get_so_by_af(wg, src->sa_family);
+	union {
+		struct sockaddr sa;
+		struct sockaddr_in sin;
+		struct sockaddr_in6 sin6;
+	} dst;
+
+#ifdef WG_DEBUG_LOG
+	char addr[128];
+	sockaddr_format(src, addr, sizeof(addr));
+	WG_DLOG("send cookie to %s\n", addr);
+#endif
+	sockaddr_copy(&dst.sa, sizeof(dst), src);
+	return sosend(so, &dst.sa, NULL, m, NULL, 0, curlwp);
 }
 
 static int
@@ -2214,7 +2240,6 @@ wg_swap_sessions(struct wg_softc *wg, struct wg_peer *wgp)
 	getnanotime(&wgp->wgp_last_handshake_time);
 	wgp->wgp_handshake_start_time = 0;
 	wgp->wgp_last_sent_mac1_valid = false;
-	wgp->wgp_last_sent_cookie_valid = false;
 
 	/*
 	 * If we had a data packet queued up, send it.
@@ -2284,6 +2309,37 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 		return;
 	}
 
+	/*
+	 * [W] 5.4.7: Under Load: Cookie Reply Message
+	 */
+	if (wg_is_underload(wg, WG_MSG_TYPE_RESP)) {
+		uint8_t cookie0[WG_COOKIE_LEN], cookie1[WG_COOKIE_LEN];
+		uint8_t mac2_0[WG_MAC_LEN], mac2_1[WG_MAC_LEN];
+
+		WG_TRACE("under load");
+
+		wg_bake_cookie(wg, cookie0, cookie1, src);
+		wg_algo_mac(mac2_0, sizeof(mac2_0),
+		    cookie0, sizeof(cookie0),
+		    (const uint8_t *)wgmr,
+		    offsetof(struct wg_msg_resp, wgmr_mac2),
+		    NULL, 0);
+		wg_algo_mac(mac2_1, sizeof(mac2_1),
+		    cookie1, sizeof(cookie1),
+		    (const uint8_t *)wgmr,
+		    offsetof(struct wg_msg_resp, wgmr_mac2),
+		    NULL, 0);
+		if (!(consttime_memequal(mac2_0, wgmr->wgmr_mac2,
+			    sizeof(mac2_0)) |
+			consttime_memequal(mac2_1, wgmr->wgmr_mac2,
+			    sizeof(mac2_1)))) {
+			WG_DLOG("mac2 is invalid, sending a cookie\n");
+			wg_send_cookie_msg(wg, cookie1, wgmr->wgmr_receiver,
+			    wgmr->wgmr_mac1, src);
+			return;
+		}
+	}
+
 	WG_TRACE("resp msg received");
 	wgs = wg_lookup_session_by_index(wg, wgmr->wgmr_receiver, &psref);
 	if (wgs == NULL) {
@@ -2299,40 +2355,6 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	if (wgs->wgs_state != WGS_STATE_INIT_ACTIVE) {
 		WG_TRACE("peer sent spurious handshake response, ignoring");
 		goto out;
-	}
-
-	if (__predict_false(wg_is_underload(wg, wgp, WG_MSG_TYPE_RESP))) {
-		WG_TRACE("under load");
-		/*
-		 * [W] 5.3: Denial of Service Mitigation & Cookies
-		 * "the responder, ..., and when under load may reject messages
-		 *  with an invalid msg.mac2.  If the responder receives a
-		 *  message with a valid msg.mac1 yet with an invalid msg.mac2,
-		 *  and is under load, it may respond with a cookie reply
-		 *  message"
-		 */
-		uint8_t zero[WG_MAC_LEN] = {0};
-		if (consttime_memequal(wgmr->wgmr_mac2, zero, sizeof(zero))) {
-			WG_TRACE("sending a cookie message: no cookie included");
-			wg_send_cookie_msg(wg, wgp, wgmr->wgmr_sender,
-			    wgmr->wgmr_mac1, src);
-			goto out;
-		}
-		if (!wgp->wgp_last_sent_cookie_valid) {
-			WG_TRACE("sending a cookie message: no cookie sent ever");
-			wg_send_cookie_msg(wg, wgp, wgmr->wgmr_sender,
-			    wgmr->wgmr_mac1, src);
-			goto out;
-		}
-		uint8_t mac2[WG_MAC_LEN];
-		wg_algo_mac(mac2, sizeof(mac2), wgp->wgp_last_sent_cookie,
-		    WG_COOKIE_LEN, (const uint8_t *)wgmr,
-		    offsetof(struct wg_msg_resp, wgmr_mac2), NULL, 0);
-		if (!consttime_memequal(mac2, wgmr->wgmr_mac2, sizeof(mac2))) {
-			WG_DLOG("mac2 is invalid\n");
-			goto out;
-		}
-		WG_TRACE("under load, but continue to sending");
 	}
 
 	memcpy(hash, wgs->wgs_handshake_hash, sizeof(hash));
@@ -2495,33 +2517,20 @@ wg_lookup_peer_by_pubkey(struct wg_softc *wg,
 }
 
 static void
-wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
-    struct wg_msg_cookie *wgmc, const uint32_t sender,
-    const uint8_t mac1[static WG_MAC_LEN], const struct sockaddr *src)
+wg_bake_cookie(struct wg_softc *wg,
+    uint8_t cookie0[static WG_COOKIE_LEN],
+    uint8_t cookie1[static WG_COOKIE_LEN],
+    const struct sockaddr *src)
 {
-	uint8_t cookie[WG_COOKIE_LEN];
-	uint8_t key[WG_HASH_LEN];
-	uint8_t addr[sizeof(struct in6_addr)];
+	uint8_t addr[16];
 	size_t addrlen;
-	uint16_t uh_sport; /* be */
+	uint8_t uh_sport[2];
 
-	KASSERT(mutex_owned(wgp->wgp_lock));
-
-	wgmc->wgmc_type = htole32(WG_MSG_TYPE_COOKIE);
-	wgmc->wgmc_receiver = sender;
-	cprng_fast(wgmc->wgmc_salt, sizeof(wgmc->wgmc_salt));
-
-	/*
-	 * [W] 5.4.7: Under Load: Cookie Reply Message
-	 * "The secret variable, Rm, changes every two minutes to a
-	 * random value"
-	 */
-	if ((time_uptime - wgp->wgp_last_cookiesecret_time) >
-	    WG_COOKIESECRET_TIME) {
-		cprng_strong(kern_cprng, wgp->wgp_cookiesecret,
-		    sizeof(wgp->wgp_cookiesecret), 0);
-		wgp->wgp_last_cookiesecret_time = time_uptime;
-	}
+#ifdef WG_DEBUG_LOG
+	char addrstr[128];
+	sockaddr_format(src, addrstr, sizeof(addrstr));
+	WG_DLOG("src=%s\n", addrstr);
+#endif
 
 	switch (src->sa_family) {
 #ifdef INET
@@ -2529,7 +2538,7 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 		const struct sockaddr_in *sin = satocsin(src);
 		addrlen = sizeof(sin->sin_addr);
 		memcpy(addr, &sin->sin_addr, addrlen);
-		uh_sport = sin->sin_port;
+		be16enc(uh_sport, ntohs(sin->sin_port));
 		break;
 	    }
 #endif
@@ -2538,7 +2547,7 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 		const struct sockaddr_in6 *sin6 = satocsin6(src);
 		addrlen = sizeof(sin6->sin6_addr);
 		memcpy(addr, &sin6->sin6_addr, addrlen);
-		uh_sport = sin6->sin6_port;
+		be16enc(uh_sport, ntohs(sin6->sin6_port));
 		break;
 	    }
 #endif
@@ -2546,29 +2555,90 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 		panic("invalid af=%d", src->sa_family);
 	}
 
-	wg_algo_mac(cookie, sizeof(cookie),
-	    wgp->wgp_cookiesecret, sizeof(wgp->wgp_cookiesecret),
-	    addr, addrlen, (const uint8_t *)&uh_sport, sizeof(uh_sport));
-	wg_algo_mac_cookie(key, sizeof(key), wg->wg_pubkey,
-	    sizeof(wg->wg_pubkey));
-	wg_algo_xaead_enc(wgmc->wgmc_cookie, sizeof(wgmc->wgmc_cookie), key,
-	    cookie, sizeof(cookie), mac1, WG_MAC_LEN, wgmc->wgmc_salt);
+	/*
+	 * [W] 5.4.7: Under Load: Cookie Reply Message
+	 * "The secret variable, R_m, changes every two minutes to a
+	 * random value..."
+	 *
+	 * Rather than keep state (requires locking, prefer not to take
+	 * any locks at this stage of DoS mitigation), we just compute
+	 * a pseudorandom function of the number of two-minute
+	 * intervals since boot.
+	 *
+	 * Actually, we compute a PRF of the number of one-minute
+	 * intervals since boot, but we allow both the current minute
+	 * and the next minute, and we will send the next minute as the
+	 * cookie on the network -- that way, every cookie is valid for
+	 * a total of two minutes of absolute time, but the cookie we
+	 * send is guaranteed to be valid for _at least_ one minute
+	 * after we send it.  If we simply used a single two-minute
+	 * interval, we might send a cookie out 119sec into its
+	 * validity period, expiring before the other side has had a
+	 * chance to use it.
+	 */
+	uint8_t R0[WG_COOKIESECRET_LEN], R1[WG_COOKIESECRET_LEN];
+	const uint32_t now = time_uptime32;
+	uint8_t now0[4], now1[4];
+	le32enc(now0, now/(WG_COOKIESECRET_TIME/2));
+	le32enc(now1, now/(WG_COOKIESECRET_TIME/2) + 1);
+	blake2s(R0, sizeof(R0),
+	    wg->wg_cookiesecret, sizeof(wg->wg_cookiesecret),
+	    now0, sizeof(now0));
+	blake2s(R1, sizeof(R1),
+	    wg->wg_cookiesecret, sizeof(wg->wg_cookiesecret),
+	    now1, sizeof(now1));
 
-	/* Need to store to calculate mac2 */
-	memcpy(wgp->wgp_last_sent_cookie, cookie, sizeof(cookie));
-	wgp->wgp_last_sent_cookie_valid = true;
+	/*
+	 * tau := MAC(R_m, A_{m'}),
+	 *
+	 * where "A_{m'} represents a concatenation of the subscript's
+	 * external IP source address and UDP source port"
+	 *
+	 * The document is not clear, but it seems that tau itself is
+	 * the `cookie' (and the `msg.cookie' field is the _encrypted_
+	 * cookie).
+	 */
+	wg_algo_mac(cookie0, WG_COOKIE_LEN,
+	    R0, sizeof(R0),
+	    addr, addrlen, uh_sport, sizeof(uh_sport));
+	wg_algo_mac(cookie1, WG_COOKIE_LEN,
+	    R1, sizeof(R1),
+	    addr, addrlen, uh_sport, sizeof(uh_sport));
 }
 
 static void
-wg_send_cookie_msg(struct wg_softc *wg, struct wg_peer *wgp,
+wg_fill_msg_cookie(struct wg_softc *wg,
+    struct wg_msg_cookie *wgmc,
+    const uint8_t cookie[static WG_COOKIE_LEN],
+    const uint32_t sender, const uint8_t mac1[static WG_MAC_LEN])
+{
+	uint8_t key[WG_HASH_LEN];
+
+	wgmc->wgmc_type = htole32(WG_MSG_TYPE_COOKIE);
+	wgmc->wgmc_receiver = sender;
+	cprng_fast(wgmc->wgmc_salt, sizeof(wgmc->wgmc_salt));
+
+	/*
+	 * msg.cookie := XAEAD(HASH(LABEL-COOKIE || S_m^pub),
+	 *     msg.nonce, tau, M),
+	 *
+	 * where tau is the cookie and M is the original mac1.
+	 */
+	wg_algo_mac_cookie(key, sizeof(key), wg->wg_pubkey,
+	    sizeof(wg->wg_pubkey));
+	wg_algo_xaead_enc(wgmc->wgmc_cookie, sizeof(wgmc->wgmc_cookie), key,
+	    cookie, WG_COOKIE_LEN, mac1, WG_MAC_LEN, wgmc->wgmc_salt);
+}
+
+static void
+wg_send_cookie_msg(struct wg_softc *wg,
+    const uint8_t cookie[static WG_COOKIE_LEN],
     const uint32_t sender, const uint8_t mac1[static WG_MAC_LEN],
     const struct sockaddr *src)
 {
 	int error;
 	struct mbuf *m;
 	struct wg_msg_cookie *wgmc;
-
-	KASSERT(mutex_owned(wgp->wgp_lock));
 
 	m = m_gethdr(M_WAIT, MT_DATA);
 	if (sizeof(*wgmc) > MHLEN) {
@@ -2577,9 +2647,9 @@ wg_send_cookie_msg(struct wg_softc *wg, struct wg_peer *wgp,
 	}
 	m->m_pkthdr.len = m->m_len = sizeof(*wgmc);
 	wgmc = mtod(m, struct wg_msg_cookie *);
-	wg_fill_msg_cookie(wg, wgp, wgmc, sender, mac1, src);
+	wg_fill_msg_cookie(wg, wgmc, cookie, sender, mac1);
 
-	error = wg->wg_ops->send_hs_msg(wgp, m); /* consumes m */
+	error = wg->wg_ops->send_cookie(wg, src, m); /* consumes m */
 	if (error) {
 		WG_DLOG("send_hs_msg failed, error=%d\n", error);
 		return;
@@ -2589,8 +2659,11 @@ wg_send_cookie_msg(struct wg_softc *wg, struct wg_peer *wgp,
 }
 
 static bool
-wg_is_underload(struct wg_softc *wg, struct wg_peer *wgp, int msgtype)
+wg_is_underload(struct wg_softc *wg, int msgtype)
 {
+	static volatile uint32_t last_received[WG_MSG_TYPE_MAX + 1];
+	uint32_t now, last;
+
 #ifdef WG_DEBUG_PARAMS
 	if (wg_force_underload)
 		return true;
@@ -2602,9 +2675,10 @@ wg_is_underload(struct wg_softc *wg, struct wg_peer *wgp, int msgtype)
 	 * messages as (a kind of) load; if a message of the same type comes
 	 * to a peer within 1 second, we consider we are under load.
 	 */
-	time_t last = wgp->wgp_last_msg_received_time[msgtype];
-	wgp->wgp_last_msg_received_time[msgtype] = time_uptime;
-	return (time_uptime - last) == 0;
+	now = time_uptime32;
+	last = msgtype < __arraycount(last_received) ?
+	    atomic_swap_32(&last_received[msgtype], now) : 0;
+	return (now - last) == 0;
 }
 
 static void
@@ -4217,6 +4291,10 @@ wg_clone_create(struct if_clone *ifc, int unit)
 	    "%s", if_name(&wg->wg_if));
 	wg->wg_ops = &wg_ops_rumpkernel;
 
+	cprng_strong(kern_cprng,
+	    wg->wg_cookiesecret, sizeof(wg->wg_cookiesecret),
+	    0);
+
 	error = threadpool_get(&wg->wg_threadpool, PRI_NONE);
 	if (error)
 		goto fail0;
@@ -5570,6 +5648,32 @@ wg_send_user(struct wg_peer *wgp, struct mbuf *m, bool handshake)
 
 	m_freem(m);
 
+	return error;
+}
+
+static int
+wg_send_cookie_user(struct wg_softc *wg, const struct sockaddr *src,
+    struct mbuf *m)
+{
+	union {
+		struct sockaddr sa;
+		struct sockaddr_in sin;
+		struct sockaddr_in6 sin6;
+	} dst;
+	struct iovec iov[1];
+	int error;
+
+#ifdef WG_DEBUG_LOG
+	char addr[128];
+	sockaddr_format(src, addr, sizeof(addr));
+	WG_DLOG("send cookie to %s\n", addr);
+#endif
+
+	sockaddr_copy(&dst.sa, sizeof(dst), src);
+	iov[0].iov_base = mtod(m, void *);
+	iov[0].iov_len = m->m_len;
+	error = rumpuser_wg_send_peer(wg->wg_user, &dst.sa, iov, 1);
+	m_freem(m);
 	return error;
 }
 

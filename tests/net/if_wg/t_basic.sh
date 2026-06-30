@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.9 2026/06/23 04:11:40 riastradh Exp $
+#	$NetBSD: t_basic.sh,v 1.10 2026/06/30 20:05:11 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -85,6 +85,24 @@ check_badhandshakekey()
 	local ip=$3
 	local pubkey=$4
 	local port=51820        # XXX parametrize more clearly
+
+	# The invalid public key will provoke the responder to assume
+	# it is under load and respond with a cookie; the sender will
+	# then have to wait for the rekey timeout before it can retry
+	# the handshake.  To keep the tests quick, let's lower the
+	# rekey timeout to the minimum possible, and then wait 2sec for
+	# the ping to work in the test.
+	#
+	# (We could alternatively do one ping first, then send the bad
+	# handshake key, then send another ping again, but that would
+	# take 2sec total anyway -- and it would only test the DoS
+	# mitigation path, not the DH path which we want to exercise
+	# with a bad key.)
+	#
+	atf_check -o ignore env RUMP_SERVER=$SOCK_LOCAL \
+	    rump.sysctl -w net.wg.rekey_timeout=1
+	atf_check -o ignore env RUMP_SERVER=$SOCK_PEER \
+	    rump.sysctl -w net.wg.rekey_timeout=1
 
 	# For each invalid public key (representing the 32-byte
 	# little-endian encoding of an x coordinate of a point of order
@@ -191,11 +209,11 @@ EOF
 	if [ $proto = inet ]; then
 		atf_check -o ignore -e ignore \
 		    $HIJACKING nc -4u -w0 $ip $port <initmsg
-		ping="atf_check -s exit:0 -o ignore rump.ping -n -c 1 -w 1"
+		ping="atf_check -s exit:0 -o ignore rump.ping -n -c 1 -w 3"
 	else
 		atf_check -o ignore -e ignore \
 		    $HIJACKING nc -6u -w0 $ip $port <initmsg
-		ping="atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X 1"
+		ping="atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X 3"
 	fi
 
 	$ping $wg_ip
@@ -564,8 +582,8 @@ wg_multiple_interfaces_head()
 wg_multiple_interfaces_body()
 {
 	local ifconfig="atf_check -s exit:0 rump.ifconfig"
-	local ping="atf_check -s exit:0 -o ignore rump.ping -n -i 0.1 -c 3 -w 1"
-	local ping_fail="atf_check -s not-exit:0 -o ignore rump.ping -n -c 1 -w 1"
+	local ping="atf_check -s exit:0 -o ignore rump.ping -n -i 0.1 -c 3 -w 3"
+	local ping_fail="atf_check -s not-exit:0 -o ignore rump.ping -n -c 1 -w 3"
 	local key_priv_peer2=
 	local key_pub_peer2=
 	local ip_local=192.168.1.1
@@ -585,6 +603,18 @@ wg_multiple_interfaces_body()
 
 	rump_server_crypto_start $SOCK_PEER2 netinet6 wg
 	rump_server_add_iface $SOCK_PEER2 shmif0 $BUS
+
+	# Handshakes from any source are counted toward load; if two
+	# handshakes occur within the same second, wg(4) will respond
+	# with a cookie, and the initiator will have to wait for the
+	# rekey timeout before using the cookie.  To keep the tests
+	# quick, let's lower the rekey timeout to the minimum possible,
+	# and then wait 2sec for the ping to work in the test.
+	#
+	atf_check -o ignore env RUMP_SERVER=$SOCK_LOCAL \
+	    rump.sysctl -w net.wg.rekey_timeout=1
+	atf_check -o ignore env RUMP_SERVER=$SOCK_PEER \
+	    rump.sysctl -w net.wg.rekey_timeout=1
 
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
 	generate_keys
@@ -654,8 +684,8 @@ wg_multiple_peers_head()
 wg_multiple_peers_body()
 {
 	local ifconfig="atf_check -s exit:0 rump.ifconfig"
-	local ping="atf_check -s exit:0 -o ignore rump.ping -n -i 0.1 -c 3 -w 1"
-	local ping_fail="atf_check -s not-exit:0 -o ignore rump.ping -n -c 1 -w 1"
+	local ping="atf_check -s exit:0 -o ignore rump.ping -n -i 0.1 -c 3 -w 3"
+	local ping_fail="atf_check -s not-exit:0 -o ignore rump.ping -n -c 1 -w 3"
 	local key_priv_peer2=
 	local key_pub_peer2=
 	local ip_local=192.168.1.1
@@ -672,6 +702,18 @@ wg_multiple_peers_body()
 
 	rump_server_crypto_start $SOCK_PEER2 netinet6 wg
 	rump_server_add_iface $SOCK_PEER2 shmif0 $BUS
+
+	# Handshakes from any source are counted toward load; if two
+	# handshakes occur within the same second, wg(4) will respond
+	# with a cookie, and the initiator will have to wait for the
+	# rekey timeout before using the cookie.  To keep the tests
+	# quick, let's lower the rekey timeout to the minimum possible,
+	# and then wait 2sec for the ping to work in the test.
+	#
+	atf_check -o ignore env RUMP_SERVER=$SOCK_LOCAL \
+	    rump.sysctl -w net.wg.rekey_timeout=1
+	atf_check -o ignore env RUMP_SERVER=$SOCK_PEER \
+	    rump.sysctl -w net.wg.rekey_timeout=1
 
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
 	generate_keys
