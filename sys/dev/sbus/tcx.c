@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.67 2026/06/30 06:44:55 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.68 2026/06/30 17:16:32 kre Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.67 2026/06/30 06:44:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.68 2026/06/30 17:16:32 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -860,8 +860,11 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				return tcx_do_cursor(sc, cursor);
 			}
 			break;	/* shouldn't ever get here */
+
 		case WSDISPLAYIO_SET_DEPTH:
+		{
 			int new_depth = *(int*)data;
+
 			if (sc->sc_8bit) {
 				return ( new_depth == 8) ? 0 : EINVAL;
 			} else if ((new_depth == 8) || (new_depth == 32)) {
@@ -869,6 +872,7 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				return 0;
 			}
 			return EINVAL;
+		}
 
 		case WSDISPLAYIO_GET_FBINFO:
 		{
