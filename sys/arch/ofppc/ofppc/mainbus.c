@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.32 2021/08/07 16:19:01 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.33 2026/06/30 22:28:00 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32 2021/08/07 16:19:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33 2026/06/30 22:28:00 rkujawa Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -320,13 +320,15 @@ init_ofppc_interrupt(void)
 	for (i = 0; i < nrofpics; i++) {
 		if (picnodes[i].type == PICNODE_TYPE_8259) {
 			aprint_debug("calling i8259 setup\n");
+#ifdef PIC_I8259
 			isa_pic = setup_i8259();
+#endif
 		}
 		if (picnodes[i].type == PICNODE_TYPE_IVR) {
 			aprint_debug("calling prepivr setup\n");
 #ifdef PIC_PREPIVR
 			isa_pic = init_prepivr(picnodes[i].node);
-#else
+#elif defined(PIC_I8259)
 			isa_pic = setup_i8259();
 #endif
 		}
@@ -341,6 +343,8 @@ init_ofppc_interrupt(void)
 			if (isa_pic != NULL)
 				isa_cascade = 1;
 			(void)init_openpic(picnodes[i].node);
+		} else if (picnodes[i].type == PICNODE_TYPE_MPC5200) {
+			aprint_debug("mpc5200 SIU pic set up as a device\n");
 		} else
 			aprint_error("Unhandled pic node type node=%x\n",
 			    picnodes[i].node);

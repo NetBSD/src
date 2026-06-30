@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.27 2022/12/06 01:14:36 macallan Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.28 2026/06/30 22:28:00 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.27 2022/12/06 01:14:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.28 2026/06/30 22:28:00 rkujawa Exp $");
 
 #include "adb.h"
 #include "adbkbd.h"
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.27 2022/12/06 01:14:36 macallan E
 #include "wsdisplay.h"
 #include "zsc.h"
 #include "zstty.h"
+
+#include "opt_pscons.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -81,6 +83,10 @@ struct usb_kbd_ihandles {
 #if (NZSTTY > 0)
 #include <dev/ic/z8530reg.h>
 extern struct consdev consdev_zs;
+#endif
+
+#ifdef PSC_CONSOLE
+#include <powerpc/mpc5200/pscvar.h>
 #endif
 
 #if (NPCKBC > 0)
@@ -145,6 +151,16 @@ ofwoea_cnprobe(void)
 		    "(keeping OF console for now)\n");
 		return;
 #endif /* PMAC_G5 */
+
+#ifdef PSC_CONSOLE
+		/*
+		 * On MPC5200 boards the OpenFirmware serial console is always 
+		 * a PSC in UART mode, so use it. The exact "compatible" 
+		 * string varies. 
+		 */
+		selected_serial_consdev = &psccons;
+		return;
+#endif /* PSC_CONSOLE */
 
 #if (NZSTTY > 0) && !defined(MAMBO)
 		OF_getprop(console_node, "name", name, sizeof(name));

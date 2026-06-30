@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.21 2021/08/07 16:19:01 thorpej Exp $ */
+/* $NetBSD: ofwpci.c,v 1.22 2026/06/30 22:28:00 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.21 2021/08/07 16:19:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.22 2026/06/30 22:28:00 rkujawa Exp $");
 
 #include "opt_pci.h"
+#include "opt_interrupt.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -179,6 +180,15 @@ ofwpci_attach(device_t parent, device_t self, void *aux)
 			init_ofppc_interrupt();
 			ofppc_init_comcons(isa_node);
 		}
+#ifdef PIC_MPC5200
+		else {
+			/*
+			 * Non-ISA SoC board but we still need to initialize the
+			 * OFW interrupt controller nodes.
+			 */
+			init_ofppc_interrupt();
+		}
+#endif
 	}
 
 	ofwpci_get_chipset_tag(pc);

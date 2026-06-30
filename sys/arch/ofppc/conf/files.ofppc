@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.49 2025/09/21 13:51:50 thorpej Exp $
+#	$NetBSD: files.ofppc,v 1.50 2026/06/30 22:28:00 rkujawa Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -79,6 +79,9 @@ file	arch/powerpc/pci/pci_machdep_common.c	pci
 file	arch/powerpc/pci/pci_machdep_ofw.c	pci
 file    arch/powerpc/pci/pci_module.c		pci & modular
 file	dev/ofw/ofw_pci_subr.c			pci
+
+# Freescale MPC5200B on-chip peripherals (EFIKA 5200B and similar).
+include "arch/powerpc/conf/files.mpc5200"
 
 device ofwpci: pcibus
 attach ofwpci at mainbus

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.13 2025/10/19 20:35:02 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.14 2026/06/30 22:28:00 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13 2025/10/19 20:35:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14 2026/06/30 22:28:00 rkujawa Exp $");
 
 #include "isa.h"
 #include "isadma.h"
@@ -192,8 +192,8 @@ pcibattach(device_t parent, device_t self, void *aux)
 void
 pcib_callback(device_t self)
 {
-	struct pcib_softc *sc = device_private(self);
 #if NISA > 0
+	struct pcib_softc *sc = device_private(self);
 	struct isabus_attach_args iba;
 
 	/*
