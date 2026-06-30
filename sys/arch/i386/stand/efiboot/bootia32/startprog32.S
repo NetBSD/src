@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog32.S,v 1.2.26.1 2023/05/13 11:45:53 martin Exp $	*/
+/*	$NetBSD: startprog32.S,v 1.2.26.2 2026/06/30 09:58:08 martin Exp $	*/
 /*	NetBSD: startprog.S,v 1.4 2016/12/04 08:21:08 maxv Exp	*/
 
 /*
@@ -59,10 +59,6 @@
 #define	DATA_SEGMENT	0x10
 
 	.align	16
-	.globl _C_LABEL(startprog32)
-_C_LABEL(startprog32):
-	.quad 0
-
 	.globl _C_LABEL(startprog32_size)
 _C_LABEL(startprog32_size):
 	.long startprog32_end - _C_LABEL(startprog32_start)

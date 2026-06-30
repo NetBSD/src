@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootia32.c,v 1.4.6.2 2023/05/13 11:45:53 martin Exp $	*/
+/*	$NetBSD: efibootia32.c,v 1.4.6.3 2026/06/30 09:58:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -32,12 +32,12 @@
 
 void startprog32_start(physaddr_t, uint32_t, uint32_t *, physaddr_t,
     physaddr_t, physaddr_t, u_long, void *);
-extern void (*startprog32)(physaddr_t, uint32_t, uint32_t *, physaddr_t,
+void (*startprog32)(physaddr_t, uint32_t, uint32_t *, physaddr_t,
     physaddr_t, physaddr_t, u_long, void *);
 extern u_int startprog32_size;
 
 void multiboot32_start(physaddr_t, physaddr_t, uint32_t);
-extern void (*multiboot32)(physaddr_t, physaddr_t, uint32_t);
+void (*multiboot32)(physaddr_t, physaddr_t, uint32_t);
 extern u_int multiboot32_size;
 
 void
