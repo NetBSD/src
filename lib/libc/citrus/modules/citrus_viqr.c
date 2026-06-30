@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_viqr.c,v 1.7 2026/06/30 23:16:08 riastradh Exp $ */
+/* $NetBSD: citrus_viqr.c,v 1.8 2026/06/30 23:17:48 riastradh Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_viqr.c,v 1.7 2026/06/30 23:16:08 riastradh Exp $");
+__RCSID("$NetBSD: citrus_viqr.c,v 1.8 2026/06/30 23:17:48 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -147,11 +147,9 @@ mnemonic_list_find(mnemonic_list_t *ml, int ch)
 }
 
 static mnemonic_t *
-mnemonic_create(mnemonic_t *parent, int ascii, wchar_t value)
+mnemonic_create_internal(mnemonic_t *parent, int ascii, wchar_t value)
 {
 	mnemonic_t *m;
-
-	_DIAGASSERT(parent != NULL);
 
 	m = malloc(sizeof(*m));
 	if (m != NULL) {
@@ -162,6 +160,21 @@ mnemonic_create(mnemonic_t *parent, int ascii, wchar_t value)
 	}
 
 	return m;
+}
+
+static mnemonic_t *
+mnemonic_create_root(int ascii, wchar_t value)
+{
+
+	return mnemonic_create_internal(NULL, ascii, value);
+}
+
+static mnemonic_t *
+mnemonic_create(mnemonic_t *parent, int ascii, wchar_t value)
+{
+
+	_DIAGASSERT(parent != NULL);
+	return mnemonic_create_internal(parent, ascii, value);
 }
 
 static int
@@ -507,7 +520,7 @@ _citrus_VIQR_encoding_module_init(_VIQREncodingInfo * __restrict ei,
 
 	ei->mb_cur_max = 1;
 	ei->invalid = (wchar_t)-1;
-	ei->mroot = mnemonic_create(NULL, '\0', ei->invalid);
+	ei->mroot = mnemonic_create_root('\0', ei->invalid);
 	if (ei->mroot == NULL)
 		return ENOMEM;
 	for (i = 0; i < sizeof(mnemonic_rfc1456) / sizeof(const char *); ++i) {

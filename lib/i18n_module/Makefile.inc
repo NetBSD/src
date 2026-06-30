@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2012/08/23 21:21:15 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2026/06/30 23:17:48 riastradh Exp $
 
 NOLINT=		# defined
 NOPICINSTALL=	# defined
@@ -21,6 +21,7 @@ SHLIBINSTALLDIR=/usr/lib/i18n
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/citrus
 CPPFLAGS+=	-DLOCALEMOD_MAJOR=${SHLIB_MAJOR}
 CPPFLAGS+=	-DLIBC_SCCS
+CPPFLAGS+=	-D_DIAGNOSTIC
 BASENAME=	${.CURDIR:T}
 LIB=		${BASENAME}
 SRCS?=		${SRCPRE:tl}${BASENAME:tl}.c

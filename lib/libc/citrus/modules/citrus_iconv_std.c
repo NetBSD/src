@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.16 2012/02/12 13:51:29 wiz Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.17 2026/06/30 23:17:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.16 2012/02/12 13:51:29 wiz Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.17 2026/06/30 23:17:48 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -565,8 +565,10 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict cv,
 		if (ret)
 			goto err;
 next:
-		_DIAGASSERT(*inbytes>=szrin && *outbytes>=szrout);
-		*inbytes -= tmpin-*in; /* szrin is insufficient on \0. */
+		_DIAGASSERT(tmpin >= *in);
+		_DIAGASSERT(*inbytes >= tmpin - *in);
+		_DIAGASSERT(*outbytes >= szrout);
+		*inbytes -= tmpin - *in;  /* szrin is insufficient on \0. */
 		*in = tmpin;
 		*outbytes -= szrout;
 		*out += szrout;

@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_hz.c,v 1.5 2026/06/30 23:15:31 riastradh Exp $ */
+/* $NetBSD: citrus_hz.c,v 1.6 2026/06/30 23:17:48 riastradh Exp $ */
 
 /*-
  * Copyright (c)2004, 2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_hz.c,v 1.5 2026/06/30 23:15:31 riastradh Exp $");
+__RCSID("$NetBSD: citrus_hz.c,v 1.6 2026/06/30 23:17:48 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -566,11 +566,12 @@ _citrus_HZ_parse_char(void *context, const char *name, const char *s)
 	void **p;
 	escape_t *escape;
 
-	_DIAGASSERT(context != NULL && *context != NULL);
+	_DIAGASSERT(context != NULL);
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(s != NULL);
 
 	p = (void **)context;
+	_DIAGASSERT(p != NULL);
 	escape = (escape_t *)p[0];
 	if (escape->ch != '\0')
 		return EINVAL;
@@ -589,11 +590,12 @@ _citrus_HZ_parse_graphic(void *context, const char *name, const char *s)
 	escape_t *escape;
 	graphic_t *graphic;
 
-	_DIAGASSERT(context != NULL && *context != NULL);
+	_DIAGASSERT(context != NULL);
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(s != NULL);
 
 	p = (void **)context;
+	_DIAGASSERT(p != NULL);
 	escape = (escape_t *)p[0];
 	ei = (_HZEncodingInfo *)p[1];
 	graphic = malloc(sizeof(*graphic));
