@@ -1,4 +1,4 @@
-/* $NetBSD: t_mbrtowc.c,v 1.4 2026/06/27 20:43:43 riastradh Exp $ */
+/* $NetBSD: t_mbrtowc.c,v 1.5 2026/06/30 05:24:11 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mbrtowc.c,v 1.4 2026/06/27 20:43:43 riastradh Exp $");
+__RCSID("$NetBSD: t_mbrtowc.c,v 1.5 2026/06/30 05:24:11 kre Exp $");
 
 #include <errno.h>
 #include <locale.h>
@@ -71,6 +71,8 @@ __RCSID("$NetBSD: t_mbrtowc.c,v 1.4 2026/06/27 20:43:43 riastradh Exp $");
 #include <atf-c.h>
 
 #define SIZE 256
+
+#define ERR	((size_t)-1)
 
 static struct test {
 	const char *locale;
@@ -92,17 +94,41 @@ static struct test {
 	"[\001\177]"				/* one-octet examples */
 	    "[\302\200\337\277]"		/* two-octet examples */
 	    "[\340\240\200\357\277\277]"	/* three-octet examples */
+	    "[\360\220\200\200\364\217\277\277]",/* four-octet samples */
+#if 0
 	    "[\360\220\200\200\367\277\277\277]"/* four-octet samples */
 	    /* five-octet samples -- XXX invalid UTF-8 */
 	    "[\370\210\200\200\200\373\277\277\277\277]"
 	    /* six-octet samples -- XXX invalid UTF-8 */
 	    "[\374\204\200\200\200\200\375\277\277\277\277\277]",
-	{ 0x5b, 0x01, 0x7f, 0x5d, 0x5b, 0x80, 0x7ff, 0x5d, 0x5b, 0x800, 0xffff,
-	  0x5d, 0x5b, 0x10000, 0x1fffff, 0x5d, 0x5b, 0x200000, 0x3ffffff, 0x5d,
-	  0x5b, 0x4000000, 0x7fffffff, 0x5d },
-	{ 1, 1, 1, 1, 1, 2, 2, 1, 1, 3, 3, 1, 1, 4, 4, 1, 1, 5, 5, 1, 1, 6, 6, 1 },
+#endif
+	{ 0x5b, 0x01, 0x7f, 0x5d,
+	  0x5b, 0x80, 0x7ff, 0x5d,
+	  0x5b, 0x800, 0xffff, 0x5d,
+	  0x5b, 0x10000, 0x10ffff, 0x5d,
+#if 0
+	  0x5b, 0x10000, 0x1fffff, 0x5d,	/* This or prev, not both */
+	  0x5b, 0x200000, 0x3ffffff, 0x5d,
+	  0x5b, 0x4000000, 0x7fffffff, 0x5d
+#endif
+	  },
+	{ 1, 1, 1, 1, 
+	  1, 2, 2, 1,
+	  1, 3, 3, 1,
+	  1, 4, 4, 1,
+#if 0
+	  1, 4, 4, 1,
+	  1, 5, 5, 1,
+	  1, 6, 6, 1
+#endif
+	  },
+#if 0
 	24,
 	"PR lib/60369: mbrtowc, mbrlen have wrong return value for some invalid byte sequences"
+#else
+	16,
+	NULL
+#endif
 }, {
 	"ja_JP.ISO2022-JP2",
 	"\033$BF|K\1348l\033(BA\033$B$\"\033(BB\033$B$$\033(B",

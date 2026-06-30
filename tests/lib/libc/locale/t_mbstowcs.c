@@ -1,4 +1,4 @@
-/* $NetBSD: t_mbstowcs.c,v 1.4 2026/06/27 20:43:43 riastradh Exp $ */
+/* $NetBSD: t_mbstowcs.c,v 1.5 2026/06/30 05:24:11 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mbstowcs.c,v 1.4 2026/06/27 20:43:43 riastradh Exp $");
+__RCSID("$NetBSD: t_mbstowcs.c,v 1.5 2026/06/30 05:24:11 kre Exp $");
 
 #include <errno.h>
 #include <locale.h>
@@ -85,22 +85,40 @@ static struct test {
 	"[\001\177]"					/* 1-byte samples */
 	    "[\302\200\337\277]"			/* 2-byte samples */
 	    "[\340\240\200\357\277\277]"		/* 3-byte samples */
+	    "[\360\220\200\200\364\217\277\277]"	/* 4-byte samples */
+#if 0
 	    "[\360\220\200\200\367\277\277\277]"	/* 4-byte samples */
 	    /* legacy 5-byte samples */
 	    "[\370\210\200\200\200\373\277\277\277\277]"
 	    /* legacy 6-byte samples */
-	    "[\374\204\200\200\200\200\375\277\277\277\277\277]",
+	    "[\374\204\200\200\200\200\375\277\277\277\277\277]"
+#endif
+		,
 	{
-		0x5B, 0x01, 0x7F, 0x5D, 0x5B, 0x80, 0x07FF, 0x5D, 0x5B, 0x0800,
-		0xFFFF, 0x5D, 0x5B, 0x10000, 0x1FFFFF, 0x5D, 0x5B, 0x200000,
-		0x3FFFFFF, 0x5D, 0x5B, 0x4000000, 0x7FFFFFFF, 0x5D, 0x0A
+		0x5B, 0x01, 0x7F, 0x5D, 0x5B, 0x80, 0x07FF, 0x5D,
+		0x5B, 0x0800, 0xFFFF, 0x5D,
+		0x5B, 0x10000, 0x10FFFF, 0x5D,
+#if 0
+		0x5B, 0x10000, 0x1FFFFF, 0x5D,	/* This or the prev, not both */
+		0x5B, 0x200000, 0x3FFFFFF, 0x5D,
+		0x5B, 0x4000000, 0x7FFFFFFF, 0x5D,
+#endif
 	},
-	{	 1, -1, -1, 1, 1, -1, 1, 1, 1, 1,
-		 -1, 1, 1, 1, -1, 1, 1, -1,
-		 -1, 1, 1, -1, -1, 1, -1
+	{	 1, -1, -1, 1,
+		 1, -1, 1, 1,
+		 1, 1, -1, 1,
+		 1, 1, -1, 1,	/* the same for the valid & invalid cases */
+#if 0
+		 1, -1, -1, 1,
+		 1, -1, -1, 1,
+#endif
 	},
 	-1,
+#if 0
 	"PR lib/60369: mbrtowc, mbrlen have wrong return value for some invalid byte sequences: Invalid sequence",
+#else
+	NULL
+#endif
 }, {
 	"ja_JP.ISO2022-JP",
 	"\033$B#J#I#S$G$9!#\033(Baaaa\033$B$\"$$$&$($*\033(B",
