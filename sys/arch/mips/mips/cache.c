@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.69 2022/03/13 17:50:55 andvar Exp $	*/
+/*	$NetBSD: cache.c,v 1.70 2026/07/01 17:07:01 rkujawa Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.69 2022/03/13 17:50:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.70 2026/07/01 17:07:01 rkujawa Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -1325,6 +1325,64 @@ mips_config_cache_modern(uint32_t cpu_id)
 			mci->mci_tcache_way_mask =
 			    mci->mci_tcache_way_size - 1;
 			break;
+		}
+	}
+
+	/*
+	 * If a secondary (L2) cache was detected, wire up its ops.
+	 *
+	 * If the CPU really is coherent, the check below replaces these
+	 * with no-ops.
+	 */
+	if (mci->mci_sdcache_size > 0 && mco->mco_sdcache_wbinv_all == NULL) {
+		mco->mco_sdcache_wbinv_all = mipsNN_sdcache_wbinv_all;
+		mco->mco_sdcache_wbinv_range_index =
+		    mipsNN_sdcache_wbinv_range_index;
+
+		switch (mci->mci_sdcache_line_size) {
+		case 16:
+			mco->mco_sdcache_wbinv_range =
+			    cache_r4k_sdcache_hit_wb_inv_16;
+			mco->mco_sdcache_inv_range =
+			    cache_r4k_sdcache_hit_inv_16;
+			mco->mco_sdcache_wb_range =
+			    cache_r4k_sdcache_hit_wb_16;
+			mco->mco_intern_sdcache_wbinv_range_index =
+			    cache_r4k_sdcache_index_wb_inv_16;
+			break;
+		case 32:
+			mco->mco_sdcache_wbinv_range =
+			    cache_r4k_sdcache_hit_wb_inv_32;
+			mco->mco_sdcache_inv_range =
+			    cache_r4k_sdcache_hit_inv_32;
+			mco->mco_sdcache_wb_range =
+			    cache_r4k_sdcache_hit_wb_32;
+			mco->mco_intern_sdcache_wbinv_range_index =
+			    cache_r4k_sdcache_index_wb_inv_32;
+			break;
+		case 64:
+			mco->mco_sdcache_wbinv_range =
+			    cache_r4k_sdcache_hit_wb_inv_64;
+			mco->mco_sdcache_inv_range =
+			    cache_r4k_sdcache_hit_inv_64;
+			mco->mco_sdcache_wb_range =
+			    cache_r4k_sdcache_hit_wb_64;
+			mco->mco_intern_sdcache_wbinv_range_index =
+			    cache_r4k_sdcache_index_wb_inv_64;
+			break;
+		case 128:
+			mco->mco_sdcache_wbinv_range =
+			    cache_r4k_sdcache_hit_wb_inv_128;
+			mco->mco_sdcache_inv_range =
+			    cache_r4k_sdcache_hit_inv_128;
+			mco->mco_sdcache_wb_range =
+			    cache_r4k_sdcache_hit_wb_128;
+			mco->mco_intern_sdcache_wbinv_range_index =
+			    cache_r4k_sdcache_index_wb_inv_128;
+			break;
+		default:
+			panic("no sdcache ops for %dB lines",
+			    mci->mci_sdcache_line_size);
 		}
 	}
 
