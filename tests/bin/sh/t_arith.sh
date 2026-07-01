@@ -1,4 +1,4 @@
-# $NetBSD: t_arith.sh,v 1.10 2025/12/13 08:11:18 kre Exp $
+# $NetBSD: t_arith.sh,v 1.11 2026/07/01 10:45:59 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1216,7 +1216,11 @@ var_preinc_head()
 }
 var_preinc_body()
 {
-	${TEST_SH} -c 'X=1; : $(( ++X ))' 2>/dev/null ||
+	# A shell which does not support preincrement may interpret
+	# ++X as a syntax error, or as the same as + + $X, either
+	# way, that is not a working preincrement operator:
+
+	${TEST_SH} -c 'X=1; Y=$(( ++X == (+ + $X) )); exit $Y' 2>/dev/null ||
 		atf_skip "${TEST_SH} does not support the prefix ++ operator"
 
 	unset X		; # just in case ...
@@ -1254,7 +1258,11 @@ var_predec_head()
 }
 var_predec_body()
 {
-	${TEST_SH} -c 'X=1; : $(( --X ))' 2>/dev/null ||
+	# A shell which does not support predecrement may interpret
+	# --X as a syntax error, or as the same as - - $X, either
+	# way, that is not a working predecrement operator:
+
+	${TEST_SH} -c 'X=1;  Y=$(( --X == (- - $X) )); exit $Y' 2>/dev/null ||
 		atf_skip "${TEST_SH} does not support the prefix -- operator"
 
 	unset X		; # just in case ...
