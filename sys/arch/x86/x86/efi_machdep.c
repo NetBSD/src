@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_machdep.c,v 1.7 2026/07/01 00:52:21 riastradh Exp $	*/
+/*	$NetBSD: efi_machdep.c,v 1.8 2026/07/01 00:59:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.7 2026/07/01 00:52:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.8 2026/07/01 00:59:57 riastradh Exp $");
 
 #include "efi.h"
 #include "opt_efi.h"
@@ -890,7 +890,6 @@ efi_runtime_gettime(struct efi_tm *tm, struct efi_tmcap *tmcap)
 
 	return status;
 }
-
 
 /*
  * efi_runtime_settime(tm)
