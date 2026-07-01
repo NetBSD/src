@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.139 2026/06/30 20:05:11 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.140 2026/07/01 09:22:35 martin Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.139 2026/06/30 20:05:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.140 2026/07/01 09:22:35 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2576,15 +2576,15 @@ wg_bake_cookie(struct wg_softc *wg,
 	 * validity period, expiring before the other side has had a
 	 * chance to use it.
 	 */
-	uint8_t R0[WG_COOKIESECRET_LEN], R1[WG_COOKIESECRET_LEN];
+	uint8_t cookie_R0[WG_COOKIESECRET_LEN], cookie_R1[WG_COOKIESECRET_LEN];
 	const uint32_t now = time_uptime32;
 	uint8_t now0[4], now1[4];
 	le32enc(now0, now/(WG_COOKIESECRET_TIME/2));
 	le32enc(now1, now/(WG_COOKIESECRET_TIME/2) + 1);
-	blake2s(R0, sizeof(R0),
+	blake2s(cookie_R0, sizeof(cookie_R0),
 	    wg->wg_cookiesecret, sizeof(wg->wg_cookiesecret),
 	    now0, sizeof(now0));
-	blake2s(R1, sizeof(R1),
+	blake2s(cookie_R1, sizeof(cookie_R1),
 	    wg->wg_cookiesecret, sizeof(wg->wg_cookiesecret),
 	    now1, sizeof(now1));
 
@@ -2599,10 +2599,10 @@ wg_bake_cookie(struct wg_softc *wg,
 	 * cookie).
 	 */
 	wg_algo_mac(cookie0, WG_COOKIE_LEN,
-	    R0, sizeof(R0),
+	    cookie_R0, sizeof(cookie_R0),
 	    addr, addrlen, uh_sport, sizeof(uh_sport));
 	wg_algo_mac(cookie1, WG_COOKIE_LEN,
-	    R1, sizeof(R1),
+	    cookie_R1, sizeof(cookie_R1),
 	    addr, addrlen, uh_sport, sizeof(uh_sport));
 }
 
