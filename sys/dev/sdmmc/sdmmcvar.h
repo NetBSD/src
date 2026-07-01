@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.39 2026/01/09 22:54:34 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.40 2026/07/01 19:02:41 yurix Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -113,8 +113,6 @@ struct sdmmc_command {
 	uint32_t	 c_arg;		/* SD/MMC command argument */
 	sdmmc_response	 c_resp;	/* response buffer */
 	bus_dmamap_t	 c_dmamap;
-	int		 c_dmaseg;	/* DMA segment number */
-	int		 c_dmaoff;	/* offset in DMA segment */
 	void		*c_data;	/* buffer to send or read into */
 	int		 c_datalen;	/* length of data buffer */
 	int		 c_blklen;	/* block length */

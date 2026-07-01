@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsdio.c,v 1.8 2021/08/07 16:19:13 thorpej Exp $	*/
+/*	$NetBSD: mvsdio.c,v 1.9 2026/07/01 19:02:41 yurix Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsdio.c,v 1.8 2021/08/07 16:19:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsdio.c,v 1.9 2026/07/01 19:02:41 yurix Exp $");
 
 #include "opt_mvsdio.h"
 
@@ -537,9 +537,8 @@ mvsdio_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	tm = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVSDIO_TM);
 
 	if (cmd->c_datalen > 0) {
-		bus_dma_segment_t *dm_seg =
-		    &cmd->c_dmamap->dm_segs[cmd->c_dmaseg];
-		bus_addr_t ds_addr = dm_seg->ds_addr + cmd->c_dmaoff;
+		bus_dma_segment_t *dm_seg = &cmd->c_dmamap->dm_segs[0];
+		bus_addr_t ds_addr = dm_seg->ds_addr;
 
 		blklen = MIN(cmd->c_datalen, cmd->c_blklen);
 
