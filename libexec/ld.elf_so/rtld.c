@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.224 2026/02/10 19:58:13 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.225 2026/07/01 19:29:57 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.224 2026/02/10 19:58:13 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.225 2026/07/01 19:29:57 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -97,6 +97,7 @@ Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
 Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
 u_int		_rtld_objcount;	/* Number of objects in _rtld_objlist */
+u_int		_rtld_objrelocpending = 1; /* Number of objects pending reloc */
 u_int		_rtld_objloads;	/* Number of objects loaded in _rtld_objlist */
 u_int		_rtld_objgen;	/* Generation count for _rtld_objlist */
 const char	_rtld_path[] = _PATH_RTLD;
@@ -146,6 +147,325 @@ static void _rtld_unref_dag(Obj_Entry *);
 static Obj_Entry *_rtld_obj_from_addr(const void *);
 static void _rtld_fill_dl_phdr_info(const Obj_Entry *, struct dl_phdr_info *);
 
+/*
+ * _rtld_load_needed_enter(obj)
+ *
+ *	Mark obj as busy loading its dependencies.  Multiple threads
+ *	may be working on a single thread's dependencies concurrently;
+ *	dlclose will wait until they are all done.  Caller must follow
+ *	this by _rtld_load_needed_enter.
+ *
+ *	Non-reentrant: a thread must not call this again until it has
+ *	called _rtld_load_needed_exit.
+ *
+ *	Caller must hold the rtld exclusive lock.  obj must have
+ *	positive refcount; if it is already slated for destruction,
+ *	this is not useful.
+ */
+void
+_rtld_load_needed_enter(Obj_Entry *obj)
+{
+
+	assert(obj->refcount > 0);
+	assert(obj->neededrefcount < INT_MAX);
+	obj->neededrefcount++;
+}
+
+/*
+ * _rtld_load_needed_exit(obj)
+ *
+ *	Mark obj as no longer busy loading its dependencies after
+ *	_rtld_load_needed_enter.
+ *
+ *	Caller must hold the rtld exclusive lock.  Will not release or
+ *	reacquire it.
+ *
+ *	Caller must have previously called
+ *	_rtld_loadingneeded_enter(obj, ...) in the same thread.
+ */
+void
+_rtld_load_needed_exit(Obj_Entry *obj)
+{
+
+	assert(obj->neededrefcount > 0);
+
+	if (__predict_false(--obj->neededrefcount))
+		return;
+	if (__predict_true(obj->neededwaiter == 0))
+		return;
+	assert(obj->refcount == 0);
+	_lwp_unpark(obj->neededwaiter, &obj->neededrefcount);
+	obj->neededwaiter = 0;
+}
+
+/*
+ * _rtld_wait_for_load_needed(&obj, mask)
+ *
+ *	If another thread is concurrently loading obj's dependencies,
+ *	release the rtld exclusive lock, wait until it is done,
+ *	reacquire the rtld exclusive lock, and return true.  On
+ *	return, obj is nulled out.
+ *
+ *	Otherwise, if there is no thread concurrently loading obj's
+ *	dependencies, leave it intact and return false without
+ *	releasing and reacquiring the rtld exclusive lock -- obj is
+ *	safe to free now.
+ *
+ *	Caller must hold the rtld exclusive lock.  May release and
+ *	reacquire the rtld exclusive lock.  obj must have refcount zero
+ *	already; this is only for when we are preparing to free obj.
+ */
+static bool
+_rtld_wait_for_load_needed(Obj_Entry **objp, sigset_t *mask)
+{
+	Obj_Entry *obj = *objp;
+	lwpid_t next;
+
+	/*
+	 * This is only useful when obj is already marked for
+	 * destruction.
+	 */
+	assert(obj->refcount == 0);
+
+	/*
+	 * If there are no threads concurrently loading obj's
+	 * dependencies, nothing to do.
+	 */
+	if (__predict_true(obj->neededrefcount == 0))
+		return false;
+
+	/*
+	 * Queue ourselves up to be notified when all threads are done
+	 * loading obj's dependencies, and remember the next thread to
+	 * be notified.
+	 */
+	next = obj->neededwaiter;
+	obj->neededwaiter = _lwp_self();
+
+	/*
+	 * Release the rtld exclusive lock to wait and reacquire it
+	 * when done.  After we release the lock, we can't dereference
+	 * obj -- it may be concurrently freed by dlclose.
+	 */
+	_rtld_exclusive_exit(mask);
+	*objp = NULL;
+	_lwp_park(CLOCK_REALTIME, 0, NULL, 0, &obj->neededrefcount, NULL);
+	_rtld_exclusive_enter(mask);
+
+	/*
+	 * If another thread was waiting too, notify that thread.
+	 */
+	if (next)
+		_lwp_unpark(next, &obj->neededrefcount);
+
+	/*
+	 * Notify the caller that we released/reacquired the rtld
+	 * exclusive lock to wait for a state change so they must start
+	 * over from the top.
+	 */
+	return true;
+}
+
+/*
+ * _rtld_initfini_enter(&obj, mask)
+ *
+ *	Prepare to call an init/fini routine and return true if the
+ *	caller should do it and then call _rtld_initfini_exit, or false
+ *	if we waited for a state change and the caller must start over
+ *	from the top.
+ *
+ *	If another thread is concurrently running an init/fini routine
+ *	for the same object, release the rtld exclusive lock, wait
+ *	until it's done (or a spurious wakeup), reacquire the rtld
+ *	exclusive lock, null out obj, and return false.  Returning
+ *	false does _not_ imply the init/fini is done -- it only implies
+ *	that it _may_ be done but the caller must reassess the rtld
+ *	state and start over from the top.
+ *
+ *	Otherwise, mark obj as running an init/fini routine in this
+ *	thread and return true, without releasing and reacquiring the
+ *	rtld exclusive lock.
+ *
+ *	Caller must hold the rtld exclusive lock.  May release and
+ *	reacquire the rtld exclusive lock.
+ */
+static bool
+_rtld_initfini_enter(Obj_Entry **objp, sigset_t *mask)
+{
+	Obj_Entry *obj = *objp;
+	lwpid_t next;
+
+	/*
+	 * If no other thread is concurrently running an init/fini
+	 * routine for this object, claim the object for this thread
+	 * and return true without releasing or reacquiring the rtld
+	 * exclusive lock.
+	 */
+	if (__predict_true(obj->initfinilock == 0)) {
+		obj->initfinilock = _lwp_self();
+		return true;
+	}
+
+	/*
+	 * Remember whether anyone else is waiting for the lock, and
+	 * record ourselves as waiting.
+	 */
+	next = obj->initfinilockwaiter;
+	obj->initfinilockwaiter = _lwp_self();
+
+	/*
+	 * Release the rtld exclusive lock, wait for a state change,
+	 * and reacquire the rtld exclusive lock.  Must not touch obj
+	 * after releasing the rtld exclusive lock -- it may be
+	 * concurrently freed by dlclose.
+	 */
+	_rtld_exclusive_exit(mask);
+	*objp = NULL;
+	_lwp_park(CLOCK_REALTIME, 0, NULL, 0, &obj->initfinilock, NULL);
+	_rtld_exclusive_enter(mask);
+
+	/*
+	 * If anyone else was waiting for the lock, wake them too.
+	 */
+	if (next)
+		_lwp_unpark(next, &obj->initfinilock);
+
+	/*
+	 * Notify the caller we failed to claim the object and
+	 * released/reacquired the lock to wait for a state change so
+	 * they must start over from the top.
+	 */
+	return false;
+}
+
+/*
+ * _rtld_initfini_exit(obj)
+ *
+ *	Mark obj as no longer running an init/fini routine in this
+ *	thread, and wake any threads waiting for _rtld_initfini_enter
+ *	on it.
+ *
+ *	Caller must hold the rtld exclusive lock.  Will not release or
+ *	reacquire it.
+ *
+ *	Caller must have previously called _rtld_initfini_enter(&obj,
+ *	...) in the same thread, and it must have returned true.
+ */
+static void
+_rtld_initfini_exit(Obj_Entry *obj)
+{
+
+	/*
+	 * We had better have claimed this object.  Relinquish our
+	 * claim.
+	 */
+	assert(obj->initfinilock == _lwp_self());
+	obj->initfinilock = 0;
+
+	/*
+	 * If there's anyone waiting for the lock, wake them.  This may
+	 * provoke a thundering herd but it's unlikely that there will
+	 * be much contention on dlopen/dlclose in the real world.
+	 */
+	if (__predict_true(obj->initfinilockwaiter == 0))
+		return;
+	_lwp_unpark(obj->initfinilockwaiter, &obj->initfinilock);
+	obj->initfinilockwaiter = 0;
+}
+
+/*
+ * _rtld_fini_done(obj)
+ *
+ *	Mark obj as done running destructors.  Wake any waiters in
+ *	_rtld_wait_for_fini(&obj, ...).
+ *
+ *	Caller must hold the rtld exclusive lock.  Will not release or
+ *	reacquire it.
+ */
+static void
+_rtld_fini_done(Obj_Entry *obj)
+{
+
+	assert(obj->refcount == 0);
+	if (__predict_true(obj->finiwaiter == 0))
+		return;
+	_lwp_unpark(obj->finiwaiter, &obj->refcount);
+	obj->finiwaiter = 0;
+}
+
+/*
+ * _rtld_wait_for_fini(&obj, mask)
+ *
+ *	If another thread is concurrently running destructors for obj,
+ *	release the rtld exclusive lock, wait for that to complete,
+ *	reacquire the rtld exclusive lock, and return true.  On return,
+ *	obj is nulled out -- it was in the process of being destroyed
+ *	when we started and it may be completely gone by the time we
+ *	return.
+ *
+ *	Otherwise, if there is no thread concurrently running
+ *	destructors for obj, leave it intact and return false without
+ *	releasing and reacquiring the rtld exclusive lock -- obj is
+ *	safe to use.
+ *
+ *	Caller must either hold the rtld exclusive lock, or be
+ *	single-threaded; if single-threaded, this is guaranteed to
+ *	return false, and mask may be null.
+ */
+bool
+_rtld_wait_for_fini(Obj_Entry **objp, sigset_t *mask)
+{
+	Obj_Entry *obj = *objp;
+	lwpid_t next;
+
+	/*
+	 * If the object is still referenced, it can't be in the
+	 * process of destruction, so nothing to do -- notify the
+	 * caller we didn't wait.
+	 */
+	if (__predict_true(obj->refcount > 0))
+		return false;
+
+	/*
+	 * We can only reach this point if there are threads running
+	 * dlopen or dlclose concurrently.  This can't happen during
+	 * initial program load -- pthread_create is not available for
+	 * use in a constructor -- so initial program load can skip
+	 * taking the rtld exclusive lock.
+	 */
+	assert(mask != NULL);
+
+	/*
+	 * Queue ourselves up to be notified when concurrent fini is
+	 * done, and remember the next thread to be notified.
+	 */
+	next = obj->finiwaiter;
+	obj->finiwaiter = _lwp_self();
+
+	/*
+	 * Release the rtld exclusive lock to wait and reacquire it
+	 * when done.  After we release the lock, we can't dereference
+	 * obj -- it may be concurrently freed by dlclose.
+	 */
+	_rtld_exclusive_exit(mask);
+	*objp = NULL;
+	_lwp_park(CLOCK_REALTIME, 0, NULL, 0, &obj->refcount, NULL);
+	_rtld_exclusive_enter(mask);
+
+	/*
+	 * If another thread was waiting too, notify that thread.
+	 */
+	if (next)
+		_lwp_unpark(next, &obj->refcount);
+
+	/*
+	 * Notify the caller that we released/reacquired the rtld
+	 * exclusive lock to wait for a state change so they must start
+	 * over from the top.
+	 */
+	return true;
+}
+
 static inline void
 _rtld_call_initfini_function(fptr_t func, sigset_t *mask)
 {
@@ -173,8 +493,11 @@ _rtld_call_fini_function(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
 	 * start to end.  We need to make restartable so just advance
 	 * the array pointer and decrement the size each time through
 	 * the loop.
+	 *
+	 * Paranoia: avoid touching obj if the generation has changed.
 	 */
-	while (obj->fini_arraysz > 0 && _rtld_objgen == cur_objgen) {
+	while (__predict_true(_rtld_objgen == cur_objgen) &&
+	    obj->fini_arraysz > 0) {
 		fptr_t fini = *obj->fini_array++;
 		obj->fini_arraysz--;
 		dbg (("calling fini array function %s at %p%s", obj->path,
@@ -201,33 +524,37 @@ restart:
 
 	/* First pass: objects _not_ marked with DF_1_INITFIRST. */
 	SIMPLEQ_FOREACH(elm, &finilist, link) {
-		Obj_Entry * const obj = elm->obj;
+		Obj_Entry *obj = elm->obj;
 		if (!obj->z_initfirst) {
 			if (obj->refcount > 0 && !force) {
 				continue;
 			}
-			/*
-			 * XXX This can race against a concurrent dlclose().
-			 * XXX In that case, the object could be unmapped before
-			 * XXX the fini() call or the fini_array has completed.
-			 */
+			if (!_rtld_initfini_enter(&obj, mask)) {
+				_rtld_objlist_clear(&finilist);
+				goto restart;
+			}
 			_rtld_call_fini_function(obj, mask, cur_objgen);
+			_rtld_initfini_exit(obj);
 			if (_rtld_objgen != cur_objgen) {
 				dbg(("restarting fini iteration"));
 				_rtld_objlist_clear(&finilist);
 				goto restart;
-		}
+			}
 		}
 	}
 
 	/* Second pass: objects marked with DF_1_INITFIRST. */
 	SIMPLEQ_FOREACH(elm, &finilist, link) {
-		Obj_Entry * const obj = elm->obj;
+		Obj_Entry *obj = elm->obj;
 		if (obj->refcount > 0 && !force) {
 			continue;
 		}
-		/* XXX See above for the race condition here */
+		if (!_rtld_initfini_enter(&obj, mask)) {
+			_rtld_objlist_clear(&finilist);
+			goto restart;
+		}
 		_rtld_call_fini_function(obj, mask, cur_objgen);
+		_rtld_initfini_exit(obj);
 		if (_rtld_objgen != cur_objgen) {
 			dbg(("restarting fini iteration"));
 			_rtld_objlist_clear(&finilist);
@@ -273,6 +600,8 @@ _rtld_call_init_function(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
 static bool
 _rtld_call_ifunc_functions(sigset_t *mask, Obj_Entry *obj, u_int cur_objgen)
 {
+	if (!_rtld_initfini_enter(&obj, mask))
+		return true;
 	if (obj->ifunc_remaining
 #if defined(IFUNC_NONPLT)
 	    || obj->ifunc_remaining_nonplt
@@ -280,9 +609,11 @@ _rtld_call_ifunc_functions(sigset_t *mask, Obj_Entry *obj, u_int cur_objgen)
 	) {
 		_rtld_call_ifunc(obj, mask, cur_objgen);
 		if (_rtld_objgen != cur_objgen) {
+			_rtld_initfini_exit(obj);
 			return true;
 		}
 	}
+	_rtld_initfini_exit(obj);
 	return false;
 }
 
@@ -321,7 +652,12 @@ restart:
 
 	/* First pass: objects with IRELATIVE relocations. */
 	SIMPLEQ_FOREACH(elm, &initlist, link) {
-		if (_rtld_call_ifunc_functions(mask, elm->obj, cur_objgen)) {
+		Obj_Entry *obj = elm->obj;
+		if (__predict_false(_rtld_wait_for_fini(&obj, mask))) {
+			_rtld_objlist_clear(&initlist);
+			goto restart;
+		}
+		if (_rtld_call_ifunc_functions(mask, obj, cur_objgen)) {
 			dbg(("restarting init iteration"));
 			_rtld_objlist_clear(&initlist);
 			goto restart;
@@ -332,6 +668,7 @@ restart:
 	 * from crt0. Don't introduce that mistake for ifunc, so look at
 	 * the head of _rtld_objlist that _rtld_initlist_tsort skipped.
 	 */
+	assert(_rtld_objlist->refcount != 0);
 	if (_rtld_call_ifunc_functions(mask, _rtld_objlist, cur_objgen)) {
 		dbg(("restarting init iteration"));
 		_rtld_objlist_clear(&initlist);
@@ -340,9 +677,18 @@ restart:
 
 	/* Second pass: objects marked with DF_1_INITFIRST. */
 	SIMPLEQ_FOREACH(elm, &initlist, link) {
-		Obj_Entry * const obj = elm->obj;
+		Obj_Entry *obj = elm->obj;
+		if (__predict_false(_rtld_wait_for_fini(&obj, mask))) {
+			_rtld_objlist_clear(&initlist);
+			goto restart;
+		}
 		if (obj->z_initfirst) {
+			if (!_rtld_initfini_enter(&obj, mask)) {
+				_rtld_objlist_clear(&initlist);
+				goto restart;
+			}
 			_rtld_call_init_function(obj, mask, cur_objgen);
+			_rtld_initfini_exit(obj);
 			if (_rtld_objgen != cur_objgen) {
 				dbg(("restarting init iteration"));
 				_rtld_objlist_clear(&initlist);
@@ -353,7 +699,17 @@ restart:
 
 	/* Third pass: all other objects. */
 	SIMPLEQ_FOREACH(elm, &initlist, link) {
-		_rtld_call_init_function(elm->obj, mask, cur_objgen);
+		Obj_Entry *obj = elm->obj;
+		if (__predict_false(_rtld_wait_for_fini(&obj, mask))) {
+			_rtld_objlist_clear(&initlist);
+			goto restart;
+		}
+		if (!_rtld_initfini_enter(&obj, mask)) {
+			_rtld_objlist_clear(&initlist);
+			goto restart;
+		}
+		_rtld_call_init_function(obj, mask, cur_objgen);
+		_rtld_initfini_exit(obj);
 		if (_rtld_objgen != cur_objgen) {
 			dbg(("restarting init iteration"));
 			_rtld_objlist_clear(&initlist);
@@ -748,12 +1104,12 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		 * but before any shared object dependencies.
 		 */
 		dbg(("preloading objects"));
-		if (_rtld_preload(ld_preload) == -1)
+		if (_rtld_preload(ld_preload, NULL) == -1)
 			_rtld_die();
 	}
 
 	dbg(("loading needed objects"));
-	if (_rtld_load_needed_objects(_rtld_objmain, _RTLD_MAIN) == -1)
+	if (_rtld_load_needed_objects(_rtld_objmain, _RTLD_MAIN, NULL) == -1)
 		_rtld_die();
 
 	dbg(("checking for required versions"));
@@ -893,6 +1249,21 @@ _rtld_initlist_visit(Objlist* list, Obj_Entry *obj, int rev)
 
 	/* dbg(("_rtld_initlist_visit(%s)", obj->path)); */
 
+	/*
+	 * If the object hasn't been relocated yet, we have nothing to
+	 * do -- another thread is running dlopen, and will get to it
+	 * eventually, but it isn't ordered with respect to any
+	 * initializers we have to run.
+	 */
+	if (!obj->relocated)
+		return;
+
+	/*
+	 * If the object has already been visited, we have nothing to
+	 * do, so skip it.  Note: This is reset at the beginning of
+	 * _rtld_initlist_topsort; it does not reflect whether the
+	 * initializers have actually run yet.
+	 */
 	if (obj->init_done)
 		return;
 	obj->init_done = 1;
@@ -968,9 +1339,39 @@ _rtld_unload_object(sigset_t *mask, Obj_Entry *root, bool do_fini_funcs)
 		Obj_Entry **linkp;
 		Objlist_Entry *elm;
 
-		/* Finalize objects that are about to be unmapped. */
-		if (do_fini_funcs)
+		assert(root->dl_refcount == 0);
+		assert(!root->z_nodelete);
+		assert(!root->ref_nodel);
+
+		/*
+		 * A concurrent dlopen of some other library might have
+		 * picked up this object while loading needed entries.
+		 * Wait for that to complete.  The root can't go away
+		 * at this point: we already hold the last actual
+		 * reference to it.
+		 */
+		obj = root;
+		(void)_rtld_wait_for_load_needed(&obj, mask);
+		assert(root->refcount == 0);
+		assert(root->dl_refcount == 0);
+		assert(!root->z_nodelete);
+		assert(!root->ref_nodel);
+
+		/*
+		 * Finalize objects that are about to be unmapped.  Set
+		 * root->dlclosing while we do this so concurrent
+		 * dlclose calls, which can run while the rtld
+		 * exclusive lock is dropped across fini calls, will
+		 * skip this when garbage-collecting the object list.
+		 */
+		if (do_fini_funcs) {
+			root->dlclosing = true;
 			_rtld_call_fini_functions(mask, 0);
+			assert(root->dlclosing);
+			assert(root->refcount == 0);
+			assert(root->dl_refcount == 0);
+			root->dlclosing = false;
+		}
 
 		/* Remove the DAG from all objects' DAG lists. */
 		SIMPLEQ_FOREACH(elm, &root->dagmembers, link)
@@ -982,10 +1383,30 @@ _rtld_unload_object(sigset_t *mask, Obj_Entry *root, bool do_fini_funcs)
 			_rtld_objlist_remove(&_rtld_list_global, root);
 		}
 
-		/* Unmap all objects that are no longer referenced. */
+		/*
+		 * Unmap all objects that are no longer referenced.
+		 *
+		 * Objects that are unreferenced but have dlclosing or
+		 * initfinilock set must be in use in a concurrent call
+		 * to _rtld_unload_object, which will go through the
+		 * list of objects to unmap when it is done, so we skip
+		 * them -- this avoids pulling the rug out from under
+		 * the concurrent call, and won't leak.
+		 *
+		 * For objects that are still having their dependencies
+		 * loaded, we have to wait until the loading is done --
+		 * and while we're waiting, another thread might free
+		 * it, so we have to start over from the top.
+		 */
+restart:
 		linkp = &_rtld_objlist->next;
 		while ((obj = *linkp) != NULL) {
-			if (obj->refcount == 0) {
+			if (obj->refcount == 0 &&
+			    !obj->dlclosing &&
+			    obj->initfinilock == 0) {
+				if (__predict_false(
+				    _rtld_wait_for_load_needed(&obj, mask)))
+					goto restart;
 				dbg(("unloading \"%s\"", obj->path));
 				if (obj->ehdr != MAP_FAILED)
 					munmap(obj->ehdr, _rtld_pagesz);
@@ -994,6 +1415,7 @@ _rtld_unload_object(sigset_t *mask, Obj_Entry *root, bool do_fini_funcs)
 				_rtld_linkmap_delete(obj);
 				*linkp = obj->next;
 				_rtld_objcount--;
+				_rtld_fini_done(obj);
 				_rtld_obj_free(obj);
 			} else
 				linkp = &obj->next;
@@ -1008,6 +1430,7 @@ _rtld_ref_dag(Obj_Entry *root)
 	const Needed_Entry *needed;
 
 	assert(root);
+	assert(root->refcount > 0);
 
 	++root->refcount;
 
@@ -1059,11 +1482,14 @@ dlclose(void *handle)
 		_rtld_exclusive_exit(&mask);
 		return -1;
 	}
+	assert(root->refcount != 0);
+	assert(root->dl_refcount != 0);
 
 	_rtld_debug.r_state = RT_DELETE;
 	_rtld_debug_state();
 
 	--root->dl_refcount;
+	assert(root->refcount != 0);
 	_rtld_unload_object(&mask, root, true);
 
 	_rtld_debug.r_state = RT_CONSISTENT;
@@ -1088,7 +1514,6 @@ __strong_alias(__dlopen,dlopen)
 void *
 dlopen(const char *name, int mode)
 {
-	Obj_Entry **old_obj_tail;
 	Obj_Entry *obj = NULL;
 	int flags = _RTLD_DLOPEN;
 	bool nodelete;
@@ -1099,8 +1524,6 @@ dlopen(const char *name, int mode)
 	dbg(("dlopen of %s 0x%x", name, mode));
 
 	_rtld_exclusive_enter(&mask);
-
-	old_obj_tail = _rtld_objtail;
 
 	flags |= (mode & RTLD_GLOBAL) ? _RTLD_GLOBAL : 0;
 	flags |= (mode & RTLD_NOLOAD) ? _RTLD_NOLOAD : 0;
@@ -1113,17 +1536,16 @@ dlopen(const char *name, int mode)
 
 	if (name == NULL) {
 		obj = _rtld_objmain;
+		assert(obj->refcount > 0);
 		obj->refcount++;
 	} else
-		obj = _rtld_load_library(name, _rtld_objmain, flags);
-
+		obj = _rtld_load_library(name, _rtld_objmain, flags, &mask);
 
 	if (obj != NULL) {
+		assert(obj->refcount > 0);
 		++obj->dl_refcount;
-		if (*old_obj_tail != NULL) {	/* We loaded something new. */
-			assert(*old_obj_tail == obj);
-
-			result = _rtld_load_needed_objects(obj, flags);
+		if (_rtld_objrelocpending) {	/* We loaded something new. */
+			result = _rtld_load_needed_objects(obj, flags, &mask);
 			if (result != -1) {
 				Objlist_Entry *entry;
 				_rtld_init_dag(obj);
@@ -1133,10 +1555,10 @@ dlopen(const char *name, int mode)
 						break;
 				}
 			}
-			if (result == -1 || _rtld_relocate_objects(obj,
+			if (result == -1 || _rtld_relocate_objects(_rtld_objlist,
 			    (now || obj->z_now)) == -1) {
-				_rtld_unload_object(&mask, obj, false);
 				obj->dl_refcount--;
+				_rtld_unload_object(&mask, obj, false);
 				obj = NULL;
 			} else {
 				_rtld_call_init_functions(&mask);
@@ -1593,8 +2015,10 @@ __dl_cxa_refcount(void *addr, ssize_t delta)
 	else if (delta < 0 && obj->cxa_refcount < -1 + (size_t)-(delta + 1))
 		_rtld_error("Reference count underflow");
 	else {
-		if (obj->cxa_refcount == 0)
+		if (obj->cxa_refcount == 0) {
+			assert(obj->refcount > 0);
 			++obj->refcount;
+		}
 		obj->cxa_refcount += delta;
 		dbg(("new reference count: %zu", obj->cxa_refcount));
 		if (obj->cxa_refcount == 0) {

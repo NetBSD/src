@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlclose_thread.c,v 1.2 2026/06/25 03:39:05 riastradh Exp $	*/
+/*	$NetBSD: t_dlclose_thread.c,v 1.3 2026/07/01 19:29:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dlclose_thread.c,v 1.2 2026/06/25 03:39:05 riastradh Exp $");
+__RCSID("$NetBSD: t_dlclose_thread.c,v 1.3 2026/07/01 19:29:58 riastradh Exp $");
 
 #include <atf-c.h>
 #include <dlfcn.h>
@@ -83,8 +83,6 @@ ATF_TC_BODY(dlclose_thread, tc)
 		RZ(pthread_create(&t[i], NULL, &dlclose_thread,
 			(void *)(uintptr_t)i));
 	}
-	atf_tc_expect_signal(-1, "PR lib/59751:"
-	    " dlclose is not MT-safe depending on the libraries unloaded");
 	(void)pthread_barrier_wait(&bar);
 	(void)sleep(5);
 	atomic_store_explicit(&stop, true, memory_order_relaxed);
