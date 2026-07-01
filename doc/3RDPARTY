@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2226 2026/06/26 08:50:56 jdc Exp $
+#	$NetBSD: 3RDPARTY,v 1.2227 2026/07/01 20:39:44 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -776,11 +776,11 @@ repository. See the lvm2tools Notes for more information.
 
 Package:	libevent
 Version:	2.1.12-stable
-Current Vers:	2.1.12-stable
+Current Vers:	2.1.13-stable
 Maintainer:	Niels Provos <provos@citi.umich.edu>
 Archive Site:	http://www.monkey.org/~provos/libevent/
 Home Page:	http://www.monkey.org/~provos/libevent/
-Date:		2026-05-03
+Date:		2026-07-01
 Responsible:
 License:	BSD (3/4-clause)
 Location:	external/bsd/libevent/dist
