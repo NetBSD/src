@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc5200_ac97.c,v 1.1 2026/06/27 13:28:35 rkujawa Exp $	*/
+/*	$NetBSD: mpc5200_ac97.c,v 1.2 2026/07/01 00:03:18 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpc5200_ac97.c,v 1.1 2026/06/27 13:28:35 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpc5200_ac97.c,v 1.2 2026/07/01 00:03:18 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,10 +269,12 @@ mpcac97_attach(device_t parent, device_t self, void *aux)
 	sc->sc_host_if.write = mpcac97_ac97_write;
 	sc->sc_host_if.reset = mpcac97_ac97_reset;
 	sc->sc_host_if.flags = mpcac97_ac97_flags;
+	aprint_debug_dev(self, "calling ac97_attach\n");
 	if (ac97_attach(&sc->sc_host_if, self, &sc->sc_lock) != 0) {
 		aprint_error_dev(self, "no AC97 codec found\n");
 		goto fail;
 	}
+	aprint_debug_dev(self, "ac97_attach returned ok\n");
 
 	/*
 	 * The codec's SPDIF control is lock-gated
@@ -280,6 +282,7 @@ mpcac97_attach(device_t parent, device_t self, void *aux)
 	mutex_enter(&sc->sc_lock);
 	sc->sc_codec->vtbl->unlock(sc->sc_codec);
 	mutex_exit(&sc->sc_lock);
+	aprint_debug_dev(self, "spdif unlocked\n");
 
 	/*
 	 * Route the BestComm transmit-task completion event to our block
@@ -291,8 +294,10 @@ mpcac97_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't establish SDMA interrupt\n");
 		goto fail;
 	}
+	aprint_debug_dev(self, "SDMA intr established\n");
 
 	sc->sc_audiodev = audio_attach_mi(&mpcac97_hw_if, sc, self);
+	aprint_debug_dev(self, "audio_attach_mi done\n");
 	return;
 
 fail:
@@ -415,8 +420,8 @@ static int
 mpcac97_ac97_reset(void *arg)
 {
 	struct mpcac97_softc *sc = arg;
-	uint16_t val;
-	int i;
+	uint16_t val = 0xffff;
+	int i, rderr = ETIMEDOUT;
 
 	/*
 	 * Cold-reset the external codec by pulsing RES low then high
@@ -430,13 +435,27 @@ mpcac97_ac97_reset(void *arg)
 
 	/* Wait for the codec's analog/digital subsections to power up. */
 	for (i = 0; i < AC97_READY_TIMEOUT; i++) {
-		if (mpcac97_ac97_read(sc, AC97_REG_POWERDOWN, &val) == 0 &&
-		    (val & AC97_POWER_READY) == AC97_POWER_READY)
+		rderr = mpcac97_ac97_read(sc, AC97_REG_POWERDOWN, &val);
+		if (rderr == 0 &&
+		    (val & AC97_POWER_READY) == AC97_POWER_READY) {
+			aprint_debug_dev(sc->sc_dev,
+			    "codec ready after ~%dms (powerdown=0x%04x)\n",
+			    i, val);
 			return 0;
+		}
 		DELAY(1000);
 	}
 
-	aprint_error_dev(sc->sc_dev, "codec not ready after reset\n");
+	/*
+	 * Rare, not-reliably-reproducible cold-boot race: the STAC9766 is
+	 * occasionally not ready within AC97_READY_TIMEOUT. Try to hunt this
+	 * down.
+	 */
+	aprint_error_dev(sc->sc_dev,
+	    "codec not ready after reset: last read %s, powerdown=0x%04x, "
+	    "sr=0x%04x\n",
+	    rderr ? "TIMED OUT (AC-link silent)" : "ok-but-not-ready",
+	    val, RD2(sc, PSC_SR));
 	return 0;	/* best effort: let ac97_attach probe the codec ID */
 }
 
