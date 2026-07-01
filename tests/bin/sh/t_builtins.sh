@@ -1,4 +1,4 @@
-# $NetBSD: t_builtins.sh,v 1.8 2026/03/10 21:59:29 andvar Exp $
+# $NetBSD: t_builtins.sh,v 1.9 2026/07/01 10:58:38 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -214,7 +214,7 @@ results()
 
 atf_test_case colon
 colon_head() {
-	atf_set "descr" "Tests the shell special builtin ':' command"
+	atf_set descr "Tests the shell special builtin ':' command"
 }
 colon_body() {
 	have_builtin : || return 0
@@ -232,7 +232,7 @@ colon_body() {
 
 atf_test_case echo
 echo_head() {
-	atf_set "descr" "Tests the shell builtin version of echo"
+	atf_set descr "Tests the shell builtin version of echo"
 }
 echo_body() {
 	have_builtin echo || return 0
@@ -299,7 +299,7 @@ echo_body() {
 
 atf_test_case eval
 eval_head() {
-	atf_set "descr" "Tests the shell special builtin 'eval'"
+	atf_set descr "Tests the shell special builtin 'eval'"
 }
 eval_body() {
 	have_builtin eval || return 0
@@ -372,7 +372,7 @@ eval_body() {
 
 atf_test_case exec
 exec_head() {
-	atf_set "descr" "Tests the shell special builtin 'exec'"
+	atf_set descr "Tests the shell special builtin 'exec'"
 }
 exec_body() {
 	have_builtin exec || return 0
@@ -385,7 +385,7 @@ exec_body() {
 
 atf_test_case export
 export_head() {
-	atf_set "descr" "Tests the shell builtin 'export'"
+	atf_set descr "Tests the shell builtin 'export'"
 }
 export_body() {
 	have_builtin export || return 0
@@ -456,7 +456,7 @@ export_body() {
 
 atf_test_case export_nbsd
 export_nbsd_head() {
-	atf_set "descr" "Tests NetBSD extensions to the shell builtin 'export'"
+	atf_set descr "Tests NetBSD extensions to the shell builtin 'export'"
 }
 export_nbsd_body() {
 	have_builtin "export" "" "" "-n foo" ' -n' || return 0
@@ -530,15 +530,34 @@ export_nbsd_body() {
 
 atf_test_case getopts
 getopts_head() {
-	atf_set "descr" "Tests the shell builtin 'getopts'"
+	atf_set descr "Tests the shell builtin 'getopts'"
 }
 getopts_body() {
 	have_builtin getopts "" "f() {" "a x; }; f -a" || return 0
+
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '
+		f() { while getopts ab: O; do case $O in
+			a) A=A;; b) B=${OPTARG};; *) printf FAIL;; esac
+		      done; printf %s\\n "$A,$B"; }
+		[ "$(f -a)" = A, ] || exit 10
+		[ "$(f -a FOO)" = A, ] || exit 11
+		[ "$(f -bC)" = ,C ] || exit 20
+		[ "$(f -bC BAR)" = ,C ] || exit 21
+		[ "$(f -abC)" = A,C ] || exit 30
+		[ "$(f -abC BAZ)" = A,C ] || exit 31
+		[ "$(f -a -bC)" = A,C ] || exit 40
+		[ "$(f -a -- -bC)" = A, ] || exit 41
+		[ "$(f -a -b C)" = A,C ] || exit 50
+		[ "$(f -a -b -- C)" = A,-- ] || exit 51
+		[ "$(f -b C -a)" = A,C ] || exit 60
+		[ "$(f -bC -a)" = A,C ] || exit 70
+		[ "$(f -bCa)" = ,Ca ] || exit 80
+		exit 0'
 }
 
 atf_test_case jobs
 jobs_head() {
-	atf_set "descr" "Tests the shell builtin 'jobs' command"
+	atf_set descr "Tests the shell builtin 'jobs' command"
 }
 jobs_body() {
 	have_builtin jobs || return 0
@@ -552,11 +571,19 @@ jobs_body() {
 		${TEST_SH} -c 'sleep 1 & P=$!; jobs; wait'
 	atf_check -s exit:0 -e empty -o match:sleep -o match:Done \
 		${TEST_SH} -c 'sleep 1 & P=$!; sleep 2; jobs; wait'
+
+	# verify that a child can access jobs, immediately after fork
+	atf_check -s exit:0 -e empty -o match:sleep -o match:Running \
+		${TEST_SH} -c 'sleep 1 & P=$!; printf %s "$(jobs)"; wait'
+
+	# but a grandchild should not be able to do that
+	atf_check -s exit:0 -e empty -o empty \
+		${TEST_SH} -c 'sleep 1 & P=$!; (printf %s "$(jobs)"); wait'
 }
 
 atf_test_case read
 read_head() {
-	atf_set "descr" "Tests the shell builtin read command"
+	atf_set descr "Tests the shell builtin read command"
 }
 read_body() {
 	have_builtin read "" "echo x|" "var" || return 0
@@ -564,7 +591,7 @@ read_body() {
 
 atf_test_case readonly
 readonly_head() {
-	atf_set "descr" "Tests the shell builtin 'readonly'"
+	atf_set descr "Tests the shell builtin 'readonly'"
 }
 readonly_body() {
 	have_builtin readonly || return 0
@@ -628,7 +655,7 @@ readonly_body() {
 
 atf_test_case readonly_nbsd
 readonly_nbsd_head() {
-	atf_set "descr" "Tests NetBSD extensions to 'readonly'"
+	atf_set descr "Tests NetBSD extensions to 'readonly'"
 }
 readonly_nbsd_body() {
 	have_builtin readonly '' 'readonly VAR;' '-q VAR' ' -q'  || return 0
@@ -673,7 +700,7 @@ readonly_nbsd_body() {
 
 atf_test_case cd_pwd
 cd_pwd_head() {
-	atf_set "descr" "Tests the shell builtins 'cd' & 'pwd'"
+	atf_set descr "Tests the shell builtins 'cd' & 'pwd'"
 }
 cd_pwd_body() {
 	have_builtin cd "" "HOME=/;" || return 0
@@ -682,7 +709,7 @@ cd_pwd_body() {
 
 atf_test_case true_false
 true_false_head() {
-	atf_set "descr" "Tests the 'true' and 'false' shell builtin commands"
+	atf_set descr "Tests the 'true' and 'false' shell builtin commands"
 }
 true_false_body() {
 	have_builtin true || return 0
@@ -708,7 +735,7 @@ true_false_body() {
 
 atf_test_case type
 type_head() {
-	atf_set "descr" "Tests the sh builtin 'type' command"
+	atf_set descr "Tests the sh builtin 'type' command"
 }
 type_body() {
 	have_builtin type "" "" type || return 0
@@ -719,7 +746,7 @@ type_body() {
 # the t_redir tests, as that affects the shell's use of file descriptors
 atf_test_case ulimit
 ulimit_head() {
-	atf_set "descr" "Tests the sh builtin 'ulimit'"
+	atf_set descr "Tests the sh builtin 'ulimit'"
 }
 ulimit_body() {
 	have_builtin ulimit || return 0
@@ -727,7 +754,7 @@ ulimit_body() {
 
 atf_test_case umask
 umask_head() {
-	atf_set "descr" "Tests the sh builtin 'umask'"
+	atf_set descr "Tests the sh builtin 'umask'"
 }
 umask_body() {
 	have_builtin umask || return 0
@@ -813,15 +840,22 @@ umask_body() {
 
 atf_test_case unset
 unset_head() {
-	atf_set "descr" "Tests the sh builtin 'unset'"
+	atf_set descr "Tests the sh builtin 'unset'"
 }
 unset_body() {
 	have_builtin unset || return 0
+
+	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c '
+		X=foo
+		test "${X-bar}" = foo || exit 10
+		unset X
+		test "${X-bar}" = bar || exit 11
+		unset X'
 }
 
 atf_test_case hash
 hash_head() {
-	atf_set "descr" "Tests the sh builtin 'hash' (ash extension)"
+	atf_set descr "Tests the sh builtin 'hash' (ash extension)"
 }
 hash_body() {
 	have_builtin hash || return 0
@@ -829,20 +863,79 @@ hash_body() {
 
 atf_test_case jobid
 jobid_head() {
-	atf_set "descr" "Tests sh builtin 'jobid' (NetBSD extension)"
+	atf_set descr "Tests sh builtin 'jobid' (NetBSD extension)"
 }
 jobid_body() {
 
-	# have_builtin jobid || return 0	No simple jobid command test
-	$TEST_SH -c '(exit 0)& jobid $!' >/dev/null 2>&1  || {
-		atf_skip "${TEST_SH} has no 'jobid' built-in"
-		return 0
+	have_builtin jobid '' ':&' ';wait' || return 0
+
+	# When the jobid command exists, it should work
+
+	atf_check -s exit:0 -e empty -o inline:OK ${TEST_SH} -c \
+	    ':& P=$!; J=$(jobid $!) || exit; wait; [ "$P" = "$J" ] && printf OK'
+
+	# But not from a grandchild
+	atf_check -s not-exit:0 -e not-empty -o empty ${TEST_SH} -c \
+	    ':& P=$!; ( J=$(jobid $!) ) || exit; wait'
+
+	# The first job created by a new shell should be %1
+	atf_check -s exit:0 -e empty -o inline:OK ${TEST_SH} -c \
+	    ':& P=$!; J=$(jobid %1) || exit; wait; [ "$P" = "$J" ] && printf OK'
+
+	# And the next should be %2
+	atf_check -s exit:0 -e empty -o inline:OK ${TEST_SH} -c \
+	    ':& P1=$!; :& P2=$!; J=$(jobid %2) || exit; wait;
+		[ "$P2" = "$J" ] && printf OK'
+
+	# for a pipe, all the pids (2 in this case) should be printed
+	atf_check -s exit:0 -e empty -o inline:OK ${TEST_SH} -c \
+	    ': | true & P=$!; jobid %1 | { read X Y Z;
+		{ test "$X" = "$P" && test -n "$Y" && test -z "$Z" ; } ||
+		{ test "$Y" = "$P" && test -n "$X" && test -z "$Z" ; } } &&
+			printf OK'
+
+	# except if jobid -p works, we should get only the lead process
+	have_builtin jobid '' ':&' '-p; wait' ' -p' &&
+	    atf_check -s exit:0 -e empty -o inline:OK ${TEST_SH} -c \
+		': | true & P=$!; jobid -p %1 | { read X Y Z;
+		    test "$X" = "$P" && test -z "$Y" && test -z "$Z" ; } &&
+		printf OK'
+
+	return 0
+
+	# If jobid -j exists, we should get the jobid (%1) back
+	# But that requires -m enabled, and ATF won't allow that!
+	have_builtin jobid '' ':&' '-j; wait' ' -j' && {
+	    R=$(${TEST_SH} -c '( set -m; :& P=$!; J=$(jobid -j "$P") || exit; wait;
+		    [ "$J" = "%1" ] && printf OK )')
+	    X=$?
+	    if [ "$X" -n0 0 ] || [ "$R" != "OK" ]
+	    then
+		atf-fail 'jobid -j failed'
+	    fi
 	}
+
+	# For a simple command, the process group should be its PID
+	# but only testable if the jobid command supports -g
+	# These would also require -m in order to work
+	have_builtin jobid '' 'set -m; :&' '-g; wait' ' -g' && {
+	    # and only if sh job control is enabled, otherwise there is none
+	    atf_check -s not-exit:0 -e empty -o inline:OK ${TEST_SH} -c \
+		':& P=$!; J=$(jobid -g $!) || exit; wait;
+		    [ "" = "$J" ] && printf OK'
+	    # this test can't run under ATF, it kills anything run with -m
+	    atf_check -s exit:0 -e empty -o inline:OK ${TEST_SH} -m -c \
+		':& P=$!; J=$(jobid -g $!) || exit; wait;
+		    [ "$P" = "$J" ] && printf OK'
+	}
+
+	# Not allowed to return 1 (from have_builtin perhaps)
+	return 0
 }
 
 atf_test_case let
 let_head() {
-	atf_set "descr" "Tests the sh builtin 'let' (common extension from ksh)"
+	atf_set descr "Tests the sh builtin 'let' (common extension from ksh)"
 }
 let_body() {
 	have_builtin let "" "" 1 || return 0
@@ -850,15 +943,19 @@ let_body() {
 
 atf_test_case local
 local_head() {
-	atf_set "descr" "Tests the shell builtin 'local' (common extension)"
+	atf_set descr "Tests the shell builtin 'local' (common extension)"
 }
 local_body() {
 	have_builtin local "" "f () {" "X; }; f" || return 0
+
+	atf_check -s exit:0 -e empty -o inline:OUTER ${TEST_SH} -c \
+	    'f() { local VAR; VAR=$1; [ "$VAR" = INNER ] ; }
+	     VAR=OUTER; f INNER || exit; printf %s "${VAR}"'
 }
 
 atf_test_case setvar
 setvar_head() {
-	atf_set "descr" "Tests the shell builtin 'setvar' (BSD extension)"
+	atf_set descr "Tests the shell builtin 'setvar' (BSD extension)"
 }
 setvar_body() {
 	have_builtin setvar || return 0
@@ -876,7 +973,7 @@ setvar_body() {
 
 atf_test_case fdflags
 fdflags_head() {
-	atf_set "descr" \
+	atf_set descr \
 	   "Tests basic operation of sh builtin 'fdflags' (NetBSD extension)"
 }
 fdflags_body() {
@@ -885,7 +982,7 @@ fdflags_body() {
 
 atf_test_case fdflags__s
 fdflags__s_head() {
-	atf_set "descr" "Checks setting/clearing flags on file descriptors"
+	atf_set descr "Checks setting/clearing flags on file descriptors"
 }
 fdflags__s_body() {
 	have_builtin fdflags || return 0
@@ -893,7 +990,7 @@ fdflags__s_body() {
 
 atf_test_case fdflags__v
 fdflags__v_head() {
-	atf_set "descr" "Checks verbose operation of fdflags"
+	atf_set descr "Checks verbose operation of fdflags"
 }
 fdflags__v_body() {
 	have_builtin fdflags || return 0
@@ -901,7 +998,7 @@ fdflags__v_body() {
 
 atf_test_case fdflags__v_s
 fdflags__v_s_head() {
-	atf_set "descr" "tests verbose operation of fdflags -s"
+	atf_set descr "tests verbose operation of fdflags -s"
 }
 fdflags__v_s_body() {
 	have_builtin fdflags || return 0
@@ -909,7 +1006,7 @@ fdflags__v_s_body() {
 
 atf_test_case fdflags_multiple_fd
 fdflags_multiple_fd_head() {
-	atf_set "descr" "Checks operation of fdflags with more than one fd"
+	atf_set descr "Checks operation of fdflags with more than one fd"
 }
 fdflags_multiple_fd_body() {
 	have_builtin fdflags || return 0
@@ -917,7 +1014,7 @@ fdflags_multiple_fd_body() {
 
 atf_test_case fdflags_one_flag_at_a_time
 fdflags_one_flag_at_a_time_head() {
-	atf_set "descr" "Tests all possible fdflags flags, and combinations"
+	atf_set descr "Tests all possible fdflags flags, and combinations"
 }
 fdflags_one_flag_at_a_time_body() {
 	have_builtin fdflags || return 0
@@ -925,7 +1022,7 @@ fdflags_one_flag_at_a_time_body() {
 
 atf_test_case fdflags_save_restore
 fdflags_save_restore_head() {
-	atf_set "descr" 'Verify that fd flags can be saved and restored'
+	atf_set descr 'Verify that fd flags can be saved and restored'
 }
 fdflags_save_restore_body() {
 	have_builtin fdflags || return 0
@@ -933,7 +1030,7 @@ fdflags_save_restore_body() {
 
 atf_test_case fdflags_names_abbreviated
 fdflags_names_abbreviated_head() {
-	atf_set "descr" 'Tests using abbreviated names for fdflags'
+	atf_set descr 'Tests using abbreviated names for fdflags'
 }
 fdflags_names_abbreviated_body() {
 	have_builtin fdflags || return 0
@@ -941,10 +1038,108 @@ fdflags_names_abbreviated_body() {
 
 atf_test_case fdflags_xx_errors
 fdflags_xx_errors_head() {
-	atf_set "descr" 'Check various erroneous fdflags uses'
+	atf_set descr 'Check various erroneous fdflags uses'
 }
 fdflags_xx_errors_body() {
 	have_builtin fdflags || return 0
+}
+
+trap_head() {
+	atf_set descr 'Check operation of trap command (not traps themselves)'
+}
+trap_body() {
+	have_builtin trap || return 0
+
+	atf_require_prog printf
+
+	# We do need to make sure that the trap command does something.
+	atf_check -s exit:0 -o inline:DONE -e empty ${TEST_SH} -c '
+		trap "printf DONE" EXIT'
+	# and that it can be undone.
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '
+		trap "printf DONE" EXIT; trap -- - EXIT'
+	# and last that the trap command prints changed traps
+	# (note that no particular format is required, but these elements are)
+	atf_check -s exit:0 -o match:'printf OK' -o match:EXIT -e empty \
+	    ${TEST_SH} -c 'trap "printf OK" EXIT; trap; trap -- - EXIT'
+
+	# Next check that we can read back what trap sets (likely format)
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '
+		C="printf FAIL"
+		trap "${C}" EXIT
+		case "$(trap -p EXIT)" in "trap -- '"'\${C}'"' EXIT");;
+		*) printf "FAIL: "; trap -p EXIT;; esac
+		trap -- - EXIT'
+
+	# And in executable form as well (an extension to the standard)
+	have_builtin trap '' '' '-P EXIT' ' -P' &&
+	   atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '
+		C="printf FAIL"
+		trap "${C}" EXIT
+		[ "${C}" = "$(trap -P EXIT)" ] || exit
+		trap -- - EXIT'
+
+	# Then $(trap) should return the changed traps (none here)
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '
+		[ -z "$(trap)" ]'
+	# but not this time
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '
+		C="printf FAIL"
+		trap "${C}" EXIT
+		[ -z "$(trap)" ] && exit
+		trap -- - EXIT'
+	# an eval "$(trap)" should restore things
+	atf_check -s exit:0 -o inline:OK -e empty ${TEST_SH} -c '
+		C="printf OK"
+		trap "${C}" EXIT
+		T="$(trap)"
+			trap -- - EXIT
+		eval "${T}"'
+	# but that fails when done the other way $T is empty.
+	atf_check -s exit:0 -o inline:OK -e empty ${TEST_SH} -c '
+		C="printf OK"
+		trap -- - EXIT
+		T="$(trap)"
+			trap "${C}" EXIT
+		eval "${T}"'
+	# but when trap -p is used, it doesn't
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '
+		C="printf OK"
+		trap -- - EXIT
+		T="$(trap -p)"
+			trap "${C}" EXIT
+		eval "${T}"'
+
+	# that $(trap) works (parent shell seen from subshell
+	# has been tested many times above, but it should not
+	# work after any other trap command has run
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '
+		C="printf FAIL"
+		trap "${C}" EXIT
+		printf %s "$( trap -- - INT ; trap)"
+		trap -- - EXIT'
+	# it also should not work if run in a subshell of a subshell
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '
+		C="printf FAIL"
+		trap "${C}" EXIT
+		printf %s "$( T=$(trap); printf %s '\"\$T\"' )"
+		trap -- - EXIT'
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '
+		C="printf FAIL"
+		trap "${C}" EXIT
+		( printf %s "$(trap)" )
+		trap -- - EXIT'
+	# but we should be able to see a subshell's traps in that subshell
+	atf_check -s exit:0 -o match:SUB:DONE -e inline:SUB:DONE ${TEST_SH} -c '
+		C="printf FAIL"
+		trap "${C}" EXIT
+		( trap "printf SUB:DONE >&2" EXIT; trap )
+		trap -- - EXIT'
+	atf_check -s exit:0 -o match:SUB:DONE -e inline:SUB:DONE ${TEST_SH} -c '
+		C="printf FAIL"
+		trap "${C}" EXIT
+		( trap "printf SUB:DONE >&2" EXIT; printf %s "$(trap)" )
+		trap -- - EXIT'
 }
 
 
@@ -965,13 +1160,16 @@ atf_init_test_cases() {
 	atf_add_test_case jobs
 	atf_add_test_case read
 	atf_add_test_case readonly
+	atf_add_test_case trap
 	atf_add_test_case true_false
 	atf_add_test_case type
 	atf_add_test_case ulimit
 	atf_add_test_case umask
 	atf_add_test_case unset
 
-	# exit/wait/set/shift/trap/alias/unalias/. should have their own tests
+	# exit/wait/set/shift/alias/unalias/. should have their own tests
+	# the test of trap tests only the command, not its function,
+	# that needs to be tested elsewhere.
 	# fc/times/fg/bg/%    are too messy to contemplate for now
 	# command ??  (probably should have some tests)
 
