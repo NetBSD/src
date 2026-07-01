@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.126 2026/05/18 16:40:00 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.127 2026/07/01 12:06:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.126 2026/05/18 16:40:00 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.127 2026/07/01 12:06:27 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,7 @@ static int ttyfd = -1;
 
 STATIC void restartjob(struct job *);
 STATIC void freejob(struct job *);
+STATIC void clear_jobs(void);
 STATIC struct job *getjob(const char *, int);
 STATIC int dowait(int, struct job *, struct job **);
 #define WBLOCK	1
@@ -659,6 +660,21 @@ freejob(struct job *jp)
 	INTON;
 }
 
+STATIC void
+clear_jobs(void)
+{
+	int i;
+	struct job *jp;
+
+	INTOFF;
+	for (i = njobs, jp = jobtab ; --i >= 0 ; jp++) {
+		if (jp->used)
+			freejob(jp);
+	}
+	INTON;
+}
+
+
 /*
  * Extract the status of a completed job (for $?)
  */
@@ -960,6 +976,9 @@ jobidcmd(int argc, char **argv)
 		error("usage: jobid [-g|-p|-r] jobid");
 
 	jp = getjob(*argptr, 0);
+	VTRACE(DBG_JOBS, ("jobidcmd.  jp=%p [%%%d] pg=%d pid=%d\n",
+	    jp, JNUM(jp), jp->pgrp, jp->ps[0].pid));
+
 	if (job) {
 		out1fmt("%%%d\n", JNUM(jp));
 		return 0;
@@ -1243,13 +1262,10 @@ makejob(union node *node, int nprocs)
 	int i;
 	struct job *jp;
 
-	if (jobs_invalid) {
+	if (jobs_invalid && nprocs > 0) {
 		VTRACE(DBG_JOBS, ("makejob(%p, %d) clearing jobtab (%d)\n",
 			(void *)node, nprocs, njobs));
-		for (i = njobs, jp = jobtab ; --i >= 0 ; jp++) {
-			if (jp->used)
-				freejob(jp);
-		}
+		clear_jobs();
 		jobs_invalid = 0;
 	}
 
@@ -1286,8 +1302,11 @@ makejob(union node *node, int nprocs)
 	jp->nprocs = 0;
 	jp->pgrp = 0;
 #if JOBS
-	jp->jobctl = jobctl;
-	set_curjob(jp, 1);
+	if (nprocs > 0) {
+		jp->jobctl = jobctl;
+		set_curjob(jp, 1);
+	} else
+		jp->jobctl = 0;
 #endif
 	if (nprocs > 1) {
 		jp->ps = ckmalloc(nprocs * sizeof (struct procstat));
@@ -1408,6 +1427,20 @@ forkchild(struct job *jp, union node *n, int mode, int vforked, sigset_t *sigs)
 
 	closescript(vforked);
 	clear_traps(vforked);
+
+	/*
+	 * If the jobs table is invalid (belongs to our parent) when we are
+	 * forking another child (jobs table belongs to its grandparent)
+	 * Then simply zap it (it cannot have any useful information for us)
+	 *
+	 * We don't do this if vforked, as we're not allowed to touch any
+	 * memory (almost) in that state, certainly not call malloc/free,
+	 * but we don't need to, vfork() will never be used in a
+	 * situation where it matters (running subshells, cmdsubs)
+	 */
+	if (jobs_invalid && !vforked)
+		clear_jobs();
+
 	/*
 	 * Now we have the trap state as we want it, signals can
 	 * be allowed to arrive again
