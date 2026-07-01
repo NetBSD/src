@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.140 2026/07/01 09:22:35 martin Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.141 2026/07/01 23:40:16 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.140 2026/07/01 09:22:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.141 2026/07/01 23:40:16 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3465,6 +3465,18 @@ wg_receive_packets(struct wg_softc *wg, const int af)
 			return;
 		}
 
+		/*
+		 * wg_overudp_cb should guarantee that only packets
+		 * long enough to possibly be wg messages make it
+		 * through to us, but let's double-check out of
+		 * paranoia.
+		 */
+		KASSERT(m_length(m) >= sizeof(struct wg_msg));
+		if (__predict_false(m_length(m) < sizeof(struct wg_msg))) {
+			m_freem(m);
+			continue;
+		}
+
 		KASSERT(paddr != NULL);
 		KASSERT(paddr->m_len >= sizeof(struct sockaddr));
 		src = mtod(paddr, struct sockaddr *);
@@ -3834,7 +3846,10 @@ wg_overudp_cb(struct mbuf **mp, int offset, struct socket *so,
 
 	WG_TRACE("enter");
 
-	/* Verify the mbuf chain is long enough to have a wg msg header.  */
+	/*
+	 * Verify the mbuf chain is long enough to have a wg msg header.
+	 * wg_receive_packets relies on this.
+	 */
 	KASSERT(offset <= m_length(m));
 	if (__predict_false(m_length(m) - offset < sizeof(struct wg_msg))) {
 		/* drop on the floor */
@@ -5799,6 +5814,13 @@ rumpkern_wg_recv_peer(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
 	int bound;
 
 	WG_TRACE("");
+
+	/*
+	 * If the input UDP packet is too short, just drop it on the
+	 * floor like the kernel does.
+	 */
+	if (iov[1].iov_len < sizeof(struct wg_msg))
+		return;
 
 	src = iov[0].iov_base;
 
