@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.50 2026/07/01 19:29:57 riastradh Exp $	 */
+/*	$NetBSD: load.c,v 1.51 2026/07/01 19:31:15 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.50 2026/07/01 19:29:57 riastradh Exp $");
+__RCSID("$NetBSD: load.c,v 1.51 2026/07/01 19:31:15 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -193,6 +193,7 @@ restart:
 
 		*_rtld_objtail = obj;
 		_rtld_objtail = &obj->next;
+		_rtld_objgen++;
 		_rtld_objcount++;
 		_rtld_objloads++;
 		_rtld_objrelocpending++;

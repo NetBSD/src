@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.225 2026/07/01 19:29:57 riastradh Exp $	 */
+/*	$NetBSD: rtld.c,v 1.226 2026/07/01 19:31:15 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.225 2026/07/01 19:29:57 riastradh Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.226 2026/07/01 19:31:15 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -518,7 +518,7 @@ _rtld_call_fini_functions(sigset_t *mask, int force)
 	dbg(("_rtld_call_fini_functions(%d)", force));
 
 restart:
-	cur_objgen = ++_rtld_objgen;
+	cur_objgen = _rtld_objgen;
 	SIMPLEQ_INIT(&finilist);
 	_rtld_initlist_tsort(&finilist, 1);
 
@@ -646,7 +646,7 @@ _rtld_call_init_functions(sigset_t *mask)
 	dbg(("_rtld_call_init_functions()"));
 
 restart:
-	cur_objgen = ++_rtld_objgen;
+	cur_objgen = _rtld_objgen;
 	SIMPLEQ_INIT(&initlist);
 	_rtld_initlist_tsort(&initlist, 0);
 
@@ -1421,6 +1421,7 @@ restart:
 				linkp = &obj->next;
 		}
 		_rtld_objtail = linkp;
+		_rtld_objgen++;
 	}
 }
 
