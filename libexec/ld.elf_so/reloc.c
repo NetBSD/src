@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.120 2025/05/02 23:03:16 riastradh Exp $	 */
+/*	$NetBSD: reloc.c,v 1.121 2026/07/01 19:29:57 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.120 2025/05/02 23:03:16 riastradh Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.121 2026/07/01 19:29:57 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -266,6 +266,10 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 	int ok = 1;
 
 	for (obj = first; obj != NULL; obj = obj->next) {
+		if (obj->relocated)
+			continue;
+		obj->relocated = true;
+		_rtld_objrelocpending--;
 		if ((!obj->sysv_hash && !obj->gnu_hash) ||
 		    obj->symtab == NULL || obj->strtab == NULL) {
 			_rtld_error("%s: Shared object has no run-time"

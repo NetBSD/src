@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.155 2026/02/10 06:03:30 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.156 2026/07/01 19:29:57 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -329,6 +329,13 @@ typedef struct Struct_Obj_Entry {
 	void		*exidx_start;
 	size_t		exidx_sz;
 #endif
+	int		finiwaiter;	/* dlopen thread waiting for dlclose */
+	int		initfinilock;	/* thread running init/fini */
+	int		initfinilockwaiter; /* thread waiting to init/fini */
+	int		neededrefcount;	/* #threads loading obj's deps */
+	int		neededwaiter;	/* thread waiting for neededrefcount */
+	bool		relocated;	/* true if already relocated */
+	bool		dlclosing;	/* true if being dlclosed now */
 } Obj_Entry;
 
 typedef struct Struct_DoneList {
@@ -344,6 +351,7 @@ extern struct r_debug _rtld_debug;
 extern Search_Path *_rtld_default_paths;
 extern Obj_Entry *_rtld_objlist;
 extern Obj_Entry **_rtld_objtail;
+extern u_int _rtld_objrelocpending;
 extern u_int _rtld_objcount;
 extern u_int _rtld_objloads;
 extern const uintptr_t _rtld_compat_obj[];
@@ -408,6 +416,29 @@ void _rtld_objlist_push_tail(Objlist *, Obj_Entry *);
 Objlist_Entry *_rtld_objlist_find(Objlist *, const Obj_Entry *);
 void _rtld_ref_dag(Obj_Entry *);
 
+#ifdef RTLD_LOADER
+void _rtld_load_needed_enter(Obj_Entry *);
+void _rtld_load_needed_exit(Obj_Entry *);
+bool _rtld_wait_for_fini(Obj_Entry **, sigset_t *);
+#else
+static inline void
+_rtld_load_needed_enter(Obj_Entry *obj)
+{
+	obj->neededrefcount++;
+}
+static inline void
+_rtld_load_needed_exit(Obj_Entry *obj)
+{
+	obj->neededrefcount--;
+}
+static inline bool
+_rtld_wait_for_fini(Obj_Entry **objp, sigset_t *mask)
+{
+	assert((*objp)->refcount);
+	return false;
+}
+#endif
+
 void _rtld_shared_enter(void);
 void _rtld_shared_exit(void);
 void _rtld_exclusive_enter(sigset_t *);
@@ -424,9 +455,9 @@ void _rtld_digest_dynamic(const char *, Obj_Entry *);
 Obj_Entry *_rtld_digest_phdr(const Elf_Phdr *, int, caddr_t);
 
 /* load.c */
-Obj_Entry *_rtld_load_object(const char *, int);
-int _rtld_load_needed_objects(Obj_Entry *, int);
-int _rtld_preload(const char *);
+Obj_Entry *_rtld_load_object(const char *, int, sigset_t *);
+int _rtld_load_needed_objects(Obj_Entry *, int, sigset_t *);
+int _rtld_preload(const char *, sigset_t *);
 
 /* arch/<arch>/fixup.c */
 int _rtld_map_segment_fixup(const char *, int, Elf_Ehdr *, Elf_Phdr *,
@@ -452,7 +483,8 @@ Elf_Addr _rtld_resolve_ifunc2(const Obj_Entry *, Elf_Addr);
 void _rtld_call_ifunc(Obj_Entry *, sigset_t *, u_int);
 
 /* search.c */
-Obj_Entry *_rtld_load_library(const char *, const Obj_Entry *, int);
+Obj_Entry *_rtld_load_library(const char *, const Obj_Entry *, int,
+    sigset_t *);
 
 /* symbol.c */
 const Elf_Sym *_rtld_symlook_obj(const char *, Elf_Hash *,
