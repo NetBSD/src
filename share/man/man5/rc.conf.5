@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.194 2024/10/02 15:56:37 roy Exp $
+.\"	$NetBSD: rc.conf.5,v 1.195 2026/07/01 03:56:27 riastradh Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -1256,6 +1256,17 @@ is true, run
 .Xr chroot 2 Ns ed
 to
 .Sy unbound_chrootdir .
+.It Sy unbound_auto_trust_anchor
+Boolean value.
+If enabled, and
+.Dq auto-trust-anchor-file
+is set in
+.Xr unbound.conf 5
+but the file does not exist, then
+.Xr unbound-anchor 8
+will be used before starting
+.Xr unbound 8
+to prime the DNSSEC root trust anchors.
 .El
 .Ss Routing daemons
 .Bl -tag -width net_interfaces

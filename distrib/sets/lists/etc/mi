@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.277 2026/02/12 04:09:47 kre Exp $
+# $NetBSD: mi,v 1.278 2026/07/01 03:56:27 riastradh Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -369,6 +369,7 @@
 ./etc/sysctl.conf				etc-sys-etc
 ./etc/syslog.conf				etc-sys-etc
 ./etc/ttys					etc-sys-etc
+./etc/unbound/unbound.conf			etc-unbound-etc		unbound
 ./etc/weekly					etc-sys-etc
 ./etc/weekly.conf				etc-sys-etc
 ./etc/wpa_supplicant.conf			etc-net-etc

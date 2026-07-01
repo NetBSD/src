@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: unbound,v 1.2 2017/10/25 09:13:41 roy Exp $
+# $NetBSD: unbound,v 1.3 2026/07/01 03:56:27 riastradh Exp $
 #
 
 # PROVIDE: named
@@ -63,6 +63,19 @@ unbound_migrate()
 
 unbound_precmd()
 {
+	local root_key
+
+	if checkyesno unbound_auto_trust_anchor; then
+		root_key=$(su -m _unbound -c \
+		    'unbound-checkconf -o auto-trust-anchor-file') || return $?
+		if [ -n "$root_key" ] && [ ! -f /etc/unbound/"$root_key" ]
+		then
+			echo Bootstrapping Unbound DNS trust anchors.
+			su -m _unbound -c 'unbound-anchor -a "$1"' -- \
+			    /etc/unbound/"$root_key"
+		fi
+	fi
+
 	if [ -z "$unbound_chrootdir" ]; then
 		return
 	fi

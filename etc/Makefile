@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.476 2026/05/10 14:19:10 tls Exp $
+#	$NetBSD: Makefile,v 1.477 2026/07/01 03:56:27 riastradh Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -339,7 +339,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 			/dev/null ${DESTDIR}${file}; \
 	else true; fi
 .endfor
-.for subdir in . defaults autofs bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
+.for subdir in . defaults autofs bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh unbound
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/dhcpcd/sbin/dhcpcd configinstall
