@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_machdep.c,v 1.6 2023/05/22 16:28:07 riastradh Exp $	*/
+/*	$NetBSD: efi_machdep.c,v 1.7 2026/07/01 00:52:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.6 2023/05/22 16:28:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.7 2026/07/01 00:52:21 riastradh Exp $");
 
 #include "efi.h"
 #include "opt_efi.h"
@@ -771,9 +771,15 @@ efi_runtime_init(void)
 	 * for easy determination of unsupported ones without needing
 	 * the pmap, and deactivate the pmap now that we're done with
 	 * it for now.
+	 *
+	 * We use (memcpy) rather than memcpy in order to bypass
+	 * kASAN's memcpy wrapper macro, which is unaware of the
+	 * unusual virtual addresses in efi_runtime_pmap and reads
+	 * memory out of oblivion trying to verify whether these
+	 * virtual addresses are kosher.
 	 */
 	pmap_update(efi_runtime_pmap);
-	memcpy(&efi_rt, systbl->st_rt, sizeof(efi_rt));
+	(memcpy)(&efi_rt, systbl->st_rt, sizeof(efi_rt));
 	pmap_deactivate_sync(efi_runtime_pmap, cookie);
 
 	/*
