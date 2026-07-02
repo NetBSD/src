@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.29 2026/05/17 01:36:21 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.30 2026/07/02 14:38:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define	_SYS_ATOMIC_H_
 
 #include <sys/types.h>
+#include <sys/endian.h>
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdint.h>
 #endif
@@ -504,7 +505,13 @@ __do_atomic_store(volatile void *p, const void *q, size_t size)
 	switch (size) {
 	case 1: {
 		uint8_t v;
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 		unsigned s = 8 * ((uintptr_t)p & 3);
+#elif _BYTE_ORDER == _BIG_ENDIAN
+		unsigned s = 8 * (3 - ((uintptr_t)p & 3));
+#else
+#  error atomic endianness kablooie
+#endif
 		uint32_t o, n, m = ~(0xffU << s);
 
 		memcpy(&v, q, 1);
@@ -516,7 +523,13 @@ __do_atomic_store(volatile void *p, const void *q, size_t size)
 	}
 	case 2: {
 		uint16_t v;
-		unsigned s = 8 * (((uintptr_t)p & 2) >> 1);
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+		unsigned s = 8 * ((uintptr_t)p & 2);
+#elif _BYTE_ORDER == _BIG_ENDIAN
+		unsigned s = 8 * (2 - ((uintptr_t)p & 2));
+#else
+#  error atomic endianness kablooie
+#endif
 		uint32_t o, n, m = ~(0xffffU << s);
 
 		memcpy(&v, q, 2);
