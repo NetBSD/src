@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.221 2026/04/06 17:13:54 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.222 2026/07/02 16:08:01 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -57,18 +57,11 @@ static char *metaBailiwickStr;		/* string storage for the list */
 static StringList metaIgnorePaths = LST_INIT; /* paths we deliberately ignore */
 static char *metaIgnorePathsStr;	/* string storage for the list */
 
-#ifndef MAKE_META_IGNORE_PATHS
 #define MAKE_META_IGNORE_PATHS ".MAKE.META.IGNORE_PATHS"
-#endif
-#ifndef MAKE_META_IGNORE_PATTERNS
 #define MAKE_META_IGNORE_PATTERNS ".MAKE.META.IGNORE_PATTERNS"
-#endif
-#ifndef MAKE_META_IGNORE_FILTER
 #define MAKE_META_IGNORE_FILTER ".MAKE.META.IGNORE_FILTER"
-#endif
-#ifndef MAKE_META_CMP_FILTER
 #define MAKE_META_CMP_FILTER ".MAKE.META.CMP_FILTER"
-#endif
+#define MAKE_META_FILTER ".MAKE.META.FILTER"
 
 bool useMeta = false;
 static bool useFilemon = false;
@@ -81,6 +74,7 @@ static bool metaIgnoreCMDs = false;	/* ignore CMDs in .meta files */
 static bool metaIgnorePatterns = false; /* do we need to do pattern matches */
 static bool metaIgnoreFilter = false;	/* do we have more complex filtering? */
 static bool metaCmpFilter = false;	/* do we have CMP_FILTER ? */
+static bool metaFilter = false;		/* do we have FILTER */
 static bool metaCurdirOk = false;	/* write .meta in .CURDIR Ok? */
 static bool metaSilent = false;		/* if we have a .meta be SILENT */
 
@@ -596,6 +590,7 @@ meta_mode_init(const char *make_mode)
     metaIgnorePatterns = Var_Exists(SCOPE_GLOBAL, MAKE_META_IGNORE_PATTERNS);
     metaIgnoreFilter = Var_Exists(SCOPE_GLOBAL, MAKE_META_IGNORE_FILTER);
     metaCmpFilter = Var_Exists(SCOPE_GLOBAL, MAKE_META_CMP_FILTER);
+    metaFilter = Var_Exists(SCOPE_GLOBAL, MAKE_META_FILTER);
 }
 
 MAKE_INLINE BuildMon *
@@ -991,16 +986,19 @@ append_if_new(StringList *list, const char *str)
     Lst_Append(list, bmake_strdup(str));
 }
 
-/* A "reserved" variable to store the command to be filtered */
-#define META_CMD_FILTER_VAR ".MAKE.cmd_filtered"
+/* A "reserved" variable to store the string to be filtered */
+#define META_FILTER_VAR ".MAKE.META._filtered_"
 
 static char *
-meta_filter_cmd(GNode *gn, char *s)
+meta_filter(GNode *gn, char *s, const char *filter)
 {
-    Var_Set(gn, META_CMD_FILTER_VAR, s);
-    s = Var_Subst(
-	"${" META_CMD_FILTER_VAR ":${" MAKE_META_CMP_FILTER ":ts:}}",
-	gn, VARE_EVAL);
+    char buf[sizeof(META_FILTER_VAR) + sizeof(MAKE_META_CMP_FILTER) + 24];
+
+    Var_Set(gn, META_FILTER_VAR, s);
+    /* ":N" is a harmless do nothing */
+    snprintf(buf, sizeof(buf), "${%s:${%s:UN:ts:}}",
+      META_FILTER_VAR, filter);
+    s = Var_Subst(buf, gn, VARE_EVAL);
     return s;
 }
 
@@ -1012,14 +1010,24 @@ meta_cmd_cmp(GNode *gn, char *a, char *b, bool filter)
     rc = strcmp(a, b);
     if (rc == 0 || !filter)
 	return rc;
-    a = meta_filter_cmd(gn, a);
-    b = meta_filter_cmd(gn, b);
+    a = meta_filter(gn, a, MAKE_META_CMP_FILTER);
+    b = meta_filter(gn, b, MAKE_META_CMP_FILTER);
     rc = strcmp(a, b);
     free(a);
     free(b);
-    Var_Delete(gn, META_CMD_FILTER_VAR);
     return rc;
 }
+
+typedef enum MetaSection {
+    META_HEADER,
+    META_CMD,
+    META_CWD,
+    META_TARGET,
+    META_OODATE,
+    META_ENV,
+    META_OUTPUT,
+    META_FILEMON
+} MetaSection;
 
 bool
 meta_oodate(GNode *gn, bool oodate)
@@ -1044,7 +1052,6 @@ meta_oodate(GNode *gn, bool oodate)
     FILE *fp;
     bool needOODATE = false;
     StringList missingFiles;
-    bool have_filemon = false;
     bool cmp_filter;
 
     if (oodate)
@@ -1077,12 +1084,14 @@ meta_oodate(GNode *gn, bool oodate)
     if ((fp = fopen(fname, "r")) != NULL) {
 	static char *buf = NULL;
 	static size_t bufsz;
+	char *freeit = NULL;
 	unsigned lineno = 0;
 	int lastpid = 0;
 	int pid;
 	int x;
 	StringListNode *cmdNode;
 	struct cached_stat cst;
+	MetaSection section = META_HEADER;
 
 	if (buf == NULL) {
 	    bufsz = 8 * BUFSIZ;
@@ -1105,10 +1114,14 @@ meta_oodate(GNode *gn, bool oodate)
 	/* we want to track all the .meta we read */
 	Global_Append(".MAKE.META.FILES", fname);
 
-	cmp_filter = metaCmpFilter || Var_Exists(gn, MAKE_META_CMP_FILTER);
+	cmp_filter = metaFilter || metaCmpFilter || Var_Exists(gn, MAKE_META_CMP_FILTER);
 
 	cmdNode = gn->commands.first;
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
+	    if (freeit != NULL) {
+		free(freeit);
+		freeit = NULL;
+	    }
 	    lineno++;
 	    if (buf[x - 1] == '\n')
 		buf[x - 1] = '\0';
@@ -1119,16 +1132,37 @@ meta_oodate(GNode *gn, bool oodate)
 	    }
 	    link_src = NULL;
 	    move_target = NULL;
-	    /* Find the start of the build monitor section. */
-	    if (!have_filemon) {
-		if (strncmp(buf, "-- filemon", 10) == 0) {
-		    have_filemon = true;
-		    continue;
-		}
-		if (strncmp(buf, "# buildmon", 10) == 0) {
-		    have_filemon = true;
-		    continue;
-		}
+	    /*
+	     * Track which section of the meta file we are in.
+	     * For CMD, CWD, and FILEMON we may have to do filtering
+	     * the rest are of no interest here.
+	     */
+	    switch (section) {
+	    case META_HEADER:
+		section = META_CMD;
+		continue;
+	    case META_CMD:
+		if (strncmp(buf, "CWD", 3) == 0)
+		    section = META_CWD;
+		break;
+	    case META_CWD:
+		if (strncmp(buf, "TARG", 4) == 0)
+		    section = META_TARGET;
+		break;
+	    case META_TARGET:
+	    case META_OODATE:
+	    case META_ENV:
+		if (strncmp(buf, "-- command", 10) == 0)
+		    section = META_OUTPUT;
+		continue;
+	    case META_OUTPUT:
+		if (strncmp(buf, "-- filemon", 10) == 0)
+		    section = META_FILEMON;
+		if (strncmp(buf, "# buildmon", 10) == 0)
+		    section = META_FILEMON;
+		continue;
+	    case META_FILEMON:
+		break;
 	    }
 
 	    /* Delimit the record type. */
@@ -1136,8 +1170,35 @@ meta_oodate(GNode *gn, bool oodate)
 #ifdef DEBUG_META_MODE
 	    DEBUG3(META, "%s:%u: %s\n", fname, lineno, buf);
 #endif
+	    if (metaFilter) {
+		switch (buf[0]) {
+		case '#':		/* these do not need filtering */
+		case 'F':
+		case 'V':
+		case 'X':
+		    break;
+		default:
+		    switch (section) {
+		    default:
+			break;
+		    case META_CMD:
+		    case META_CWD:
+		    case META_FILEMON:
+			freeit = p = meta_filter(gn, p, MAKE_META_FILTER);
+#ifdef DEBUG_META_MODE
+			DEBUG3(META, "%s:%u: filtered: %s\n", fname, lineno, p);
+#endif
+			break;
+		    }
+		    break;
+		}
+	    }
+
 	    strsep(&p, " ");
-	    if (have_filemon) {
+	    switch (section) {
+	    default:
+		break;
+	    case META_FILEMON:
 		/*
 		 * We are in the 'filemon' output section.
 		 * Each record from filemon follows the general form:
@@ -1442,7 +1503,8 @@ meta_oodate(GNode *gn, bool oodate)
 		}
 		if (!oodate && buf[0] == 'L' && link_src != NULL)
 		    goto check_link_src;
-	    } else if (strcmp(buf, "CMD") == 0) {
+		break;
+	    case META_CMD:
 		/*
 		 * Compare the current command with the one in the
 		 * meta data file.
@@ -1508,7 +1570,8 @@ meta_oodate(GNode *gn, bool oodate)
 		    free(cmd);
 		    cmdNode = cmdNode->next;
 		}
-	    } else if (strcmp(buf, "CWD") == 0) {
+		break;
+	    case META_CWD:
 		/*
 		 * Check if there are extra commands now
 		 * that weren't in the meta data file.
@@ -1524,8 +1587,13 @@ meta_oodate(GNode *gn, bool oodate)
 			   fname, lineno, p, curdir);
 		    oodate = true;
 		}
+		break;
 	    }
 	}
+	free(freeit);
+
+	if (metaFilter || metaCmpFilter)
+	    Var_Delete(gn, META_FILTER_VAR);
 
 	fclose(fp);
 	if (!Lst_IsEmpty(&missingFiles)) {
@@ -1533,10 +1601,12 @@ meta_oodate(GNode *gn, bool oodate)
 		   fname, (char *)missingFiles.first->datum);
 	    oodate = true;
 	}
-	if (!oodate && !have_filemon && filemonMissing) {
+#ifdef USE_FILEMON
+	if (!oodate && section != META_FILEMON && filemonMissing) {
 	    DEBUG1(META, "%s: missing filemon data\n", fname);
 	    oodate = true;
 	}
+#endif
     } else {
 	if (writeMeta && (metaMissing || (gn->type & OP_META))) {
 	    const char *cp = NULL;

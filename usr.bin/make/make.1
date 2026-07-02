@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.392 2026/06/20 01:14:47 sjg Exp $
+.\"	$NetBSD: make.1,v 1.393 2026/07/02 16:08:01 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd June 19, 2026
+.Dd July  1, 2026
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1033,11 +1033,26 @@ the current target is considered out-of-date.
 .It Va .MAKE.META.CMP_FILTER
 In
 .Dq meta
-mode, it can (very rarely!) be useful to filter command
+mode, it can sometimes be useful to filter command
 lines before comparison.
-This variable can be set to a set of modifiers that are applied to
-each line of the old and new command that differ, if the filtered
-commands still differ, the target is considered out-of-date.
+This variable can contain a list of modifiers that will be joined with
+.Ql \&:
+and applied to each line of the old and new command that differ.
+If the filtered commands still differ,
+the target is considered out-of-date.
+.It Va .MAKE.META.FILTER
+In
+.Dq meta
+mode, it can be useful to filter most of the data in a meta file.
+For example, when a pre-built tree is relocated or cloned,
+all the targets would be considered out-of-date without a filter
+to replace the old location with the new.
+This variable is similar to
+.Va .MAKE.META.CMP_FILTER
+but is appliled to commands, cwd and the syscall records from filemon.
+In the case of commands, this is done prior to any
+.Va .MAKE.META.CMP_FILTER
+modifiers are applied during comparison.
 .It Va .MAKE.META.CREATED
 In
 .Dq meta
