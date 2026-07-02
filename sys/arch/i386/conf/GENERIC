@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1262 2026/02/20 07:54:26 yamt Exp $
+# $NetBSD: GENERIC,v 1.1263 2026/07/02 17:56:49 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1262 $"
+#ident		"GENERIC-$Revision: 1.1263 $"
 
 maxusers	64		# estimated number of users
 
@@ -414,7 +414,7 @@ pci*	at elansc? bus ?
 					# on anything else.
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
-#options 	PCI_RESOURCE		# Allocate unconfigured PCI resources
+options 	PCI_RESOURCE		# Allocate unconfigured PCI resources
 
 # PCI fixups, for both PCIBIOS and ACPI
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
