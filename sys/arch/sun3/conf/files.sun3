@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.89 2026/04/23 02:54:40 thorpej Exp $
+#	$NetBSD: files.sun3,v 1.90 2026/07/03 21:27:39 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -198,13 +198,13 @@ file arch/sun3/dev/cg2.c		cgtwo needs-flag
 
 device	xyc {drive = -1}
 attach	xyc at vme
-device	xy: disk
+device	xy: disk, bad144
 attach	xy at xyc
 file	arch/sun3/dev/xy.c		xy | xyc needs-flag
 
 device	xdc {drive = -1}
 attach	xdc at vme
-device	xd: disk
+device	xd: disk, bad144
 attach	xd at xdc
 file	arch/sun3/dev/xd.c		xd | xdc needs-flag
 

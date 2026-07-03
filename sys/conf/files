@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1320 2026/06/10 00:09:43 kre Exp $
+#	$NetBSD: files,v 1.1321 2026/07/03 21:27:39 thorpej Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -532,6 +532,10 @@ include "altq/files.altq"
 #
 device	ld: disk
 file	dev/ld.c			ld			needs-flag
+
+# Disk-related attributes
+define	bad144
+file	dev/bad144.c			bad144
 
 #
 # MII/PHY support for network devices

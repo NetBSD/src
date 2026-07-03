@@ -1,4 +1,4 @@
-#	$NetBSD: files.vme,v 1.10 2007/01/09 23:51:30 cube Exp $
+#	$NetBSD: files.vme,v 1.11 2026/07/03 21:27:40 thorpej Exp $
 #
 # Config file and device description for machine-independent VME code.
 # Included by ports that need it.
@@ -23,14 +23,14 @@ file	dev/vme/if_ie_vme.c	ie_vme
 # Xylogics 753/7053 SMD controller
 device	xdc {drive = -1}
 attach	xdc at vme
-device	xd: disk
+device	xd: disk, bad144
 attach	xd at xdc
 file	dev/vme/xd.c		xd | xdc			needs-flag
 
 # Xylogics 450/451 SMD controller
 device	xyc {drive = -1}
 attach	xyc at vme
-device	xy: disk
+device	xy: disk, bad144
 attach	xy at xyc
 file	dev/vme/xy.c		xy | xyc			needs-flag
 

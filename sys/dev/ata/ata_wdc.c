@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.120 2021/10/05 08:01:05 rin Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.121 2026/07/03 21:27:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.120 2021/10/05 08:01:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.121 2026/07/03 21:27:40 thorpej Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.120 2021/10/05 08:01:05 rin Exp $");
 #include <sys/bufq.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
+#include <sys/dkbad.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
 
@@ -362,38 +363,33 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 #endif
 	/*
-	 *
 	 * When starting a multi-sector transfer, or doing single-sector
 	 * transfers...
 	 */
 	if (xfer->c_skip == 0 || (ata_bio->flags & ATA_SINGLE) != 0) {
+		int i, distance;
+
 		if (ata_bio->flags & ATA_SINGLE)
 			nblks = 1;
 		else
 			nblks = xfer->c_bcount / drvp->lp->d_secsize;
 		/* Check for bad sectors and adjust transfer, if necessary. */
-		if ((drvp->lp->d_flags & D_BADSECT) != 0) {
-			long blkdiff;
-			int i;
-			for (i = 0; (blkdiff = drvp->badsect[i]) != -1;
-			    i++) {
-				blkdiff -= ata_bio->blkno;
-				if (blkdiff < 0)
-					continue;
-				if (blkdiff == 0) {
-					/* Replace current block of transfer. */
-					ata_bio->blkno =
-					    drvp->lp->d_secperunit -
-					    drvp->lp->d_nsectors - i - 1;
-				}
-				if (blkdiff < nblks) {
-					/* Bad block inside transfer. */
-					ata_bio->flags |= ATA_SINGLE;
-					nblks = 1;
-				}
-				break;
+		if (drvp->bad144 != NULL &&
+		    (i = bad144_isbad_lba(drvp->bad144,
+					  ata_bio->blkno, nblks,
+					  &distance)) != -1) {
+			/*
+			 * The bad block appears somewhere in this
+			 * transfer, so degrade to single-sector mode.
+			 */
+			ata_bio->flags |= ATA_SINGLE;
+			nblks = 1;
+			if (distance == 0) {
+				/* Replace current block of transfer. */
+				ata_bio->blkno =
+				    drvp->lp->d_secperunit -
+				    drvp->lp->d_nsectors - i - 1;
 			}
-		/* Transfer is okay now. */
 		}
 		if (ata_bio->flags & ATA_LBA48) {
 			sect = 0;

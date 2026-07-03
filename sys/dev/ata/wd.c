@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.474 2025/04/13 14:00:59 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.475 2026/07/03 21:27:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.474 2025/04/13 14:00:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.475 2026/07/03 21:27:40 thorpej Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.474 2025/04/13 14:00:59 jakllsch Exp $");
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/dkbad.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
@@ -229,10 +230,6 @@ static const struct dkdriver wddkdriver = {
 	.d_lastclose = wd_lastclose,
 	.d_discard = wd_discard
 };
-
-#ifdef HAS_BAD144_HANDLING
-static void bad144intern(struct wd_softc *);
-#endif
 
 #define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
 
@@ -1138,6 +1135,87 @@ wdwrite(dev_t dev, struct uio *uio, int flags)
 	return (physio(wdstrategy, NULL, dev, B_WRITE, wdminphys, uio));
 }
 
+/*
+ * The bad144 table is consulted in _wdc_ata_bio_start(), which is
+ * called with the channel lock held.  Thus, we must serialize using
+ * that lock when manipulating anything related to the bad144 table.
+ */
+#define	WD_BAD144_LOCK(wd)	mutex_enter(&(wd)->drvp->chnl_softc->ch_lock)
+#define	WD_BAD144_UNLOCK(wd)	mutex_exit(&(wd)->drvp->chnl_softc->ch_lock)
+
+static void
+wd_load_bad144(struct wd_softc *wd, dev_t dev)
+{
+	struct dk_softc * const dksc = &wd->sc_dksc;
+	const struct disklabel * const lp = dksc->sc_dkdev.dk_label;
+	struct bad144_context *bad144 = NULL;
+	int error;
+
+	/*
+	 * We are called from wdopen() if the disklabel indicates there
+	 * is a bad144 table present on the disk.  We only want to attempt
+	 * to read the bad144 table once, on the very first open, because
+	 * we are going to print diagnostic information in case there is
+	 * some inconsistency that prevents bad144 from working.
+	 */
+
+	WD_BAD144_LOCK(wd);
+
+	if (wd->sc_tried_bad144 || wd->drvp->bad144 != NULL) {
+		/*
+		 * This is not the first pass through, or someone raced
+		 * with us and beat us to it.
+		 */
+		goto out_unlock;
+	}
+
+	/* Don't hold this lock while we allocate memory and perform I/O. */
+	WD_BAD144_UNLOCK(wd);
+
+	bad144 = bad144_init(lp->d_secsize, lp->d_ncylinders, lp->d_ntracks,
+	    lp->d_nsectors);
+	if (bad144 == NULL) {
+		printf("%s: disklabel indicates BAD144 but "
+		       "BAD144 not supported on this drive",
+		    device_xname(dksc->sc_dev));
+		goto out;
+	}
+
+	error = bad144_load(bad144, WDLABELDEV(dev), wdstrategy);
+	if (error == ESRCH) {
+		/* No bad144 table on this drive?? */
+		printf("%s: disklabel indicates BAD144 but "
+		       "BAD144 table not found",
+		    device_xname(dksc->sc_dev));
+	} else if (error == EINVAL) {
+		printf("%s: invalid BAD144 table",
+		    device_xname(dksc->sc_dev));
+	} else if (error) {
+		printf("%s: error %d reading BAD144 table",
+		    device_xname(dksc->sc_dev), error);
+	}
+
+ out:
+	WD_BAD144_LOCK(wd);
+	if (bad144 != NULL && error == 0) {
+		/*
+		 * Don't replace the in-use table if we lost the
+		 * race; the one we just read in is probably stale.
+		 */
+		if (wd->drvp->bad144 == NULL) {
+			wd->drvp->bad144 = bad144;
+			bad144 = NULL;
+		}
+	}
+	wd->sc_tried_bad144 = true;
+
+ out_unlock:
+	WD_BAD144_UNLOCK(wd);
+	if (bad144 != NULL) {
+		bad144_fini(bad144);
+	}
+}
+
 static int
 wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
@@ -1170,6 +1248,15 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	}
 
 	error = dk_open(dksc, dev, flag, fmt, l);
+
+	/*
+	 * If the disklabel indicates we have a bad144 table,
+	 * read that in if we haven't already.
+	 */
+	if (error == 0 &&
+	    (dksc->sc_dkdev.dk_label->d_flags & D_BADSECT) != 0) {
+		wd_load_bad144(wd, dev);
+	}
 
 	return error;
 }
@@ -1283,6 +1370,38 @@ wdperror(const struct wd_softc *wd, struct ata_xfer *xfer)
 	printf(")\n");
 }
 
+static int
+wd_diocsbad(struct wd_softc *wd, const struct dkbad *dkb)
+{
+	struct dk_softc *dksc = &wd->sc_dksc;
+	const struct disklabel * const lp = dksc->sc_dkdev.dk_label;
+	struct bad144_context *bad144, *obad144;
+	int error;
+
+	bad144 = bad144_init(lp->d_secsize, lp->d_ncylinders, lp->d_ntracks,
+	    lp->d_nsectors);
+	if (bad144 == NULL) {
+		return ENOTSUP;
+	}
+
+	error = bad144_set(bad144, dkb);
+	if (error) {
+		bad144_fini(bad144);
+		return error;
+	}
+
+	WD_BAD144_LOCK(wd);
+	obad144 = wd->drvp->bad144;
+	wd->drvp->bad144 = bad144;
+	WD_BAD144_UNLOCK(wd);
+
+	if (obad144 != NULL) {
+		bad144_fini(obad144);
+	}
+
+	return 0;
+}
+
 int
 wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
@@ -1296,15 +1415,11 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return EIO;
 
 	switch (cmd) {
-#ifdef HAS_BAD144_HANDLING
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
-		dksc->sc_dkdev.dk_cpulabel->bad = *(struct dkbad *)addr;
-		dksc->sc_dkdev.dk_label->d_flags |= D_BADSECT;
-		bad144intern(wd);
-		return 0;
-#endif
+		return wd_diocsbad(wd, (struct dkbad *)addr);
+
 #ifdef WD_SOFTBADSECT
 	case DIOCBSLIST: {
 		uint32_t count, missing, skip;
@@ -1686,33 +1801,6 @@ wd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	wddoingadump = 0;
 	return 0;
 }
-
-#ifdef HAS_BAD144_HANDLING
-/*
- * Internalize the bad sector table.
- */
-void
-bad144intern(struct wd_softc *wd)
-{
-	struct dk_softc *dksc = &wd->sc_dksc;
-	struct dkbad *bt = &dksc->sc_dkdev.dk_cpulabel->bad;
-	struct disklabel *lp = dksc->sc_dkdev.dk_label;
-	int i = 0;
-
-	ATADEBUG_PRINT(("bad144intern\n"), DEBUG_XFERS);
-
-	for (; i < NBT_BAD; i++) {
-		if (bt->bt_bad[i].bt_cyl == 0xffff)
-			break;
-		wd->drvp->badsect[i] =
-		    bt->bt_bad[i].bt_cyl * lp->d_secpercyl +
-		    (bt->bt_bad[i].bt_trksec >> 8) * lp->d_nsectors +
-		    (bt->bt_bad[i].bt_trksec & 0xff);
-	}
-	for (; i < NBT_BAD+1; i++)
-		wd->drvp->badsect[i] = -1;
-}
-#endif
 
 static void
 wd_set_geometry(struct wd_softc *wd)

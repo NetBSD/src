@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.109 2021/10/05 08:01:05 rin Exp $	*/
+/*	$NetBSD: atavar.h,v 1.110 2026/07/03 21:27:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -338,7 +338,7 @@ struct ata_drive_datas {
 	/* Context used for I/O */
 	struct disklabel *lp;	/* pointer to drive's label info */
 	uint8_t		multi;	/* # of blocks to transfer in multi-mode */
-	daddr_t	badsect[127];	/* 126 plus trailing -1 marker */
+	struct bad144_context *bad144; /* bad144 data */
 };
 
 /* User config flags that force (or disable) the use of a mode */

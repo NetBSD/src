@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.84 2024/12/21 17:40:11 tsutsui Exp $	*/
+/*	$NetBSD: xy.c,v 1.85 2026/07/03 21:27:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.84 2024/12/21 17:40:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.85 2026/07/03 21:27:39 thorpej Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -537,7 +537,6 @@ static void
 xy_init(struct xy_softc *xy)
 {
 	struct xyc_softc *xyc;
-	struct dkbad *dkb;
 	void *dvmabuf;
 	int err, spt, mb, blk, lcv, fullmode, newstate;
 
@@ -573,9 +572,6 @@ xy_init(struct xy_softc *xy)
 	xy->nhead = 1;
 	xy->nsect = 1;
 	xy->sectpercyl = 1;
-	for (lcv = 0; lcv < 126; lcv++)	/* init empty bad144 table */
-		xy->dkb.bt_bad[lcv].bt_cyl =
-		    xy->dkb.bt_bad[lcv].bt_trksec = 0xffff;
 
 	/* read disk label */
 	for (xy->drive_type = 0; xy->drive_type <= XYC_MAXDT;
@@ -659,6 +655,10 @@ xy_init(struct xy_softc *xy)
 	 * read bad144 table. this table resides on the first sector of the
 	 * last track of the disk (i.e. second cyl of "acyl" area).
 	 */
+
+	xy->bad144 = bad144_init(XYFM_BPS, xy->ncyl, xy->nhead, xy->nsect);
+	KASSERT(xy->bad144 != NULL);
+
 	blk = (xy->ncyl + xy->acyl - 1) * (xy->nhead * xy->nsect) +
 								/* last cyl */
 	    (xy->nhead - 1) * xy->nsect;	/* last head */
@@ -671,25 +671,10 @@ xy_init(struct xy_softc *xy)
 		goto done;
 	}
 
-	/* check dkbad for sanity */
-	dkb = (struct dkbad *)dvmabuf;
-	for (lcv = 0; lcv < 126; lcv++) {
-		if ((dkb->bt_bad[lcv].bt_cyl == 0xffff ||
-		     dkb->bt_bad[lcv].bt_cyl == 0) &&
-		    dkb->bt_bad[lcv].bt_trksec == 0xffff)
-			continue;	/* blank */
-		if (dkb->bt_bad[lcv].bt_cyl >= xy->ncyl)
-			break;
-		if ((dkb->bt_bad[lcv].bt_trksec >> 8) >= xy->nhead)
-			break;
-		if ((dkb->bt_bad[lcv].bt_trksec & 0xff) >= xy->nsect)
-			break;
-	}
-	if (lcv != 126) {
+	err = bad144_set(xy->bad144, (struct dkbad *)dvmabuf);
+	if (err) {
 		printf("%s: warning: invalid bad144 sector!\n",
 		    device_xname(xy->sc_dev));
-	} else {
-		memcpy(&xy->dkb, dvmabuf, XYFM_BPS);
 	}
 
  done:
@@ -829,9 +814,9 @@ xyioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		s = splbio();
-		memcpy(&xy->dkb, addr, sizeof(xy->dkb));
+		error = bad144_set(xy->bad144, (struct dkbad *)addr);
 		splx(s);
-		return 0;
+		return error;
 
 	case DIOCSDINFO:	/* set disk label */
 		if ((flag & FWRITE) == 0)
@@ -1888,10 +1873,10 @@ xyc_error(struct xyc_softc *xycsc, struct xy_iorq *iorq, struct xy_iopb *iopb,
 	    (iorq->mode & XY_MODE_B144) == 0) {
 		advance = iorq->sectcnt - iopb->scnt;
 		XYC_ADVANCE(iorq, advance);
-		if ((i = isbad(&iorq->xy->dkb,
-		    iorq->blockno / iorq->xy->sectpercyl,
-		    (iorq->blockno / iorq->xy->nsect) % iorq->xy->nhead,
-		    iorq->blockno % iorq->xy->nsect)) != -1) {
+		if ((i = bad144_isbad_chs(iorq->xy->bad144,
+			    iorq->blockno / iorq->xy->sectpercyl,
+			    (iorq->blockno / iorq->xy->nsect) % iorq->xy->nhead,
+			    iorq->blockno % iorq->xy->nsect)) != -1) {
 			iorq->mode |= XY_MODE_B144;	/* enter bad144 mode &
 							 * redirect */
 			iopb->errno = iopb->done = iopb->errs = 0;
