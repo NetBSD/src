@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.52 2025/04/13 14:00:59 jakllsch Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.53 2026/07/03 21:27:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -71,6 +71,12 @@ struct wd_softc {
 	uint64_t sc_capacity512; /* ... in DEV_BSIZE blocks */
 	uint32_t sc_capacity28; /* capacity accessible with LBA28 commands */
 	uint32_t sc_blksize; /* logical block size, in bytes */
+
+	/*
+	 * We only want to try loading the bad144 table from disk once,
+	 * the very first time the disk is opened.
+	 */
+	bool sc_tried_bad144;
 
 #ifdef WD_SOFTBADSECT
 	SLIST_HEAD(, disk_badsectors)	sc_bslist;

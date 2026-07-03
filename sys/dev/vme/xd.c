@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.100 2025/09/06 21:20:20 andvar Exp $	*/
+/*	$NetBSD: xd.c,v 1.101 2026/07/03 21:27:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.100 2025/09/06 21:20:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.101 2026/07/03 21:27:40 thorpej Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -711,9 +711,8 @@ xdattach(device_t parent, device_t self, void *aux)
 	struct xd_softc *xd = device_private(self);
 	struct xdc_softc *xdc = device_private(parent);
 	struct xdc_attach_args *xa = aux;
-	int     rqno, spt = 0, mb, blk, lcv, fmode, s = 0, newstate;
+	int     rqno, spt = 0, mb, blk, fmode, s = 0, newstate;
 	struct xd_iopb_drive *driopb;
-	struct dkbad *dkb;
 	int			rseg, error;
 	bus_dma_segment_t	seg;
 	bus_addr_t		busaddr;
@@ -815,8 +814,6 @@ xdattach(device_t parent, device_t self, void *aux)
 	xd->nhead = 1;
 	xd->nsect = 1;
 	xd->sectpercyl = 1;
-	for (lcv = 0; lcv < 126; lcv++)	/* init empty bad144 table */
-		xd->dkb.bt_bad[lcv].bt_cyl = xd->dkb.bt_bad[lcv].bt_trksec = 0xffff;
 	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_DRV, xd->xd_drive, 0, 0, 0, fmode);
 	XDC_DONE(xdc, rqno, error);
 	if (error) {
@@ -867,6 +864,9 @@ xdattach(device_t parent, device_t self, void *aux)
 	 * last track of the disk (i.e. second cyl of "acyl" area).
 	 */
 
+	xd->bad144 = bad144_init(XDFM_BPS, xd->ncyl, xd->nhead, xd->nsect);
+	KASSERT(xd->bad144 != NULL);
+
 	blk = (xd->ncyl + xd->acyl - 1) * (xd->nhead * xd->nsect) + /* last cyl */
 	    (xd->nhead - 1) * xd->nsect;	/* last head */
 	rqno = xdc_cmd(xdc, XDCMD_RD, 0, xd->xd_drive, blk, 1, dmaddr, fmode);
@@ -877,24 +877,9 @@ xdattach(device_t parent, device_t self, void *aux)
 		goto done;
 	}
 
-	/* check dkbad for sanity */
-	dkb = (struct dkbad *) buf;
-	for (lcv = 0; lcv < 126; lcv++) {
-		if ((dkb->bt_bad[lcv].bt_cyl == 0xffff ||
-				dkb->bt_bad[lcv].bt_cyl == 0) &&
-		     dkb->bt_bad[lcv].bt_trksec == 0xffff)
-			continue;	/* blank */
-		if (dkb->bt_bad[lcv].bt_cyl >= xd->ncyl)
-			break;
-		if ((dkb->bt_bad[lcv].bt_trksec >> 8) >= xd->nhead)
-			break;
-		if ((dkb->bt_bad[lcv].bt_trksec & 0xff) >= xd->nsect)
-			break;
-	}
-	if (lcv != 126) {
+	error = bad144_set(xd->bad144, (struct dkbad *)buf);
+	if (error) {
 		aprint_error_dev(xd->sc_dev, "warning: invalid bad144 sector!\n");
-	} else {
-		memcpy(&xd->dkb, buf, XDFM_BPS);
 	}
 
 done:
@@ -1044,9 +1029,9 @@ xdioctl(dev_t dev, u_long command, void *addr, int flag, struct lwp *l)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		s = splbio();
-		memcpy(&xd->dkb, addr, sizeof(xd->dkb));
+		error = bad144_set(xd->bad144, (struct dkbad *)addr);
 		splx(s);
-		return 0;
+		return error;
 
 	case DIOCSDINFO:	/* set disk label */
 #ifdef __HAVE_OLD_DISKLABEL
@@ -2177,8 +2162,8 @@ xdc_error(struct xdc_softc *xdcsc, struct xd_iorq *iorq, struct xd_iopb *iopb,
 	    (iorq->mode & XD_MODE_B144) == 0) {
 		advance = iorq->sectcnt - iopb->sectcnt;
 		XDC_ADVANCE(iorq, advance);
-#ifdef __sparc__
-		if ((i = isbad(&iorq->xd->dkb, iorq->blockno / iorq->xd->sectpercyl,
+		if ((i = bad144_isbad_chs(iorq->xd->bad144,
+			    iorq->blockno / iorq->xd->sectpercyl,
 			    (iorq->blockno / iorq->xd->nsect) % iorq->xd->nhead,
 			    iorq->blockno % iorq->xd->nsect)) != -1) {
 			iorq->mode |= XD_MODE_B144;	/* enter bad144 mode &
@@ -2195,7 +2180,6 @@ xdc_error(struct xdc_softc *xdcsc, struct xd_iorq *iorq, struct xd_iopb *iopb,
 			xdc_start(xdcsc, 1);	/* resubmit */
 			return (XD_ERR_AOK);	/* recovered! */
 		}
-#endif
 	}
 
 	/*
