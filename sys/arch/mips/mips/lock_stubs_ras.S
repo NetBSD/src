@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_ras.S,v 1.12 2024/09/08 09:36:49 rillig Exp $	*/
+/*	$NetBSD: lock_stubs_ras.S,v 1.12.2.1 2026/07/03 18:29:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_ras.S,v 1.12 2024/09/08 09:36:49 rillig Exp $")
+RCSID("$NetBSD: lock_stubs_ras.S,v 1.12.2.1 2026/07/03 18:29:25 martin Exp $")
 
 #include "assym.h"
 
@@ -400,7 +400,7 @@ STATIC_NESTED(ras_mutex_spin_enter, CALLFRAME_SIZ, ra)
 	 INT_S	t1, MTX_LOCK(t0)
 3:
 	j	_C_LABEL(mutex_spin_retry)
-	 nop
+	 move	a0, t0			# a0 still holds the splraise cookie
 #else	/* DIAGNOSTIC */
 	j	ra
 	 nop
