@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.36 2026/05/12 02:16:27 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.37 2026/07/03 17:35:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,7 +101,27 @@
  * consume kernel VA space.
  */
 #define	MAXEXEC		1
+
+#define	__NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PGSHIFT)
+#define	__NKMEMPAGES_MAX_DEFAULT	((8 * 1024 * 1024) >> PGSHIFT)
+
+#else /* ! __mc68010__ */
+
+#define	__NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PGSHIFT)
+#define	__NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PGSHIFT)
+
 #endif /* __mc68010__ */
+
+/*
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ */
+#ifndef NKMEMPAGES_MIN_DEFAULT
+#define	NKMEMPAGES_MIN_DEFAULT	__NKMEMPAGES_MIN_DEFAULT
+#endif
+#if !defined(NKMEMPAGES_MAX_UNLIMITED) && !defined(NKMEMPAGES_MAX_DEFAULT)
+#define	NKMEMPAGES_MAX_DEFAULT	__NKMEMPAGES_MAX_DEFAULT
+#endif
 
 /*
  * Mach-derived conversion macros
@@ -112,7 +132,7 @@
 #define	m68k_btop(x)		((vaddr_t)(x) >> PGSHIFT)
 #define	m68k_ptob(x)		((vaddr_t)(x) << PGSHIFT)
 
-#endif /* _MODULE */
+#endif /* ! _MODULE */
 
 #endif /* _KERNEL || _STANDALONE */
 

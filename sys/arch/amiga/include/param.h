@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.54 2026/05/10 20:27:28 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.55 2026/07/03 17:35:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,13 +53,6 @@
 
 /* We need the same btop macro in device drivers for m68k and powerpc */
 #define MD_BTOP(pa)	m68k_btop(pa)
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 #ifdef	_KERNEL
 /*

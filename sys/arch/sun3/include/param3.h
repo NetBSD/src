@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.59 2026/05/11 12:23:29 thorpej Exp $	*/
+/*	$NetBSD: param3.h,v 1.60 2026/07/03 17:35:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,6 @@
  * logical pages.
  * Note maximum value can't be so large due to limited KVA space as above.
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
 
 #if !defined(__mc68010__)	/* sun68k libsa always builds for 68010 */

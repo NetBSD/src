@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.37 2026/05/10 20:27:29 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.38 2026/07/03 17:35:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,22 +47,14 @@
 #define	_MACHINE 	mvme68k
 #define	MACHINE		"mvme68k"
 
-#ifdef _KERNEL
-/*
- * Grab the interrupt definitions
- */
-#include <machine/intr.h>
-#endif /* _KERNEL */
-
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 
-#include <m68k/param.h>
+#ifdef _KERNEL
+#include <machine/intr.h>
 
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
 #define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#endif /* _KERNEL */
+
+#include <m68k/param.h>
 
 #endif	/* !_MACHINE_PARAM_H_ */
