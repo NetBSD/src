@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.76 2026/07/03 11:59:58 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.77 2026/07/03 12:05:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1623,7 +1623,7 @@ AARCH64REG_WRITE_INLINE(cntvct_el0)
 #define	ID_AA64PFR0_EL1_MPAM		__BITS(43,40) // MPAM Extension
 #define	 ID_AA64PFR0_EL1_MPAM_NONE	0
 #define	 ID_AA64PFR0_EL1_MPAM_IMPL	1
-#define	ID_AA64PFR0_EL1_SEL2		__BITS(43,40) // Secure EL2
+#define	ID_AA64PFR0_EL1_SEL2		__BITS(39,36) // Secure EL2
 #define	 ID_AA64PFR0_EL1_SEL2_NONE	0
 #define	 ID_AA64PFR0_EL1_SEL2_IMPL	1
 #define	ID_AA64PFR0_EL1_SVE		__BITS(35,32) // Scalable Vector
