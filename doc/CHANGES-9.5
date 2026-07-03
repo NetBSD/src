@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.108 2026/06/30 09:59:20 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.109 2026/07/03 18:44:19 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1500,4 +1500,24 @@ sys/arch/i386/stand/efiboot/bootx64/startprog64.S 1.6
 
 	x86/efiboot: PR 59151: put writable variables in .data, not .text.
 	[riastradh, ticket #2029]
+
+distrib/sets/lists/debug/mi			1.515 (patch)
+distrib/sets/lists/tests/mi			1.1423 (patch)
+lib/libc/citrus/modules/citrus_hz.c		1.5 (patch)
+lib/libc/citrus/modules/citrus_utf7.c		1.8 (patch)
+lib/libc/citrus/modules/citrus_viqr.c		1.7 (patch)
+lib/libc/citrus/modules/citrus_zw.c		1.7 (patch)
+tests/lib/libc/locale/Makefile			1.19 (patch)
+tests/lib/libc/locale/t_iconv.c			1.1-1.8 (patch)
+
+	libc: PR 59019: fix various iconv/encoding issues.
+	[riastradh, ticket #2030]
+
+tools/compat/compat_defs.h			1.131 (patch)
+tools/compat/configure				1.111 (patch)
+tools/compat/configure.ac			1.113 (patch)
+
+	Fix tools build on NetBSD -current (and other systems with newer
+	compilers).
+	[gutteridge, ticket #2031]
 
