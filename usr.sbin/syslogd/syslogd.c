@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.154 2026/07/03 10:16:14 msaitoh Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.155 2026/07/03 10:18:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.154 2026/07/03 10:16:14 msaitoh Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.155 2026/07/03 10:18:05 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -687,6 +687,8 @@ getgroup:
 	ev = allocev();
 	signal_set(ev, SIGUSR1, dispatch_force_tls_reconnect, ev);
 	EVENT_ADD(ev);
+	SLIST_INIT(&tls_opt.fprint_head);
+	SLIST_INIT(&tls_opt.cert_head);
 #endif /* !DISABLE_TLS */
 
 	if (fklog >= 0) {
