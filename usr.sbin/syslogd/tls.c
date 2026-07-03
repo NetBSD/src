@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.23 2026/07/03 09:37:45 msaitoh Exp $	*/
+/*	$NetBSD: tls.c,v 1.24 2026/07/03 09:40:54 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.23 2026/07/03 09:37:45 msaitoh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.24 2026/07/03 09:40:54 msaitoh Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -445,8 +445,9 @@ match_hostnames(X509 *cert, const char *hostname, const char *subject)
 	GENERAL_NAME *gn;
 	X509_NAME *x509name;
 	X509_NAME_ENTRY *entry;
-	ASN1_OCTET_STRING *asn1_ip, *asn1_cn_ip;
+	ASN1_OCTET_STRING *asn1_ip = NULL, *asn1_cn_ip = NULL;
 	int crit, idx;
+	bool match = false;
 
 	DPRINTF((D_TLS|D_CALL), "match_hostnames(%p, \"%s\", \"%s\")\n",
 	    cert, hostname, subject);
@@ -470,8 +471,10 @@ match_hostnames(X509 *cert, const char *hostname, const char *subject)
 				gn = sk_GENERAL_NAME_value(gennames, i);
 				if (gn->type == GEN_IPADD
 				    && !ASN1_OCTET_STRING_cmp(asn1_ip,
-					gn->d.iPAddress))
-					return true;
+					gn->d.iPAddress)) {
+					match = true;
+					goto matched;
+				}
 			}
 		}
 		/* second loop: check DNS names */
@@ -482,8 +485,10 @@ match_hostnames(X509 *cert, const char *hostname, const char *subject)
 				    ASN1_STRING_get0_data(gn->d.ia5);
 				len = ASN1_STRING_length(gn->d.ia5);
 				if (!strncasecmp(subject, str, len)
-				    || !strncasecmp(hostname, str, len))
-					return true;
+				    || !strncasecmp(hostname, str, len)) {
+					match = true;
+					goto matched;
+				}
 			}
 		}
 	}
@@ -504,7 +509,8 @@ match_hostnames(X509 *cert, const char *hostname, const char *subject)
 			    || (hostname && !strncasecmp(hostname,
 			    (const char*)ubuf, len))) {
 				OPENSSL_free(ubuf);
-				return true;
+				match = true;
+				goto matched;
 			}
 			OPENSSL_free(ubuf);
 			/* IP -- convert to ASN1_OCTET_STRING and compare then
@@ -513,12 +519,16 @@ match_hostnames(X509 *cert, const char *hostname, const char *subject)
 			    && subject
 			    && (asn1_cn_ip = a2i_IPADDRESS(subject))
 			    && !ASN1_OCTET_STRING_cmp(asn1_ip, asn1_cn_ip)) {
-				return true;
+				match = true;
+				goto matched;
 			}
 		}
 		i = X509_NAME_get_index_by_NID(x509name, NID_commonName, i);
 	}
-	return false;
+matched:
+	ASN1_OCTET_STRING_free(asn1_ip);
+	ASN1_OCTET_STRING_free(asn1_cn_ip);
+	return match;
 }
 
 /*
