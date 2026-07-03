@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37.4.1 2023/12/29 20:21:39 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37.4.2 2026/07/03 17:54:56 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -122,11 +122,13 @@ __BEGIN_DECLS
 #include <sys/systm.h>
 
 /*
- * For OEA and OEA64_BRIDGE, we guarantee that pa below USER_ADDR
- * (== 3GB < VM_MIN_KERNEL_ADDRESS) is direct-mapped.
+ * Physical memory below PMAP_DIRECT_MAPPED_LEN is direct-mapped 
+ * (pa == va). Direct region covers the segments below BOTH 
+ * the user copyin window (USER_SR) and the kernel HTAB window
+ * (KERNEL_SR), so it can never overlap.
  */
 #if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
-#define	PMAP_DIRECT_MAPPED_SR	(USER_SR - 1)
+#define	PMAP_DIRECT_MAPPED_SR	(MIN(USER_SR, KERNEL_SR) - 1)
 #define	PMAP_DIRECT_MAPPED_LEN \
     ((vaddr_t)SEGMENT_LENGTH * (PMAP_DIRECT_MAPPED_SR + 1))
 #endif
