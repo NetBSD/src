@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.297 2026/06/24 15:30:45 riastradh Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.298 2026/07/03 07:07:56 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.297 2026/06/24 15:30:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.298 2026/07/03 07:07:56 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -656,7 +656,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		/* Count received bytes, add hardware framing */
 		if_statadd(ifp, if_ibytes, m->m_pkthdr.len + sp->pp_framebytes);
 		/* Note time of last receive */
-		sp->pp_last_receive = time_uptime32;
+		atomic_store_relaxed(&sp->pp_last_receive, time_uptime32);
 	}
 
 	if (m->m_pkthdr.len <= PPP_HEADER_LEN) {
@@ -749,14 +749,15 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			sppp_cp_input(&ipcp, sp, m);
 			/* already m_freem(m) */
 		} else {
-			m_freem(m);
+			SPPP_UNLOCK(sp);
+			goto drop;
 		}
 		SPPP_UNLOCK(sp);
 		return;
 	case PPP_IP:
 		SPPP_LOCK(sp, RW_READER);
 		if (sp->scp[IDX_IPCP].state == STATE_OPENED) {
-			atomic_store_relaxed(&sp->pp_last_activity, time_uptime);
+			atomic_store_relaxed(&sp->pp_last_activity, time_uptime32);
 			pktq = ip_pktq;
 			rps_hash = atomic_load_relaxed(&sppp_pktq_rps_hash_p);
 		}
@@ -825,7 +826,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	uint16_t protocol;
 	size_t pktlen;
 
-	atomic_store_relaxed(&sp->pp_last_activity, time_uptime);
+	atomic_store_relaxed(&sp->pp_last_activity, time_uptime32);
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -5448,7 +5449,7 @@ static void
 sppp_keepalive(void *dummy)
 {
 	struct sppp *sp;
-	uint32_t now, last_activity;
+	uint32_t now, last_activity, last_receive;
 
 	SPPPQ_LOCK();
 
@@ -5456,6 +5457,7 @@ sppp_keepalive(void *dummy)
 	for (sp=spppq; sp; sp=sp->pp_next) {
 		SPPP_LOCK(sp, RW_WRITER);
 		last_activity = atomic_load_relaxed(&sp->pp_last_activity);
+		last_receive = atomic_load_relaxed(&sp->pp_last_receive);
 
 		/* check idle timeout */
 		if ((sp->pp_idle_timeout != 0) && sp->pp_connecting
@@ -5485,7 +5487,7 @@ sppp_keepalive(void *dummy)
 
 		/* No echo reply, but maybe user data passed through? */
 		if (sp->pp_max_noreceive != 0 &&
-		    (now - sp->pp_last_receive) < sp->pp_max_noreceive) {
+		    (now - last_receive) < sp->pp_max_noreceive) {
 			sp->pp_alivecnt = 0;
 			SPPP_UNLOCK(sp);
 			continue;
