@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.h,v 1.10 2026/07/03 10:08:40 msaitoh Exp $	*/
+/*	$NetBSD: syslogd.h,v 1.11 2026/07/03 10:10:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 
 #include <sys/cdefs.h>
 #define MAXLINE		1024		/* maximum line length */
-#define MAXSVLINE	120		/* maximum saved line length */
 #define DEFUPRI		(LOG_USER|LOG_NOTICE)
 #define DEFSPRI		(LOG_KERN|LOG_NOTICE)
 #define TIMERINTVL	30		/* interval for checking flush, mark */
