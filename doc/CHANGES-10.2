@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.106 2026/06/30 09:57:19 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.107 2026/07/03 18:33:11 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5435,4 +5435,37 @@ sys/arch/i386/stand/efiboot/bootx64/startprog64.S 1.6
 
 	x86/efiboot: PR 59151: put writable variables in .data, not .text.
 	[riastradh, ticket #1299]
+
+sys/arch/powerpc/include/oea/pmap.h		1.40
+
+	ppc: clamp PMAP_DIRECT_MAPPED_LEN below USER_SR/KERNEL_SR.
+	[rkujawa, ticket #1300]
+
+distrib/sets/lists/debug/mi			1.515
+distrib/sets/lists/tests/mi			1.1423
+lib/libc/citrus/modules/citrus_hz.c		1.5
+lib/libc/citrus/modules/citrus_utf7.c		1.8
+lib/libc/citrus/modules/citrus_viqr.c		1.7
+lib/libc/citrus/modules/citrus_zw.c		1.7
+tests/lib/libc/locale/Makefile			1.19
+tests/lib/libc/locale/t_iconv.c			1.1-1.8
+
+	libc: PR 59019: fix various iconv/encoding issues.
+	[riastradh, ticket #1301]
+
+sys/net/if_wg.c					1.141
+sys/rump/net/lib/libwg/wg_user.c		1.4
+
+	wg-userspace(8): PR 60392: fix crashes on assertion failures.
+	[riastradh, ticket #1302]
+
+sys/net/if_ethersubr.c				1.336
+
+	l2tp(4): PR 60351: fix assertion failure.
+	[yamaguchi, ticket #1303]
+
+sys/arch/mips/mips/lock_stubs_ras.S		1.13
+
+	mips: fix "locking against myself" diagnostics.
+	[rkujawa, ticket #1304]
 
