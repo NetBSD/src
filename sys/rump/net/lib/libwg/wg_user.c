@@ -1,4 +1,4 @@
-/*	$NetBSD: wg_user.c,v 1.3 2020/08/27 02:51:15 riastradh Exp $	*/
+/*	$NetBSD: wg_user.c,v 1.3.20.1 2026/07/03 18:18:09 martin Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wg_user.c,v 1.3 2020/08/27 02:51:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wg_user.c,v 1.3.20.1 2026/07/03 18:18:09 martin Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>
@@ -183,7 +183,7 @@ wg_user_rcvthread(void *aaargh)
 			nn = recvfrom(wgu->wgu_sock4, wgu->wgu_rcvbuf,
 			    sizeof(wgu->wgu_rcvbuf), 0, (struct sockaddr *)&sin,
 			    &len);
-			if (nn == -1 && errno == EAGAIN)
+			if (nn == -1)
 				continue;
 			if (len != sizeof(sin))
 				continue;
@@ -205,7 +205,7 @@ wg_user_rcvthread(void *aaargh)
 			nn = recvfrom(wgu->wgu_sock6, wgu->wgu_rcvbuf,
 			    sizeof(wgu->wgu_rcvbuf), 0, (struct sockaddr *)&sin6,
 			    &len);
-			if (nn == -1 && errno == EAGAIN)
+			if (nn == -1)
 				continue;
 			if (len != sizeof(sin6))
 				continue;
