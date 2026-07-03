@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.114 2026/07/03 17:50:43 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.115 2026/07/03 18:38:00 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11865,4 +11865,61 @@ xsrc/external/mit/libdrm/dist/configure		1.8
 
 	libdrm: bump version to 2.4.134.
 	[kikadf, ticket #358]
+
+sys/arch/powerpc/include/oea/pmap.h		1.40
+
+	ppc: clamp PMAP_DIRECT_MAPPED_LEN below USER_SR/KERNEL_SR.
+	[rkujawa, ticket #359]
+
+distrib/sets/lists/etc/mi			1.278
+etc/Makefile					1.477
+etc/defaults/rc.conf				1.168
+etc/unbound/Makefile				1.1
+etc/unbound/unbound.conf			1.1
+external/bsd/unbound/etc/rc.d/unbound		1.3
+share/man/man5/rc.conf.5			1.195
+share/man/man8/afterboot.8			1.84
+
+	unbound(8): PR 60339, PR 60325: install a default configuration.
+	[riastradh, ticket #360]
+
+distrib/sets/lists/debug/mi			1.515
+distrib/sets/lists/tests/mi			1.1423
+lib/libc/citrus/modules/citrus_hz.c		1.5
+lib/libc/citrus/modules/citrus_utf7.c		1.8
+lib/libc/citrus/modules/citrus_viqr.c		1.7
+lib/libc/citrus/modules/citrus_zw.c		1.7
+tests/lib/libc/locale/Makefile			1.19
+tests/lib/libc/locale/t_iconv.c			1.1-1.8
+
+	libc: PR 59019: fix various iconv/encoding issues.
+	[riastradh, ticket #361]
+
+sys/net/if_wg.c					1.141
+sys/rump/net/lib/libwg/wg_user.c		1.4
+
+	wg-userspace(8): PR 60392: fix crashes on assertion failures.
+	[riastradh, ticket #362]
+
+sys/net/if_ethersubr.c				1.336
+
+	l2tp(4): PR 60351: fix assertion failure.
+	[yamaguchi, ticket #363]
+
+sys/arch/mips/mips/lock_stubs_ras.S		1.13
+
+	mips: fix "locking against myself" diagnostics.
+	[rkujawa, ticket #364]
+
+libexec/ld.elf_so/load.c			1.50,1.51
+libexec/ld.elf_so/reloc.c			1.121
+libexec/ld.elf_so/rtld.c			1.225,1.226
+libexec/ld.elf_so/rtld.h			1.156
+libexec/ld.elf_so/search.c			1.28
+tests/libexec/ld.elf_so/t_dlclose_thread.c	1.2,1.3
+usr.bin/ldd/ldd.c				1.29,1.30
+usr.bin/ldd/ldd_elfxx.c				1.9
+
+	ld.elf_so(1): PR 59751: fix races with concurrent dlopen/dlclose.
+	[riastradh, ticket #365]
 
