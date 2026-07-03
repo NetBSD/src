@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238.2.23 2026/06/29 19:55:51 martin Exp $
+# $NetBSD: mi,v 1.1238.2.24 2026/07/03 18:06:57 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3069,6 +3069,7 @@
 ./usr/tests/lib/libc/locale/t_ctype2			tests-obsolete		obsolete
 ./usr/tests/lib/libc/locale/t_digittoint		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_ducet			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_iconv			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_io			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_mbrtoc16			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_mbrtoc32			tests-lib-tests		compattestfile,atf
