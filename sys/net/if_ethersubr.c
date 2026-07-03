@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.330 2025/04/23 12:17:05 joe Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.330.2.1 2026/07/03 18:22:08 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.330 2025/04/23 12:17:05 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.330.2.1 2026/07/03 18:22:08 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1124,8 +1124,8 @@ ether_ifdetachhook_establish(struct ifnet *ifp,
 	struct ethercom *ec;
 	khook_t *hk;
 
-	if (ifp->if_type != IFT_ETHER)
-		return NULL;
+	KASSERT(ifp->if_type == IFT_ETHER ||
+	    ifp->if_type == IFT_L2TP);
 
 	ec = (struct ethercom *)ifp;
 	hk = simplehook_establish(ec->ec_ifdetach_hooks,
