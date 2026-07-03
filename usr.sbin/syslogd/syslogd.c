@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.148 2026/04/07 22:22:13 andvar Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.149 2026/07/03 09:13:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.148 2026/04/07 22:22:13 andvar Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.149 2026/07/03 09:13:03 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -3184,8 +3184,8 @@ read_config_file(FILE *cf, struct filed **f_ptr)
 	} config_keywords[] = {
 #ifndef DISABLE_TLS
 		/* TLS settings */
-		{"tls_ca",		  &tls_opt.CAfile},
 		{"tls_cadir",		  &tls_opt.CAdir},
+		{"tls_ca",		  &tls_opt.CAfile},
 		{"tls_cert",		  &tls_opt.certfile},
 		{"tls_key",		  &tls_opt.keyfile},
 		{"tls_verify",		  &tls_opt.x509verify},
