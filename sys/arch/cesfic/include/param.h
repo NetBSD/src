@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 2026/05/10 19:33:32 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.17 2026/07/03 17:35:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,13 +62,6 @@
 #define	KERNBASE	0x00002000	/* start of kernel virtual */
 
 #include <m68k/param.h>
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * Interrupt glue.

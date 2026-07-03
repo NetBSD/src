@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.35 2026/05/10 20:27:29 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.36 2026/07/03 17:35:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,21 +53,12 @@
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 
-#ifndef MSGBUFSIZE
-#define MSGBUFSIZE	(2 * NBPG)	/* default message buffer size */
-#endif
-
-#include <m68k/param.h>
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
-
 #if defined(_KERNEL) && !defined(_LOCORE)
 #include <machine/intr.h>
+
+#define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
 #endif /* _KERNEL && !_LOCORE */
+
+#include <m68k/param.h>
 
 #endif	/* !_MACHINE_PARAM_H_ */
