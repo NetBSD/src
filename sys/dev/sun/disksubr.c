@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 2026/06/21 10:28:09 andvar Exp $ */
+/*	$NetBSD: disksubr.c,v 1.19 2026/07/03 21:36:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2026/06/21 10:28:09 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2026/07/03 21:36:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2026/06/21 10:28:09 andvar Exp $")
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/dkbad.h>
 
 #include <dev/sun/disklabel.h>
 
@@ -386,27 +385,4 @@ disklabel_bsd_to_sun(struct disklabel *lp, char *cp)
 	sl->sl_cksum = cksum;
 
 	return (0);
-}
-
-/*
- * Search the bad sector table looking for the specified sector.
- * Return index if found.
- * Return -1 if not found.
- */
-int
-isbad(struct dkbad *bt, int cyl, int trk, int sec)
-{
-	int i;
-	long blk, bblk;
-
-	blk = ((long)cyl << 16) + (trk << 8) + sec;
-	for (i = 0; i < 126; i++) {
-		bblk = ((long)bt->bt_bad[i].bt_cyl << 16) +
-			bt->bt_bad[i].bt_trksec;
-		if (blk == bblk)
-			return (i);
-		if (blk < bblk || bblk < 0)
-			break;
-	}
-	return (-1);
 }
