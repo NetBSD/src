@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.c,v 1.9 2022/11/08 01:03:27 uwe Exp $	*/
+/*	$NetBSD: sign.c,v 1.10 2026/07/03 10:08:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sign.c,v 1.9 2022/11/08 01:03:27 uwe Exp $");
+__RCSID("$NetBSD: sign.c,v 1.10 2026/07/03 10:08:40 msaitoh Exp $");
 
 #ifndef DISABLE_SIGN
 #include "syslogd.h"
@@ -241,8 +241,8 @@ sign_get_keys(void)
 			logerror("DSA_new() failed");
 			return false;
 		}
-		if (!DSA_generate_parameters_ex(dsa, SIGN_GENCERT_BITS, NULL, 0,
-			NULL, NULL, NULL)) {
+		if (!DSA_generate_parameters_ex(dsa, SIGN_GENCERT_BITS, NULL,
+			0, NULL, NULL, NULL)) {
 			logerror("DSA_generate_parameters_ex() failed");
 			return false;
 		}
@@ -309,7 +309,7 @@ sign_sg_init(struct filed *Files)
 	 */
 
 #define ALLOC_OR_FALSE(x) do {				\
-	if(!((x) = calloc(1, sizeof(*(x))))) {		\
+	if (!((x) = calloc(1, sizeof(*(x))))) {		\
 		logerror("Unable to allocate memory");	\
 		return false;				\
 	}						\
@@ -492,11 +492,11 @@ sign_global_free(void)
 		EVP_PKEY_free(GlobalSign.pubkey);
 		GlobalSign.pubkey = NULL;
 	}
-	if(GlobalSign.mdctx) {
+	if (GlobalSign.mdctx) {
 		EVP_MD_CTX_destroy(GlobalSign.mdctx);
 		GlobalSign.mdctx = NULL;
 	}
-	if(GlobalSign.sigctx) {
+	if (GlobalSign.sigctx) {
 		EVP_MD_CTX_destroy(GlobalSign.sigctx);
 		GlobalSign.sigctx = NULL;
 	}

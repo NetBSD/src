@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.25 2026/07/03 09:44:18 msaitoh Exp $	*/
+/*	$NetBSD: tls.c,v 1.26 2026/07/03 10:08:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.25 2026/07/03 09:44:18 msaitoh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.26 2026/07/03 10:08:40 msaitoh Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -120,7 +120,7 @@ out:
 }
 
 #define ST_CHANGE(x, y) do {					\
-	if ((x) != (y)) { 					\
+	if ((x) != (y)) {					\
 		DPRINTF(D_TLS, "Change state: %s --> %s\n",	\
 		    TLS_CONN_STATES[x], TLS_CONN_STATES[y]);	\
 		(x) = (y);					\
@@ -837,7 +837,7 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 	const int on = 1;
 	struct socketEvent *s, *socks;
 
-	if(!tls_opt.server
+	if (!tls_opt.server
 	|| !tls_opt.global_TLS_CTX)
 		return NULL;
 
@@ -906,8 +906,8 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 	}
 
 	if (socks->fd == 0) {
-		free (socks);
-		if(Debug)
+		free(socks);
+		if (Debug)
 			return NULL;
 		else
 			die(0, 0, NULL);
@@ -999,7 +999,7 @@ tls_connect(struct tls_conn_settings *conn_info)
 	DPRINTF((D_TLS|D_CALL), "tls_connect(conn_info@%p)\n", conn_info);
 	assert(conn_info->state == ST_NONE);
 
-	if(!tls_opt.global_TLS_CTX)
+	if (!tls_opt.global_TLS_CTX)
 		return false;
 
 	memset(&hints, 0, sizeof(hints));
@@ -1060,7 +1060,7 @@ tls_connect(struct tls_conn_settings *conn_info)
 			ERR_error_string_n(rc, buf, sizeof(buf));
 			DPRINTF(D_TLS, "Found SSL error in queue: %s\n", buf);
 		}
-		errno = 0;  /* reset to be sure we get the right one later on */
+		errno = 0; /* reset to be sure we get the right one later on */
 
 		if ((fcntl(sock, F_SETFL, O_NONBLOCK)) == -1) {
 			DPRINTF(D_NET, "Unable to fcntl(sock, O_NONBLOCK): "
@@ -1737,7 +1737,7 @@ tls_send(struct filed *f, char *line, size_t len, struct buf_queue *qentry)
 	    line, (len > DEBUG_LINELENGTH ? "..." : ""),
 	    len, f->f_un.f_tls.tls_conn->sslptr ? "" : "un");
 
-	if(f->f_un.f_tls.tls_conn->state == ST_TLS_EST) {
+	if (f->f_un.f_tls.tls_conn->state == ST_TLS_EST) {
 		/* send now */
 		if (!(smsg = calloc(1, sizeof(*smsg)))) {
 			logerror("Unable to allocate memory, drop message");
@@ -2057,7 +2057,7 @@ x509_cert_add_subjectAltName(X509 *cert, X509V3_CTX *ctx)
 	    "DNS:%s", LocalFQDN);
 
 	for (ifa = ifp; ifa; ifa = ifa->ifa_next) {
-		if(!ifa->ifa_addr)
+		if (!ifa->ifa_addr)
 			continue;
 
 		/* only IP4 and IP6 addresses, but filter loopbacks */
