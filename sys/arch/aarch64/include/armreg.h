@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.75 2026/06/22 07:52:32 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.76 2026/07/03 11:59:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1633,7 +1633,7 @@ AARCH64REG_WRITE_INLINE(cntvct_el0)
 #define	 ID_AA64PFR0_EL1_RAS_NONE	 0
 #define	 ID_AA64PFR0_EL1_RAS_IMPL	 1
 #define	 ID_AA64PFR0_EL1_RAS_ERX	 2
-#define	ID_AA64PFR0_EL1_GIC		__BITS(24,27) // GIC CPU IF
+#define	ID_AA64PFR0_EL1_GIC		__BITS(27,24) // GIC CPU IF
 #define	ID_AA64PFR0_EL1_GIC_SHIFT	24
 #define	 ID_AA64PFR0_EL1_GIC_CPUIF_EN	 1
 #define	 ID_AA64PFR0_EL1_GIC_CPUIF_NONE	 0
