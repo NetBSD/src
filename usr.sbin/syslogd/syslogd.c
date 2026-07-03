@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.150 2026/07/03 09:17:35 msaitoh Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.151 2026/07/03 10:04:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.150 2026/07/03 09:17:35 msaitoh Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.151 2026/07/03 10:04:45 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -2654,6 +2654,7 @@ sendagain:
 			    r->ai_addr, r->ai_addrlen);
 			if (lsent == -1) {
 				switch (errno) {
+				case EBUSY:
 				case ENOBUFS:
 					/* wait/retry/drop */
 					if (++retry < 5) {
