@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.26 2026/07/03 10:08:40 msaitoh Exp $	*/
+/*	$NetBSD: tls.c,v 1.27 2026/07/03 10:16:14 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.26 2026/07/03 10:08:40 msaitoh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.27 2026/07/03 10:16:14 msaitoh Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -304,8 +304,8 @@ init_global_TLS_CTX(void)
 	    "Use certificate from file \"%s\" with CN \"%s\" "
 	    "and fingerprint \"%s\"", SSLeay_version(SSLEAY_VERSION),
 	    certfilename, cn, fp);
-	free(cn);
-	free(fp);
+	FREEPTR(cn);
+	FREEPTR(fp);
 	if (cert)
 		X509_free(cert);
 
@@ -561,11 +561,11 @@ match_fingerprint(const X509 *cert, const char *fingerprint)
 	}
 	if (strncmp(certfingerprint, fingerprint, strlen(certfingerprint))) {
 		DPRINTF(D_TLS, "fail: fingerprints do not match\n");
-		free(certfingerprint);
+		FREEPTR(certfingerprint);
 		return false;
 	}
 	DPRINTF(D_TLS, "accepted: fingerprints match\n");
-	free(certfingerprint);
+	FREEPTR(certfingerprint);
 	return true;
 }
 
@@ -906,7 +906,7 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 	}
 
 	if (socks->fd == 0) {
-		free(socks);
+		FREEPTR(socks);
 		if (Debug)
 			return NULL;
 		else
@@ -1161,8 +1161,8 @@ parse_tls_destination(const char *p, struct filed *f, size_t linenum)
 	 || !(f->f_un.f_tls.tls_conn->event = allocev())
 	 || !(f->f_un.f_tls.tls_conn->retryevent = allocev())) {
 		if (f->f_un.f_tls.tls_conn)
-			free(f->f_un.f_tls.tls_conn->event);
-		free(f->f_un.f_tls.tls_conn);
+			FREEPTR(f->f_un.f_tls.tls_conn->event);
+		FREEPTR(f->f_un.f_tls.tls_conn);
 		logerror("Couldn't allocate memory for TLS config");
 		return false;
 	}
@@ -1432,8 +1432,8 @@ dispatch_socket_accept(int fd, short event, void *ev)
 	    || !(conn_info->event = allocev())
 	    || !(conn_info->retryevent = allocev())) {
 		if (conn_info)
-			free(conn_info->event);
-		free(conn_info);
+			FREEPTR(conn_info->event);
+		FREEPTR(conn_info);
 		SSL_free(ssl);
 		close(newsock);
 		logerror("Unable to allocate memory to accept incoming "
@@ -1573,7 +1573,7 @@ dispatch_tls_read(int fd_lib, short event, void *arg)
 		free_tls_conn(c->tls_conn);
 		FREEPTR(c->inbuf);
 		SLIST_REMOVE(&TLS_Incoming_Head, c, TLS_Incoming_Conn, entries);
-		free(c);
+		FREEPTR(c);
 	} else
 		ST_CHANGE(c->tls_conn->state, ST_TLS_EST);
 	RESTORE_SIGNALS(omask);
