@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.22 2026/07/03 09:28:17 msaitoh Exp $	*/
+/*	$NetBSD: tls.c,v 1.23 2026/07/03 09:37:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.22 2026/07/03 09:28:17 msaitoh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.23 2026/07/03 09:37:45 msaitoh Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -306,6 +306,8 @@ init_global_TLS_CTX(void)
 	    certfilename, cn, fp);
 	free(cn);
 	free(fp);
+	if (cert)
+		X509_free(cert);
 
 	tls_opt.global_TLS_CTX = ctx;
 	return strdup(statusmsg);
