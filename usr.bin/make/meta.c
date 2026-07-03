@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.222 2026/07/02 16:08:01 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.223 2026/07/03 18:58:40 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -986,6 +986,73 @@ append_if_new(StringList *list, const char *str)
     Lst_Append(list, bmake_strdup(str));
 }
 
+/* remove any missingFiles entries that match p */
+static void
+remove_missing(StringList *missingFiles, const char *p)
+{
+    StringListNode *ln = missingFiles->first;
+
+    while (ln != NULL) {
+	StringListNode *next = ln->next;
+	if (path_starts_with(ln->datum, p)) {
+	    free(ln->datum);
+	    Lst_Remove(missingFiles, ln);
+	}
+	ln = next;
+    }
+}
+
+static void
+remove_relative_missing(StringList *missingFiles, const char *p, char *sdirs[])
+{
+    char buf[MAXPATHLEN];
+    char **sdp;
+
+    for (sdp = sdirs; *sdp != NULL; sdp++) {
+	snprintf(buf, sizeof(buf), "%s/%s", *sdp, p);
+	remove_missing(missingFiles, buf);
+    }
+}
+
+/* try to find a relative path */
+static char *
+meta_resolve_path(char *buf, size_t bufsz, const char *p,
+  char *cwd, struct cached_stat *cstp, char *sdirs[])
+{
+    char **sdp;
+
+    if (strcmp(p, ".") == 0)
+	return cwd;
+    
+    for (sdp = sdirs; *sdp != NULL; sdp++) {
+	snprintf(buf, bufsz, "%s/%s", *sdp, p);
+	if (cached_stat(buf, cstp) == 0)
+	    return buf;
+    }
+    return NULL;
+}
+
+/*
+ * Update sdirs to contain a NULL terminated list of
+ * unique dirs to try and resolve relative paths against.
+ */
+static void
+set_sdirs(char *sdirs[], size_t sdsz,
+  char *latestdir, char *lcwd, char *cwd)
+{
+    size_t i = 0;
+
+    sdirs[i++] = latestdir;
+    if (i < sdsz && strcmp(latestdir, lcwd) != 0)
+	sdirs[i++] = lcwd;
+    if (i < sdsz && strcmp(lcwd, cwd) != 0)
+	sdirs[i++] = cwd;
+    if (i < sdsz)
+	sdirs[i] = NULL;
+    else
+	sdirs[i - 1] = NULL;		/* should never happen */
+}
+
 /* A "reserved" variable to store the string to be filtered */
 #define META_FILTER_VAR ".MAKE.META._filtered_"
 
@@ -1041,7 +1108,6 @@ meta_oodate(GNode *gn, bool oodate)
     char fname[MAXPATHLEN];
     char fname1[MAXPATHLEN];
     char fname2[MAXPATHLEN];
-    char fname3[MAXPATHLEN];
     FStr dname;
     const char *tname;
     char *p;
@@ -1060,10 +1126,10 @@ meta_oodate(GNode *gn, bool oodate)
     dname = Var_Value(gn, ".OBJDIR");
     tname = GNode_VarTarget(gn);
 
-    /* if this succeeds fname3 is realpath of dname */
-    if (!meta_needed(gn, dname.str, fname3, false))
+    /* if this succeeds fname2 is realpath of dname */
+    if (!meta_needed(gn, dname.str, fname2, false))
 	goto oodate_out;
-    dname.str = fname3;
+    dname.str = fname2;
 
     Lst_Init(&missingFiles);
 
@@ -1084,11 +1150,14 @@ meta_oodate(GNode *gn, bool oodate)
     if ((fp = fopen(fname, "r")) != NULL) {
 	static char *buf = NULL;
 	static size_t bufsz;
+	char *rp;
 	char *freeit = NULL;
+	char *sdirs[4];
 	unsigned lineno = 0;
 	int lastpid = 0;
 	int pid;
 	int x;
+	bool found;
 	StringListNode *cmdNode;
 	struct cached_stat cst;
 	MetaSection section = META_HEADER;
@@ -1105,6 +1174,10 @@ meta_oodate(GNode *gn, bool oodate)
 	}
 	strlcpy(lcwd, cwd, sizeof lcwd);
 	strlcpy(latestdir, cwd, sizeof latestdir);
+
+	/* adjust this when lcwd or latestdir change */
+	sdirs[0] = cwd;
+	sdirs[1] = NULL;
 
 	if (tmpdir == NULL) {
 	    tmpdir = getTmpdir();
@@ -1257,6 +1330,7 @@ meta_oodate(GNode *gn, bool oodate)
 			    strlcpy(lcwd, ldir.str, sizeof lcwd);
 			    FStr_Done(&ldir);
 			}
+			set_sdirs(sdirs, 4, latestdir, lcwd, cwd);
 		    }
 		    /* Skip past the pid. */
 		    if (strsep(&p, " ") == NULL)
@@ -1312,6 +1386,7 @@ meta_oodate(GNode *gn, bool oodate)
 		    DEBUG4(META, "%s:%u: cwd=%s ldir=%s\n",
 			   fname, lineno, cwd, lcwd);
 #endif
+		    set_sdirs(sdirs, 4, latestdir, lcwd, cwd);
 		    break;
 
 		case 'M':		/* renaMe */
@@ -1334,17 +1409,25 @@ meta_oodate(GNode *gn, bool oodate)
 		    DEQUOTE(move_target);
 		    /* FALLTHROUGH */
 		case 'D':		/* unlink */
-		    if (*p == '/') {
-			/* remove any missingFiles entries that match p */
-			StringListNode *ln = missingFiles.first;
-			while (ln != NULL) {
-			    StringListNode *next = ln->next;
-			    if (path_starts_with(ln->datum, p)) {
-				free(ln->datum);
-				Lst_Remove(&missingFiles, ln);
-			    }
-			    ln = next;
+		    if (*p != '/') {
+#ifdef DEBUG_META_MODE
+			DEBUG3(META, "%s:%u: looking for: %s ...\n",
+			  fname, lineno, p);
+#endif
+			rp = meta_resolve_path(fname1, sizeof(fname1), p,
+			  lcwd, &cst, sdirs);
+			if (rp != NULL) {
+#ifdef DEBUG_META_MODE
+			    DEBUG3(META, "%s:%u: found: %s\n",
+			      fname, lineno, rp);
+#endif
+			    p = rp;
 			}
+		    }
+		    if (*p == '/') {
+			remove_missing(&missingFiles, p);
+		    } else {
+			remove_relative_missing(&missingFiles, p, sdirs);
 		    }
 		    if (buf[0] == 'M') {
 			/* the target of the mv is a file 'W'ritten */
@@ -1381,10 +1464,34 @@ meta_oodate(GNode *gn, bool oodate)
 		     * but outside of .OBJDIR is missing,
 		     * we need to do it again.
 		     */
-		    /* ignore non-absolute paths */
-		    if (*p != '/')
+		    if (*p != '/') {
+#ifdef DEBUG_META_MODE
+			DEBUG3(META, "%s:%u: looking for: %s ...\n",
+			  fname, lineno, p);
+#endif
+			rp = meta_resolve_path(fname1, sizeof(fname1), p,
+			  lcwd, &cst, sdirs);
+			if (rp != NULL) {
+#ifdef DEBUG_META_MODE
+			    DEBUG3(META, "%s:%u: found: %s\n",
+			      fname, lineno, rp);
+#endif
+			    p = rp;
+			}
+		    }
+		    if (*p != '/') {
+			/*
+			 * it is missing or we should have found it
+			 */
+			snprintf(fname1, sizeof(fname1), "%s/%s",
+			  lcwd, p);
+#ifdef DEBUG_META_MODE
+			DEBUG3(META, "%s:%u: maybe missing: %s\n",
+			  fname, lineno, fname1);
+#endif
+			append_if_new(&missingFiles, fname1);
 			break;
-
+		    }
 		    if (Lst_IsEmpty(&metaBailiwick))
 			break;
 
@@ -1429,73 +1536,59 @@ meta_oodate(GNode *gn, bool oodate)
 
 		    /*
 		     * The rest of the record is the file name.
-		     * Check if it's not an absolute path.
 		     */
-		    {
-			char *sdirs[4];
-			char **sdp;
-			int sdx = 0;
-			bool found = false;
-
-			if (*p == '/') {
-			    sdirs[sdx++] = p; /* done */
-			} else {
-			    if (strcmp(".", p) == 0)
-				continue; /* no point */
-
-			    /* Check vs latestdir */
-			    if (snprintf(fname1, sizeof fname1, "%s/%s", latestdir, p) < (int)(sizeof fname1))
-				sdirs[sdx++] = fname1;
-
-			    if (strcmp(latestdir, lcwd) != 0) {
-				/* Check vs lcwd */
-				if (snprintf(fname2, sizeof fname2, "%s/%s", lcwd, p) < (int)(sizeof fname2))
-				    sdirs[sdx++] = fname2;
-			    }
-			    if (strcmp(lcwd, cwd) != 0) {
-				/* Check vs cwd */
-				if (snprintf(fname3, sizeof fname3, "%s/%s", cwd, p) < (int)(sizeof fname3))
-				    sdirs[sdx++] = fname3;
-			    }
-			}
-			sdirs[sdx++] = NULL;
-
-			for (sdp = sdirs; *sdp != NULL && !found; sdp++) {
-#ifdef DEBUG_META_MODE
-			    DEBUG3(META, "%s:%u: looking for: %s\n",
-				   fname, lineno, *sdp);
-#endif
-			    if (cached_stat(*sdp, &cst) == 0) {
-				found = true;
-				p = *sdp;
-			    }
-			}
-			if (found) {
+		    if (*p == '/') {
+			if (cached_stat(p, &cst) == 0) {
+			    found = true;
 #ifdef DEBUG_META_MODE
 			    DEBUG3(META, "%s:%u: found: %s\n",
-				   fname, lineno, p);
+			      fname, lineno, p);
 #endif
-			    if (!S_ISDIR(cst.cst_mode) &&
-				cst.cst_mtime > gn->mtime) {
-				DEBUG3(META, "%s:%u: file '%s' is newer than the target...\n",
-				       fname, lineno, p);
-				oodate = true;
-			    } else if (S_ISDIR(cst.cst_mode)) {
-				/* Update the latest directory. */
-				cached_realpath(p, latestdir);
-			    }
-			} else if (errno == ENOENT && *p == '/' &&
-				   strncmp(p, cwd, cwdlen) != 0) {
+			}
+		    } else {
+#ifdef DEBUG_META_MODE
+			DEBUG3(META, "%s:%u: looking for: %s ...\n",
+			  fname, lineno, p);
+#endif
+			rp = meta_resolve_path(fname1, sizeof(fname1), p,
+			  lcwd, &cst, sdirs);
+			if (rp != NULL) {
+#ifdef DEBUG_META_MODE
+			    DEBUG3(META, "%s:%u: found: %s\n",
+			      fname, lineno, rp);
+#endif
+			    p = rp;
+			    found = true;
+			}
+		    }
+		    if (found) {
+			if (!S_ISDIR(cst.cst_mode) &&
+			  cst.cst_mtime > gn->mtime) {
+			    DEBUG3(META, "%s:%u: file '%s' is newer than the target...\n",
+			      fname, lineno, p);
+			    oodate = true;
+			} else if (S_ISDIR(cst.cst_mode)) {
+			    /* Update the latest directory. */
+			    cached_realpath(p, latestdir);
+			    set_sdirs(sdirs, 4, latestdir, lcwd, cwd);
+			}
+		    } else if (errno == ENOENT) {
+			if (*p != '/' || strncmp(p, cwd, cwdlen) != 0) {
 			    /*
 			     * A referenced file outside of CWD is missing.
 			     * We cannot catch every eventuality here...
 			     */
+#ifdef DEBUG_META_MODE
+			    DEBUG3(META, "%s:%u: maybe missing: %s\n",
+			      fname, lineno, p);
+#endif
 			    append_if_new(&missingFiles, p);
 			}
 		    }
 		    if (buf[0] == 'E') {
 			/* previous latestdir is no longer relevant */
 			strlcpy(latestdir, lcwd, sizeof latestdir);
+			set_sdirs(sdirs, 4, latestdir, lcwd, cwd);
 		    }
 		    break;
 		default:
