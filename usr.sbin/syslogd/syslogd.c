@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.152 2026/07/03 10:08:40 msaitoh Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.153 2026/07/03 10:13:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.152 2026/07/03 10:08:40 msaitoh Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.153 2026/07/03 10:13:30 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -287,8 +287,8 @@ char	timestamp[MAX_TIMESTAMPLEN + 1];
  * a global one will do.  But for klog, we use own buffer so that
  * partial line at the end of buffer can be deferred.
  */
-char *linebuf, *klog_linebuf;
-size_t linebufsize, klog_linebufoff;
+static char *linebuf, *klog_linebuf;
+static size_t linebufsize, klog_linebufoff;
 
 static const char *bindhostname = NULL;
 
