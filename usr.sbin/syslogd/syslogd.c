@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.153 2026/07/03 10:13:30 msaitoh Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.154 2026/07/03 10:16:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.153 2026/07/03 10:13:30 msaitoh Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.154 2026/07/03 10:16:14 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -2983,7 +2983,7 @@ free_incoming_tls_sockets(void)
 		SLIST_REMOVE_HEAD(&TLS_Incoming_Head, entries);
 		FREEPTR(tls_in->inbuf);
 		free_tls_conn(tls_in->tls_conn);
-		free(tls_in);
+		FREEPTR(tls_in);
 	}
 }
 #endif /* !DISABLE_TLS */
@@ -3060,7 +3060,7 @@ die(int fd, short event, void *ev)
 		FREEPTR(f->f_program);
 		FREEPTR(f->f_host);
 		DEL_EVENT(f->f_sq_event);
-		free((char *)f);
+		FREEPTR(f);
 	}
 
 	/*
@@ -3120,7 +3120,7 @@ store_sign_delim_sg2(char *tmp_buf)
 	if (dehumanize_number(tmp_buf, (int64_t*) &(sqentry->key)) == -1
 	    || sqentry->key > (LOG_NFACILITIES<<3)) {
 		DPRINTF(D_PARSE, "invalid sign_delim_sg2: %s\n", tmp_buf);
-		free(sqentry);
+		FREEPTR(sqentry);
 		FREEPTR(tmp_buf);
 		return;
 	}
@@ -3614,7 +3614,7 @@ init(int fd, short event, void *ev)
 		DEL_EVENT(f->f_sq_event);
 
 		ftmp = f->f_next;
-		free((char *)f);
+		FREEPTR(f);
 		f = ftmp;
 	}
 	Files = newf;
@@ -4383,7 +4383,7 @@ free_cred_SLIST(struct peer_cred_head *head)
 		cred = SLIST_FIRST(head);
 		SLIST_REMOVE_HEAD(head, entries);
 		FREEPTR(cred->data);
-		free(cred);
+		FREEPTR(cred);
 	}
 }
 #endif /* !DISABLE_TLS */
