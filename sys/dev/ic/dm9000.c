@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.44 2026/06/14 16:00:25 gutteridge Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.45 2026/07/03 00:44:29 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm9000.c,v 1.44 2026/06/14 16:00:25 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm9000.c,v 1.45 2026/07/03 00:44:29 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -670,7 +670,8 @@ dme_receive(struct ifnet *ifp)
 {
 	struct dme_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	uint8_t avail, rsr;
+	uint8_t avail;
+	int rsr;
 
 	DPRINTF(("inside dme_receive\n"));
 
@@ -690,6 +691,14 @@ dme_receive(struct ifnet *ifp)
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->dme_io,
 				DM9000_MRCMD);
 			rsr = PKT_READ(sc, &m);
+			if (rsr < 0) {
+				/* RX FIFO desync; recover like bad avail */
+				if_statinc(ifp, if_ierrors);
+				printf("%s: Resetting chip\n",
+				    device_xname(sc->sc_dev));
+				dme_reset(sc);
+				break;
+			}
 			if (m == NULL) {
 				/* failed to allocate a receive buffer */
 				RX_DPRINTF(("dme_receive: "
@@ -976,9 +985,13 @@ pkt_read_2(struct dme_softc *sc, struct mbuf **outBuf)
 	frame_length = bus_space_read_2(sc->sc_iot,
 					sc->sc_ioh, sc->dme_data);
 	if (frame_length > ETHER_MAX_LEN) {
-		printf("Got frame of length: %d\n", frame_length);
-		printf("ETHER_MAX_LEN is: %d\n", ETHER_MAX_LEN);
-		panic("Something is rotten");
+		/*
+		 * RX FIFO pointer has desynced from the chip
+		 */
+		printf("%s: bogus RX frame length %u, resetting\n",
+		    device_xname(sc->sc_dev), frame_length);
+		*outBuf = NULL;
+		return -1;
 	}
 	RX_DPRINTF(("dme_receive: rx_statux: 0x%x, frame_length: %d\n",
 		rx_status, frame_length));
@@ -1070,9 +1083,11 @@ pkt_read_1(struct dme_softc *sc, struct mbuf **outBuf)
 	frame_length = reg;
 
 	if (frame_length > ETHER_MAX_LEN) {
-		printf("Got frame of length: %d\n", frame_length);
-		printf("ETHER_MAX_LEN is: %d\n", ETHER_MAX_LEN);
-		panic("Something is rotten");
+		/* see pkt_read_2 */
+		printf("%s: bogus RX frame length %u, resetting\n",
+		    device_xname(sc->sc_dev), frame_length);
+		*outBuf = NULL;
+		return -1;
 	}
 	RX_DPRINTF(("dme_receive: "
 		    "rx_statux: 0x%x, frame_length: %d\n",
