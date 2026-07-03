@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.h,v 1.15 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: dkbad.h,v 1.16 2026/07/03 21:35:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -65,6 +65,10 @@ struct dkbad {
 	} bt_bad[NBT_BAD];
 };
 
+#define	BAD144_MAXCYLNO	0xffff		/* maximum cylinder number */
+#define	BAD144_MAXTRKNO	0xff		/* maximum track number */
+#define	BAD144_MAXSECNO	0xff		/* maximum sector number */
+
 /*
  * An indicator that the bad block handling is available. This is used
  * to conditionally enable code that performs badblock re-mapping.
@@ -77,6 +81,17 @@ struct dkbad {
 #define	CONT	3
 
 #ifdef _KERNEL
-int isbad(struct dkbad *, int, int, int);
-#endif
+struct bad144_context;
+
+struct bad144_context *
+	bad144_init(uint32_t, uint32_t, uint32_t, uint32_t);
+void	bad144_fini(struct bad144_context *);
+int	bad144_set(struct bad144_context *, const struct dkbad *);
+int	bad144_load(struct bad144_context *, dev_t, void (*)(struct buf *));
+int	bad144_isbad_chs(const struct bad144_context *,
+			 uint32_t, uint32_t, uint32_t);
+int	bad144_isbad_lba(const struct bad144_context *,
+			 daddr_t, int, int *);
+#endif /* _KERNEL */
+
 #endif /* _SYS_DKBAD_H_ */
