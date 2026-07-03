@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.24 2026/07/03 09:40:54 msaitoh Exp $	*/
+/*	$NetBSD: tls.c,v 1.25 2026/07/03 09:44:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.24 2026/07/03 09:40:54 msaitoh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.25 2026/07/03 09:44:18 msaitoh Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -1741,6 +1741,7 @@ tls_send(struct filed *f, char *line, size_t len, struct buf_queue *qentry)
 		/* send now */
 		if (!(smsg = calloc(1, sizeof(*smsg)))) {
 			logerror("Unable to allocate memory, drop message");
+			FREEPTR(line);
 			return false;
 		}
 		smsg->f = f;
@@ -1756,6 +1757,7 @@ tls_send(struct filed *f, char *line, size_t len, struct buf_queue *qentry)
 		/* other socket operation active, send later  */
 		DPRINTF(D_DATA, "connection not ready to send: \"%.*s\"\n",
 		    (int)len, line);
+		FREEPTR(line);
 		return false;
 	}
 }
