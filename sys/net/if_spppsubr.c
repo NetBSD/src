@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.298 2026/07/03 07:07:56 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.299 2026/07/03 07:41:28 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.298 2026/07/03 07:07:56 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.299 2026/07/03 07:41:28 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -663,7 +663,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		/* Too small packet, drop it. */
 		SPPP_DLOG(sp, "input packet is too small, "
 		    "%d bytes\n", m->m_pkthdr.len);
-		goto drop;
+		goto error;
 	}
 
 	if (ISSET(sp->pp_dev_flags, PP_DEVF_NOFRAMING)) {
@@ -709,8 +709,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			    ++sp->scp[IDX_LCP].seq, sizeof(prot), &prot);
 		}
 		SPPP_UNLOCK(sp);
-		if_statinc(ifp, if_noproto);
-		goto drop;
+		goto noproto;
 	default:
 		SPPP_DLOG(sp, "invalid input protocol "
 		    "<proto=0x%x>\n", protocol);
@@ -725,6 +724,9 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		SPPP_LOCK(sp, RW_WRITER);
 		if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE) {
 			sppp_pap_input(sp, m);
+		} else {
+			SPPP_UNLOCK(sp);
+			goto drop;
 		}
 		SPPP_UNLOCK(sp);
 		m_freem(m);
@@ -733,6 +735,9 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		SPPP_LOCK(sp, RW_WRITER);
 		if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE) {
 			sppp_chap_input(sp, m);
+		} else {
+			SPPP_UNLOCK(sp);
+			goto drop;
 		}
 		SPPP_UNLOCK(sp);
 		m_freem(m);
@@ -776,7 +781,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			sppp_cp_input(&ipv6cp, sp, m);
 			/* already m_freem(m) */
 		} else {
-			m_freem(m);
+			SPPP_UNLOCK(sp);
+			goto drop;
 		}
 		SPPP_UNLOCK(sp);
 		return;
@@ -784,7 +790,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	case PPP_IPV6:
 		SPPP_LOCK(sp, RW_WRITER);
 		if (sp->scp[IDX_IPV6CP].state == STATE_OPENED) {
-			atomic_store_relaxed(&sp->pp_last_activity, time_uptime);
+			atomic_store_relaxed(&sp->pp_last_activity, time_uptime32);
 			pktq = ip6_pktq;
 			rps_hash = atomic_load_relaxed(&sppp_pktq_rps_hash_p);
 		}
@@ -805,7 +811,17 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	return;
 
 drop:
-	if_statadd2(ifp, if_ierrors, 1, if_iqdrops, 1);
+	if_statinc(ifp, if_iqdrops);
+	m_freem(m);
+	return;
+
+error:
+	if_statinc(ifp, if_ierrors);
+	m_freem(m);
+	return;
+
+noproto:
+	if_statinc(ifp, if_noproto);
 	m_freem(m);
 	return;
 }
