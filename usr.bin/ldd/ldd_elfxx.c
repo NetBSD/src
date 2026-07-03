@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd_elfxx.c,v 1.8 2021/07/22 17:39:53 christos Exp $	*/
+/*	$NetBSD: ldd_elfxx.c,v 1.8.6.1 2026/07/03 18:36:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd_elfxx.c,v 1.8 2021/07/22 17:39:53 christos Exp $");
+__RCSID("$NetBSD: ldd_elfxx.c,v 1.8.6.1 2026/07/03 18:36:36 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -129,7 +129,7 @@ ELFNAME(ldd)(int fd, char *prog, char *path, const char *fmt1, const char *fmt2)
 	_rtld_objtail = &_rtld_objmain->next;
 	++_rtld_objmain->refcount;
 
-	(void) _rtld_load_needed_objects(_rtld_objmain, 0);
+	(void) _rtld_load_needed_objects(_rtld_objmain, 0, NULL);
 
 	if (fmt1 == NULL)
 		printf("%s:\n", prog);

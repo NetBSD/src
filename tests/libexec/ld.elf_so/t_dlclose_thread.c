@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlclose_thread.c,v 1.1.2.2 2025/12/18 18:03:33 martin Exp $	*/
+/*	$NetBSD: t_dlclose_thread.c,v 1.1.2.3 2026/07/03 18:36:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dlclose_thread.c,v 1.1.2.2 2025/12/18 18:03:33 martin Exp $");
+__RCSID("$NetBSD: t_dlclose_thread.c,v 1.1.2.3 2026/07/03 18:36:36 martin Exp $");
 
 #include <atf-c.h>
 #include <dlfcn.h>
@@ -71,6 +71,7 @@ ATF_TC_HEAD(dlclose_thread, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test concurrent dlopen and dlclose with destructors");
+	atf_tc_set_md_var(tc, "timeout", "20");
 }
 ATF_TC_BODY(dlclose_thread, tc)
 {
@@ -82,10 +83,8 @@ ATF_TC_BODY(dlclose_thread, tc)
 		RZ(pthread_create(&t[i], NULL, &dlclose_thread,
 			(void *)(uintptr_t)i));
 	}
-	atf_tc_expect_signal(-1, "PR lib/59751:"
-	    " dlclose is not MT-safe depending on the libraries unloaded");
 	(void)pthread_barrier_wait(&bar);
-	(void)sleep(1);
+	(void)sleep(5);
 	atomic_store_explicit(&stop, true, memory_order_relaxed);
 	for (i = 0; i < __arraycount(t); i++)
 		RZ(pthread_join(t[i], NULL));

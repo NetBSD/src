@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.27 2020/04/22 23:54:32 joerg Exp $	 */
+/*	$NetBSD: search.c,v 1.27.10.1 2026/07/03 18:36:36 martin Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: search.c,v 1.27 2020/04/22 23:54:32 joerg Exp $");
+__RCSID("$NetBSD: search.c,v 1.27.10.1 2026/07/03 18:36:36 martin Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -63,11 +63,11 @@ __RCSID("$NetBSD: search.c,v 1.27 2020/04/22 23:54:32 joerg Exp $");
 static Search_Path    *_rtld_invalid_paths;
 
 static Obj_Entry *_rtld_search_library_path(const char *, size_t,
-    const char *, size_t, int);
+    const char *, size_t, int, sigset_t *);
 
 static Obj_Entry *
 _rtld_search_library_path(const char *name, size_t namelen,
-    const char *dir, size_t dirlen, int flags)
+    const char *dir, size_t dirlen, int flags, sigset_t *mask)
 {
 	char pathname[MAXPATHLEN];
 	size_t pathnamelen;
@@ -93,7 +93,7 @@ _rtld_search_library_path(const char *name, size_t namelen,
 	pathname[pathnamelen] = '\0';
 
 	dbg(("  Trying \"%s\"", pathname));
-	obj = _rtld_load_object(pathname, flags);
+	obj = _rtld_load_object(pathname, flags, mask);
 	if (obj == NULL) {
 		Search_Path *path;
 
@@ -102,6 +102,8 @@ _rtld_search_library_path(const char *name, size_t namelen,
 		path->sp_path = xstrdup(pathname);
 		path->sp_next = _rtld_invalid_paths;
 		_rtld_invalid_paths = path;
+	} else {
+		assert(obj->refcount > 0);
 	}
 	return obj;
 }
@@ -115,7 +117,8 @@ _rtld_search_library_path(const char *name, size_t namelen,
  * loaded shared object, whose library search path will be searched.
  */
 Obj_Entry *
-_rtld_load_library(const char *name, const Obj_Entry *refobj, int flags)
+_rtld_load_library(const char *name, const Obj_Entry *refobj, int flags,
+    sigset_t *mask)
 {
 	extern char *__progname;
 	char tmperror[512], *tmperrorp;
@@ -146,18 +149,19 @@ _rtld_load_library(const char *name, const Obj_Entry *refobj, int flags)
 
 	for (sp = _rtld_paths; sp != NULL; sp = sp->sp_next)
 		if ((obj = _rtld_search_library_path(name, namelen,
-		    sp->sp_path, sp->sp_pathlen, flags)) != NULL)
+		    sp->sp_path, sp->sp_pathlen, flags, mask)) != NULL)
 			goto pathfound;
 
 	if (refobj != NULL)
 		for (sp = refobj->rpaths; sp != NULL; sp = sp->sp_next)
 			if ((obj = _rtld_search_library_path(name,
-			    namelen, sp->sp_path, sp->sp_pathlen, flags)) != NULL)
+			    namelen, sp->sp_path, sp->sp_pathlen, flags, mask))
+			    != NULL)
 				goto pathfound;
 
 	for (sp = _rtld_default_paths; sp != NULL; sp = sp->sp_next)
 		if ((obj = _rtld_search_library_path(name, namelen,
-		    sp->sp_path, sp->sp_pathlen, flags)) != NULL)
+		    sp->sp_path, sp->sp_pathlen, flags, mask)) != NULL)
 			goto pathfound;
 
 	_rtld_error("%s: Shared object \"%s\" not found",
@@ -182,13 +186,15 @@ pathfound:
 		_rtld_error("%s", tmperror);
 	else
 		(void)dlerror();
+	assert(obj->refcount > 0);
 	return obj;
 
 found:
-	obj = _rtld_load_object(pathname, flags);
+	obj = _rtld_load_object(pathname, flags, mask);
 	if (obj == OBJ_ERR)
 		return NULL;
 
+	assert(obj->refcount > 0);
 	return obj;
 }
 

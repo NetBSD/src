@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.49 2020/09/21 16:08:57 kamil Exp $	 */
+/*	$NetBSD: load.c,v 1.49.10.1 2026/07/03 18:36:36 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.49 2020/09/21 16:08:57 kamil Exp $");
+__RCSID("$NetBSD: load.c,v 1.49.10.1 2026/07/03 18:36:36 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: load.c,v 1.49 2020/09/21 16:08:57 kamil Exp $");
 #include "rtld.h"
 
 static bool _rtld_load_by_name(const char *, Obj_Entry *, Needed_Entry **,
-    int);
+    int, sigset_t *);
 
 #ifdef RTLD_LOADER
 Objlist _rtld_list_main =	/* Objects loaded at program startup */
@@ -111,16 +111,27 @@ _rtld_objlist_find(Objlist *list, const Obj_Entry *obj)
  * on failure.
  */
 Obj_Entry *
-_rtld_load_object(const char *filepath, int flags)
+_rtld_load_object(const char *filepath, int flags, sigset_t *mask)
 {
 	Obj_Entry *obj;
 	int fd = -1;
 	struct stat sb;
 	size_t pathlen = strlen(filepath);
 
-	for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next)
-		if (pathlen == obj->pathlen && !strcmp(obj->path, filepath))
+restart:
+	/*
+	 * Search the list of objects for a matching path.  If we find
+	 * a match, but it's concurrently running destructors, wait for
+	 * it with the rtld exclusive lock dropped and start over.
+	 */
+	for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next) {
+		if (pathlen == obj->pathlen && !strcmp(obj->path, filepath)) {
+			if (__predict_false(_rtld_wait_for_fini(&obj, mask)))
+				goto restart;
+			assert(obj->refcount > 0);
 			break;
+		}
+	}
 
 	/*
 	 * If we didn't find a match by pathname, open the file and check
@@ -143,6 +154,10 @@ _rtld_load_object(const char *filepath, int flags)
 		for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next) {
 			if (obj->ino == sb.st_ino && obj->dev == sb.st_dev) {
 				close(fd);
+				if (__predict_false(_rtld_wait_for_fini(&obj,
+					    mask)))
+					goto restart;
+				assert(obj->refcount > 0);
 				break;
 			}
 		}
@@ -152,6 +167,7 @@ _rtld_load_object(const char *filepath, int flags)
 	if (pathlen == _rtld_objself.pathlen &&
 	    strcmp(_rtld_objself.path, filepath) == 0) {
 		close(fd);
+		assert(_rtld_objself.refcount > 0);
 		return &_rtld_objself;
 	}
 #endif
@@ -177,8 +193,10 @@ _rtld_load_object(const char *filepath, int flags)
 
 		*_rtld_objtail = obj;
 		_rtld_objtail = &obj->next;
+		_rtld_objgen++;
 		_rtld_objcount++;
 		_rtld_objloads++;
+		_rtld_objrelocpending++;
 #ifdef RTLD_LOADER
 		_rtld_linkmap_add(obj);	/* for the debugger */
 #endif
@@ -186,6 +204,8 @@ _rtld_load_object(const char *filepath, int flags)
 		    obj->mapbase + obj->mapsize - 1, obj->path));
 		if (obj->textrel)
 			dbg(("  WARNING: %s has impure text", obj->path));
+	} else {
+		assert(obj->refcount > 0);
 	}
 
 	++obj->refcount;
@@ -201,12 +221,13 @@ _rtld_load_object(const char *filepath, int flags)
 		_rtld_objlist_push_tail(&_rtld_list_global, obj);
 	}
 #endif
+	assert(obj->refcount > 0);
 	return obj;
 }
 
 static bool
 _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
-    int flags)
+    int flags, sigset_t *mask)
 {
 	Library_Xform *x = _rtld_xforms;
 	Obj_Entry *o;
@@ -219,13 +240,31 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 		char s[16];
 	} val;
 
+	/*
+	 * Caller must hold a reference to prevent concurrent dlclose
+	 * from unloading obj until we're done, even if we
+	 * unlock/wait/relock to wait for a dependency that is being
+	 * concurrently unloaded.
+	 */
+	assert(obj->neededrefcount);
+
 	dbg(("load by name %s %p", name, x));
-	for (o = _rtld_objlist->next; o != NULL; o = o->next)
+restart:
+	/*
+	 * Search the list of objects for a matching path.  If we find
+	 * a match, but it's concurrently running destructors, wait for
+	 * it with the rtld exclusive lock dropped and start over.
+	 */
+	for (o = _rtld_objlist->next; o != NULL; o = o->next) {
 		if (_rtld_object_match_name(o, name)) {
+			if (__predict_false(_rtld_wait_for_fini(&o, mask)))
+				goto restart;
+			assert(o->refcount > 0);
 			++o->refcount;
 			(*needed)->obj = o;
 			return true;
 		}
+	}
 
 	for (; x; x = x->next) {
 		if (strcmp(x->name, name) != 0)
@@ -270,12 +309,13 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 		for (j = 0; j < RTLD_MAX_LIBRARY &&
 		    x->entry[i].library[j] != NULL; j++) {
 			o = _rtld_load_library(x->entry[i].library[j], obj,
-			    flags);
+			    flags, mask);
 			if (o == NULL) {
 				xwarnx("could not load %s for %s",
 				    x->entry[i].library[j], name);
 				continue;
 			}
+			assert(o->refcount > 0);
 			got = true;
 			if (j == 0)
 				(*needed)->obj = o;
@@ -296,7 +336,10 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 	if (got)
 		return true;
 
-	return ((*needed)->obj = _rtld_load_library(name, obj, flags)) != NULL;
+	assert((*needed)->obj == NULL);
+	(*needed)->obj = _rtld_load_library(name, obj, flags, mask);
+	assert((*needed)->obj->refcount > 0);
+	return ((*needed)->obj != NULL);
 }
 
 
@@ -306,7 +349,7 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
  * returns -1 on failure.
  */
 int
-_rtld_load_needed_objects(Obj_Entry *first, int flags)
+_rtld_load_needed_objects(Obj_Entry *first, int flags, sigset_t *mask)
 {
 	Obj_Entry *obj;
 	int status = 0;
@@ -314,18 +357,34 @@ _rtld_load_needed_objects(Obj_Entry *first, int flags)
 	for (obj = first; obj != NULL; obj = obj->next) {
 		Needed_Entry *needed;
 
+		/*
+		 * If obj is already being unloaded, there is no need
+		 * to load its dependencies, so just skip it.
+		 */
+		if (__predict_false(obj->refcount == 0))
+			continue;
+
+		/*
+		 * Prevent obj from being concurrently unloaded until
+		 * we're done.  We hold the rtld exclusive lock right
+		 * now, but _rtld_load_by_name may drop it.
+		 */
+		_rtld_load_needed_enter(obj);
+
 		for (needed = obj->needed; needed != NULL;
 		    needed = needed->next) {
 			const char *name = obj->strtab + needed->name;
 #ifdef RTLD_LOADER
 			Obj_Entry *nobj;
 #endif
+			if (__predict_false(needed->obj != NULL))
+				continue;
 			if (!_rtld_load_by_name(name, obj, &needed,
-			    flags & ~_RTLD_NOLOAD))
+			    flags & ~_RTLD_NOLOAD, mask))
 				status = -1;	/* FIXME - cleanup */
 #ifdef RTLD_LOADER
 			if (status == -1)
-				return status;
+				break;
 
 			if (flags & _RTLD_MAIN)
 				continue;
@@ -338,6 +397,17 @@ _rtld_load_needed_objects(Obj_Entry *first, int flags)
 			}
 #endif
 		}
+
+		/*
+		 * Allow obj to be concurrently unloaded now that we're
+		 * done loading its dependencies.
+		 */
+		_rtld_load_needed_exit(obj);
+
+#ifdef RTLD_LOADER
+		if (status == -1)
+			break;
+#endif
 	}
 
 	return status;
@@ -345,7 +415,7 @@ _rtld_load_needed_objects(Obj_Entry *first, int flags)
 
 #ifdef RTLD_LOADER
 int
-_rtld_preload(const char *preload_path)
+_rtld_preload(const char *preload_path, sigset_t *mask)
 {
 	const char *path;
 	char *cp, *buf;
@@ -354,7 +424,7 @@ _rtld_preload(const char *preload_path)
 	if (preload_path != NULL && *preload_path != '\0') {
 		cp = buf = xstrdup(preload_path);
 		while ((path = strsep(&cp, " :")) != NULL && status == 0) {
-			if (!_rtld_load_object(path, _RTLD_MAIN))
+			if (!_rtld_load_object(path, _RTLD_MAIN, mask))
 				status = -1;
 			else
 				dbg((" preloaded \"%s\"", path));
