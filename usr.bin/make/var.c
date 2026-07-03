@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1180 2026/04/06 17:13:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1181 2026/07/03 15:31:35 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1180 2026/04/06 17:13:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1181 2026/07/03 15:31:35 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2806,7 +2806,7 @@ ParseModifier_Match(const char **pp, const ModChain *ch)
 }
 
 struct ModifyWord_MatchArgs {
-	const char *pattern;
+	StringList patterns;
 	bool neg;
 	bool error_reported;
 };
@@ -2815,17 +2815,25 @@ static void
 ModifyWord_Match(Substring word, SepBuf *buf, void *data)
 {
 	struct ModifyWord_MatchArgs *args = data;
+	StringListNode *ln;
 	StrMatchResult res;
+	const char *pattern;
+
 	assert(word.end[0] == '\0');	/* assume null-terminated word */
-	res = Str_Match(word.start, args->pattern);
-	if (res.error != NULL && !args->error_reported) {
-		args->error_reported = true;
-		Parse_Error(PARSE_FATAL,
-		    "%s in pattern \"%s\" of modifier \"%s\"",
-		    res.error, args->pattern, args->neg ? ":N" : ":M");
+	for (ln = args->patterns.first; ln != NULL; ln = ln->next) {
+		pattern = ln->datum;
+		res = Str_Match(word.start, pattern);
+		if (res.error != NULL && !args->error_reported) {
+			args->error_reported = true;
+			Parse_Error(PARSE_FATAL,
+			    "%s in pattern \"%s\" of modifier \"%s\"",
+			    res.error, pattern, args->neg ? ":N" : ":M");
+		}
+		if (res.matched != args->neg) {
+			SepBuf_AddSubstring(buf, word);
+			break;
+		}
 	}
-	if (res.matched != args->neg)
-		SepBuf_AddSubstring(buf, word);
 }
 
 /* :Mpattern or :Npattern */
@@ -2839,10 +2847,30 @@ ApplyModifier_Match(const char **pp, ModChain *ch)
 
 	if (ModChain_ShouldEval(ch)) {
 		struct ModifyWord_MatchArgs args;
-		args.pattern = pattern;
+		const char *brace;
+		
+		Lst_Init(&args.patterns);
+		if (mod == 'N')
+			brace = NULL;	/* not supported */
+		else
+			for (brace = strchr(pattern, '{'); brace != NULL;
+			     brace = strchr(++brace, '{')) {
+				if (brace == pattern
+				    || (brace[-1] != '\\' && brace[-1] != '$'))
+					break;
+			}
+
+		if (brace)
+			ExpandCurly(pattern, brace, NULL, &args.patterns);
+		else
+			Lst_Append(&args.patterns, pattern);
 		args.neg = mod == 'N';
 		args.error_reported = false;
 		ModifyWords(ch, ModifyWord_Match, &args, ch->oneBigWord);
+		if (brace)
+			Lst_DoneFree(&args.patterns);
+		else
+			Lst_Done(&args.patterns);
 	}
 
 	free(pattern);
