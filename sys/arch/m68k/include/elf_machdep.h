@@ -1,11 +1,26 @@
-/*	$NetBSD: elf_machdep.h,v 1.10 2025/12/06 12:19:12 jkoshy Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.11 2026/07/03 19:38:53 thorpej Exp $	*/
 
 #if !defined(_SYS_ELFDEFINITIONS_H_)
 /*
  * Machine-dependent ELF flags.  These are defined by the GNU tools.
+ *
+ * The upper 24 bits encode the architecture, the lower 8 bits
+ * encode the ColdFire variant.  If any of the lower 8 ColdFire
+ * bits are used, the upper 24 bits will either be EF_M68K_CFV4E
+ * or 0.
  */
-#define	EF_CPU32	0x00810000
-#define	EF_M68000	0x01000000
+#define	EF_M68K_CPU32	0x00810000
+#define	EF_M68K_M68000	0x01000000
+#define	EF_M68K_CFV4E	0x00008000
+#define	EF_M68K_FIDO	0x02000000
+
+#define	EF_M68K_ARCH_MASK	(EF_M68K_CPU32 | EF_M68K_M68000 |	\
+				 EF_M68K_CFV4E | EF_M68K_FIDO)
+
+/* XXX add ColdFire bits here eventually */
+
+#define	EF_M68K_CF_ISA_MASK	0x0f
+#define	EF_M68K_CF_MASK		0xff
 
 /* m68k relocation types */
 #define	R_68K_NONE	0
@@ -67,5 +82,10 @@
 
 #define	KERN_ELFSIZE		32
 #define ARCH_ELFSIZE		32	/* MD native binary size */
+
+#if defined(__mc68010__)
+#define	ELF32_EHDR_FLAGS_OK(eh)						\
+	(((eh)->e_flags & EF_M68K_M68000) != 0)
+#endif
 
 #define	R_TYPE(name)	__CONCAT(R_68K_,name)
