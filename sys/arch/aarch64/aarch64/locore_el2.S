@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.13 2026/07/03 07:36:30 skrll Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.14 2026/07/03 11:40:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -32,7 +32,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.13 2026/07/03 07:36:30 skrll Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.14 2026/07/03 11:40:45 skrll Exp $")
 
 /*
  * For use in #include "locore_el2.S".
@@ -132,9 +132,9 @@ no_el2_host_mode:
 	cmp	x2, #ID_AA64PFR0_EL1_GIC_CPUIF_EN
 	b.ne	2f
 
-	mrs	x2, icc_sre_el2
-	orr	x2, x2, #ICC_SRE_EL2_EN	/* Enable access from insecure EL1 */
-	orr	x2, x2, #ICC_SRE_EL2_SRE	/* Enable system registers */
+	mrs	x2, icc_sre_el2			/* Enable... */
+	orr	x2, x2, #ICC_SRE_EL2_EN		/*  access from insecure EL1 */
+	orr	x2, x2, #ICC_SRE_EL2_SRE	/*  system registers */
 	msr	icc_sre_el2, x2
 2:
 
