@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.393 2026/07/02 16:08:01 sjg Exp $
+.\"	$NetBSD: make.1,v 1.394 2026/07/03 15:31:34 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd July  1, 2026
+.Dd July  3, 2026
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1515,7 +1515,16 @@ and
 .Ql \&[] )
 may
 be used.
-The wildcard characters may be escaped with a backslash
+Braces can be used to list alternate patterns.
+For example,
+.Ql ${.ALLSRC:M*{Makefile*,.mk}}
+could be used to match any
+.Ql *Makefile*
+or
+.Ql *.mk
+in
+.Va .ALLSRC .
+The wildcard characters and braces may be escaped with a backslash
 .Pq Ql \e .
 As a consequence of the way values are split into words, matched,
 and then joined, the construct
