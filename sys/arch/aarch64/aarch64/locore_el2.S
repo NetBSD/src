@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.12 2026/06/16 15:49:33 skrll Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.13 2026/07/03 07:36:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -32,7 +32,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.12 2026/06/16 15:49:33 skrll Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.13 2026/07/03 07:36:30 skrll Exp $")
 
 /*
  * For use in #include "locore_el2.S".
@@ -81,8 +81,15 @@ no_el2_host_mode:
 	mrs	x2, mpidr_el1
 	msr	vmpidr_el2, x2
 
+	/* Set the bits that need to be 1 in SCTLR_EL2. */
+	ldr	x2, .Lsctlr_el2_res1
+	mrs	x1, sctlr_el2
+	and	x1, x1, #(SCTLR_EE | SCTLR_E0E)	/* keep SCTLR_EL2.{EE,E0E} */
+	orr	x2, x2, x1
+	msr	sctlr_el2, x2
+
 	/* Set the bits that need to be 1 in SCTLR_EL1. */
-	ldr	x2, .Lsctlr_res1
+	ldr	x2, .Lsctlr_el1_res1
 	mrs	x1, sctlr_el1
 	and	x1, x1, #(SCTLR_EE | SCTLR_E0E)	/* keep SCTLR_EL1.{EE,E0E} */
 	orr	x2, x2, x1
@@ -145,8 +152,19 @@ no_el2_host_mode:
 	eret
 
 	.align 3
-.Lsctlr_res1:
+.Lsctlr_el1_res1:
 	.quad SCTLR_RES1
+.Lsctlr_el2_res1:
+	.quad (								\
+	    __BIT(28) | /* nTLSMD when FEAT_LSMAOC */			\
+	    __BIT(23) | /* SPAN */					\
+	    __BIT(22) | /* EIS */					\
+	    __BIT(18) | /* nTWE */					\
+	    __BIT(16) | /* nTWI */					\
+	    __BIT(11) | /* EOS */					\
+	     __BIT(5) | /* CP15BEN */					\
+	     __BIT(4)   /* SA0 */					\
+	)
 
 #define	VECT_EMPTY	\
 	.align 7;	\
