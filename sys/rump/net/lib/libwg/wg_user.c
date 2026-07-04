@@ -1,4 +1,4 @@
-/*	$NetBSD: wg_user.c,v 1.4 2026/07/02 00:32:00 riastradh Exp $	*/
+/*	$NetBSD: wg_user.c,v 1.5 2026/07/04 22:22:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -29,9 +29,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wg_user.c,v 1.4 2026/07/02 00:32:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wg_user.c,v 1.5 2026/07/04 22:22:33 riastradh Exp $");
 
-#ifndef _KERNEL
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -71,7 +70,14 @@ struct wg_user {
 
 	int wgu_dying;
 
-	char wgu_rcvbuf[9018]; /* jumbo frame max len */
+	struct {
+		union {
+			struct sockaddr sa;
+			struct sockaddr_in sin;
+			struct sockaddr_in6 sin6;
+		} addr;
+		char payload[9018]; /* jumbo frame max len */
+	} wgu_rcvbuf;
 };
 
 static int
@@ -136,8 +142,6 @@ wg_user_rcvthread(void *aaargh)
 	pfd[3].events = POLLIN;
 
 	while (!wgu->wgu_dying) {
-		struct iovec iov[2];
-
 		prv = poll(pfd, 4, -1);
 		if (prv == 0)
 			continue;
@@ -148,12 +152,19 @@ wg_user_rcvthread(void *aaargh)
 			sleep(1);
 			continue;
 		}
+
+		/* rumpuser_wg_destroy notified us it's time */
 		if (pfd[1].revents & POLLIN)
 			continue;
 
 		/* Receive user packets from tun */
 		if (pfd[0].revents & POLLIN) {
-			nn = read(wgu->wgu_fd, wgu->wgu_rcvbuf, sizeof(wgu->wgu_rcvbuf));
+			const struct sockaddr *dst;
+			const void *pkt;
+			size_t pktlen;
+
+			nn = read(wgu->wgu_fd, &wgu->wgu_rcvbuf,
+			    sizeof(wgu->wgu_rcvbuf));
 			if (nn == -1 && errno == EAGAIN)
 				continue;
 
@@ -165,58 +176,54 @@ wg_user_rcvthread(void *aaargh)
 				continue;
 			}
 
-			iov[0].iov_base = wgu->wgu_rcvbuf;
-			iov[0].iov_len = ((struct sockaddr *)wgu->wgu_rcvbuf)->sa_len;
-
-			iov[1].iov_base = (char *)wgu->wgu_rcvbuf + iov[0].iov_len;
-			iov[1].iov_len = nn - iov[0].iov_len;
+			dst = &wgu->wgu_rcvbuf.addr.sa;
+			pkt = (const char *)dst + dst->sa_len;
+			pktlen = (size_t)nn - dst->sa_len;
 
 			rumpuser_component_schedule(NULL);
-			rumpkern_wg_recv_user(wgu->wgu_sc, iov, 2);
+			rumpkern_wg_recv_user(wgu->wgu_sc, dst, pkt, pktlen);
 			rumpuser_component_unschedule();
 		}
 
 		/* Receive wg UDP/IPv4 packets from a peer */
 		if (pfd[2].revents & POLLIN) {
-			struct sockaddr_in sin;
-			socklen_t len = sizeof(sin);
-			nn = recvfrom(wgu->wgu_sock4, wgu->wgu_rcvbuf,
-			    sizeof(wgu->wgu_rcvbuf), 0, (struct sockaddr *)&sin,
-			    &len);
+			struct sockaddr *src = &wgu->wgu_rcvbuf.addr.sa;
+			socklen_t len = sizeof(wgu->wgu_rcvbuf.addr.sin);
+			const void *pkt;
+			size_t pktlen;
+
+			nn = recvfrom(wgu->wgu_sock4, wgu->wgu_rcvbuf.payload,
+			    sizeof(wgu->wgu_rcvbuf.payload), 0, src, &len);
 			if (nn == -1)
 				continue;
-			if (len != sizeof(sin))
+			if (len != sizeof(wgu->wgu_rcvbuf.addr.sin))
 				continue;
-			iov[0].iov_base = &sin;
-			iov[0].iov_len = sin.sin_len;
-
-			iov[1].iov_base = wgu->wgu_rcvbuf;
-			iov[1].iov_len = nn;
+			pkt = wgu->wgu_rcvbuf.payload;
+			pktlen = (size_t)nn;
 
 			rumpuser_component_schedule(NULL);
-			rumpkern_wg_recv_peer(wgu->wgu_sc, iov, 2);
+			rumpkern_wg_recv_peer(wgu->wgu_sc, src, pkt, pktlen);
 			rumpuser_component_unschedule();
 		}
 
 		/* Receive wg UDP/IPv6 packets from a peer */
 		if (pfd[3].revents & POLLIN) {
-			struct sockaddr_in6 sin6;
-			socklen_t len = sizeof(sin6);
-			nn = recvfrom(wgu->wgu_sock6, wgu->wgu_rcvbuf,
-			    sizeof(wgu->wgu_rcvbuf), 0, (struct sockaddr *)&sin6,
-			    &len);
+			struct sockaddr *src = &wgu->wgu_rcvbuf.addr.sa;
+			socklen_t len = sizeof(wgu->wgu_rcvbuf.addr.sin6);
+			const void *pkt;
+			size_t pktlen;
+
+			nn = recvfrom(wgu->wgu_sock6, wgu->wgu_rcvbuf.payload,
+			    sizeof(wgu->wgu_rcvbuf.payload), 0, src, &len);
 			if (nn == -1)
 				continue;
-			if (len != sizeof(sin6))
+			if (len != sizeof(wgu->wgu_rcvbuf.addr.sin6))
 				continue;
-			iov[0].iov_base = &sin6;
-			iov[0].iov_len = sin6.sin6_len;
-
-			iov[1].iov_base = wgu->wgu_rcvbuf;
-			iov[1].iov_len = nn;
+			pkt = wgu->wgu_rcvbuf.payload;
+			pktlen = (size_t)nn;
 
 			rumpuser_component_schedule(NULL);
-			rumpkern_wg_recv_peer(wgu->wgu_sc, iov, 2);
+			rumpkern_wg_recv_peer(wgu->wgu_sc, src, pkt, pktlen);
 			rumpuser_component_unschedule();
 		}
 	}
@@ -297,10 +304,20 @@ rumpuser_wg_create(const char *tun_name, struct wg_softc *wg,
  * Send decrypted packets to users via a tun.
  */
 void
-rumpuser_wg_send_user(struct wg_user *wgu, struct iovec *iov, size_t iovlen)
+rumpuser_wg_send_user(struct wg_user *wgu, const struct sockaddr *dst,
+    const void *pkt, size_t pktlen)
 {
 	void *cookie = rumpuser_component_unschedule();
+	struct iovec iov[2];
+	int iovlen;
 	ssize_t idontcare __attribute__((__unused__));
+
+	memset(iov, 0, sizeof(iov));
+	iov[0].iov_base = __UNCONST(dst);
+	iov[0].iov_len = dst->sa_len;
+	iov[1].iov_base = __UNCONST(pkt);
+	iov[1].iov_len = pktlen;
+	iovlen = 2;
 
 	/*
 	 * no need to check for return value; packets may be dropped
@@ -321,29 +338,32 @@ rumpuser_wg_send_user(struct wg_user *wgu, struct iovec *iov, size_t iovlen)
  * Send wg messages to a peer.
  */
 int
-rumpuser_wg_send_peer(struct wg_user *wgu, struct sockaddr *sa,
-    struct iovec *iov, size_t iovlen)
+rumpuser_wg_send_peer(struct wg_user *wgu, const struct sockaddr *dst,
+    const void *pkt, size_t pktlen)
 {
 	void *cookie = rumpuser_component_unschedule();
 	int s, error = 0;
-	size_t i;
 	ssize_t sent;
 
-	if (sa->sa_family == AF_INET)
+	switch (dst->sa_family) {
+	case AF_INET:
 		s = wgu->wgu_sock4;
-	else
+		break;
+	case AF_INET6:
 		s = wgu->wgu_sock6;
-
-	for (i = 0; i < iovlen; i++) {
-		sent = sendto(s, iov[i].iov_base, iov[i].iov_len, 0, sa,
-		    sa->sa_len);
-		if (sent == -1 || (size_t)sent != iov[i].iov_len) {
-			error = errno;
-			break;
-		}
+		break;
+	default:
+		error = EAFNOSUPPORT;
+		goto out;
 	}
 
-	rumpuser_component_schedule(cookie);
+	sent = sendto(s, pkt, pktlen, 0, dst, dst->sa_len);
+	if (sent == -1)
+		error = errno;
+	else if ((size_t)sent != pktlen)
+		error = EIO;
+
+out:	rumpuser_component_schedule(cookie);
 
 	return error;
 }
@@ -368,28 +388,28 @@ rumpuser_wg_ioctl(struct wg_user *wgu, u_long cmd, void *data, int af)
 int
 rumpuser_wg_sock_bind(struct wg_user *wgu, const uint16_t port)
 {
-	int error;
-	struct sockaddr_in sin;
-	struct sockaddr_in6 sin6;
+	union {
+		struct sockaddr sa;
+		struct sockaddr_in sin;
+		struct sockaddr_in6 sin6;
+	} u;
 
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	sin.sin_len = sizeof(sin);
-	sin.sin_addr.s_addr = INADDR_ANY;
-	sin.sin_port = htons(port);
+	memset(&u.sin, 0, sizeof(u.sin));
+	u.sin.sin_family = AF_INET;
+	u.sin.sin_len = sizeof(u.sin);
+	u.sin.sin_addr.s_addr = INADDR_ANY;
+	u.sin.sin_port = htons(port);
 
-	error = bind(wgu->wgu_sock4, (struct sockaddr *)&sin, sizeof(sin));
-	if (error == -1)
+	if (bind(wgu->wgu_sock4, &u.sa, sizeof(u.sin)) == -1)
 		return errno;
 
-	memset(&sin6, 0, sizeof(sin6));
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_len = sizeof(sin6);
-	sin6.sin6_addr = in6addr_any;
-	sin6.sin6_port = htons(port);
+	memset(&u.sin6, 0, sizeof(u.sin6));
+	u.sin6.sin6_family = AF_INET6;
+	u.sin6.sin6_len = sizeof(u.sin6);
+	u.sin6.sin6_addr = in6addr_any;
+	u.sin6.sin6_port = htons(port);
 
-	error = bind(wgu->wgu_sock6, (struct sockaddr *)&sin6, sizeof(sin6));
-	if (error == -1)
+	if (bind(wgu->wgu_sock6, &u.sa, sizeof(u.sin6)) == -1)
 		return errno;
 
 	return 0;
@@ -425,4 +445,3 @@ rumpuser_wg_get_tunname(struct wg_user *wgu)
 
 	return wgu->wgu_tun_name;
 }
-#endif
