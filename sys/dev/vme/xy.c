@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.103 2026/07/03 21:27:40 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.104 2026/07/04 13:01:25 kre Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.103 2026/07/03 21:27:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.104 2026/07/04 13:01:25 kre Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -2031,6 +2031,8 @@ xyc_error(struct xyc_softc *xycsc, struct xy_iorq *iorq, struct xy_iopb *iopb,
 
 	if ((comm == XYCMD_RD || comm == XYCMD_WR) &&
 	    (iorq->mode & XY_MODE_B144) == 0) {
+		int i;
+
 		advance = iorq->sectcnt - iopb->scnt;
 		XYC_ADVANCE(iorq, advance);
 		if ((i = bad144_isbad_chs(iorq->xy->bad144,
