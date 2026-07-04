@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.6 2026/01/06 10:54:41 nia Exp $ */
+/* $NetBSD: main.c,v 1.7 2026/07/04 16:13:26 christos Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.6 2026/01/06 10:54:41 nia Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2026/07/04 16:13:26 christos Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -548,7 +548,7 @@ main(int argc, char **argv)
 
 	efi_fd = open(_PATH_EFI, O_RDONLY);
 	if (efi_fd == -1)
-		err(EXIT_FAILURE, "open");
+		err(EXIT_FAILURE, "Cannot open `%s'", _PATH_EFI);
 
 	switch (action) {
 	case act_del_bootorder_dups:	return del_bootorder_dups(efi_fd, opt.target);
