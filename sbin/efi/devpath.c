@@ -1,4 +1,4 @@
-/* $NetBSD: devpath.c,v 1.1 2025/02/24 13:47:56 christos Exp $ */
+/* $NetBSD: devpath.c,v 1.2 2026/07/04 18:27:17 kre Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath.c,v 1.1 2025/02/24 13:47:56 christos Exp $");
+__RCSID("$NetBSD: devpath.c,v 1.2 2026/07/04 18:27:17 kre Exp $");
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -90,9 +90,12 @@ collapse_list(devpath_head_t *head, size_t plen, char **dmsg, size_t dlen)
 	bp = path = emalloc(plen + 1);
 	SIMPLEQ_FOREACH_SAFE(blk, head, entry, next) {
 		if (blk->path.cp == NULL) {
-			*bp = '\0';
-			assert(next == NULL);
-			break;
+			if (next == NULL) {
+				*bp = '\0';
+				break;
+			}
+			// *bp++=';';   /* just nothing should be OK, or ??? */
+			continue;
 		}
 		else if (*blk->path.cp == '\0') {
 			*bp++ = ':';
