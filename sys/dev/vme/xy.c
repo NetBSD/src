@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.104 2026/07/04 13:01:25 kre Exp $	*/
+/*	$NetBSD: xy.c,v 1.105 2026/07/04 15:53:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.104 2026/07/04 13:01:25 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.105 2026/07/04 15:53:53 christos Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -2015,9 +2015,6 @@ xyc_error(struct xyc_softc *xycsc, struct xy_iorq *iorq, struct xy_iopb *iopb,
 	int     errnum = iorq->errnum;
 	int     erract = xyc_entoact(errnum);
 	int     oldmode, advance;
-#ifdef __sparc__
-	int i;
-#endif
 
 	if (erract == XY_ERA_RSET) {	/* some errors require a reset */
 		oldmode = iorq->mode;
