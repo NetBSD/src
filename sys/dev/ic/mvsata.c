@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.63 2026/07/04 00:14:50 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.64 2026/07/04 02:05:12 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.63 2026/07/04 00:14:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.64 2026/07/04 02:05:12 thorpej Exp $");
 
 #include "opt_mvsata.h"
 
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.63 2026/07/04 00:14:50 jakllsch Exp $")
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/dkbad.h>
 #include <sys/errno.h>
@@ -1049,7 +1050,7 @@ mvsata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		/* Check for bad sectors and adjust transfer, if necessary. */
 		if (drvp->bad144 != NULL &&
 		    (i = bad144_isbad_lba(drvp->bad144,
-		    			  ata_bio->blkno, nblks,
+					  ata_bio->blkno, nblks,
 					  &distance)) != -1) {
 			/*
 			 * The bad block appears somewhere in this
