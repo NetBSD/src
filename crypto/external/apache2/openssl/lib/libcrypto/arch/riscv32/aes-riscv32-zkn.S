@@ -337,11 +337,6 @@ rv32i_zknd_decrypt:
 .type rv32i_zkne_set_encrypt_key,@function
 rv32i_zkne_set_encrypt_key:
     addi    sp,sp,-0
-    bnez    x10,1f        # if (!userKey || !key) return -1;
-    bnez    x12,1f
-    li      a0,-1
-    ret
-1:
     # Determine number of rounds from key size in bits
     li      x13,128
     bne     x11,x13,1f
@@ -1083,11 +1078,6 @@ rv32i_zkne_set_encrypt_key:
 .type rv32i_zbkb_zkne_set_encrypt_key,@function
 rv32i_zbkb_zkne_set_encrypt_key:
     addi    sp,sp,-0
-    bnez    x10,1f        # if (!userKey || !key) return -1;
-    bnez    x12,1f
-    li      a0,-1
-    ret
-1:
     # Determine number of rounds from key size in bits
     li      x13,128
     bne     x11,x13,1f
@@ -1779,11 +1769,6 @@ rv32i_zbkb_zkne_set_encrypt_key:
 .type   rv32i_zknd_zkne_set_decrypt_key,@function
 rv32i_zknd_zkne_set_decrypt_key:
     addi    sp,sp,-0
-    bnez    x10,1f        # if (!userKey || !key) return -1;
-    bnez    x12,1f
-    li      a0,-1
-    ret
-1:
     # Determine number of rounds from key size in bits
     li      x13,128
     bne     x11,x13,1f
@@ -4226,11 +4211,6 @@ rv32i_zknd_zkne_set_decrypt_key:
 .type rv32i_zbkb_zknd_zkne_set_decrypt_key,@function
 rv32i_zbkb_zknd_zkne_set_decrypt_key:
     addi    sp,sp,-0
-    bnez    x10,1f        # if (!userKey || !key) return -1;
-    bnez    x12,1f
-    li      a0,-1
-    ret
-1:
     # Determine number of rounds from key size in bits
     li      x13,128
     bne     x11,x13,1f

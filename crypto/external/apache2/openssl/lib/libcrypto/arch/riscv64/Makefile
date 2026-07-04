@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2025/07/20 00:32:10 christos Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2026/07/04 15:29:33 martin Exp $
 
 .include "bsd.own.mk"
 
@@ -10,7 +10,7 @@ CC+= -fno-integrated-as
 .endif
 
 regen:
-	for i in $$(find ${OPENSSLSRC} -name \*${MACHINE_ARCH}\*.pl); do \
+	for i in $$(find ${OPENSSLSRC} -name \*riscv64\*.pl); do \
 		j=$$(basename $$i .pl).S; \
 		case $$j in \
 		(chacha-riscv64-v-zbb.S) \

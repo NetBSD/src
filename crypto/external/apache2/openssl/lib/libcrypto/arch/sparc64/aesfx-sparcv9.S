@@ -542,11 +542,16 @@ aes_fx_cbc_encrypt:
 	ldd		[%l2 + 24], %f12
 
 	movrz		%i2, 0, %l3
+
+	brz,pn		%i2, .Lcbc_enc_skip_load
+	nop
+
 	fmovd		%f32, %f28
 	ldd		[%i0 - 8], %f30	! load next input block
 	ldda		[%i0]0x82, %f32	! non-faulting load
 	add		%i0, %l3, %i0	! inp+=16
 
+.Lcbc_enc_skip_load:
 	fmovd		%f0, %f4
 	.word	0x81b09206 !faesencx	%f2,%f6,%f0
 	.word	0x85b11208 !faesencx	%f4,%f8,%f2
@@ -757,11 +762,16 @@ aes_fx_cbc_encrypt:
 	fmovd		%f30, %f18
 
 	movrz		%i2, 0, %l3
+
+	brz,pn		%i2, .Lcbc_dec_skip_load
+	nop
+
 	fmovd		%f32, %f28
 	ldd		[%i0 - 8], %f30	! load next input block
 	ldda		[%i0]0x82, %f32	! non-faulting load
 	add		%i0, %l3, %i0	! inp+=16
 
+.Lcbc_dec_skip_load:
 	fmovd		%f0, %f4
 	.word	0x81b0922a !faesdecx	%f2,%f10,%f0
 	.word	0x85b1122c !faesdecx	%f4,%f12,%f2
@@ -1005,11 +1015,16 @@ aes_fx_ctr32_encrypt_blocks:
 	.word	0x91b78d9a !fxor	%f30,%f26,%f8
 
 	movrz		%i2, 0, %l3
+
+	brz,pn		%i2, .Lctr32_enc_skip_load
+	nop
+
 	fmovd		%f32, %f28
 	ldd		[%i0 - 8], %f30	! load next input block
 	ldda		[%i0]0x82, %f32	! non-faulting load
 	add		%i0, %l3, %i0	! inp+=16
 
+.Lctr32_enc_skip_load:
 	fmovd		%f0, %f4
 	.word	0x81b0920a !faesencx	%f2,%f10,%f0
 	.word	0x85b1120c !faesencx	%f4,%f12,%f2
