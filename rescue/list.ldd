@@ -1,4 +1,4 @@
-#	$NetBSD: list.ldd,v 1.7 2011/04/15 08:47:02 plunky Exp $
+#	$NetBSD: list.ldd,v 1.7.58.1 2026/07/04 08:57:45 martin Exp $
 
 PROG	ldd
 SPECIAL	ldd	srcdir	usr.bin/ldd/build
@@ -11,6 +11,7 @@ SPECIAL ldd	keepsymbols	_rtld_default_paths _rtld_paths
 SPECIAL ldd	keepsymbols	_rtld_xforms _rtld_objmain
 SPECIAL ldd	keepsymbols	_rtld_objtail _rtld_objlist
 SPECIAL ldd	keepsymbols	_rtld_objcount _rtld_objloads
+SPECIAL ldd	keepsymbols	_rtld_objrelocpending _rtld_objgen
 SPECIAL ldd	keepsymbols	_rtld_shared_enter _rtld_shared_exit
 SPECIAL ldd	keepsymbols	_rtld_exclusive_enter _rtld_exclusive_exit
 
