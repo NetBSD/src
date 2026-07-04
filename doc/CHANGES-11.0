@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.117 2026/07/04 15:35:41 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.118 2026/07/04 15:46:57 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -12597,13 +12597,16 @@ external/mit/expat/lib/libexpat/shlib_version	1.8
 	Update expat to 2.8.2.
 	[jdc, ticket #338]
 
-lib/libc/citrus/modules/citrus_utf8.c		1.19
+lib/libc/citrus/modules/citrus_utf8.c		1.19-1.22
+lib/libc/locale/c8rtomb.c			1.10
 tests/lib/libc/locale/t_mbrtowc.c		1.3-1.5
 tests/lib/libc/locale/t_mbstowcs.c		1.4,1.5
+tests/lib/libc/locale/t_c8rtomb.c		1.8
 
 	mbrtowc(3), mbrlen(3): PR 60369: fix return value for
 	some invalid UTF-8 byte sequences.
 	Fix testcases affected by this change.
+	libc: fix bugs in UTF-8 decoding and add exhaustive tests.
 	[wiz, ticket #339]
 
 lib/libbsdmalloc/malloc.c			1.12
