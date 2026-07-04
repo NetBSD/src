@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.104 2026/05/23 14:02:38 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.105 2026/07/04 14:40:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.104 2026/05/23 14:02:38 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.105 2026/07/04 14:40:21 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -482,8 +482,9 @@ mp_vstart:
 	msr	tcr_el1, x0
 	isb
 
-	tlbi	vmalle1is
-	dsb	ish
+	/* Invalidate local TLB */
+	tlbi	vmalle1
+	dsb	nsh
 	isb
 
 	/* set exception vector */
@@ -912,14 +913,9 @@ mmu_disable:
 mmu_enable:
 	dsb	sy
 
-	/* Invalidate all TLB */
-	dsb	ishst
-#ifdef MULTIPROCESSOR
-	tlbi	vmalle1is
-#else
+	/* Invalidate local TLB */
 	tlbi	vmalle1
-#endif
-	dsb	ish
+	dsb	nsh
 	isb
 
 	ldr	x0, mair_setting
