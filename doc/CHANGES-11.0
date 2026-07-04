@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.118 2026/07/04 15:46:57 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.119 2026/07/04 18:55:33 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11514,6 +11514,7 @@ crypto/external/apache2/openssl/lib/libcrypto/man/x509v3_config.5 up to 1.6
 tests/crypto/libcrypto/t_pubkey.sh              up to 1.9
 tests/crypto/libcrypto/t_sha512trunc.c          up to 1.4
 tests/crypto/libcrypto/threads/Makefile         up to 1.10
+etc/mtree/NetBSD.dist.tests			1.214
 doc/3RDPARTY						(manually edited)
 
 	Update OpenSSL to 3.5.7. Update tests too.
