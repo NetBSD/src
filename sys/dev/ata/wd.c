@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.475 2026/07/03 21:27:40 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.476 2026/07/04 00:13:39 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.475 2026/07/03 21:27:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.476 2026/07/04 00:13:39 jakllsch Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -1149,7 +1149,7 @@ wd_load_bad144(struct wd_softc *wd, dev_t dev)
 	struct dk_softc * const dksc = &wd->sc_dksc;
 	const struct disklabel * const lp = dksc->sc_dkdev.dk_label;
 	struct bad144_context *bad144 = NULL;
-	int error;
+	int error = 0;
 
 	/*
 	 * We are called from wdopen() if the disklabel indicates there
