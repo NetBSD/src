@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.62 2021/12/05 04:37:11 msaitoh Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.63 2026/07/04 00:14:50 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.62 2021/12/05 04:37:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.63 2026/07/04 00:14:50 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.62 2021/12/05 04:37:11 msaitoh Exp $");
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
+#include <sys/dkbad.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -1035,38 +1036,33 @@ mvsata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			drvp->n_xfers++;
 
 	/*
-	 *
 	 * When starting a multi-sector transfer, or doing single-sector
 	 * transfers...
 	 */
 	if (xfer->c_skip == 0 || (ata_bio->flags & ATA_SINGLE) != 0) {
+		int i, distance;
+
 		if (ata_bio->flags & ATA_SINGLE)
 			nblks = 1;
 		else
 			nblks = xfer->c_bcount / drvp->lp->d_secsize;
 		/* Check for bad sectors and adjust transfer, if necessary. */
-		if ((drvp->lp->d_flags & D_BADSECT) != 0) {
-			long blkdiff;
-			int i;
-
-			for (i = 0; (blkdiff = drvp->badsect[i]) != -1;
-			    i++) {
-				blkdiff -= ata_bio->blkno;
-				if (blkdiff < 0)
-					continue;
-				if (blkdiff == 0)
-					/* Replace current block of transfer. */
-					ata_bio->blkno =
-					    drvp->lp->d_secperunit -
-					    drvp->lp->d_nsectors - i - 1;
-				if (blkdiff < nblks) {
-					/* Bad block inside transfer. */
-					ata_bio->flags |= ATA_SINGLE;
-					nblks = 1;
-				}
-				break;
+		if (drvp->bad144 != NULL &&
+		    (i = bad144_isbad_lba(drvp->bad144,
+		    			  ata_bio->blkno, nblks,
+					  &distance)) != -1) {
+			/*
+			 * The bad block appears somewhere in this
+			 * transfer, so degrade to single-sector mode.
+			 */
+			ata_bio->flags |= ATA_SINGLE;
+			nblks = 1;
+			if (distance == 0) {
+				/* Replace current block of transfer. */
+				ata_bio->blkno =
+				    drvp->lp->d_secperunit -
+				    drvp->lp->d_nsectors - i - 1;
 			}
-			/* Transfer is okay now. */
 		}
 		if (xfer->c_flags & C_DMA) {
 			enum mvsata_edmamode dmamode;
