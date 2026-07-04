@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.115 2026/07/03 18:38:00 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.116 2026/07/04 08:59:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11919,6 +11919,8 @@ libexec/ld.elf_so/search.c			1.28
 tests/libexec/ld.elf_so/t_dlclose_thread.c	1.2,1.3
 usr.bin/ldd/ldd.c				1.29,1.30
 usr.bin/ldd/ldd_elfxx.c				1.9
+rescue/list.ldd					1.8
+
 
 	ld.elf_so(1): PR 59751: fix races with concurrent dlopen/dlclose.
 	[riastradh, ticket #365]
