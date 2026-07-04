@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23 2026/05/03 19:10:41 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24 2026/07/04 20:02:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,11 +53,7 @@
  */
 #define	VM_PHYS_SIZE		(256 * 1024)
 
-/*
- * We definitely need a small pager map.
- */
-#define	PAGER_MAP_DEFAULT_SIZE (1 * 1024 * 1024)
-
 #endif /* _KERNEL && !_MODULE */
 
 #include <m68k/vmparam.h>
+

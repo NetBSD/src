@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2026/06/30 13:14:04 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2026/07/04 20:02:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -193,6 +193,10 @@ extern vaddr_t kernel_virtual_max;
 #else
 #define	VM_PHYS_SIZE		(1 * 1024 * 1024)
 #endif
+#endif
+
+#if defined(__mc68010__)
+#define	PAGER_MAP_DEFAULT_SIZE	(1 * 1024 * 1024)
 #endif
 
 /*
