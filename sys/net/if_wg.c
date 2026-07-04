@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.141 2026/07/01 23:40:16 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.142 2026/07/04 22:22:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.141 2026/07/01 23:40:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.142 2026/07/04 22:22:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -5641,7 +5641,8 @@ wg_send_user(struct wg_peer *wgp, struct mbuf *m, bool handshake)
 	struct psref psref;
 	struct wg_sockaddr *wgsa;
 	struct wg_softc *wg = wgp->wgp_sc;
-	struct iovec iov[1];
+	void *pkt;
+	size_t pktlen;
 
 	wgsa = wg_get_endpoint_sa(wgp, &psref);
 
@@ -5653,11 +5654,12 @@ wg_send_user(struct wg_peer *wgp, struct mbuf *m, bool handshake)
 	}
 #endif
 
-	iov[0].iov_base = mtod(m, void *);
-	iov[0].iov_len = m->m_len;
+	pkt = mtod(m, void *);
+	pktlen = m->m_len;
 
 	/* Send messages to a peer via an ordinary socket. */
-	error = rumpuser_wg_send_peer(wg->wg_user, wgsatosa(wgsa), iov, 1);
+	error = rumpuser_wg_send_peer(wg->wg_user, wgsatosa(wgsa),
+	    pkt, pktlen);
 
 	wg_put_sa(wgp, wgsa, &psref);
 
@@ -5675,7 +5677,8 @@ wg_send_cookie_user(struct wg_softc *wg, const struct sockaddr *src,
 		struct sockaddr_in sin;
 		struct sockaddr_in6 sin6;
 	} dst;
-	struct iovec iov[1];
+	void *pkt;
+	size_t pktlen;
 	int error;
 
 #ifdef WG_DEBUG_LOG
@@ -5685,9 +5688,9 @@ wg_send_cookie_user(struct wg_softc *wg, const struct sockaddr *src,
 #endif
 
 	sockaddr_copy(&dst.sa, sizeof(dst), src);
-	iov[0].iov_base = mtod(m, void *);
-	iov[0].iov_len = m->m_len;
-	error = rumpuser_wg_send_peer(wg->wg_user, &dst.sa, iov, 1);
+	pkt = mtod(m, void *);
+	pktlen = m->m_len;
+	error = rumpuser_wg_send_peer(wg->wg_user, &dst.sa, pkt, pktlen);
 	m_freem(m);
 	return error;
 }
@@ -5710,8 +5713,17 @@ static void
 wg_input_user(struct ifnet *ifp, struct mbuf *m, const int af)
 {
 	struct wg_softc *wg = ifp->if_softc;
-	struct iovec iov[2];
-	struct sockaddr_storage ss;
+	union {
+		struct sockaddr sa;
+#ifdef INET
+		struct sockaddr_in sin;
+#endif
+#ifdef INET6
+		struct sockaddr_in6 sin6;
+#endif
+	} dst;
+	const void *pkt;
+	size_t pktlen;
 
 	KASSERT(af == AF_INET || af == AF_INET6);
 
@@ -5720,23 +5732,21 @@ wg_input_user(struct ifnet *ifp, struct mbuf *m, const int af)
 	switch (af) {
 #ifdef INET
 	case AF_INET: {
-		struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
 		struct ip *ip;
 
 		KASSERT(m->m_len >= sizeof(struct ip));
 		ip = mtod(m, struct ip *);
-		sockaddr_in_init(sin, &ip->ip_dst, 0);
+		sockaddr_in_init(&dst.sin, &ip->ip_dst, 0);
 		break;
 	}
 #endif
 #ifdef INET6
 	case AF_INET6: {
-		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
 		struct ip6_hdr *ip6;
 
 		KASSERT(m->m_len >= sizeof(struct ip6_hdr));
 		ip6 = mtod(m, struct ip6_hdr *);
-		sockaddr_in6_init(sin6, &ip6->ip6_dst, 0, 0, 0);
+		sockaddr_in6_init(&dst.sin6, &ip6->ip6_dst, 0, 0, 0);
 		break;
 	}
 #endif
@@ -5744,15 +5754,13 @@ wg_input_user(struct ifnet *ifp, struct mbuf *m, const int af)
 		goto out;
 	}
 
-	iov[0].iov_base = &ss;
-	iov[0].iov_len = ss.ss_len;
-	iov[1].iov_base = mtod(m, void *);
-	iov[1].iov_len = m->m_len;
+	pkt = mtod(m, void *);
+	pktlen = m->m_len;
 
-	WG_DUMP_BUF(iov[1].iov_base, iov[1].iov_len);
+	WG_DUMP_BUF(pkt, pktlen);
 
 	/* Send decrypted packets to users via a tun. */
-	rumpuser_wg_send_user(wg->wg_user, iov, 2);
+	rumpuser_wg_send_user(wg->wg_user, &dst.sa, pkt, pktlen);
 
 out:	m_freem(m);
 }
@@ -5775,28 +5783,30 @@ wg_bind_port_user(struct wg_softc *wg, const uint16_t port)
 }
 
 /*
- * Receive user packets.
+ * Receive outgoing packets from the kernel network stack on the wgN
+ * interface (actually, tunN).
  */
 void
-rumpkern_wg_recv_user(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
+rumpkern_wg_recv_user(struct wg_softc *wg, const struct sockaddr *dst,
+    const void *pkt, size_t pktlen)
 {
 	struct ifnet *ifp = &wg->wg_if;
 	struct mbuf *m;
-	const struct sockaddr *dst;
 	int error;
 
 	WG_TRACE("");
 
-	dst = iov[0].iov_base;
+	if (pktlen > INT_MAX)	/* paranoia */
+		return;
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return;
 	m->m_len = m->m_pkthdr.len = 0;
-	m_copyback(m, 0, iov[1].iov_len, iov[1].iov_base);
+	m_copyback(m, 0, (int)pktlen, pkt);
 
-	WG_DLOG("iov_len=%zu\n", iov[1].iov_len);
-	WG_DUMP_BUF(iov[1].iov_base, iov[1].iov_len);
+	WG_DLOG("iov_len=%zu\n", pktlen);
+	WG_DUMP_BUF(pkt, pktlen);
 
 	error = wg_output(ifp, m, dst, NULL); /* consumes m */
 	if (error)
@@ -5804,34 +5814,41 @@ rumpkern_wg_recv_user(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
 }
 
 /*
- * Receive packets from a peer.
+ * Receive incoming packets packets from a peer on the network.
  */
 void
-rumpkern_wg_recv_peer(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
+rumpkern_wg_recv_peer(struct wg_softc *wg, const struct sockaddr *src,
+    const void *pkt, size_t pktlen)
 {
 	struct mbuf *m;
-	const struct sockaddr *src;
 	int bound;
 
 	WG_TRACE("");
+
+	if (pktlen > INT_MAX)	/* paranoia */
+		return;
 
 	/*
 	 * If the input UDP packet is too short, just drop it on the
 	 * floor like the kernel does.
 	 */
-	if (iov[1].iov_len < sizeof(struct wg_msg))
+	if (pktlen < sizeof(struct wg_msg))
 		return;
 
-	src = iov[0].iov_base;
-
+	/*
+	 * Create an mbuf with the data.  Can't use the caller's buffer
+	 * -- don't know how long it will last.  (XXX Should maybe push
+	 * mbuf allocation into the caller to we don't have to memcpy
+	 * here.)
+	 */
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return;
 	m->m_len = m->m_pkthdr.len = 0;
-	m_copyback(m, 0, iov[1].iov_len, iov[1].iov_base);
+	m_copyback(m, 0, (int)pktlen, pkt);
 
-	WG_DLOG("iov_len=%zu\n", iov[1].iov_len);
-	WG_DUMP_BUF(iov[1].iov_base, iov[1].iov_len);
+	WG_DLOG("iov_len=%zu\n", pktlen);
+	WG_DUMP_BUF(pkt, pktlen);
 
 	bound = curlwp_bind();
 	wg_handle_packet(wg, m, src);

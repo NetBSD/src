@@ -1,4 +1,4 @@
-/*	$NetBSD: wg_user.h,v 1.1 2020/08/26 16:03:42 riastradh Exp $	*/
+/*	$NetBSD: wg_user.h,v 1.2 2026/07/04 22:22:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -26,8 +26,14 @@
  * SUCH DAMAGE.
  */
 
-struct wg_user;
+#ifndef	_RUMP_NET_LIB_LIBWG_WG_USER_H_
+#define	_RUMP_NET_LIB_LIBWG_WG_USER_H_
+
+#include <sys/types.h>
+
+struct sockaddr;
 struct wg_softc;
+struct wg_user;
 
 /*
  * Defined in wg_user.c and called from if_wg.c.
@@ -36,17 +42,22 @@ int	rumpuser_wg_create(const char *tun_name, struct wg_softc *,
 	    struct wg_user **);
 void	rumpuser_wg_destroy(struct wg_user *);
 
-void	rumpuser_wg_send_user(struct wg_user *, struct iovec *, size_t);
-int	rumpuser_wg_send_peer(struct wg_user *, struct sockaddr *,
-	    struct iovec *, size_t);
+void	rumpuser_wg_send_user(struct wg_user *, const struct sockaddr *,
+	    const void *, size_t);
+int	rumpuser_wg_send_peer(struct wg_user *, const struct sockaddr *,
+	    const void *, size_t);
 
 int	rumpuser_wg_ioctl(struct wg_user *, u_long, void *, int);
-int	rumpuser_wg_sock_bind(struct wg_user *, const uint16_t);
+int	rumpuser_wg_sock_bind(struct wg_user *, uint16_t);
 
 char *	rumpuser_wg_get_tunname(struct wg_user *);
 
 /*
  * Defined in if_wg.c and called from wg_user.c.
  */
-void	rumpkern_wg_recv_user(struct wg_softc *, struct iovec *, size_t);
-void	rumpkern_wg_recv_peer(struct wg_softc *, struct iovec *, size_t);
+void	rumpkern_wg_recv_user(struct wg_softc *, const struct sockaddr *,
+	    const void *, size_t);
+void	rumpkern_wg_recv_peer(struct wg_softc *, const struct sockaddr *,
+	    const void *, size_t);
+
+#endif	/* _RUMP_NET_LIB_LIBWG_WG_USER_H_ */
