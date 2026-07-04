@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_simple.h,v 1.3 2026/04/26 15:12:09 thorpej Exp $	*/
+/*	$NetBSD: bus_space_simple.h,v 1.4 2026/07/04 22:59:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -393,7 +393,7 @@ bus_space_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
-	1:	movl	a1@+,%%a0@				;	\
+	1:	movl	%%a1@+,%%a0@				;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
