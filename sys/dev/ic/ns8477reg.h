@@ -1,4 +1,4 @@
-/*	$NetBSD: ns8477reg.h,v 1.3 2008/04/28 20:23:50 martin Exp $	 */
+/*	$NetBSD: ns8477reg.h,v 1.4 2026/07/04 17:39:42 andvar Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 # define FDC_MSR_CMDPRG	0x10	/* Command In Progress	*/
 # define FDC_MSR_NONDMA	0x20	/* Non DMA Execution	*/
 # define FDC_MSR_DIO	0x40	/* Data I/O Direction	*/
-# define FDC_MSR_RQM	0x80	/* Reguest for Master	*/
+# define FDC_MSR_RQM	0x80	/* Request for Master	*/
 
 #define FDC_DSR	4	/* (W)   Data Rate Select Register	*/
 # define FDC_DSR_DRATE0	0x01	/* Data Rate Select 0	*/

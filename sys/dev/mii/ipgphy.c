@@ -1,4 +1,4 @@
-/*	$NetBSD: ipgphy.c,v 1.11 2023/02/22 08:09:09 msaitoh Exp $ */
+/*	$NetBSD: ipgphy.c,v 1.12 2026/07/04 17:39:42 andvar Exp $ */
 /*	$OpenBSD: ipgphy.c,v 1.19 2015/07/19 06:28:12 yuo Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * Driver for the IC Plus IP1000A/IP1001 10/100/1000 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.11 2023/02/22 08:09:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.12 2026/07/04 17:39:42 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ ipgphy_mii_phy_auto(struct mii_softc *sc, u_int media)
 
 	KASSERT(mii_locked(sc->mii_pdata));
 
-	/* XXX Is it requreid ? */
+	/* XXX Is it required ? */
 	if (sc->mii_mpd_model == MII_MODEL_xxICPLUS_IP1001) {
 		PHY_READ(sc, MII_ANAR, &reg);
 		reg &= ~(ANAR_PAUSE_SYM | ANAR_PAUSE_ASYM);

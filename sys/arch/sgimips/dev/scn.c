@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.11 2023/12/20 15:29:07 thorpej Exp $ */
+/*	$NetBSD: scn.c,v 1.12 2026/07/04 17:39:42 andvar Exp $ */
 
 /*
  * Resurrected from the old pc532 port 1/18/2009.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.11 2023/12/20 15:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.12 2026/07/04 17:39:42 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1373,7 +1373,7 @@ scnintr(void *arg)
 /*
  * Handle rxrdy/ffull interrupt: QUICKLY poll both channels (checking
  * status first) and stash data in a ring buffer.  Ring buffer scheme
- * borowed from sparc/zs.c requires NO interlock on data!
+ * borrowed from sparc/zs.c requires NO interlock on data!
  *
  * This interrupt should NOT be included in spltty() mask since it
  * invokes NO tty code!  The whole point is to allow tty input as much
