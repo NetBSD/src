@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf8.c,v 1.21 2026/06/30 02:30:04 kre Exp $	*/
+/*	$NetBSD: citrus_utf8.c,v 1.22 2026/07/04 13:21:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf8.c,v 1.21 2026/06/30 02:30:04 kre Exp $");
+__RCSID("$NetBSD: citrus_utf8.c,v 1.22 2026/07/04 13:21:05 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -161,13 +161,18 @@ _UTF8_init_count(void)
 			_UTF8_Byte2_array[i].low = 0xA0;
 			_UTF8_Byte2_array[i].high = 0xBF;
 		}
-		for (i = 0xe1; i <= 0xef; i++) {
+		for (i = 0xe1; i <= 0xec; i++) {
 			_UTF8_count_array[i] = 3;
-			/*
-			 * This range includes the surrogate chars (0xeD),
-			 * which could be excluded here, but those are
-			 * tested separately, so no need to bother
-			 */
+			_UTF8_Byte2_array[i].low = 0x80;
+			_UTF8_Byte2_array[i].high = 0xBF;
+		}
+		for (i = 0xed; i <= 0xed; i++) {
+			_UTF8_count_array[i] = 3;
+			_UTF8_Byte2_array[i].low = 0x80;
+			_UTF8_Byte2_array[i].high = 0x9F;
+		}
+		for (i = 0xee; i <= 0xef; i++) {
+			_UTF8_count_array[i] = 3;
 			_UTF8_Byte2_array[i].low = 0x80;
 			_UTF8_Byte2_array[i].high = 0xBF;
 		}
@@ -287,8 +292,8 @@ _citrus_UTF8_mbrtowc_priv(_UTF8EncodingInfo *ei, wchar_t *pwc, const char **s,
 			wchar <<= 6;
 			wchar |= (psenc->ch[i] & 0x3f);
 		}
-		if (_UTF8_surrogate(wchar) || _UTF8_findlen(wchar) != c)
-			goto ilseq;
+		_DIAGASSERT(!_UTF8_surrogate(wchar));
+		_DIAGASSERT(_UTF8_findlen(wchar) == c);
 	}
 	if (pwc != NULL)
 		*pwc = wchar;
