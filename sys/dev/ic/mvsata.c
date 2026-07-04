@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.64 2026/07/04 02:05:12 thorpej Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.65 2026/07/04 13:07:07 kre Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.64 2026/07/04 02:05:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.65 2026/07/04 13:07:07 kre Exp $");
 
 #include "opt_mvsata.h"
 
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.64 2026/07/04 02:05:12 thorpej Exp $");
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/dkbad.h>
 #include <sys/errno.h>
@@ -1223,7 +1222,7 @@ intr:
 	KASSERTMSG(((xfer->c_flags & C_DMA) != 0)
 		== (mvport->port_edmamode_curr != nodma),
 		"DMA mode mismatch: flags %x vs edmamode %d != %d",
-		xfer->c_flags, mvport->port_edmamode_curr, nodma); 
+		xfer->c_flags, mvport->port_edmamode_curr, nodma);
 
 	/* Wait for IRQ (either real or polled) */
 	if ((ata_bio->flags & ATA_POLL) != 0) {
