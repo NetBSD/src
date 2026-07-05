@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.121 2026/07/05 07:30:01 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.122 2026/07/05 07:38:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -12791,4 +12791,14 @@ rescue/list.ldd					1.8
 
 	ld.elf_so(1): PR 59751: fix races with concurrent dlopen/dlclose.
 	[riastradh, ticket #365]
+
+sbin/efi/devpath.c				1.2
+
+	efi(8): PR 60403: fix core dump from assert in devpath.
+	[kre, ticket #366]
+
+sys/dev/usb/xhci.c				1.193
+
+	xhci(4): fix xHCI port power.
+	[msaitoh, ticket #367]
 
