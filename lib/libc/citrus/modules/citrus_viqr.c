@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_viqr.c,v 1.9 2026/06/30 23:18:40 riastradh Exp $ */
+/* $NetBSD: citrus_viqr.c,v 1.10 2026/07/05 20:40:04 riastradh Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_viqr.c,v 1.9 2026/06/30 23:18:40 riastradh Exp $");
+__RCSID("$NetBSD: citrus_viqr.c,v 1.10 2026/07/05 20:40:04 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -218,11 +218,11 @@ mnemonic_append_child(mnemonic_t *m, const char *s,
 static void
 mnemonic_destroy(mnemonic_t *m)
 {
-	mnemonic_t *m0;
+	mnemonic_t *m0, *n;
 
 	_DIAGASSERT(m != NULL);
 
-	TAILQ_FOREACH(m0, &m->child, entry)
+	TAILQ_FOREACH_SAFE(m0, &m->child, entry, n)
 		mnemonic_destroy(m0);
 	free(m);
 }
