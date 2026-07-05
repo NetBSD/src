@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.31 2026/04/29 14:51:58 christos Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.32 2026/07/05 15:34:13 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,12 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.31 2026/04/29 14:51:58 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.32 2026/07/05 15:34:13 riastradh Exp $");
 
 #include <sys/cprng.h>
 #include <sys/kmem.h>
 #include <sys/md5.h>
 #include <sys/rmd160.h>
+#include <sys/sdt.h>
 #include <sys/sha1.h>
 #include <sys/sha2.h>
 
@@ -433,7 +434,7 @@ des1_setkey(uint8_t **sched, const uint8_t *key, int len)
 	    M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 	*sched = (uint8_t *) p;
 	if (p == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	des_set_key((des_cblock *)__UNCONST(key), p[0]);
 	return 0;
 }
@@ -473,7 +474,7 @@ des3_setkey(uint8_t **sched, const uint8_t *key, int len)
 		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 	*sched = (uint8_t *) p;
 	if (p == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	des_set_key((des_cblock *)__UNCONST(key +  0), p[0]);
 	des_set_key((des_cblock *)__UNCONST(key +  8), p[1]);
 	des_set_key((des_cblock *)__UNCONST(key + 16), p[2]);
@@ -509,7 +510,7 @@ blf_setkey(uint8_t **sched, const uint8_t *key, int len)
 	*sched = malloc(sizeof(BF_KEY),
 		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 	if (*sched == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	BF_set_key((BF_KEY *) *sched, len, key);
 	return 0;
 }
@@ -541,7 +542,7 @@ cast5_setkey(uint8_t **sched, const uint8_t *key, int len)
 	*sched = malloc(sizeof(cast128_key), M_CRYPTO_DATA,
 	       M_NOWAIT|M_ZERO);
 	if (*sched == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	cast128_setkey((cast128_key *)*sched, key, len);
 	return 0;
 }
@@ -578,7 +579,7 @@ skipjack_setkey(uint8_t **sched, const uint8_t *key, int len)
 		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 
 	if (*sched == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	uint8_t** key_tables = (uint8_t**) *sched;
 	uint8_t* table = (uint8_t*) &key_tables[10];
@@ -628,10 +629,10 @@ aes_setkey(uint8_t **sched, const uint8_t *key, int len)
 	struct aes_ctx *ctx;
 
 	if (len != 16 && len != 24 && len != 32)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	ctx = kmem_zalloc(sizeof(*ctx), KM_NOSLEEP);
 	if (ctx == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	switch (len) {
 	case 16:
@@ -684,11 +685,11 @@ cml_setkey(uint8_t **sched, const uint8_t *key, int len)
 {
 
 	if (len != 16 && len != 24 && len != 32)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	*sched = malloc(sizeof(camellia_ctx), M_CRYPTO_DATA,
 			M_NOWAIT|M_ZERO);
 	if (*sched == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	camellia_set_key((camellia_ctx *) *sched, key, len * 8);
 	return 0;
@@ -742,11 +743,11 @@ aes_ctr_setkey(uint8_t **sched, const uint8_t *key, int len)
 	struct aes_ctr_ctx *ctx;
 
 	if (len < AESCTR_NONCESIZE)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	ctx = kmem_zalloc(sizeof(*ctx), KM_NOSLEEP);
 	if (!ctx)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	switch (len) {
 	case 16 + AESCTR_NONCESIZE:
 		ctx->ac_nr = aes_setenckey128(&ctx->ac_ek, key);
@@ -759,7 +760,7 @@ aes_ctr_setkey(uint8_t **sched, const uint8_t *key, int len)
 		break;
 	default:
 		aes_ctr_zerokey((uint8_t **)&ctx);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	memcpy(ctx->ac_block, key + len - AESCTR_NONCESIZE, AESCTR_NONCESIZE);
 	/* random start value for simple counter */
@@ -824,7 +825,7 @@ aes_gmac_setkey(uint8_t **sched, const uint8_t *key, int len)
 
 	ctx = kmem_zalloc(sizeof(*ctx), KM_NOSLEEP);
 	if (!ctx)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	/* random start value for simple counter */
 	cprng_fast(&ctx->ivgenctx.lastiv, sizeof(ctx->ivgenctx.lastiv));
