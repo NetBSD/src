@@ -75,6 +75,7 @@ imx23clkctrl*	at fdt? pass 1			# i.MX23 clock controller
 am18xxpllc*	at fdt?	pass 2				# TI AM18XX pll controller
 am18xxaclk*	at fdt? pass 3				# TI AM18XX async-clk clkgates
 am18xxpsc*	at fdt? pass 4				# TI AM18XX power&sleep controller
+am18xxuphyclk*	at fdt? pass 5			# TI AM18XX  usb phy pll
 
 # System Controller
 syscon*		at fdt? pass 1		# Generic System Controller
@@ -118,11 +119,14 @@ iic* 		at i2cbus?
 
 # USB
 imx23usbphy*	at fdt? pass 1	# i.MX23 usb phy
+am18xxusbphy*	at fdt? pass 6	# TI AM18XX usb phy
 
 imxusbc* 	at fdt? pass 6 # i.MX23 usb controller
 
+ohci* 		at fdt? pass 7
 ehci* 		at imxusbc?
 
+usb* 		at usbus?
 usb*		at ehci?
 uhub*		at usb?
 uhub*		at uhub? port ?
