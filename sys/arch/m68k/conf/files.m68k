@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.74 2026/04/24 11:24:32 thorpej Exp $
+#	$NetBSD: files.m68k,v 1.75 2026/07/05 16:45:22 thorpej Exp $
 #
 
 version	20240118		# mkflagvar
@@ -15,6 +15,7 @@ defflag	opt_m68k_arch.h		M68K_MMU_68851: M68K_MMU_MOTOROLA
 defflag	opt_m68k_arch.h		M68K_MMU_68030: M68K_MMU_MOTOROLA
 defflag	opt_m68k_arch.h		M68K_MMU_68040: M68K_MMU_MOTOROLA
 defflag	opt_m68k_arch.h		M68K_MMU_68060: M68K_MMU_MOTOROLA
+defflag	opt_m68k_arch.h		M68K_MMU_CUSTOM
 
 defflag	opt_m68k_arch.h		M68K_FPCOPROC
 defflag	opt_m68k_arch.h		M68K_EC
