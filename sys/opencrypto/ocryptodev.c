@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.20 2026/07/05 15:33:44 riastradh Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.21 2026/07/05 15:34:13 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.20 2026/07/05 15:33:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.21 2026/07/05 15:34:13 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.20 2026/07/05 15:33:44 riastradh Ex
 #include <sys/module.h>
 #include <sys/poll.h>
 #include <sys/pool.h>
+#include <sys/sdt.h>
 #include <sys/select.h>
 #include <sys/sha1.h>
 #include <sys/sysctl.h>
@@ -133,7 +134,7 @@ ocryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		osgop = (struct ocrypt_sgop *)data;
 		if (osgop->count <= 0 || osgop->count >
 		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*osnop))) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			break;
 		}
 		osnop = kmem_alloc(osgop->count * sizeof(*osnop), KM_SLEEP);
@@ -158,7 +159,7 @@ mbail:
 		cse = cryptodev_cse_find(fcr, ocop->ses);
 		if (cse == NULL) {
 			DPRINTF("csefind failed\n");
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		error = ocryptodev_op(cse, ocop, curlwp);
 		cryptodev_cse_free(cse);
@@ -167,7 +168,7 @@ mbail:
 	case OCIOCNCRYPTM:
 		omop = (struct ocrypt_mop *)data;
 		if (omop->count <= 0 || omop->count > 1) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			break;
 		}
 		ocnop = kmem_alloc(omop->count * sizeof(*ocnop), KM_SLEEP);
@@ -189,7 +190,7 @@ nbail:
 		break;
 	default:
 		DPRINTF("invalid ioctl cmd 0x%lx\n", cmd);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.68 2026/07/05 15:33:44 riastradh Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.69 2026/07/05 15:34:13 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.68 2026/07/05 15:33:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.69 2026/07/05 15:34:13 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.68 2026/07/05 15:33:44 riastradh Ex
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/module.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
@@ -100,7 +101,7 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 
 	/* Check for non-padded data */
 	if (crd->crd_len % blks)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* Initialize the IV */
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
@@ -182,7 +183,7 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 		/* Find beginning of data */
 		m = m_getptr(m, crd->crd_skip, &k);
 		if (m == NULL)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 
 		i = crd->crd_len;
 
@@ -244,7 +245,7 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 				/* Advance pointer */
 				m = m_getptr(m, k + blks, &k);
 				if (m == NULL)
-					return EINVAL;
+					return SET_ERROR(EINVAL);
 
 				i -= blks;
 
@@ -263,7 +264,7 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 
 			/* Sanity check */
 			if (m == NULL)
-				return EINVAL;
+				return SET_ERROR(EINVAL);
 
 			/*
 			 * Warning: idat may point to garbage here, but
@@ -324,7 +325,7 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 		count = crd->crd_skip;
 		ind = cuio_getptr(uio, count, &k);
 		if (ind == -1)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 
 		i = crd->crd_len;
 
@@ -389,7 +390,7 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 				/* Advance pointer */
 				ind = cuio_getptr(uio, count, &k);
 				if (ind == -1)
-					return (EINVAL);
+					return SET_ERROR(EINVAL);
 
 				i -= blks;
 
@@ -454,7 +455,7 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 	}
 
 	/* Unreachable */
-	return EINVAL;
+	return SET_ERROR(EINVAL);
 }
 
 /*
@@ -470,7 +471,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	int err;
 
 	if (sw->sw_ictx == 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	axf = sw->sw_axf;
 
@@ -497,7 +498,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 		}
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	switch (sw->sw_alg) {
@@ -511,7 +512,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	case CRYPTO_RIPEMD160_HMAC:
 	case CRYPTO_RIPEMD160_HMAC_96:
 		if (sw->sw_octx == NULL)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 
 		axf->Final(aalg, &ctx);
 		memcpy(&ctx, sw->sw_octx, axf->ctxsize);
@@ -522,7 +523,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	case CRYPTO_MD5_KPDK:
 	case CRYPTO_SHA1_KPDK:
 		if (sw->sw_octx == NULL)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 
 		axf->Update(&ctx, sw->sw_octx, sw->sw_klen);
 		axf->Final(aalg, &ctx);
@@ -550,7 +551,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 		memcpy(crp->crp_mac, aalg, axf->auth_hash->authsize);
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	return 0;
 }
@@ -580,7 +581,7 @@ swcr_combined(struct cryptop *crp, int outtype)
 		     sw = sw->sw_next)
 			;
 		if (sw == NULL)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 
 		switch (sw->sw_alg) {
 		case CRYPTO_AES_GCM_16:
@@ -597,18 +598,18 @@ swcr_combined(struct cryptop *crp, int outtype)
 			crda = crd;
 			axf = swa->sw_axf;
 			if (swa->sw_ictx == 0)
-				return (EINVAL);
+				return SET_ERROR(EINVAL);
 			memcpy(&ctx, swa->sw_ictx, axf->ctxsize);
 			blksz = axf->auth_hash->blocksize;
 			break;
 		default:
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		}
 	}
 	if (crde == NULL || crda == NULL)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	if (outtype == CRYPTO_BUF_CONTIG)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	/* Initialize the IV */
 	if (crde->crd_flags & CRD_F_ENCRYPT) {
@@ -713,7 +714,7 @@ swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
 
 	data = malloc(crd->crd_len, M_CRYPTO_DATA, M_NOWAIT);
 	if (data == NULL)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	COPYDATA(outtype, buf, crd->crd_skip, crd->crd_len, data);
 
 	if (crd->crd_flags & CRD_F_COMP)
@@ -724,7 +725,7 @@ swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
 
 	free(data, M_CRYPTO_DATA);
 	if (result == 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* Copy back the (de)compressed data. m_copyback is
 	 * extending the mbuf as necessary.
@@ -785,7 +786,7 @@ swcr_newsession(void *arg, uint32_t *sid, struct cryptoini *cri)
 		newsessions = kmem_zalloc(newnum * sizeof(struct swcr_data *),
 		    KM_NOSLEEP);
 		if (newsessions == NULL) {
-			return ENOBUFS;
+			return SET_ERROR(ENOBUFS);
 		}
 
 		/* Copy existing sessions */
@@ -807,7 +808,7 @@ swcr_newsession(void *arg, uint32_t *sid, struct cryptoini *cri)
 		if (*swd == NULL) {
 			if (first != NULL)
 				swcr_freesession_internal(first);
-			return ENOBUFS;
+			return SET_ERROR(ENOBUFS);
 		} else if (first == NULL)
 			first = *swd;
 
@@ -889,13 +890,13 @@ swcr_newsession(void *arg, uint32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_ictx = kmem_alloc(axf->ctxsize, KM_NOSLEEP);
 			if ((*swd)->sw_ictx == NULL) {
 				swcr_freesession_internal(first);
-				return ENOBUFS;
+				return SET_ERROR(ENOBUFS);
 			}
 
 			(*swd)->sw_octx = kmem_alloc(axf->ctxsize, KM_NOSLEEP);
 			if ((*swd)->sw_octx == NULL) {
 				swcr_freesession_internal(first);
-				return ENOBUFS;
+				return SET_ERROR(ENOBUFS);
 			}
 
 			for (k = 0; k < cri->cri_klen / 8; k++)
@@ -933,7 +934,7 @@ swcr_newsession(void *arg, uint32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_ictx = kmem_alloc(axf->ctxsize, KM_NOSLEEP);
 			if ((*swd)->sw_ictx == NULL) {
 				swcr_freesession_internal(first);
-				return ENOBUFS;
+				return SET_ERROR(ENOBUFS);
 			}
 
 			/* Store the key so we can "append" it to the payload */
@@ -941,7 +942,7 @@ swcr_newsession(void *arg, uint32_t *sid, struct cryptoini *cri)
 			    KM_NOSLEEP);
 			if ((*swd)->sw_octx == NULL) {
 				swcr_freesession_internal(first);
-				return ENOBUFS;
+				return SET_ERROR(ENOBUFS);
 			}
 
 			(*swd)->sw_klen = cri->cri_klen / 8;
@@ -964,7 +965,7 @@ swcr_newsession(void *arg, uint32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_ictx = kmem_alloc(axf->ctxsize, KM_NOSLEEP);
 			if ((*swd)->sw_ictx == NULL) {
 				swcr_freesession_internal(first);
-				return ENOBUFS;
+				return SET_ERROR(ENOBUFS);
 			}
 
 			axf->Init((*swd)->sw_ictx);
@@ -986,7 +987,7 @@ swcr_newsession(void *arg, uint32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_ictx = kmem_alloc(axf->ctxsize, KM_NOSLEEP);
 			if ((*swd)->sw_ictx == NULL) {
 				swcr_freesession_internal(first);
-				return ENOBUFS;
+				return SET_ERROR(ENOBUFS);
 			}
 			axf->Init((*swd)->sw_ictx);
 			axf->Setkey((*swd)->sw_ictx,
@@ -1010,7 +1011,7 @@ swcr_newsession(void *arg, uint32_t *sid, struct cryptoini *cri)
 			break;
 		default:
 			swcr_freesession_internal(first);
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 
 		(*swd)->sw_alg = cri->cri_alg;
@@ -1146,16 +1147,16 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 
 	/* Sanity check */
 	if (crp == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (crp->crp_desc == NULL || crp->crp_buf == NULL) {
-		crp->crp_etype = EINVAL;
+		crp->crp_etype = SET_ERROR(EINVAL);
 		goto done;
 	}
 
 	lid = crp->crp_sid & 0xffffffff;
 	if (lid >= swcr_sesnum || lid == 0 || swcr_sessions[lid] == NULL) {
-		crp->crp_etype = ENOENT;
+		crp->crp_etype = SET_ERROR(ENOENT);
 		goto done;
 	}
 
@@ -1186,7 +1187,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 
 		/* No such context ? */
 		if (sw == NULL) {
-			crp->crp_etype = EINVAL;
+			crp->crp_etype = SET_ERROR(EINVAL);
 			goto done;
 		}
 
@@ -1245,7 +1246,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 
 		default:
 			/* Unknown/unsupported algorithm */
-			crp->crp_etype = EINVAL;
+			crp->crp_etype = SET_ERROR(EINVAL);
 			goto done;
 		}
 	}
@@ -1262,7 +1263,7 @@ swcr_init(void)
 
 	swcr_id = crypto_get_driverid(CRYPTOCAP_F_SOFTWARE);
 	if (swcr_id < 0)
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 
 	crypto_register(swcr_id, CRYPTO_DES_CBC,
 	    0, 0, swcr_newsession, swcr_freesession, swcr_process, NULL);
@@ -1358,11 +1359,11 @@ swcrypto_modcmd(modcmd_t cmd, void *arg)
 		return 0;
 	case MODULE_CMD_FINI:
 		/* XXX: Need to keep track if we are in use. */
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
 
 		swcr_fini();
 		return 0;
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
 	}
 }
