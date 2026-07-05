@@ -1,4 +1,4 @@
-#	$NetBSD: driver.mk,v 1.8 2024/07/03 02:40:50 mrg Exp $
+#	$NetBSD: driver.mk,v 1.8.2.1 2026/07/05 19:54:10 martin Exp $
 
 # stuff both dri and gallium drivers need.
 
@@ -96,6 +96,7 @@ SRCS.perf= \
 
 CPPFLAGS.u_trace.c+=	-I${X11SRCDIR.Mesa}/src/util/perf
 CPPFLAGS.u_trace.c+=	-I${X11SRCDIR.Mesa}/src/gallium/auxiliary
+CPPFLAGS.u_process.c+=	-DHAVE_NOATEXIT
 
 SRCS+=	${SRCS.util} ${SRCS.format} ${SRCS.perf}
 
