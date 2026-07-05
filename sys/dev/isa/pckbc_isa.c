@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.27 2022/09/25 17:11:48 thorpej Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.28 2026/07/05 02:47:16 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.27 2022/09/25 17:11:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.28 2026/07/05 02:47:16 msaitoh Exp $");
 
 #include "opt_pckbc.h"
 
@@ -217,8 +217,8 @@ pckbc_isa_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	struct pckbc_isa_softc *isc = (void *) sc;
 	void *rv;
 
-	rv = isa_intr_establish(isc->sc_ic, isc->sc_irq[slot], IST_EDGE,
-	    IPL_TTY, pckbcintr, sc);
+	rv = isa_intr_establish_xname(isc->sc_ic, isc->sc_irq[slot], IST_EDGE,
+	    IPL_TTY, pckbcintr, sc, device_xname(sc->sc_dv));
 	if (rv == NULL) {
 		aprint_error_dev(sc->sc_dv,
 		    "unable to establish interrupt for %s slot\n",
