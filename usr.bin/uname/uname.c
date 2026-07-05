@@ -87,6 +87,7 @@ main(int argc, char **argv)
 		case 'r': 
 			print_mask |= PRINT_RELEASE;
 			break;
+		case 'o':
 		case 's': 
 			print_mask |= PRINT_SYSNAME;
 			break;
@@ -154,6 +155,6 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: uname [-amnprsv]\n");
+	fprintf(stderr, "usage: uname [-amnoprsv]\n");
 	exit(EXIT_FAILURE);
 }
