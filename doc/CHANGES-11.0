@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.123 2026/07/05 13:36:21 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.124 2026/07/05 19:54:56 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -12810,4 +12810,13 @@ usr.sbin/sysinst/util.c				1.85
 	sysinst(8): PR 54932: avoid kernel messages disrupting
 	the installer screen.
 	[gson, ticket #371]
+
+external/mit/xorg/lib/driver.mk			1.9
+external/mit/xorg/lib/libEGL/Makefile		1.10
+external/mit/xorg/lib/libGL/Makefile		1.36
+external/mit/xorg/lib/libgbm/Makefile		1.11
+
+	Ensure HAVE_NOATEXIT is properly set for all xorg shared libaries
+	that need it.
+	[mrg, ticket #372]
 
