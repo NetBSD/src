@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.17 2026/06/30 23:17:48 riastradh Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.18 2026/07/05 20:41:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,17 +28,22 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.17 2026/06/30 23:17:48 riastradh Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.18 2026/07/05 20:41:23 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/param.h>
+
+#include <sys/queue.h>
+
 #include <assert.h>
+#include <endian.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdalign.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <machine/endian.h>
-#include <sys/queue.h>
+#include <wchar.h>
 
 #include "citrus_namespace.h"
 #include "citrus_types.h"
@@ -156,6 +161,9 @@ init_encoding(struct _citrus_iconv_std_encoding *se, struct _stdenc *cs,
 	      void *ps1, void *ps2)
 {
 	int ret = -1;
+
+	_DIAGASSERT((uintptr_t)ps1 % alignof(mbstate_t) == 0);
+	_DIAGASSERT((uintptr_t)ps2 % alignof(mbstate_t) == 0);
 
 	se->se_handle = cs;
 	se->se_ps = ps1;
@@ -421,15 +429,35 @@ _citrus_iconv_std_iconv_init_context(struct _citrus_iconv *cv)
 	size_t szpssrc, szpsdst, sz;
 	char *ptr;
 
-	szpssrc = _stdenc_get_state_size(is->is_src_encoding);
-	szpsdst = _stdenc_get_state_size(is->is_dst_encoding);
+	/*
+	 * Allocate space for:
+	 *
+	 *	struct {
+	 *		struct _citrus_iconv_std_context sc;
+	 *		struct <src_state> src_ps;
+	 *		struct <src_state> src_pssaved;
+	 *		struct <dst_state> dst_ps;
+	 *		struct <dst_state> dst_pssaved;
+	 *	};
+	 *
+	 * Note that `struct <src_state>' and `struct <dst_state>' are
+	 * required to be aligned like mbstate_t.
+	 */
+	szpssrc = roundup(_stdenc_get_state_size(is->is_src_encoding),
+	    alignof(mbstate_t));
+	szpsdst = roundup(_stdenc_get_state_size(is->is_dst_encoding),
+	    alignof(mbstate_t));
+	_DIAGASSERT(szpssrc % alignof(mbstate_t) == 0);
+	_DIAGASSERT(szpsdst % alignof(mbstate_t) == 0);
 
-	sz = (szpssrc + szpsdst)*2 + sizeof(struct _citrus_iconv_std_context);
+	sz = roundup(sizeof(*sc), alignof(mbstate_t)) +
+	    (szpssrc + szpsdst)*2;
 	sc = malloc(sz);
 	if (sc == NULL)
 		return errno;
 
-	ptr = (char *)&sc[1];
+	ptr = (char *)sc + roundup(sizeof(*sc), alignof(mbstate_t));
+	_DIAGASSERT((uintptr_t)ptr % alignof(mbstate_t) == 0);
 	if (szpssrc)
 		init_encoding(&sc->sc_src_encoding, is->is_src_encoding,
 			      ptr, ptr+szpssrc);
@@ -437,6 +465,7 @@ _citrus_iconv_std_iconv_init_context(struct _citrus_iconv *cv)
 		init_encoding(&sc->sc_src_encoding, is->is_src_encoding,
 			      NULL, NULL);
 	ptr += szpssrc*2;
+	_DIAGASSERT((uintptr_t)ptr % alignof(mbstate_t) == 0);
 	if (szpsdst)
 		init_encoding(&sc->sc_dst_encoding, is->is_dst_encoding,
 			      ptr, ptr+szpsdst);
