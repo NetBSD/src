@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_crypto_50.c,v 1.2 2020/01/27 17:11:27 pgoyette Exp $ */
+/*	$NetBSD: compat_crypto_50.c,v 1.3 2026/07/05 15:33:43 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_crypto_50.c,v 1.2 2020/01/27 17:11:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_crypto_50.c,v 1.3 2026/07/05 15:33:43 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/compat_stub.h> 
+
+#include <sys/compat_stub.h>
 #include <sys/module.h>
+#include <sys/systm.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/ocryptodev.h>
@@ -57,11 +58,11 @@ crypto_50_fini(void)
 }
 
 MODULE(MODULE_CLASS_EXEC, compat_crypto_50, "crypto,compat_50");
- 
+
 static int
 compat_crypto_50_modcmd(modcmd_t cmd, void *arg)
 {
- 
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		crypto_50_init();

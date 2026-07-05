@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.133 2026/04/29 14:51:58 christos Exp $ */
+/*	$NetBSD: crypto.c,v 1.134 2026/07/05 15:33:44 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,24 +53,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.133 2026/04/29 14:51:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.134 2026/07/05 15:33:44 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/reboot.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/pool.h>
-#include <sys/kthread.h>
-#include <sys/once.h>
-#include <sys/sysctl.h>
-#include <sys/intr.h>
-#include <sys/errno.h>
-#include <sys/module.h>
-#include <sys/xcall.h>
-#include <sys/device.h>
+
 #include <sys/cpu.h>
-#include <sys/percpu.h>
+#include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/intr.h>
 #include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/module.h>
+#include <sys/once.h>
+#include <sys/percpu.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/xcall.h>
 
 #if defined(_KERNEL_OPT)
 #include "opt_ocf.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.22 2026/04/29 14:51:58 christos Exp $ */
+/*	$NetBSD: xform.h,v 1.23 2026/07/05 15:33:44 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -25,6 +25,8 @@
 
 #ifndef _CRYPTO_XFORM_H_
 #define _CRYPTO_XFORM_H_
+
+#include <sys/types.h>
 
 /* Declarations */
 struct auth_hash {

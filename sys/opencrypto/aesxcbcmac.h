@@ -1,9 +1,11 @@
-/* $NetBSD: aesxcbcmac.h,v 1.3 2026/04/29 14:51:58 christos Exp $ */
+/* $NetBSD: aesxcbcmac.h,v 1.4 2026/07/05 15:33:43 riastradh Exp $ */
 
 #ifndef	_OPENCRYPTO_AESXCBCMAC_H
 #define	_OPENCRYPTO_AESXCBCMAC_H
 
 #include <sys/types.h>
+
+#include <crypto/aes/aes.h>
 
 #define AES_BLOCKSIZE   16
 

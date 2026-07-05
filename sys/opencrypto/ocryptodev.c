@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.19 2026/05/19 19:00:00 riastradh Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.20 2026/07/05 15:33:44 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,28 +69,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.19 2026/05/19 19:00:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.20 2026/07/05 15:33:44 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+
+#include <sys/atomic.h>
+#include <sys/compat_stub.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/pool.h>
-#include <sys/sysctl.h>
-#include <sys/file.h>
-#include <sys/filedesc.h>
-#include <sys/errno.h>
 #include <sys/md5.h>
-#include <sys/sha1.h>
-#include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/kauth.h>
-#include <sys/select.h>
-#include <sys/poll.h>
-#include <sys/atomic.h>
-#include <sys/compat_stub.h> 
 #include <sys/module.h>
+#include <sys/poll.h>
+#include <sys/pool.h>
+#include <sys/select.h>
+#include <sys/sha1.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #ifdef _KERNEL_OPT
 #include "opt_ocf.h"
