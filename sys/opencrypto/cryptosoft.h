@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.h,v 1.8 2026/04/29 14:51:58 christos Exp $ */
+/*	$NetBSD: cryptosoft.h,v 1.9 2026/07/05 15:33:44 riastradh Exp $ */
 /*	$OpenBSD: cryptosoft.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
 /*
@@ -24,6 +24,13 @@
 
 #ifndef _CRYPTO_CRYPTOSOFT_H_
 #define _CRYPTO_CRYPTOSOFT_H_
+
+#include <sys/types.h>
+
+struct cryptodesc;
+struct cryptop;
+struct swcr_auth_hash;
+struct swcr_enc_xform;
 
 /* Software session entry */
 struct swcr_data {

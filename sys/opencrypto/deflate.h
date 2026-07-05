@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.h,v 1.10 2026/04/29 14:51:58 christos Exp $ */
+/*	$NetBSD: deflate.h,v 1.11 2026/07/05 15:33:44 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.h,v 1.3 2002/03/14 01:26:51 millert Exp $ */
 
@@ -36,6 +36,8 @@
 
 #ifndef _CRYPTO_DEFLATE_H_
 #define _CRYPTO_DEFLATE_H_
+
+#include <sys/types.h>
 
 #include <net/zlib.h>
 

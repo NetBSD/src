@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.53 2026/04/29 14:51:58 christos Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.54 2026/07/05 15:33:44 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -136,7 +136,7 @@
 #define CRYPTO_NULL_HMAC	16
 #define CRYPTO_NULL_CBC		17
 #define CRYPTO_DEFLATE_COMP	18 /* Deflate compression algorithm */
-#define CRYPTO_MD5_HMAC_96	19 
+#define CRYPTO_MD5_HMAC_96	19
 #define CRYPTO_SHA1_HMAC_96	20
 #define CRYPTO_RIPEMD160_HMAC_96	21
 #define CRYPTO_GZIP_COMP	22 /* gzip compression algorithm */
@@ -206,9 +206,9 @@ struct crypt_op {
 /* to support multiple session creation */
 /*
  *
- * The reqid field is filled when the operation has 
+ * The reqid field is filled when the operation has
  * been accepted and started, and can be used to later retrieve
- * the operation results via CIOCNCRYPTRET or identify the 
+ * the operation results via CIOCNCRYPTRET or identify the
  * request in the completion list returned by CIOCNCRYPTRETM.
  *
  * The opaque pointer can be set arbitrarily by the user
@@ -229,7 +229,7 @@ struct crypt_n_op {
 	uint32_t	len;		/* src len */
 
 	uint32_t	reqid;		/* request id */
-	int		status;		/* status of request -accepted or not */	
+	int		status;		/* status of request -accepted or not */
 	void		*opaque;	/* opaque pointer returned to user */
 	uint32_t	keylen;		/* cipher key - optional */
 	void *		key;
@@ -287,7 +287,7 @@ struct crypt_kop {
  *
  * This structure allows the OCF to return a request id
  * for each of the kop operations specified in the CIOCNFKEYM call.
- * 
+ *
  * The crk_opaque pointer can be arbitrarily set by the user
  * and it is passed back in the crypt_result structure
  * when the request completes.  This field can be used for example
@@ -323,7 +323,6 @@ struct cryptret {
 	size_t		count;		/* space for how many */
 	struct crypt_result *	results;	/* where to put them */
 };
-
 
 /* Asymmetric key operations */
 #define	CRK_ALGORITHM_MIN	0
@@ -522,7 +521,7 @@ struct cryptop {
 	uint32_t	len;
 	u_char		tmp_iv[EALG_MAX_BLOCK_LEN];
 	u_char		tmp_mac[CRYPTO_MAX_MAC_LEN];
-	
+
 	struct cryptop_data cod;
 	uint32_t	magic;
 	struct cpu_info	*reqcpu;	/*

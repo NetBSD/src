@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.25 2026/04/29 14:51:58 christos Exp $ */
+/*	$NetBSD: deflate.c,v 1.26 2026/07/05 15:33:44 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,13 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.25 2026/04/29 14:51:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.26 2026/07/05 15:33:44 riastradh Exp $");
 
-#include <sys/types.h>
-#include <sys/malloc.h>
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <net/zlib.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/deflate.h>

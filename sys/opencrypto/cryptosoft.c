@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.67 2026/05/19 15:58:37 riastradh Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.68 2026/07/05 15:33:44 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,17 +24,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.67 2026/05/19 15:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.68 2026/07/05 15:33:44 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+
+#include <sys/cprng.h>
+#include <sys/device.h>
+#include <sys/errno.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
-#include <sys/sysctl.h>
-#include <sys/errno.h>
-#include <sys/cprng.h>
 #include <sys/module.h>
-#include <sys/device.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #ifdef _KERNEL_OPT
 #include "opt_ocf.h"
