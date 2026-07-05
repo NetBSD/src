@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1538 2026/03/08 19:30:20 mlelstv Exp $
+$NetBSD: pcidevs,v 1.1539 2026/07/05 08:30:30 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4858,6 +4858,7 @@ product INTEL C2000_25GBE	0x1f45	C2000 Ethernet(2.5Gbe)
 product INTEL XEONSC_UBOX_0	0x2014	Xeon Scalable Ubox
 product INTEL XEONSC_UBOX_1	0x2015	Xeon Scalable Ubox
 product INTEL XEONSC_UBOX_2	0x2016	Xeon Scalable Ubox
+product INTEL XEONSC_VMD	0x201d	Xeon Scalable Volume Management Device
 product INTEL XEONSC_M2PCIR	0x2018	Xeon Scalable M2PCI
 product INTEL XEONSC_HB		0x2020	Xeon Scalable Host
 product INTEL XEONSC_CBDMAR	0x2021	Xeon Scalable CBDMA
@@ -5246,7 +5247,7 @@ product INTEL 82801H_HDA	0x284b	82801H High Definition Audio Controller
 product INTEL 82801H_THERMAL	0x284f	82801H Thermal Controller
 product INTEL 82801HBM_IDE	0x2850	82801H IDE Controller
 product INTEL SNR_DDRIO		0x2880	Snow Ridge DDRIO
-product INTEL SNR_VMD		0x28c0	Snow Ridge VMD
+product INTEL SNR_VMD		0x28c0	Snow Ridge Volume Management Device
 product INTEL 82801IH_LPC	0x2912	82801IH LPC Interface Bridge
 product INTEL 82801IO_LPC	0x2914	82801IO LPC Interface Bridge
 product INTEL 82801IR_LPC	0x2916	82801IR LPC Interface Bridge
@@ -6259,6 +6260,7 @@ product INTEL RKL_PCIE_RP_1	0x4c05	Rocket Lake PCIe Root Port 1 (x8)
 product INTEL RKL_PCIE_RP_2	0x4c07	Rocket Lake PCIe Root Port 2 (x4)
 product INTEL RKL_PCIE_RP_3	0x4c09	Rocket Lake PCIe Root Port 3 (x4)
 product INTEL RKL_GNA		0x4c11	Rocket Lake Gauss Newton Algorithm
+product INTEL RKL_VMD		0x4c3d	Rocket Lake Volume Management Device
 product INTEL RKL_8C_HOST	0x4c43	Rocket Lake (8Core) Host
 product INTEL RKL_6C_HOST	0x4c53	Rocket Lake (8Core) Host
 product INTEL RKL_IGD_1		0x4c8a	Rocket Lake UHD Graphics 750 (32EU)
@@ -6805,7 +6807,7 @@ product INTEL 6HS_H_GSPI_2	0x7afb	600 Series PCH-H GSPI 2
 product INTEL 6HS_H_I2C_4	0x7afc	600 Series PCH-H I2C 4
 product INTEL 6HS_H_I2C_5	0x7afd	600 Series PCH-H I2C 5
 product INTEL 6HS_H_UART_2	0x7afe	600 Series PCH-H UART 2
-product INTEL VMD_MTL		0x7d0b	Volume Management Device
+product INTEL VMD_MTL		0x7d0b	Meteor Lake Volume Management Device
 product INTEL NPU_MTL		0x7d1d	Meteor Lake NPU
 product INTEL LPC_MTL		0x7e02	Meteor Lake LPC/ISA Bridge
 product INTEL PCH_MTL		0x7d14	Meteor Lake PCH
