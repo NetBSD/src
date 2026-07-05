@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.30 2026/03/30 08:17:29 yurix Exp $
+#	$NetBSD: files.ti,v 1.31 2026/07/05 21:40:09 yurix Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -83,6 +83,10 @@ device	am18xxaclk: fdt_clock
 attach	am18xxaclk at fdt
 file	arch/arm/ti/am18xx_aclk.c am18xxaclk
 
+device	am18xxuphyclk: fdt_clock
+attach	am18xxuphyclk at fdt
+file	arch/arm/ti/am18xx_usbphyclk.c am18xxuphyclk
+
 # UART
 attach	com at fdt with ti_com: ti_prcm
 file	arch/arm/ti/ti_com.c		ti_com needs-flag
@@ -136,6 +140,9 @@ device	tiusbtll
 attach	tiusbtll at fdt with ti_usbtll
 file	arch/arm/ti/ti_usbtll.c		ti_usbtll
 
+attach	ohci at fdt with am18xxohci: fdt_clock, fdt_phy
+file	arch/arm/ti/am18xx_ohci.c	am18xxohci
+
 attach	ehci at fdt with ti_ehci: fdt_clock, fdt_phy, fdt_reset
 file	arch/arm/ti/ti_ehci.c		ti_ehci
 
@@ -144,6 +151,10 @@ file	arch/arm/ti/ti_motg.c		ti_motg
 
 attach	motg at fdt with omapmusb
 file	arch/arm/ti/ti_omapmusb.c	omapmusb
+
+device	am18xxusbphy: fdt_phy, fdt_clock
+attach	am18xxusbphy at fdt
+file	arch/arm/ti/am18xx_usbphy.c am18xxusbphy
 
 # RNG
 device	tirng
