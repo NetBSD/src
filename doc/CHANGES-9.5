@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.109 2026/07/03 18:44:19 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.110 2026/07/05 07:40:56 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1520,4 +1520,9 @@ tools/compat/configure.ac			1.113 (patch)
 	Fix tools build on NetBSD -current (and other systems with newer
 	compilers).
 	[gutteridge, ticket #2031]
+
+sys/dev/usb/xhci.c				1.193
+
+	xhci(4): fix xHCI port power.
+	[msaitoh, ticket #2032]
 
