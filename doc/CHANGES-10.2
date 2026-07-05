@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.107 2026/07/03 18:33:11 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.108 2026/07/05 07:39:34 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5468,4 +5468,9 @@ sys/arch/mips/mips/lock_stubs_ras.S		1.13
 
 	mips: fix "locking against myself" diagnostics.
 	[rkujawa, ticket #1304]
+
+sys/dev/usb/xhci.c				1.193
+
+	xhci(4): fix xHCI port power.
+	[msaitoh, ticket #1305]
 
