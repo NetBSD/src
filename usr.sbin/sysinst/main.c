@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34.2.2 2026/06/27 06:04:44 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.34.2.3 2026/07/05 13:35:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -281,6 +281,9 @@ main(int argc, char **argv)
 	if (no_openssl_trust_anchors_available())
 #endif
 		setenv("FTPSSLNOVERIFY", "1", 1);
+
+	/* Prevent kernel conole messages from messing up the display */
+	discard_console_output();
 
 	/* initialize message window */
 	if (menu_init()) {

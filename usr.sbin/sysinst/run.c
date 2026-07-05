@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.16 2024/10/04 15:11:09 rillig Exp $	*/
+/*	$NetBSD: run.c,v 1.16.2.1 2026/07/05 13:35:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -419,7 +419,6 @@ launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
 	char *cp, *ncp;
 	struct termios rtt, tt;
 	struct timeval tmo;
-	static int do_tioccons = 2;
 
 	(void)tcgetattr(STDIN_FILENO, &tt);
 	if (openpty(&master, &slave, NULL, &tt, win) == -1) {
@@ -433,20 +432,7 @@ launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
 	ttysig_ignore = 1;
 	ioctl(master, TIOCPKT, &ttysig_ignore);
 
-	/* Try to get console output into our pipe */
-	if (do_tioccons) {
-		if (ioctl(slave, TIOCCONS, &do_tioccons) == 0
-		    && do_tioccons == 2) {
-			/* test our output - we don't want it grabbed */
-			write(1, " \b", 2);
-			ioctl(master, FIONREAD, &do_tioccons);
-			if (do_tioccons != 0) {
-				do_tioccons = 0;
-				ioctl(slave, TIOCCONS, &do_tioccons);
-			} else
-				do_tioccons = 1;
-		}
-	}
+	redirect_console(master, slave);
 
 	if (logfp)
 		fflush(logfp);
@@ -589,6 +575,7 @@ launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
 	}
 	close(master);
 	close(slave);
+	discard_console_output();
 	if (logfp)
 		fflush(logfp);
 
