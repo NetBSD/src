@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.138 2026/02/20 07:20:28 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.139 2026/07/05 23:38:34 brook Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -106,6 +106,7 @@ __mkimage: .USE
 	@cp ${IMAGE.dir}/${.TARGET:S/smp_//}.img ${IMAGE.dir}/${.TARGET:S/smp_//}-${f}.img
 	@${TOOL_INSTALLBOOT} -m ${MACHINE} -o board=${f} \
 			${IMAGE.dir}/${.TARGET:S/smp_//}-${f}.img \
+		&& (cd ${IMAGE.dir} && (for i in MD5 SHA512; do ${CKSUM} -a $${i} ${.TARGET:S/smp_//}-${f}.img >> $${i}; done)) \
 		&& ${TOOL_GZIP} -f ${IMAGE.dir}/${.TARGET:S/smp_//}-${f}.img \
 		|| rm ${IMAGE.dir}/${.TARGET:S/smp_//}-${f}.img
 .endfor
