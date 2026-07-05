@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2023/11/22 17:48:35 rjs Exp $
+#	$NetBSD: Makefile,v 1.11 2026/07/05 08:42:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -32,6 +32,7 @@ SRCS=	${SRCS.main} ${SRCS.dri} ${SRCS.util}
 
 CPPFLAGS+=	-D_OS_UNIX=1
 CPPFLAGS+=	-DHAVE_PTHREAD=1 -DHAVE_TIMESPEC_GET
+CPPFLAGS+=	-DHAVE_NOATEXIT
 CPPFLAGS+=	-DDEFAULT_BACKENDS_PATH=\"${X11USRLIBDIR}/modules/dri\"
 CPPFLAGS+=	-DMODULEDIR=\"${X11USRLIBDIR}/gbm\"
 CPPFLAGS+=	-I${X11SRCDIR.Mesa}/include
