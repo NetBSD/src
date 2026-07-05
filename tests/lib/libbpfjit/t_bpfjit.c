@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.15 2023/08/07 23:29:58 mrg Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.16 2026/07/05 17:29:13 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014-2015 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.15 2023/08/07 23:29:58 mrg Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.16 2026/07/05 17:29:13 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -99,35 +99,199 @@ ATF_TC_BODY(libbpfjit_ret_k, tc)
 	bpfjit_free_code(code);
 }
 
+ATF_TC(libbpfjit_bad_ret_a);
+ATF_TC_HEAD(libbpfjit_bad_ret_a, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test that JIT compilation of a program ending with a bad BPF_RET fails");
+}
+
+ATF_TC_BODY(libbpfjit_bad_ret_a, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 13),
+		BPF_STMT(BPF_RET+BPF_A+0x8000, 0) /* bad ret */
+	};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	const uint16_t rcode = insns[1].code;
+	ATF_CHECK(BPF_CLASS(rcode) == BPF_RET && BPF_RVAL(rcode) == BPF_A &&
+	    rcode != BPF_RET+BPF_A);
+
+	ATF_CHECK(!bpf_validate(insns, insn_count));
+	ATF_CHECK(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
+}
+
 ATF_TC(libbpfjit_bad_ret_k);
 ATF_TC_HEAD(libbpfjit_bad_ret_k, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Test that JIT compilation of a program with bad BPF_RET fails");
+	    "Test that JIT compilation of a program ending with a bad BPF_RET fails");
 }
 
 ATF_TC_BODY(libbpfjit_bad_ret_k, tc)
 {
 	static struct bpf_insn insns[] = {
-		BPF_STMT(BPF_RET+BPF_K+0x8000, 13)
+		BPF_STMT(BPF_RET+BPF_K+0x8000, 13) /* bad ret */
 	};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	const uint16_t rcode = insns[0].code;
+	ATF_CHECK(BPF_CLASS(rcode) == BPF_RET && BPF_RVAL(rcode) == BPF_K &&
+	    rcode != BPF_RET+BPF_K);
+
+	ATF_CHECK(!bpf_validate(insns, insn_count));
+	ATF_CHECK(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
+}
+
+ATF_TC(libbpfjit_bad_ret_x);
+ATF_TC_HEAD(libbpfjit_bad_ret_x, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test that JIT compilation of a program ending with a bad BPF_RET fails");
+}
+
+ATF_TC_BODY(libbpfjit_bad_ret_x, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 13),
+		BPF_STMT(BPF_RET+BPF_X, 0) /* bad ret */
+	};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(!bpf_validate(insns, insn_count));
+	ATF_CHECK(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
+}
+
+ATF_TC(libbpfjit_bad_middle_ret_a);
+ATF_TC_HEAD(libbpfjit_bad_middle_ret_a, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test that JIT compiles a program with a bad BPF_RET");
+}
+
+ATF_TC_BODY(libbpfjit_bad_middle_ret_a, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 13),
+		BPF_STMT(BPF_RET+BPF_A+0x8000, 0), /* bad ret */
+		BPF_STMT(BPF_RET+BPF_K, 31) /* unreachable */
+	};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	bpfjit_func_t code;
 	uint8_t pkt[1]; /* the program doesn't read any data */
 
+	const uint16_t rcode = insns[1].code;
+	ATF_CHECK(BPF_CLASS(rcode) == BPF_RET && BPF_RVAL(rcode) == BPF_A &&
+	    rcode != BPF_RET+BPF_K);
+
+	/* bpf_validate() rejects a bad RET only if it's the last instruction */
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(NULL, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+
+	bpfjit_free_code(code);
+}
+
+ATF_TC(libbpfjit_bad_middle_ret_k);
+ATF_TC_HEAD(libbpfjit_bad_middle_ret_k, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test that JIT compiles a program with a bad BPF_RET");
+}
+
+ATF_TC_BODY(libbpfjit_bad_middle_ret_k, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 13),
+		BPF_STMT(BPF_RET+BPF_K+0x8000, 31), /* bad ret */
+		BPF_STMT(BPF_RET+BPF_A, 0) /* unreachable */
+	};
+
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
-	/*
-	 * The point of this test is checking a bad instruction of
-	 * a valid class and with a valid BPF_RVAL data.
-	 */
-	const uint16_t rcode = insns[0].code;
-	ATF_CHECK(BPF_CLASS(rcode) == BPF_RET &&
-	    (BPF_RVAL(rcode) == BPF_K || BPF_RVAL(rcode) == BPF_A));
+	bpfjit_func_t code;
+	uint8_t pkt[1]; /* the program doesn't read any data */
 
-	ATF_CHECK(!bpf_validate(insns, insn_count));
+	const uint16_t rcode = insns[1].code;
+	ATF_CHECK(BPF_CLASS(rcode) == BPF_RET && BPF_RVAL(rcode) == BPF_K &&
+	    rcode != BPF_RET+BPF_K);
 
-	/* Current implementation generates code. */
+	/* bpf_validate() rejects a bad RET only if it's the last instruction */
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(NULL, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+
+	bpfjit_free_code(code);
+}
+
+ATF_TC(libbpfjit_bad_middle_ret_x);
+ATF_TC_HEAD(libbpfjit_bad_middle_ret_x, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test that JIT compiles a program with a bad BPF_RET");
+}
+
+ATF_TC_BODY(libbpfjit_bad_middle_ret_x, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 13),
+		BPF_STMT(BPF_RET+BPF_X, 0), /* bad ret */
+		BPF_STMT(BPF_RET+BPF_K, 31) /* unreachable */
+	};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	bpfjit_func_t code;
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	/* bpf_validate() rejects a bad RET only if it's the last instruction */
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(NULL, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+
+	bpfjit_free_code(code);
+}
+
+ATF_TC(libbpfjit_bad_unreachable_ret_x);
+ATF_TC_HEAD(libbpfjit_bad_unreachable_ret_x, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test that JIT compiles a program with unreachable bad BPF_RET");
+}
+
+ATF_TC_BODY(libbpfjit_bad_unreachable_ret_x, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 13),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 13, 2, 0),
+		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 31),
+		BPF_STMT(BPF_RET+BPF_X, 0), /* unreachable bad ret */
+		BPF_STMT(BPF_RET+BPF_A, 0)
+	};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	bpfjit_func_t code;
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	/* bpf_validate() rejects a bad RET only if it's the last instruction */
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
 	code = bpfjit_generate_code(NULL, insns, insn_count);
 	ATF_REQUIRE(code != NULL);
 
@@ -240,19 +404,10 @@ ATF_TC_BODY(libbpfjit_alu_div0_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_func_t code;
-	uint8_t pkt[1]; /* the program doesn't read any data */
-
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
-	//ATF_CHECK(bpf_validate(insns, insn_count));
-
-	code = bpfjit_generate_code(NULL, insns, insn_count);
-	ATF_REQUIRE(code != NULL);
-
-	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
-
-	bpfjit_free_code(code);
+	ATF_CHECK(!bpf_validate(insns, insn_count));
+	ATF_CHECK(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
 }
 
 ATF_TC(libbpfjit_alu_div1_k);
@@ -479,19 +634,10 @@ ATF_TC_BODY(libbpfjit_alu_mod0_k, tc)
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
-	bpfjit_func_t code;
-	uint8_t pkt[1]; /* the program doesn't read any data */
-
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
-	//ATF_CHECK(bpf_validate(insns, insn_count));
-
-	code = bpfjit_generate_code(NULL, insns, insn_count);
-	ATF_REQUIRE(code != NULL);
-
-	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
-
-	bpfjit_free_code(code);
+	ATF_CHECK(!bpf_validate(insns, insn_count));
+	ATF_CHECK(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
 }
 
 ATF_TC(libbpfjit_alu_mod1_k);
@@ -4637,7 +4783,13 @@ ATF_TP_ADD_TCS(tp)
 	 */
 	ATF_TP_ADD_TC(tp, libbpfjit_empty);
 	ATF_TP_ADD_TC(tp, libbpfjit_ret_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_bad_ret_a);
 	ATF_TP_ADD_TC(tp, libbpfjit_bad_ret_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_bad_ret_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_bad_middle_ret_a);
+	ATF_TP_ADD_TC(tp, libbpfjit_bad_middle_ret_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_bad_middle_ret_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_bad_unreachable_ret_x);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_add_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_sub_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_mul_k);
