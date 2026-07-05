@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.175.2.5 2025/10/19 10:11:03 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.175.2.6 2026/07/05 07:39:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.175.2.5 2025/10/19 10:11:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.175.2.6 2026/07/05 07:39:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -4105,6 +4105,7 @@ xhci_roothub_ctrl_locked(struct usbd_bus *bus, usb_device_request_t *req,
 		case UHF_PORT_SUSPEND:
 			return -1;
 		case UHF_PORT_POWER:
+			xhci_op_write_4(sc, port, v & ~XHCI_PS_PP);
 			break;
 		case UHF_PORT_TEST:
 		case UHF_PORT_INDICATOR:
@@ -4255,7 +4256,7 @@ xhci_roothub_ctrl_locked(struct usbd_bus *bus, usb_device_request_t *req,
 			}
 			break;
 		case UHF_PORT_POWER:
-			/* XXX power control */
+			xhci_op_write_4(sc, port, v | XHCI_PS_PP);
 			break;
 		/* XXX more */
 		case UHF_C_PORT_RESET:
