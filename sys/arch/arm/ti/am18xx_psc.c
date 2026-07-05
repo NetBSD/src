@@ -31,11 +31,15 @@
 
 /*
  * Power&Sleep Controller for the TI AM18XX SOC.
+ *
+ * Locking Strategy: All hardware interactions, as well as
+ * am18xx_psc_clk.clk_refcount should be touched with sc->sc_lock held.
  */
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
 #include <sys/device.h>
+#include <sys/mutex.h>
 
 #include <dev/clk/clk_backend.h>
 #include <dev/fdt/fdtvar.h>
@@ -45,12 +49,15 @@
 #define MAX_PARENT_CLOCKS 5
 
 struct am18xx_psc_clk {
-	struct clk clk_base;
+	struct clk clk_base; /* must be first */
 	int clk_index;
 	union {
 		const char *clk_parent_name;
 		struct clk *clk_parent;
 	} u;
+	/* Some clocks might be enabled by multiple consumers. Only disable it
+	 * if no consumer is using it anymore. */
+	uint clk_refcount;
 };
 
 struct am18xx_psc_config {
@@ -62,7 +69,7 @@ struct am18xx_psc_softc {
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 	struct clk_domain sc_clkdom;
-	struct clk parent_clocks[MAX_PARENT_CLOCKS];
+	kmutex_t sc_lock;
 	struct am18xx_psc_clk *sc_clks;
 	int sc_clknum;
 };
@@ -98,10 +105,11 @@ CFATTACH_DECL_NEW(am18xxpsc, sizeof(struct am18xx_psc_softc),
 
 #define PSC_CLK(_i, _name, _p) 						\
 	{								\
-		.clk_index = (_i), 					\
+		.clk_index = (_i), 						\
 		.u.clk_parent_name = (_p), 				\
 		.clk_base.name = (_name),				\
 		.clk_base.flags = 0,					\
+		.clk_refcount = 0,						\
 	}
 
 static struct am18xx_psc_clk am18xx_psc0_clks[] = {
@@ -175,6 +183,7 @@ static const struct clk_funcs am18xx_psc_clk_funcs = {
 	.get_parent = am18xx_psc_clk_get_parent
 };
 
+/* should be called with sc->sc_lock held */
 static void
 am18xx_psc_clk_transition(struct am18xx_psc_softc *sc,
 			struct am18xx_psc_clk *clk, uint32_t state)
@@ -217,7 +226,13 @@ am18xx_psc_clk_enable(void *priv, struct clk *clkp)
 	struct am18xx_psc_softc * const sc = priv;
 	struct am18xx_psc_clk *clk = (struct am18xx_psc_clk *)clkp;
 
+	mutex_enter(&sc->sc_lock);
+
+	clk->clk_refcount += 1;
+
 	am18xx_psc_clk_transition(sc, clk, AM18XX_PSC_MDCTL_ENABLE);
+
+	mutex_exit(&sc->sc_lock);
 
 	return 0;
 }
@@ -228,7 +243,15 @@ am18xx_psc_clk_disable(void *priv, struct clk *clkp)
 	struct am18xx_psc_softc * const sc = priv;
 	struct am18xx_psc_clk *clk = (struct am18xx_psc_clk *)clkp;
 
-	am18xx_psc_clk_transition(sc, clk, AM18XX_PSC_MDCTL_DISABLE);
+	mutex_enter(&sc->sc_lock);
+
+	clk->clk_refcount -= 1;
+
+	if (clk->clk_refcount == 0) {
+		am18xx_psc_clk_transition(sc, clk, AM18XX_PSC_MDCTL_DISABLE);
+	}
+
+	mutex_exit(&sc->sc_lock);
 
 	return 0;
 }
@@ -278,6 +301,7 @@ am18xx_psc_attach(device_t parent, device_t self, void *aux)
 	const struct am18xx_psc_config *config;
 
 	sc->sc_bst = faa->faa_bst;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* map PSC control registers */
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -318,7 +342,7 @@ am18xx_psc_attach(device_t parent, device_t self, void *aux)
 		clk_attach(&sc->sc_clks[i].clk_base);
 	}
 
-	/* register it int he fdt subsystem */
+	/* register it in the fdt subsystem */
 	fdtbus_register_clock_controller(self, phandle,
 					 &am18xx_psc_clk_fdt_funcs);
 
