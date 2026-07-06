@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.138 2024/05/20 04:16:48 christos Exp $
+#	$NetBSD: Makefile.rump,v 1.139 2026/07/06 13:01:13 riastradh Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -186,6 +186,10 @@ ${rcusrc}.pico: ${rcusrc}.c
 ${rcusrc}.po: ${rcusrc}.c
 	${_MKTARGET_COMPILE}
 	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${CPUFLAGS} ${REPROFLAGS} ${RUMPCOMP_USER_WERROR} ${RUMPCOMP_USER_WARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
+
+${rcusrc}.go: ${rcusrc}.c
+	${_MKTARGET_COMPILE}
+	${CC} -o ${.TARGET} ${DEBUGFLAGS} -g ${DBG} ${CWARNFLAGS} ${CPUFLAGS} ${REPROFLAGS} ${RUMPCOMP_USER_WERROR} ${RUMPCOMP_USER_WARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
 
 RUMPOBJ_NORENAME+=${rcusrc}.o ${rcusrc}.pico ${rcusrc}.po
 SRCS+=${rcusrc}.c
