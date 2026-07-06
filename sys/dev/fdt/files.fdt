@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.80 2026/06/22 20:26:33 jakllsch Exp $
+# $NetBSD: files.fdt,v 1.81 2026/07/06 23:45:48 thorpej Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -270,3 +270,7 @@ file	dev/fdt/genet_fdt.c			genet_fdt
 # Google Goldfish RTC
 attach	gfrtc at fdt with gfrtc_fdt
 file	dev/fdt/gfrtc_fdt.c			gfrtc_fdt
+
+# Generic ATA disk interface
+attach	wdc at fdt with wdc_fdt
+file	dev/fdt/wdc_fdt.c			wdc_fdt
