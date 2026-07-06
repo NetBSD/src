@@ -245,6 +245,7 @@ am18xx_psc_clk_disable(void *priv, struct clk *clkp)
 
 	mutex_enter(&sc->sc_lock);
 
+	KASSERT(clk->clk_refcount > 0);
 	clk->clk_refcount -= 1;
 
 	if (clk->clk_refcount == 0) {

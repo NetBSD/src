@@ -114,8 +114,13 @@ static int
 am18xx_usbphyclk_state_transition(struct am18xx_usbphyclk_softc *sc,
     enum usbphyclk_state state)
 {
+	int error;
+
 	/* you need the usb 2.0 phy clocked to change the pll configuration */
-	clk_enable(sc->sc_phy_logic_clk);
+	error = clk_enable(sc->sc_phy_logic_clk);
+	if (error) {
+		return error;
+	}
 
 	syscon_lock(sc->sc_syscon);
 
@@ -164,10 +169,10 @@ am18xx_usbphyclk_state_transition(struct am18xx_usbphyclk_softc *sc,
 	sc->sc_state = state;
 	syscon_unlock(sc->sc_syscon);
 
-	/* If usb 2.0 isn't running, we can turn the usb 2.0 phy off after
-	 * changing the configuration. */
-	if (state != BOTH && state != USB20_ONLY) {
-		clk_disable(sc->sc_phy_logic_clk);
+	/* safe since psc clocks are refcounted */
+	error = clk_disable(sc->sc_phy_logic_clk);
+	if (error) {
+		return error;
 	}
 
 	return 0;
