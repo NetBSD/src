@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.139 2026/07/06 13:01:13 riastradh Exp $
+#	$NetBSD: Makefile.rump,v 1.140 2026/07/06 13:03:33 riastradh Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -191,7 +191,7 @@ ${rcusrc}.go: ${rcusrc}.c
 	${_MKTARGET_COMPILE}
 	${CC} -o ${.TARGET} ${DEBUGFLAGS} -g ${DBG} ${CWARNFLAGS} ${CPUFLAGS} ${REPROFLAGS} ${RUMPCOMP_USER_WERROR} ${RUMPCOMP_USER_WARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*${rcusrc}.c}
 
-RUMPOBJ_NORENAME+=${rcusrc}.o ${rcusrc}.pico ${rcusrc}.po
+RUMPOBJ_NORENAME+=${rcusrc}.o ${rcusrc}.pico ${rcusrc}.po ${rcusrc}.go
 SRCS+=${rcusrc}.c
 .endfor
 .endif
