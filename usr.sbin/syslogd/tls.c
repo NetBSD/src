@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.16.6.1 2019/11/01 09:32:21 martin Exp $	*/
+/*	$NetBSD: tls.c,v 1.16.6.2 2026/07/06 12:03:43 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.16.6.1 2019/11/01 09:32:21 martin Exp $");
+__RCSID("$NetBSD: tls.c,v 1.16.6.2 2026/07/06 12:03:43 sborrill Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -561,8 +561,8 @@ match_fingerprint(const X509 *cert, const char *fingerprint)
 bool
 match_certfile(const X509 *cert1, const char *certfilename)
 {
-	X509 *cert2;
-	char *fp1, *fp2;
+	X509 *cert2 = NULL;
+	char *fp1 = NULL, *fp2 = NULL;
 	bool rc = false;
 	errno = 0;
 
@@ -571,11 +571,13 @@ match_certfile(const X509 *cert1, const char *certfilename)
 	    && get_fingerprint(cert2, &fp2, NULL)) {
 		if (!strcmp(fp1, fp2))
 			rc = true;
-		FREEPTR(fp1);
-		FREEPTR(fp2);
 	 }
 	DPRINTF((D_TLS|D_CALL), "match_certfile(cert@%p, file \"%s\") "
 	    "returns %d\n", cert1, certfilename, rc);
+	FREEPTR(fp1);
+	FREEPTR(fp2);
+	if (cert2)
+		X509_free(cert2);
 	return rc;
 }
 
