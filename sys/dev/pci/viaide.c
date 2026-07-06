@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.107 2025/12/04 16:01:43 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.108 2026/07/06 17:40:42 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.107 2025/12/04 16:01:43 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.108 2026/07/06 17:40:42 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1301,7 +1301,7 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 		    PCI_MAPREG_TYPE_IO, 0, &wdr->cmd_iot, &wdr->cmd_baseioh,
 		    NULL, &wdr->cmd_ios) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-			    "couldn't map %s channel regs\n", cp->name);
+			    "couldn't map channel %d regs\n", channel);
 		}
 		wdr->ctl_iot = wdr->cmd_iot;
 		for (i = 0; i < WDC_NREG; i++) {
@@ -1310,8 +1310,8 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 			    &wdr->cmd_iohs[i]) != 0) {
 				aprint_error_dev(
 				    sc->sc_wdcdev.sc_atac.atac_dev,
-				    "couldn't subregion %s "
-				    "channel cmd regs\n", cp->name);
+				    "couldn't subregion channel %d "
+				    "cmd regs\n", channel);
 				return;
 			}
 		}
