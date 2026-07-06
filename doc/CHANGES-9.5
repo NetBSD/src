@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.110 2026/07/05 07:40:56 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.111 2026/07/06 12:01:18 sborrill Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1525,4 +1525,10 @@ sys/dev/usb/xhci.c				1.193
 
 	xhci(4): fix xHCI port power.
 	[msaitoh, ticket #2032]
+
+usr.sbin/syslogd/syslogd.c			1.149
+
+	syslogd: Fix a bug that tls_ca mistakenly matches tls_cadir.
+	Found and fixed by Masakazu OOHASHI at IIJ.
+	[msaitoh, ticket #2033]
 
