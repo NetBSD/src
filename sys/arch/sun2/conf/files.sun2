@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.24 2026/04/02 03:56:43 thorpej Exp $
+#	$NetBSD: files.sun2,v 1.25 2026/07/06 15:50:07 thorpej Exp $
 
 #
 # sun2-specific configuration info
@@ -15,7 +15,7 @@ file arch/sun2/sun2/machdep.c
 file arch/sun2/sun2/pmap.c
 file arch/sun2/sun2/control.c
 file arch/sun2/sun2/db_machdep.c		ddb
-file arch/sun2/sun2/db_memrw.c			ddb | kgdb
+file arch/m68k/m68k/db_memrw.c			ddb | kgdb
 file arch/sun2/sun2/leds.c
 file arch/sun2/sun2/mm_md.c
 file arch/sun2/sun2/idprom.c
