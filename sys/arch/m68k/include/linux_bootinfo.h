@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_bootinfo.h,v 1.4 2026/04/04 16:45:31 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.h,v 1.5 2026/07/06 13:36:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -158,7 +158,8 @@ struct bootinfo_data {
 paddr_t			bootinfo_startup1(paddr_t, vaddr_t);
 void			bootinfo_startup2(paddr_t);
 struct bootinfo_data *	bootinfo_data(void);
-struct bi_record *	bootinfo_find(uint32_t tag);
+struct bi_record *	bootinfo_find(uint32_t);
+struct bi_record *	bootinfo_find_machdep(uint32_t, uint32_t);
 void			bootinfo_enumerate(bool (*)(struct bi_record *, void *),
 					   void *);
 
