@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2026/07/06 15:50:07 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 2026/07/06 16:05:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2026/07/06 15:50:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2026/07/06 16:05:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3809,6 +3809,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
 }
 
+#if defined(DDB) || defined(KGDB)
 /*
  *	Routine:	pmap_db_write_text_enter
  *
@@ -3857,6 +3858,7 @@ pmap_db_write_text_exit(struct pmap_db_write_text_context *ctx)
 	set_pte(ctx->pgva, ctx->opte);
 	set_context(old_ctx);
 }
+#endif /* DDB || KGDB */
 
 #ifdef	PMAP_DEBUG
 /* Things to call from the debugger. */
