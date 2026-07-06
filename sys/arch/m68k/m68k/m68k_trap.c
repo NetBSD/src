@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.11 2026/04/26 12:49:38 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.12 2026/07/06 15:46:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.11 2026/04/26 12:49:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.12 2026/07/06 15:46:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.11 2026/04/26 12:49:38 thorpej Exp $
 #include <m68k/cpu.h>
 #include <m68k/cacheops.h>
 
+#include <machine/fcode.h>
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/pcb.h>
