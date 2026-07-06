@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.197 2026/05/29 11:26:09 thorpej Exp $
+#	$NetBSD: files.amiga,v 1.198 2026/07/06 16:21:47 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -480,7 +480,6 @@ file	arch/amiga/amiga/machdep.c
 file	arch/amiga/amiga/pmap_bootstrap.c
 file	arch/amiga/amiga/cc.c
 file	dev/md_root.c			memory_disk_hooks
-file	arch/m68k/m68k/db_memrw.c	ddb
 file	arch/m68k/m68k/delay.s
 file	arch/m68k/m68k/bus_dma.c
 

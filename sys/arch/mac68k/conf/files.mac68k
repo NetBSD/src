@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.150 2026/04/23 02:54:39 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.151 2026/07/06 16:21:47 thorpej Exp $
 
 # mac68k-specific configuration info
 
@@ -174,7 +174,6 @@ file	arch/mac68k/mac68k/pramasm.s
 file	arch/mac68k/mac68k/psc.c
 file	arch/mac68k/mac68k/via.c
 file	arch/m68k/m68k/bus_dma.c
-file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 
 file	arch/mac68k/dev/grf_compat.c		grf needs-flag
 file	arch/mac68k/dev/ite_compat.c		ite needs-flag

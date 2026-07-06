@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.138 2026/05/29 11:26:10 thorpej Exp $
+#	$NetBSD: files.atari,v 1.139 2026/07/06 16:21:47 thorpej Exp $
 
 maxpartitions 16
 
@@ -212,7 +212,6 @@ file	arch/atari/atari/pmap_bootstrap.c
 file	arch/atari/atari/stalloc.c
 file	arch/atari/dev/ym2149.c			_atarihw_
 file	arch/atari/atari/intr.c
-file	arch/m68k/m68k/db_memrw.c		ddb
 
 include	"dev/pckbport/files.pckbport"
 
