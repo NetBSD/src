@@ -1,4 +1,4 @@
-.\"	$NetBSD: fss.4,v 1.15 2011/02/24 09:38:57 hannken Exp $	*/
+.\"	$NetBSD: fss.4,v 1.16 2026/07/06 13:37:08 riastradh Exp $	*/
 .\"
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -82,6 +82,20 @@ is the preferred size of this data.
 The struct element
 .Va fss_flags
 is the initial set of flags.
+.Pp
+If
+.Va fss_bstore
+is a regular file on the file system at
+.Va fss_mount ,
+the snapshot will be
+.Sy persistent .
+In this case, if
+.Va fss_bstore
+is already a snapshot file from a past state of the file system, the
+snapshot will be loaded from it; otherwise,
+.Va fss_bstore
+will be truncated and a snapshot of the current state of the file
+system will be saved to it.
 .It Dv FSSIOCGET(struct fss_get)
 Gets the status of a
 .Nm
