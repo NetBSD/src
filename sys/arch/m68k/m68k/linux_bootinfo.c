@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_bootinfo.c,v 1.7 2026/05/06 04:45:03 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.c,v 1.8 2026/07/06 13:36:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.7 2026/05/06 04:45:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.8 2026/07/06 13:36:47 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -409,6 +409,17 @@ bootinfo_find(uint32_t tag)
 
 	bootinfo_enumerate(bootinfo_find_cb, &ctx);
 	return ctx.result;
+}
+
+/*
+ * bootinfo_find_machdep --
+ *	Like bootinfo_find(), but only if the machine type matches.
+ */
+struct bi_record *
+bootinfo_find_machdep(uint32_t mtype, uint32_t tag)
+{
+	return bootinfo_data_store.bootinfo_machtype == mtype ?
+	    bootinfo_find(tag) : NULL;
 }
 
 /*
