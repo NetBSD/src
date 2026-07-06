@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.17 2026/03/29 20:56:00 thorpej Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.18 2026/07/06 14:55:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -33,6 +33,23 @@
 #define	_M68K_CACHEOPS_H_
 
 #include "opt_m68k_arch.h"
+
+#if defined(__mc68010__)
+
+/*
+ * None of these are relevant on the 68010, but generic m68k code
+ * may reference them.
+ */
+
+#define	DCIA()		__nothing
+#define	DCIAS(pa)	__nothing
+#define	DCIS()		__nothing
+#define	DCIU()		__nothing
+#define	ICIA()		__nothing
+#define	ICPA()		__nothing
+#define	PCIA()		__nothing
+
+#else /* ! __mc68010__ */
 
 #if notyet /* XXX */
 #include <machine/cpuconf.h>
@@ -162,5 +179,7 @@ void	_TBIS(vaddr_t);
 #define	DCFL(pa)	DCFL_40(pa)
 #define	DCFP(pa)	DCFP_40(pa)
 #endif
+
+#endif /* __mc68010__ */
 
 #endif /* _M68K_CACHEOPS_H_ */
