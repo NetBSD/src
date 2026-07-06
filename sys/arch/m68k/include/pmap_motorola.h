@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.63 2026/05/19 21:41:21 andvar Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.64 2026/07/06 14:33:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -296,6 +296,15 @@ extern struct pmap_bootmap machine_bootmap[];
 bool	pmap_pa_has_static_mapping(paddr_t, size_t, vm_prot_t,
 	    vaddr_t *, int *);
 bool	pmap_va_is_static_mapping(vaddr_t va, size_t);
+
+/* Kernel debugger support functions. */
+struct pmap_db_write_text_context {
+	vaddr_t			pgva;
+	volatile pt_entry_t *	ptep;
+	pt_entry_t		opte;
+};
+bool	pmap_db_write_text_enter(vaddr_t, struct pmap_db_write_text_context *);
+void	pmap_db_write_text_exit(struct pmap_db_write_text_context *);
 
 /*
  * pmap_bootstrap1() may need to relocate global references, and perform

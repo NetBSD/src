@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.9 2025/11/08 08:23:44 thorpej Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.10 2026/07/06 14:33:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.9 2025/11/08 08:23:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.10 2026/07/06 14:33:55 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -108,9 +108,8 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
 static void
 db_write_text(db_addr_t addr, size_t size, const char *data)
 {
-	char *dst, *odst;
-	volatile pt_entry_t *pte;
-	pt_entry_t oldpte, tmppte;
+	struct pmap_db_write_text_context ctx;
+	char *dst;
 	vaddr_t pgva;
 	int limit;
 
@@ -123,11 +122,6 @@ db_write_text(db_addr_t addr, size_t size, const char *data)
 		pgva = trunc_page((vaddr_t)dst);
 
 		/*
-		 * Save this destination address, for TLB flush.
-		 */
-		odst = dst;
-
-		/*
 		 * Compute number of bytes that can be written
 		 * with this mapping and subtract it from the total size.
 		 */
@@ -136,34 +130,11 @@ db_write_text(db_addr_t addr, size_t size, const char *data)
 			limit = size;
 		size -= limit;
 
-#ifdef M68K_MMU_HP
-		/*
-		 * Flush the supervisor side of the VAC to
-		 * prevent a cache hit on the old, read-only PTE.
-		 */
-		if (ectype == EC_VIRT)
-			DCIS();
-#endif
-
-		/*
-		 * N.B. we use the 68851 PTE bit names here, but in
-		 * the case of the kernel text, it all works out vis
-		 * a vis the 68040 PTE bits.
-		 */
-
-		/*
-		 * Make the page writable.  Note the mapping is
-		 * cache-inhibited to save hair.
-		 */
-		pte = kvtopte(pgva);
-		oldpte = *pte;
-		if ((oldpte & DT51_PAGE) == 0) {
+		/* Temporarily make the page writable. */
+		if (!  pmap_db_write_text_enter(pgva, &ctx)) {
 			printf(" address %p not a valid page\n", dst);
 			return;
 		}
-		tmppte = (oldpte & ~PTE51_WP) | PTE51_CI;
-		*pte = tmppte;
-		TBIS((vaddr_t)odst);
 
 		/*
 		 * Page is now writable.  Do as much access as we can.
@@ -171,11 +142,8 @@ db_write_text(db_addr_t addr, size_t size, const char *data)
 		for (; limit > 0; limit--)
 			*dst++ = *data++;
 
-		/*
-		 * Restore the old PTE.
-		 */
-		*pte = oldpte;
-		TBIS((vaddr_t)odst);
+		/* Restore previous page permissions. */
+		pmap_db_write_text_exit(&ctx);
 	}
 
 	/*
