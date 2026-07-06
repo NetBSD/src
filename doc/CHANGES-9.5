@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.113 2026/07/06 16:05:24 sborrill Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.114 2026/07/06 16:20:22 sborrill Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1533,8 +1533,13 @@ usr.sbin/syslogd/syslogd.c			1.149-1.150
 	Found and fixed by Masakazu OOHASHI at IIJ.
 	[msaitoh, ticket #2033]
 
-usr.sbin/syslogd/tls.c				1.22
+usr.sbin/syslogd/tls.c				1.22-1.25
 
 	Fix memory leak in match_certfile().
+	Use X509_free() to deallocate certfile data in init_global_TLS_CTX().
+	Fix mem-leak of match_hostname().
+	ASN1_OCTET_STRING must be deallocated.
+	Fix memory-leak during tls_send().
 	Found and fixed by Masakazu OOHASHI at IIJ.
 	[msaitoh, ticket #2034]
+
