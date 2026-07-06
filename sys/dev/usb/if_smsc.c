@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.95 2025/10/04 04:44:21 thorpej Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.96 2026/07/06 11:49:25 msaitoh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.95 2025/10/04 04:44:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.96 2026/07/06 11:49:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -278,6 +278,7 @@ smsc_uno_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint32_t addr;
 	uint32_t data = 0;
+	int err;
 
 	if (un->un_phyno != phy) {
 		*val = 0;
@@ -299,7 +300,11 @@ smsc_uno_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 		return ETIMEDOUT;
 	}
 
-	smsc_readreg(un, SMSC_MII_DATA, &data);
+	err = smsc_readreg(un, SMSC_MII_DATA, &data);
+	if (err != 0) {
+		*val = 0;
+		return err;
+	}
 
 	*val = data & 0xffff;
 	return 0;
