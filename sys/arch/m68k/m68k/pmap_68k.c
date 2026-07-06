@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.74 2026/07/06 13:17:57 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.75 2026/07/06 14:33:55 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -220,10 +220,12 @@
  * - PROFIT!
  */
 
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.74 2026/07/06 13:17:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.75 2026/07/06 14:33:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3666,6 +3668,66 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 	 */
 	(void)cachectl1(0x80000004, va, len, p);
 }
+
+#if defined(DDB) || defined(KGDB)
+/*
+ * pmap_db_write_text_enter:
+ *
+ *	Temporarily map a page of kernel text read-write for the
+ *	kernel debugger.
+ */
+bool
+pmap_db_write_text_enter(vaddr_t pgva, struct pmap_db_write_text_context *ctx)
+{
+	pt_entry_t *pte = pmap_kernel_pte(pgva);
+
+#ifdef M68K_MMU_HP
+	/*
+	 * Flush the supervisor side of the VAC to prevent
+	 * a cache hit on the old, read-only PTE.
+	 *
+	 * XXX Is this really necessary?
+	 */
+	if (MMU_IS_HP_CLASS) {
+		DCIS();
+	}
+#endif
+
+	pt_entry_t opte = pte_load(pte);
+	if (! pte_valid_p(opte)) {
+		return false;
+	}
+
+	/*
+	 * N.B. we use the 68851 PTE bit names here, but in
+	 * the case of the kernel text, it all works out vis
+	 * a vis the 68040 PTE bits.
+	 *
+	 * Note the mapping is cache-inhibited to save hair.
+	 */
+	pt_entry_t npte = (opte & ~PTE51_WP) | PTE51_CI;
+	pte_store(pte, npte);
+	TBIS(pgva);
+
+	ctx->pgva = pgva;
+	ctx->ptep = pte;
+	ctx->opte = opte;
+
+	return true;
+}
+
+/*
+ * pmap_db_write_text_exit:
+ *
+ *	Undo the effects of pmap_db_write_text_enter().
+ */
+void
+pmap_db_write_text_exit(struct pmap_db_write_text_context *ctx)
+{
+	pte_store(ctx->ptep, ctx->opte);
+	TBIS(ctx->pgva);
+}
+#endif /* DDB || KGDB */
 
 static paddr_t kernel_reloc_offset;
 static vaddr_t kernel_reloc_end;

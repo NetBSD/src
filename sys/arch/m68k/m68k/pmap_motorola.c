@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.109 2026/06/01 20:34:18 andvar Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.110 2026/07/06 14:33:55 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,10 +117,12 @@
  *	and to when physical maps must be made correct.
  */
 
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.109 2026/06/01 20:34:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.110 2026/07/06 14:33:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2860,6 +2862,67 @@ pmap_procwr(struct proc	*p, vaddr_t va, size_t len)
 
 	(void)cachectl1(0x80000004, va, len, p);
 }
+
+#if defined(DDB) || defined(KGDB)
+/*
+ *	Routine:	pmap_db_write_text_enter
+ *
+ *	Function:
+ *		Temporarily map a page of kernel text read-write for the
+ *		kernel debugger.
+ */
+bool
+pmap_db_write_text_enter(vaddr_t pgva, struct pmap_db_write_text_context *ctx)
+{
+	volatile pt_entry_t *pte;
+	pt_entry_t oldpte, tmppte;
+
+#ifdef M68K_MMU_HP
+	/*
+	 * Flush the supervisor side of the VAC to
+	 * prevent a cache hit on the old, read-only PTE.
+	 */
+	if (ectype == EC_VIRT)
+		DCIS();
+#endif
+
+	/*
+	 * N.B. we use the 68851 PTE bit names here, but in
+	 * the case of the kernel text, it all works out vis
+	 * a vis the 68040 PTE bits.
+	 *
+	 * Note the mapping is cache-inhibited to save hair.
+	 */
+	pte = kvtopte(pgva);
+	oldpte = *pte;
+	if ((oldpte & DT51_PAGE) == 0) {
+		return false;
+	}
+
+	tmppte = (oldpte & ~PTE51_WP) | PTE51_CI;
+	*pte = tmppte;
+	TBIS(pgva);
+
+	ctx->pgva = pgva;
+	ctx->ptep = pte;
+	ctx->opte = oldpte;
+
+	return true;
+}
+
+/*
+ *	Routine:	pmap_db_write_text_exit
+ *
+ *	Function:
+ *		Undo the effects of pmap_db_write_text_enter().
+ */
+void
+pmap_db_write_text_exit(struct pmap_db_write_text_context *ctx)
+{
+	*ctx->ptep = ctx->opte;
+	TBIS(ctx->pgva);
+}
+#endif /* DDB || KGDB */
 
 void
 _pmap_set_page_cacheable(pmap_t pmap, vaddr_t va)
