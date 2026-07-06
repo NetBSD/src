@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.246 2026/02/08 09:00:54 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.247 2026/07/06 07:07:00 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997-2026 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.246 2026/02/08 09:00:54 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.247 2026/07/06 07:07:00 mlelstv Exp $");
 #endif /* not lint */
 
 /*
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: fetch.c,v 1.246 2026/02/08 09:00:54 lukem Exp $");
 
 #include "ssl.h"
 #include "ftp_var.h"
+#include "uri.h"
 #include "version.h"
 
 typedef enum {
@@ -1246,6 +1247,7 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 			if (verbose)
 				fprintf(ttyout, "Redirected to %s\n",
 				    location);
+			location = make_absurl(location, url);
 			*rval = go_fetch(location, ui);
 		}
 		goto cleanup_fetch_url;
