@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.73 2026/06/30 13:23:05 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.74 2026/07/06 13:17:57 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.73 2026/06/30 13:23:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.74 2026/07/06 13:17:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2804,7 +2804,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * XXX hit the ATC after setting the new PTE anyway.
 		 */
 		pmap_evcnt(enter_pa_change);
-		pmap_remove_mapping(pmap, va, ptep, pt, pg,
+		pmap_remove_mapping(pmap, va, ptep, pt, NULL,
 		    PRM_TFLUSH|PRM_CFLUSH, &pc);
 	}
 
