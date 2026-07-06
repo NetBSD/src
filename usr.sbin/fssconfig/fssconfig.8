@@ -1,4 +1,4 @@
-.\"	$NetBSD: fssconfig.8,v 1.12 2016/07/29 05:20:33 pgoyette Exp $	*/
+.\"	$NetBSD: fssconfig.8,v 1.13 2026/07/06 16:52:31 riastradh Exp $	*/
 .\"
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 29, 2016
+.Dd July 6, 2026
 .Dt FSSCONFIG 8
 .Os
 .Sh NAME
@@ -37,132 +37,291 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl cxv
-.Ar device
-.Ar path
-.Ar backup
+.Ar fss_dev
+.Ar fs
+.Ar snapstore
 .Op Ar cluster Op Ar size
 .Nm
 .Fl u Op Fl v
-.Ar device
+.Ar fss_dev
 .Nm
 .Fl l Op Fl v
-.Op Ar device
+.Op Ar fss_dev
 .Sh DESCRIPTION
 The
 .Nm
-command configures file system snapshot pseudo disk devices.
+command configures
+.Xr fss 4
+file system snapshot pseudo disk devices.
 It will associate the file system snapshot disk
-.Ar device
+.Ar fss_dev
 with a snapshot of the file system mounted on
-.Ar path ,
+.Ar fs ,
 allowing
-.Ar device
+.Ar fss_dev
 to be accessed as though it were a disk.
 .Pp
-If
-.Ar backup
-resides on the snapshotted file system a persistent snapshot will be created.
-This snapshot is active until
-.Ar backup
-is unlinked.
-Persistent snapshots save the file system as if it had been unmounted.
+The file system can remain in use when a snapshot is taken.
+As parts of the file system are overwritten, old data will be stored in
+the snapshot backing store
+.Ar snapstore ,
+which can be either a regular file or a raw character disk device, so
+that the old data will remain unchanged through
+.Ar fss_dev
+since the snapshot was taken.
+.Pp
+There are two types of snapshot:
+.Sy persistent
+and
+.Sy non-persistent .
+.Bl -tag -width "Sy non-persistent"
+.It Sy persistent
+.Ar snapstore
+is a regular file on the same file system as it is a snapshot of, and
+the snapshot persists until
+.Ar snapstore
+is unlinked, even if the
+.Ar fss_dev
+used to create it is unconfigured or the system is rebooted.
+.Pp
+After it has been created, a persistent snapshot can be loaded again
+from
+.Ar snapstore
+with the same
+.Dl Nm Oo Fl c Oc Ar fss_dev Ar fs Ar snapstore
+command that was used to create it.
+.Pp
 Unlinked but open files get removed from the snapshot.
 The time needed to create a persistent snapshot increases with the size of the
 file system and decreases with the file system block size.
-This snapshot mode is only supported for FFS file systems.
+File systems may limit the total number of snapshots per volume.
 .Pp
-Otherwise data written through the
-.Ar path
-will be saved in
-.Ar backup .
-If
-.Ar backup
-is a regular file, it will be created with length
-.Ar size .
-Default size is the size of
-.Ar path .
-Data is saved to
-.Ar backup
-in units of
-.Ar cluster
-bytes.
-The snapshot is an image of the underlying block device at a moment in time.
+Supported file system types:
+.Bl -column -offset indent ".Sy File system" ".Sy Max snapshots"
+.It Sy "File system" Ta Sy "Max snapshots"
+.It ffs Ta 20
+.El
+.It Sy non-persistent
+.Ar snapstore
+is a disk device, or a regular file on a separate file system from the
+one it represents a snapshot of, and becomes invalid as soon as it is
+unconfigured.
+.Pp
 Unlinked but open files are still present on the snapshot.
 The time needed to create a snapshot is independent of the size of the
 file system or the file system block size.
 .Pp
-Options indicate an action to be performed:
-.Bl -tag -width 3n
+Any type of file system in
+.Nx
+mounted from a disk device, such as ffs, ext2fs, and msdos (but not,
+for example, procfs, ptyfs, tmpfs, or zfs), can have non-persistent
+snapshots taken.
+.El
+.Pp
+Options indicating an action to be performed:
+.Bl -tag -width ".Fl c"
 .It Fl c
-Configures the device.
-If successful, references to
-.Ar device
-will access the contents of
-.Ar path
+Configure the device.
+If successful,
+.Ar fss_dev
+will expose the contents of
+.Ar fs
 at the time the snapshot was taken.
+.Pp
 If
-.Ar backup
-is a directory, a temporary file will be created in this directory.
-This file will be unlinked on exit.
+.Ar snapstore
+is an existing persistent snapshot on
+.Ar fs ,
+.Nm
+will load it so that the past state of the file system represented by
+.Ar snapstore
+is exposed through
+.Ar fss_dev .
+Otherwise,
+.Nm
+will create a backing store at
+.Ar snapstore
+to take a new snapshot.
+.Pp
+When taking a snapshot,
+.Ar snapstore
+must either not exist or be an existing directory.
+If it doesn't exist,
+.Nm
+will create it.
+if it is an existing directory,
+.Nm
+will create a temporary file with an unpredictable name in it as the
+snapshot backing store, and then immediately unlink the backing store,
+so the storage will be released once
+.Ar fss_dev
+is unconfigured.
+.Pp
+Overwritten data will be saved in units of at least
+.Ar cluster
+bytes, or units of the file system's preferred I/O size
+.Pq Xr statvfs 5 , Fa f_iosize
+if
+.Ar cluster
+is zero or unspecified.
+The backing store will be limited to
+.Ar size
+bytes, which defaults to the size of the file system
+.Pq Xr statvfs 5 , Fa f_blocks No "*" Fa f_iosize ;
+if the backing store fills up, write operations on the file system will
+fail.
 .It Fl l
 List the snapshot devices and indicate which ones are in use.
 If a specific
-.Ar device
+.Ar fss_dev
 is given, then only that will be described.
 .It Fl u
-Unconfigures the
-.Ar device .
-.It Fl v
-Be more verbose listing the snapshot devices.
-.It Fl x
-Unlink
-.Ar backup
-after the
-.Ar device
-is configured.
+Unconfigure the
+.Ar fss_dev .
 .El
 .Pp
 If no action option is given,
 .Fl c
 is assumed.
+.Pp
+Other options:
+.Bl -tag -width ".Fl v"
+.It Fl v
+Be more verbose listing the snapshot devices.
+.It Fl x
+.Po
+.Fl c
+only
+.Pc
+Unlink
+.Ar snapstore
+after the
+.Ar fss_dev
+is configured.
+.Pp
+If
+.Ar snapstore
+is a directory for
+.Nm
+to create a temporary file in, that file will be unlinked anyway, with
+or without
+.Fl x .
+.El
 .Sh FILES
 .Bl -tag -width /etc/disktab -compact
 .It Pa /dev/rfss?
+Raw character device with read access to snapshot content.
 .It Pa /dev/fss?
+Block device for mounting a file system from a snapshot.
 .El
 .Sh EXAMPLES
-.Dl fssconfig fss0 /usr /tmp/back
-.Dl mount /dev/fss0 /mnt
+.Bl -bullet
+.It
+Take a persistent snapshot of the ffs file system
+.Pa /home ,
+stored at
+.Pa /home/.snap/20260706.store ,
+and mount the snapshot at
+.Pa /home/.snap/20260706 :
+.Bd -literal
+# fssconfig fss0 /home /home/.snap/20260706.store
+# mkdir /home/.snap/20260706
+# mount /dev/fss0 /home/.snap/20260706
+.Ed
 .Pp
-Configures the snapshot device
+The snapshot will persist at
+.Pa /home/.snap/20260705.store
+and, even after unconfiguring
 .Pa fss0
-as a snapshot of the
-.Pa /usr
-file system, and makes the contents of the snapshot available via
-.Pa /mnt .
-Data written through
-.Pa /usr
-will be backed up in
-.Pa /tmp/back .
+or even rebooting, can be mounted again later:
+.Bd -literal
+# fssconfig fss0 /home /home/.snap/20260706.store
+# mount /dev/fss0 /home/.snap/20260706
+.Ed
+.It
+Take a snapshot of the msdos file system
+.Pa /boot ,
+saving overwritten data at a temporary file in
+.Pa /tmp
+that will immediately be unlinked, and mount the snapshot at
+.Pa /mnt :
+.Bd -literal
+# fssconfig fss1 /boot /tmp/
+# mount /dev/fss1 /mnt
+.Ed
 .Pp
-.Dl fssconfig fss1 / /dev/rsd0e 8192
-.Pp
-Configures the snapshot device
+Once
 .Pa fss1
-as a snapshot of the
-.Pa /
-file system.
-Data written through
-.Pa /
-will be backed up in
-.Pa /dev/rsd0e .
-The backup will take place in units of 8192 bytes.
+is unconfigured, the backing store will be released and the snapshot
+cannot be recovered again.
+.It
+Take a snapshot of
+.Pa / ,
+saving overwritten data on the
+.Pa ld0e
+disk partition in units of 8192 bytes:
+.Bd -literal
+# fssconfig fss2 / /dev/rld0e 8192
+.Ed
 .Pp
-.Dl fssconfig -u fss0
+Note that you must pass the
+.Em raw character device
+.Pa /dev/rld0e ,
+not the block device
+.Pa /dev/ld0e .
 .Pp
-Unconfigures the
-.Pa fss0
-device.
+Once
+.Fa fss2
+is unconfigured, the content of
+.Pa ld0e
+will become useless garbage.
+.It
+List configured
+.Xr fss 4
+devices:
+.Bd -literal
+# fssconfig -l -v
+fss0: /, taken 2026-06-30 03:20:43, file system internal
+fss1: /boot, taken 2026-07-06 16:42:14, 1280 cluster of 64K, 64K backup
+fss2: not in use
+fss3: not in use
+.Ed
+.It
+Unmount the snapshot
+.Pa fss1
+when done with it:
+.Bd -literal
+# fssconfig -u fss1
+.Ed
+.It
+Take a snapshot of the ffs file system at
+.Pa /
+and dump it so it can be restored later with
+.Xr restore 8
+\(em with the
+.Fl X
+option
+.Xr dump 8 ,
+will internally manage an
+.Xr fss 4
+instance to take the snapshot and read the file system:
+.Bd -literal
+# dump -0 -f /backups/root.20260706.dump -X /
+.Ed
+.Pp
+For file system types other than ffs, which don't support persistent
+snapshots, a place for a backing store must be given explicitly with
+the
+.Fl x
+option to
+.Xr dump 8 ,
+which again will internally manage an
+.Xr fss 4
+instance:
+.Bd -literal
+# dump -0 -f /backups/boot.20260706.dump -x /var/tmp/ /boot
+.Ed
+.El
 .Sh SEE ALSO
 .Xr opendisk 3 ,
 .Xr fss 4 ,
