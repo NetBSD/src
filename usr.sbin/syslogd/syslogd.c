@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.131.2.1 2026/07/06 12:01:00 sborrill Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.131.2.2 2026/07/06 16:04:08 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.131.2.1 2026/07/06 12:01:00 sborrill Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.131.2.2 2026/07/06 16:04:08 sborrill Exp $");
 #endif
 #endif /* not lint */
 
@@ -4583,10 +4583,10 @@ buf_queue_obj_size(struct buf_queue *qentry)
 	    + SAFEstrlen(qentry->msg->timestamp)+1
 	    + SAFEstrlen(qentry->msg->msgid)+1;
 	if (qentry->msg->prog
-	    && qentry->msg->prog != include_pid)
+	    && qentry->msg->prog != appname)
 		sum += strlen(qentry->msg->prog)+1;
 	if (qentry->msg->pid
-	    && qentry->msg->pid != appname)
+	    && qentry->msg->pid != include_pid)
 		sum += strlen(qentry->msg->pid)+1;
 	if (qentry->msg->recvhost
 	    && qentry->msg->recvhost != LocalHostName
