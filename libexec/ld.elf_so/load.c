@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.49.10.1 2026/07/03 18:36:36 martin Exp $	 */
+/*	$NetBSD: load.c,v 1.49.10.2 2026/07/07 15:01:15 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.49.10.1 2026/07/03 18:36:36 martin Exp $");
+__RCSID("$NetBSD: load.c,v 1.49.10.2 2026/07/07 15:01:15 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -338,7 +338,7 @@ restart:
 
 	assert((*needed)->obj == NULL);
 	(*needed)->obj = _rtld_load_library(name, obj, flags, mask);
-	assert((*needed)->obj->refcount > 0);
+	assert((*needed)->obj == NULL || (*needed)->obj->refcount > 0);
 	return ((*needed)->obj != NULL);
 }
 
