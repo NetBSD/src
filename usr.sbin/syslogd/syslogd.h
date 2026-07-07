@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.h,v 1.9 2021/11/27 22:30:26 rillig Exp $	*/
+/*	$NetBSD: syslogd.h,v 1.9.6.1 2026/07/07 13:53:36 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 
 #include <sys/cdefs.h>
 #define MAXLINE		1024		/* maximum line length */
-#define MAXSVLINE	120		/* maximum saved line length */
 #define DEFUPRI		(LOG_USER|LOG_NOTICE)
 #define DEFSPRI		(LOG_KERN|LOG_NOTICE)
 #define TIMERINTVL	30		/* interval for checking flush, mark */
@@ -192,14 +191,15 @@ void dbprintf(const char *, const char *, size_t, const char *, ...)
 		SSL_CTX_free(x); x = NULL; }
 
 /* reference counting macros for buffers */
-#define NEWREF(x) ((x) ? (DPRINTF(D_BUFFER, "inc refcount of " #x \
-			" @ %p: %zu --> %zu\n", (x), (x)->refcount, \
-			(x)->refcount + 1), (x)->refcount++, (x))\
-		       : (DPRINTF(D_BUFFER, "inc refcount of NULL!\n"), NULL))
-#define DELREF(x) /*LINTED null effect*/(void)((x) ? (DPRINTF(D_BUFFER, "dec refcount of " #x \
-			" @ %p: %zu --> %zu\n", (x), (x)->refcount, \
-			(x)->refcount - 1), buf_msg_free(x), NULL) \
-		       : (DPRINTF(D_BUFFER, "dec refcount of NULL!\n"), NULL))
+#define NEWREF(x) ((x) ? (DPRINTF(D_BUFFER, "inc refcount of " #x	\
+			" @ %p: %zu --> %zu\n", (x), (x)->refcount,	\
+			(x)->refcount + 1), (x)->refcount++, (x))	\
+			: (DPRINTF(D_BUFFER, "inc refcount of NULL!\n"), NULL))
+#define DELREF(x) /*LINTED null effect*/				\
+			(void)((x) ? (DPRINTF(D_BUFFER, "dec refcount of " #x \
+			" @ %p: %zu --> %zu\n", (x), (x)->refcount,	\
+			(x)->refcount - 1), buf_msg_free(x), NULL)	\
+			: (DPRINTF(D_BUFFER, "dec refcount of NULL!\n"), NULL))
 
 /* assumption:
  * - malloc()/calloc() only fails if not enough memory available
@@ -208,7 +208,7 @@ void dbprintf(const char *, const char *, size_t, const char *, ...)
  *   and can be freed if necessary
  */
 #define MALLOC(ptr, size) do {						\
-	while(!(ptr = malloc(size))) {					\
+	while (!(ptr = malloc(size))) {					\
 		DPRINTF(D_MEM, "Unable to allocate memory");		\
 		message_allqueues_purge();				\
 	}								\
@@ -216,7 +216,7 @@ void dbprintf(const char *, const char *, size_t, const char *, ...)
 } while (0)
 
 #define CALLOC(ptr, size) do {						\
-	while(!(ptr = calloc(1, size))) {				\
+	while (!(ptr = calloc(1, size))) {				\
 		DPRINTF(D_MEM, "Unable to allocate memory");		\
 		message_allqueues_purge();				\
 	}								\
@@ -239,7 +239,7 @@ void dbprintf(const char *, const char *, size_t, const char *, ...)
 /* small optimization to call send_queue() only if queue has elements */
 #define SEND_QUEUE(f) do {						\
 	if ((f)->f_qelements)						\
-		send_queue(0, 0, f);	      				\
+		send_queue(0, 0, f);					\
 } while (0)
 
 #define MAXUNAMES		20	/* maximum number of user names */
@@ -363,7 +363,7 @@ struct filed {
 	struct signature_group_t *f_sg;	     /* one signature group */
 #endif /* !DISABLE_SIGN */
 	struct buf_queue_head f_qhead;	     /* undelivered msgs queue */
-	size_t	      	      f_qelements;   /* elements in queue */
+	size_t		      f_qelements;   /* elements in queue */
 	size_t		      f_qsize;	     /* size of queue in bytes */
 	struct buf_msg	     *f_prevmsg;     /* last message logged */
 	struct event	     *f_sq_event;    /* timer for send_queue() */

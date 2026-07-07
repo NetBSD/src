@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.147.2.1 2026/07/07 13:36:45 sborrill Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.147.2.2 2026/07/07 13:53:36 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.147.2.1 2026/07/07 13:36:45 sborrill Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.147.2.2 2026/07/07 13:53:36 sborrill Exp $");
 #endif
 #endif /* not lint */
 
@@ -287,8 +287,8 @@ char	timestamp[MAX_TIMESTAMPLEN + 1];
  * a global one will do.  But for klog, we use own buffer so that
  * partial line at the end of buffer can be deferred.
  */
-char *linebuf, *klog_linebuf;
-size_t linebufsize, klog_linebufoff;
+static char *linebuf, *klog_linebuf;
+static size_t linebufsize, klog_linebufoff;
 
 static const char *bindhostname = NULL;
 
@@ -322,7 +322,7 @@ main(int argc, char *argv[])
 	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "b:B:d::knsSf:m:o:p:P:ru:g:t:TUvX")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'b':
 			bindhostname = optarg;
 			break;
@@ -586,7 +586,8 @@ getgroup:
 			die(0, 0, NULL);
 		}
 		if (chown(pfpath, uid, gid) < 0) {
-			logerror("Failed to chown pidfile `%s` to `%d:%d`", pfpath, uid, gid);
+			logerror("Failed to chown pidfile `%s` to `%d:%d`",
+			    pfpath, uid, gid);
 			die(0, 0, NULL);
 		}
 	}
@@ -686,6 +687,8 @@ getgroup:
 	ev = allocev();
 	signal_set(ev, SIGUSR1, dispatch_force_tls_reconnect, ev);
 	EVENT_ADD(ev);
+	SLIST_INIT(&tls_opt.fprint_head);
+	SLIST_INIT(&tls_opt.cert_head);
 #endif /* !DISABLE_TLS */
 
 	if (fklog >= 0) {
@@ -1061,7 +1064,7 @@ check_sd(char* p)
 	if (*q == '-' && (*(q+1) == ' ' || *(q+1) == '\0'))
 		return 1;
 
-	for(;;) { /* SD-ELEMENT */
+	for (;;) { /* SD-ELEMENT */
 		if (*q++ != '[') return 0;
 		/* SD-ID */
 		if (!sdname(*q)) return 0;
@@ -1069,7 +1072,7 @@ check_sd(char* p)
 			*q = FORCE2ASCII(*q);
 			q++;
 		}
-		for(;;) { /* SD-PARAM */
+		for (;;) { /* SD-PARAM */
 			if (*q == ']') {
 				q++;
 				if (*q == ' ' || *q == '\0') return q - p;
@@ -1086,7 +1089,7 @@ check_sd(char* p)
 			if (*q++ != '=') return 0;
 			if (*q++ != '"') return 0;
 
-			for(;;) { /* PARAM-VALUE */
+			for (;;) { /* PARAM-VALUE */
 				if (esc) {
 					esc = false;
 					if (*q == '\\' || *q == '"' ||
@@ -1804,9 +1807,9 @@ check_timestamp(unsigned char *from_buf, char **to_buf,
 			/* NILVALUE */
 			if (to_iso) {
 				/* with ISO = syslog-protocol output leave
-			 	 * it as is, because it is better to have
-			 	 * no timestamp than a wrong one.
-			 	 */
+				 * it as is, because it is better to have
+				 * no timestamp than a wrong one.
+				 */
 				*to_buf = strdup("-");
 			} else {
 				/* with BSD Syslog the field is required
@@ -1840,19 +1843,19 @@ check_timestamp(unsigned char *from_buf, char **to_buf,
 		int i = 0, j;
 
 		DPRINTF(D_CALL, "check_timestamp(): convert ISO->BSD\n");
-		for(i = 0; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
+		for (i = 0; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
 		    && from_buf[i] != '.' && from_buf[i] != ' '; i++)
 			tsbuf[i] = from_buf[i]; /* copy date & time */
 		j = i;
-		for(; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
+		for (; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
 		    && from_buf[i] != '+' && from_buf[i] != '-'
 		    && from_buf[i] != 'Z' && from_buf[i] != ' '; i++)
 			;			   /* skip fraction digits */
-		for(; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
+		for (; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
 		    && from_buf[i] != ':' && from_buf[i] != ' ' ; i++, j++)
 			tsbuf[j] = from_buf[i]; /* copy TZ */
 		if (from_buf[i] == ':') i++;	/* skip colon */
-		for(; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
+		for (; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
 		    && from_buf[i] != ' ' ; i++, j++)
 			tsbuf[j] = from_buf[i]; /* copy TZ */
 
@@ -2020,7 +2023,8 @@ logmsg(struct buf_msg *buffer)
 		    MSG_FIELD_EQ(msg)
 		    ) {
 			f->f_prevcount++;
-			DPRINTF(D_DATA, "Msg repeated %d times, %ld sec of %d\n",
+			DPRINTF(D_DATA,
+			    "Msg repeated %d times, %ld sec of %d\n",
 			    f->f_prevcount, (long)(now - f->f_time),
 			    repeatinterval[f->f_repeatcount]);
 			/*
@@ -2213,7 +2217,8 @@ format_buffer(struct buf_msg *buffer, char **line, size_t *ptr_linelen,
  *		    but after delivery be removed from the queue
  */
 void
-fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentry)
+fprintlog(struct filed *f, struct buf_msg *passedbuffer,
+    struct buf_queue *qentry)
 {
 	static char crnl[] = "\r\n";
 	struct buf_msg *buffer = passedbuffer;
@@ -2654,6 +2659,7 @@ sendagain:
 			    r->ai_addr, r->ai_addrlen);
 			if (lsent == -1) {
 				switch (errno) {
+				case EBUSY:
 				case ENOBUFS:
 					/* wait/retry/drop */
 					if (++retry < 5) {
@@ -2848,7 +2854,8 @@ domark(int fd, short event, void *ev)
 
 	for (f = Files; f; f = f->f_next) {
 		if (f->f_prevcount && now >= REPEATTIME(f)) {
-			DPRINTF(D_DATA, "Flush %s: repeated %d times, %d sec.\n",
+			DPRINTF(D_DATA,
+			    "Flush %s: repeated %d times, %d sec.\n",
 			    TypeInfo[f->f_type].name, f->f_prevcount,
 			    repeatinterval[f->f_repeatcount]);
 			fprintlog(f, NULL, NULL);
@@ -2978,7 +2985,7 @@ free_incoming_tls_sockets(void)
 		SLIST_REMOVE_HEAD(&TLS_Incoming_Head, entries);
 		FREEPTR(tls_in->inbuf);
 		free_tls_conn(tls_in->tls_conn);
-		free(tls_in);
+		FREEPTR(tls_in);
 	}
 }
 #endif /* !DISABLE_TLS */
@@ -3055,7 +3062,7 @@ die(int fd, short event, void *ev)
 		FREEPTR(f->f_program);
 		FREEPTR(f->f_host);
 		DEL_EVENT(f->f_sq_event);
-		free((char *)f);
+		FREEPTR(f);
 	}
 
 	/*
@@ -3106,7 +3113,7 @@ store_sign_delim_sg2(char *tmp_buf)
 {
 	struct string_queue *sqentry, *sqe1, *sqe2;
 
-	if(!(sqentry = malloc(sizeof(*sqentry)))) {
+	if (!(sqentry = malloc(sizeof(*sqentry)))) {
 		logerror("Unable to allocate memory");
 		return;
 	}
@@ -3115,7 +3122,7 @@ store_sign_delim_sg2(char *tmp_buf)
 	if (dehumanize_number(tmp_buf, (int64_t*) &(sqentry->key)) == -1
 	    || sqentry->key > (LOG_NFACILITIES<<3)) {
 		DPRINTF(D_PARSE, "invalid sign_delim_sg2: %s\n", tmp_buf);
-		free(sqentry);
+		FREEPTR(sqentry);
 		FREEPTR(tmp_buf);
 		return;
 	}
@@ -3273,7 +3280,7 @@ read_config_file(FILE *cf, struct filed **f_ptr)
 					credhead = &tls_opt.cert_head;
 
 				if (credhead) do {
-					if(!(cred = malloc(sizeof(*cred)))) {
+					if (!(cred = malloc(sizeof(*cred)))) {
 						logerror("Unable to "
 							"allocate memory");
 						break;
@@ -3609,7 +3616,7 @@ init(int fd, short event, void *ev)
 		DEL_EVENT(f->f_sq_event);
 
 		ftmp = f->f_next;
-		free((char *)f);
+		FREEPTR(f);
 		f = ftmp;
 	}
 	Files = newf;
@@ -3665,7 +3672,9 @@ init(int fd, short event, void *ev)
 				}
 			}
 		} else
-			DPRINTF(D_NET, "Listening on inet and/or inet6 socket\n");
+			DPRINTF(D_NET,
+			    "Listening on inet and/or inet6 socket\n");
+
 		DPRINTF(D_NET, "Sending on inet and/or inet6 socket\n");
 	}
 
@@ -4126,7 +4135,7 @@ socksetup(int af, const char *hostname)
 	int on = 1;
 	struct socketEvent *s, *socks;
 
-	if(SecureMode && !NumForwards)
+	if (SecureMode && !NumForwards)
 		return NULL;
 
 	memset(&hints, 0, sizeof(hints));
@@ -4192,7 +4201,7 @@ socksetup(int af, const char *hostname)
 		freeaddrinfo(res);
 	if (socks->fd == 0) {
 		free (socks);
-		if(Debug)
+		if (Debug)
 			return NULL;
 		else
 			die(0, 0, NULL);
@@ -4376,7 +4385,7 @@ free_cred_SLIST(struct peer_cred_head *head)
 		cred = SLIST_FIRST(head);
 		SLIST_REMOVE_HEAD(head, entries);
 		FREEPTR(cred->data);
-		free(cred);
+		FREEPTR(cred);
 	}
 }
 #endif /* !DISABLE_TLS */
@@ -4783,8 +4792,8 @@ make_timestamp(time_t *in_now, bool iso, size_t tlen)
 		snprintf(&timestamp[len], frac_digits + 2, ".%.*jd",
 		    frac_digits, (intmax_t)tv.tv_usec);
 		len += frac_digits + 1;
-		tzlen = strftime(&timestamp[len], sizeof(timestamp) - len, "%z",
-		    &ltime);
+		tzlen = strftime(&timestamp[len], sizeof(timestamp) - len,
+		    "%z", &ltime);
 		len += tzlen;
 
 		if (tzlen == 5) {
