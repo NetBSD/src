@@ -1,4 +1,4 @@
-.\"	$NetBSD: fssconfig.8,v 1.15 2026/07/07 22:28:41 uwe Exp $	*/
+.\"	$NetBSD: fssconfig.8,v 1.16 2026/07/07 22:42:14 riastradh Exp $	*/
 .\"
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -287,10 +287,13 @@ fss2: not in use
 fss3: not in use
 .Ed
 .It
-Unmount the snapshot
+Unmount
+.Pa /mnt
+and unconfigure the snapshot
 .Pa fss1
 when done with it:
 .Bd -literal
+# umount /mnt
 # fssconfig -u fss1
 .Ed
 .It
