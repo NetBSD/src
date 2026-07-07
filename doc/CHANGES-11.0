@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.124 2026/07/05 19:54:56 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.125 2026/07/07 13:45:06 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -12819,4 +12819,10 @@ external/mit/xorg/lib/libgbm/Makefile		1.11
 	Ensure HAVE_NOATEXIT is properly set for all xorg shared libaries
 	that need it.
 	[mrg, ticket #372]
+
+usr.sbin/syslogd/syslogd.c			1.149-1.150
+
+	syslogd: Fix a bug that tls_ca mistakenly matches tls_cadir.
+	syslogd: Fix incorrect comparison in buf_queue_obj_size().
+	[msaitoh, ticket #368]
 
