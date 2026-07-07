@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.108 2026/07/05 07:39:34 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.109 2026/07/07 07:42:46 sborrill Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5473,4 +5473,11 @@ sys/dev/usb/xhci.c				1.193
 
 	xhci(4): fix xHCI port power.
 	[msaitoh, ticket #1305]
+
+usr.sbin/syslogd/syslogd.c			1.149-1.150
+
+	syslogd: Fix a bug that tls_ca mistakenly matches tls_cadir.
+	syslogd: Fix incorrect comparison in buf_queue_obj_size().
+	syslogd: Found and fixed by Masakazu OOHASHI at IIJ
+	[msaitoh, ticket #1306]
 
