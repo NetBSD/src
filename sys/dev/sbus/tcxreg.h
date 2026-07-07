@@ -1,4 +1,4 @@
-/*	$NetBSD: tcxreg.h,v 1.6 2014/07/16 17:58:35 macallan Exp $ */
+/*	$NetBSD: tcxreg.h,v 1.7 2026/07/07 09:10:05 macallan Exp $ */
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
  *  All rights reserved.
@@ -94,6 +94,7 @@
  */
 #define TCX_CTL_8_MAPPED	0x00000000	/* 8 bits, uses color map */
 #define TCX_CTL_24_MAPPED	0x01000000	/* 24 bits, uses color map */
+#define TCX_CTL_24_GAMMA	0x02000000	/* 24 bits, uses gamma ROM */
 #define TCX_CTL_24_LEVEL	0x03000000	/* 24 bits, ignores color map */
 #define TCX_CTL_PIXELMASK	0x00FFFFFF	/* mask for index/level */
 /*
