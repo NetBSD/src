@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.21 2022/11/08 01:05:10 uwe Exp $	*/
+/*	$NetBSD: tls.c,v 1.21.2.1 2026/07/07 07:48:38 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.21 2022/11/08 01:05:10 uwe Exp $");
+__RCSID("$NetBSD: tls.c,v 1.21.2.1 2026/07/07 07:48:38 sborrill Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -306,6 +306,8 @@ init_global_TLS_CTX(void)
 	    certfilename, cn, fp);
 	free(cn);
 	free(fp);
+	if (cert)
+		X509_free(cert);
 
 	tls_opt.global_TLS_CTX = ctx;
 	return strdup(statusmsg);
@@ -443,8 +445,9 @@ match_hostnames(X509 *cert, const char *hostname, const char *subject)
 	GENERAL_NAME *gn;
 	X509_NAME *x509name;
 	X509_NAME_ENTRY *entry;
-	ASN1_OCTET_STRING *asn1_ip, *asn1_cn_ip;
+	ASN1_OCTET_STRING *asn1_ip = NULL, *asn1_cn_ip = NULL;
 	int crit, idx;
+	bool match = false;
 
 	DPRINTF((D_TLS|D_CALL), "match_hostnames(%p, \"%s\", \"%s\")\n",
 	    cert, hostname, subject);
@@ -468,8 +471,10 @@ match_hostnames(X509 *cert, const char *hostname, const char *subject)
 				gn = sk_GENERAL_NAME_value(gennames, i);
 				if (gn->type == GEN_IPADD
 				    && !ASN1_OCTET_STRING_cmp(asn1_ip,
-					gn->d.iPAddress))
-					return true;
+					gn->d.iPAddress)) {
+					match = true;
+					goto matched;
+				}
 			}
 		}
 		/* second loop: check DNS names */
@@ -480,8 +485,10 @@ match_hostnames(X509 *cert, const char *hostname, const char *subject)
 				    ASN1_STRING_get0_data(gn->d.ia5);
 				len = ASN1_STRING_length(gn->d.ia5);
 				if (!strncasecmp(subject, str, len)
-				    || !strncasecmp(hostname, str, len))
-					return true;
+				    || !strncasecmp(hostname, str, len)) {
+					match = true;
+					goto matched;
+				}
 			}
 		}
 	}
@@ -502,7 +509,8 @@ match_hostnames(X509 *cert, const char *hostname, const char *subject)
 			    || (hostname && !strncasecmp(hostname,
 			    (const char*)ubuf, len))) {
 				OPENSSL_free(ubuf);
-				return true;
+				match = true;
+				goto matched;
 			}
 			OPENSSL_free(ubuf);
 			/* IP -- convert to ASN1_OCTET_STRING and compare then
@@ -511,12 +519,16 @@ match_hostnames(X509 *cert, const char *hostname, const char *subject)
 			    && subject
 			    && (asn1_cn_ip = a2i_IPADDRESS(subject))
 			    && !ASN1_OCTET_STRING_cmp(asn1_ip, asn1_cn_ip)) {
-				return true;
+				match = true;
+				goto matched;
 			}
 		}
 		i = X509_NAME_get_index_by_NID(x509name, NID_commonName, i);
 	}
-	return false;
+matched:
+	ASN1_OCTET_STRING_free(asn1_ip);
+	ASN1_OCTET_STRING_free(asn1_cn_ip);
+	return match;
 }
 
 /*
@@ -563,8 +575,8 @@ match_fingerprint(const X509 *cert, const char *fingerprint)
 bool
 match_certfile(const X509 *cert1, const char *certfilename)
 {
-	X509 *cert2;
-	char *fp1, *fp2;
+	X509 *cert2 = NULL;
+	char *fp1 = NULL, *fp2 = NULL;
 	bool rc = false;
 	errno = 0;
 
@@ -573,11 +585,13 @@ match_certfile(const X509 *cert1, const char *certfilename)
 	    && get_fingerprint(cert2, &fp2, NULL)) {
 		if (!strcmp(fp1, fp2))
 			rc = true;
-		FREEPTR(fp1);
-		FREEPTR(fp2);
 	 }
 	DPRINTF((D_TLS|D_CALL), "match_certfile(cert@%p, file \"%s\") "
 	    "returns %d\n", cert1, certfilename, rc);
+	FREEPTR(fp1);
+	FREEPTR(fp2);
+	if (cert2)
+		X509_free(cert2);
 	return rc;
 }
 
@@ -1727,6 +1741,7 @@ tls_send(struct filed *f, char *line, size_t len, struct buf_queue *qentry)
 		/* send now */
 		if (!(smsg = calloc(1, sizeof(*smsg)))) {
 			logerror("Unable to allocate memory, drop message");
+			FREEPTR(line);
 			return false;
 		}
 		smsg->f = f;
@@ -1742,6 +1757,7 @@ tls_send(struct filed *f, char *line, size_t len, struct buf_queue *qentry)
 		/* other socket operation active, send later  */
 		DPRINTF(D_DATA, "connection not ready to send: \"%.*s\"\n",
 		    (int)len, line);
+		FREEPTR(line);
 		return false;
 	}
 }
