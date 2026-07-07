@@ -1,4 +1,4 @@
-/* $NetBSD: adt7462reg.h,v 1.1 2026/06/03 11:11:18 jdc Exp $ */
+/* $NetBSD: adt7462reg.h,v 1.2 2026/07/07 12:27:03 jdc Exp $ */
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7462reg.h,v 1.1 2026/06/03 11:11:18 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7462reg.h,v 1.2 2026/07/07 12:27:03 jdc Exp $");
 
 #define ADT7462_ADDR1		0x58
 #define ADT7462_ADDR2		0x5c
@@ -241,6 +241,10 @@ __KERNEL_RCSID(0, "$NetBSD: adt7462reg.h,v 1.1 2026/06/03 11:11:18 jdc Exp $");
 #define ADT7462_CONF2_VRD2	0x10	/* Full speed fans on VRD2 */
 #define ADT7462_CONF2_FFULL	0x20	/* Full speed fans */
 #define ADT7462_CONF2_TACH	0xc0	/* Tach pulse to measure */
+#define ADT7462_CONF2_TACH1	0x00	/*   1 */
+#define ADT7462_CONF2_TACH2	0x40	/*   2 */
+#define ADT7462_CONF2_TACH3	0x80	/*   3 */
+#define ADT7462_CONF2_TACH4	0xc0	/*   4 */
 
 /* 0x03: Configuration register 3 */
 #define ADT7462_CONF3_GPIO_EN	0x01	/* Enable GPIO's */
@@ -333,8 +337,9 @@ __KERNEL_RCSID(0, "$NetBSD: adt7462reg.h,v 1.1 2026/06/03 11:11:18 jdc Exp $");
 #define ADT7462_DIODE1_CONF	0x40	/* 0 = volt/SCSI, 1 = D1+/D1- */
 #define ADT7462_VID_EN		0x80	/* 1 = En. VID's pins 1-4 28 31 32 */
 
-#define ADT7462_PCR1_TACH(val, x)	(x > 3 || \
-    (!(val & ADT7462_VID_EN) && (val & (1 << x)) != 0))
+#define ADT7462_PCR1_TACH(val, x)	(x > 4 || \
+    (x == 4 && (val & ADT7462_PIN7_CONF)) ||  \
+    (!(val & ADT7462_VID_EN) && (val & (1 << (4 - x)))))
 #define ADT7462_PCR1_TEMP(val, x)	(x== 0 || x == 2 || \
     (x == 3 && (val & ADT7462_DIODE3_CONF)) || \
     (x == 1 && (val & ADT7462_DIODE1_CONF)))
