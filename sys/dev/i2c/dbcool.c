@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.68 2025/10/05 04:26:08 macallan Exp $ */
+/*	$NetBSD: dbcool.c,v 1.69 2026/07/07 12:42:58 jdc Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.68 2025/10/05 04:26:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.69 2026/07/07 12:42:58 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -732,6 +732,7 @@ CFATTACH_DECL_NEW(dbcool, sizeof(struct dbcool_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "i2c-adm1031" },
+	{ .compat = "i2c-adt7475" },
 	{ .compat = "adt7467" },
 	{ .compat = "adt7460" },
 	{ .compat = "adm1030" },
