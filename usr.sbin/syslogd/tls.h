@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.3 2018/02/08 17:45:29 christos Exp $	*/
+/*	$NetBSD: tls.h,v 1.3.14.1 2026/07/07 14:49:16 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ struct tls_send_msg {
 	struct buf_queue *qentry;
 	char		 *line;	     /* formatted message */
 	size_t		  linelen;
-	size_t	  	  offset;    /* in case of partial writes */
+	size_t		  offset;    /* in case of partial writes */
 };
 
 /* return values for TLS_examine_error() */
