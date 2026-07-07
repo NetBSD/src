@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.130 2026/07/07 14:35:14 sborrill Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.131 2026/07/07 15:09:16 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -12879,4 +12879,9 @@ lib/libcurses/refresh.c				1.134
 
 	Fix PR lib/58282
 	[blymn, ticket #375]
+
+libexec/ld.elf_so/load.c			1.52
+
+	ld.elf_so(1), ldd(1): PR 60422: fix a bad assertion.
+	[riastradh, ticket #376]
 
