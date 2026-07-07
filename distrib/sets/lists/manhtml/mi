@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.53 2026/06/11 19:51:15 rumble Exp $
+# $NetBSD: mi,v 1.54 2026/07/07 12:38:44 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -955,6 +955,7 @@
 ./usr/share/man/html4/bochsfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/bpf.html			man-sys-htmlman		html
 ./usr/share/man/html4/bpfjit.html		man-sys-htmlman		html
+./usr/share/man/html4/bq4802rtc.html		man-sys-htmlman		html
 ./usr/share/man/html4/brgphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/bridge.html		man-sys-htmlman		html
 ./usr/share/man/html4/bt.html			man-sys-htmlman		html
