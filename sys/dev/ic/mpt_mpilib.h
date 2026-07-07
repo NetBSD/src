@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_mpilib.h,v 1.6 2024/02/10 18:43:52 andvar Exp $	*/
+/*	$NetBSD: mpt_mpilib.h,v 1.7 2026/07/07 12:17:03 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by LSI Logic Corporation
@@ -1976,10 +1976,13 @@ typedef struct _RAID_VOL0_STATUS
 #define MPI_RAIDVOL0_STATUS_FLAG_ENABLED                (0x01)
 #define MPI_RAIDVOL0_STATUS_FLAG_QUIESCED               (0x02)
 #define MPI_RAIDVOL0_STATUS_FLAG_RESYNC_IN_PROGRESS     (0x04)
+#define MPI_RAIDVOL0_STATUS_FLAG_VOLUME_INACTIVE        (0x08)
+#define MPI_RAIDVOL0_STATUS_FLAG_BAD_BLOCK_TABLE_FULL   (0x10)
 
 #define MPI_RAIDVOL0_STATUS_STATE_OPTIMAL               (0x00)
 #define MPI_RAIDVOL0_STATUS_STATE_DEGRADED              (0x01)
 #define MPI_RAIDVOL0_STATUS_STATE_FAILED                (0x02)
+#define MPI_RAIDVOL0_STATUS_STATE_MISSING               (0x03)
 
 typedef struct _RAID_VOL0_SETTINGS
 {
