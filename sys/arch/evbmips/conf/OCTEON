@@ -1,11 +1,11 @@
-#	$NetBSD: OCTEON,v 1.18 2026/05/21 11:35:40 skrll Exp $
+#	$NetBSD: OCTEON,v 1.19 2026/07/07 08:14:15 kbowling Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OCTEON-$Revision: 1.18 $"
+#ident 		"OCTEON-$Revision: 1.19 $"
 
 maxusers	32
 
@@ -142,6 +142,7 @@ simplebus*	at fdt? pass 0
 
 octintc*	at fdt? pass 1
 octcib*		at fdt? pass 2
+octgpio*	at fdt? pass 3	# GPIO controller (must attach before octmmc)
 
 com*		at iobus?
 com*		at fdt?

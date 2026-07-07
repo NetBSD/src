@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gpioreg.h,v 1.2 2020/06/22 03:05:07 simonb Exp $	*/
+/*	$NetBSD: octeon_gpioreg.h,v 1.3 2026/07/07 08:14:15 kbowling Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -64,6 +64,8 @@
 #define	GPIO_XBIT_CFG22				0x0001070000000930ULL
 #define	GPIO_XBIT_CFG23				0x0001070000000938ULL
 
+/* OUTPUT_SEL (CN70XX and newer): output mux, 0 selects normal GPIO TX. */
+#define	GPIO_BIT_CFG_OUT_SEL			UINT64_C(0x00000000001f0000)
 #define	GPIO_BIT_CFG_XXX_63_12			UINT64_C(0xfffffffffffff000)
 #define	GPIO_BIT_CFG_FIL_SEL			UINT64_C(0x0000000000000f00)
 #define	GPIO_BIT_CFG_FIL_CNT			UINT64_C(0x00000000000000f0)
