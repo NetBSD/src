@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.129 2026/07/07 14:29:57 sborrill Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.130 2026/07/07 14:35:14 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -12871,4 +12871,12 @@ sys/dev/acpi/acpi_mcfg.c			1.33
 	Addresses:
 	PR kern/60411: x86 PCI_RESOURCE: null pointer dereference at boot
 	[riastradh, ticket #374]
+
+lib/libcurses/cur_hash.c			1.15
+lib/libcurses/curses_private.h			1.83
+lib/libcurses/addbytes.c			1.72
+lib/libcurses/refresh.c				1.134
+
+	Fix PR lib/58282
+	[blymn, ticket #375]
 
