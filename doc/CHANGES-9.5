@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.115 2026/07/07 07:59:10 sborrill Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.116 2026/07/07 09:57:27 sborrill Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1557,4 +1557,15 @@ usr.sbin/syslogd/tls.h				1.4
 	  the tls_opt is in BSS and SLIST_INIT() assign NULL.
 	- Cleanups (KNF, fix typos and G.C.).
 	[msaitoh, ticket #2036]
+
+lib/libc/citrus/modules/citrus_viqr.c		1.10
+lib/libc/citrus/modules/citrus_iconv_std.c	1.18
+
+	iconv(3): Fix use-after-free in VIQR encoding, and incorrect
+	mbstate_t allocation alignment in various encodings (triggerable
+	if the source is VIQR).
+	Fixes:
+	- PR lib/59019: various iconv issues
+	- PR lib/60413: iconv_samples test crashes on sparc*
+	[riastradh, ticket #2035]
 
