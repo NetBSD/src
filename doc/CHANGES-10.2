@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.112 2026/07/07 14:41:32 sborrill Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.113 2026/07/07 14:52:32 sborrill Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5510,4 +5510,19 @@ lib/libcurses/refresh.c				1.134
 
 	Fix PR lib/58282
 	[blymn, ticket #1309]
+
+usr.sbin/syslogd/extern.h			1.5
+usr.sbin/syslogd/sign.c				1.10
+usr.sbin/syslogd/sign.h				1.4
+usr.sbin/syslogd/syslogd.c			1.141,1.145,1.148,1.151-1.155 via patch
+usr.sbin/syslogd/syslogd.h			1.10-1.11
+usr.sbin/syslogd/tls.c				1.26-1.27
+usr.sbin/syslogd/tls.h				1.4
+
+	Some improvements for syslogd(8):
+	- Retry sendto() if it raises EBUSY, too.
+	- Add missing SLIST_INIT() in main(). This is not a real bug
+	  because the tls_opt is in BSS and SLIST_INIT() assigns NULL.
+	- Cleanups (KNF, fix typos and G.C.).
+	[msaitoh, ticket #1310]
 
