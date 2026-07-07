@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.40 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.41 2026/07/07 12:24:32 jdc Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.40 2024/02/09 22:08:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.41 2026/07/07 12:24:32 jdc Exp $");
 
 #include "bio.h"
 
@@ -1481,6 +1481,149 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 		}
 		break;
 
+	case MPI_EVENT_INTEGRATED_RAID:
+#define MSG_LEN 64
+#define ERR_LEN 32
+		char raid_msg[MSG_LEN], err_msg[ERR_LEN];
+		EVENT_DATA_RAID *data = (EVENT_DATA_RAID *) msg->Data;
+		uint32_t sstatus = le32toh(data->SettingsStatus);
+		uint8_t sflags = sstatus & 0xff;
+		uint8_t sstate = (sstatus >> 8) & 0xff;
+
+		switch(data->ReasonCode) {
+		case MPI_EVENT_RAID_RC_VOLUME_CREATED:
+			snprintf(raid_msg, MSG_LEN,
+			    "volume %d created", data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_VOLUME_DELETED:
+			snprintf(raid_msg, MSG_LEN,
+			    "volume %d deleted", data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_VOLUME_SETTINGS_CHANGED:
+			snprintf(raid_msg, MSG_LEN,
+			    "volume %d settings changed",
+			    data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_VOLUME_STATUS_CHANGED:
+			snprintf(raid_msg, MSG_LEN,
+			    "volume %d status: ", data->VolumeID);
+			switch (sstate) {
+			case MPI_RAIDVOL0_STATUS_STATE_OPTIMAL:
+				strncat(raid_msg, "optimal", MSG_LEN - 1);
+				break;
+			case MPI_RAIDVOL0_STATUS_STATE_DEGRADED:
+				strncat(raid_msg, "degraded", MSG_LEN - 1);
+				break;
+			case MPI_RAIDVOL0_STATUS_STATE_FAILED:
+				strncat(raid_msg, "failed", MSG_LEN - 1);
+				break;
+			case MPI_RAIDVOL0_STATUS_STATE_MISSING:
+				strncat(raid_msg, "missing", MSG_LEN - 1);
+				break;
+			default:
+				snprintf(err_msg, ERR_LEN,
+				    "unknown: 0x%02x %02x", sstate, sflags);
+				strncat(raid_msg, err_msg, MSG_LEN - 1);
+				break;
+			}
+			if (sflags & MPI_RAIDVOL0_STATUS_FLAG_ENABLED)
+				strncat(raid_msg, ", enabled", MSG_LEN - 1);
+			if (sflags & MPI_RAIDVOL0_STATUS_FLAG_QUIESCED)
+				strncat(raid_msg, ", quiesced", MSG_LEN - 1);
+			if (sflags &
+			    MPI_RAIDVOL0_STATUS_FLAG_RESYNC_IN_PROGRESS)
+				strncat(raid_msg, ", resyncing", MSG_LEN - 1);
+			if (sflags & MPI_RAIDVOL0_STATUS_FLAG_VOLUME_INACTIVE)
+				strncat(raid_msg, ", inactive", MSG_LEN - 1);
+			break;
+		case MPI_EVENT_RAID_RC_VOLUME_PHYSDISK_CHANGED:
+			snprintf(raid_msg, MSG_LEN,
+			    "volume of physdisk %d (id %d) changed",
+			    data->PhysDiskNum, data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_PHYSDISK_CREATED:
+			snprintf(raid_msg, MSG_LEN,
+			    "physdisk %d (id %d) created",
+			    data->PhysDiskNum, data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_PHYSDISK_DELETED:
+			snprintf(raid_msg, MSG_LEN,
+			    "physdisk %d (id %d) deleted",
+			    data->PhysDiskNum, data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_PHYSDISK_SETTINGS_CHANGED:
+			snprintf(raid_msg, MSG_LEN,
+			    "physdisk %d (id %d) settings changed",
+			    data->PhysDiskNum, data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_PHYSDISK_STATUS_CHANGED:
+			snprintf(raid_msg, MSG_LEN,
+			    "physdisk %d (id %d) status: ",
+			    data->PhysDiskNum, data->VolumeID);
+			switch (sstate) {
+			case MPI_PHYSDISK0_STATUS_ONLINE:
+				strncat(raid_msg, "online", MSG_LEN - 1);
+				break;
+			case MPI_PHYSDISK0_STATUS_MISSING:
+				strncat(raid_msg, "missing", MSG_LEN - 1);
+				break;
+			case MPI_PHYSDISK0_STATUS_NOT_COMPATIBLE:
+				strncat(raid_msg, "not compatible",
+				    MSG_LEN - 1);
+				break;
+			case MPI_PHYSDISK0_STATUS_FAILED:
+				strncat(raid_msg, "failed", MSG_LEN - 1);
+				break;
+			case MPI_PHYSDISK0_STATUS_INITIALIZING:
+				strncat(raid_msg, "initializing", MSG_LEN - 1);
+				break;
+			case MPI_PHYSDISK0_STATUS_OFFLINE_REQUESTED:
+				strncat(raid_msg, "offline requested",
+				    MSG_LEN - 1);
+				break;
+			case MPI_PHYSDISK0_STATUS_FAILED_REQUESTED:
+				strncat(raid_msg, "failed requested",
+				    MSG_LEN - 1);
+				break;
+			case MPI_PHYSDISK0_STATUS_OTHER_OFFLINE:
+				strncat(raid_msg, "offline", MSG_LEN - 1);
+				break;
+			default:
+				snprintf(err_msg, ERR_LEN,
+				    "unknown: 0x%02x %02x", sstate, sflags);
+				strncat(raid_msg, err_msg, MSG_LEN - 1);
+				break;
+			}
+			if (sflags & MPI_PHYSDISK0_STATUS_FLAG_OUT_OF_SYNC)
+				strncat(raid_msg, ", out of sync",
+				    MSG_LEN - 1);
+			if (sflags & MPI_PHYSDISK0_STATUS_FLAG_QUIESCED)
+				strncat(raid_msg, ", quiesced", MSG_LEN - 1);
+			break;
+		case MPI_EVENT_RAID_RC_DOMAIN_VAL_NEEDED:
+			snprintf(raid_msg, MSG_LEN,
+			    "physdisk %d domain validation needed",
+			    data->PhysDiskNum);
+			break;
+		case MPI_EVENT_RAID_RC_SMART_DATA:
+			snprintf(raid_msg, MSG_LEN,
+			    "smart data ASC/ASCQ: 0x%02x/0x%02x",
+			    data->ASC, data->ASCQ);
+			break;
+		case MPI_EVENT_RAID_RC_REPLACE_ACTION_STARTED:
+			snprintf(raid_msg, MSG_LEN,
+			    "replace physdisk %d started", data->PhysDiskNum);
+			break;
+		default:
+			snprintf(raid_msg, MSG_LEN,
+			    "unknown reason code (0x%02x)", data->ReasonCode);
+			break;
+		}
+		mpt_prt(mpt, "Integrated RAID Event: %s", raid_msg);
+#undef MSG_LEN
+#undef ERR_LEN
+		break;
+
 	case MPI_EVENT_SAS_DEVICE_STATUS_CHANGE:
 	case MPI_EVENT_SAS_DISCOVERY:
 		/* ignore these events for now */
@@ -1493,7 +1636,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 		break;
 
 	default:
-		mpt_prt(mpt, "Unknown async event: 0x%x", msg->Event);
+		mpt_prt(mpt, "Unknown async event: 0x%x", le32toh(msg->Event));
 		break;
 	}
 
