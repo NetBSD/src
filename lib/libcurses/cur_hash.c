@@ -1,4 +1,4 @@
-/*	$NetBSD: cur_hash.c,v 1.14 2021/09/07 01:23:09 rin Exp $	*/
+/*	$NetBSD: cur_hash.c,v 1.14.2.1 2026/07/07 14:40:46 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cur_hash.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: cur_hash.c,v 1.14 2021/09/07 01:23:09 rin Exp $");
+__RCSID("$NetBSD: cur_hash.c,v 1.14.2.1 2026/07/07 14:40:46 sborrill Exp $");
 #endif
 #endif				/* not lint */
 
@@ -46,29 +46,31 @@ __RCSID("$NetBSD: cur_hash.c,v 1.14 2021/09/07 01:23:09 rin Exp $");
 /*
  * __hash_more() is "hashpjw" from the Dragon Book, Aho, Sethi & Ullman, p.436.
  */
-unsigned int
-__hash_more(const void  *v_s, size_t len, unsigned int h)
+uint32_t
+__hash_more(const void  *v_s, size_t len, uint32_t h)
 {
-	unsigned int g;
+	uint32_t g;
 	size_t i = 0;
-	const char *s = v_s;
+	const unsigned char *s = v_s;
 
 	while (i < len) {
-		h = (h << 4) + s[i];
-		if ((g = h & 0xf0000000) != 0) {
-			h = h ^ (g >> 24);
-			h = h ^ g;
+		if (s[i] != 0) {
+			h = (h << 4) + s[i];
+			if ((g = h & 0xf0000000) != 0) {
+				h = h ^ (g >> 24);
+				h = h ^ g;
+			}
 		}
 		i++;
 	}
 	return h;
 }
 
-unsigned int
+uint32_t
 __hash_line(const __LDATA *cp, int ncols)
 {
 #ifdef HAVE_WCHAR
-	unsigned int h;
+	uint32_t h;
 	const nschar_t *np;
 	int x;
 
