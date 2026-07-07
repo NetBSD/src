@@ -1,4 +1,4 @@
-.\"	$NetBSD: fssconfig.8,v 1.14 2026/07/06 16:53:56 riastradh Exp $	*/
+.\"	$NetBSD: fssconfig.8,v 1.15 2026/07/07 22:28:41 uwe Exp $	*/
 .\"
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -113,13 +113,13 @@ file system or the file system block size.
 .Pp
 Any type of file system in
 .Nx
-mounted from a disk device, such as ffs, ext2fs, and msdos (but not,
-for example, procfs, ptyfs, tmpfs, or zfs), can have non-persistent
-snapshots taken.
+mounted from a disk device, such as ffs, ext2fs, and msdos
+.Pq but not, for example, procfs, ptyfs, tmpfs, or zfs ,
+can have non-persistent snapshots taken.
 .El
 .Pp
 Options indicating an action to be performed:
-.Bl -tag -width ".Fl c"
+.Bl -tag -width Fl
 .It Fl c
 Configure the device.
 If successful,
@@ -185,7 +185,7 @@ If no action option is given,
 is assumed.
 .Pp
 Other options:
-.Bl -tag -width ".Fl v"
+.Bl -tag -width Fl
 .It Fl v
 Be more verbose listing the snapshot devices.
 .It Fl x
@@ -208,7 +208,7 @@ or without
 .Fl x .
 .El
 .Sh FILES
-.Bl -tag -width /etc/disktab -compact
+.Bl -tag -width Pa
 .It Pa /dev/rfss?
 Raw character device with read access to snapshot content.
 .It Pa /dev/fss?
