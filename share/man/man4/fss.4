@@ -1,4 +1,4 @@
-.\"	$NetBSD: fss.4,v 1.16 2026/07/06 13:37:08 riastradh Exp $	*/
+.\"	$NetBSD: fss.4,v 1.17 2026/07/07 21:55:33 uwe Exp $	*/
 .\"
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -55,8 +55,8 @@ command codes below are defined in
 The (third) argument to
 .Xr ioctl 2
 should be a pointer to the type indicated.
-.Bl -tag -width 8n
-.It Dv FSSIOCSET(struct fss_set)
+.Bl -tag -width Dv
+.It Dv FSSIOCSET Pq Vt struct fss_set
 Configures a
 .Nm
 device.
@@ -70,33 +70,33 @@ struct fss_set {
 .Ed
 .Pp
 The struct element
-.Va fss_mount
+.Fa fss_mount
 is the mount point of the file system.
 The struct element
-.Va fss_bstore
+.Fa fss_bstore
 is either a regular file or a raw disk device where data overwritten on
 the file system will be saved.
 The struct element
-.Va fss_csize
+.Fa fss_csize
 is the preferred size of this data.
 The struct element
-.Va fss_flags
+.Fa fss_flags
 is the initial set of flags.
 .Pp
 If
-.Va fss_bstore
+.Fa fss_bstore
 is a regular file on the file system at
-.Va fss_mount ,
+.Fa fss_mount ,
 the snapshot will be
 .Sy persistent .
 In this case, if
-.Va fss_bstore
+.Fa fss_bstore
 is already a snapshot file from a past state of the file system, the
 snapshot will be loaded from it; otherwise,
-.Va fss_bstore
+.Fa fss_bstore
 will be truncated and a snapshot of the current state of the file
 system will be saved to it.
-.It Dv FSSIOCGET(struct fss_get)
+.It Dv FSSIOCGET Pq Vt struct fss_get
 Gets the status of a
 .Nm
 device.
@@ -110,25 +110,25 @@ struct fss_get {
 };
 .Ed
 The struct element
-.Va fsg_mount
+.Fa fsg_mount
 is the mount point of the file system.
 The struct element
-.Va fsg_time
+.Fa fsg_time
 is the time this snapshot was taken.
 The struct element
-.Va fsg_csize
+.Fa fsg_csize
 is the current size of data clusters.
 The struct element
-.Va fsg_mount_size
+.Fa fsg_mount_size
 is the number of clusters of the file system.
 The struct element
-.Va fsg_bs_size
+.Fa fsg_bs_size
 is the number of clusters written to the backing store.
 .It Dv FSSIOCCLR
 Unconfigures a
 .Nm
 device.
-.It Dv FSSIOFSET(int)
+.It Dv FSSIOFSET Pq Vt int
 Sets the flags of a
 .Nm
 device.
@@ -143,7 +143,7 @@ Unlink the backing file before the
 .Nm
 device is created.
 .El
-.It Dv FSSIOFGET(int)
+.It Dv FSSIOFGET Pq Vt int
 Gets the flags of a
 .Nm
 device.
@@ -152,12 +152,12 @@ device.
 For each active snapshot device there is a kernel thread
 that handles the backing store.
 This thread is named
-.Va fssN
+.Li fss Ns Ar N
 where
-.Va N
+.Ar N
 is the device minor number.
 .Sh FILES
-.Bl -tag -width /dev/rfss? -compact
+.Bl -tag -width Pa -compact
 .It Pa /dev/rfss?
 .It Pa /dev/fss?
 .El
