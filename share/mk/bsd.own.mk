@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1482 2026/05/10 14:19:10 tls Exp $
+#      $NetBSD: bsd.own.mk,v 1.1483 2026/07/07 04:25:35 thorpej Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -281,7 +281,7 @@ USE_SSP?=	yes
 # built-in to libc from 2005 (pre version 3).
 #
 .if \
-    ${MACHINE} == "sun2" || \
+    ${MACHINE_ARCH} == "m68000" || \
     ${MACHINE_ARCH} == "vax"
 HAVE_JEMALLOC?=		100
 .else
@@ -733,7 +733,7 @@ TOOL_ZIC=		zic
 .if defined(BINDIR) && ${BINDIR} == "/usr/mdec"
 NOCTF=			# defined
 NOPIE=			# defined
-.elif ${MACHINE} == "sun2"
+.elif ${MACHINE_ARCH} == "m68000"
 NOPIE=			# we don't have PIC, so no PIE
 .endif
 
