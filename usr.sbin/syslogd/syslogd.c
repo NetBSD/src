@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.147 2024/11/09 16:31:31 jschauma Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.147.2.1 2026/07/07 13:36:45 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.147 2024/11/09 16:31:31 jschauma Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.147.2.1 2026/07/07 13:36:45 sborrill Exp $");
 #endif
 #endif /* not lint */
 
@@ -3184,8 +3184,8 @@ read_config_file(FILE *cf, struct filed **f_ptr)
 	} config_keywords[] = {
 #ifndef DISABLE_TLS
 		/* TLS settings */
-		{"tls_ca",		  &tls_opt.CAfile},
 		{"tls_cadir",		  &tls_opt.CAdir},
+		{"tls_ca",		  &tls_opt.CAfile},
 		{"tls_cert",		  &tls_opt.certfile},
 		{"tls_key",		  &tls_opt.keyfile},
 		{"tls_verify",		  &tls_opt.x509verify},
@@ -4631,10 +4631,10 @@ buf_queue_obj_size(struct buf_queue *qentry)
 	    + SAFEstrlen(qentry->msg->timestamp)+1
 	    + SAFEstrlen(qentry->msg->msgid)+1;
 	if (qentry->msg->prog
-	    && qentry->msg->prog != include_pid)
+	    && qentry->msg->prog != appname)
 		sum += strlen(qentry->msg->prog)+1;
 	if (qentry->msg->pid
-	    && qentry->msg->pid != appname)
+	    && qentry->msg->pid != include_pid)
 		sum += strlen(qentry->msg->pid)+1;
 	if (qentry->msg->recvhost
 	    && qentry->msg->recvhost != LocalHostName
