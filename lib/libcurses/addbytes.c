@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.70.2.1 2026/04/03 13:32:58 martin Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.70.2.2 2026/07/07 14:34:01 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.70.2.1 2026/04/03 13:32:58 martin Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.70.2.2 2026/07/07 14:34:01 sborrill Exp $");
 #endif
 #endif				/* not lint */
 
@@ -411,6 +411,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 			for (i = 0; i < newx; i++) {
 				if (wadd_wch(win, &cc) == ERR)
 					return ERR;
+				(*lnp)->flags |= __ISDIRTY;
 			}
 			return OK;
 		}
@@ -480,6 +481,9 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		newx = sx + win->ch_off;
 		if (newx < *(*lnp)->firstchp)
 			*(*lnp)->firstchp = newx;
+
+		if (newx > *(*lnp)->lastchp)
+			*(*lnp)->lastchp = newx;
 	}
 
 	/* check for enough space before the end of line */
@@ -529,6 +533,9 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	newx = *x + win->ch_off;
 	if (newx < *(*lnp)->firstchp)
 		*(*lnp)->firstchp = newx;
+
+	if (newx > *(*lnp)->lastchp)
+		*(*lnp)->lastchp = newx;
 
 	if (lp->nsp) {
 		__cursesi_free_nsp(lp->nsp);
