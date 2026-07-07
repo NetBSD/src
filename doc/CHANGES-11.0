@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.126 2026/07/07 13:47:41 sborrill Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.127 2026/07/07 13:54:44 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -12836,4 +12836,19 @@ usr.sbin/syslogd/tls.c				1.22-1.25
 	Fix memory-leak during tls_send().
 	Found and fixed by Masakazu OOHASHI at IIJ.
 	[msaitoh, ticket #369]
+
+usr.sbin/syslogd/extern.h			1.5
+usr.sbin/syslogd/sign.c				1.10
+usr.sbin/syslogd/sign.h				1.4
+usr.sbin/syslogd/syslogd.c			1.151-1.155
+usr.sbin/syslogd/syslogd.h			1.10-1.11
+usr.sbin/syslogd/tls.h				1.4
+usr.sbin/syslogd/tls.c				1.26-1.27
+
+	Some improvements for syslogd(8):
+	- Retry sendto() if it raises EBUSY, too.
+	- Add missing SLIST_INIT() in main(). This is not a real bug because
+	  the tls_opt is in BSS and SLIST_INIT() assign NULL.
+	- Cleanups (KNF, fix typos and G.C.).
+	[msaitoh, ticket #370]
 
