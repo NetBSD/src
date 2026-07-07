@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.16.6.3 2026/07/06 16:19:46 sborrill Exp $	*/
+/*	$NetBSD: tls.c,v 1.16.6.4 2026/07/07 07:58:37 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.16.6.3 2026/07/06 16:19:46 sborrill Exp $");
+__RCSID("$NetBSD: tls.c,v 1.16.6.4 2026/07/07 07:58:37 sborrill Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -118,7 +118,7 @@ out:
 }
 
 #define ST_CHANGE(x, y) do {					\
-	if ((x) != (y)) { 					\
+	if ((x) != (y)) {					\
 		DPRINTF(D_TLS, "Change state: %s --> %s\n",	\
 		    TLS_CONN_STATES[x], TLS_CONN_STATES[y]);	\
 		(x) = (y);					\
@@ -141,7 +141,7 @@ getVerifySetting(const char *x509verifystring)
 /*
  * init OpenSSL lib and one context.
  * returns NULL if global context already exists.
- * returns a status message on successfull init (to be free()d by caller).
+ * returns a status message on successful init (to be free()d by caller).
  * calls die() on serious error.
  */
 char*
@@ -302,8 +302,8 @@ init_global_TLS_CTX(void)
 	    "Use certificate from file \"%s\" with CN \"%s\" "
 	    "and fingerprint \"%s\"", SSLeay_version(SSLEAY_VERSION),
 	    certfilename, cn, fp);
-	free(cn);
-	free(fp);
+	FREEPTR(cn);
+	FREEPTR(fp);
 	if (cert)
 		X509_free(cert);
 
@@ -338,7 +338,7 @@ get_fingerprint(const X509 *cert, char **returnstring, const char *alg_name)
 	 *
 	 * Intended behaviour is to prefer the IANA names,
 	 * but allow the user to use OpenSSL names as well
-	 * (e.g. for "RIPEMD160" wich has no IANA name)
+	 * (e.g. for "RIPEMD160" which has no IANA name)
 	 */
 	static const struct hash_alg_namemap {
 		const char *iana;
@@ -559,11 +559,11 @@ match_fingerprint(const X509 *cert, const char *fingerprint)
 	}
 	if (strncmp(certfingerprint, fingerprint, strlen(certfingerprint))) {
 		DPRINTF(D_TLS, "fail: fingerprints do not match\n");
-		free(certfingerprint);
+		FREEPTR(certfingerprint);
 		return false;
 	}
 	DPRINTF(D_TLS, "accepted: fingerprints match\n");
-	free(certfingerprint);
+	FREEPTR(certfingerprint);
 	return true;
 }
 
@@ -835,7 +835,7 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 	const int on = 1;
 	struct socketEvent *s, *socks;
 
-	if(!tls_opt.server
+	if (!tls_opt.server
 	|| !tls_opt.global_TLS_CTX)
 		return NULL;
 
@@ -904,8 +904,8 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 	}
 
 	if (socks->fd == 0) {
-		free (socks);
-		if(Debug)
+		FREEPTR(socks);
+		if (Debug)
 			return NULL;
 		else
 			die(0, 0, NULL);
@@ -997,7 +997,7 @@ tls_connect(struct tls_conn_settings *conn_info)
 	DPRINTF((D_TLS|D_CALL), "tls_connect(conn_info@%p)\n", conn_info);
 	assert(conn_info->state == ST_NONE);
 
-	if(!tls_opt.global_TLS_CTX)
+	if (!tls_opt.global_TLS_CTX)
 		return false;
 
 	memset(&hints, 0, sizeof(hints));
@@ -1058,7 +1058,7 @@ tls_connect(struct tls_conn_settings *conn_info)
 			ERR_error_string_n(rc, buf, sizeof(buf));
 			DPRINTF(D_TLS, "Found SSL error in queue: %s\n", buf);
 		}
-		errno = 0;  /* reset to be sure we get the right one later on */
+		errno = 0; /* reset to be sure we get the right one later on */
 
 		if ((fcntl(sock, F_SETFL, O_NONBLOCK)) == -1) {
 			DPRINTF(D_NET, "Unable to fcntl(sock, O_NONBLOCK): "
@@ -1159,8 +1159,8 @@ parse_tls_destination(const char *p, struct filed *f, size_t linenum)
 	 || !(f->f_un.f_tls.tls_conn->event = allocev())
 	 || !(f->f_un.f_tls.tls_conn->retryevent = allocev())) {
 		if (f->f_un.f_tls.tls_conn)
-			free(f->f_un.f_tls.tls_conn->event);
-		free(f->f_un.f_tls.tls_conn);
+			FREEPTR(f->f_un.f_tls.tls_conn->event);
+		FREEPTR(f->f_un.f_tls.tls_conn);
 		logerror("Couldn't allocate memory for TLS config");
 		return false;
 	}
@@ -1430,8 +1430,8 @@ dispatch_socket_accept(int fd, short event, void *ev)
 	    || !(conn_info->event = allocev())
 	    || !(conn_info->retryevent = allocev())) {
 		if (conn_info)
-			free(conn_info->event);
-		free(conn_info);
+			FREEPTR(conn_info->event);
+		FREEPTR(conn_info);
 		SSL_free(ssl);
 		close(newsock);
 		logerror("Unable to allocate memory to accept incoming "
@@ -1571,7 +1571,7 @@ dispatch_tls_read(int fd_lib, short event, void *arg)
 		free_tls_conn(c->tls_conn);
 		FREEPTR(c->inbuf);
 		SLIST_REMOVE(&TLS_Incoming_Head, c, TLS_Incoming_Conn, entries);
-		free(c);
+		FREEPTR(c);
 	} else
 		ST_CHANGE(c->tls_conn->state, ST_TLS_EST);
 	RESTORE_SIGNALS(omask);
@@ -1735,7 +1735,7 @@ tls_send(struct filed *f, char *line, size_t len, struct buf_queue *qentry)
 	    line, (len > DEBUG_LINELENGTH ? "..." : ""),
 	    len, f->f_un.f_tls.tls_conn->sslptr ? "" : "un");
 
-	if(f->f_un.f_tls.tls_conn->state == ST_TLS_EST) {
+	if (f->f_un.f_tls.tls_conn->state == ST_TLS_EST) {
 		/* send now */
 		if (!(smsg = calloc(1, sizeof(*smsg)))) {
 			logerror("Unable to allocate memory, drop message");
@@ -2055,7 +2055,7 @@ x509_cert_add_subjectAltName(X509 *cert, X509V3_CTX *ctx)
 	    "DNS:%s", LocalFQDN);
 
 	for (ifa = ifp; ifa; ifa = ifa->ifa_next) {
-		if(!ifa->ifa_addr)
+		if (!ifa->ifa_addr)
 			continue;
 
 		/* only IP4 and IP6 addresses, but filter loopbacks */

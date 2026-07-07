@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2015/02/10 20:38:15 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.4.18.1 2026/07/07 07:58:37 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,8 +50,6 @@ extern int Debug;
 extern struct tls_global_options_t tls_opt;
 extern struct TLS_Incoming TLS_Incoming_Head;
 extern struct sign_global_t GlobalSign;
-extern char  *linebuf;
-extern size_t linebufsize;
 extern int    RemoteAddDate;
 
 extern bool	BSDOutputFormat;

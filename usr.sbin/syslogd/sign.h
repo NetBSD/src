@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.h,v 1.2 2008/11/07 07:36:38 minskim Exp $	*/
+/*	$NetBSD: sign.h,v 1.2.50.1 2026/07/07 07:58:37 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -121,10 +121,10 @@
 #define SIGN_GENCERT_BITS 1024
 
 #define SSL_CHECK_ONE(exp) do {						\
-	if ((exp) != 1) {				     		\
+	if ((exp) != 1) {						\
 		DPRINTF(D_SIGN, #exp " failed in %d: %s\n", __LINE__,	\
-		    ERR_error_string(ERR_get_error(), NULL));	     	\
-		return 1;					     	\
+		    ERR_error_string(ERR_get_error(), NULL));		\
+		return 1;						\
 	}								\
 } while (/*CONSTCOND*/0)
 
