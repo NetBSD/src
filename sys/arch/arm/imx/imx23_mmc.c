@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_mmc.c,v 1.6 2026/02/08 22:19:05 yurix Exp $ */
+/* $NetBSD: imx23_mmc.c,v 1.7 2026/07/07 04:54:34 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -309,8 +309,10 @@ imx23_mmc_bus_clock(sdmmc_chipset_handle_t sch, int clock)
 	else
 		sck = imx23_mmc_set_sck(sc, clock * 1000);
 
-	/* Notify user if we didn't get the exact clock rate from SSP that was
-	 * requested from the SDMMC subsystem. */
+	/*
+	 * Notify user if we didn't get the exact clock rate from SSP that was
+	 * requested from the SDMMC subsystem.
+	 */
 	if (sck != clock * 1000) {
 		sck = sck / 1000;
 		if (((sck) / 1000) != 0)
@@ -394,8 +396,10 @@ imx23_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		cv_wait(&sc->sc_intr_cv, &sc->sc_lock);
 
 	if (sc->sc_irq_error) {
-		/* Do not log RESP_TIMEOUT_IRQ error if bus width is 0 as it is
-		 * expected during SD card initialization phase. */
+		/*
+		 * Do not log RESP_TIMEOUT_IRQ error if bus width is 0 as it is
+		 * expected during SD card initialization phase.
+		 */
 		if (sc->sc_bus_width) {
 			aprint_error_dev(sc->sc_dev, "SSP_ERROR_IRQ: %d\n",
 			    sc->sc_irq_error);
@@ -458,7 +462,8 @@ imx23_mmc_reset(struct imx23_mmc_softc *sc)
 {
 	unsigned int loop;
 
-	/* Prepare for soft-reset by making sure that SFTRST is not currently
+	/*
+	 * Prepare for soft-reset by making sure that SFTRST is not currently
 	 * asserted. Also clear CLKGATE so we can wait for its assertion below.
 	 */
 	SSP_WR(sc, HW_SSP_CTRL0_CLR, HW_SSP_CTRL0_SFTRST);
