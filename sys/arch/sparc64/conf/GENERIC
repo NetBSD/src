@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.248 2026/06/04 13:59:46 jdc Exp $
+# $NetBSD: GENERIC,v 1.249 2026/07/07 14:15:03 jdc Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.248 $"
+#ident		"GENERIC-$Revision: 1.249 $"
 
 maxusers	64
 
@@ -437,6 +437,10 @@ pseudo-device	accf_http		# "httpready" accept filter
 
 pseudo-device	vnd
 #options 	VND_COMPRESSION		# compressed vnd(4)
+
+## RAID control device driver
+
+pseudo-device 	bio
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
