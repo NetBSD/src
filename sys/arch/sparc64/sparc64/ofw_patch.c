@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.13 2026/06/13 17:17:39 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.14 2026/07/07 12:41:59 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.13 2026/06/13 17:17:39 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.14 2026/07/07 12:41:59 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -129,6 +129,30 @@ add_gpio_props_v210(device_t dev, void *aux)
 			add_gpio_pin(pins, "LED bay3_fault", 11, 0, 0);
 			add_gpio_pin(pins, "LED bay2_remove", 12, 0, 0);
 			add_gpio_pin(pins, "LED bay3_remove", 13, 0, 0);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+	}
+}
+
+static void
+add_gpio_props_v245(device_t dev, void *aux)
+{
+	struct i2c_attach_args *ia = aux;
+	prop_dictionary_t dict = device_properties(dev);
+	prop_array_t pins;
+
+	switch (ia->ia_addr) {
+		case 0x22:	/* Disks present */
+			pins = prop_array_create();
+			add_gpio_pin(pins,
+			    "INDICATOR HDD 3 present", 11, 1, -1);
+			add_gpio_pin(pins,
+			    "INDICATOR HDD 2 present", 10, 1, -1);
+			add_gpio_pin(pins,
+			    "INDICATOR HDD 1 present", 9, 1, -1);
+			add_gpio_pin(pins,
+			    "INDICATOR HDD 0 present", 8, 1, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
@@ -326,6 +350,27 @@ add_env_sensors_u45(device_t busdev)
 	add_i2c_device(cfg, "temperature-sensor", "i2c-lm75a", 0x4f, 0);
 }
 
+/*
+ * Add V245 environmental sensors that are not in the OFW tree.
+ */
+static void
+add_env_sensors_v245(device_t busdev)
+{
+	prop_array_t cfg;
+
+	DPRINTF(ACDB_PROBE, ("\nAdding sensors for %s ", machine_model));
+	cfg = create_i2c_dict(busdev);
+
+	/* PCA9555 at 0x22 */
+	add_i2c_device(cfg, "temperature-sensor", "i2c-pca9555", 0x22, 0);
+
+	/* LM95221 at 0x2b */
+	add_i2c_device(cfg, "temperature-sensor", "i2c-lm95221", 0x2b, 0);
+
+	/* ADT7475 at 0x2e */
+	add_i2c_device(cfg, "hardware-monitor", "i2c-adt7475", 0x2e, 0);
+}
+
 /* Sensors and GPIO's for E450 and E250 */
 static void
 add_i2c_props_e450(device_t busdev, uint64_t node)
@@ -480,6 +525,7 @@ set_i2c_bus_props(device_t busdev, uint64_t busnode)
 	if (device_is_a(busdev, "firei2c")) {
 		if (!strcmp(machine_model, "SUNW,Sun-Fire-V245") ||
 		    !strcmp(machine_model, "SUNW,Sun-Fire-V215")) {
+			add_env_sensors_v245(busdev);
 			fix_properties_v245(busdev);
 		}
 	}
@@ -505,6 +551,10 @@ set_i2c_dev_props(device_t dev, device_t busdev, void *aux)
 				    "fan_mask", 0x08);
 		}
 	}
+
+	if (!strcmp(machine_model, "SUNW,Sun-Fire-V245"))
+		if (device_is_a(dev, "pcagpio"))
+			add_gpio_props_v245(dev, aux);
 
 	/* U45 has 5 measured fans */
 	if (!strcmp(machine_model, "SUNW,A70")) {
