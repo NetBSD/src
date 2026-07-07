@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.111 2026/07/07 09:40:02 sborrill Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.112 2026/07/07 14:41:32 sborrill Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5502,4 +5502,12 @@ lib/libc/citrus/modules/citrus_iconv_std.c	1.18
 	- PR lib/59019: various iconv issues
 	- PR lib/60413: iconv_samples test crashes on sparc*
 	[riastradh, ticket #1308]
+
+lib/libcurses/cur_hash.c			1.15
+lib/libcurses/curses_private.h			1.83
+lib/libcurses/addbytes.c			1.72
+lib/libcurses/refresh.c				1.134
+
+	Fix PR lib/58282
+	[blymn, ticket #1309]
 
