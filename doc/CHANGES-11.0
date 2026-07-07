@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.128 2026/07/07 13:59:55 sborrill Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.129 2026/07/07 14:29:57 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -12862,4 +12862,13 @@ lib/libc/citrus/modules/citrus_iconv_std.c	1.18
 	- PR lib/59019: various iconv issues
 	- PR lib/60413: iconv_samples test crashes on sparc*
 	[riastradh, ticket #373]
+
+sys/dev/acpi/acpi_mcfg.c			1.33
+
+	x86: Fix crash at boot on some machines with options
+	PCI_RESOURCE, in case something goes wrong traversing the
+	MCFG table and no segments are found.
+	Addresses:
+	PR kern/60411: x86 PCI_RESOURCE: null pointer dereference at boot
+	[riastradh, ticket #374]
 
