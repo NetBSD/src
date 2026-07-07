@@ -1,4 +1,4 @@
-/*	$NetBSD: bq4802_ebus.c,v 1.2 2026/02/16 16:29:59 jdc Exp $	*/
+/*	$NetBSD: bq4802_ebus.c,v 1.3 2026/07/07 12:33:39 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -30,15 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bq4802_ebus.c,v 1.2 2026/02/16 16:29:59 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bq4802_ebus.c,v 1.3 2026/07/07 12:33:39 jdc Exp $");
 
 /* Clock driver for rtc/bq4802 (a Texas Instruments bq4802Y/bq4802LY). */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/types.h>
+#include <sys/sysctl.h>
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>
@@ -49,13 +49,16 @@ __KERNEL_RCSID(0, "$NetBSD: bq4802_ebus.c,v 1.2 2026/02/16 16:29:59 jdc Exp $");
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
+
 struct bq4802rtc_softc {
 	device_t	sc_dev;
 
-	struct		todr_chip_handle sc_tch;
+	struct todr_chip_handle	sc_tch;
 
-	bus_space_tag_t sc_bst;	
-	bus_space_handle_t sc_bsh;
+	bus_space_tag_t		sc_bst;	
+	bus_space_handle_t	sc_bsh;
+
+	int			sc_osc_stp;	/* Oscillator stop (sysctl) */
 };
 
 static int	bq4802rtc_ebus_match(device_t, cfdata_t, void *);
@@ -64,6 +67,7 @@ static int	bq4802_gettime_ymdhms(struct todr_chip_handle *,
 		    struct clock_ymdhms *);
 static int	bq4802_settime_ymdhms(struct todr_chip_handle *,
 		    struct clock_ymdhms *);
+static int	sysctl_bq4802_osc(SYSCTLFN_ARGS);
 
 CFATTACH_DECL_NEW(bq4802rtc_ebus, sizeof(struct bq4802rtc_softc),
     bq4802rtc_ebus_match, bq4802rtc_ebus_attach, NULL, NULL);
@@ -96,8 +100,9 @@ bq4802rtc_ebus_attach(device_t parent, device_t self, void *aux)
 	struct bq4802rtc_softc *sc = device_private(self);
 	struct ebus_attach_args *ea = aux;
 	todr_chip_handle_t tch = &sc->sc_tch;
+	const struct sysctlnode *me = NULL, *node = NULL;
 	int sz;
-	uint8_t ctrl;
+	uint8_t ctrl, new;
 
 	sc->sc_dev = self;
 	sc->sc_bst = ea->ea_bustag;
@@ -120,11 +125,37 @@ bq4802rtc_ebus_attach(device_t parent, device_t self, void *aux)
 
 	/* Setup: alarms off, disable DST, enable updates, 24-hour mode */
 	ctrl = bq4802_read(sc, BQ4802_CTRL);
-	ctrl = ctrl & ~(BQ4802_CTRL_DSE | BQ4802_CTRL_UTI);
-	ctrl = ctrl | BQ4802_CTRL_24 | BQ4802_CTRL_STP;
-	bq4802_write(sc, BQ4802_CTRL, ctrl);
+	if (ctrl & BQ4802_CTRL_STP)
+		sc->sc_osc_stp = 0;
+	else {
+		aprint_error_dev(self,
+		    "WARNING: oscillator is stopped (0x%02x)\n", ctrl);
+		sc->sc_osc_stp = 1;
+	}
+	new = ctrl & ~(BQ4802_CTRL_DSE | BQ4802_CTRL_UTI);
+	new = new | BQ4802_CTRL_24;
+	if (new != ctrl)
+		bq4802_write(sc, BQ4802_CTRL, ctrl);
 
 	todr_attach(tch);
+
+	/* Setup sysctl for the oscillator control */
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_NODE, device_xname(self), NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL);
+	if (me == NULL)
+		aprint_error_dev(self, "unable to add sysctl root\n");
+	else {
+		sysctl_createv(NULL, 0, NULL, &node,
+		    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+		    CTLTYPE_INT, "stop_oscillator", "Stop the chip oscillator",
+		    sysctl_bq4802_osc, 1, (void *)sc, 0,
+		    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
+		if (node == NULL)
+			aprint_error_dev(self, "unable to add sysctl node\n");
+	}
 }
 
 static int
@@ -182,3 +213,53 @@ bq4802_settime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 
 	return 0;
 }
+
+static int
+sysctl_bq4802_osc(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct bq4802rtc_softc *sc = node.sysctl_data;
+	int stp;
+	uint8_t ctrl;
+
+	if (newp) {
+		/* write */
+		stp = sc->sc_osc_stp;
+		node.sysctl_data = &stp;
+		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+			if (stp != 0 && stp != 1)
+				return EINVAL;
+
+			if (stp != sc->sc_osc_stp) {
+				sc->sc_osc_stp = stp;
+				ctrl = bq4802_read(sc, BQ4802_CTRL);
+				if (stp)
+					ctrl &= ~BQ4802_CTRL_STP;
+				else
+					ctrl |= BQ4802_CTRL_STP;
+				bq4802_write(sc, BQ4802_CTRL, ctrl);
+			}
+
+			return 0;
+		}
+		return EINVAL;
+	} else {
+		node.sysctl_data = &sc->sc_osc_stp;
+		node.sysctl_size = 4;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+
+	return 0;
+}
+
+/*
+SYSCTL_SETUP(sysctl_bq4802_setup, "sysctl bq4802 subtree setup")
+{
+
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "hw", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_HW, CTL_EOL);
+}
+*/
