@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_usbphy.c,v 1.6 2026/02/02 09:51:40 yurix Exp $ */
+/* $NetBSD: imx23_usbphy.c,v 1.7 2026/07/07 04:54:34 skrll Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -118,7 +118,8 @@ imx23_usbphy_reset(struct imx23_usbphy_softc *sc)
 {
 	unsigned int loop;
 
-	/* Prepare for soft-reset by making sure that SFTRST is not currently
+	/*
+	 * Prepare for soft-reset by making sure that SFTRST is not currently
 	 * asserted. Also clear CLKGATE so we can wait for its assertion below.
 	 */
 	PHY_WR(sc, HW_USBPHY_CTRL_CLR, HW_USBPHY_CTRL_SFTRST);

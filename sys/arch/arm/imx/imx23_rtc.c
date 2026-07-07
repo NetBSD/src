@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_rtc.c,v 1.7 2026/02/02 09:51:40 yurix Exp $ */
+/* $NetBSD: imx23_rtc.c,v 1.8 2026/07/07 04:54:34 skrll Exp $ */
 
 /*
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -113,9 +113,10 @@ imx23_rtc_reset(struct imx23_rtc_softc *sc)
 {
 	unsigned int loop;
 
-	/* Prepare for soft-reset by making sure that SFTRST is not currently
-	* asserted. Also clear CLKGATE so we can wait for its assertion below.
-	*/
+	/*
+	 * Prepare for soft-reset by making sure that SFTRST is not currently
+	 * asserted. Also clear CLKGATE so we can wait for its assertion below.
+	 */
 	RTC_WR(sc, HW_RTC_CTRL_CLR, HW_RTC_CTRL_SFTRST);
 
 	/* Wait at least a microsecond for SFTRST to deassert. */

@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_timrot.c,v 1.13 2026/05/11 19:37:14 yurix Exp $ */
+/* $NetBSD: imx23_timrot.c,v 1.14 2026/07/07 04:54:34 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -235,9 +235,10 @@ imx23_timrot_reset(struct imx23_timrot_softc *sc)
 {
 	unsigned int loop;
 
-	/* Prepare for soft-reset by making sure that SFTRST is not currently
-	* asserted. Also clear CLKGATE so we can wait for its assertion below.
-	*/
+	/*
+	 * Prepare for soft-reset by making sure that SFTRST is not currently
+	 * asserted. Also clear CLKGATE so we can wait for its assertion below.
+	 */
 	TIMROT_WRITE(sc, HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_SFTRST);
 
 	/* Wait at least a microsecond for SFTRST to deassert. */

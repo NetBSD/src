@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_digfilt.c,v 1.11 2026/02/02 09:51:40 yurix Exp $ */
+/* $NetBSD: imx23_digfilt.c,v 1.12 2026/07/07 04:54:34 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -708,8 +708,10 @@ imx23_dac_dma_intr(void *arg)
 
 	mutex_enter(&sc->sc_intr_lock);
 
-	/* When halting, the driver finishes playing the current block, but
-	 * the audio subsystem no longer expects us to call back */
+	/*
+	 * When halting, the driver finishes playing the current block, but
+	 * the audio subsystem no longer expects us to call back
+	 */
 	if (sc->sc_intr != NULL) {
 		sc->sc_intr(sc->sc_intarg);
 	}
@@ -788,9 +790,10 @@ imx23_digfilt_ao_reset(struct imx23_digfilt_softc *sc)
 {
 	unsigned int loop;
 
-	/* Prepare for soft-reset by making sure that SFTRST is not currently
-	* asserted. Also clear CLKGATE so we can wait for its assertion below.
-	*/
+	/*
+	 * Prepare for soft-reset by making sure that SFTRST is not currently
+	 * asserted. Also clear CLKGATE so we can wait for its assertion below.
+	 */
 	AO_WR(sc, HW_AUDIOOUT_CTRL_CLR, HW_AUDIOOUT_CTRL_SFTRST);
 
 	/* Wait at least a microsecond for SFTRST to deassert. */
