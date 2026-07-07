@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.68 2026/06/30 17:16:32 kre Exp $ */
+/*	$NetBSD: tcx.c,v 1.69 2026/07/07 09:11:31 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.68 2026/06/30 17:16:32 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.69 2026/07/07 09:11:31 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -956,7 +956,7 @@ tcx_init_screen(void *cookie, struct vcons_screen *scr,
 	/* enable acceleration */
 	ri->ri_ops.copyrows  = tcx_copyrows;
 	ri->ri_ops.eraserows = tcx_eraserows;
-	if (0) ri->ri_ops.erasecols = tcx_erasecols;
+	ri->ri_ops.erasecols = tcx_erasecols;
 	ri->ri_ops.putchar   = tcx_putchar;
 	ri->ri_ops.allocattr   = tcx_allocattr;
 #if 0
@@ -1070,30 +1070,50 @@ tcx_eraserows(void *cookie, int start, int nrows, long attr)
 static void
 tcx_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 {
-#if 0
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct tcx_softc *sc = scr->scr_cookie;
-	volatile uint64_t temp;
-	int i, last, first, len, leftover;
+	volatile uint64_t temp, cmd, rcmd, lcmd;
+	uint32_t pmask;
+	int i, fullsteps, line, dst;
+	int x1 = startcol * ri->ri_font->fontwidth + ri->ri_xorigin;
+	int x2 = (startcol + ncols) * ri->ri_font->fontwidth + ri->ri_xorigin;
 
-	i = ri->ri_width * ri->ri_font->fontheight;
-	len = i & 0xffffe0;
-	leftover = i & 0x1f;
-	first = ri->ri_width * 
-	    (ri->ri_font->fontheight * start + ri->ri_yorigin);
-	last = first + len;
-	temp = 0x30000000ffffffffLL | 
-	    ((uint64_t)((ri->ri_devcmap[(attr >> 16) & 0xff]) & 0xff) << 32);
+	temp = 0x3000000000000000LL | 
+	    ((uint64_t)((ri->ri_devcmap[(attr >> 16) & 0xff]) & 0xff) << 32),
+	dst = ri->ri_width * (ri->ri_font->fontheight * row + ri->ri_yorigin) +
+	      x1;
+	dst &= 0xffffffe0;
 
-	for (i = first; i < last; i+= 32)
-		sc->sc_rstip[i] = temp;
-
-	if (leftover > 0) {
-		temp &= 0xffffffffffffffffLL << (32 - leftover);
-		sc->sc_rstip[i] = temp;
+	/* see if the whole thing falls into one 32bit chunk */
+	if ((x1 & 0xffe0) == (x2 & 0xffe0)) {
+		/* first zero out pixels on the right */
+		pmask = 0xffffffff << (31 - (x2 & 0x1f));
+		/* then mask out pixels on the left */
+		pmask &= (0xffffffff >> (x1 & 0x1f));
+		cmd = temp | pmask;
+		for (i = 0; i < ri->ri_font->fontheight; i++) {
+			sc->sc_rstip[dst] = cmd;
+			dst += ri->ri_width;
+		}
+	} else {
+		/* at least two writes per line */
+		pmask = 0xffffffff << (31 - (x2 & 0x1f));
+		rcmd = temp | (uint64_t)pmask;
+		pmask = 0xffffffff >> (x1 & 0x1f);
+		lcmd = temp | (uint64_t)pmask;
+		cmd = temp | 0xffffffffLL;
+		dst &= 0xffffffe0;
+		fullsteps = ((x2 >> 5) - (x1 >> 5));
+		fullsteps = fullsteps << 5;
+		for (line = 0; line < ri->ri_font->fontheight; line++) {
+	    		sc->sc_rstip[dst] = lcmd;
+			for (i = 32; i < fullsteps; i+= 32)
+				sc->sc_rstip[dst + i] = cmd;
+			sc->sc_rstip[dst + i] = rcmd;
+			dst += ri->ri_width;
+		}
 	}
-#endif
 }
 
 /*
@@ -1351,7 +1371,7 @@ tcx_do_cursor(struct tcx_softc *sc, struct wsdisplay_cursor *cur)
 	 * this the screen goes all funky
 	 */
 		int i;
-	
+
 		for (i = 0; i < cur->cmap.count; i++) {
 			bus_space_write_4(sc->sc_bustag, sc->sc_bt, DAC_ADDRESS,
 			    (cur->cmap.index + i + 2) << 24);
@@ -1370,7 +1390,6 @@ tcx_do_cursor(struct tcx_softc *sc, struct wsdisplay_cursor *cur)
 
 		for (i = 0; i < 128; i += 4) {
 			memcpy(&temp, &cur->mask[i], 4);
-			printf("%08x -> ", temp);
 			poof = ((temp & 0x80808080) >> 7) |
 			       ((temp & 0x40404040) >> 5) |
 			       ((temp & 0x20202020) >> 3) |
@@ -1379,7 +1398,6 @@ tcx_do_cursor(struct tcx_softc *sc, struct wsdisplay_cursor *cur)
 			       ((temp & 0x04040404) << 3) |
 			       ((temp & 0x02020202) << 5) |
 			       ((temp & 0x01010101) << 7);
-			printf("%08x\n", poof);
 			bus_space_write_4(sc->sc_bustag, sc->sc_thc,
 			    THC_CURSOR_1 + i, poof);
 			memcpy(&temp, &cur->image[i], 4);
@@ -1403,8 +1421,8 @@ tcx_set_cursor(struct tcx_softc *sc)
 {
 	uint32_t reg;
 
-	reg = (sc->sc_cursor_x - sc->sc_hotspot_x) << 16 | 
-	     ((sc->sc_cursor_y - sc->sc_hotspot_y) & 0xffff);
+	reg = (((sc->sc_cursor_x - sc->sc_hotspot_x) & 0xfff) << 16) | 
+	     ((sc->sc_cursor_y - sc->sc_hotspot_y) & 0x0fff);
 	bus_space_write_4(sc->sc_bustag, sc->sc_thc, THC_CURSOR_POS, reg);
 }
 
