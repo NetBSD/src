@@ -1,4 +1,4 @@
-/* $NetBSD: adt7462.c,v 1.1 2026/06/03 11:11:18 jdc Exp $ */
+/* $NetBSD: adt7462.c,v 1.2 2026/07/07 12:28:44 jdc Exp $ */
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7462.c,v 1.1 2026/06/03 11:11:18 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7462.c,v 1.2 2026/07/07 12:28:44 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ struct adt7462_softc {
 	int sc_address;
 	bool sc_monitor;
 
-	int sc_nfans, sc_ntemps, sc_nvolts;
+	int sc_nfans, sc_ntemps, sc_nvolts, sc_nfaults;
 	int sc_env_map[ADT7462_MAX_SENSORS];  /* Envsys numbers to sensors */
 	int sc_vscale[ADT7462_MAX_VOLTS];  /* Scale for voltages */
 	struct sysmon_envsys *sc_sme;
@@ -271,7 +271,8 @@ adt7462_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	/* Property override for the number of fans */
-	if (prop_dictionary_get_uint8(props, "fan_conf", &sc->sc_fan_conf) == 0)
+	if (prop_dictionary_get_uint8(props, "fan_conf",
+	    &sc->sc_fan_conf) == 0)
 		sc->sc_fan_conf = 0xff;	/* 4 + 4 fans */
 
 	(void) adt7462_ident(sc->sc_tag, sc->sc_address, 0, &rev);
@@ -311,14 +312,16 @@ adt7462_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nfans = 0;
 	sc->sc_ntemps = 0;
 	sc->sc_nvolts = 0;
+	sc->sc_nfaults = 0;
 	if (adt7462_setup_fans(sc, pin_cfg))
 		goto bad;
 	if (adt7462_setup_temps(sc, pin_cfg))
 		goto bad;
 	if (adt7462_setup_volts(sc, pin_cfg))
 		goto bad;
-	if (adt7462_setup_faults(sc))
-		goto bad;
+	if (sc->sc_nfans)
+		if (adt7462_setup_faults(sc))
+			goto bad;
 	aprint_normal_dev(self, "%d fans, %d temperatures, %d voltages\n",
 	    sc->sc_nfans, sc->sc_ntemps, sc->sc_nvolts);
 
@@ -453,21 +456,11 @@ static int
 adt7462_setup_fans(struct adt7462_softc *sc, uint8_t *pin_cfg)
 {
 	int i, map, snum;
-	uint8_t reg, val, fans;
-
-	/* Check tach enable register to see which tachs are enabled. */
-	reg = ADT7462_TACH_EN;
-	if (adt7462_read_reg(sc->sc_tag, sc->sc_address, reg, &val) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to read tach enable\n");
-		return 1;
-	}
-	fans = val & sc->sc_fan_conf;
-
-	/* Don't check the fan present register - it might not be set up. */
+	uint8_t reg, val;
 
 	for (i = 0; i < ADT7462_MAX_FANS; i++) {
-		/* Check tach mask and pin1/pin2 configurations. */
-		if (!ADT7462_FAN_TACH_EN(fans, i) ||
+		/* Check fan conf and pin1/pin2 configurations. */
+		if (!(sc->sc_fan_conf & (1 << i)) ||
 		    !ADT7462_PCR1_TACH(pin_cfg[0], i) ||
 		    !ADT7462_PCR2_TACH(pin_cfg[1], i))
 			continue;
@@ -775,6 +768,7 @@ adt7462_setup_faults(struct adt7462_softc *sc)
 	}
 	map = sc->sc_sensor[snum].sensor;
 	sc->sc_env_map[map] = 0;
+	sc->sc_nfaults = 1;
 	return 0;
 }
 
