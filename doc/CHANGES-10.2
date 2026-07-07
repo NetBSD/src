@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.110 2026/07/07 07:49:22 sborrill Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.111 2026/07/07 09:40:02 sborrill Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5491,4 +5491,15 @@ usr.sbin/syslogd/tls.c				1.22-1.25
 	Fix memory-leak during tls_send().
 	Found and fixed by Masakazu OOHASHI at IIJ.
 	[msaitoh, ticket #1307]
+
+lib/libc/citrus/modules/citrus_viqr.c		1.10
+lib/libc/citrus/modules/citrus_iconv_std.c	1.18
+
+	iconv(3): Fix use-after-free in VIQR encoding, and incorrect
+	mbstate_t allocation alignment in various encodings (triggerable
+	if the source is VIQR).
+	Fixes:
+	- PR lib/59019: various iconv issues
+	- PR lib/60413: iconv_samples test crashes on sparc*
+	[riastradh, ticket #1308]
 
