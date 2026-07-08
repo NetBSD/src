@@ -1,4 +1,4 @@
-/*	$NetBSD: uri.c,v 1.2 2026/07/08 16:10:36 mlelstv Exp $	*/
+/*	$NetBSD: uri.c,v 1.3 2026/07/08 19:27:04 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -208,9 +208,11 @@ remove_dot_segments(const char *path, size_t len)
 		} else {
 			seg = strchr(p, '/');
 		}
-		if (seg != NULL)
+		if (seg != NULL) {
 			n = seg - p;
-		else
+			if (n > len)
+				n = len;
+		} else
 			n = len;
 
 		memcpy(out, p, n);
