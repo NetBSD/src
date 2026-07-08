@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2229 2026/07/08 02:13:05 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.2230 2026/07/08 13:45:21 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -775,20 +775,17 @@ The lvm2tools and the libdevmapper are now distributed as one source
 repository. See the lvm2tools Notes for more information.
 
 Package:	libevent
-Version:	2.1.12-stable
+Version:	2.1.13-stable
 Current Vers:	2.1.13-stable
 Maintainer:	Niels Provos <provos@citi.umich.edu>
 Archive Site:	http://www.monkey.org/~provos/libevent/
 Home Page:	http://www.monkey.org/~provos/libevent/
-Date:		2026-07-01
+Date:		2026-07-08
 Responsible:
 License:	BSD (3/4-clause)
 Location:	external/bsd/libevent/dist
 Notes:
 - Run the libevent2netbsd script
-- Build the doxygen man pages. Edit the Doxyfile to GENERATE_MAN=yes.
-  man pages are in doxygen/man/man3. Remove the extra man pages that are
-  .so'ing only. Copy the rest to man.
 
 Package:	llvm
 Version:	10.0.0git (01f3a59fb3e2542fce74c768718f594d0debd0da)
