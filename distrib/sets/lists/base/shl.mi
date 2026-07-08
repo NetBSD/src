@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1045 2026/06/26 08:50:10 jdc Exp $
+# $NetBSD: shl.mi,v 1.1046 2026/07/08 13:43:44 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -46,7 +46,7 @@
 ./lib/libedit.so.3.1				base-sys-shlib		dynamicroot
 ./lib/libevent.so				base-sys-shlib		dynamicroot
 ./lib/libevent.so.5				base-sys-shlib		dynamicroot
-./lib/libevent.so.5.0				base-sys-shlib		dynamicroot
+./lib/libevent.so.5.1				base-sys-shlib		dynamicroot
 ./lib/libgcc_s.so				base-sys-shlib		dynamicroot,gcc
 ./lib/libgcc_s.so.1				base-sys-shlib		dynamicroot,gcc
 ./lib/libgcc_s.so.1.0				base-sys-shlib		dynamicroot,gcc
@@ -331,13 +331,13 @@
 ./usr/lib/libelf.so.2.1				base-sys-shlib		compatfile
 ./usr/lib/libevent.so				base-sys-shlib		compatfile
 ./usr/lib/libevent.so.5				base-sys-shlib		compatfile
-./usr/lib/libevent.so.5.0			base-sys-shlib		compatfile
+./usr/lib/libevent.so.5.1			base-sys-shlib		compatfile
 ./usr/lib/libevent_openssl.so			base-sys-shlib		compatfile
 ./usr/lib/libevent_openssl.so.5			base-sys-shlib		compatfile
-./usr/lib/libevent_openssl.so.5.0		base-sys-shlib		compatfile
+./usr/lib/libevent_openssl.so.5.1		base-sys-shlib		compatfile
 ./usr/lib/libevent_pthreads.so			base-sys-shlib		compatfile
 ./usr/lib/libevent_pthreads.so.5		base-sys-shlib		compatfile
-./usr/lib/libevent_pthreads.so.5.0		base-sys-shlib		compatfile
+./usr/lib/libevent_pthreads.so.5.1		base-sys-shlib		compatfile
 ./usr/lib/libexecinfo.so			base-sys-shlib		compatfile
 ./usr/lib/libexecinfo.so.0			base-sys-shlib		compatfile
 ./usr/lib/libexecinfo.so.0.0			base-sys-shlib		compatfile

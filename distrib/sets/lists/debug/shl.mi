@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.408 2026/06/26 22:47:42 riastradh Exp $
+# $NetBSD: shl.mi,v 1.409 2026/07/08 13:43:45 christos Exp $
 #
 # Note: Like base/shl.mi, entries here for shared libraries should
 #       generally NOT be marked `obsolete' and instead should be
@@ -21,7 +21,7 @@
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug		comp-sys-debug	debug,dynamicroot,lvm
 ./usr/libdata/debug/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libedit.so.3.1.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libevent.so.5.0.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libevent.so.5.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libgcc_s.so.1.0.debug			comp-sys-debug	debug,dynamicroot,gcc
 ./usr/libdata/debug/lib/libipsec.so.3.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libisns.so.0.0.debug			comp-isns-debug	debug,dynamicroot
@@ -118,9 +118,9 @@
 ./usr/libdata/debug/usr/lib/libdwarf.so.2.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libedit.so.3.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libelf.so.2.1.debug			comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libevent.so.5.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libevent_openssl.so.5.0.debug	comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libevent_pthreads.so.5.0.debug	comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libevent.so.5.1.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libevent_openssl.so.5.1.debug	comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libevent_pthreads.so.5.1.debug	comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libexecinfo.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libexpat.so.2.7.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libfetch.so.4.0.debug		comp-sys-debug	debug,compatfile
