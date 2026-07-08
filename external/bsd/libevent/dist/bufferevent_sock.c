@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_sock.c,v 1.1.1.5 2026/07/08 13:23:34 christos Exp $	*/
+/*	$NetBSD: bufferevent_sock.c,v 1.2 2026/07/08 13:27:36 christos Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  * Copyright (c) 2002-2006 Niels Provos <provos@citi.umich.edu>
@@ -29,7 +29,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bufferevent_sock.c,v 1.1.1.5 2026/07/08 13:23:34 christos Exp $");
+__RCSID("$NetBSD: bufferevent_sock.c,v 1.2 2026/07/08 13:27:36 christos Exp $");
 #include "evconfig-private.h"
 
 #include <sys/types.h>

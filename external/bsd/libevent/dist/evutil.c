@@ -1,4 +1,4 @@
-/*	$NetBSD: evutil.c,v 1.7 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: evutil.c,v 1.8 2026/07/08 13:27:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -28,22 +28,23 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evutil.c,v 1.7 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: evutil.c,v 1.8 2026/07/08 13:27:37 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
 #include <winsock2.h>
 #include <winerror.h>
 #include <ws2tcpip.h>
+#ifndef _WIN32_WINNT
+/* For structs needed by GetAdaptersAddresses and AI_NUMERICSERV */
+#define _WIN32_WINNT 0x0600
+#endif
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
 #include <io.h>
 #include <tchar.h>
 #include <process.h>
-#undef _WIN32_WINNT
-/* For structs needed by GetAdaptersAddresses */
-#define _WIN32_WINNT 0x0501
 #include <iphlpapi.h>
 #include <netioapi.h>
 #endif
@@ -1997,7 +1998,8 @@ evutil_inet_pton_scope(int af, const char *src, void *dst, unsigned *indexp)
 {
 	int r;
 	unsigned if_index;
-	char *check, *cp, *tmp_src;
+	char *check, *tmp_src;
+	const char *scope;
 
 	*indexp = 0; /* Reasonable default */
 
@@ -2005,25 +2007,25 @@ evutil_inet_pton_scope(int af, const char *src, void *dst, unsigned *indexp)
 	if (af != AF_INET6)
 		return evutil_inet_pton(af, src, dst);
 
-	cp = strchr(src, '%');
+	scope = strchr(src, '%');
 
 	/* Bail out if no zone ID */
-	if (cp == NULL)
+	if (scope == NULL)
 		return evutil_inet_pton(af, src, dst);
 
-	if_index = if_nametoindex(cp + 1);
+	if_index = if_nametoindex(scope + 1);
 	if (if_index == 0) {
-		/* Could be numeric */
-		if_index = strtoul(cp + 1, &check, 10);
+		if_index = strtoul(scope + 1, &check, 10);
 		if (check[0] != '\0')
 			return 0;
 	}
 	*indexp = if_index;
-	tmp_src = mm_strdup(src);
-	cp = strchr(tmp_src, '%');
-	*cp = '\0';
+	if (!(tmp_src = mm_strdup(src))) {
+		return -1;
+	}
+	tmp_src[scope - src] = '\0';
 	r = evutil_inet_pton(af, tmp_src, dst);
-	free(tmp_src);
+	mm_free(tmp_src);
 	return r;
 }
 
@@ -2535,7 +2537,7 @@ evutil_memclear_(void *mem, size_t len)
 int
 evutil_sockaddr_is_loopback_(const struct sockaddr *addr)
 {
-	static const char LOOPBACK_S6[16] =
+	EVUTIL_NONSTRING static const char LOOPBACK_S6[16] =
 	    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1";
 	if (addr->sa_family == AF_INET) {
 		const struct sockaddr_in *sin = (const struct sockaddr_in *)addr;

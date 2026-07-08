@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.6 2026/07/08 13:27:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
@@ -29,7 +29,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer.c,v 1.5 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.6 2026/07/08 13:27:36 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
@@ -1042,8 +1042,13 @@ evbuffer_add_buffer_reference(struct evbuffer *outbuf, struct evbuffer *inbuf)
 
 	if (out_total_len == 0) {
 		/* There might be an empty chain at the start of outbuf; free
-		 * it. */
+		 * it.  Reset the chain pointers afterwards so the subsequent
+		 * APPEND_CHAIN_MULTICAST does not dereference the freed chain
+		 * through outbuf->first / last_with_datap. */
 		evbuffer_free_all_chains(outbuf->first);
+		outbuf->first = NULL;
+		outbuf->last = NULL;
+		outbuf->last_with_datap = &outbuf->first;
 	}
 	APPEND_CHAIN_MULTICAST(outbuf, inbuf);
 

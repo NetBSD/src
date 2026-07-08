@@ -1,4 +1,4 @@
-.TH "event2/rpc_compat.h" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
+.TH "event2/rpc_compat.h" 3 "libevent-2.1.13-stable" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,15 +11,26 @@ event2/rpc_compat.h \- Deprecated versions of the functions in \fBrpc\&.h\fP: pr
 
 .in +1c
 .ti -1c
-.RI "#define \fBEVTAG_LEN\fP(msg,  member)   ((msg)\->member##_length)"
+.RI "#define \fBEVTAG_LEN\fP(msg,  member)"
 .br
-.RI "\fIbackwards compatible accessors that work only with gcc \fP"
+.RI "backwards compatible accessors that work only with gcc "
 .in -1c
 .SH "Detailed Description"
 .PP 
 Deprecated versions of the functions in \fBrpc\&.h\fP: provided only for backwards compatibility\&. 
 
 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define EVTAG_LEN( msg,  member)"
+\fBValue:\fP
+.nf
+((msg)\->member##_length)
+.PP
+.fi
+
+.PP
+backwards compatible accessors that work only with gcc 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for libevent from the source code\&.
+Generated automatically by Doxygen for libevent-2\&.1\&.13-stable from the source code\&.

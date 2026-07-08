@@ -1,4 +1,4 @@
-.TH "evthread_lock_callbacks" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
+.TH "evthread_lock_callbacks" 3 "libevent-2.1.13-stable" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -8,34 +8,34 @@ evthread_lock_callbacks \- This structure describes the interface a threading li
 .br
 .PP
 .PP
-\fC#include <thread\&.h>\fP
+\fR#include <thread\&.h>\fP
 .SS "Data Fields"
 
 .in +1c
 .ti -1c
 .RI "void *(* \fBalloc\fP )(unsigned locktype)"
 .br
-.RI "\fIFunction to allocate and initialize new lock of type 'locktype'\&. \fP"
+.RI "Function to allocate and initialize new lock of type 'locktype'\&. "
 .ti -1c
 .RI "void(* \fBfree\fP )(void *\fBlock\fP, unsigned locktype)"
 .br
-.RI "\fIFuntion to release all storage held in 'lock', which was created with type 'locktype'\&. \fP"
+.RI "Funtion to release all storage held in 'lock', which was created with type 'locktype'\&. "
 .ti -1c
 .RI "int(* \fBlock\fP )(unsigned mode, void *lock)"
 .br
-.RI "\fIAcquire an already-allocated lock at 'lock' with mode 'mode'\&. \fP"
+.RI "Acquire an already-allocated lock at 'lock' with mode 'mode'\&. "
 .ti -1c
 .RI "int \fBlock_api_version\fP"
 .br
-.RI "\fIThe current version of the locking API\&. \fP"
+.RI "The current version of the locking API\&. "
 .ti -1c
 .RI "unsigned \fBsupported_locktypes\fP"
 .br
-.RI "\fIWhich kinds of locks does this version of the locking API support? A bitfield of EVTHREAD_LOCKTYPE_RECURSIVE and EVTHREAD_LOCKTYPE_READWRITE\&. \fP"
+.RI "Which kinds of locks does this version of the locking API support? "
 .ti -1c
 .RI "int(* \fBunlock\fP )(unsigned mode, void *\fBlock\fP)"
 .br
-.RI "\fIRelease a lock at 'lock' using mode 'mode'\&. \fP"
+.RI "Release a lock at 'lock' using mode 'mode'\&. "
 .in -1c
 .SH "Detailed Description"
 .PP 
@@ -44,14 +44,10 @@ This structure describes the interface a threading library uses for locking\&.
 It's used to tell \fBevthread_set_lock_callbacks()\fP how to use locking on this platform\&. 
 .SH "Field Documentation"
 .PP 
-.SS "void*(* evthread_lock_callbacks::alloc) (unsigned locktype)"
+.SS "void *(* evthread_lock_callbacks::alloc) (unsigned locktype)"
 
 .PP
 Function to allocate and initialize new lock of type 'locktype'\&. Returns NULL on failure\&. 
-.SS "void(* evthread_lock_callbacks::free) (void *\fBlock\fP, unsigned locktype)"
-
-.PP
-Funtion to release all storage held in 'lock', which was created with type 'locktype'\&. 
 .SS "int(* evthread_lock_callbacks::lock) (unsigned mode, void *lock)"
 
 .PP
@@ -63,7 +59,10 @@ The current version of the locking API\&. Set this to EVTHREAD_LOCK_API_VERSION
 .SS "unsigned evthread_lock_callbacks::supported_locktypes"
 
 .PP
-Which kinds of locks does this version of the locking API support? A bitfield of EVTHREAD_LOCKTYPE_RECURSIVE and EVTHREAD_LOCKTYPE_READWRITE\&. (Note that RECURSIVE locks are currently mandatory, and READWRITE locks are not currently used\&.) 
+Which kinds of locks does this version of the locking API support? A bitfield of EVTHREAD_LOCKTYPE_RECURSIVE and EVTHREAD_LOCKTYPE_READWRITE\&.
+
+.PP
+(Note that RECURSIVE locks are currently mandatory, and READWRITE locks are not currently used\&.) 
 .SS "int(* evthread_lock_callbacks::unlock) (unsigned mode, void *\fBlock\fP)"
 
 .PP
@@ -71,4 +70,4 @@ Release a lock at 'lock' using mode 'mode'\&. Returns 0 on success, and nonzero 
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for libevent from the source code\&.
+Generated automatically by Doxygen for libevent-2\&.1\&.13-stable from the source code\&.

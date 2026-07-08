@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.6 2023/08/03 08:03:19 mrg Exp $	*/
+/*	$NetBSD: event.c,v 1.7 2026/07/08 13:27:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -28,7 +28,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: event.c,v 1.6 2023/08/03 08:03:19 mrg Exp $");
+__RCSID("$NetBSD: event.c,v 1.7 2026/07/08 13:27:37 christos Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
@@ -1357,6 +1357,15 @@ event_haveevents(struct event_base *base)
 static inline void
 event_signal_closure(struct event_base *base, struct event *ev)
 {
+#if defined(__clang__)
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+/* NOTE: it is better to avoid such code all together, by using separate
+ * variable to break the loop in the event structure, but now this code is safe
+ * */
+#pragma GCC diagnostic ignored "-Wdangling-pointer"
+#endif
+
 	short ncalls;
 	int should_break;
 
@@ -1382,7 +1391,11 @@ event_signal_closure(struct event_base *base, struct event *ev)
 			return;
 		}
 	}
-	ev->ev_pncalls = NULL;
+
+#if defined(__clang__)
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 }
 
 /* Common timeouts are special timeouts that are handled as queues rather than

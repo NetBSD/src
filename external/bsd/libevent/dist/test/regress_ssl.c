@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_ssl.c,v 1.6 2021/05/30 00:19:08 joerg Exp $	*/
+/*	$NetBSD: regress_ssl.c,v 1.7 2026/07/08 13:27:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -155,7 +155,7 @@ ssl_getcert(EVP_PKEY *key)
 	now += 3600;
 	X509_time_adj(X509_getm_notAfter(x509), 0, &now);
 	X509_set_pubkey(x509, key);
-	tt_assert(0 != X509_sign(x509, key, EVP_sha1()));
+	tt_assert(0 != X509_sign(x509, key, EVP_sha256()));
 
 	return x509;
 end:
