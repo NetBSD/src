@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.342 2025/09/23 20:12:05 rillig Exp $
+#	$NetBSD: Makefile,v 1.343 2026/07/08 04:10:14 kre Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -134,7 +134,7 @@ _SRC_TOP_OBJ_=
 # _SUBDIR is used to set SUBDIR, after removing directories that have
 # BUILD_${dir}=no, or that have no ${dir}/Makefile.
 #
-_SUBDIR=	tools .WAIT lib
+_SUBDIR=	tools .WAIT lib .WAIT
 .if ${MKLLVM} != "no"
 _SUBDIR+=	external/bsd/compiler_rt
 .endif
