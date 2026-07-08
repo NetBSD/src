@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: libevent2netbsd,v 1.4 2026/07/08 13:27:36 christos Exp $
+# $NetBSD: libevent2netbsd,v 1.5 2026/07/08 14:30:10 christos Exp $
 
 # Extract the new tarball and rename the libevent-X.Y.Z directory
 # to dist.  Run this script and check for additional files and
@@ -37,44 +37,44 @@ if [ -f $d/configure ]; then
 	make include/event2/event-config.h
 	make doxygen
 	sed -e '
-/_EVENT_SIZEOF_SIZE_T/ {
+/EVENT__SIZEOF_SIZE_T/ {
 	a\
 #ifdef _LP64\
-#define _EVENT_SIZEOF_SIZE_T 8\
+#define EVENT__SIZEOF_SIZE_T 8\
 #else\
-#define _EVENT_SIZEOF_SIZE_T 4\
+#define EVENT__SIZEOF_SIZE_T 4\
 #endif
 	d
 }
-/_EVENT_SIZEOF_LONG_LONG/ {
+/EVENT__SIZEOF_LONG_LONG/ {
 	a\
-#define _EVENT_SIZEOF_LONG_LONG 8
+#define EVENT__SIZEOF_LONG_LONG 8
 	d
 }
-/_EVENT_SIZEOF_LONG/ {
+/EVENT__SIZEOF_LONG/ {
 	a\
 #ifdef _LP64\
-#define _EVENT_SIZEOF_LONG 8\
+#define EVENT__SIZEOF_LONG 8\
 #else\
-#define _EVENT_SIZEOF_LONG 4\
+#define EVENT__SIZEOF_LONG 4\
 #endif
 	d
 }
-/_EVENT_SIZEOF_PTHREAD_T/ {
+/EVENT__SIZEOF_PTHREAD_T/ {
 	a\
 #ifdef _LP64\
-#define _EVENT_SIZEOF_PTHREAD_T 8\
+#define EVENT__SIZEOF_PTHREAD_T 8\
 #else\
-#define _EVENT_SIZEOF_PTHREAD_T 4\
+#define EVENT__SIZEOF_PTHREAD_T 4\
 #endif
 	d
 }
-/_EVENT_SIZEOF_VOID_P/ {
+/EVENT__SIZEOF_VOID_P/ {
 	a\
 #ifdef _LP64\
-#define _EVENT_SIZEOF_VOID_P 8\
+#define EVENT__SIZEOF_VOID_P 8\
 #else\
-#define _EVENT_SIZEOF_VOID_P 4\
+#define EVENT__SIZEOF_VOID_P 4\
 #endif
 	d
 }' < include/event2/event-config.h > ../include/event2/event-config.h
