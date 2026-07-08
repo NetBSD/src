@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.4 2026/01/06 10:54:41 nia Exp $ */
+/* $NetBSD: utils.c,v 1.5 2026/07/08 02:13:38 kre Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.4 2026/01/06 10:54:41 nia Exp $");
+__RCSID("$NetBSD: utils.c,v 1.5 2026/07/08 02:13:38 kre Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -154,6 +154,9 @@ ucs2_to_utf8(const uint16_t *ibuf, size_t isz, char *obuf, size_t *osz)
 		else {
 			if (j + 3 >= j_max)
 				break;
+			/* if the char is a surrogate, replace it */
+			if (0xD800 <= c && c <= 0xDFFF)
+				c = UCS2_REPLACEMENT_CHARACTER;
 			dst[j++] = 0xe0 | (uint8_t)(c >> 12);
 			dst[j++] = 0x80 | (uint8_t)((c >> 6) & 0x3f);
 			dst[j++] = 0x80 | (uint8_t)(c & 0x3f);
@@ -228,7 +231,8 @@ utf8_to_ucs2(const char *ibuf, size_t isz, uint16_t *obuf, size_t *osz)
 				break;
 			}
 			if ((src[i + 1] & 0xc0) != 0x80 ||
-			    (src[i + 2] & 0xc0) != 0x80) {
+			    (src[i + 2] & 0xc0) != 0x80 ||
+			    (out == 0xed && src[i + 1] > 0x9f)) {
 				out = UCS2_REPLACEMENT_CHARACTER;
 			}
 			else {
