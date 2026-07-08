@@ -1,4 +1,4 @@
-#	$NetBSD: std.mac68k,v 1.33 2026/05/13 14:19:08 thorpej Exp $
+#	$NetBSD: std.mac68k,v 1.34 2026/07/08 05:10:23 thorpej Exp $
 #
 # "options" common to all mac68k kernel configs
 
@@ -16,6 +16,6 @@ options 	__HAVE_NEW_PMAP_68K
 # XXX config(1) needs something like this:
 #
 # ifoption M68020: M68K_MMU_68851
-options 	M68K_MMU_MOTOROLA
+options 	M68K_MMU_68851
 
 options 	HZ=60			# mac clock runs at 60hz
