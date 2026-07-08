@@ -1,4 +1,4 @@
-/*	$NetBSD: evthread.c,v 1.1.1.3 2021/04/07 02:43:14 christos Exp $	*/
+/*	$NetBSD: evthread.c,v 1.1.1.4 2026/07/08 13:23:34 christos Exp $	*/
 /*
  * Copyright (c) 2008-2012 Niels Provos, Nick Mathewson
  *
@@ -27,7 +27,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evthread.c,v 1.1.1.3 2021/04/07 02:43:14 christos Exp $");
+__RCSID("$NetBSD: evthread.c,v 1.1.1.4 2026/07/08 13:23:34 christos Exp $");
 #include "evconfig-private.h"
 
 #ifndef EVENT__DISABLE_THREAD_SUPPORT
@@ -77,12 +77,12 @@ evthread_set_id_callback(unsigned long (*id_fn)(void))
 	evthread_id_fn_ = id_fn;
 }
 
-struct evthread_lock_callbacks *evthread_get_lock_callbacks()
+struct evthread_lock_callbacks *evthread_get_lock_callbacks(void)
 {
 	return evthread_lock_debugging_enabled_
 	    ? &original_lock_fns_ : &evthread_lock_fns_;
 }
-struct evthread_condition_callbacks *evthread_get_condition_callbacks()
+struct evthread_condition_callbacks *evthread_get_condition_callbacks(void)
 {
 	return evthread_lock_debugging_enabled_
 	    ? &original_cond_fns_ : &evthread_cond_fns_;

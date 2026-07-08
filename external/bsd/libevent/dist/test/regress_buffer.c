@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_buffer.c,v 1.1.1.4 2021/04/07 02:43:15 christos Exp $	*/
+/*	$NetBSD: regress_buffer.c,v 1.1.1.5 2026/07/08 13:23:37 christos Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -34,7 +34,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_buffer.c,v 1.1.1.4 2021/04/07 02:43:15 christos Exp $");
+__RCSID("$NetBSD: regress_buffer.c,v 1.1.1.5 2026/07/08 13:23:37 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -167,6 +167,8 @@ evbuffer_get_waste(struct evbuffer *buf, size_t *allocatedp, size_t *wastedp, si
 	*allocatedp = a;
 	*wastedp = w;
 	*usedp = u;
+
+	(void) n;
 }
 
 #define evbuffer_validate(buf)			\
@@ -444,7 +446,7 @@ test_evbuffer_pullup_with_empty(void *ptr)
 	buf = evbuffer_new();
 	evbuffer_validate(buf);
 	tt_int_op(evbuffer_get_length(buf), ==, 0);
-	tt_int_op(evbuffer_pullup(buf, -1), ==, NULL);
+	tt_ptr_op(evbuffer_pullup(buf, -1), ==, NULL);
 
 	evbuffer_free(buf);
 	buf = evbuffer_new();
@@ -2231,6 +2233,40 @@ end:
 }
 
 static void
+test_evbuffer_multicast_empty_chain(void *ptr)
+{
+	const char chunk[] = "If you have found the answer to such a problem";
+	size_t len = strlen(chunk);
+
+	struct evbuffer *buf1 = NULL, *buf2 = NULL;
+
+	buf1 = evbuffer_new();
+	tt_assert(buf1);
+	buf2 = evbuffer_new();
+	tt_assert(buf2);
+
+	evbuffer_add_reference(buf2, "", 0, NULL, NULL);
+	evbuffer_validate(buf2);
+	tt_int_op(evbuffer_get_length(buf2), ==, 0);
+
+	evbuffer_add(buf1, chunk, len);
+	evbuffer_validate(buf1);
+
+	tt_int_op(evbuffer_add_buffer_reference(buf2, buf1), ==, 0);
+	evbuffer_validate(buf2);
+	tt_int_op(evbuffer_get_length(buf2), ==, len);
+
+	tt_assert(!strncmp((char *)evbuffer_pullup(buf2, -1), chunk, len));
+	evbuffer_validate(buf2);
+
+end:
+	if (buf1)
+		evbuffer_free(buf1);
+	if (buf2)
+		evbuffer_free(buf2);
+}
+
+static void
 check_prepend(struct evbuffer *buffer,
     const struct evbuffer_cb_info *cbinfo,
     void *arg)
@@ -2833,6 +2869,7 @@ struct testcase_t evbuffer_testcases[] = {
 	{ "add_reference", test_evbuffer_add_reference, 0, NULL, NULL },
 	{ "multicast", test_evbuffer_multicast, 0, NULL, NULL },
 	{ "multicast_drain", test_evbuffer_multicast_drain, 0, NULL, NULL },
+	{ "multicast_empty_chain", test_evbuffer_multicast_empty_chain, TT_FORK, NULL, NULL },
 	{ "prepend", test_evbuffer_prepend, TT_FORK, NULL, NULL },
 	{ "empty_reference_prepend", test_evbuffer_empty_reference_prepend, TT_FORK, NULL, NULL },
 	{ "empty_reference_prepend_buffer", test_evbuffer_empty_reference_prepend_buffer, TT_FORK, NULL, NULL },

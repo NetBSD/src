@@ -1,4 +1,4 @@
-/*	$NetBSD: evdns.c,v 1.1.1.5 2021/04/07 02:43:14 christos Exp $	*/
+/*	$NetBSD: evdns.c,v 1.1.1.6 2026/07/08 13:23:33 christos Exp $	*/
 /* Copyright 2006-2007 Niels Provos
  * Copyright 2007-2012 Nick Mathewson and Niels Provos
  *
@@ -51,7 +51,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evdns.c,v 1.1.1.5 2021/04/07 02:43:14 christos Exp $");
+__RCSID("$NetBSD: evdns.c,v 1.1.1.6 2026/07/08 13:23:33 christos Exp $");
 #include "evconfig-private.h"
 
 #include <sys/types.h>
@@ -1674,7 +1674,10 @@ dnsname_to_labels(u8 *const buf, size_t buf_len, off_t j,
 	/* the labels must be terminated by a 0. */
 	/* It's possible that the name ended in a . */
 	/* in which case the zero is already there */
-	if (!j || buf[j-1]) buf[j++] = 0;
+	if ((size_t)j >= buf_len)
+		return -2;
+	if (!j || buf[j-1])
+		buf[j++] = 0;
 	return j;
  overflow:
 	return (-2);

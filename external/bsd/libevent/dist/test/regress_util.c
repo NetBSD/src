@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_util.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $	*/
+/*	$NetBSD: regress_util.c,v 1.1.1.4 2026/07/08 13:23:36 christos Exp $	*/
 /*
  * Copyright (c) 2009-2012 Nick Mathewson and Niels Provos
  *
@@ -38,7 +38,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_util.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $");
+__RCSID("$NetBSD: regress_util.c,v 1.1.1.4 2026/07/08 13:23:36 christos Exp $");
 
 #include <sys/types.h>
 
@@ -981,6 +981,8 @@ test_evutil_rand(void *arg)
 		tt_int_op(0, <=, r);
 		tt_int_op(r, <, 9999);
 	}
+
+	(void) n;
 
 	/* for (i=0;i<256;++i) { printf("%3d %2d\n", i, counts[i]); } */
 end:

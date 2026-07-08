@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_http.c,v 1.1.1.5 2021/04/07 02:43:15 christos Exp $	*/
+/*	$NetBSD: regress_http.c,v 1.1.1.6 2026/07/08 13:23:36 christos Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -35,7 +35,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_http.c,v 1.1.1.5 2021/04/07 02:43:15 christos Exp $");
+__RCSID("$NetBSD: regress_http.c,v 1.1.1.6 2026/07/08 13:23:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1468,7 +1468,7 @@ http_cancel_test(void *arg)
 	struct event_base *base_to_fill = data->base;
 
 	enum http_cancel_test_type type =
-		(enum http_cancel_test_type)data->setup_data;
+	    (enum http_cancel_test_type)(size_t)data->setup_data;
 	struct evhttp *http = http_setup(&port, data->base, 0);
 
 	if (type & BY_HOST) {
@@ -2409,7 +2409,8 @@ http_bad_header_test(void *ptr)
 	TAILQ_INIT(&headers);
 
 	tt_want(evhttp_add_header(&headers, "One", "Two") == 0);
-	tt_want(evhttp_add_header(&headers, "One", "Two\r\n Three") == 0);
+	tt_want(evhttp_add_header(&headers, "One", "Two Three") == 0);
+	tt_want(evhttp_add_header(&headers, "One", "Two\r\n Three") == -1);
 	tt_want(evhttp_add_header(&headers, "One\r", "Two") == -1);
 	tt_want(evhttp_add_header(&headers, "One\n", "Two") == -1);
 	tt_want(evhttp_add_header(&headers, "One", "Two\r") == -1);
@@ -3963,6 +3964,44 @@ http_multi_line_header_test(void *arg)
 }
 
 static void
+http_is_chunked_test(void *arg)
+{
+	(void) arg;
+	tt_assert(evhttp_str_is_chunked_("chunked", NULL));
+	tt_assert(evhttp_str_is_chunked_("chUNKED", NULL));
+	tt_assert(evhttp_str_is_chunked_("  CHUNKED  ", NULL));
+	tt_assert(evhttp_str_is_chunked_(" chUNKED ; foo=bar", NULL));
+	tt_assert(evhttp_str_is_chunked_("chUNKED ; foo=bar", NULL));
+
+	tt_assert(! evhttp_str_is_chunked_("wombat", NULL));
+	tt_assert(! evhttp_str_is_chunked_("chunked+", NULL));
+	tt_assert(! evhttp_str_is_chunked_("wombchunkedat", NULL));
+	tt_assert(! evhttp_str_is_chunked_("wombat chunked", NULL));
+	tt_assert(! evhttp_str_is_chunked_("wombat; chunked=foo", NULL));
+end:
+	;
+}
+
+static void
+http_check_transfer_encoding_test(void *arg)
+{
+	enum evhttp_transfer_encoding_header_status status;
+#define CH(s) (status = evhttp_check_transfer_encoding_(s))
+	tt_int_op(CH("hello"), ==, TE_NO_CHUNKED);
+	tt_int_op(CH("hello, world"), ==, TE_NO_CHUNKED);
+	tt_int_op(CH("hello, world, chunked"), ==, TE_ENDS_IN_CHUNKED);
+	tt_int_op(CH("chunked  "), ==, TE_ENDS_IN_CHUNKED);
+	tt_int_op(CH("    ,  chunked  "), ==, TE_ENDS_IN_CHUNKED);
+	tt_int_op(CH("chunked , gzip"), ==, TE_INVALID);
+	tt_int_op(CH("foo, chunked , gzip"), ==, TE_INVALID);
+	tt_int_op(CH("    ,  chunked, "), ==, TE_INVALID);
+end:
+	;
+#undef CH
+}
+
+
+static void
 http_request_bad(struct evhttp_request *req, void *arg)
 {
 	if (req != NULL) {
@@ -4223,8 +4262,8 @@ struct terminate_state {
 	struct evhttp_request *req;
 	struct bufferevent *bev;
 	evutil_socket_t fd;
-	int gotclosecb: 1;
-	int oneshot: 1;
+	unsigned int gotclosecb: 1;
+	unsigned int oneshot: 1;
 };
 
 static void
@@ -4750,6 +4789,8 @@ struct testcase_t http_testcases[] = {
 	HTTP(highport),
 	HTTP(dispatcher),
 	HTTP(multi_line_header),
+	HTTP(is_chunked),
+	HTTP(check_transfer_encoding),
 	HTTP(negative_content_length),
 	HTTP(chunk_out),
 	HTTP(stream_out),

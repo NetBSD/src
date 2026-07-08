@@ -1,4 +1,4 @@
-/*	$NetBSD: le-proxy.c,v 1.1.1.3 2021/04/07 02:43:15 christos Exp $	*/
+/*	$NetBSD: le-proxy.c,v 1.1.1.4 2026/07/08 13:23:37 christos Exp $	*/
 /*
   This example code shows how to write an (optionally encrypting) SSL proxy
   with Libevent's bufferevent layer.
@@ -10,6 +10,9 @@
 #if defined(__APPLE__) && defined(__clang__)
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
+
+/* This example is very old, and it uses some deprecated OpenSSL APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
 #include <assert.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: http-server.c,v 1.1.1.4 2021/04/07 02:43:15 christos Exp $	*/
+/*	$NetBSD: http-server.c,v 1.1.1.5 2026/07/08 13:23:37 christos Exp $	*/
 /*
   A trivial static http webserver using Libevent's evhttp.
 
@@ -385,7 +385,7 @@ parse_opts(int argc, char **argv)
 }
 
 static void
-do_term(int sig, short events, void *arg)
+do_term(evutil_socket_t sig, short events, void *arg)
 {
 	struct event_base *base = arg;
 	event_base_loopbreak(base);
@@ -520,7 +520,12 @@ main(int argc, char **argv)
 		}
 
 		addr.sun_family = AF_UNIX;
-		strcpy(addr.sun_path, o.unixsock);
+		if (strlen(o.unixsock) >= sizeof(addr.sun_path)) {
+			fprintf(stderr, "Unix socket path too long\n");
+			return 1;
+		}
+		strncpy(addr.sun_path, o.unixsock, sizeof(addr.sun_path) - 1);
+		addr.sun_path[sizeof(addr.sun_path) - 1] = '\0';
 
 		lev = evconnlistener_new_bind(base, NULL, NULL,
 			LEV_OPT_CLOSE_ON_FREE, -1,
