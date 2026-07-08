@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cmachflags,v 1.4 2022/01/26 11:48:53 andvar Exp $
+#	$NetBSD: Makefile.cmachflags,v 1.5 2026/07/08 04:26:53 thorpej Exp $
 
 # Set CMACHFLAGS best target the specific CPU combination, based on
 # their "options" setting.
@@ -30,11 +30,18 @@
 # 020 030         -m68020
 # 030             -m68030
 # 020             -m68020
+#
+# 010             -m68010
 
+HAVE_M68010!=	grep '\#define[ 	]*M68010' opt_m68k_arch.h 2>/dev/null || echo no
 HAVE_M68020!=	grep '\#define[ 	]*M68020' opt_m68k_arch.h 2>/dev/null || echo no
 HAVE_M68030!=	grep '\#define[ 	]*M68030' opt_m68k_arch.h 2>/dev/null || echo no
 HAVE_M68040!=	grep '\#define[ 	]*M68040' opt_m68k_arch.h 2>/dev/null || echo no
 HAVE_M68060!=	grep '\#define[ 	]*M68060' opt_m68k_arch.h 2>/dev/null || echo no
+
+.if ${HAVE_M68010} != "no"
+CMACHFLAGS=	-m68010 -Wa,-m68010
+.else
 
 .if ${HAVE_M68060} != "no"
 . if ${HAVE_M68020} != "no" || ${HAVE_M68030} != "no" || ${HAVE_M68040} != "no"
@@ -53,3 +60,5 @@ CMACHFLAGS=	-m68020
 .else
 CMACHFLAGS=	-m68030
 .endif	# !-DM68060
+
+.endif	# HAVE_M68010
