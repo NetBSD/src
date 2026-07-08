@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.14 2026/07/07 12:41:59 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.15 2026/07/08 09:34:32 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.14 2026/07/07 12:41:59 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.15 2026/07/08 09:34:32 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -146,13 +146,13 @@ add_gpio_props_v245(device_t dev, void *aux)
 		case 0x22:	/* Disks present */
 			pins = prop_array_create();
 			add_gpio_pin(pins,
-			    "INDICATOR HDD 3 present", 11, 1, -1);
-			add_gpio_pin(pins,
-			    "INDICATOR HDD 2 present", 10, 1, -1);
+			    "INDICATOR HDD 0 present", 8, 1, -1);
 			add_gpio_pin(pins,
 			    "INDICATOR HDD 1 present", 9, 1, -1);
 			add_gpio_pin(pins,
-			    "INDICATOR HDD 0 present", 8, 1, -1);
+			    "INDICATOR HDD 2 present", 10, 1, -1);
+			add_gpio_pin(pins,
+			    "INDICATOR HDD 3 present", 11, 1, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
