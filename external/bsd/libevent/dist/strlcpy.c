@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.c,v 1.1.1.3 2026/07/08 13:23:35 christos Exp $	*/
+/*	$NetBSD: strlcpy.c,v 1.2 2026/07/08 13:27:37 christos Exp $	*/
 /*	$OpenBSD: strlcpy.c,v 1.5 2001/05/13 15:40:16 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@ static char *rcsid = "$OpenBSD: strlcpy.c,v 1.5 2001/05/13 15:40:16 deraadt Exp 
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strlcpy.c,v 1.1.1.3 2026/07/08 13:23:35 christos Exp $");
+__RCSID("$NetBSD: strlcpy.c,v 1.2 2026/07/08 13:27:37 christos Exp $");
 #include "evconfig-private.h"
 
 #include <sys/types.h>

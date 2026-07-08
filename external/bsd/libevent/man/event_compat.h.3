@@ -1,4 +1,4 @@
-.TH "event2/event_compat.h" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
+.TH "event2/event_compat.h" 3 "libevent-2.1.13-stable" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,27 +7,27 @@ event2/event_compat.h \- Potentially non-threadsafe versions of the functions in
 .SH SYNOPSIS
 .br
 .PP
-\fC#include <event2/visibility\&.h>\fP
+\fR#include <event2/visibility\&.h>\fP
 .br
-\fC#include <event2/event\-config\&.h>\fP
+\fR#include <event2/event\-config\&.h>\fP
 .br
-\fC#include <event2/util\&.h>\fP
+\fR#include <event2/util\&.h>\fP
 .br
 
 .SS "Macros"
 
 .in +1c
 .ti -1c
-.RI "#define \fBEVENT_FD\fP(ev)   ((int)\fBevent_get_fd\fP(ev))"
+.RI "#define \fBEVENT_FD\fP(ev)"
 .br
 .ti -1c
-.RI "#define \fBEVENT_SIGNAL\fP(ev)   \fBevent_get_signal\fP(ev)"
+.RI "#define \fBEVENT_SIGNAL\fP(ev)"
 .br
 .ti -1c
-.RI "#define \fBevsignal_set\fP(ev,  x,  cb,  arg)   \fBevent_set\fP((ev), (x), \fBEV_SIGNAL\fP|\fBEV_PERSIST\fP, (cb), (arg))"
+.RI "#define \fBevsignal_set\fP(ev,  x,  cb,  arg)"
 .br
 .ti -1c
-.RI "#define \fBevtimer_set\fP(ev,  cb,  arg)   \fBevent_set\fP((ev), \-1, 0, (cb), (arg))"
+.RI "#define \fBevtimer_set\fP(ev,  cb,  arg)"
 .br
 .in -1c
 .PP
@@ -37,27 +37,27 @@ event2/event_compat.h \- Potentially non-threadsafe versions of the functions in
 .PP
 \fBDeprecated\fP
 .RS 4
-These macros are deprecated because their naming is inconsistent with the rest of Libevent\&.
+These macros are deprecated because their naming is inconsistent with the rest of Libevent\&. Use the evtimer_* macros instead\&.
 .RE
 .PP
-Use the evtimer_* macros instead\&. 
+
 .PP
 .in +1c
 .in +1c
 .ti -1c
-.RI "#define \fBtimeout_add\fP(ev,  tv)   \fBevent_add\fP((ev), (tv))"
+.RI "#define \fBtimeout_add\fP(ev,  tv)"
 .br
 .ti -1c
-.RI "#define \fBtimeout_set\fP(ev,  cb,  arg)   \fBevent_set\fP((ev), \-1, 0, (cb), (arg))"
+.RI "#define \fBtimeout_del\fP(ev)"
 .br
 .ti -1c
-.RI "#define \fBtimeout_del\fP(ev)   \fBevent_del\fP(ev)"
+.RI "#define \fBtimeout_initialized\fP(ev)"
 .br
 .ti -1c
-.RI "#define \fBtimeout_pending\fP(ev,  tv)   \fBevent_pending\fP((ev), \fBEV_TIMEOUT\fP, (tv))"
+.RI "#define \fBtimeout_pending\fP(ev,  tv)"
 .br
 .ti -1c
-.RI "#define \fBtimeout_initialized\fP(ev)   \fBevent_initialized\fP(ev)"
+.RI "#define \fBtimeout_set\fP(ev,  cb,  arg)"
 .br
 .in -1c
 .in -1c
@@ -68,27 +68,27 @@ Use the evtimer_* macros instead\&.
 .PP
 \fBDeprecated\fP
 .RS 4
-These macros are deprecated because their naming is inconsistent with the rest of Libevent\&.
+These macros are deprecated because their naming is inconsistent with the rest of Libevent\&. Use the evsignal_* macros instead\&.
 .RE
 .PP
-Use the evsignal_* macros instead\&. 
+
 .PP
 .in +1c
 .in +1c
 .ti -1c
-.RI "#define \fBsignal_add\fP(ev,  tv)   \fBevent_add\fP((ev), (tv))"
+.RI "#define \fBsignal_add\fP(ev,  tv)"
 .br
 .ti -1c
-.RI "#define \fBsignal_set\fP(ev,  x,  cb,  arg)   \fBevent_set\fP((ev), (x), \fBEV_SIGNAL\fP|\fBEV_PERSIST\fP, (cb), (arg))"
+.RI "#define \fBsignal_del\fP(ev)"
 .br
 .ti -1c
-.RI "#define \fBsignal_del\fP(ev)   \fBevent_del\fP(ev)"
+.RI "#define \fBsignal_initialized\fP(ev)"
 .br
 .ti -1c
-.RI "#define \fBsignal_pending\fP(ev,  tv)   \fBevent_pending\fP((ev), \fBEV_SIGNAL\fP, (tv))"
+.RI "#define \fBsignal_pending\fP(ev,  tv)"
 .br
 .ti -1c
-.RI "#define \fBsignal_initialized\fP(ev)   \fBevent_initialized\fP(ev)"
+.RI "#define \fBsignal_set\fP(ev,  x,  cb,  arg)"
 .br
 .in -1c
 .in -1c
@@ -98,45 +98,46 @@ Use the evsignal_* macros instead\&.
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL int \fBevent_dispatch\fP (void)"
 .br
-.RI "\fILoop to process events\&. \fP"
+.RI "Loop to process events\&. "
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL const char * \fBevent_get_method\fP (void)"
 .br
-.RI "\fIGet the kernel event notification mechanism used by Libevent\&. \fP"
+.RI "Get the kernel event notification mechanism used by Libevent\&. "
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL struct \fBevent_base\fP * \fBevent_init\fP (void)"
 .br
-.RI "\fIInitialize the event API\&. \fP"
+.RI "Initialize the event API\&. "
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL int \fBevent_loop\fP (int)"
 .br
-.RI "\fIHandle events\&. \fP"
+.RI "Handle events\&. "
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL int \fBevent_loopbreak\fP (void)"
 .br
-.RI "\fIAbort the active \fBevent_loop()\fP immediately\&. \fP"
+.RI "Abort the active \fBevent_loop()\fP immediately\&. "
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL int \fBevent_loopexit\fP (const struct timeval *)"
 .br
-.RI "\fIExit the event loop after the specified time\&. \fP"
+.RI "Exit the event loop after the specified time\&. "
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL int \fBevent_once\fP (\fBevutil_socket_t\fP, short, void(*)(\fBevutil_socket_t\fP, short, void *), void *, const struct timeval *)"
 .br
-.RI "\fISchedule a one-time event to occur\&. \fP"
+.RI "Schedule a one-time event to occur\&. "
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL int \fBevent_priority_init\fP (int)"
 .br
-.RI "\fISet the number of different event priorities\&. \fP"
+.RI "Set the number of different event priorities\&. "
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL void \fBevent_set\fP (struct \fBevent\fP *, \fBevutil_socket_t\fP, short, void(*)(\fBevutil_socket_t\fP, short, void *), void *)"
 .br
-.RI "\fIPrepare an event structure to be added\&. \fP"
+.RI "Prepare an event structure to be added\&. "
 .in -1c
 .SH "Detailed Description"
 .PP 
 Potentially non-threadsafe versions of the functions in \fBevent\&.h\fP: provided only for backwards compatibility\&. 
 
-In the oldest versions of Libevent, \fBevent_base\fP was not a first-class structure\&. Instead, there was a single event base that every function manipulated\&. Later, when separate event bases were added, the old functions that didn't take an \fBevent_base\fP argument needed to work by manipulating the 'current' event base\&. This could lead to thread-safety issues, and obscure, hard-to-diagnose bugs\&.
+In the oldest versions of Libevent, \fBevent_base\fP was not a first-class structure\&. Instead, there was a single event base that every function manipulated\&. Later, when separate event bases were added, the old functions that didn't take an \fBevent_base\fP argument needed to work by manipulating the "current" event base\&. This could lead to thread-safety issues, and obscure, hard-to-diagnose bugs\&.
+
 .PP
 \fBDeprecated\fP
 .RS 4
@@ -144,128 +145,240 @@ All functions in this file are by definition deprecated\&.
 .RE
 .PP
 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define EVENT_FD( ev)"
+\fBValue:\fP
+.nf
+((int)event_get_fd(ev))
+.PP
+.fi
+
+.SS "#define EVENT_SIGNAL( ev)"
+\fBValue:\fP
+.nf
+event_get_signal(ev)
+.PP
+.fi
+
+.SS "#define evsignal_set( ev,  x,  cb,  arg)"
+\fBValue:\fP
+.nf
+event_set((ev), (x), EV_SIGNAL|EV_PERSIST, (cb), (arg))
+.PP
+.fi
+
+.SS "#define evtimer_set( ev,  cb,  arg)"
+\fBValue:\fP
+.nf
+event_set((ev), \-1, 0, (cb), (arg))
+.PP
+.fi
+
+.SS "#define signal_add( ev,  tv)"
+\fBValue:\fP
+.nf
+event_add((ev), (tv))
+.PP
+.fi
+
+.SS "#define signal_del( ev)"
+\fBValue:\fP
+.nf
+event_del(ev)
+.PP
+.fi
+
+.SS "#define signal_initialized( ev)"
+\fBValue:\fP
+.nf
+event_initialized(ev)
+.PP
+.fi
+
+.SS "#define signal_pending( ev,  tv)"
+\fBValue:\fP
+.nf
+event_pending((ev), EV_SIGNAL, (tv))
+.PP
+.fi
+
+.SS "#define signal_set( ev,  x,  cb,  arg)"
+\fBValue:\fP
+.nf
+event_set((ev), (x), EV_SIGNAL|EV_PERSIST, (cb), (arg))
+.PP
+.fi
+
+.SS "#define timeout_add( ev,  tv)"
+\fBValue:\fP
+.nf
+event_add((ev), (tv))
+.PP
+.fi
+
+.SS "#define timeout_del( ev)"
+\fBValue:\fP
+.nf
+event_del(ev)
+.PP
+.fi
+
+.SS "#define timeout_initialized( ev)"
+\fBValue:\fP
+.nf
+event_initialized(ev)
+.PP
+.fi
+
+.SS "#define timeout_pending( ev,  tv)"
+\fBValue:\fP
+.nf
+event_pending((ev), EV_TIMEOUT, (tv))
+.PP
+.fi
+
+.SS "#define timeout_set( ev,  cb,  arg)"
+\fBValue:\fP
+.nf
+event_set((ev), \-1, 0, (cb), (arg))
+.PP
+.fi
+
 .SH "Function Documentation"
 .PP 
-.SS "EVENT2_EXPORT_SYMBOL int event_dispatch (void)"
+.SS "EVENT2_EXPORT_SYMBOL int event_dispatch (void )"
 
 .PP
-Loop to process events\&. Like \fBevent_base_dispatch()\fP, but uses the 'current' base\&.
+Loop to process events\&. Like \fBevent_base_dispatch()\fP, but uses the "current" base\&.
+
 .PP
 \fBDeprecated\fP
 .RS 4
 This function is deprecated because it is easily confused by multiple calls to \fBevent_init()\fP, and because it is not safe for multithreaded use\&. The replacement is \fBevent_base_dispatch()\fP\&.
 .RE
 .PP
+
 .PP
-\fBSee also:\fP
+\fBSee also\fP
 .RS 4
 \fBevent_base_dispatch()\fP, \fBevent_init()\fP 
 .RE
 .PP
 
-.SS "EVENT2_EXPORT_SYMBOL const char* event_get_method (void)"
+.SS "EVENT2_EXPORT_SYMBOL const char * event_get_method (void )"
 
 .PP
 Get the kernel event notification mechanism used by Libevent\&. 
 .PP
 \fBDeprecated\fP
 .RS 4
-This function is obsolete, and has been replaced by \fBevent_base_get_method()\fP\&. Its use is deprecated because it relies on the 'current' base configured by \fBevent_init()\fP\&.
+This function is obsolete, and has been replaced by \fBevent_base_get_method()\fP\&. Its use is deprecated because it relies on the "current" base configured by \fBevent_init()\fP\&.
 .RE
 .PP
+
 .PP
-\fBSee also:\fP
+\fBSee also\fP
 .RS 4
 \fBevent_base_get_method()\fP 
 .RE
 .PP
 
-.SS "EVENT2_EXPORT_SYMBOL struct \fBevent_base\fP* event_init (void)"
+.SS "EVENT2_EXPORT_SYMBOL struct \fBevent_base\fP * event_init (void )"
 
 .PP
 Initialize the event API\&. The event API needs to be initialized with \fBevent_init()\fP before it can be used\&. Sets the global current base that gets used for events that have no base associated with them\&.
+
 .PP
 \fBDeprecated\fP
 .RS 4
-This function is deprecated because it replaces the 'current' \fBevent_base\fP, and is totally unsafe for multithreaded use\&. The replacement is \fBevent_base_new()\fP\&.
+This function is deprecated because it replaces the "current" \fBevent_base\fP, and is totally unsafe for multithreaded use\&. The replacement is \fBevent_base_new()\fP\&.
 .RE
 .PP
+
 .PP
-\fBSee also:\fP
+\fBSee also\fP
 .RS 4
 \fBevent_base_set()\fP, \fBevent_base_new()\fP 
 .RE
 .PP
 
-.SS "EVENT2_EXPORT_SYMBOL int event_loop (int)"
+.SS "EVENT2_EXPORT_SYMBOL int event_loop (int )"
 
 .PP
-Handle events\&. This function behaves like \fBevent_base_loop()\fP, but uses the 'current' base
+Handle events\&. This function behaves like \fBevent_base_loop()\fP, but uses the "current" base
+
 .PP
 \fBDeprecated\fP
 .RS 4
 This function is deprecated because it uses the event base from the last call to event_init, and is therefore not safe for multithreaded use\&. The replacement is \fBevent_base_loop()\fP\&.
 .RE
 .PP
+
 .PP
-\fBSee also:\fP
+\fBSee also\fP
 .RS 4
 \fBevent_base_loop()\fP, \fBevent_init()\fP 
 .RE
 .PP
 
-.SS "EVENT2_EXPORT_SYMBOL int event_loopbreak (void)"
+.SS "EVENT2_EXPORT_SYMBOL int event_loopbreak (void )"
 
 .PP
-Abort the active \fBevent_loop()\fP immediately\&. This function behaves like event_base_loopbreakt(), except that it uses the 'current' base\&.
+Abort the active \fBevent_loop()\fP immediately\&. This function behaves like event_base_loopbreakt(), except that it uses the "current" base\&.
+
 .PP
 \fBDeprecated\fP
 .RS 4
 This function is deprecated because it uses the event base from the last call to event_init, and is therefore not safe for multithreaded use\&. The replacement is \fBevent_base_loopbreak()\fP\&.
 .RE
 .PP
+
 .PP
-\fBSee also:\fP
+\fBSee also\fP
 .RS 4
 \fBevent_base_loopbreak()\fP, \fBevent_init()\fP 
 .RE
 .PP
 
-.SS "EVENT2_EXPORT_SYMBOL int event_loopexit (const struct timeval *)"
+.SS "EVENT2_EXPORT_SYMBOL int event_loopexit (const struct timeval * )"
 
 .PP
-Exit the event loop after the specified time\&. This function behaves like \fBevent_base_loopexit()\fP, except that it uses the 'current' base\&.
+Exit the event loop after the specified time\&. This function behaves like \fBevent_base_loopexit()\fP, except that it uses the "current" base\&.
+
 .PP
 \fBDeprecated\fP
 .RS 4
 This function is deprecated because it uses the event base from the last call to event_init, and is therefore not safe for multithreaded use\&. The replacement is \fBevent_base_loopexit()\fP\&.
 .RE
 .PP
+
 .PP
-\fBSee also:\fP
+\fBSee also\fP
 .RS 4
 \fBevent_init\fP, \fBevent_base_loopexit()\fP 
 .RE
 .PP
 
-.SS "EVENT2_EXPORT_SYMBOL int event_once (\fBevutil_socket_t\fP, short, void(*)(\fBevutil_socket_t\fP, short, void *), void *, const struct timeval *)"
+.SS "EVENT2_EXPORT_SYMBOL int event_once (\fBevutil_socket_t\fP , short , void(*  )(\fBevutil_socket_t\fP, short, void *), void * , const struct timeval * )"
 
 .PP
 Schedule a one-time event to occur\&. 
 .PP
 \fBDeprecated\fP
 .RS 4
-This function is obsolete, and has been replaced by \fBevent_base_once()\fP\&. Its use is deprecated because it relies on the 'current' base configured by \fBevent_init()\fP\&.
+This function is obsolete, and has been replaced by \fBevent_base_once()\fP\&. Its use is deprecated because it relies on the "current" base configured by \fBevent_init()\fP\&.
 .RE
 .PP
+
 .PP
-\fBSee also:\fP
+\fBSee also\fP
 .RS 4
 \fBevent_base_once()\fP 
 .RE
 .PP
 
-.SS "EVENT2_EXPORT_SYMBOL int event_priority_init (int)"
+.SS "EVENT2_EXPORT_SYMBOL int event_priority_init (int )"
 
 .PP
 Set the number of different event priorities\&. 
@@ -275,14 +388,15 @@ Set the number of different event priorities\&.
 This function is deprecated because it is easily confused by multiple calls to \fBevent_init()\fP, and because it is not safe for multithreaded use\&. The replacement is \fBevent_base_priority_init()\fP\&.
 .RE
 .PP
+
 .PP
-\fBSee also:\fP
+\fBSee also\fP
 .RS 4
 \fBevent_base_priority_init()\fP 
 .RE
 .PP
 
-.SS "EVENT2_EXPORT_SYMBOL void event_set (struct \fBevent\fP *, \fBevutil_socket_t\fP, short, void(*)(\fBevutil_socket_t\fP, short, void *), void *)"
+.SS "EVENT2_EXPORT_SYMBOL void event_set (struct \fBevent\fP * , \fBevutil_socket_t\fP , short , void(*  )(\fBevutil_socket_t\fP, short, void *), void * )"
 
 .PP
 Prepare an event structure to be added\&. 
@@ -295,4 +409,4 @@ Prepare an event structure to be added\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for libevent from the source code\&.
+Generated automatically by Doxygen for libevent-2\&.1\&.13-stable from the source code\&.

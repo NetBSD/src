@@ -1,4 +1,4 @@
-.TH "event2/tag_compat.h" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
+.TH "event2/tag_compat.h" 3 "libevent-2.1.13-stable" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -16,18 +16,18 @@ event2/tag_compat.h \- Obsolete/deprecated functions from \fBtag\&.h\fP; provide
 .PP
 \fBDeprecated\fP
 .RS 4
-These macros are deprecated because their names don't follow Libevent's naming conventions\&.
+These macros are deprecated because their names don't follow Libevent's naming conventions\&. Use evtag_encode_int and evtag_encode_int64 instead\&.
 .RE
 .PP
-Use evtag_encode_int and evtag_encode_int64 instead\&. 
+
 .PP
 .in +1c
 .in +1c
 .ti -1c
-.RI "#define \fBencode_int\fP(evbuf,  number)   \fBevtag_encode_int\fP((evbuf), (number))"
+.RI "#define \fBencode_int\fP(evbuf,  number)"
 .br
 .ti -1c
-.RI "#define \fBencode_int64\fP(evbuf,  number)   evtag_encode_int64((evbuf), (number))"
+.RI "#define \fBencode_int64\fP(evbuf,  number)"
 .br
 .in -1c
 .in -1c
@@ -36,6 +36,22 @@ Use evtag_encode_int and evtag_encode_int64 instead\&.
 Obsolete/deprecated functions from \fBtag\&.h\fP; provided only for backwards compatibility\&. 
 
 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define encode_int( evbuf,  number)"
+\fBValue:\fP
+.nf
+evtag_encode_int((evbuf), (number))
+.PP
+.fi
+
+.SS "#define encode_int64( evbuf,  number)"
+\fBValue:\fP
+.nf
+evtag_encode_int64((evbuf), (number))
+.PP
+.fi
+
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for libevent from the source code\&.
+Generated automatically by Doxygen for libevent-2\&.1\&.13-stable from the source code\&.

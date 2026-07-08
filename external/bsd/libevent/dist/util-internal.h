@@ -1,4 +1,4 @@
-/*	$NetBSD: util-internal.h,v 1.8 2023/08/01 07:04:14 mrg Exp $	*/
+/*	$NetBSD: util-internal.h,v 1.9 2026/07/08 13:27:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -355,6 +355,12 @@ ev_int32_t evutil_weakrand_range_(struct evutil_weakrand_state *seed, ev_int32_t
 #define EVUTIL_FALLTHROUGH __attribute__((fallthrough))
 #else
 #define EVUTIL_FALLTHROUGH /* fallthrough */
+#endif
+
+#if EVUTIL_HAS_ATTRIBUTE(nonstring)
+#define EVUTIL_NONSTRING __attribute__((nonstring))
+#else
+#define EVUTIL_NONSTRING
 #endif
 
 /* Replacement for assert() that calls event_errx on failure. */

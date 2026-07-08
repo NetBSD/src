@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_openssl.c,v 1.2 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: bufferevent_openssl.c,v 1.3 2026/07/08 13:27:36 christos Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -32,7 +32,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bufferevent_openssl.c,v 1.2 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: bufferevent_openssl.c,v 1.3 2026/07/08 13:27:36 christos Exp $");
 #include "evconfig-private.h"
 
 #include <sys/types.h>
@@ -517,7 +517,9 @@ conn_closed(struct bufferevent_openssl *bev_ssl, int when, int errcode, int ret)
 		put_error(bev_ssl, errcode);
 		break;
 	case SSL_ERROR_SSL:
-		/* Protocol error. */
+		/* Protocol error; possibly a dirty shutdown. */
+		if (ret == 0 && SSL_is_init_finished(bev_ssl->ssl) == 0)
+			dirty_shutdown = 1;
 		put_error(bev_ssl, errcode);
 		break;
 	case SSL_ERROR_WANT_X509_LOOKUP:

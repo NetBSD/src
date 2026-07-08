@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: libevent2netbsd,v 1.3 2021/04/07 03:36:48 christos Exp $
+# $NetBSD: libevent2netbsd,v 1.4 2026/07/08 13:27:36 christos Exp $
 
 # Extract the new tarball and rename the libevent-X.Y.Z directory
 # to dist.  Run this script and check for additional files and
@@ -13,7 +13,9 @@
 #
 # don't forget to bump the shlib version in Makefile.inc and
 # commit the include/ files
-# XXX: Automate the man page generation
+# XXX:
+# There is a ton of man pages generated, we copy all of them for now
+# but only install the ones that we have historically installed
 
 if [ -z "$1" ]
 then
@@ -31,8 +33,9 @@ esac
 if [ -f $d/configure ]; then
 	mkdir -p tmp
 	cd tmp
-	$d/configure
+	$d/configure --enable-doxygen-doc --enable-doxygen-man
 	make include/event2/event-config.h
+	make doxygen
 	sed -e '
 /_EVENT_SIZEOF_SIZE_T/ {
 	a\
@@ -75,6 +78,7 @@ if [ -f $d/configure ]; then
 #endif
 	d
 }' < include/event2/event-config.h > ../include/event2/event-config.h
+	cp doxygen/man/man3/*.3 ../man
 	cd ..
 	rm -Rf tmp
 fi

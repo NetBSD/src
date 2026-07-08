@@ -375,6 +375,7 @@ evhttp_bind_socket_with_handle
 evhttp_bound_socket_get_fd
 evhttp_bound_socket_get_listener
 evhttp_cancel_request
+evhttp_check_transfer_encoding_
 evhttp_clear_headers
 evhttp_connection_base_bufferevent_new
 evhttp_connection_base_new
@@ -459,6 +460,7 @@ evhttp_set_timeout_tv
 evhttp_start
 evhttp_start_read_
 evhttp_start_write_
+evhttp_str_is_chunked_
 evhttp_uri_free
 evhttp_uri_get_fragment
 evhttp_uri_get_host

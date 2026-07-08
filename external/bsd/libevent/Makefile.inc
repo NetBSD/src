@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2023/09/04 18:12:47 riastradh Exp $
+# $NetBSD: Makefile.inc,v 1.6 2026/07/08 13:27:36 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ CPPFLAGS+=	-I${LIBEVENT_DIST} -I${LIBEVENT_DIR}/include
 CPPFLAGS+=	-I${LIBEVENT_DIST}/include
 
 SHLIB_MAJOR=	5
-SHLIB_MINOR=	0
+SHLIB_MINOR=	1
 
 WARNS?=		4
 

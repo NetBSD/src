@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_main.c,v 1.4 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: regress_main.c,v 1.5 2026/07/08 13:27:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -53,7 +53,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_main.c,v 1.4 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: regress_main.c,v 1.5 2026/07/08 13:27:37 christos Exp $");
 
 #if 0
 #include <sys/types.h>
@@ -247,7 +247,15 @@ basic_test_setup(const struct testcase_t *testcase)
 	evutil_socket_t spair[2] = { -1, -1 };
 	struct basic_test_data *data = NULL;
 
+#ifdef _WIN32
+	DWORD tid;
+	THREAD_T p;
+	tid = THREAD_SELF();
+	p = (THREAD_T)&tid;
+	thread_setup(p);
+#else
 	thread_setup(THREAD_SELF());
+#endif
 
 #ifndef _WIN32
 	if (testcase->flags & TT_ENABLE_IOCP_FLAG)
