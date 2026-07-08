@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.41 2026/07/07 12:24:32 jdc Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.42 2026/07/08 06:30:23 kre Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.41 2026/07/07 12:24:32 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.42 2026/07/08 06:30:23 kre Exp $");
 
 #include "bio.h"
 
@@ -1481,7 +1481,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 		}
 		break;
 
-	case MPI_EVENT_INTEGRATED_RAID:
+	case MPI_EVENT_INTEGRATED_RAID: {
 #define MSG_LEN 64
 #define ERR_LEN 32
 		char raid_msg[MSG_LEN], err_msg[ERR_LEN];
@@ -1623,6 +1623,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 #undef MSG_LEN
 #undef ERR_LEN
 		break;
+	}
 
 	case MPI_EVENT_SAS_DEVICE_STATUS_CHANGE:
 	case MPI_EVENT_SAS_DISCOVERY:
