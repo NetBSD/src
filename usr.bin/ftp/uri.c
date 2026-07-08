@@ -1,4 +1,4 @@
-/*	$NetBSD: uri.c,v 1.1 2026/07/06 07:07:00 mlelstv Exp $	*/
+/*	$NetBSD: uri.c,v 1.2 2026/07/08 16:10:36 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -131,10 +131,10 @@ static char *
 remove_dot_segments(const char *path, size_t len)
 {
 	char *p;
-	char *buf, *out, *seg;
+	char *pbuf, *buf, *out, *seg;
 	size_t n;
 
-	p = ftp_malloc(len + 1);
+	p = pbuf = ftp_malloc(len + 1);
 	strcpy(p, path);
 
 	buf = ftp_malloc(len + 1);
@@ -220,7 +220,7 @@ remove_dot_segments(const char *path, size_t len)
 		len -= n;
 	};
 
-	FREEPTR(p);
+	FREEPTR(pbuf);
 
 	return buf;
 }
