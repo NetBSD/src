@@ -1,4 +1,4 @@
-/*	$NetBSD: tag.h,v 1.1.1.3 2017/01/31 21:14:53 christos Exp $	*/
+/*	$NetBSD: tag.h,v 1.1.1.4 2026/07/08 13:23:37 christos Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -64,6 +64,8 @@ void evtag_init(void);
 
 /**
    Unmarshals the header and returns the length of the payload
+
+   Returns an error if the payload length is above INT_MAX.
 
    @param evbuf the buffer from which to unmarshal data
    @param ptag a pointer in which the tag id is being stored
