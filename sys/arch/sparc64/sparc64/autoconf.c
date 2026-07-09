@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.251 2026/06/04 13:58:28 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.252 2026/07/09 07:47:40 jdc Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.251 2026/06/04 13:58:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.252 2026/07/09 07:47:40 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1237,7 +1237,11 @@ device_register(device_t dev, void *aux)
 		 */
 		busdev = device_parent(busdev);
 		devhandle = device_handle(busdev);
-		KASSERT(devhandle_type(devhandle) == DEVHANDLE_TYPE_OF);
+		if (devhandle_type(devhandle) != DEVHANDLE_TYPE_OF)
+{
+printf("Not OF: %d\n", devhandle_type(devhandle));
+			return;
+}
 		ofnode = devhandle_to_of(devhandle);
 
 		/*
@@ -1273,7 +1277,8 @@ device_register(device_t dev, void *aux)
 		 * e.g. "atabus".  Get the controller's devhandle.
 		 */
 		devhandle = device_handle(device_parent(busdev));
-		KASSERT(devhandle_type(devhandle) == DEVHANDLE_TYPE_OF);
+		if (devhandle_type(devhandle) != DEVHANDLE_TYPE_OF)
+			return;
 		ofnode = devhandle_to_of(devhandle);
 
 		dev_bi_unit_drive_match(dev, ofnode, adev->adev_channel*2+
@@ -1498,8 +1503,8 @@ device_register_post_config(device_t dev, void *aux)
 			 */
 			devhandle_t ctlr_devhandle = device_handle(
 			    device_parent(device_parent(dev)));
-			KASSERT(devhandle_type(ctlr_devhandle) ==
-			    DEVHANDLE_TYPE_OF);
+			if (devhandle_type(ctlr_devhandle) != DEVHANDLE_TYPE_OF)
+				return;
 			int ofnode = devhandle_to_of(ctlr_devhandle);
 
 			for (ofnode = OF_child(ofnode);
