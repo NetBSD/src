@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.53 2025/10/04 01:12:14 thorpej Exp $ */
+/*	$NetBSD: promlib.c,v 1.54 2026/07/09 21:25:03 palle Exp $ */
 
 /*-
  * Copyright (c) 1998, 2025 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.53 2025/10/04 01:12:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.54 2026/07/09 21:25:03 palle Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -427,7 +427,7 @@ OBP_DEVICE_CALL_REGISTER(DEVICE_GET_PROPERTY_STR,
  */
 
 int
-prom_getprop(int node, const char *name, size_t	size, int *nitem, void *bufp)
+prom_getprop(int node, const char *name, size_t size, int *nitem, void *bufp)
 {
 	void	*buf;
 	int	len;
