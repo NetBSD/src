@@ -1,4 +1,4 @@
-/*	$NetBSD: uri.c,v 1.3 2026/07/08 19:27:04 mlelstv Exp $	*/
+/*	$NetBSD: uri.c,v 1.4 2026/07/09 16:54:11 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -135,7 +135,8 @@ remove_dot_segments(const char *path, size_t len)
 	size_t n;
 
 	p = pbuf = ftp_malloc(len + 1);
-	strcpy(p, path);
+	memcpy(p, path, len);
+	p[len] = '\0';
 
 	buf = ftp_malloc(len + 1);
 	out = buf;
@@ -263,7 +264,7 @@ make_absurl(char *refurl, const char *baseurl)
 	uriparts_t ref;
 	uriparts_t p;
 	char *buf, *tmp1, *tmp2;
-	
+
 	split_uri(baseurl, &base);
 	split_uri(refurl, &ref);
 
