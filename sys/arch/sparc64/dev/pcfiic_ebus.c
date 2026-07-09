@@ -1,4 +1,4 @@
-/*	$NetBSD: pcfiic_ebus.c,v 1.10 2026/02/01 10:50:23 jdc Exp $	*/
+/*	$NetBSD: pcfiic_ebus.c,v 1.11 2026/07/09 14:48:42 thorpej Exp $	*/
 /*	$OpenBSD: pcfiic_ebus.c,v 1.13 2008/06/08 03:07:40 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.10 2026/02/01 10:50:23 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.11 2026/07/09 14:48:42 thorpej Exp $");
 
 /*
  * Device specific driver for the EBus i2c devices found on some sun4u
@@ -91,12 +91,17 @@ pcfiic_ebus_attach(device_t parent, device_t self, void *aux)
 	char				compat[32];
 	u_int64_t			addr;
 	u_int8_t			clock = PCF8584_CLK_12 | PCF8584_SCL_90;
-	int				flags = 0;
 
 	if (ea->ea_nreg < 1 || ea->ea_nreg > 2) {
 		printf(": expected 1 or 2 registers, got %d\n", ea->ea_nreg);
 		return;
 	}
+
+	/*
+	 * Default to the standard register offsets.
+	 */
+	sc->sc_regmap[PCF8584_S0] = PCF8584_S0;
+	sc->sc_regmap[PCF8584_S1] = PCF8584_S1;
 
 	/* E450 and E250 have a different clock */
 	if ((strcmp(ea->ea_name, "SUNW,envctrl") == 0) ||
@@ -117,13 +122,15 @@ pcfiic_ebus_attach(device_t parent, device_t self, void *aux)
 			clock = PCF8584_CLK_3 | PCF8584_SCL_90;
 		else if (clk < 160000000)
 			clock = PCF8584_CLK_4_43 | PCF8584_SCL_90;
-		flags |= SWAP_REGS;
+		sc->sc_regmap[PCF8584_S0] ^= 1;
+		sc->sc_regmap[PCF8584_S1] ^= 1;
 	}
 
 	if (OF_getprop(ea->ea_node, "compatible", compat, sizeof(compat)) > 0 &&
-	    strcmp(compat, "SUNW,i2c-pic16f747") == 0)
+	    strcmp(compat, "SUNW,i2c-pic16f747") == 0) {
 		/* U45 needs a delay after reads/writes */
-		flags |= NEED_DELAY;
+		sc->sc_delay = 10;
+	}
 
 	if (OF_getprop(ea->ea_node, "own-address", &addr, sizeof(addr)) == -1) {
 		addr = 0xaa;
@@ -147,11 +154,11 @@ pcfiic_ebus_attach(device_t parent, device_t self, void *aux)
 		 * and is likely not prom mapped
 		*/
 		if (bus_space_map(sc->sc_iot, EBUS_ADDR_FROM_REG(&ea->ea_reg[1]),
-		    ea->ea_reg[1].size, 0, &sc->sc_ioh2) != 0) {
-			printf(": can't map 2nd register space\n");
+		    ea->ea_reg[1].size, 0, &sc->sc_mux_ioh) != 0) {
+			printf(": can't map mux registers\n");
 			return;
 		}
-		sc->sc_master = 1;
+		sc->sc_has_mux = true;
 		printf(": iic mux present");
 	}
 
@@ -167,5 +174,5 @@ pcfiic_ebus_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	pcfiic_attach(sc, (i2c_addr_t)(addr >> 1), clock, flags);
+	pcfiic_attach(sc, (i2c_addr_t)(addr >> 1), clock);
 }

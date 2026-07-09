@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.23 2026/02/01 10:50:23 jdc Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.24 2026/07/09 14:48:42 thorpej Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -28,12 +28,6 @@
 
 #include <dev/ic/pcf8584var.h>
 #include <dev/ic/pcf8584reg.h>
-
-/* Internal registers */
-#define PCF8584_S0		0x00
-#define PCF8584_S1		0x01
-#define PCF8584_S2		0x02
-#define PCF8584_S3		0x03
 
 /* Write then read */
 #define REPEAT_START		1
@@ -73,26 +67,14 @@ pcfiic_init(struct pcfiic_softc *sc)
 }
 
 void
-pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock,
-    int flags)
+pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock)
 {
-	if (flags & SWAP_REGS) {
-		sc->sc_regmap[PCF8584_S1] = PCF8584_S0;
-		sc->sc_regmap[PCF8584_S0] = PCF8584_S1;
-	} else {
-		sc->sc_regmap[PCF8584_S0] = PCF8584_S0;
-		sc->sc_regmap[PCF8584_S1] = PCF8584_S1;
-	}
-	if (flags & NEED_DELAY)
-		sc->sc_delay = 1;
-	else
-		sc->sc_delay = 0;
 	sc->sc_clock = clock;
 	sc->sc_addr = addr;
 
 	pcfiic_init(sc);
 
-	if (sc->sc_master)
+	if (sc->sc_has_mux)
 		pcfiic_choose_bus(sc, 0);
 
 	iic_tag_init(&sc->sc_i2c);
@@ -123,7 +105,7 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 	if (sc->sc_poll)
 		flags |= I2C_F_POLL;
 
-	if (sc->sc_master)
+	if (sc->sc_has_mux)
 		pcfiic_choose_bus(sc, addr >> 7);
 
 	/*
@@ -234,6 +216,14 @@ pcfiic_recv(struct pcfiic_softc *sc, u_int8_t addr, u_int8_t *buf, size_t len,
 	return (err);
 }
 
+static inline void
+pcfiic_delay(struct pcfiic_softc *sc)
+{
+	if (sc->sc_delay) {
+		delay(sc->sc_delay);
+	}
+}
+
 u_int8_t
 pcfiic_read(struct pcfiic_softc *sc, bus_size_t r)
 {
@@ -242,8 +232,7 @@ pcfiic_read(struct pcfiic_softc *sc, bus_size_t r)
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], 1,
 	    BUS_SPACE_BARRIER_READ);
 	val = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r]);
-	if (sc->sc_delay)
-		delay(10);
+	pcfiic_delay(sc);
 	return val;
 }
 
@@ -251,20 +240,19 @@ void
 pcfiic_write(struct pcfiic_softc *sc, bus_size_t r, u_int8_t v)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], v);
-	if (sc->sc_delay)
-		delay(10);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, PCF8584_S1, 1,
+	pcfiic_delay(sc);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[PCF8584_S1], 1,
 	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ);
-	(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCF8584_S1);
-	if (sc->sc_delay)
-		delay(10);
+	(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+	    sc->sc_regmap[PCF8584_S1]);
+	pcfiic_delay(sc);
 }
 
 void
 pcfiic_choose_bus(struct pcfiic_softc *sc, u_int8_t bus)
 {
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh2, 0, bus);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh2, 0, 1,
+	bus_space_write_1(sc->sc_iot, sc->sc_mux_ioh, 0, bus);
+	bus_space_barrier(sc->sc_iot, sc->sc_mux_ioh, 0, 1,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
