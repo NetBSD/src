@@ -1,4 +1,7 @@
-/*	$NetBSD: pcf8584reg.h,v 1.3 2025/01/05 22:11:18 andvar Exp $ */
+/*	$NetBSD: pcf8584reg.h,v 1.4 2026/07/09 14:14:57 thorpej Exp $ */
+
+#ifndef _DEV_IC_PCF8584REG_H_
+#define	_DEV_IC_PCF8584REG_H_
 
 /* Written by Tobias Nygren. Released into the public domain. */
 
@@ -48,3 +51,5 @@
 #define PCF8584_CMD_IDLE        (PCF8584_CTRL_PIN | PCF8584_CTRL_ESO | \
     PCF8584_CTRL_ACK)
 #define PCF8584_CMD_NAK (PCF8584_CTRL_ESO)
+
+#endif /* _DEV_IC_PCF8584REG_H_ */
