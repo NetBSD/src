@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584var.h,v 1.7 2026/02/01 10:50:23 jdc Exp $	*/
+/*	$NetBSD: pcf8584var.h,v 1.8 2026/07/09 14:14:57 thorpej Exp $	*/
 /*	$OpenBSD: pcf8584var.h,v 1.5 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -16,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _DEV_IC_PCF8584VAR_H_
+#define	_DEV_IC_PCF8584VAR_H_
 
 struct pcfiic_softc {
 	device_t		sc_dev;
@@ -40,3 +43,5 @@ int	pcfiic_intr(void *);
 /* Quirks */
 #define SWAP_REGS	0x01
 #define NEED_DELAY	0x02
+
+#endif /* _DEV_IC_PCF8584VAR_H_ */
