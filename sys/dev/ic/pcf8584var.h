@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584var.h,v 1.9 2026/07/09 14:48:42 thorpej Exp $	*/
+/*	$NetBSD: pcf8584var.h,v 1.10 2026/07/09 14:55:03 thorpej Exp $	*/
 /*	$OpenBSD: pcf8584var.h,v 1.5 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -31,8 +31,8 @@ struct pcfiic_softc {
 	u_int8_t		sc_regmap[2];
 
 	bool			sc_has_mux;
+	bool			sc_poll;
 
-	int			sc_poll;
 	int			sc_delay;
 
 	struct i2c_controller	sc_i2c;
