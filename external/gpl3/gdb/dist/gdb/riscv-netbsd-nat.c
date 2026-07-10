@@ -131,9 +131,7 @@ riscv_nbsd_nat_target::store_registers (struct regcache *regcache,
 
 /* Initialize RISC-V NetBSD native support.  */
 
-void _initialize_riscv_nbsd_nat ();
-void
-_initialize_riscv_nbsd_nat ()
+INIT_GDB_FILE (riscv_nbsd_nat)
 {
   add_inf_child_target (&the_riscv_nbsd_nat_target);
 

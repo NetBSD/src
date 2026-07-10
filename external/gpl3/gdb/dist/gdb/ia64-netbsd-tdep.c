@@ -34,8 +34,8 @@ ia64nbsd_elf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 }
 
 
-void
-_initialize_ia64nbsd_tdep ()
+
+INIT_GDB_FILE (ia64nbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_ia64, 0, GDB_OSABI_NETBSD,
 			  ia64nbsd_elf_init_abi);

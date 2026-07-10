@@ -221,9 +221,7 @@ riscv_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 #endif
 }
 
-void _initialize_riscv_nbsd_tdep ();
-void
-_initialize_riscv_nbsd_tdep ()
+INIT_GDB_FILE (riscv_nbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_riscv, 0, GDB_OSABI_NETBSD,
 			  riscv_nbsd_init_abi);
