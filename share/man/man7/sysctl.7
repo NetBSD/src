@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.172 2026/05/01 07:19:45 kre Exp $
+.\"	$NetBSD: sysctl.7,v 1.173 2026/07/10 03:27:57 kre Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd April 23, 2026
+.Dd July 10, 2026
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -2467,12 +2467,16 @@ privilege may change the value.
 .It user.bc_dim_max	integer	no
 .It user.bc_scale_max	integer	no
 .It user.bc_string_max	integer	no
+.It user.built	string	no
 .It user.coll_weights_max	integer	no
 .It user.cs_path	string	no
 .It user.expr_nest_max	integer	no
 .It user.line_max	integer	no
 .It user.posix2_c_bind	integer	no
 .It user.posix2_c_dev	integer	no
+.It user.osrelease	string	no
+.It user.osrevision	integer	no
+.It user.ostype	string	no
 .It user.posix2_char_term	integer	no
 .It user.posix2_fort_dev	integer	no
 .It user.posix2_fort_run	integer	no
@@ -2505,6 +2509,16 @@ utility.
 The maximum string length in the
 .Xr bc 1
 utility.
+.It Li user.built Pq Dv USER_BUILDTIME
+A string in the format
+.Dq Li "YYYY-MM-DD\ hh:mm:ss\ UTC[\ !]"
+representing the date and time (in Universal Co-ordinated Time)
+at which the user parts of the system, and libc in particular,
+were built.
+If the optional trailing exclamation mark
+.Pq Sq \&!
+appears, the string represents the date and time used as the
+basis for a reproducible build.
 .It Li user.coll_weights_max ( Dv USER_COLL_WEIGHTS_MAX )
 The maximum number of weights that can be assigned to any entry of
 the LC_COLLATE order keyword in the locale definition file.
@@ -2520,6 +2534,22 @@ utility.
 .It Li user.line_max ( Dv USER_LINE_MAX )
 The maximum length in bytes of a text-processing utility's input
 line.
+.It Li user.osrelease Pq Dv USER_OSRELEASE
+This is a string, analagous to
+.Li kern.osrelease
+which contains the release sting for the utilities and libraries,
+and libc in particular.
+.It Li user.osrevision Pq Dv USER_OSREVISION
+An integer, analagous to
+.Li kern.osrevision
+giving the library and utility release version.
+.It Li user.ostype Pq Dv USER_OSTYPE
+A string giving the name of the Operating System.
+On
+.Nx
+it will always be
+.\" nb: the following is *not* .Nx - the value is NetBSD whatever Nx becomes.
+.Dq Li NetBSD .
 .It Li user.posix2_char_term ( Dv USER_POSIX2_CHAR_TERM )
 Return 1 if the system supports at least one terminal type capable of
 all operations described in
