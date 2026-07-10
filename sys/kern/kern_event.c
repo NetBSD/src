@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.153 2026/07/10 14:22:20 riastradh Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.154 2026/07/10 14:32:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.153 2026/07/10 14:22:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.154 2026/07/10 14:32:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -147,7 +147,7 @@ knote_alloc(bool sleepok)
 	struct knote_impl *ki;
 
 	ki = kmem_zalloc(sizeof(*ki), sleepok ? KM_SLEEP : KM_NOSLEEP);
-	if (ki == NULL)
+	if (!sleepok && __predict_false(ki == NULL))
 		return NULL;
 	mutex_init(&ki->ki_foplock, MUTEX_DEFAULT, IPL_NONE);
 
