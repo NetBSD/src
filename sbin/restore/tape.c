@@ -263,7 +263,7 @@ setinput(const char *source)
 		}
 		pipein++;
 	}
-	(void) strcpy(magtape, source);
+	(void) strlcpy(magtape, source, sizeof(magtape));
 }
 
 void
