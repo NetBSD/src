@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.241 2025/07/13 20:13:39 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.242 2026/07/10 03:27:57 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -889,6 +889,10 @@ struct kinfo_vmentry {
 #define	USER_STREAM_MAX		19	/* int: POSIX2_STREAM_MAX */
 #define	USER_TZNAME_MAX		20	/* int: _POSIX_TZNAME_MAX */
 #define	USER_ATEXIT_MAX		21	/* int: {ATEXIT_MAX} */
+#define	USER_OSTYPE		22	/* str: "NetBSD" */
+#define	USER_OSREVISION		23	/* int: __NetBSD_Version__ */
+#define	USER_OSRELEASE		24	/* str: "11.0_RC6" (or whatever) */
+#define	USER_BUILDTIME		25	/* str: YYYY-MM-DD hh:mm:ss UTC [!] */
 
 /*
  * CTL_DDB definitions

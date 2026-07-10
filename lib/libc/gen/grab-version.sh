@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: grab-version.sh,v 1.1 2026/07/10 03:14:13 kre Exp $
+# $NetBSD: grab-version.sh,v 1.2 2026/07/10 03:27:57 kre Exp $
 
 # Free unlicensed public-domain code.
 # Found under a bush behind an outdoor dunny in Wagga Wagga (mid 1800's).
@@ -11,8 +11,9 @@ case "$#" in
 *)	printf >&2 'Usage: %s NETBSDSRCDIR Out-File\n' "${0##*/}"; exit 1;;
 esac
 
-GEN='$NetBSD: grab-version.sh,v 1.1 2026/07/10 03:14:13 kre Exp $'
-GEN=${GEN#NetBSD: }
+GEN='$NetBSD: grab-version.sh,v 1.2 2026/07/10 03:27:57 kre Exp $'
+GEN=${GEN#'$NetBSD: '}
+GEN=${GEN%' Exp $'}
 
 VERSION_FILE="${1}/sys/sys/param.h"
 OUTPUT="${2}"

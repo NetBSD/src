@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.40 2026/05/01 07:19:45 kre Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.41 2026/07/10 03:27:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.40 2026/05/01 07:19:45 kre Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.41 2026/07/10 03:27:57 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,8 @@ __RCSID("$NetBSD: sysctl.c,v 1.40 2026/05/01 07:19:45 kre Exp $");
 #include <time.h>
 #include <unistd.h>
 #include "extern.h"
+
+#include "user-version.h"
 
 #ifdef __weak_alias
 __weak_alias(sysctl,_sysctl)
@@ -122,21 +124,22 @@ user_sysctl(const int *name, unsigned int namelen,
 	.sysctl_desc = X(d),					\
 	}
 
+#define _STRING(s, n, v, d) {					\
+	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_PERMANENT|CTLTYPE_STRING, \
+	.sysctl_size = sizeof(v),				\
+	.sysctl_name = (s),					\
+	.sysctl_num = (n),					\
+	.sysctl_data = __UNCONST(v),				\
+	.sysctl_desc = X(d),					\
+	}
+
 	/*
 	 * the nodes under the "user" node
 	 */
 	static const struct sysctlnode sysctl_usermib[] = {
-		{
-			.sysctl_flags = SYSCTL_VERSION|CTLFLAG_PERMANENT|
-				CTLTYPE_STRING,
-			.sysctl_size = sizeof(_PATH_STDPATH),
-			.sysctl_name = "cs_path",
-			.sysctl_num = USER_CS_PATH,
-			.sysctl_data = __UNCONST(_PATH_STDPATH),
-			.sysctl_desc = __UNCONST(
-				"A value for the PATH environment variable "
-				"that finds all the standard utilities"),
-		},
+		_STRING("cs_path", USER_CS_PATH, _PATH_STDPATH,
+			"A value for the PATH environment variable "
+			"that finds all the standard utilities"),
 		_INT("bc_base_max", USER_BC_BASE_MAX, BC_BASE_MAX,
 		     "The maximum ibase/obase values in the bc(1) utility"),
 		_INT("bc_dim_max", USER_BC_DIM_MAX, BC_DIM_MAX,
@@ -239,8 +242,19 @@ user_sysctl(const int *name, unsigned int namelen,
 		_INT("atexit_max", USER_ATEXIT_MAX, -1,
 		     "The maximum number of functions that may be registered "
 		     "with atexit(3)"),
+		_STRING("ostype", USER_OSTYPE, USER_OSTYPE_VALUE,
+		     "The name of the operating system"),
+		_INT("osrevision", USER_OSREVISION, USER_OSREVISION_VALUE,
+		     "A numeric representation of the OS version"),
+		_STRING("osrelease", USER_OSRELEASE, USER_OSRELEASE_VALUE,
+		     "The system version of the libraries & utilities"),
+		_STRING("built", USER_BUILDTIME, USER_BUILDTIME_VALUE,
+		     "The date & time (UTC) at which libc was last built "
+		     "- if with a trailing '!' the reproducible build time"),
 	};
+#undef X
 #undef _INT
+#undef _STRING
 
 	static const int clen = sizeof(sysctl_usermib) /
 		sizeof(sysctl_usermib[0]);
