@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.42 2026/07/10 05:04:34 kre Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.43 2026/07/10 21:54:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.42 2026/07/10 05:04:34 kre Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.43 2026/07/10 21:54:30 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,10 +51,6 @@ __RCSID("$NetBSD: sysctl.c,v 1.42 2026/07/10 05:04:34 kre Exp $");
 #include <time.h>
 #include <unistd.h>
 #include "extern.h"
-
-#ifdef INCL_USER_OSVERSIONS
-#include "user-version.h"
-#endif
 
 #ifdef __weak_alias
 __weak_alias(sysctl,_sysctl)
@@ -245,13 +241,19 @@ user_sysctl(const int *name, unsigned int namelen,
 		     "The maximum number of functions that may be registered "
 		     "with atexit(3)"),
 
-#ifdef INCL_USER_OSVERSIONS
+#ifdef USER_OSTYPE_VALUE
 		_STRING("ostype", USER_OSTYPE, USER_OSTYPE_VALUE,
 		     "The name of the operating system"),
+#endif
+#ifdef USER_OSREVISION_VALUE
 		_INT("osrevision", USER_OSREVISION, USER_OSREVISION_VALUE,
 		     "A numeric representation of the OS version"),
+#endif
+#ifdef USER_OSRELEASE_VALUE
 		_STRING("osrelease", USER_OSRELEASE, USER_OSRELEASE_VALUE,
 		     "The system version of the libraries & utilities"),
+#endif
+#ifdef USER_BUILDTIME_VALUE
 		_STRING("built", USER_BUILDTIME, USER_BUILDTIME_VALUE,
 		     "The date & time (UTC) at which libc was last built "
 		     "- if with a trailing '!' the reproducible build time"),
