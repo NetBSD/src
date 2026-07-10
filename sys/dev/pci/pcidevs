@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1539 2026/07/05 08:30:30 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1540 2026/07/10 18:46:47 rkujawa Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -9463,6 +9463,10 @@ product REALTEK RTL8821CE	0xc821	RTL8821CE 802.11ac PCIe NIC
 /* Red Hat products */
 product REDHAT PPB		0x0001	Qemu PCI-PCI
 product REDHAT QXL		0x0100	QXL Video
+
+/* Rendition products */
+product RENDITION V1000		0x0001	Verite V1000
+product RENDITION V2X00		0x2000	Verite V2100/V2200
 
 /* Renesas products */
 product RENESAS SH7780		0x0002	SH7780 PCI Controller
