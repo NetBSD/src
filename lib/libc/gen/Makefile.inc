@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.229 2026/07/10 05:52:43 kre Exp $
+#	$NetBSD: Makefile.inc,v 1.230 2026/07/10 21:54:30 kre Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -212,16 +212,14 @@ CPPFLAGS.isctype.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.tolower_.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
 
-CPPFLAGS.sysctl.c+=	-I${.CURDIR} -DINCL_USER_OSVERSIONS=1
 
 errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
 
-sysctl.d: user-version.h
+USER_VERSIONS!= DATE=${TOOL_DATE} SED=${TOOL_SED}			\
+	$${HOST_SH:-sh} ${LIBCDIR}/gen/grab-version.sh "${NETBSDSRCDIR}"
 
-user-version.h! grab-version.sh ${NETBSDSRCDIR}/sys/sys/param.h
-	DATE=${TOOL_DATE} SED=${TOOL_SED} $${HOST_SH:-sh}		\
-	${LIBCDIR}/gen/grab-version.sh "${NETBSDSRCDIR}" user-version.h
+CPPFLAGS.sysctl.c+=${USER_VERSIONS}
 
 LINTFLAGS.rb.c += -X 231	# XXX: marked as unused already why?
 LINTFLAGS.siglist.c += -X 351	# XXX: renames
