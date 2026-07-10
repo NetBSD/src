@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe_ondemand.sh,v 1.1 2026/06/24 07:13:44 yamaguchi Exp $
+#	$NetBSD: t_pppoe_ondemand.sh,v 1.2 2026/07/10 22:24:02 andvar Exp $
 #
 # Copyright (c) Internet Initiative Japan Inc.
 # All rights reserved.
@@ -158,9 +158,9 @@ pppoe_ondemand_body()
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 
 	#
-	# Test reset the session after PADT recieved
+	# Test reset the session after PADT received
 	#
-	echo "Test reset the session after PADT recieved"
+	echo "Test reset the session after PADT received"
 
 	# Set a generous missed count to prevent accidental disconnects
 	export RUMP_SERVER=$CLIENT
