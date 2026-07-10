@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.139 2025/11/23 22:48:26 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.140 2026/07/10 15:11:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.139 2025/11/23 22:48:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.140 2026/07/10 15:11:25 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.139 2025/11/23 22:48:26 riastradh Exp
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
+#include <machine/frame.h>
 #include <machine/pio.h>
 #include <machine/specialreg.h>
 
@@ -844,9 +845,21 @@ cpu_probe_fpu(struct cpu_info *ci)
 	/* Get component offsets and sizes for the save area */
 	for (i = XSAVE_YMM_Hi128; i < __arraycount(x86_xsave_offsets); i++) {
 		if (x86_xsave_features & __BIT(i)) {
+			size_t size;
 			x86_cpuid2(0x0d, i, descs);
 			x86_xsave_offsets[i] = descs[1];
 			x86_xsave_sizes[i] = descs[0];
+
+			/*
+			 * Verify the total XSAVE size requires no
+			 * userland ABI change.
+			 */
+			size = x86_xsave_offsets[i] + x86_xsave_sizes[i];
+			if (size > XSAVE_MAX_BYTES) {
+				panic("XSAVE size >=%zu"
+				    " exceeds ABI maximum %zu",
+				    size, (size_t)XSAVE_MAX_BYTES);
+			}
 		}
 	}
 }

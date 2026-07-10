@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.221 2026/04/07 22:22:11 andvar Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.222 2026/07/10 15:11:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -182,16 +182,82 @@
 	"b\077"		"X\0"
 
 /*
- * Known FPU bits, only these get enabled. The save area is sized for all the
- * fields below.
+ * XCR0_FPU: Known FPU bits, only these get enabled.  The save area is
+ * sized for all the fields below.
+ *
+ * Any bits added to this will expand the extended CPU state that we
+ * may have to save and restore with XSAVE for userland processes,
+ * either in the kernel when preempting threads, or on the user's stack
+ * when delivering a signal.
+ *
+ * The kernel can dyanmically allocate larger sizes (on amd64, anyway,
+ * though not currently on i386 or Xen PV).  But if the XSAVE area is
+ * expanded so much that it and mcontext_t exceed MINSIGSTKSZ
+ * (currently 8192), a userland ABI change and compatibility layer is
+ * required to accommodate that, because existing programs may use
+ * sigaltstack(2) with stacks sized for the old MINSIGSTKSZ.
+ *
+ * The current stack requirement is 3160 bytes of space plus up to
+ * 63+15+8=86 bytes of padding for alignment (could be reduced by
+ * around 512 bytes by having mcontext_t overlap with the XSAVE area a
+ * little in machdep.c cpu_getmcontext_xsave, but we don't do that
+ * right now):
+ *
+ * - mcontext_t (728 bytes: general registers and 512-byte FXSAVE area)
+ * - XSAVE header (576 bytes: 512 bytes of FXSAVE, 64 bytes of metadata)
+ * - AVX state: ymm0..ymm15 high 128-bit halves (256 bytes)
+ * - AVX-512 state:
+ *   . k0..k7 opmask registers (64 bytes)
+ *   . zmm0..zmm15 high 256-bit halves (512 bytes)
+ *   . zmm16..zmm31 registers (1024 bytes)
+ *
+ * Likely future extensions that would expand the state beyond
+ * MINSIGSTKSZ:
+ *
+ * - AMX (Advanced Matrix Extensions) and ACE (AI Compute Extensions)
+ *   state:
+ *   . [AMX/ACE] TILECFG (64 bytes)
+ *   . [AMX/ACE] TILEDATA (8192 bytes)
+ *   . [ACE] SCALEDATA (128 bytes)
+ *
+ * As a precaution against ABI breakage, x86/identcpu.c will panic at
+ * boot if the XSAVE state size enabled in XCR0 exceeds MINSIGSTKSZ.
+ *
+ * References:
+ *
+ * - Intel 64 and IA-32 Architectures Software Developer's Manual,
+ *   Volume 1: Basic Architecture, Intel, Order Number: 253665-092US,
+ *   June 2026, Sec. 13.1 `XSAVE-Supported Features and State-Component
+ *   Bitmaps', pp. 13-1 -- 13-2.
+ *   https://web.archive.org/web/20260709150417/https://cdrdv2-public.intel.com/922477/253665-092-sdm-vol-1.pdf
+ *
+ * - AI Compute Extensions (ACE) Specification, x86 Ecosystem Advisory
+ *   Group, Version 1.15, 2026-05-15, Sec 15.4.1 `XSAVE State
+ *   Components', p. 86.
+ *   https://web.archive.org/web/20260619062626/https://x86ecosystem.org/wp-content/uploads/2026/06/ACE_v1_Specification_public_1_15.pdf
  */
 #if defined __i386__ || defined XENPV /* XXX XENPV PR kern/59371 */
 #define XCR0_FPU	(XCR0_X87 | XCR0_SSE | XCR0_YMM_Hi128 | \
 			 XCR0_Opmask | XCR0_ZMM_Hi256 | XCR0_Hi16_ZMM)
 #else
 #define XCR0_FPU	(XCR0_X87 | XCR0_SSE | XCR0_YMM_Hi128 | \
-			 XCR0_Opmask | XCR0_ZMM_Hi256 | XCR0_Hi16_ZMM | \
-			 XCR0_TILECFG | XCR0_TILEDATA)
+			 XCR0_Opmask | XCR0_ZMM_Hi256 | XCR0_Hi16_ZMM)
+#endif
+
+/*
+ * Maximum size of XSAVE state that we can handle without ABI changes
+ * to userland.  Must match usage in cpu_getmcontext.  Extra 8 is neeed
+ * on amd64 to have space for return address in 16-byte-aligned stack
+ * frame.
+ */
+#ifdef __x86_64__
+#define	XSAVE_MAX_BYTES							      \
+	(MINSIGSTKSZ - (8 + STACK_ALIGNBYTES +				      \
+	    sizeof(struct sigframe_siginfo) + (XSAVE_ALIGN - 1)))
+#else
+#define	XSAVE_MAX_BYTES							      \
+	(MINSIGSTKSZ - (STACK_ALIGNBYTES +				      \
+	    sizeof(struct sigframe_siginfo) + (XSAVE_ALIGN - 1)))
 #endif
 
 /*

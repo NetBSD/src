@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.379 2026/02/22 12:14:56 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.380 2026/07/10 15:11:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.379 2026/02/22 12:14:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.380 2026/07/10 15:11:25 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -328,6 +328,9 @@ int dumpsys_seg(paddr_t, paddr_t);
 void init_bootspace(void);
 void init_slotspace(void);
 void init_x86_64(paddr_t);
+
+static int cpu_getmcontext_xsave(struct lwp *, mcontext_t *, unsigned *,
+    const struct xsave_header *, size_t, struct xsave_header *);
 
 /*
  * Machine-dependent startup code
@@ -594,6 +597,9 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigframe_siginfo *fp, frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
+	const struct xsave_header *xsavebuf = NULL;
+	size_t xsavelen = 0;
+	struct xsave_header *user_xsave = NULL;
 	char *sp;
 
 	KASSERT(mutex_owned(p->p_lock));
@@ -604,16 +610,67 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
-	if (onstack)
+	if (onstack) {
+		KASSERT(l->l_sigstk.ss_size >= MINSIGSTKSZ);
 		sp = ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
-	else
+	} else {
 		/* AMD64 ABI 128-bytes "red zone". */
 		sp = (char *)tf->tf_rsp - 128;
+	}
 
+	/*
+	 * The maximum amount of space we might use, including padding
+	 * for alignment, had better fit in MINSIGSTKSZ.
+	 *
+	 * If this changes because you have increased XSAVE_MAX_BYTES,
+	 * you need to work out the ABI change for MINSIGSTKSZ.
+	 */
+	__CTASSERT(8 + STACK_ALIGNBYTES + sizeof(struct sigframe_siginfo) +
+	    (XSAVE_ALIGN - 1) + XSAVE_MAX_BYTES <= MINSIGSTKSZ);
+
+	/*
+	 * Find whether we need to allocate a separate XSAVE area,
+	 * because the user program has used extended CPU state beyond
+	 * the x87/SSE registers, or whether we can get by with just an
+	 * FXSAVE area.
+	 */
+	if (process_xsave_needed_p(l)) {
+		process_read_xsave(l, &xsavebuf, &xsavelen);
+		KASSERT(xsavebuf != NULL);
+		KASSERT(xsavelen <= XSAVE_MAX_BYTES);
+
+		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+		KASSERT(!onstack ||
+		    sp - (char *)l->l_sigstk.ss_sp >= xsavelen);
+		sp -= xsavelen;
+
+		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+		KASSERT(!onstack ||
+		    sp - (char *)l->l_sigstk.ss_sp >= XSAVE_ALIGN - 1);
+		sp = (char *)((uintptr_t)sp & ~(XSAVE_ALIGN - 1));
+
+		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+		KASSERT(((uintptr_t)sp & (XSAVE_ALIGN - 1)) == 0);
+		user_xsave = (void *)sp;
+	}
+
+	/*
+	 * Reserve space for a struct sigframe_siginfo.  The first
+	 * member is a return address, as if we are entering a
+	 * procedure with a CALL instruction with a stack frame aligned
+	 * to a multiple of 16 bytes; the rest of the structure is that
+	 * stack frame.  So make sure the structure starts at an
+	 * address congruent to 8 modulo 16.
+	 */
+	KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+	KASSERT(!onstack || (size_t)(sp - (char *)l->l_sigstk.ss_sp) >=
+	    8 + STACK_ALIGNBYTES + sizeof(struct sigframe_siginfo));
 	sp -= sizeof(struct sigframe_siginfo);
 	/* Round down the stackpointer to a multiple of 16 for the ABI. */
 	fp = (struct sigframe_siginfo *)(((unsigned long)sp &
 		~STACK_ALIGNBYTES) - 8);
+	KASSERT(!onstack || (char *)fp >= (char *)l->l_sigstk.ss_sp);
+	KASSERT(((uintptr_t)fp & STACK_ALIGNBYTES) == 8);
 
 	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (uint64_t)ps->sa_sigdesc[sig].sd_tramp;
@@ -627,8 +684,21 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+
+	/*
+	 * If we have to use XSAVE, copy out that area separately --
+	 * and be ready to bail if it failed.
+	 */
+	if (xsavebuf) {
+		error = cpu_getmcontext_xsave(l, &frame.sf_uc.uc_mcontext,
+		    &frame.sf_uc.uc_flags, xsavebuf, xsavelen, user_xsave);
+		if (error != 0)
+			goto relock;
+	}
+
 	/* Copyout all the fp regs, the signal handler might expect them. */
 	error = copyout(&frame, fp, sizeof frame);
+relock:
 	mutex_enter(p->p_lock);
 
 	if (error != 0) {
@@ -2123,8 +2193,50 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
 	*flags |= _UC_TLSBASE;
 
-	process_read_fpregs_xmm(l, (struct fxsave *)&mcp->__fpregs);
+	process_read_fpregs_xmm(l, (struct fxsave *)&mcp->__fpregs.__fxsave);
 	*flags |= _UC_FPU;
+}
+
+/*
+ * cpu_getmcontext_xsave(l, mcp, flags, xsavebuf, xsavelen, user_xsave)
+ *
+ *	Copy out xsavebuf[0..xsavelen) to user_xsave, set mcp to point
+ *	there, and set _UC_XSAVE in flags.  Caller must have already
+ *	used cpu_getmcontext to initialize mcp's FXSAVE area.
+ *
+ *	May fail if the copyout fails.
+ */
+static int
+cpu_getmcontext_xsave(struct lwp *l, mcontext_t *mcp, unsigned int *flags,
+    const struct xsave_header *xsavebuf, size_t xsavelen,
+    struct xsave_header *user_xsave)
+{
+	int error;
+
+	KASSERT(*flags & _UC_FPU);
+
+	/*
+	 * Copy out the XSAVE area.
+	 */
+	error = copyout(xsavebuf, user_xsave, xsavelen);
+	if (error != 0)
+		return error;
+
+	/*
+	 * Record a pointer to the real XSAVE area in the
+	 * architecturally unused bits mcontext_t's FXSAVE area.
+	 */
+	mcp->__fpregs.__xsave.__xsaveptr = (__greg_t)(uintptr_t)user_xsave;
+	mcp->__fpregs.__xsave.__xsavelen = (__greg_t)xsavelen;
+
+	/*
+	 * Set the _UC_XSAVE flag so cpu_setmcontext will be able to
+	 * restore the full state from the XSAVE area.
+	 */
+	*flags |= _UC_XSAVE;
+
+	/* Success! */
+	return 0;
 }
 
 int
@@ -2133,15 +2245,43 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
 	struct proc *p = l->l_proc;
+	struct xsave_header *xsavebuf = NULL;
+	size_t xsavelen = 0;
 	int error;
 	int64_t rflags;
 
 	CTASSERT(sizeof (mcontext_t) == 26 * 8 + 8 + 512);
 
+	/*
+	 * If there's an external XSAVE area, copy it in and validate
+	 * it before we irreversibly modify the trapframe.
+	 *
+	 * We could check the length against the state components
+	 * included, but we currently don't: if it's truncated, it will
+	 * be as if the truncated part were zero-filled -- this is
+	 * implemented in process_write_xsave, called a little below.
+	 */
+	if ((flags & _UC_XSAVE) != 0) {
+		const struct xsave_header *user_xsave =
+		    (void *)(uintptr_t)mcp->__fpregs.__xsave.__xsaveptr;
+
+		xsavelen = mcp->__fpregs.__xsave.__xsavelen;
+		error = process_verify_xsavelen(l, xsavelen);
+		if (error != 0)
+			goto out;
+		xsavebuf = kmem_alloc(xsavelen, KM_SLEEP);
+		error = copyin(user_xsave, xsavebuf, xsavelen);
+		if (error != 0)
+			goto out;
+		error = process_verify_xsave(l, xsavebuf, xsavelen);
+		if (error != 0)
+			goto out;
+	}
+
 	if ((flags & _UC_CPU) != 0) {
 		error = cpu_mcontext_validate(l, mcp);
 		if (error != 0)
-			return error;
+			goto out;
 
 		tf->tf_rdi  = gr[_REG_RDI];
 		tf->tf_rsi  = gr[_REG_RSI];
@@ -2175,8 +2315,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_md.md_flags |= MDL_IRET;
 	}
 
-	if ((flags & _UC_FPU) != 0)
-		process_write_fpregs_xmm(l, (const struct fxsave *)&mcp->__fpregs);
+	if ((flags & _UC_XSAVE) != 0) {
+		KASSERT(xsavebuf != NULL);
+		process_write_xsave(l, xsavebuf, xsavelen);
+	} else if ((flags & _UC_FPU) != 0) {
+		process_write_fpregs_xmm(l,
+		    (const struct fxsave *)&mcp->__fpregs.__fxsave);
+	}
 
 	if ((flags & _UC_TLSBASE) != 0)
 		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
@@ -2188,7 +2333,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
-	return 0;
+	/* Success! */
+	error = 0;
+
+out:	if (xsavebuf)
+		kmem_free(xsavebuf, xsavelen);
+	return error;
 }
 
 int

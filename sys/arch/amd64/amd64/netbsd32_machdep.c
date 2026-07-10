@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.142 2025/04/24 23:51:03 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.143 2026/07/10 15:11:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.142 2025/04/24 23:51:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.143 2026/07/10 15:11:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -110,6 +110,9 @@ static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
 int check_sigcontext32(struct lwp *, const struct netbsd32_sigcontext *);
 void netbsd32_buildcontext(struct lwp *, struct trapframe *, void *,
     sig_t, int);
+
+static int cpu_getmcontext32_xsave(struct lwp *, mcontext32_t *, unsigned *,
+    const struct xsave_header *, size_t, struct xsave_header *);
 
 #ifdef EXEC_AOUT
 /*
@@ -219,6 +222,10 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = sa->sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
 	stack_t * const ss = &l->l_sigstk;
+	const struct xsave_header *xsavebuf = NULL;
+	size_t xsavelen = 0;
+	struct xsave_header *user_xsave = NULL;
+	char *sp;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -226,15 +233,59 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    (sa->sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct netbsd32_sigframe_siginfo *)
-		    ((char *)ss->ss_sp + ss->ss_size);
-	else
-		fp = (struct netbsd32_sigframe_siginfo *)tf->tf_rsp;
+	if (onstack) {
+		KASSERT(ss->ss_size >= MINSIGSTKSZ);
+		sp = (char *)ss->ss_sp + ss->ss_size;
+	} else {
+		sp = (char *)tf->tf_rsp;
+	}
 
+	/*
+	 * The maximum amount of space we might use, including padding
+	 * for alignment, had better fit in MINSIGSTKSZ.
+	 *
+	 * If this changes because you have increased XSAVE_MAX_BYTES,
+	 * you need to work out the ABI change for MINSIGSTKSZ.
+	 */
+	__CTASSERT(STACK_ALIGNBYTES32 +
+	    sizeof(struct netbsd32_sigframe_siginfo) +
+	    (XSAVE_ALIGN - 1) + XSAVE_MAX_BYTES <= MINSIGSTKSZ);
+
+	/*
+	 * Find whether we need to allocate a separate XSAVE area,
+	 * because the user program has used extended CPU state beyond
+	 * the x87/SSE registers, or whether we can get by with just an
+	 * FXSAVE area.
+	 */
+	if (process_xsave_needed_p(l)) {
+		process_read_xsave(l, &xsavebuf, &xsavelen);
+		KASSERT(xsavebuf != NULL);
+		KASSERT(xsavelen <= XSAVE_MAX_BYTES);
+
+		KASSERT(!onstack || sp >= (char *)ss->ss_sp);
+		KASSERT(!onstack ||
+		    (size_t)(sp - (char *)ss->ss_sp) >= xsavelen);
+		sp -= xsavelen;
+
+		KASSERT(!onstack || sp >= (char *)ss->ss_sp);
+		KASSERT(!onstack || (size_t)(sp - (char *)ss->ss_sp) >=
+		    XSAVE_ALIGN - 1);
+		sp = (char *)((uintptr_t)sp & ~(XSAVE_ALIGN - 1));
+
+		KASSERT(!onstack || sp >= (char *)ss->ss_sp);
+		KASSERT(((uintptr_t)sp & (XSAVE_ALIGN - 1)) == 0);
+		user_xsave = (void *)sp;
+	}
+
+	KASSERT(!onstack || sp >= (char *)ss->ss_sp);
+	KASSERT(!onstack || (size_t)(sp - (char *)ss->ss_sp) >=
+	    STACK_ALIGNBYTES32 + sizeof(struct netbsd32_sigframe_siginfo));
+	fp = (struct netbsd32_sigframe_siginfo *)sp;
 	fp--;
 	fp = (struct netbsd32_sigframe_siginfo *)((uintptr_t)fp &
 	    ~STACK_ALIGNBYTES32);
+	KASSERT(!onstack || (char *)fp >= (char *)ss->ss_sp);
+	KASSERT(((uintptr_t)fp & STACK_ALIGNBYTES32) == 0);
 
 	/* Build stack frame for signal trampoline. */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
@@ -263,7 +314,20 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	mutex_exit(p->p_lock);
 	cpu_getmcontext32(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+
+	/*
+	 * If we have to use XSAVE, copy out that area separately --
+	 * and be ready to bail if it failed.
+	 */
+	if (xsavebuf) {
+		error = cpu_getmcontext32_xsave(l, &frame.sf_uc.uc_mcontext,
+		    &frame.sf_uc.uc_flags, xsavebuf, xsavelen, user_xsave);
+		if (error != 0)
+			goto relock;
+	}
+
 	error = copyout(&frame, fp, sizeof(frame));
+relock:
 	mutex_enter(p->p_lock);
 
 	if (error != 0) {
@@ -798,7 +862,36 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg32_t *gr = mcp->__gregs;
 	struct proc *p = l->l_proc;
+	struct xsave_header *xsavebuf = NULL;
+	size_t xsavelen = 0;
 	int error;
+
+	/*
+	 * If there's an external XSAVE area, copy it in and validate
+	 * it before we irreversibly modify the trapframe.
+	 *
+	 * We could check the length against the state components
+	 * included, but we currently don't: if it's truncated, it will
+	 * be as if the truncated part were zero-filled -- this is
+	 * implemented in process_write_xsave, called a little below.
+	 */
+	if ((flags & _UC_XSAVE) != 0) {
+		const __greg32_t xsaveptr =
+		    mcp->__fpregs.__fp_reg_set.__xsave.__xsaveptr;
+
+		xsavelen = mcp->__fpregs.__fp_reg_set.__xsave.__xsavelen;
+		error = process_verify_xsavelen(l, xsavelen);
+		if (error != 0)
+			goto out;
+		xsavebuf = kmem_alloc(xsavelen, KM_SLEEP);
+		error = copyin((const void *)(uintptr_t)xsaveptr, xsavebuf,
+		    xsavelen);
+		if (error != 0)
+			goto out;
+		error = process_verify_xsave(l, xsavebuf, xsavelen);
+		if (error != 0)
+			goto out;
+	}
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
@@ -832,7 +925,10 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
 	/* Restore floating point register context, if any. */
-	if ((flags & _UC_FPU) != 0) {
+	if ((flags & _UC_XSAVE) != 0) {
+		KASSERT(xsavebuf != NULL);
+		process_write_xsave(l, xsavebuf, xsavelen);
+	} else if ((flags & _UC_FPU) != 0) {
 		/* Assume fxsave context */
 		process_write_fpregs_xmm(l, (const struct fxsave *)
 		    &mcp->__fpregs.__fp_reg_set.__fp_xmm_state);
@@ -845,7 +941,12 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
-	return 0;
+	/* Success! */
+	error = 0;
+
+out:	if (xsavebuf)
+		kmem_free(xsavebuf, xsavelen);
+	return error;
 }
 
 void
@@ -890,6 +991,54 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	    &mcp->__fpregs.__fp_reg_set.__fp_xmm_state);
 	memset(&mcp->__fpregs.__fp_pad, 0, sizeof(mcp->__fpregs.__fp_pad));
 	*flags |= _UC_FXSAVE | _UC_FPU;
+}
+
+/*
+ * cpu_getmcontext32_xsave(l, mcp, flags, xsavebuf, xsavelen, user_xsave)
+ *
+ *	Copy out xsavebuf[0..xsavelen) to user_xsave, set mcp to point
+ *	there, and set _UC_XSAVE in flags.  Caller must have already
+ *	used cpu_getmcontext32 to initialize mcp's FXSAVE area.
+ *
+ *	May fail if the copyout fails.
+ */
+static int
+cpu_getmcontext32_xsave(struct lwp *l, mcontext32_t *mcp, unsigned int *flags,
+    const struct xsave_header *xsavebuf, size_t xsavelen,
+    struct xsave_header *user_xsave)
+{
+	int error;
+
+	KASSERT(*flags & _UC_FPU);
+	KASSERT(*flags & _UC_FXSAVE);
+	KASSERT((uintptr_t)user_xsave == (__greg32_t)(uintptr_t)user_xsave);
+	KASSERT(xsavelen == (__greg32_t)xsavelen);
+	__CTASSERT(XSAVE_MAX_BYTES <= ~(__greg32_t)0);
+
+	/*
+	 * Copy out the XSAVE area.
+	 */
+	error = copyout(xsavebuf, user_xsave, xsavelen);
+	if (error != 0)
+		return error;
+
+	/*
+	 * Record a pointer to the real XSAVE area in the
+	 * architecturally unused bits mcontext_t's FXSAVE area.
+	 */
+	mcp->__fpregs.__fp_reg_set.__xsave.__xsaveptr =
+	    (__greg32_t)(uintptr_t)user_xsave;
+	mcp->__fpregs.__fp_reg_set.__xsave.__xsavelen =
+	    (__greg32_t)xsavelen;
+
+	/*
+	 * Set the _UC_XSAVE flag so cpu_setmcontext will be able to
+	 * restore the full state from the XSAVE area.
+	 */
+	*flags |= _UC_XSAVE;
+
+	/* Success! */
+	return 0;
 }
 
 void
