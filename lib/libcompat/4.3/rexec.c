@@ -1,4 +1,4 @@
-/*	$NetBSD: rexec.c,v 1.16 2003/08/07 16:44:16 agc Exp $	*/
+/*	$NetBSD: rexec.c,v 1.17 2026/07/10 22:24:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexec.c,v 1.16 2003/08/07 16:44:16 agc Exp $");
+__RCSID("$NetBSD: rexec.c,v 1.17 2026/07/10 22:24:01 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -147,7 +147,7 @@ retry:
 		*fd2p = s3;
 	}
 	(void)write(s, name, strlen(name) + 1);
-	/* should public key encypt the password here */
+	/* should public key encrypt the password here */
 	(void)write(s, pass, strlen(pass) + 1);
 	(void)write(s, cmd, strlen(cmd) + 1);
 	if (read(s, &c, 1) != 1) {

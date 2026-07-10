@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.45 2026/07/03 00:44:29 rkujawa Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.46 2026/07/10 22:24:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm9000.c,v 1.45 2026/07/03 00:44:29 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm9000.c,v 1.46 2026/07/10 22:24:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -711,7 +711,7 @@ dme_receive(struct ifnet *ifp)
 				 * discard it and keep track of counters
 				 */
 				RX_DPRINTF(("dme_receive: "
-					"Error reciving frame\n"));
+					"Error receiving frame\n"));
 				if_statinc(ifp, if_ierrors);
 				continue;
 			}
