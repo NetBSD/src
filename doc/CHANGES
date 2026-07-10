@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3278 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3279 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -323,7 +323,27 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	bind: Import version 9.20.24. [christos 20260619]
 	acpi: Consume and wipe entropy passed by Hyper-V in OEM0 table.
 		[tls 20260621]
+	agp(4): Port agp_nvidia driver from FreeBSD; supports AGP
+		on nForce and nForce2 chipsets. [andvar 20260621]
 	expat: Import 2.8.2 (security fixes). [jdc 20260626]
+	powerpc: Support the NXP MPC5200B system-on-a-chip, based
+		on prior work by Robert Swindells. Supported
+		peripherals include ATA, PCI, Ethernet, audio, etc.
+		[rkujawa 20260627]
+	sparc: Support lazy cursor updates and runtime framebuffer
+		color depth configuration in the tcx(4) driver.
+		[macallan 20260629]
+	unbound(8): Install a functional default configuration so that
+		setting unbound=YES is enough to get a working local
+		recursive resolver. [riastradh 20260701]
+	ofppc: Support the EFIKA 5200B board. [rkujawa 20260701]
 	evbarm: Add an USB 1.1 host port driver for the am18xx family of SoCs.
 		[yurix 20260705]
+	evbmips: Port Visa Hankala's Octeon GPIO driver from OpenBSD.
+		[kbowling 20260707]
+	sparc64: Support disk presence indication on the Sun V245.
+		[jdc 20260707]
 	event(3): Import libevent 2.1.13 [christos 20260708]
+	sysctl(3): Add new user.* nodes that allow determining the
+		currently installed libc version, much in the same
+		way as the kern.* sysctl nodes. [kre 20260710]
