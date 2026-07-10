@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_fpu.c,v 1.2 2026/07/10 15:11:25 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_fpu.c,v 1.3 2026/07/10 20:36:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_fpu.c,v 1.2 2026/07/10 15:11:25 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_fpu.c,v 1.3 2026/07/10 20:36:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -170,7 +170,7 @@ test_double(volatile bool *ready, const volatile bool *done)
 		     i++, f++)
 			continue;
 	}
-	if (f != (float)i)
+	if (f != (double)i)
 		error = i;
 	return error;
 }
