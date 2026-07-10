@@ -1,4 +1,4 @@
-.\" $NetBSD: umcpmio.4,v 1.10 2026/01/05 20:26:57 brad Exp $
+.\" $NetBSD: umcpmio.4,v 1.11 2026/07/10 22:26:51 andvar Exp $
 .\"
 .\" Copyright (c) 2024, 2025 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -107,7 +107,7 @@ Various SPI delays are configured with
 The SPI engine on the MCP2210 only functions in full duplex mode.
 That is, it is not possible to just send bytes without also receiving
 them.
-The driver will queue up any recived bytes that might have come though
+The driver will queue up any received bytes that might have come though
 on a transaction and present them to the upstream layer from the queue
 when asked.
 This queue will be cleared out for a particular slave address when a
