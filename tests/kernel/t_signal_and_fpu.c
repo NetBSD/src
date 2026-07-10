@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_fpu.c,v 1.1 2026/07/09 02:05:45 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_fpu.c,v 1.2 2026/07/10 15:11:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_fpu.c,v 1.1 2026/07/09 02:05:45 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_fpu.c,v 1.2 2026/07/10 15:11:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -384,8 +384,7 @@ ATF_TC_HEAD(ymm, tc)
 }
 ATF_TC_BODY(ymm, tc)
 {
-	test_signal_fpu(&ymm_supported, &test_ymm, &trash_ymm,
-	    "PR kern/60426: Signal handler corrupts AVX (YMM) registers");
+	test_signal_fpu(&ymm_supported, &test_ymm, &trash_ymm, NULL);
 }
 
 #endif
