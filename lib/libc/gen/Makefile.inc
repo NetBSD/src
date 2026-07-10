@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.227 2026/07/10 03:27:57 kre Exp $
+#	$NetBSD: Makefile.inc,v 1.228 2026/07/10 05:04:34 kre Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -212,7 +212,7 @@ CPPFLAGS.isctype.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.tolower_.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
 
-CPPFLAGS.sysctl.c+=	-I${.CURDIR}
+CPPFLAGS.sysctl.c+=	-I${.CURDIR} -DINCL_USER_OSVERSIONS=1
 
 errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
