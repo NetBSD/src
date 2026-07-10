@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.299 2026/07/03 07:41:28 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.300 2026/07/10 02:19:53 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.299 2026/07/03 07:41:28 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.300 2026/07/10 02:19:53 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -354,8 +354,6 @@ static int sppp_output(struct ifnet *, struct mbuf *,
 
 static void sppp_cp_init(const struct cp *, struct sppp *);
 static void sppp_cp_fini(const struct cp *, struct sppp *);
-static void sppp_cp_input(const struct cp *, struct sppp *,
-			  struct mbuf *);
 static void sppp_cp_input(const struct cp *, struct sppp *,
 			  struct mbuf *);
 static void sppp_cp_send(struct sppp *, u_short, u_char,
