@@ -1,0 +1,85 @@
+.\"	$NetBSD: veritefb.4,v 1.1 2026/07/11 21:20:12 nia Exp $
+.\"
+.\" Copyright (c) 2026 The NetBSD Foundation, Inc
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd July 11, 2026
+.Dt VERITEFB 4
+.Os
+.Sh NAME
+.Nm veritefb
+.Nd Rendition Verite V2100/V2200 framebuffer driver
+.Sh SYNOPSIS
+.Cd "veritefb* at pci?"
+.Cd "wsdisplay* at veritefb?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for Rendition Verite V2100/V2200-based PCI and AGP
+cards.
+These are 2D/3D video cards based on a MIPS-like RISC ASIC with a
+fixed-function pixel engine.
+.Pp
+.Nm
+provides an unaccelerated 2D console until the root file system is mounted
+and the firmware file
+.Pa v20002d.uc
+becomes available.
+After this, 2D acceleration is enabled via the
+.Xr rasops 9
+framework.
+.Pp
+During initialization,
+.Nm
+attempts to detect the characteristics of the display using DDC/EDID
+information.
+If this fails, it falls back to a preset VGA (640x480) video mode
+at 60Hz.
+.Sh SEE ALSO
+.Xr genfb 4 ,
+.Xr pci 4 ,
+.Xr wsdisplay 4
+.Rs
+.%A Rendition, Inc.
+.%T V2200 Integrated 3D/2D/Video Accelerator Technical Specifications
+.%D "January 1998"
+.Re
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 12.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Radoslaw Kujawa .
+.Sh CAVEATS
+The microcode required to use these cards with 2D acceleration has
+unclear distribution terms and must be obtained separately.
+.Sh BUGS
+V1000-based cards are not supported.
+.Pp
+Currently, the driver is limited to 8-bit color depth.
