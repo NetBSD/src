@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.453 2026/03/17 10:03:02 macallan Exp $
+#	$NetBSD: files.pci,v 1.454 2026/07/11 15:18:21 rkujawa Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1148,6 +1148,13 @@ defflag	opt_tdvfb.h		TDVFB_CONSOLE
 device	tdvfb: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
 attach	tdvfb at pci
 file	dev/pci/tdvfb.c		tdvfb
+
+# Rendition Verite V2100/V2200
+defflag	opt_veritefb.h		VERITEFB_CONSOLE VERITEFB_DEBUG
+device	veritefb: wsemuldisplaydev, rasops8, vcons, firmload, glyphcache,
+		  i2cexec, i2c_bitbang, ddc_read_edid, edid, videomode
+attach	veritefb at pci
+file	dev/pci/veritefb.c	veritefb
 
 # nvidia geforce framebuffer console driver
 device	gffb: wsemuldisplaydev, rasops8, vcons, glyphcache
