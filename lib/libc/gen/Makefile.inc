@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.230 2026/07/10 21:54:30 kre Exp $
+#	$NetBSD: Makefile.inc,v 1.231 2026/07/11 03:53:40 kre Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -220,6 +220,7 @@ USER_VERSIONS!= DATE=${TOOL_DATE} SED=${TOOL_SED}			\
 	$${HOST_SH:-sh} ${LIBCDIR}/gen/grab-version.sh "${NETBSDSRCDIR}"
 
 CPPFLAGS.sysctl.c+=${USER_VERSIONS}
+sysctl.o: /dev/null
 
 LINTFLAGS.rb.c += -X 231	# XXX: marked as unused already why?
 LINTFLAGS.siglist.c += -X 351	# XXX: renames
