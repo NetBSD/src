@@ -199,5 +199,5 @@ aarch64_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 INIT_GDB_FILE (aarch64_nbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_aarch64, 0, GDB_OSABI_NETBSD,
-			  aarch64_nbsd_init_abi);
+                          aarch64_nbsd_init_abi);
 }
