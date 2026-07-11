@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.140 2026/07/10 15:11:25 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.141 2026/07/11 03:26:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.140 2026/07/10 15:11:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.141 2026/07/11 03:26:26 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -836,30 +836,35 @@ cpu_probe_fpu(struct cpu_info *ci)
 	 * Get the size of the save area with those features enabled
 	 * with the second CPUID.
 	 *
-	 * (Let's hope the features don't change!)
+	 * Verify the save area requires no userland ABI change.  If
+	 * this panic fires, then either
+	 *
+	 * (a) the CPU is inconsistent with the architectural
+	 *     documentation of the XSAVE state sizes, or
+	 *
+	 * (b) NetBSD's requested features XCR0_FPU have been extended
+	 *     to require more state than will fit in the current value
+	 *     of MINSIGSTKSZ, which will need to be raised with a
+	 *     compatibility mechanism so that old programs compiled
+	 *     with the old value will continue to work (just without
+	 *     access to the new extended CPU state).
 	 */
 	x86_cpuid2(0x0d, 0, descs);
-	if (descs[1] > x86_fpu_save_size)
+	if (descs[1] > x86_fpu_save_size) {
+		if (descs[1] > XSAVE_MAX_BYTES) {
+			panic("XSAVE size >=%"PRIx32
+			    " exceeds ABI maximum %zu",
+			    descs[1], (size_t)XSAVE_MAX_BYTES);
+		}
 		x86_fpu_save_size = descs[1];
+	}
 
 	/* Get component offsets and sizes for the save area */
 	for (i = XSAVE_YMM_Hi128; i < __arraycount(x86_xsave_offsets); i++) {
 		if (x86_xsave_features & __BIT(i)) {
-			size_t size;
 			x86_cpuid2(0x0d, i, descs);
 			x86_xsave_offsets[i] = descs[1];
 			x86_xsave_sizes[i] = descs[0];
-
-			/*
-			 * Verify the total XSAVE size requires no
-			 * userland ABI change.
-			 */
-			size = x86_xsave_offsets[i] + x86_xsave_sizes[i];
-			if (size > XSAVE_MAX_BYTES) {
-				panic("XSAVE size >=%zu"
-				    " exceeds ABI maximum %zu",
-				    size, (size_t)XSAVE_MAX_BYTES);
-			}
 		}
 	}
 }
