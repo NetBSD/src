@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.22 2026/06/23 19:29:11 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.23 2026/07/11 11:39:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -136,8 +136,8 @@ struct pmap_page {
 
 #define	LX_BLKPAG_OS_MODEMUL	LX_BLKPAG_OS_0
 
-#define	PMAP_PTE_OS0	"modemul"
-#define	PMAP_PTE_OS1	"(unused)"
+#define	PMAP_PTE_OS0		"modemul"
+#define	PMAP_PTE_OS1		"(unused)"
 
 static inline paddr_t
 pmap_l0pa(struct pmap *pm)
