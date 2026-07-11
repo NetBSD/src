@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.105 2026/07/04 14:40:21 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.106 2026/07/11 05:56:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.105 2026/07/04 14:40:21 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.106 2026/07/11 05:56:18 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -73,10 +73,40 @@ RCSID("$NetBSD: locore.S,v 1.105 2026/07/04 14:40:21 skrll Exp $")
 #define DPRINT(string)		PRINT(string)
 #define DPRINTREG(str, reg)	mov x19,reg; PRINT(str); mov x0,x19; bl print_x0
 #define DPRINTSREG(str, reg)	mrs x19,reg; PRINT(str); mov x0,x19; bl print_x0
-#else
+
+#define CPU_DPRINT(str)			\
+	bl	locore_lock_enter;	\
+	bl	printcpu;		\
+	DPRINT(str);			\
+	bl	locore_lock_exit
+
+/*
+ * CPU_DPRINTREG macro use x19 internally. x0-x15 may be broken.
+ * x27 for cpuindex.
+ */
+#define CPU_DPRINTREG(str,reg)		\
+	mov	x19, reg;		\
+	bl	locore_lock_enter;	\
+	bl	printcpu;		\
+	PRINT(str);			\
+	mov	x0, x19;		\
+	bl	print_x0;		\
+	bl	locore_lock_exit
+
+#define CPU_DPRINTSREG(str, reg)	\
+	mrs	x19, reg;		\
+	CPU_DPRINTREG(str, x19)
+
+#else /* DEBUG_LOCORE && EARLYCONS */
+
 #define DPRINT(string)
 #define DPRINTREG(str, reg)
 #define DPRINTSREG(str, reg)
+
+#define CPU_DPRINT(str)
+#define CPU_DPRINTREG(str,reg)
+#define CPU_DPRINTSREG(str, reg)
+
 #endif
 
 #define PRINT(string)	bl xprint; .asciz string; .align 2
@@ -338,35 +368,6 @@ printcpu:
 	ldp	x0, lr, [sp], #16
 	ret
 
-#define CPU_DPRINT(str)			\
-	bl	locore_lock_enter;	\
-	bl	printcpu;		\
-	DPRINT(str);			\
-	bl	locore_lock_exit
-
-/*
- * CPU_DPRINTREG macro use x19 internally. x0-x15 may be broken.
- * x27 for cpuindex.
- */
-#define CPU_DPRINTREG(str,reg)		\
-	mov	x19, reg;		\
-	bl	locore_lock_enter;	\
-	bl	printcpu;		\
-	PRINT(str);			\
-	mov	x0, x19;		\
-	bl	print_x0;		\
-	bl	locore_lock_exit
-
-#define CPU_DPRINTSREG(str, reg)	\
-	mrs	x19, reg;		\
-	CPU_DPRINTREG(str, x19)
-
-#else /* DEBUG_LOCORE */
-
-#define CPU_DPRINT(str)
-#define CPU_DPRINTREG(str,reg)
-#define CPU_DPRINTSREG(str, reg)
-
 #endif /* DEBUG_LOCORE */
 
 ENTRY_NP(cpu_mpstart)
@@ -465,16 +466,16 @@ ENTRY_NP(cpu_mpstart)
 mp_vstart:
 	hint	0x24		/* bti j */
 
+	/* Set SP to VA */
+	adrl	x0, kern_vtopdiff
+	ldr	x0, [x0]
+	add	sp, sp, x0
+
 	CPU_DPRINTREG("PC               = ", x20)
 	CPU_DPRINTREG("SP               = ", sp)
 
 	CPU_DPRINTSREG("TTBR0            = ", ttbr0_el1)
 	CPU_DPRINTSREG("TTBR1            = ", ttbr1_el1)
-
-	/* Set SP to VA */
-	adrl	x0, kern_vtopdiff
-	ldr	x0, [x0]
-	add	sp, sp, x0
 
 	/* disable TTBR0 - CPU_DPRINT{,REG,SREG} no longer work after this */
 	mrs	x0, tcr_el1
