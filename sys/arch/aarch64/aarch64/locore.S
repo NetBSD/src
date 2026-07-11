@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.106 2026/07/11 05:56:18 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.107 2026/07/11 12:23:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.106 2026/07/11 05:56:18 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.107 2026/07/11 12:23:51 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -435,7 +435,10 @@ ENTRY_NP(cpu_mpstart)
 	bcc	1f
 	/* EL2 registers can be accessed in EL2 or higher */
 	CPU_DPRINTSREG("SCTLR_EL2        = ", sctlr_el2)
+	CPU_DPRINTSREG("TCR_EL2          = ", tcr_el2)
 	CPU_DPRINTSREG("HCR_EL2          = ", hcr_el2)
+	CPU_DPRINTSREG("VTTBR_EL2        = ", vttbr_el2)
+	CPU_DPRINTSREG("MAIR_EL2         = ", mair_el2)
 1:
 	CPU_DPRINTSREG("SPSR_EL1         = ", spsr_el1)
 	CPU_DPRINTSREG("SCTLR_EL1        = ", sctlr_el1)
