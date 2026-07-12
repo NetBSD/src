@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2022/10/16 23:38:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2026/07/12 01:23:49 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ SRCS=	dashlist.c planemask.c getfile.c tests.c text.c \
 
 YHEADER=1
 #CPPFLAGS+=-D_CONST_X_STRING
+CPPFLAGS+=-DHAVE_LRAND48
 CPPFLAGS+=-I. -I${X11SRCDIR.${PROG}}
 
 APPDEFS=Xgc Xgc-color
@@ -18,6 +19,8 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXPM} \
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man
+
+.include "../../xorg-pkg-ver.mk"
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
