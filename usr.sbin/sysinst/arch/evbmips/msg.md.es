@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2 2026/07/12 15:39:07 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,6 +50,7 @@ message dobootblks
 {Instalando bloques de arranque en %s....
 }
 
+.if KERNEL_NAMES_mipsel_or_mipseb
 message set_kernel_1
 {Núcleo (ALCHEMY)}
 
@@ -64,9 +65,33 @@ message set_kernel_4
 
 message set_kernel_5
 {Núcleo (MALTA)}
+.endif
 
+.if KERNEL_NAMES_mipsel
 message set_kernel_6
 {Núcleo (MTX-1)}
 
 message set_kernel_7
 {Núcleo (OMSAL400)}
+.endif
+
+.if KERNEL_NAMES_mipsel64_or_mipseb64
+message set_kernel_4
+{Núcleo (MALTA32)}
+
+message set_kernel_3
+{Núcleo (MALTA64)}
+
+message set_kernel_2
+{Núcleo (XLSATX32)}
+
+message set_kernel_1
+{Núcleo (XLSATX64)}
+.endif
+
+.if KERNEL_NAMES_mips64eb
+message set_kernel_5
+{Núcleo (OCTEON)}
+.endif
+
+
