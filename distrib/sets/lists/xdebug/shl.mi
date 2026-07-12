@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.76 2025/07/22 19:23:53 mrg Exp $
+# $NetBSD: shl.mi,v 1.77 2026/07/12 00:14:45 mrg Exp $
 #
 ./usr/libdata/debug/usr/X11R7/lib	base-sys-usr		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	obsolete		obsolete
@@ -98,7 +98,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-xvmc.so.0.1.debug	xdebug-libxcb-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb.so.2.0.debug		xdebug-libxcb-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcvt.so.0.0.debug		xdebug-libxcvt-debug		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libxkbfile.so.2.0.debug	xdebug-libxkbfile-debug		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libxkbfile.so.2.1.debug	xdebug-libxkbfile-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxkbui.so.2.0.debug		xdebug-libxkbui-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxshmfence.so.1.0.debug	xdebug-libxshmfence-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	xdebug-gallium-debug	xorg,debug
