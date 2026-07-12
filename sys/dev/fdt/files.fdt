@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.81 2026/07/06 23:45:48 thorpej Exp $
+# $NetBSD: files.fdt,v 1.82 2026/07/12 04:23:59 thorpej Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -274,3 +274,7 @@ file	dev/fdt/gfrtc_fdt.c			gfrtc_fdt
 # Generic ATA disk interface
 attach	wdc at fdt with wdc_fdt
 file	dev/fdt/wdc_fdt.c			wdc_fdt
+
+# PCF8584 I2C controller
+attach	pcfiic at fdt with pcfiic_fdt: fdt_i2c
+file	dev/fdt/pcfiic_fdt.c			pcfiic_fdt
