@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.314 2026/04/10 13:55:59 jakllsch Exp $ */
+/*	$NetBSD: wdc.c,v 1.315 2026/07/12 20:58:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.314 2026/04/10 13:55:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.315 2026/07/12 20:58:00 thorpej Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -377,13 +377,44 @@ wdc_drvprobe(struct ata_channel *chp)
 		chp->ch_drive[i].n_dmaerrs = NERRS_MAX - 1;
 #endif
 
-		/* If controller can't do 16bit flag the drives as 32bit */
-		if ((atac->atac_cap &
-		    (ATAC_CAP_DATA16 | ATAC_CAP_DATA32)) == ATAC_CAP_DATA32) {
+		switch (atac->atac_cap & (ATAC_CAP_DATA16 | ATAC_CAP_DATA32)) {
+		case 0:
+			/*
+			 * Controller can only do 8-bit PIO; we will have
+			 * to issue a SET_FEATURES to put the drive into
+			 * that mode.  If it fails, we will ignore the
+			 * drive.
+			 */
+			aprint_verbose("%s:%d:%d: setting PIO8_EN\n",
+			    device_xname(atac->atac_dev),
+			    chp->ch_channel, i);
+			error = ata_set_pio8(&chp->ch_drive[i],
+			    AT_WAIT | AT_POLL);
+			if (error != CMD_OK) {
+				aprint_error("%s:%d:%d: failed to set "
+					     "8-bit PIO (%d)\n",
+				    device_xname(atac->atac_dev),
+				    chp->ch_channel, i, error);
+				ata_channel_lock(chp);
+				chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
+				ata_channel_unlock(chp);
+			}
+			break;
+
+		case ATAC_CAP_DATA32:
+			/*
+			 * If the controller can't do 16-bit, then flag
+			 * the drives as 32-bit.
+			 */
 			ata_channel_lock(chp);
 			chp->ch_drive[i].drive_flags |= ATA_DRIVE_CAP32;
 			ata_channel_unlock(chp);
+			break;
+
+		default:
+			break;
 		}
+
 		if (chp->ch_drive[i].drive_type == ATA_DRIVET_NONE)
 			continue;
 
@@ -1928,6 +1959,26 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 
+	if ((chp->ch_atac->atac_cap & ATAC_CAP_DATA16) == 0) {
+		/*
+		 * ATA_DRIVE_NOSTREAM is used for the IDENTIFY
+		 * command for ... reasons.  Bad reasons, but
+		 * reasons nonetheless.  So, emulate it as if
+		 * it were 16-bit PIO.
+		 */
+		if (flags & ATA_DRIVE_NOSTREAM) {
+			uint8_t *cp = bf;
+			for (size_t i = 0; i < len; i++) {
+				cp[i ^ 1] = bus_space_read_1(wdr->cmd_iot,
+				    wdr->cmd_iohs[wd_data], 0);
+			}
+			return;
+		}
+		bus_space_read_multi_1(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_data], 0, bf, len);
+		return;
+	}
+
 #ifndef __NO_STRICT_ALIGNMENT
 	if ((uintptr_t)bf & 1)
 		goto unaligned;
@@ -2019,6 +2070,26 @@ static void
 wdc_dataout_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
+
+	if ((chp->ch_atac->atac_cap & ATAC_CAP_DATA16) == 0) {
+		/*
+		 * ATA_DRIVE_NOSTREAM is not exactly expected for
+		 * PIO writes, but emulate it as if it were
+		 * 16-bit PIO.
+		 */
+		if (flags & ATA_DRIVE_NOSTREAM) {
+			uint8_t *cp = bf;
+			for (size_t i = 0; i < len; i++) {
+				bus_space_write_1(wdr->cmd_iot,
+				    wdr->cmd_iohs[wd_data], 0,
+				    cp[i ^ 1]);
+			}
+			return;
+		}
+		bus_space_write_multi_1(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_data], 0, bf, len);
+		return;
+	}
 
 #ifndef __NO_STRICT_ALIGNMENT
 	if ((uintptr_t)bf & 1)
