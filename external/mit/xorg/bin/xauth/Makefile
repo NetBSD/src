@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2023/06/03 09:09:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2026/07/12 01:44:36 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,8 @@ DPADD+=	${LIBXAU} ${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 .include <bsd.own.mk>
 
 USE_SSP:=	no
+
+.include "../../xorg-pkg-ver.mk"
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
