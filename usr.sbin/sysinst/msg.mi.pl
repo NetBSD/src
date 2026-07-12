@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.57 2026/06/26 13:18:40 nia Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.58 2026/07/12 20:07:45 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -275,6 +275,7 @@ message endoutsidedisk
 {Przy tej wartosci, koniec partycji znajduje sie poza koncem dysku. Rozmiar
 twojej partycji zostal zmniejszony.}
 
+.if HAVE_DISKSIZE_CHECKS
 message toobigdisklabel
 {
 Ten dysk ($0) jest zbyt duzy ($3) na tablice partycji $2 (maks. $4),
@@ -288,6 +289,7 @@ message cvtscheme_convert	{uzyj innego typu tablicy partycji}
 message cvtscheme_abort		{anuluj}
 message cvtscheme_error
 {Could not convert all partitions}
+.endif
 
 /* Called with:				Example
  *  $0 = device name			wd0
@@ -1519,6 +1521,7 @@ message size_ptn_not_mounted		{(Inna: $0)}
 
 message running_system			{current system}
 
+.if HAVE_CLONES
 message clone_from_elsewhere		{Clone external partition(s)}
 message select_foreign_part
 {Please select an external source partition:}
@@ -1532,6 +1535,7 @@ message clone_target_hdr
 message clone_target_disp		{cloned partition(s)}
 message clone_src_done
 {Source selection OK, proceed to target selection}
+.endif
 
 message network_ok
 {Your network seems to work fine. 
