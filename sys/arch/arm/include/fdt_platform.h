@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_platform.h,v 1.2 2026/07/12 05:00:14 thorpej Exp $	*/
+/*	$NetBSD: fdt_platform.h,v 1.1 2026/07/12 05:00:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,32 +26,27 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _DEV_FDT_FDT_PLATFORM_H_
-#define	_DEV_FDT_FDT_PLATFORM_H_
+#ifndef _ARM_FDT_PLATFORM_H_
+#define	_ARM_FDT_PLATFORM_H_
 
 #include <sys/device.h>
 
-/* struct fdt_platform provided by <machine/fdt_platform.h> */
-#include <machine/fdt_platform.h>
+struct fdt_attach_args;
+struct pmap_devmap;
 
-struct fdt_platform_info {
-	const char *			fpi_compat;
-	const struct fdt_platform *	fpi_ops;
+struct fdt_platform {
+	const struct pmap_devmap *
+				(*fp_devmap)(void);
+	void			(*fp_bootstrap)(void);
+	int			(*fp_mpstart)(void);
+	void			(*fp_startup)(void);
+	void			(*fp_init_attach_args)(struct fdt_attach_args *);
+	void			(*fp_device_register)(device_t, void *);
+	void			(*fp_device_register_post_config)(device_t,
+				    void *);
+	void			(*fp_reset)(void);
+	void			(*fp_delay)(u_int);
+	u_int			(*fp_uart_freq)(void);
 };
 
-#define	FDT_PLATFORM_DEFAULT		""
-
-#define	_FDT_PLATFORM_REGISTER(name)	\
-	__link_set_add_rodata(fdt_platforms, __CONCAT(name,_platinfo));
-
-#define	FDT_PLATFORM(_name, _compat, _ops)				\
-static const struct fdt_platform_info __CONCAT(_name,_platinfo) = {	\
-	.fpi_compat = (_compat),					\
-	.fpi_ops = (_ops)						\
-};									\
-_FDT_PLATFORM_REGISTER(_name)
-
-const struct fdt_platform *
-		fdt_platform_find(void);
-
-#endif /* _DEV_FDT_FDT_PLATFORM_H_ */
+#endif /* _ARM_FDT_PLATFORM_H_ */
