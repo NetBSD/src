@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 2026/07/12 01:44:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2026/07/12 01:45:33 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xauth
 SRCS=	xauth.c gethost.c process.c parsedpy.c
 
-CPPFLAGS+=		-DRETSIGTYPE=void -DPACKAGE_VERSION=\"1.0.8\"
+CPPFLAGS+=		-DRETSIGTYPE=void
 CPPFLAGS+= 		-DHAVE_STRLCPY
 CPPFLAGS+= 		-DHAVE_REALLOCARRAY
 CPPFLAGS.gethost.c=	${X11FLAGS.CONNECTION}
