@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.55 2026/06/26 19:03:49 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.56 2026/07/12 20:07:45 martin Exp $
 #
 # Makefile for sysinst
 
@@ -55,10 +55,17 @@ COPTS.mbr.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
 .endif
 .if ${NO_CLONES:Uno} == "yes"
 CPPFLAGS+=	-DNO_CLONES
+.else
+MD_OPTIONS+=	HAVE_CLONES
 .endif
 .if ${HAVE_DVD_IMAGE:Uno} == "yes"
 CPPFLAGS+=	-DHAVE_DVD_IMAGE
 MD_OPTIONS+=	HAVE_DVD_IMAGE
+.endif
+.if ${NO_DISKSIZE_CHECKS:Uno} == "yes"
+CPPFLAGS+=	-DNO_DISKSIZE_CHECKS
+.else
+MD_OPTIONS+=	HAVE_DISKSIZE_CHECKS
 .endif
 
 .if ${CHECK_ENTROPY:Uyes} != "no"

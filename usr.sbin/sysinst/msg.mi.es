@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.51 2026/06/26 13:18:40 nia Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.52 2026/07/12 20:07:45 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -281,6 +281,7 @@ message endoutsidedisk
 {Con este valor, el final de la partición está mas allá del final del disco.
 El tamaño de la partición se ha truncado.}
 
+.if HAVE_DISKSIZE_CHECKS
 /* Called with:				Example
  *  $0 = device name			wd0
  *  $1 = partitioning scheme name	Master Boot Record (MBR)
@@ -301,6 +302,7 @@ message cvtscheme_convert	{convert to another partitioning method}
 message cvtscheme_abort		{abort}
 message cvtscheme_error
 {Could not convert all partitions}
+.endif
 
 /* Called with:				Example
  *  $0 = device name			wd0
@@ -1581,6 +1583,7 @@ message size_ptn_not_mounted		{(Other: $0)}
 
 message running_system			{current system}
 
+.if HAVE_CLONES
 message clone_from_elsewhere		{Clone external partition(s)}
 message select_foreign_part
 {Please select an external source partition:}
@@ -1594,6 +1597,7 @@ message clone_target_hdr
 message clone_target_disp		{cloned partition(s)}
 message clone_src_done
 {Source selection OK, proceed to target selection}
+.endif
 
 message network_ok
 {Your network seems to work fine. 

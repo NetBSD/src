@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.59 2026/06/25 15:54:22 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.60 2026/07/12 20:07:45 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -291,6 +291,7 @@ message endoutsidedisk
 Festplatte.
 Die Größe Ihrer Partition wurde verringert.}
 
+.if HAVE_DISKSIZE_CHECKS
 /* Called with:				Example
  *  $0 = device name			wd0
  *  $1 = partitioning scheme name	Master Boot Record (MBR)
@@ -311,6 +312,7 @@ message cvtscheme_convert	{in ein anderes Schema konvertieren}
 message cvtscheme_abort		{abbrechen}
 message cvtscheme_error
 {Nicht alle Partitionen konnten übernommen werden}
+.endif
 
 /* Called with:				Example
  *  $0 = device name			wd0
@@ -1603,6 +1605,7 @@ message size_ptn_not_mounted		{(Sonstige: $0)}
 
 message running_system			{aktuelles System}
 
+.if HAVE_CLONES
 message clone_from_elsewhere		{Externe Partition(en) duplizieren}
 message select_foreign_part		{Wählen Sie eine Quellpartition:}
 message select_source_hdr
@@ -1615,6 +1618,7 @@ message clone_target_hdr
 message clone_target_disp		{duplizierte Partition(en)}
 message clone_src_done
 {Quellauswahl OK, weiter mit der Zielauswahl}
+.endif
 
 message network_ok
 {Ihr Netzwerk scheint bereits zu funktionieren. 

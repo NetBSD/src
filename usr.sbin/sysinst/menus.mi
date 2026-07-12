@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.33 2026/06/26 21:02:57 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.34 2026/07/12 20:07:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -686,11 +686,13 @@ menu usersh, title MSG_User_shell, no clear;
 	option "/bin/ksh", exit, action { ushell = "/bin/ksh";};
 	option "/bin/csh", exit, action { ushell = "/bin/csh";};
 
+.if HAVE_DISKSIZE_CHECKS
 menu convertscheme, title MSG_cvtscheme_hdr;
 	option MSG_cvtscheme_keep,		exit, action { *(int*)arg = 0; };
 	option MSG_cvtscheme_delete,		exit, action { *(int*)arg = 1; };
 	option MSG_cvtscheme_convert,		exit, action { *(int*)arg = 2; };
 	option MSG_cvtscheme_abort,		exit, action { *(int*)arg = 3; };
+.endif
 
 
 menu reedit, title MSG_reeditpart, y=-10;
