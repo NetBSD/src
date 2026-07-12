@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2015/07/22 07:58:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2026/07/12 00:40:01 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,9 @@ FILES=	rgb.txt
 FILESDIR=${X11LIBDIR}
 
 .PATH:	${X11SRCDIR.rgb} ${X11SRCDIR.rgb}/man
+
+XORG_PKG_VER_PROG=	rgb
+.include "../../xorg-pkg-ver.mk"
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
