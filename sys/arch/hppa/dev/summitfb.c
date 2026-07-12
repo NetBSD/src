@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.42 2026/05/18 22:06:25 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.43 2026/07/12 10:16:36 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.42 2026/05/18 22:06:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.43 2026/07/12 10:16:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ struct	summitfb_softc {
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
-	int sc_mode;
+	int sc_mode, sc_fbdepth;
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
@@ -299,6 +299,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+	sc->sc_fbdepth = 32;
 	sc->sc_locked = 0;
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
@@ -442,11 +443,20 @@ summitfb_setup_fb(struct summitfb_softc *sc)
 			 * on FX2/4/6 turn off the overlay and expose the
 			 * 24bit framebuffer
 			 */
-			summitfb_write_mode(sc, OTC01 | BIN8F | BUFFL);
-			summitfb_read_mode(sc, OTC01 | BIN8F | BUFFL);
-			summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_32);
-			/* make overlay transparent */
-			summitfb_write4(sc, VISFX_OTR, OTR_A);
+			if (sc->sc_fbdepth == 32) {
+				summitfb_write_mode(sc, OTC01 | BIN8F | BUFFL);
+				summitfb_read_mode(sc, OTC01 | BIN8F | BUFFL);
+				summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_32);
+				/* make overlay transparent */
+				summitfb_write4(sc, VISFX_OTR, OTR_A);
+			} else {
+				summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
+				summitfb_read_mode(sc, VISFX_WRITE_MODE_PLAIN);
+				summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
+				/* make overlay opaque */
+				summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0);
+
+			}
 		}
 	}
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
@@ -641,20 +651,37 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			fbi->fbi_fbsize = sc->sc_scr.fbheight * 2048;
 		} else {
 			/* on FX2/4/6 we switch to 24bit */
-			//fbi->fbi_fbsize = sc->sc_height * 2048;
-			fbi->fbi_stride = 8192;
-			fbi->fbi_bitsperpixel = 32;
-			fbi->fbi_pixeltype = WSFB_RGB;
-			fbi->fbi_subtype.fbi_rgbmasks.red_offset = 16;
-			fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
-			fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
-			fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
-			fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 0;
-			fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
-			fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
-			fbi->fbi_fbsize = sc->sc_scr.fbheight * 8192;
+			if (sc->sc_fbdepth == 32) {
+				fbi->fbi_stride = 8192;
+				fbi->fbi_bitsperpixel = 32;
+				fbi->fbi_fbsize = sc->sc_scr.fbheight * 8192;
+				fbi->fbi_pixeltype = WSFB_RGB;
+				fbi->fbi_subtype.fbi_rgbmasks.red_offset = 16;
+				fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 0;
+				fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
+			} else {
+				fbi->fbi_stride = 2048;
+				fbi->fbi_bitsperpixel = 8;
+				fbi->fbi_fbsize = sc->sc_scr.fbheight * 2048;
+				fbi->fbi_pixeltype = WSFB_CI;
+				fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = 256;
+			}
 		}
 		return ret;
+	}
+
+	case WSDISPLAYIO_SET_DEPTH:
+	{
+		int new_depth = *(int*)data;
+		if ((new_depth == 8) || (new_depth == 32)) {
+			sc->sc_fbdepth = new_depth;
+			return 0;
+		}
+		return EINVAL;
 	}
 
 	case WSDISPLAYIO_GCURPOS: {
