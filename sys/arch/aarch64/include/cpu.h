@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.54 2026/06/13 12:12:47 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.55 2026/07/12 16:03:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #ifdef _KERNEL_OPT
 #include "opt_gprof.h"
 #include "opt_multiprocessor.h"
-#include "opt_pmap.h"
 #endif
 
 #include <sys/param.h>
