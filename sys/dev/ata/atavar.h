@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.110 2026/07/03 21:27:40 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.111 2026/07/12 20:52:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -528,6 +528,7 @@ void	atabus_free_drives(struct ata_channel *);
 
 struct ataparams;
 int	ata_get_params(struct ata_drive_datas *, uint8_t, struct ataparams *);
+int	ata_set_pio8(struct ata_drive_datas *, uint8_t);
 int	ata_set_mode(struct ata_drive_datas *, uint8_t, uint8_t);
 int	ata_read_log_ext_ncq(struct ata_drive_datas *, uint8_t, uint8_t *,
     uint8_t *, uint8_t *);

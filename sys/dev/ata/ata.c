@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.172 2026/04/10 14:19:52 jakllsch Exp $	*/
+/*	$NetBSD: ata.c,v 1.173 2026/07/12 20:52:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.172 2026/04/10 14:19:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.173 2026/07/12 20:52:47 thorpej Exp $");
 
 #include "opt_ata.h"
 
@@ -909,6 +909,44 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	rv = CMD_OK;
  out:
 	kmem_free(tb, ATA_BSIZE);
+	ata_free_xfer(chp, xfer);
+	return rv;
+}
+
+int
+ata_set_pio8(struct ata_drive_datas *drvp, uint8_t flags)
+{
+	struct ata_xfer *xfer;
+	int rv;
+	struct ata_channel *chp = drvp->chnl_softc;
+	struct atac_softc *atac = chp->ch_atac;
+
+	ATADEBUG_PRINT(("ata_set_pio8\n"), DEBUG_FUNCS);
+
+	xfer = ata_get_xfer(chp, false);
+	if (xfer == NULL) {
+		ATADEBUG_PRINT(("%s: no xfer\n", __func__),
+		    DEBUG_FUNCS|DEBUG_PROBE);
+		return CMD_AGAIN;
+	}
+
+	xfer->c_ata_c.r_command = SET_FEATURES;
+	xfer->c_ata_c.r_st_bmask = 0;
+	xfer->c_ata_c.r_st_pmask = 0;
+	xfer->c_ata_c.r_features = WDSF_8BIT_PIO_EN;
+	xfer->c_ata_c.r_count = 0;
+	xfer->c_ata_c.flags = flags;
+	xfer->c_ata_c.timeout = 1000; /* 1s */
+	(*atac->atac_bustype_ata->ata_exec_command)(drvp, xfer);
+	ata_wait_cmd(chp, xfer);
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		rv = CMD_ERR;
+		goto out;
+	}
+
+	rv = CMD_OK;
+
+out:
 	ata_free_xfer(chp, xfer);
 	return rv;
 }
