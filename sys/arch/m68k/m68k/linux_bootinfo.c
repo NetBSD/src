@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_bootinfo.c,v 1.8 2026/07/06 13:36:47 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.c,v 1.9 2026/07/12 22:21:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,9 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.8 2026/07/06 13:36:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.9 2026/07/12 22:21:59 thorpej Exp $");
 
+#include "opt_ddb.h"
+#include "opt_modular.h"
 #include "opt_md.h"
+
+#include "ksyms.h"
 
 #include <sys/types.h>
 #include <sys/cpu.h>
@@ -43,6 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.8 2026/07/06 13:36:47 thorpej E
 
 #ifdef MEMORY_DISK_DYNAMIC
 #include <dev/md.h>
+#endif
+
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+#define	PRESERVE_KERNEL_SYMBOLS
 #endif
 
 #include <m68k/linux_bootinfo.h>
@@ -146,6 +154,20 @@ bootinfo_add_initrd(struct bootinfo_data *bid, struct bi_record *bi)
 		bid->bootinfo_initrd_size  = rd->mem_size;
 	}
 }
+
+#ifdef PRESERVE_KERNEL_SYMBOLS
+static inline paddr_t __attribute__((always_inline))
+bootinfo_preserve_ksyms(struct bootinfo_data *bid, vaddr_t addr, size_t size,
+    paddr_t nextpa, vaddr_t reloff)
+{
+	bid->bootinfo_ksym_start = PMAP_BOOTSTRAP_PA_TO_VA(addr);
+	bid->bootinfo_ksym_size = size;
+	if (addr + size > nextpa) {
+		nextpa = addr + size;
+	}
+	return nextpa;
+}
+#endif /* PRESERVE_KERNEL_SYMBOLS */
 
 static void
 bootinfo_reserve_initrd(struct bootinfo_data *bid)
@@ -276,6 +298,25 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 			break;
 
 		default:
+#ifdef PRESERVE_KERNEL_SYMBOLS
+			/*
+			 * For the BI_MACH_FDT machine type, the ELF
+			 * symbols record is a memory record pointing
+			 * to where they are.  We assume they're part
+			 * of the contiguous kernel / bootinfo region,
+			 * and we need to advance nextpa along to
+			 * account for them.
+			 *
+			 * N.B. This record has the PHYSICAL address
+			 * of the ELF symbols.
+			 */
+			if (bid->bootinfo_machtype == BI_MACH_FDT &&
+			    bi->bi_tag == BI_FDT_ELF_SYMS) {
+				struct bi_mem_info *m = bootinfo_dataptr(bi);
+				nextpa = bootinfo_preserve_ksyms(bid,
+				    m->mem_addr, m->mem_size, nextpa, reloff);
+			}
+#endif /* PRESERVE_KERNEL_SYMBOLS */
 			break;
 		}
 	}
@@ -311,8 +352,13 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 #endif /* ! __mc68010__ */
 
 	/* Set bootinfo_end to be just past the BI_LAST record. */
-	nextpa = (paddr_t)bootinfo_next(bi);
-	bid->bootinfo_end = PMAP_BOOTSTRAP_PA_TO_VA(nextpa);
+	paddr_t bi_end = (paddr_t)bootinfo_next(bi);
+	bid->bootinfo_end = PMAP_BOOTSTRAP_PA_TO_VA(bi_end);
+
+	/* Advance nextpa. */
+	if (bi_end > nextpa) {
+		nextpa = bi_end;
+	}
 
 	/* Initialize the physmem variable for the memory found. */
 	RELOC(physmem, psize_t) = bid->bootinfo_total_mem_pages;
