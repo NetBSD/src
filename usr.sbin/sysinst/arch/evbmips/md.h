@@ -1,4 +1,4 @@
-/* $NetBSD: md.h,v 1.3 2019/10/02 11:16:02 maya Exp $ */
+/* $NetBSD: md.h,v 1.4 2026/07/12 15:39:07 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,11 +62,16 @@
 #define SET_KERNEL_7_NAME	"kern-OMSAL400"
 #endif
 
-#if defined(ARCH_mips64eb) || defined(ARCH_mips64el)
+#if defined(ARCH_mips64eb) || defined(ARCH_mips64el) || \
+	defined(ARCH_mipsn64eb) || defined(ARCH_mipsn64el)
 #define SET_KERNEL_4_NAME	"kern-MALTA32"
 #define SET_KERNEL_3_NAME	"kern-MALTA64"
 #define SET_KERNEL_2_NAME	"kern-XLSATX32"
 #define SET_KERNEL_1_NAME	"kern-XLSATX64"
+#endif
+
+#if defined(ARCH_mipsn64eb) || defined(ARCH_mips64eb)
+#define SET_KERNEL_5_NAME	"kern-OCTEON"
 #endif
 
 #undef evbmips
