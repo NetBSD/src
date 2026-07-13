@@ -1,4 +1,4 @@
-/* $NetBSD: ti_otgreg.h,v 1.1 2019/10/27 16:31:26 jmcneill Exp $ */
+/* $NetBSD: ti_otgreg.h,v 1.2 2026/07/13 09:59:20 yurix Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define TI_OTG_NPORTS 2
 /* USBSS registers */
 #define TIOTG_USBSS_OFFSET 0
 #define TIOTG_USBSS_READ4(sc, reg) \
