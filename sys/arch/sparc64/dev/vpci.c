@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.13 2022/01/21 19:14:14 thorpej Exp $	*/
+/*	$NetBSD: vpci.c,v 1.14 2026/07/13 20:07:40 palle Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.13 2022/01/21 19:14:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.14 2026/07/13 20:07:40 palle Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -380,9 +380,11 @@ vpci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	if (*ihp != (pci_intr_handle_t)-1) {
 		err = hv_intr_devino_to_sysino(devhandle, devino, &sysino);
-		if (err != H_EOK)
+		if (err != H_EOK) {
+			printf("vpci_intr_map: hv_intr_devino_to_sysino(%#lx, %#lx) failed - err = %d\n", 
+			       devhandle, devino, err);
 			return (-1);
-
+		}
 		KASSERT(sysino == INTVEC(sysino));
 		*ihp = sysino;
 		DPRINTF(VDB_INTR, ("vpci_intr_map(): sysino 0x%lx\n", sysino));
