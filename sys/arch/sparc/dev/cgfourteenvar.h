@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.19 2021/12/17 19:27:57 macallan Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.20 2026/07/13 08:42:06 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -88,6 +88,7 @@ struct cgfourteen_softc {
 	union 	cg14cmap sc_saveclut; 	/* a place to stash PROM state */
 	size_t	sc_vramsize;
 	int 	sc_depth;	/* current colour depth */
+	int 	sc_fbdepth;	/* colour depth to be used in MODE_MAPPED */
 #if NWSDISPLAY > 0
 	struct  vcons_data sc_vd;
 	struct 	vcons_screen sc_console_screen;
@@ -127,6 +128,7 @@ struct cgfourteen_softc {
 #define CG14_CLUT3_VOFF		0x00006000	/* Color Look Up Table */
 #define CG14_SXREG_VOFF		0x00010000	/* SX userspace registers */
 #define CG14_DIRECT_VOFF	0x10000000
+#define CG14_PSEUDO_VOFF	0x10800000	/* RAM for SX use if available */
 #define CG14_CTLREG_VOFF	0x20000000
 #define CG14_CURSOR_VOFF	0x30000000
 #define CG14_SHDW_VRT_VOFF	0x40000000
@@ -139,3 +141,4 @@ struct cgfourteen_softc {
 #define CG14_G32_VOFF		0xb0000000
 #define CG14_R32_VOFF		0xc0000000
 #define CG14_SXIO_VOFF		0xd0000000
+
