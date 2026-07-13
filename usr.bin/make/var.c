@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1181 2026/07/03 15:31:35 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1182 2026/07/13 19:23:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1181 2026/07/03 15:31:35 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1182 2026/07/13 19:23:55 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2848,7 +2848,7 @@ ApplyModifier_Match(const char **pp, ModChain *ch)
 	if (ModChain_ShouldEval(ch)) {
 		struct ModifyWord_MatchArgs args;
 		const char *brace;
-		
+
 		Lst_Init(&args.patterns);
 		if (mod == 'N')
 			brace = NULL;	/* not supported */
@@ -2860,14 +2860,14 @@ ApplyModifier_Match(const char **pp, ModChain *ch)
 					break;
 			}
 
-		if (brace)
+		if (brace != NULL)
 			ExpandCurly(pattern, brace, NULL, &args.patterns);
 		else
 			Lst_Append(&args.patterns, pattern);
 		args.neg = mod == 'N';
 		args.error_reported = false;
 		ModifyWords(ch, ModifyWord_Match, &args, ch->oneBigWord);
-		if (brace)
+		if (brace != NULL)
 			Lst_DoneFree(&args.patterns);
 		else
 			Lst_Done(&args.patterns);
