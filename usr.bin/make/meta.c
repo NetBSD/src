@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.223 2026/07/03 18:58:40 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.224 2026/07/13 19:31:15 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1023,7 +1023,7 @@ meta_resolve_path(char *buf, size_t bufsz, const char *p,
 
     if (strcmp(p, ".") == 0)
 	return cwd;
-    
+
     for (sdp = sdirs; *sdp != NULL; sdp++) {
 	snprintf(buf, bufsz, "%s/%s", *sdp, p);
 	if (cached_stat(buf, cstp) == 0)
