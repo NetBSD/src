@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.154 2026/05/01 07:19:45 kre Exp $	*/
+/*	$NetBSD: localtime.c,v 1.155 2026/07/13 18:44:44 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.154 2026/05/01 07:19:45 kre Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.155 2026/07/13 18:44:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -270,7 +270,7 @@ struct timespec { time_t tv_sec; long tv_nsec; };
 
 /* How many seconds to wait before checking the default TZif file again.
    Negative means no checking.  Default to 61 if DETECT_TZ_CHANGES
-   (as circa 2025 FreeBSD builds its localtime.c with -DDETECT_TZ_CHANGES),
+   (as FreeBSD optionally builds its localtime.c with -DDETECT_TZ_CHANGES),
    and to -1 otherwise.  */
 #ifndef TZ_CHANGE_INTERVAL
 # ifdef DETECT_TZ_CHANGES
@@ -331,10 +331,12 @@ typedef intmax_t timex_t;
 # endif
 #endif
 
-/* Placeholders for platforms lacking openat.  */
+/* Placeholders for platforms lacking AT_FCWD, openat, and fstatat.  */
 #ifndef AT_FDCWD
 # define AT_FDCWD (-1) /* any negative value will do */
 static int openat(int dd, char const *path, int oflag) { unreachable (); }
+static int fstatat(int dd, char const *path, struct stat *st, int flags)
+{ unreachable(); }
 #endif
 
 /* Port to platforms that lack some O_* flags.  Unless otherwise
@@ -468,8 +470,7 @@ static char const *utc = etc_utc + sizeof "Etc/" - 1;
    approach of opening "/usr/share/zoneinfo/America/Los_Angeles".
    Although the OPENAT_TZDIR approach is less efficient, suffers from
    spurious EMFILE and ENFILE failures, and is no more secure in practice,
-   it is how bleeding edge FreeBSD did things from August 2025
-   through at least September 2025.  */
+   bleeding edge FreeBSD started doing it this way in August 2025.  */
 #ifndef OPENAT_TZDIR
 # define OPENAT_TZDIR 0
 #endif
@@ -1030,6 +1031,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 	int dd = AT_FDCWD;
 	int oflags = (O_RDONLY | O_BINARY | O_CLOEXEC | O_CLOFORK
 		      | O_IGNORE_CTTY | O_NOCTTY | O_REGULAR);
+	bool might_escape = false;
 	int err;
 	struct stat st;
 	st.st_ctime = 0;
@@ -1056,17 +1058,8 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 	      continue;
 	  else if (issetugid())
 	    return ENOTCAPABLE;
-	  else if (!O_REGULAR) {
-	    /*NOTREACHED*/
-	    /* Check for devices, as their mere opening could have
-	       unwanted side effects.  Though racy, there is no
-	       portable way to fix the races.  This check is needed
-	       only for files not otherwise known to be non-devices.  */
-	    if (stat(name, &st) < 0)
-	      return errno;
-	    if (!S_ISREG(st.st_mode))
-	      return EINVAL;
-	  }
+	  else
+	    might_escape = true;
 	}
 
 	if (relname[0] != '/') {
@@ -1078,8 +1071,12 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 	    for (component = relname; component[0]; component++)
 	      if (component[0] == '.' && component[1] == '.'
 		  && component[2] == '/'
-		  && (component == relname || component[-1] == '/'))
-		return ENOTCAPABLE;
+		  && (component == relname || component[-1] == '/')) {
+		if (issetugid())
+		  return ENOTCAPABLE;
+		might_escape = true;
+		break;
+	      }
 	  }
 
 	  if (OPENAT_TZDIR && !SUPPRESS_TZDIR) {
@@ -1092,7 +1089,10 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 		       | O_BINARY | O_CLOEXEC | O_CLOFORK | O_DIRECTORY));
 	    if (dd < 0)
 	      return errno;
-	    oflags |= O_RESOLVE_BENEATH;
+	    if (O_RESOLVE_BENEATH && issetugid()) {
+	      oflags |= O_RESOLVE_BENEATH;
+	      might_escape = false;
+	    }
 	  }
 	}
 
@@ -1128,6 +1128,18 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 #endif
 	}
 
+	/* For a platform that lacks O_REGULAR and a file that might
+	   be outside TZDIR, check that it is a regular file,
+	   as merely opening a device could have unwanted side effects.
+	   Though racy, there is no portable way to fix the race.  */
+	if (!O_REGULAR && might_escape) {
+	  /* (oflags & O_RESOLVE_BENEATH) must be zero here.  */
+	  if ((OPENAT_TZDIR ? fstatat(dd, relname, &st, 0) : stat(name, &st))
+	      < 0)
+	    return errno;
+	  if (!S_ISREG(st.st_mode))
+	    return EFTYPE;
+	}
 	fid = OPENAT_TZDIR ? openat(dd, relname, oflags) : open(name, oflags);
 	err = errno;
 	if (0 <= dd)
@@ -1150,7 +1162,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 	  }
 	  up = &lsp->u.u;
 	  nread = read(fid, up->buf, sizeof up->buf);
-	  err = (ssize_t)tzheadsize <= nread ? 0 : nread < 0 ? errno : EINVAL;
+	  err = (ssize_t)tzheadsize <= nread ? 0 : nread < 0 ? errno : EFTYPE;
 	}
 	close(fid);
 	if (err)
@@ -1177,7 +1189,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 		   && 0 <= charcnt && charcnt <= TZ_MAX_CHARS
 		   && 0 <= ttisstdcnt && ttisstdcnt <= TZ_MAX_TYPES
 		   && 0 <= ttisutcnt && ttisutcnt <= TZ_MAX_TYPES))
-	      return EINVAL;
+	      return EFTYPE;
 	    datablock_size
 		    = (timecnt * stored		/* ats */
 		       + timecnt		/* types */
@@ -1187,7 +1199,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 		       + ttisstdcnt		/* ttisstds */
 		       + ttisutcnt);		/* ttisuts */
 	    if (nread < (ssize_t)(tzheadsize + datablock_size))
-	      return EINVAL;
+	      return EFTYPE;
 	    if (skip_datablock)
 		p += datablock_size;
 	    else if (! ((ttisstdcnt == typecnt || ttisstdcnt == 0)
@@ -1216,7 +1228,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 			       ? TIME_T_MIN : (time_t)at);
 			  if (timecnt && attime <= sp->ats[timecnt - 1]) {
 			    if (attime < sp->ats[timecnt - 1])
-			      return EINVAL;
+			      return EFTYPE;
 			    sp->types[i - 1] = 0;
 			    timecnt--;
 			  }
@@ -1229,7 +1241,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 		for (i = 0; i < sp->timecnt; ++i) {
 			unsigned char typ = *p++;
 			if (sp->typecnt <= typ)
-			  return EINVAL;
+			  return EFTYPE;
 			if (sp->types[i])
 				sp->types[timecnt++] = typ;
 		}
@@ -1243,18 +1255,18 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 			   cause trouble both in this file and in callers.
 			   Also, it violates RFC 9636 section 3.2.  */
 			if (utoff < -TWO_31_MINUS_1)
-			  return EINVAL;
+			  return EFTYPE;
 
 			ttisp = &sp->ttis[i];
 			ttisp->tt_utoff = (int)utoff;
 			p += 4;
 			isdst = *p++;
 			if (! (isdst < 2))
-			  return EINVAL;
+			  return EFTYPE;
 			ttisp->tt_isdst = isdst;
 			desigidx = *p++;
 			if (! (desigidx < sp->charcnt))
-			  return EINVAL;
+			  return EFTYPE;
 			ttisp->tt_desigidx = desigidx;
 		}
 		for (i = 0; i < sp->charcnt; ++i)
@@ -1273,7 +1285,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 		  /* Leap seconds cannot occur before the Epoch,
 		     or out of order.  */
 		  if (tr <= prevtr)
-		    return EINVAL;
+		    return EFTYPE;
 
 		  /* To avoid other botches in this code, each leap second's
 		     correction must differ from the previous one's by 1
@@ -1285,7 +1297,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 			     ? corr == prevcorr + 1
 			     : (corr == prevcorr
 				|| corr == prevcorr - 1))))
-		    return EINVAL;
+		    return EFTYPE;
 		  prevtr = tr;
 		  prevcorr = corr;
 
@@ -1307,7 +1319,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 				ttisp->tt_ttisstd = false;
 			else {
 				if (*p != true && *p != false)
-				  return EINVAL;
+				  return EFTYPE;
 				ttisp->tt_ttisstd = *p++;
 			}
 		}
@@ -1319,7 +1331,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 				ttisp->tt_ttisut = false;
 			else {
 				if (*p != true && *p != false)
-						return EINVAL;
+						return EFTYPE;
 				ttisp->tt_ttisut = *p++;
 			}
 		}
@@ -1404,7 +1416,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 			}
 	}
 	if (sp->typecnt == 0)
-	  return EINVAL;
+	  return EFTYPE;
 
 	return 0;
 }
