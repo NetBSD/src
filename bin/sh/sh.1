@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.277 2026/05/28 10:07:58 kre Exp $
+.\"	$NetBSD: sh.1,v 1.278 2026/07/13 10:46:21 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3886,7 +3886,7 @@ flag was not given, the
 .Aq backslash
 character
 .Pq Sq \e
-character is then treated as an escape character,
+is then treated as an escape character,
 the character following it, if not
 .Sq \e0 ,
 is always treated as a normal,
@@ -3930,7 +3930,12 @@ is encountered on input, before encountering the delimiter,
 or having read
 .Ar max
 bytes.
-In this case any data previously read will be assigned to
+If a read error occurred,
+.Ic read
+will immediately exit with a status larger than 1.
+In case of EOF, or
+.Ar max
+bytes having been read, any data previously read will be assigned to
 the variables, as if the delimiter had been located at that
 point, and
 .Ic read
@@ -4502,11 +4507,10 @@ Interpret each
 .Ar name
 as a command and print the resolution of the command search.
 Possible resolutions are:
-shell keyword, alias, shell built-in,
-command, tracked alias and not found.
-For aliases the alias expansion is
-printed; for commands and tracked aliases the complete pathname of the
-command is printed.
+shell keyword, alias, shell built-in, function,
+command, and not found.
+For aliases the alias expansion is printed;
+for commands the complete pathname of the command is printed.
 .\"
 .Pp
 .It Ic ulimit Oo Fl H Ns \*(Ba Ns Fl S Oc Op Fl a \*(Ba Fl btfdscmlrpnv Op Ar value
