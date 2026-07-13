@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.99 2026/07/12 20:07:45 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.100 2026/07/13 07:38:57 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -798,7 +798,7 @@ delete_scheme(struct pm_devs *p)
 }
 #endif
 
-#if !defined(NO_DISKSIZE_CHECKS) && !defined(NO_PARTMAN)
+#if !defined(NO_DISKSIZE_CHECKS) || !defined(NO_PARTMAN)
 static bool
 convert_copy(struct disk_partitions *old_parts,
     struct disk_partitions *new_parts)
