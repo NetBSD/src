@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.57 2025/07/03 03:54:40 kre Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.58 2026/07/13 10:46:21 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.57 2025/07/03 03:54:40 kre Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.58 2026/07/13 10:46:21 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,8 +155,11 @@ next_read_char(int fd, size_t max)
 		char c;
 
 		(void) max;
-		if (read(fd, &c, 1) != 1)
-			return -1;
+		while ((len = read(fd, &c, 1)) != 1) {
+			if (len == -1 && errno == EINTR)
+				continue;
+			return len - 1;
+		}
 		return (c & 0xFF);
 	}
 
@@ -164,12 +167,22 @@ next_read_char(int fd, size_t max)
 		pos = 0;
 		if (max > sizeof buffer)
 			max = sizeof buffer;
-		len = read(fd, buffer, max);
+		while ((len = read(fd, buffer, max)) < 0)
+			if (errno != EINTR)
+				break;
 		if (len <= 0)
-			return -1;
+			return len - 1;
 	}
 
 	return buffer[pos++] & 0xFF;
+}
+
+static void
+read_reset(int setraw, struct termios *ttystate)
+{
+	(void)next_read_char(0, (size_t)-1);	/* attempt to seek back */
+	if (setraw)
+		setrawmode(0, 0, 0, ttystate);
 }
 
 #define READ_OPTS	"bd:n:p:r"
@@ -180,15 +193,20 @@ static inline int
 next_read_char(int fd, size_t max)
 {
 	char c;
+	int len;
 
 	if (max == 0 || max == (size_t)-1)
 		return 0;
 
-	if (read(fd, &c, 1) != 1)
-		return -1;
+	while ((len = read(fd, &c, 1)) != 1) {
+		if (len == -1 && errno == EINTR)
+			continue;
+		return len - 1;
+	}
 	return (c & 0xFF);
 }
 
+#define read_reset(a, b) __nothing
 #define n_flag 0
 #define maxlen 0
 
@@ -302,6 +320,10 @@ readcmd(int argc, char **argv)
 	for ( ; !n_flag || --maxlen >= 0 ; ) {
 #endif
 		if ((c = next_read_char(0, maxlen + 1)) < 0) {
+			if (c <= -2) {
+				read_reset(setraw, &ttystate);
+				error("read error");
+			}
 			status = 1;
 			break;
 		}
@@ -311,6 +333,10 @@ readcmd(int argc, char **argv)
 				break;
 #endif
 			if ((c = next_read_char(0, maxlen + 1)) < 0) {
+				if (c <= -2) {
+					read_reset(setraw, &ttystate);
+					error("read error");
+				}
 				status = 1;
 				break;
 			}
@@ -391,12 +417,7 @@ readcmd(int argc, char **argv)
 	}
 	STACKSTRNUL(p);
 
-#ifndef SMALL
-	(void)next_read_char(0, (size_t)-1);	/* attempt to seek back */
-	if (setraw)
-		setrawmode(0, 0, end, &ttystate);
-#endif
-
+	read_reset(setraw, &ttystate);
 
 	/* Remove trailing IFS chars */
 	for (; stackblock() + wordlen <= --p; *p = 0) {
