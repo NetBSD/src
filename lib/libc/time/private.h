@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.76 2026/03/08 21:04:54 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.77 2026/07/13 18:44:45 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -257,6 +257,9 @@ strnlen (char const *s, size_t maxlen)
 # define EINVAL ERANGE
 #endif
 
+#ifndef EFTYPE
+# define EFTYPE EINVAL
+#endif
 #ifndef ELOOP
 # define ELOOP EINVAL
 #endif
@@ -973,6 +976,11 @@ ATTRIBUTE_POSIX2TIME time_t time2posix_z(timezone_t __restrict, time_t);
      (/*LINTED*/((type)~(type)0 >> (sizeof(type) * CHAR_BIT - 1)) == (type)-1)
 #define TWOS_COMPLEMENT(type) (TYPE_SIGNED (type) && (! ~ (type) -1))
 
+/* Yield the value of the arithmetic expression X after integer promotion.
+   This is safer than a cast, which in general would accept even
+   pointers and which might trap or yield a value not equal to X.  */
+#define INT_PROMOTE(x) (+(x))
+
 /* Minimum and maximum of two values.  Use lower case to avoid
    naming clashes with standard include files.  */
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -1093,12 +1101,16 @@ time_t timeoff(struct tm *, long);
 ** The default is to use gettext if available, and use MSGID otherwise.
 */
 
-#if HAVE_GETTEXT
-# define _(msgid) gettext(msgid)
-#else /* !HAVE_GETTEXT */
-# define _(msgid) (msgid)
-#endif /* !HAVE_GETTEXT */
-#define N_(msgid) (msgid)
+#ifndef _
+# if HAVE_GETTEXT
+#  define _(msgid) gettext(msgid)
+# else
+#  define _(msgid) (msgid)
+# endif
+#endif
+#ifndef N_
+# define N_(msgid) (msgid)
+#endif
 
 #if !defined TZ_DOMAIN && defined HAVE_GETTEXT
 # define TZ_DOMAIN "tz"

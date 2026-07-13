@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_localtime.c,v 1.5 2025/12/18 17:45:29 christos Exp $	*/
+/*	$NetBSD: compat_localtime.c,v 1.6 2026/07/13 18:44:44 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -87,5 +87,6 @@ __warn_references(tzsetwall,
  */
 int	stat(const char *, struct stat *) __RENAME(__stat50);
 int	fstat(int, struct stat *) __RENAME(__fstat50);
+int	fstatat(int, const char *, struct stat *, int);
 
 #include "time/localtime.c"
