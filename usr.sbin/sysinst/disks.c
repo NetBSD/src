@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.100 2026/07/13 07:38:57 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.101 2026/07/13 07:43:49 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -799,6 +799,13 @@ delete_scheme(struct pm_devs *p)
 #endif
 
 #if !defined(NO_DISKSIZE_CHECKS) || !defined(NO_PARTMAN)
+/* If we have PARTMAN we offer a menu to convert between different partitioning
+ * schemes, so this code is referenced from code outside the #ifndef NO_DISKSIZE_CHECKS
+ * code below.
+ * Ideally we would also conditionalize this on the effective number of partitioning
+ * schemes available, but that is only known at runtime and this #if stuff is about
+ * reducing size for "challenged" environments.
+ */
 static bool
 convert_copy(struct disk_partitions *old_parts,
     struct disk_partitions *new_parts)
