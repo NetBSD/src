@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe_keepalive.sh,v 1.3 2026/06/22 04:08:57 yamaguchi Exp $
+#	$NetBSD: t_pppoe_keepalive.sh,v 1.4 2026/07/14 05:05:21 yamaguchi Exp $
 #
 # Copyright (c) Internet Initiative Japan Inc.
 # All rights reserved.
@@ -75,7 +75,7 @@ pppoe_keepalive_reset_body()
 	atf_ifconfig shmif0 up
 	atf_ifconfig pppoe0 up
 
-	# automatically recoonect
+	# automatically reconnect
 	echo "sleep \$PPPOE_RECON_PADTRCVD (${PPPOE_RECON_PADTRCVD}s)"
 	sleep $PPPOE_RECON_PADTRCVD
 	wait_for "IPCP" "opened"
@@ -89,7 +89,7 @@ pppoe_keepalive_reset_cleanup()
 }
 
 atf_test_case pppoe_keepalive_ifdown cleanup
-pppoe_keppalive_ifdown_head()
+pppoe_keepalive_ifdown_head()
 {
 
 	atf_set "descr" "Test for PP_IFDOWN flag"
@@ -122,7 +122,7 @@ pppoe_keepalive_ifdown_body()
 	export RUMP_SERVER=$SERVER
 	atf_ifconfig shmif0 down
 
-	# wait for no keepalive detaction
+	# wait for no keepalive detection
 	T=$((RUMP_PPPOE_KEEPALIVE_INTERVAL * 3))
 	echo "sleep PPPOE_KEEPALIVE_INTERVAL * 3 (${T}s)"
 	sleep $T
@@ -137,7 +137,7 @@ pppoe_keepalive_ifdown_body()
 	atf_ifconfig shmif0 up
 	atf_ifconfig pppoe0 up
 
-	# automatically recoonect
+	# automatically reconnect
 	echo "sleep \$PPPOE_RECON_PADTRCVD (${PPPOE_RECON_PADTRCVD}s)"
 	sleep $PPPOE_RECON_PADTRCVD
 	wait_for "IPCP" "opened"
@@ -151,7 +151,7 @@ pppoe_keepalive_ifdown_body()
 	export RUMP_SERVER=$SERVER
 	atf_ifconfig shmif0 down
 
-	# wait for no keepalive detaction
+	# wait for no keepalive detection
 	T=$((RUMP_PPPOE_KEEPALIVE_INTERVAL * 3))
 	echo "sleep PPPOE_KEEPALIVE_INTERVAL * 3 (${T}s)"
 	sleep $T

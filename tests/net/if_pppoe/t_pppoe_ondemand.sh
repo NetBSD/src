@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe_ondemand.sh,v 1.2 2026/07/10 22:24:02 andvar Exp $
+#	$NetBSD: t_pppoe_ondemand.sh,v 1.3 2026/07/14 05:05:21 yamaguchi Exp $
 #
 # Copyright (c) Internet Initiative Japan Inc.
 # All rights reserved.
@@ -107,9 +107,9 @@ pppoe_ondemand_body()
 	done
 
 	#
-	# Test reset the session due to no echo reply
+	# Test session reset due to no echo reply
 	#
-	echo "Test reset the session due to no echo reply"
+	echo "Test session reset due to no echo reply"
 
 	local n=1
 	export RUMP_SERVER=$CLIENT
@@ -150,7 +150,7 @@ pppoe_ondemand_body()
 	atf_ifconfig shmif0 up
 	atf_ifconfig pppoe0 up
 
-	# automatically recoonect
+	# automatically reconnect
 	echo "sleep \$PPPOE_RECON_PADTRCVD (${PPPOE_RECON_PADTRCVD}s)"
 	sleep $PPPOE_RECON_PADTRCVD
 	wait_for "IPCP" "opened"
@@ -158,9 +158,9 @@ pppoe_ondemand_body()
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 
 	#
-	# Test reset the session after PADT received
+	# Test session reset after PADT received
 	#
-	echo "Test reset the session after PADT received"
+	echo "Test session reset after PADT received"
 
 	# Set a generous missed count to prevent accidental disconnects
 	export RUMP_SERVER=$CLIENT
@@ -179,7 +179,7 @@ pppoe_ondemand_body()
 	export RUMP_SERVER=$SERVER
 	atf_ifconfig pppoe0 up
 
-	# automatically recoonect
+	# automatically reconnect
 	T=$((PPPOE_RECON_PADTRCVD * 2))
 	echo "sleep \$PPPOE_RECON_PADTRCVD * 2 (${T}s)"
 	sleep $T
@@ -205,6 +205,8 @@ pppoe_ondemand_maxpadi_head()
 
 pppoe_ondemand_maxpadi_body()
 {
+	# A generous idle timeout to prevent accidental disconnects
+	local t_idle=300
 
 	# Skipped by default as it involves a long sleep duration.
 	if [ "$ATF_NET_IF_PPPOE_FULLTEST" != "yes" ]; then
@@ -247,12 +249,12 @@ pppoe_ondemand_maxpadi_body()
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 
-	# The client start to connection
+	# The client starts connection
 	atf_check -s exit:0 -o match:'UP.*RUNNING' rump.ifconfig pppoe0
 	wait_for "LCP" "starting"
 
 	local t=$((total_retry_wait + 10))
-	echo "Waiting for timeout of PADI sendings (${t}s)"
+	echo "Waiting for timeout of PADI retries (${t}s)"
 	sleep $t
 
 	atf_check -s exit:0 -o     match:'UP'      rump.ifconfig pppoe0

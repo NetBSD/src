@@ -1,4 +1,4 @@
-#	$NetBSD: common.sh,v 1.1 2026/06/10 05:22:57 yamaguchi Exp $
+#	$NetBSD: common.sh,v 1.2 2026/07/14 05:05:21 yamaguchi Exp $
 #
 # Copyright (c) Internet Initiative Japan Inc.
 # All rights reserved.
@@ -87,7 +87,7 @@ setup_auth_params()
 
 	# As pppoe client doesn't support rechallenge yet.
 	local server_optparam=""
-	if [ $auth = "chap" ]; then
+	if [ "$auth" = "chap" ]; then
 		server_optparam="norechallenge"
 	fi
 
@@ -237,7 +237,7 @@ cleanup_bus()
 		atf_ifconfig shmif0 -linkstr
 	done
 
-	rm $BUS
+	rm $BUS_
 
 	for S in $SERVER_ $CLIENT_; do
 		export RUMP_SERVER=$S

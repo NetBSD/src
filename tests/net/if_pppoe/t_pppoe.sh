@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.34 2026/06/10 05:22:57 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.35 2026/07/14 05:05:21 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -77,9 +77,9 @@ pppoe_ncp_body()
 	setup_ipv6cp_addrs $SERVER_IP6 $CLIENT_IP6
 
 	#
-	# test of default settings
+	# Testing default settings
 	#
-	echo "Test of default settings"
+	echo "Testing default settings"
 
 	# ipcp & ipv6cp are enabled by default
 	export RUMP_SERVER=$CLIENT
@@ -133,7 +133,7 @@ atf_test_case pppoe_mtu cleanup
 pppoe_mtu_head()
 {
 
-	atf_set "descr" "Test for mtu"
+	atf_set "descr" "Test for MTU"
 	atf_set "require.progs" "rump_server"
 }
 
