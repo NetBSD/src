@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.303 2026/07/14 05:14:52 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.304 2026/07/14 06:00:19 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.303 2026/07/14 05:14:52 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.304 2026/07/14 06:00:19 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1131,7 +1131,7 @@ sppp_sysctl_setup(struct sppp *sp)
 
 	err = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-	    CTLTYPE_INT, "ifdown",
+	    CTLTYPE_BOOL, "ifdown",
 	    SYSCTL_DESCR("Down interface on no echo reply and loopback detected"),
 	    sppp_sysctl_flags, 0, (void *)sp, 0,
 	    CTL_CREATE, CTL_EOL);
