@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.304 2026/07/14 06:00:19 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.305 2026/07/14 06:01:50 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.304 2026/07/14 06:00:19 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.305 2026/07/14 06:01:50 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1140,8 +1140,9 @@ sppp_sysctl_setup(struct sppp *sp)
 
 	return;
 bad:
-	printf("%s: could not attach sysctl nodes for sppp\n",
-	    sp->pp_if.if_xname);
+	sysctl_teardown(&sp->pp_sysctl_log);
+	SPPP_LOG(sp, LOG_WARNING,
+	    "could not attach sysctl nodes for sppp\n");
 	return;
 }
 
