@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_natt.sh,v 1.5 2020/06/05 03:24:58 knakahara Exp $
+#	$NetBSD: t_ipsec_natt.sh,v 1.6 2026/07/14 02:33:22 knakahara Exp $
 #
 # Copyright (c) 2018 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -151,7 +151,7 @@ start_natt_terminator()
 	fi
 	echo $pid >> $PIDSFILE
 
-	$DEBUG && rump.netstat -a -f inet
+	$DEBUG && rump.netstat -na -f inet
 
 	export RUMP_SERVER=$backup
 
