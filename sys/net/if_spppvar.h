@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.54 2026/07/14 05:07:58 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.55 2026/07/14 06:03:11 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -227,6 +227,19 @@ int sppp_isempty (struct ifnet *);
 void sppp_flush (struct ifnet *);
 void sppp_abort_connect(struct ifnet *);
 
+/*
+ * An interface to read pp_connecting for layer-violation
+ * optimization.
+ *
+ * If pp_connecting is false when read by a lower layer, a Close event
+ * for LCP has been scheduled but pp_tlf() has not yet been called.
+ * This allows the lower layer to abort connection retries during a Down
+ * (This-Layer-Down) before pp_tlf() is invoked.
+ *
+ * Since pp_tlf() is guaranteed to be called eventually, this check is
+ * purely optional for optimization; therefore, acquiring pp_lock
+ * (SPPP_LOCK()) is not required.
+ */
 static inline bool
 sppp_is_connecting(struct ifnet *ifp)
 {
@@ -235,6 +248,18 @@ sppp_is_connecting(struct ifnet *ifp)
 	return atomic_load_relaxed(&sp->pp_connecting);
 }
 
+/*
+ * An interface to check if Dial-on-Demand is enabled.
+ *
+ * If Dial-on-Demand is enabled, the lower layer can abort connection
+ * retries asynchronously with the sppp layer. On aborting, the lower
+ * layer is expected to invoke sppp_abort_connect(), which evaluates
+ * pp_ondemand while holding pp_lock.
+ *
+ * Since this function serves as the initial unlocked check for a
+ * Double-checked locking pattern, acquiring pp_lock (SPPP_LOCK())
+ * is not required.
+ */
 static inline bool
 sppp_ondemand_enabled(struct ifnet *ifp)
 {
