@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.300 2026/07/10 02:19:53 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.301 2026/07/14 05:11:01 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.300 2026/07/10 02:19:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.301 2026/07/14 05:11:01 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3347,10 +3347,11 @@ sppp_cp_check(struct sppp *sp, u_char cp_flags)
 static bool
 sppp_is_ncp_opened(struct sppp *sp)
 {
-	int i, mask;
+	size_t i;
 
-	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1)
-		if (((cps[i])->flags & CP_NCP) && (sp->scp[i].state == STATE_OPENED))
+	for (i = 0; i < IDX_COUNT; i++)
+		if (((cps[i])->flags & CP_NCP) &&
+		    (sp->scp[i].state == STATE_OPENED))
 			return true;
 	return false;
 }
