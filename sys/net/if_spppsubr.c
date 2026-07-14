@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.302 2026/07/14 05:12:53 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.303 2026/07/14 05:14:52 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.302 2026/07/14 05:12:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.303 2026/07/14 05:14:52 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -302,7 +302,8 @@ static struct sppp	*spppq;
 static kmutex_t		*spppq_lock = NULL;
 static callout_t	 keepalive_ch;
 static unsigned int	 sppp_keepalive_cnt = 0;
-unsigned int		 sppp_keepalive_interval = SPPP_KEEPALIVE_INTERVAL;
+unsigned int		 sppp_keepalive_interval __read_mostly
+			    = SPPP_KEEPALIVE_INTERVAL;
 
 pktq_rps_hash_func_t sppp_pktq_rps_hash_p;
 
