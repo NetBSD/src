@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.53 2026/06/24 15:30:45 riastradh Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.54 2026/07/14 05:07:58 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -143,8 +143,8 @@ struct sppp {
 
 #define PP_DEVF_KEEPALIVE	__BIT(0)	/* use keepalive protocol */
 #define PP_DEVF_NOFRAMING	__BIT(1)	/* do not add/expect encapsulation
-						   around PPP frames (i.e. the serial
-						   HDLC like encapsulation, RFC1662) */
+						 * around PPP frames (i.e. the serial
+						 * HDLC like encapsulation, RFC1662) */
 	uint32_t	pp_dev_flags; /* immutable device flags after attach*/
 	size_t		pp_framebytes; /* number of bytes added by (hardware) framing */
 
