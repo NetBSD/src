@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.19 2026/06/21 10:28:07 andvar Exp $ */
+/* $NetBSD: disksubr.c,v 1.20 2026/07/14 13:34:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2026/06/21 10:28:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20 2026/07/14 13:34:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 {
 	struct buf *bp;
 	struct disklabel *dlp;
-	struct dkbad *bdp;
 	const char *msg = NULL;
 	uint32_t secperunit;
-	int i;
 
 	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize == 0)
@@ -98,46 +96,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		}
 	}
 
-	if (msg)
-		goto done;
-
-	if ((msg = convertdisklabel(lp, strat, bp, secperunit)) != NULL)
-		goto done;
-
-	/* obtain bad sector table if requested and present */
-	if (clp && (bdp = &clp->bad) != NULL && (lp->d_flags & D_BADSECT)) {
-		struct dkbad *db;
-
-		i = 0;
-		do {
-			/* read a bad sector table */
-			bp->b_oflags &= ~(BO_DONE);
-			bp->b_flags |= B_READ;
-			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
-			if (lp->d_secsize > DEV_BSIZE)
-				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
-			else
-				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
-			bp->b_bcount = lp->d_secsize;
-			bp->b_cylinder = lp->d_ncylinders - 1;
-			(*strat)(bp);
-
-			/* if successful, validate, otherwise try another */
-			if (biowait(bp)) {
-				msg = "bad sector table I/O error";
-			} else {
-				db = (struct dkbad *)(bp->b_data);
-#define DKBAD_MAGIC 0x4321
-				if (db->bt_mbz == 0
-					&& db->bt_flag == DKBAD_MAGIC) {
-					msg = NULL;
-					*bdp = *db;
-					break;
-				} else
-					msg = "bad sector table corrupted";
-			}
-		} while (bp->b_error != 0 && (i += 2) < 10 &&
-			i < lp->d_nsectors);
+	if (msg == NULL) {
+		msg = convertdisklabel(lp, strat, bp, secperunit);
 	}
 
 done:

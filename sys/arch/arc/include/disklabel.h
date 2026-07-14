@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.13 2020/06/15 22:03:39 tsutsui Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.14 2026/07/14 13:34:33 thorpej Exp $	*/
 /*	$OpenBSD: disklabel.h,v 1.14 1999/03/23 16:36:17 millert Exp $	*/
 /*	NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp 	*/
 
@@ -48,15 +48,8 @@
 #include <sys/bootblock.h>
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/dkbad.h>
-#else
-#include <sys/dkbad.h>
-#endif /* HAVE_NBTOOL_CONFIG_H */
 struct cpu_disklabel {
 	struct mbr_partition mbrparts[MBR_PART_COUNT];
-#define __HAVE_DISKLABEL_DKBAD
-	struct dkbad bad;
 };
 
 #endif /* _MACHINE_DISKLABEL_H_ */

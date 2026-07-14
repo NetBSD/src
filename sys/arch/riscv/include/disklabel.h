@@ -1,4 +1,4 @@
-/* $NetBSD: disklabel.h,v 1.2 2022/05/24 19:37:39 andvar Exp $ */
+/* $NetBSD: disklabel.h,v 1.3 2026/07/14 13:34:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,17 +39,13 @@
 #define RAW_PART		2	/* raw partition: XX?c */
 
 #if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/dkbad.h>
 #include <nbinclude/sys/bootblock.h>
 #else
-#include <sys/dkbad.h>
 #include <sys/bootblock.h>
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
 struct cpu_disklabel {
 	struct mbr_partition mbrparts[MBR_PART_COUNT];
-#define __HAVE_DISKLABEL_DKBAD
-	struct dkbad bad;
 };
 
 #ifdef _KERNEL

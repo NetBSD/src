@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5 2011/08/30 12:39:52 bouyer Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6 2026/07/14 13:34:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,16 +39,9 @@
 #define	MAXPARTITIONS	8			/* number of partitions */
 #define	RAW_PART	2			/* raw partition: xx?c */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/dkbad.h>
-#else
-#include <sys/dkbad.h>
-#endif /* HAVE_NBTOOL_CONFIG_H */
-
 /* Just a dummy */
 struct cpu_disklabel {
-#define __HAVE_DISKLABEL_DKBAD
-	struct dkbad bad;			/* must have one element. */
+	int dummy;
 };
 
 #endif	/* !_ALGOR_DISKLABEL_H_ */

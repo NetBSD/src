@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 2026/07/14 13:34:34 thorpej Exp $	*/
 
 /*	$OpenBSD: disklabel.h,v 1.5 2000/07/05 22:37:22 mickey Exp $	*/
 
@@ -48,16 +48,9 @@
 #include <sys/bootblock.h>
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/dkbad.h>
-#else
-#include <sys/dkbad.h>
-#endif /* HAVE_NBTOOL_CONFIG_H */
 struct cpu_disklabel {
 	struct hppa_lifvol lifvol;
 	struct hppa_lifdir lifdir[HPPA_LIF_NUMDIR];
-#define __HAVE_DISKLABEL_DKBAD
-	struct dkbad bad;			/* To make wd(4) happy */
 };
 
 #endif /* _MACHINE_DISKLABEL_H_ */
