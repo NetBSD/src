@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.6 2017/07/24 10:04:09 mrg Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7 2026/07/14 13:34:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -87,15 +87,8 @@
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
 #ifndef __ASSEMBLER__
-#if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/dkbad.h>
-#else
-#include <sys/dkbad.h>
-#endif /* HAVE_NBTOOL_CONFIG_H */
 struct cpu_disklabel {
 	struct mbr_partition mbrparts[MBR_PART_COUNT];
-#define __HAVE_DISKLABEL_DKBAD
-	struct dkbad bad;
 };
 #endif
 #endif
@@ -197,16 +190,9 @@ struct boot_block {
 #define	MAXPARTITIONS	16			/* number of partitions */
 #define	RAW_PART	2			/* raw partition: xx?c */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/dkbad.h>
-#else
-#include <sys/dkbad.h>
-#endif /* HAVE_NBTOOL_CONFIG_H */
-
 /* Just a dummy */
 struct cpu_disklabel {
-#define __HAVE_DISKLABEL_DKBAD
-	struct dkbad bad;			/* must have one element. */
+	int dummy;
 };
 
 #endif /* MIPS64_SB1 */

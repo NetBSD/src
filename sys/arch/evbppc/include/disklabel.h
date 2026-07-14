@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.8 2013/05/16 19:06:44 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.9 2026/07/14 13:34:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -52,18 +52,12 @@
 #define	LABELOFFSET	64		/* offset of label in sector */
 #endif /* EVBPPC_HAS_MBR */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/dkbad.h>
-#else
-#include <sys/dkbad.h>
-#endif /* HAVE_NBTOOL_CONFIG_H */
-
 struct cpu_disklabel {
 #ifdef EVBPPC_HAS_MBR
 	struct mbr_partition mbrparts[MBR_PART_COUNT];
+#else
+	int dummy;
 #endif
-#define __HAVE_DISKLABEL_DKBAD
-	struct dkbad bad;		/* bad-sector information */
 };
 
 #endif /* _MACHINE_DISKLABEL_H_ */

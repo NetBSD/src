@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2026/06/21 10:28:08 andvar Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 2026/07/14 13:34:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2026/06/21 10:28:08 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2026/07/14 13:34:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 {
 	struct mbr_partition *dp;
 	struct partition *pp;
-	struct dkbad *bdp;
 	struct buf *bp;
 	struct disklabel *dlp;
 	const char *msg = NULL;
@@ -263,46 +262,6 @@ nombrpart:
 			msg = NULL;
 			break;
 		}
-	}
-
-	if (msg)
-		goto done;
-
-	/* obtain bad sector table if requested and present */
-	if (osdep && (lp->d_flags & D_BADSECT)) {
-		struct dkbad *db;
-
-		bdp = &osdep->bad;
-		i = 0;
-		do {
-			/* read a bad sector table */
-			bp->b_oflags &= ~(BO_DONE);
-			bp->b_flags |= B_READ;
-			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
-			if (lp->d_secsize > DEV_BSIZE)
-				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
-			else
-				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
-			bp->b_bcount = lp->d_secsize;
-			bp->b_cylinder = lp->d_ncylinders - 1;
-			(*strat)(bp);
-
-			/* if successful, validate, otherwise try another */
-			if (biowait(bp)) {
-				msg = "bad sector table I/O error";
-			} else {
-				db = (struct dkbad *)(bp->b_data);
-#define DKBAD_MAGIC 0x4321
-				if (db->bt_mbz == 0
-					&& db->bt_flag == DKBAD_MAGIC) {
-					msg = NULL;
-					*bdp = *db;
-					break;
-				} else
-					msg = "bad sector table corrupted";
-			}
-		} while (bp->b_error != 0 && (i += 2) < 10 &&
-			i < lp->d_nsectors);
 	}
 
 done:
