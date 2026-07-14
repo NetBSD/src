@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.301 2026/07/14 05:11:01 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.302 2026/07/14 05:12:53 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.301 2026/07/14 05:11:01 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.302 2026/07/14 05:12:53 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -786,7 +786,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 
 	case PPP_IPV6:
-		SPPP_LOCK(sp, RW_WRITER);
+		SPPP_LOCK(sp, RW_READER);
 		if (sp->scp[IDX_IPV6CP].state == STATE_OPENED) {
 			atomic_store_relaxed(&sp->pp_last_activity, time_uptime32);
 			pktq = ip6_pktq;
