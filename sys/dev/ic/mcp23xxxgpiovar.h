@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23xxxgpiovar.h,v 1.2 2022/01/17 19:36:54 thorpej Exp $	*/
+/*      $NetBSD: mcp23xxxgpiovar.h,v 1.3 2026/07/15 13:20:48 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define	_DEV_IC_MCP23xxxGPIOVAR_H_
 
 /* 
- * Driver for Microchip serial I/O expansers:
+ * Driver for Microchip serial I/O expanders:
  *
  *	MCP23008	8-bit, I2C interface
  *	MCP23S08	8-bit, SPI interface

@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.39 2026/03/13 21:13:45 andvar Exp $	*/
+/*	$NetBSD: scr.c,v 1.40 2026/07/15 13:20:48 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.39 2026/03/13 21:13:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.40 2026/07/15 13:20:48 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -3964,7 +3964,7 @@ char * getText(int x)
         case    atrcTWorkWaiting: return "atrcTWorkWaiting";
 
 
-            /* states in in Anser To Reset (ATR) state machine */
+            /* states in Answer To Reset (ATR) state machine */
         case    atrsIdle:        return "atrsIdle";
         case    atrsTS:          return "atrsTS";
         case    atrsT0:          return "atrsT0";
@@ -3984,7 +3984,7 @@ char * getText(int x)
         case    t0rbcTErrorStart:   return "t0rbcTErrorStart";
         case    t0rbcTErrorStop:    return "t0rbcTErrorStop";
 
-            /* states in in TO Recv Byte state machine */
+            /* states in TO Recv Byte state machine */
         case    t0rbsIdle:          return "t0rbsIdle";
         case    t0rbsFindStartEdge: return "t0rbcFindStartEdge";
         case    t0rbsFindStartMid:  return "t0rbcFindStartMid";
@@ -4000,7 +4000,7 @@ char * getText(int x)
         case    t0sbcTError:        return "t0sbcTError";
         case    t0sbcTResend:       return "t0sbcTResend";
 
-            /* states in in T0 Send Byte state machine */
+            /* states in T0 Send Byte state machine */
         case    t0sbsIdle:          return "t0sbsIdle";
         case    t0sbsClockData:     return "t0sbsClockData";
         case    t0sbsWaitError:     return "t0sbsWaitError";
