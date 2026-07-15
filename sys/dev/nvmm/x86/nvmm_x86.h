@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.21 2021/03/26 15:59:53 reinoud Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.22 2026/07/15 01:22:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -132,6 +132,7 @@ struct nvmm_cap_md {
 	uint64_t vcpu_conf_support;
 #define NVMM_CAP_ARCH_VCPU_CONF_CPUID	__BIT(0)
 #define NVMM_CAP_ARCH_VCPU_CONF_TPR	__BIT(1)
+#define NVMM_CAP_ARCH_VCPU_CONF_XCR0_MASK __BIT(2)
 
 	uint64_t xcr0_mask;
 	uint32_t mxcsr_mask;
@@ -269,6 +270,7 @@ struct nvmm_x64_state {
 
 #define NVMM_VCPU_CONF_CPUID	NVMM_VCPU_CONF_MD_BEGIN
 #define NVMM_VCPU_CONF_TPR	(NVMM_VCPU_CONF_MD_BEGIN + 1)
+#define NVMM_VCPU_CONF_XCR0_MASK (NVMM_VCPU_CONF_MD_BEGIN + 2)
 
 struct nvmm_vcpu_conf_cpuid {
 	/* The options. */
@@ -309,7 +311,7 @@ struct nvmm_vcpu_conf_tpr {
 
 #ifdef _KERNEL
 #define NVMM_X86_MACH_NCONF	0
-#define NVMM_X86_VCPU_NCONF	2
+#define NVMM_X86_VCPU_NCONF	3
 struct nvmm_x86_cpuid_mask {
 	uint32_t eax;
 	uint32_t ebx;
@@ -323,6 +325,9 @@ extern const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000001;
 extern const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000007;
 extern const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000008;
 bool nvmm_x86_pat_validate(uint64_t);
+uint32_t nvmm_x86_xsave_size(uint64_t);
+bool nvmm_x86_xcr0_valid(uint64_t, uint64_t);
+uint64_t nvmm_x86_munge_xcr0(uint64_t, uint64_t);
 #endif
 
 #endif /* ASM_NVMM */
