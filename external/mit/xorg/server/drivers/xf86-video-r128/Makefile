@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2018/12/30 07:13:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2026/07/15 07:55:36 macallan Exp $
 
 DRIVER=		xf86-video-r128
 DRIVER_NAME=	r128_drv
@@ -21,6 +21,7 @@ CPPFLAGS+=	-DWITH_VGAHW
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 
 CPPFLAGS+=	-DUSE_EXA -DR128DRI
+CPPFLAGS+=	-DHAVE_DEV_WSCONS_WSCONSIO_H
 
 CWARNFLAGS.clang+=	-Wno-format -Wno-pointer-sign
 
