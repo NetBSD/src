@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_fpu.c,v 1.1 2026/07/09 02:05:45 riastradh Exp $	*/
+/*	$NetBSD: sig_fpu.c,v 1.2 2026/07/15 01:02:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sig_fpu.c,v 1.1 2026/07/09 02:05:45 riastradh Exp $");
+__RCSID("$NetBSD: sig_fpu.c,v 1.2 2026/07/15 01:02:42 riastradh Exp $");
 
 #include "sig_fpu.h"
 
@@ -45,9 +45,13 @@ __RCSID("$NetBSD: sig_fpu.c,v 1.1 2026/07/09 02:05:45 riastradh Exp $");
 #include "h_macros.h"
 
 #ifdef __x86_64__
-#  define	NVECREGS	16
+#  define	NXMMREGS	16
+#  define	NYMMREGS	16
+#  define	NZMMREGS	32
 #else  /* 32-bit */
-#  define	NVECREGS	8
+#  define	NXMMREGS	8
+#  define	NYMMREGS	8
+#  define	NZMMREGS	8
 #endif
 
 #define	X87_CW_RC	__BITS(11,10) /* rounding control (mode) */
@@ -256,7 +260,7 @@ trash_x87(void)
 struct xmmregs {
 	struct {
 		uint8_t b[16];
-	} __aligned(16)	xmm[NVECREGS];
+	} __aligned(16)	xmm[NXMMREGS];
 	uint32_t mxcsr;
 };
 
@@ -426,7 +430,7 @@ ymm_supported(void)
 struct ymmregs {
 	struct {
 		uint8_t b[32];
-	} __aligned(32)	ymm[NVECREGS];
+	} __aligned(32)	ymm[NYMMREGS];
 };
 
 __attribute__((target("avx")))
@@ -551,6 +555,198 @@ trash_ymm(void)
 #ifdef __x86_64__
 	    , "ymm8", "ymm9", "ymm10", "ymm11", "ymm12",
 	      "ymm13", "ymm14", "ymm15"
+#endif
+	);
+}
+
+bool
+zmm_supported(void)
+{
+	return cpuid(0x00000007, 0).ebx & __BIT(16);
+}
+
+struct zmmregs {
+	struct {
+		uint8_t b[64];
+	} __aligned(64)	zmm[NZMMREGS];
+};
+
+__attribute__((target("avx512f")))
+int
+test_zmm(volatile bool *ready, const volatile bool *done)
+{
+	struct zmmregs before, after;
+	unsigned i;
+	int error = 0;
+
+	/*
+	 * Randomize the zmm register content.
+	 */
+	arc4random_buf(&before, sizeof(before));
+
+	/*
+	 * Load up the registers, report that we're ready, busy-wait
+	 * with the registers still live -- so no subroutine calls --
+	 * until we're done, and then store the registers back to
+	 * memory so we can check them.
+	 */
+	asm("\n"
+	    "	vmovdqa64	0*64(%[before_zmm]),%%zmm0\n"
+	    "	vmovdqa64	1*64(%[before_zmm]),%%zmm1\n"
+	    "	vmovdqa64	2*64(%[before_zmm]),%%zmm2\n"
+	    "	vmovdqa64	3*64(%[before_zmm]),%%zmm3\n"
+	    "	vmovdqa64	4*64(%[before_zmm]),%%zmm4\n"
+	    "	vmovdqa64	5*64(%[before_zmm]),%%zmm5\n"
+	    "	vmovdqa64	6*64(%[before_zmm]),%%zmm6\n"
+	    "	vmovdqa64	7*64(%[before_zmm]),%%zmm7\n"
+#ifdef __x86_64__
+	    "	vmovdqa64	8*64(%[before_zmm]),%%zmm8\n"
+	    "	vmovdqa64	9*64(%[before_zmm]),%%zmm9\n"
+	    "	vmovdqa64	10*64(%[before_zmm]),%%zmm10\n"
+	    "	vmovdqa64	11*64(%[before_zmm]),%%zmm11\n"
+	    "	vmovdqa64	12*64(%[before_zmm]),%%zmm12\n"
+	    "	vmovdqa64	13*64(%[before_zmm]),%%zmm13\n"
+	    "	vmovdqa64	14*64(%[before_zmm]),%%zmm14\n"
+	    "	vmovdqa64	15*64(%[before_zmm]),%%zmm15\n"
+	    "	vmovdqa64	16*64(%[before_zmm]),%%zmm16\n"
+	    "	vmovdqa64	17*64(%[before_zmm]),%%zmm17\n"
+	    "	vmovdqa64	18*64(%[before_zmm]),%%zmm18\n"
+	    "	vmovdqa64	19*64(%[before_zmm]),%%zmm19\n"
+	    "	vmovdqa64	20*64(%[before_zmm]),%%zmm20\n"
+	    "	vmovdqa64	21*64(%[before_zmm]),%%zmm21\n"
+	    "	vmovdqa64	22*64(%[before_zmm]),%%zmm22\n"
+	    "	vmovdqa64	23*64(%[before_zmm]),%%zmm23\n"
+	    "	vmovdqa64	24*64(%[before_zmm]),%%zmm24\n"
+	    "	vmovdqa64	25*64(%[before_zmm]),%%zmm25\n"
+	    "	vmovdqa64	26*64(%[before_zmm]),%%zmm26\n"
+	    "	vmovdqa64	27*64(%[before_zmm]),%%zmm27\n"
+	    "	vmovdqa64	28*64(%[before_zmm]),%%zmm28\n"
+	    "	vmovdqa64	29*64(%[before_zmm]),%%zmm29\n"
+	    "	vmovdqa64	30*64(%[before_zmm]),%%zmm30\n"
+	    "	vmovdqa64	31*64(%[before_zmm]),%%zmm31\n"
+#endif
+	    "	lock\n"
+	    "	orb	$1,%[ready]\n"
+	    "0:	pause\n"
+	    "	cmpb	$0,%[done]\n"
+	    "	lfence\n"
+	    "	je	0b\n"
+	    "	vmovdqa64	%%zmm0,0*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm1,1*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm2,2*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm3,3*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm4,4*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm5,5*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm6,6*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm7,7*64(%[after_zmm])\n"
+#ifdef __x86_64__
+	    "	vmovdqa64	%%zmm8,8*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm9,9*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm10,10*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm11,11*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm12,12*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm13,13*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm14,14*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm15,15*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm16,16*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm17,17*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm18,18*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm19,19*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm20,20*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm21,21*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm22,22*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm23,23*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm24,24*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm25,25*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm26,26*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm27,27*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm28,28*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm29,29*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm30,30*64(%[after_zmm])\n"
+	    "	vmovdqa64	%%zmm31,31*64(%[after_zmm])\n"
+#endif
+	    : /*out*/ [ready]"=m"(*ready), "=m"(after.zmm)
+	    : /*in*/ [done]"m"(*done), "m"(before.zmm),
+	      [before_zmm]"r"(before.zmm), [after_zmm]"r"(after.zmm)
+	    : /*clobber*/ "zmm0", "zmm1", "zmm2", "zmm3", "zmm4", "zmm5",
+	      "zmm6", "zmm7"
+#ifdef __x86_64__
+	    , "zmm8", "zmm9", "zmm10", "zmm11", "zmm12",
+	      "zmm13", "zmm14", "zmm15", "zmm16", "zmm17",
+	      "zmm18", "zmm19", "zmm20", "zmm21", "zmm22",
+	      "zmm23", "zmm24", "zmm25", "zmm26", "zmm27",
+	      "zmm28", "zmm29", "zmm30", "zmm31"
+#endif
+	);
+
+	for (i = 0; i < __arraycount(before.zmm); i++) {
+		if (memcmp(&before.zmm[i], &after.zmm[i],
+			sizeof(before.zmm[i]))) {
+			fprintf(stderr, "zmm%u clobbered\n", i);
+			hexdump(stderr, &before.zmm[i], sizeof(before.zmm[i]),
+			    "before");
+			hexdump(stderr, &after.zmm[i], sizeof(after.zmm[i]),
+			    "after");
+			error |= 1 << i;
+		}
+	}
+
+	return error;
+}
+
+__attribute__((target("avx512f")))
+void
+trash_zmm(void)
+{
+	struct zmmregs regs;
+
+	arc4random_buf(&regs, sizeof(regs));
+
+	asm("\n"
+	    "	vmovdqa64	0*64(%[zmm]),%%zmm0\n"
+	    "	vmovdqa64	1*64(%[zmm]),%%zmm1\n"
+	    "	vmovdqa64	2*64(%[zmm]),%%zmm2\n"
+	    "	vmovdqa64	3*64(%[zmm]),%%zmm3\n"
+	    "	vmovdqa64	4*64(%[zmm]),%%zmm4\n"
+	    "	vmovdqa64	5*64(%[zmm]),%%zmm5\n"
+	    "	vmovdqa64	6*64(%[zmm]),%%zmm6\n"
+	    "	vmovdqa64	7*64(%[zmm]),%%zmm7\n"
+#ifdef __x86_64__
+	    "	vmovdqa64	8*64(%[zmm]),%%zmm8\n"
+	    "	vmovdqa64	9*64(%[zmm]),%%zmm9\n"
+	    "	vmovdqa64	10*64(%[zmm]),%%zmm10\n"
+	    "	vmovdqa64	11*64(%[zmm]),%%zmm11\n"
+	    "	vmovdqa64	12*64(%[zmm]),%%zmm12\n"
+	    "	vmovdqa64	13*64(%[zmm]),%%zmm13\n"
+	    "	vmovdqa64	14*64(%[zmm]),%%zmm14\n"
+	    "	vmovdqa64	15*64(%[zmm]),%%zmm15\n"
+	    "	vmovdqa64	16*64(%[zmm]),%%zmm16\n"
+	    "	vmovdqa64	17*64(%[zmm]),%%zmm17\n"
+	    "	vmovdqa64	18*64(%[zmm]),%%zmm18\n"
+	    "	vmovdqa64	19*64(%[zmm]),%%zmm19\n"
+	    "	vmovdqa64	20*64(%[zmm]),%%zmm20\n"
+	    "	vmovdqa64	21*64(%[zmm]),%%zmm21\n"
+	    "	vmovdqa64	22*64(%[zmm]),%%zmm22\n"
+	    "	vmovdqa64	23*64(%[zmm]),%%zmm23\n"
+	    "	vmovdqa64	24*64(%[zmm]),%%zmm24\n"
+	    "	vmovdqa64	25*64(%[zmm]),%%zmm25\n"
+	    "	vmovdqa64	26*64(%[zmm]),%%zmm26\n"
+	    "	vmovdqa64	27*64(%[zmm]),%%zmm27\n"
+	    "	vmovdqa64	28*64(%[zmm]),%%zmm28\n"
+	    "	vmovdqa64	29*64(%[zmm]),%%zmm29\n"
+	    "	vmovdqa64	30*64(%[zmm]),%%zmm30\n"
+	    "	vmovdqa64	31*64(%[zmm]),%%zmm31\n"
+#endif
+	    : /*out*/
+	    : /*in*/ "m"(regs.zmm), [zmm]"r"(regs.zmm)
+	    : /*clobber*/ "zmm0", "zmm1", "zmm2", "zmm3", "zmm4", "zmm5",
+	      "zmm6", "zmm7"
+#ifdef __x86_64__
+	    , "zmm8", "zmm9", "zmm10", "zmm11", "zmm12",
+	      "zmm13", "zmm14", "zmm15", "zmm16", "zmm17",
+	      "zmm18", "zmm19", "zmm20", "zmm21", "zmm22",
+	      "zmm23", "zmm24", "zmm25", "zmm26", "zmm27",
+	      "zmm28", "zmm29", "zmm30", "zmm31"
 #endif
 	);
 }
