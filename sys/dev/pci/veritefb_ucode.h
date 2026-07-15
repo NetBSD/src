@@ -1,4 +1,4 @@
-/*	$NetBSD: veritefb_ucode.h,v 1.1 2026/07/11 15:18:21 rkujawa Exp $	*/
+/*	$NetBSD: veritefb_ucode.h,v 1.2 2026/07/15 20:53:22 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -40,18 +40,27 @@
 
 /*
  * VRAM layout: the first VFB_MC_SIZE bytes are reserved for microcode,
- * the framebuffer starts right after...  
+ * the framebuffer starts right after...
  *
  * The context-switch monitor (csucode) lives at VFB_CSUCODE_BASE.
  */
-#define VFB_MC_SIZE		0x10000
+#define VFB_MC_SIZE		0x20000
 #define VFB_CSUCODE_BASE	0x800
 #define VFB_CSUCODE_SEM0	0x7f8
 #define VFB_CSUCODE_SEM1	0x7fc
 
+/* Per-slot load bounds for the two resident microcode images. */
+#define VFB_UC2D_LO		0x1000	/* 2D blob: link base 0x1000 */
+#define VFB_UC2D_HI		VFB_UCF_BASE
+#define VFB_UCF_BASE		0x8000	/* foreign 3D/GL slot */
+#define VFB_UCF_END		0x14000	/* v20003d data stash ends 0x13208 */
+#define VFB_CTX_BASE		0x14000	/* foreign context store area */
+#define VFB_CTX_SIZE		0x400	/* context store area */
+
 /* csucode monitor commands (first FIFO word after starting the monitor) */
 #define VFB_CSUCODE_INIT	0	/* a1=ctx store area, a2, entry */
-#define VFB_CSUCODE_SYNC	2	/* wait for pixel engine idle */
+#define VFB_CSUCODE_RESUME	1	/* same args; ucode sees cmd in %128 */
+#define VFB_CSUCODE_PING	2	/* echoes 0x2 on the output FIFO */
 
 /*
  * Host->RISC commands: 32-bit words into the input FIFO,
@@ -61,6 +70,7 @@
 				 (uint16_t)(cmd))
 #define VFB_P2(x, y)		VFB_CMDW(x, y)
 
+#define VCMD_SUSPEND		0	/* park in the csucode monitor */
 #define VCMD_FILLRECTSOLID	1	/* prefer the ROP variant */
 #define VCMD_PIXENGSYNC		8	/* -> 0xffffffff in output FIFO */
 #define VCMD_GETPIXEL		9	/* P2(x,y) -> pixel in output FIFO */

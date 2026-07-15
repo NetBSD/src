@@ -1,4 +1,4 @@
-/*	$NetBSD: veritefbreg.h,v 1.1 2026/07/11 15:18:21 rkujawa Exp $	*/
+/*	$NetBSD: veritefbreg.h,v 1.2 2026/07/15 20:53:22 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -95,8 +95,18 @@
 #define VFB_XBUSCTL		0x4b	/* V2x00 only */
 
 #define VFB_DMACMDPTR		0x50	/* DMA command list pointer */
+#define VFB_DMACMDPTR_BUSY	0x01	/* RO: DMA in progress */
 #define VFB_DMAADDRESS		0x54	/* DMA data address */
 #define VFB_DMACOUNT		0x58	/* DMA remaining transfer count */
+/*
+ * DMA descriptor
+ */
+#define VFB_DMALEN_LINK		0x80000000
+#define VFB_DMASWAP_NONE	0	/* data already LE words */
+#define VFB_DMASWAP_BYTE	1	/* full byte reverse (BE words) */
+#define VFB_DMASWAP_HWIN	2	/* halfword-internal swap */
+#define VFB_DMASWAP_HW		3	/* halfword swap */
+#define VFB_DMA_LOWWATER	8	/* burst pacing; spec wants >= 3 */
 
 /* RISC state access window (debug port). */
 #define VFB_STATEINDEX		0x60
