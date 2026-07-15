@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_fpu.c,v 1.2 2026/07/15 01:02:42 riastradh Exp $	*/
+/*	$NetBSD: sig_fpu.c,v 1.3 2026/07/15 02:08:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sig_fpu.c,v 1.2 2026/07/15 01:02:42 riastradh Exp $");
+__RCSID("$NetBSD: sig_fpu.c,v 1.3 2026/07/15 02:08:18 riastradh Exp $");
 
 #include "sig_fpu.h"
 
@@ -392,23 +392,23 @@ trash_xmm(void)
 	arc4random_buf(&regs, sizeof(regs));
 
 	asm("\n"
-	    "	movdqa	0*32(%[xmm]),%%xmm0\n"
-	    "	movdqa	1*32(%[xmm]),%%xmm1\n"
-	    "	movdqa	2*32(%[xmm]),%%xmm2\n"
-	    "	movdqa	3*32(%[xmm]),%%xmm3\n"
-	    "	movdqa	4*32(%[xmm]),%%xmm4\n"
-	    "	movdqa	5*32(%[xmm]),%%xmm5\n"
-	    "	movdqa	6*32(%[xmm]),%%xmm6\n"
-	    "	movdqa	7*32(%[xmm]),%%xmm7\n"
+	    "	movdqa	0*16(%[xmm]),%%xmm0\n"
+	    "	movdqa	1*16(%[xmm]),%%xmm1\n"
+	    "	movdqa	2*16(%[xmm]),%%xmm2\n"
+	    "	movdqa	3*16(%[xmm]),%%xmm3\n"
+	    "	movdqa	4*16(%[xmm]),%%xmm4\n"
+	    "	movdqa	5*16(%[xmm]),%%xmm5\n"
+	    "	movdqa	6*16(%[xmm]),%%xmm6\n"
+	    "	movdqa	7*16(%[xmm]),%%xmm7\n"
 #ifdef __x86_64__
-	    "	movdqa	8*32(%[xmm]),%%xmm8\n"
-	    "	movdqa	9*32(%[xmm]),%%xmm9\n"
-	    "	movdqa	10*32(%[xmm]),%%xmm10\n"
-	    "	movdqa	11*32(%[xmm]),%%xmm11\n"
-	    "	movdqa	12*32(%[xmm]),%%xmm12\n"
-	    "	movdqa	13*32(%[xmm]),%%xmm13\n"
-	    "	movdqa	14*32(%[xmm]),%%xmm14\n"
-	    "	movdqa	15*32(%[xmm]),%%xmm15\n"
+	    "	movdqa	8*16(%[xmm]),%%xmm8\n"
+	    "	movdqa	9*16(%[xmm]),%%xmm9\n"
+	    "	movdqa	10*16(%[xmm]),%%xmm10\n"
+	    "	movdqa	11*16(%[xmm]),%%xmm11\n"
+	    "	movdqa	12*16(%[xmm]),%%xmm12\n"
+	    "	movdqa	13*16(%[xmm]),%%xmm13\n"
+	    "	movdqa	14*16(%[xmm]),%%xmm14\n"
+	    "	movdqa	15*16(%[xmm]),%%xmm15\n"
 #endif
 	    : /*out*/
 	    : /*in*/ [xmm]"r"(regs.xmm), "m"(regs.xmm)
