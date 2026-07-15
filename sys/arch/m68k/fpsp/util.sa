@@ -1,4 +1,4 @@
-*	$NetBSD: util.sa,v 1.5 2022/04/08 10:17:53 andvar Exp $
+*	$NetBSD: util.sa,v 1.6 2026/07/15 13:20:47 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -282,7 +282,7 @@ SGL_RN:
 	bset.b	#inf_bit,FPSR_CC(a6)
 	bra.b	set_sign
 SGL_RZ:
-	lea.l	SGL_PLRG,a1	;anwer is +/- large number
+	lea.l	SGL_PLRG,a1	;answer is +/- large number
 	bra.b	set_sign
 SGL_RM:
 	tst.b	LOCAL_SGN(a0)	;if negative overflow
