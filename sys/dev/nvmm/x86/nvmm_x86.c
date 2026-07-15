@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.24 2026/02/08 10:59:52 nia Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.25 2026/07/15 01:22:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.24 2026/02/08 10:59:52 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.25 2026/07/15 01:22:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	    CPUID2_AESNI |
 	    CPUID2_XSAVE |
 	    CPUID2_OSXSAVE |
-	    /* CPUID2_AVX excluded */
+	    CPUID2_AVX |
 	    CPUID2_F16C |
 	    CPUID2_RDRAND,
 	    /* CPUID2_RAZ excluded */
@@ -302,7 +302,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007 = {
 	    /* CPUID_SEF_SGX excluded */
 	    CPUID_SEF_BMI1 |
 	    /* CPUID_SEF_HLE excluded */
-	    /* CPUID_SEF_AVX2 excluded */
+	    CPUID_SEF_AVX2 |
 	    CPUID_SEF_FDPEXONLY |
 	    CPUID_SEF_SMEP |
 	    CPUID_SEF_BMI2 |
@@ -465,4 +465,188 @@ nvmm_x86_pat_validate(uint64_t val)
 	}
 
 	return true;
+}
+
+/*
+ * nvmm_x86_xsave_size(xcr0)
+ *
+ *	Returns the maximum XSAVE area size in bytes needed to
+ *	represent all user state components corresponding to bits set
+ *	in xcr0.  Bit 63, which is reserved for future architecture
+ *	extension at the time of writing, MUST NOT be set.  Bits that
+ *	were not previously advertised in CPUID[EAX=0x0d,ECX=0].EDX:EAX
+ *	MUST NOT be set.
+ */
+uint32_t
+nvmm_x86_xsave_size(uint64_t xcr0)
+{
+	uint32_t totalsize = sizeof(struct xsave_header);
+	unsigned i;
+
+	/*
+	 * Caller must not pass bit 63 until the architectural
+	 * extension mechanism it is reserved for has been defined.
+	 * Caller must also not pass any bits that the CPU has not
+	 * advertised support for.
+	 */
+	KASSERTMSG((xcr0 & ~__BITS(62, 0)) == 0, "xcr0=0x%"PRIx64, xcr0);
+	KASSERTMSG((xcr0 & ~x86_xsave_features) == 0,
+	    "xcr0=0x%"PRIx64" x86_xsave_features=0x%"PRIx64,
+	    xcr0, x86_xsave_features);
+
+	/*
+	 * Bit 0 is for x87 state, and bit 1 is for SSE state, for
+	 * which (a) space is already included in the 512-byte legacy
+	 * area of XSAVE (which is included in `struct xsave_header'),
+	 * and (b) we can't query the CPUID[EAX=0x0d,ECX=i] leaf
+	 * because for i=0 and i=1 the leaf serves a different purpose.
+	 *
+	 * We stop before bit 63 because it is reserved for future
+	 * architectural extension which is not yet defined.
+	 */
+	CTASSERT(sizeof(struct xsave_header) == 512 + 64);
+	for (i = 2; i < 63; i++) {
+		uint32_t descs[4];
+		uint32_t size, offset;
+
+		/*
+		 * Skip state components that are not of interest to
+		 * the caller.
+		 */
+		if ((xcr0 & __BIT(i)) == 0)
+			continue;
+
+		/*
+		 * Can't use x86_xsave_offsets[i] + x86_xsave_sizes[i]
+		 * because the NetBSD kernel only queries those for the
+		 * user state components it knows about, but in
+		 * principle this should support any user state
+		 * component the guest wants to use even if NetBSD
+		 * doesn't know how.
+		 */
+		x86_cpuid2(0x0d, i, descs);
+		size = descs[0];	/* CPUID[EAX=0x0d,ECX=i].EAX */
+		offset = descs[1];	/* CPUID[EAX=0x0d,ECX=i].EBX */
+		KASSERT(size <= UINT32_MAX - offset);
+		totalsize = MAX(totalsize, offset + size);
+	}
+
+	return totalsize;
+}
+
+/*
+ * nvmm_x86_xcr0_valid(xcr0, xcr0_mask)
+ *
+ *	True if xcr0 is a valid content for the XCR0 register, false if
+ *	not.
+ *
+ *	- Bits outside xcr0_mask must not be set.
+ *	- Bit for x87 state must be set.
+ *	- The bit for the YMM_Hi128 state (high 128-bit halves of the
+ *	  ymm registers) can only be set if the SSE state (xmm
+ *	  registers, a.k.a. low 128-bit halves of the ymm registers) is
+ *	  also enabled.
+ *
+ *	What about ZMM_Hi256?  According to even recent architecture
+ *	manuals from Intel and AMD, this does _not_ seem to require
+ *	that SSE or YMM_Hi128 be enabled for ZMM_Hi256 to be enabled.
+ *	Not requiring this is sensible because it enables XSAVE
+ *	extensions to work safely even if software doesn't know such
+ *	details.  But I have not tested on real hardware whether
+ *	ZMM_Hi256 actually does require YMM_Hi128 or SSE to be enabled
+ *	in XCR0.
+ *
+ *	References:
+ *
+ *	- Intel 64 and IA-32 Architectures Software Developer's Manual,
+ *	  Volume 2 (2A, 2B, 2C, & 2D): Instruction Set Reference, A-Z,
+ *	  Intel, Order Number: 325383-092US, June 2026, Sec. 6.1
+ *	  `Instructions (W-Z)', `XSETBV---Set Extended Control
+ *	  Register', pp. 6-70 -- 6-71.
+ *	  https://cdrdv2.intel.com/v1/dl/getContent/671110
+ *	  https://web.archive.org/web/20260711031355/https://cdrdv2-public.intel.com/922478/325383-092-sdm-vol-2abcd.pdf
+ *
+ *	- AMD64 Architecture Programmer's Manual, Volume 4: 128-bit,
+ *	  256-bit, and 512-bit Media Instructions, Advanced Micro
+ *	  Devices, Publication No. 26568, Rev. 3.26, January 2026,
+ *	  pp. 1576--1577.
+ *	  https://docs.amd.com/v/u/en-US/26568_3.26_APM_Vol4
+ *	  https://web.archive.org/web/20260714233827/https://docs.amd.com/api/khub/documents/ioQiNhSqxlMkRaU~IyGQYQ/content?Ft-Calling-App=ft%2Fturnkey-portal&Ft-Calling-App-Version=5.3.24
+ */
+bool
+nvmm_x86_xcr0_valid(uint64_t xcr0, uint64_t xcr0_mask)
+{
+
+	/*
+	 * Refuse setting any bits in XCR0 that are disabled in the
+	 * vCPU configuration.
+	 */
+	if (__predict_false(xcr0 & ~xcr0_mask))
+		return false;
+
+	/*
+	 * Refuse clearing the x87 state component in XCR0, as the
+	 * physical CPU would.
+	 */
+	if (__predict_false((xcr0 & XCR0_X87) == 0))
+		return false;
+
+	/*
+	 * Refuse setting the YMM_Hi128 state component in XCR0 if the
+	 * SSE/XMM state component is not also enabled, like the
+	 * physical CPU would.
+	 */
+	if (__predict_false((xcr0 & (XCR0_YMM_Hi128|XCR0_SSE)) ==
+		XCR0_YMM_Hi128))
+		return false;
+
+	/* Looks good! */
+	return true;
+}
+
+/*
+ * nvmm_x86_munge_xcr0(xcr0, xcr0_mask)
+ *
+ *	Map an arbitrary 64-bit word into a plausible value for XCR0
+ *	under the given mask (which must itself be a plausible value
+ *	for XCR0).  This function MUST NOT be called on CPUs without
+ *	XSAVE at all.
+ */
+uint64_t
+nvmm_x86_munge_xcr0(uint64_t xcr0, uint64_t xcr0_mask)
+{
+	uint64_t origxcr0 __diagused = xcr0;
+
+	KASSERT(xcr0_mask != 0);
+	KASSERTMSG(xcr0_mask & XCR0_X87, "xcr0_mask=0x%"PRIx64, xcr0_mask);
+	KASSERTMSG((xcr0_mask & (XCR0_YMM_Hi128|XCR0_SSE)) != XCR0_YMM_Hi128,
+	    "xcr0_mask=0x%"PRIx64, xcr0_mask);
+
+	/*
+	 * Clear any bits not in xcr0_mask.
+	 */
+	xcr0 &= xcr0_mask;
+
+	/*
+	 * Set the mandatory x87 bit.
+	 */
+	xcr0 |= XCR0_X87;
+
+	/*
+	 * If YMM_Hi128 (high 128-bit halves of ymmN) is enabled, then
+	 * SSE (xmmN, a.k.a. low 128-bit halves of ymmN) must also be
+	 * enabled.
+	 *
+	 * Note: The same may not apply to zmmN; see above about
+	 * nvmm_x86_xcr0_valid.
+	 */
+	if (__predict_false((xcr0 & (XCR0_YMM_Hi128|XCR0_SSE)) ==
+		XCR0_YMM_Hi128))
+		xcr0 |= XCR0_SSE;
+
+	KASSERTMSG(nvmm_x86_xcr0_valid(xcr0, xcr0_mask),
+	    "origxcr0=0x%"PRIx64" xcr0=0x%"PRIx64" xcr0_mask=0x%"PRIx64,
+	    origxcr0, xcr0, xcr0_mask);
+
+	return xcr0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.95 2026/05/27 12:41:52 yamt Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.96 2026/07/15 01:22:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.95 2026/05/27 12:41:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.96 2026/07/15 01:22:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,7 +499,6 @@ static kmutex_t svm_asidlock __cacheline_aligned;
 static bool svm_decode_assist __read_mostly;
 static uint32_t svm_ctrl_tlb_flush __read_mostly;
 
-#define SVM_XCR0_MASK_DEFAULT	(XCR0_X87|XCR0_SSE)
 static uint64_t svm_xcr0_mask __read_mostly;
 
 #define SVM_NCPUIDS	32
@@ -560,7 +559,9 @@ static const size_t svm_vcpu_conf_sizes[NVMM_X86_VCPU_NCONF] = {
 	[NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_CPUID)] =
 	    sizeof(struct nvmm_vcpu_conf_cpuid),
 	[NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_TPR)] =
-	    sizeof(struct nvmm_vcpu_conf_tpr)
+	    sizeof(struct nvmm_vcpu_conf_tpr),
+	[NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_XCR0_MASK)] =
+	    sizeof(uint64_t),
 };
 
 struct svm_cpudata {
@@ -601,11 +602,20 @@ struct svm_cpudata {
 	uint64_t gprs[NVMM_X64_NGPR];
 	uint64_t drs[NVMM_X64_NDR];
 	uint64_t gtsc;
-	struct xsave_header gfpu __aligned(64);
 
 	/* VCPU configuration. */
 	bool cpuidpresent[SVM_NCPUIDS];
 	struct nvmm_vcpu_conf_cpuid cpuid[SVM_NCPUIDS];
+	uint64_t xcr0_mask;
+
+	/*
+	 * Guest XSAVE state.  Must be the last member because it may
+	 * be extended variably by whatever CPU we're running on.  We
+	 * add a flexible array member afterward to ward UB-exploiting
+	 * compilers away from memset/memcpy calls that access it.
+	 */
+	struct xsave_header gfpu __aligned(64);
+	uint8_t gfpu_ext[];
 };
 
 static void
@@ -960,20 +970,23 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 		break;
 	case 0x0000000D: /* Processor Extended State Enumeration */
-		if (svm_xcr0_mask == 0) {
+		if (cpudata->xcr0_mask == 0) {
+			cpudata->vmcb->state.rax = 0;
+			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 			break;
 		}
 		switch (ecx) {
 		case 0:
-			cpudata->vmcb->state.rax = svm_xcr0_mask & 0xFFFFFFFF;
-			if (cpudata->gxcr0 & XCR0_SSE) {
-				cpudata->gprs[NVMM_X64_GPR_RBX] = sizeof(struct fxsave);
-			} else {
-				cpudata->gprs[NVMM_X64_GPR_RBX] = sizeof(struct save87);
-			}
-			cpudata->gprs[NVMM_X64_GPR_RBX] += 64; /* XSAVE header */
-			cpudata->gprs[NVMM_X64_GPR_RCX] = sizeof(struct fxsave) + 64;
-			cpudata->gprs[NVMM_X64_GPR_RDX] = svm_xcr0_mask >> 32;
+			cpudata->vmcb->state.rax =
+			    cpudata->xcr0_mask & 0xFFFFFFFF;
+			cpudata->gprs[NVMM_X64_GPR_RBX] =
+			    nvmm_x86_xsave_size(cpudata->gxcr0);
+			cpudata->gprs[NVMM_X64_GPR_RCX] =
+			    nvmm_x86_xsave_size(cpudata->xcr0_mask);
+			cpudata->gprs[NVMM_X64_GPR_RDX] =
+			    cpudata->xcr0_mask >> 32;
 			break;
 		case 1:
 			cpudata->vmcb->state.rax &=
@@ -982,6 +995,21 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
 			cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
 			cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+			break;
+		case 2 ... 62:
+			/*
+			 * CPUID[EAX=0x0d,ECX=n], 2 <= n <= 62: size
+			 * and offset of nth component in XSAVE area.
+			 * If the nth bit of XCR0 is disabled in the
+			 * vCPU configuration, we return all-zero
+			 * instead.
+			 */
+			if ((cpudata->xcr0_mask & __BIT(ecx)) == 0) {
+				cpudata->vmcb->state.rax = 0;
+				cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+				cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+				cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+			}
 			break;
 		default:
 			cpudata->vmcb->state.rax = 0;
@@ -1377,12 +1405,16 @@ svm_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		goto error;
 	} else if (__predict_false(vmcb->state.cpl != 0)) {
 		goto error;
-	} else if (__predict_false((val & ~svm_xcr0_mask) != 0)) {
+	} else if (__predict_false(cpudata->xcr0_mask == 0)) {
 		goto error;
-	} else if (__predict_false((val & XCR0_X87) == 0)) {
+	} else if (__predict_false(!nvmm_x86_xcr0_valid(val,
+		    cpudata->xcr0_mask))) {
 		goto error;
 	}
 
+	KASSERTMSG(nvmm_x86_xcr0_valid(val, cpudata->xcr0_mask),
+	    "val=0x%"PRIx64" xcr0_mask=0x%"PRIx64" (gxcr0=0x%"PRIx64")",
+	    val, cpudata->xcr0_mask, cpudata->gxcr0);
 	cpudata->gxcr0 = val;
 
 	svm_inkernel_advance(cpudata->vmcb);
@@ -1406,14 +1438,80 @@ svm_vcpu_guest_fpu_enter(struct nvmm_cpu *vcpu)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 
-	fpu_kern_enter();
-	/* TODO: should we use *XSAVE64 here? */
-	fpu_area_restore(&cpudata->gfpu, svm_xcr0_mask, false);
+	/*
+	 * The guest's XCR0 had better not have any bits that aren't
+	 * allowed in the vCPU configuration, and the current XSAVE
+	 * area had better not store any either according to
+	 * cpudata->gfpu.xsh_xstate_bv.
+	 *
+	 * Note that XRSTOR will trap if XSTATE_BV has any bits that
+	 * are not set in XCR0.
+	 */
+	KASSERTMSG((cpudata->gxcr0 & ~cpudata->xcr0_mask) == 0,
+	    "gxcr0=0x%"PRIx64" xcr0_mask=0x%"PRIx64,
+	    cpudata->gxcr0, cpudata->xcr0_mask);
+	KASSERTMSG((cpudata->gfpu.xsh_xstate_bv & ~cpudata->xcr0_mask) == 0,
+	    "XSTATE_BV=0x%"PRIx64" xcr0_mask=0x%"PRIx64,
+	    cpudata->gfpu.xsh_xstate_bv, cpudata->xcr0_mask);
 
-	if (svm_xcr0_mask != 0) {
-		cpudata->hxcr0 = rdxcr(0);
-		wrxcr(0, cpudata->gxcr0);
+	/*
+	 * Save anything in the FPU registers that this thread might
+	 * have been using to memory, and raise the IPL to IPL_VM to
+	 * block interrupt handlers that might use the FPU.  This also
+	 * zeroes any FPU registers that the NetBSD host uses.
+	 *
+	 * After this point, we are free to use the FPU registers.
+	 */
+	fpu_kern_enter();
+
+	/*
+	 * If the host CPU doesn't support XSAVE or we're simulating a
+	 * vCPU without it, just restore the x87 and SSE state.  The
+	 * host should already have both x87 and SSE enabled in XCR0,
+	 * if the host uses XSAVE.
+	 */
+	if (cpudata->xcr0_mask == 0) {
+		/* TODO: should we use *XSAVE64 here? */
+		fpu_area_restore(&cpudata->gfpu, XCR0_X87|XCR0_SSE, false);
+		return;
 	}
+
+	/*
+	 * Set XCR0 to allow access to anything the guest has
+	 * previously used and is saved to memory, _and_ to anything
+	 * the guest has asked to use in cpudata->gxcr0.
+	 *
+	 * The guest may have used some extended CPU state like the
+	 * zmmN registers, and then later disabled them in XCR0; in
+	 * that case, the state must be preserved in case the guest
+	 * later enables it in XCR0, but we can only load while all
+	 * bits in cpudata->gfpu.xsh_xstate_bv are set in XCR0.
+	 *
+	 * Similarly, the guest may _not_ have used some extended CPU
+	 * state since reset, but may have since enabled it in XCR0.
+	 * Such state will be clear in cpudata->gfpu.xsh_xstate_bv and
+	 * must be initialized afresh by the CPU, which requires the
+	 * bits be set in XCR0 to allow that.
+	 */
+	cpudata->hxcr0 = rdxcr(0);
+	wrxcr(0, cpudata->xcr0_mask &
+	    (cpudata->gfpu.xsh_xstate_bv | cpudata->gxcr0));
+
+	/*
+	 * Load the guest's saved extended CPU state from memory into
+	 * the CPU.
+	 */
+	/* TODO: should we use *XSAVE64 here? */
+	fpu_area_restore(&cpudata->gfpu, cpudata->xcr0_mask, false);
+
+	/*
+	 * If we temporarily set XCR0 beyond what the guest asked for
+	 * in order to restore state that is currently disabled, reduce
+	 * it down to what the guest asked for.
+	 */
+	if (__predict_false(cpudata->gxcr0 != (cpudata->xcr0_mask &
+		    (cpudata->gfpu.xsh_xstate_bv | cpudata->gxcr0))))
+		wrxcr(0, cpudata->xcr0_mask & cpudata->gxcr0);
 }
 
 static void
@@ -1421,14 +1519,76 @@ svm_vcpu_guest_fpu_leave(struct nvmm_cpu *vcpu)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 
-	if (svm_xcr0_mask != 0) {
-		cpudata->gxcr0 = rdxcr(0);
-		wrxcr(0, cpudata->hxcr0);
+	/*
+	 * If the host CPU doesn't support XSAVE or we're simulating a
+	 * vCPU without it, just save the x87 and SSE state.  If the
+	 * host uses XSAVE, it should still have both x87 and SSE
+	 * enabled in XCR0; if the host doesn't use XSAVE, doesn't
+	 * matter.
+	 */
+	if (cpudata->xcr0_mask == 0) {
+		/* TODO: should we use *XSAVE64 here? */
+		fpu_area_save(&cpudata->gfpu, XCR0_X87|XCR0_SSE, false);
+		goto leave;
 	}
 
+	/*
+	 * In case the guest has cleared some XCR0 bits but used the
+	 * corresponding extended CPU state, increase XCR0 to the
+	 * maximum supported for this guest before we XSAVE.
+	 *
+	 * Note that XRSTOR will trap if XSTATE_BV has any bits that
+	 * are not set in XCR0.
+	 */
+	cpudata->gxcr0 = rdxcr(0);
+	wrxcr(0, cpudata->xcr0_mask);
+
+	/*
+	 * Paranoia: Ensure the guest's XCR0 has no forbidden bits.
+	 * Should not be possible because we filter them on XSETBV
+	 * exits.
+	 */
+	KASSERTMSG((cpudata->gxcr0 & ~cpudata->xcr0_mask) == 0,
+	    "gxcr0=0x%"PRIx64" xcr0_mask=0x%"PRIx64,
+	    cpudata->gxcr0, cpudata->xcr0_mask);
+	cpudata->gxcr0 &= cpudata->xcr0_mask;
+
+	/*
+	 * Save any extended CPU state that could be in use by the
+	 * guest.
+	 */
 	/* TODO: should we use *XSAVE64 here? */
-	fpu_area_save(&cpudata->gfpu, svm_xcr0_mask, false);
+	fpu_area_save(&cpudata->gfpu, cpudata->xcr0_mask, false);
+
+	/*
+	 * If the host XCR0 is different from the maximum guest XCR0,
+	 * switch back to the host XCR0 so we can restore NetBSD's FPU
+	 * state.
+	 */
+	if (cpudata->xcr0_mask != cpudata->hxcr0)
+		wrxcr(0, cpudata->hxcr0);
+
+leave:	/*
+	 * Restore any FPU registers that we might have saved in
+	 * svm_vcpu_guest_fpu_enter for this thread, and restore the
+	 * IPL from IPL_VM.
+	 *
+	 * After this point, we must not touch the FPU registers.
+	 */
 	fpu_kern_leave();
+
+	/*
+	 * The guest's XCR0 had better not have any bits that aren't
+	 * allowed in the vCPU configuration, and the current XSAVE
+	 * area had better not store any either according to
+	 * cpudata->gfpu.xsh_xstate_bv.
+	 */
+	KASSERTMSG((cpudata->gxcr0 & ~cpudata->xcr0_mask) == 0,
+	    "gxcr0=0x%"PRIx64" xcr0_mask=0x%"PRIx64,
+	    cpudata->gxcr0, cpudata->xcr0_mask);
+	KASSERTMSG((cpudata->gfpu.xsh_xstate_bv & ~cpudata->xcr0_mask) == 0,
+	    "XSTATE_BV=0x%"PRIx64" xcr0_mask=0x%"PRIx64,
+	    cpudata->gfpu.xsh_xstate_bv, cpudata->xcr0_mask);
 }
 
 static void
@@ -1915,11 +2075,11 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu)
 		vmcb->ctrl.v |= __SHIFTIN(state->crs[NVMM_X64_CR_CR8],
 		    VMCB_CTRL_V_TPR);
 
-		if (svm_xcr0_mask != 0) {
-			/* Clear illegal XCR0 bits, set mandatory X87 bit. */
-			cpudata->gxcr0 = state->crs[NVMM_X64_CR_XCR0];
-			cpudata->gxcr0 &= svm_xcr0_mask;
-			cpudata->gxcr0 |= XCR0_X87;
+		if (cpudata->xcr0_mask != 0) {
+			const uint64_t xcr0 = state->crs[NVMM_X64_CR_XCR0];
+
+			cpudata->gxcr0 = nvmm_x86_munge_xcr0(xcr0,
+			    cpudata->xcr0_mask);
 		}
 	}
 
@@ -1983,11 +2143,15 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu)
 		fpustate->fx_mxcsr_mask &= x86_fpu_mxcsr_mask;
 		fpustate->fx_mxcsr &= fpustate->fx_mxcsr_mask;
 
-		if (svm_xcr0_mask != 0) {
+		if (cpudata->xcr0_mask != 0) {
 			/* Reset XSTATE_BV, to force a reload. */
-			cpudata->gfpu.xsh_xstate_bv = svm_xcr0_mask;
+			cpudata->gfpu.xsh_xstate_bv = cpudata->xcr0_mask;
 		}
 	}
+	/*
+	 * XXX XSAVE area -- need to allocate and map it separately
+	 * since it may exceed the comm page size
+	 */
 
 	svm_vmcb_cache_update(vmcb, flags);
 
@@ -2093,6 +2257,10 @@ svm_vcpu_getstate(struct nvmm_cpu *vcpu)
 		memcpy(&state->fpu, cpudata->gfpu.xsh_fxsave,
 		    sizeof(state->fpu));
 	}
+	/*
+	 * XXX XSAVE area -- need to allocate and map it separately
+	 * since it may exceed the comm page size
+	 */
 
 	comm->state_wanted = 0;
 	comm->state_cached |= flags;
@@ -2282,7 +2450,11 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmcb->ctrl.n_cr3 = mach->vm->vm_map.pmap->pm_pdirpa[0];
 
 	/* Init XSAVE header. */
-	cpudata->gfpu.xsh_xstate_bv = svm_xcr0_mask;
+	cpudata->xcr0_mask = svm_xcr0_mask;
+	KASSERTMSG(nvmm_x86_xcr0_valid(cpudata->xcr0_mask, svm_xcr0_mask),
+	    "cpudata->xcr0_mask=0x%"PRIx64" svm_xcr0_mask=0x%"PRIx64,
+	    cpudata->xcr0_mask, svm_xcr0_mask);
+	cpudata->gfpu.xsh_xstate_bv = cpudata->xcr0_mask;
 	cpudata->gfpu.xsh_xcomp_bv = 0;
 
 	/* These MSRs are static. */
@@ -2302,12 +2474,27 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 static int
 svm_vcpu_create(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 {
+	size_t xsave_size, cpudata_size;
 	struct svm_cpudata *cpudata;
 	int error;
 
+	/*
+	 * Compute the size of the SVM cpudata.  We put the
+	 * variable-length XSAVE area at the end so if it's small
+	 * enough, it stays within a single page.  We size the XSAVE
+	 * area for the maximum set of features supported by the CPU
+	 * which a guest can enable (which may be more than the NetBSD
+	 * host enables for itself -- hence we don't use
+	 * x86_fpu_save_size here!).
+	 */
+	xsave_size = nvmm_x86_xsave_size(svm_xcr0_mask);
+	KASSERT(xsave_size < SIZE_MAX - offsetof(struct svm_cpudata, gfpu));
+	cpudata_size = MAX(sizeof(*cpudata),
+	    offsetof(struct svm_cpudata, gfpu) + xsave_size);
+
 	/* Allocate the SVM cpudata. */
 	cpudata = (struct svm_cpudata *)uvm_km_alloc(kernel_map,
-	    roundup(sizeof(*cpudata), PAGE_SIZE), 0,
+	    roundup(cpudata_size, PAGE_SIZE), 0,
 	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 	vcpu->cpudata = cpudata;
 
@@ -2425,6 +2612,54 @@ svm_vcpu_configure_cpuid(struct svm_cpudata *cpudata, void *data)
 }
 
 static int
+svm_vcpu_configure_xcr0_mask(struct svm_cpudata *cpudata, void *data)
+{
+	const uint64_t *xcr0_maskp = data;
+
+	/*
+	 * Refuse to enable XCR0 bits (extended CPU state components)
+	 * not supported by this system, or to set up otherwise
+	 * nonsensical masks like AVX (YMM_Hi128) but not SSE (XMM)
+	 * registers.  Exception: The mask can be all-zero to disable
+	 * all XSAVE state components.
+	 */
+	if (*xcr0_maskp != 0 &&
+	    !nvmm_x86_xcr0_valid(*xcr0_maskp, svm_xcr0_mask))
+		return EINVAL;
+
+	/*
+	 * Out of paranoia, clear any existing extended CPU state.
+	 * This operation is unlikely to be used before the guest has
+	 * begun execution at all, so the extended CPU state is
+	 * probably all zero.  But in case some weird hypervisor
+	 * software tries to change the XCR0 mask dynamically, let's
+	 * avoid accidentally leaking things through any extended CPU
+	 * state.
+	 *
+	 * We could zero only the components that are getting disabled.
+	 * But if the saved state is compated (XSAVEC), we wouldd also
+	 * have to move the remaining components around in order to
+	 * avoid zeroing them.  Since no software is likely to try this
+	 * anyway, we'll just zero everything to keep it simple and
+	 * avoid having to test the difficult-and-unused paths.
+	 */
+	memset(&cpudata->gfpu, 0, nvmm_x86_xsave_size(svm_xcr0_mask));
+
+	/*
+	 * Set the XCR0 mask, and limit the guest's XCR0 to this mask.
+	 * Any extended CPU state the guest had previously been using
+	 * will be wiped out.
+	 */
+	cpudata->xcr0_mask = *xcr0_maskp;
+	cpudata->gxcr0 &= cpudata->xcr0_mask;
+	KASSERTMSG((cpudata->xcr0_mask == 0 ||
+		nvmm_x86_xcr0_valid(cpudata->gxcr0, cpudata->xcr0_mask)),
+	    "gxcr0=0x%"PRIx64" xcr0_mask=0x%"PRIx64,
+	    cpudata->gxcr0, cpudata->xcr0_mask);
+	return 0;
+}
+
+static int
 svm_vcpu_configure(struct nvmm_cpu *vcpu, uint64_t op, void *data)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
@@ -2432,6 +2667,8 @@ svm_vcpu_configure(struct nvmm_cpu *vcpu, uint64_t op, void *data)
 	switch (op) {
 	case NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_CPUID):
 		return svm_vcpu_configure_cpuid(cpudata, data);
+	case NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_XCR0_MASK):
+		return svm_vcpu_configure_xcr0_mask(cpudata, data);
 	default:
 		return EINVAL;
 	}
@@ -2602,8 +2839,25 @@ svm_init(void)
 	/* Init the ASID. */
 	svm_init_asid(descs[1]);
 
-	/* Init the XCR0 mask. */
-	svm_xcr0_mask = SVM_XCR0_MASK_DEFAULT & x86_xsave_features;
+	/*
+	 * Init the XCR0 mask.
+	 *
+	 * x86_xsave_features is the cached result of
+	 * CPUID[EAX=0x0000000d,ECX=0].EDX:EAX, the set of all
+	 * supported XCR0 bits for user XSAVE state components on the
+	 * physical CPU.  Hypervisor software can use
+	 * nvmm_vcpu_configure(NVMM_VCPU_CONF_XCR0_MASK) to restrict
+	 * the available features on a per-vCPU basis, e.g. in order to
+	 * limit guests to compatible features for migration.
+	 *
+	 * Out of paranoia, we mask off bit 63 which is reserved for
+	 * future extension which we don't understand because it's not
+	 * yet defined.
+	 */
+	svm_xcr0_mask = x86_xsave_features & __BITS(62, 0);
+	KASSERTMSG((svm_xcr0_mask == 0 ||
+		nvmm_x86_xcr0_valid(svm_xcr0_mask, svm_xcr0_mask)),
+	    "svm_xcr0_mask=0x%"PRIx64, svm_xcr0_mask);
 
 	/* Init the max basic CPUID leaf. */
 	svm_cpuid_max_basic = uimin(cpuid_level, SVM_CPUID_MAX_BASIC);
