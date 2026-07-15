@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: unbound,v 1.3 2026/07/01 03:56:27 riastradh Exp $
+# $NetBSD: unbound,v 1.4 2026/07/15 03:34:13 riastradh Exp $
 #
 
 # PROVIDE: named
@@ -54,6 +54,7 @@ unbound_migrate()
 	if $diff; then
 		echo "Cannot complete migration because files are different"
 		echo "Run 'diff -r $src $dst' resolve the differences"
+		return 1
 	else
 		rm -fr "$src"
 		ln -s "$dst" "$src"
@@ -65,6 +66,18 @@ unbound_precmd()
 {
 	local root_key
 
+	# If a chrootdir is set (as it is by default), make sure we're
+	# migrated to it first; until we are, the default config won't
+	# work, so unbound-checkconf(8) below will fail.
+	#
+	if [ -n "$unbound_chrootdir" ] && [ ! -h /etc/unbound ]; then
+		unbound_migrate /etc/unbound ${unbound_chrootdir} || return $?
+	fi
+
+	# If auto-trust-anchor is requested (on by default), find the
+	# location of auto-trust-anchor-file with unbound-checkconf(8)
+	# and make sure it is initialized with unbound-anchor(8).
+	#
 	if checkyesno unbound_auto_trust_anchor; then
 		root_key=$(su -m _unbound -c \
 		    'unbound-checkconf -o auto-trust-anchor-file') || return $?
@@ -73,15 +86,13 @@ unbound_precmd()
 			echo Bootstrapping Unbound DNS trust anchors.
 			su -m _unbound -c 'unbound-anchor -a "$1"' -- \
 			    /etc/unbound/"$root_key"
+			if [ $? -ne 1 ] || [ ! -s /etc/unbound/"$root_key" ]
+			then
+				printf >&2 '%s: failed to bootstrap %s\n' \
+				    "$name" /etc/unbound/"$root_key"
+				return 1
+			fi
 		fi
-	fi
-
-	if [ -z "$unbound_chrootdir" ]; then
-		return
-	fi
-
-	if [ ! -h /etc/unbound ]; then
-		unbound_migrate /etc/unbound ${unbound_chrootdir}
 	fi
 }
 
