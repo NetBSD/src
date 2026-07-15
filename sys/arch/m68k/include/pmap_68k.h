@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.20 2026/07/06 14:33:55 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.21 2026/07/15 04:58:26 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -459,7 +459,6 @@ void	pmap_db_write_text_exit(struct pmap_db_write_text_context *);
  * XXX Clean this up eventually.
  */
 pt_entry_t *		pmap_kernel_pte(vaddr_t);
-#define	kvtopte(va)	pmap_kernel_pte(va)
 
 paddr_t		vtophys(vaddr_t);
 
