@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.224 2026/07/13 19:31:15 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.225 2026/07/15 00:41:35 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -883,6 +883,8 @@ static bool
 meta_ignore(GNode *gn, const char *p)
 {
     char fname[MAXPATHLEN];
+    const char *expr;
+    char *fm;
 
     if (p == NULL)
 	return true;
@@ -904,10 +906,7 @@ meta_ignore(GNode *gn, const char *p)
 	}
     }
 
-    if (metaIgnorePatterns) {
-	const char *expr;
-	char *pm;
-
+    if (metaIgnorePatterns || metaIgnoreFilter)
 	/*
 	 * XXX: This variable is set on a target GNode but is not one of
 	 * the usual local variables.  It should be deleted afterwards.
@@ -915,27 +914,24 @@ meta_ignore(GNode *gn, const char *p)
 	 * in a .for loop.
 	 */
 	Var_Set(gn, ".p.", p);
-	expr = "${" MAKE_META_IGNORE_PATTERNS ":@m@${.p.:M$m}@}";
-	pm = Var_Subst(expr, gn, VARE_EVAL);
+
+    if (metaIgnorePatterns) {
+	expr = "${.p.:${" MAKE_META_IGNORE_PATTERNS ":S,^,N,:ts:}}";
+	fm = Var_Subst(expr, gn, VARE_EVAL);
 	/* TODO: handle errors */
-	if (pm[0] != '\0') {
+	if (*fm == '\0') {
 #ifdef DEBUG_META_MODE
 	    DEBUG1(META, "meta_oodate: ignoring pattern: %s\n", p);
 #endif
-	    free(pm);
+	    free(fm);
 	    return true;
 	}
-	free(pm);
+	free(fm);
     }
 
     if (metaIgnoreFilter) {
-	char *fm;
-
-	/* skip if filter result is empty */
-	snprintf(fname, sizeof fname,
-		 "${%s:L:${%s:ts:}}",
-		 p, MAKE_META_IGNORE_FILTER);
-	fm = Var_Subst(fname, gn, VARE_EVAL);
+	expr = "${.p.:${" MAKE_META_IGNORE_FILTER ":ts:}}";
+	fm = Var_Subst(expr, gn, VARE_EVAL);
 	/* TODO: handle errors */
 	if (*fm == '\0') {
 #ifdef DEBUG_META_MODE
