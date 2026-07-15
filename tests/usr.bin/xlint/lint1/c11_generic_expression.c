@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.26 2026/03/18 06:17:55 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.27 2026/07/15 05:35:10 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -109,8 +109,8 @@ const char *x = _Generic(
     int: 1
 );
 
-// Introduced by C11 6.5.2.1.
-// Fixed by C23 6.5.2.1.
+// In C11 6.5.2.1, type qualifiers were not required to be removed.
+// C23 6.5.2.1 added that requirement.
 void
 type_conversions(const char *str)
 {
@@ -163,6 +163,7 @@ evaluation_mode(void)
 	    int: "matched",
 
 	    // Only parse since 'const char *' does not match 'int'.
+	    // Plus, 'int' already matched in the previous branch.
 	    const char *: 1 / 0,
 
 	    // Only parse since a previous branch already matched,
