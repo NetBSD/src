@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.715 2026/06/16 05:37:27 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.716 2026/07/15 05:35:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.715 2026/06/16 05:37:27 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.716 2026/07/15 05:35:09 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -737,7 +737,7 @@ block_derive_type(type_t *tp, tspec_t t)
 }
 
 /*
- * Derive 'pointer to tp' or 'function returning tp'.
+ * Derive 'pointer to tp'.
  * The memory is freed at the end of the current expression.
  */
 static type_t *
