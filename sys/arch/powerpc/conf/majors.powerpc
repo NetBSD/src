@@ -1,4 +1,4 @@
-#	$NetBSD: majors.powerpc,v 1.18 2026/06/27 13:31:03 rkujawa Exp $
+#	$NetBSD: majors.powerpc,v 1.19 2026/07/15 22:00:35 rkujawa Exp $
 #
 # Device majors for shared PowerPC
 #
@@ -93,6 +93,7 @@ device-major	gtmpsc		char 80			gtmpsc
 device-major	xlcom		char 99			xlcom
 device-major	satmgr		char 100		satmgr
 device-major	psc		char 101		psc
+device-major	verite3d	char 102		veritefb
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
