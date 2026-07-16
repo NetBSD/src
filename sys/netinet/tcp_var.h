@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.199 2024/12/03 20:02:30 andvar Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.200 2026/07/16 21:36:36 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -519,7 +519,7 @@ struct tcp_opt_info {
 };
 
 #define	TOF_SIGNATURE	0x0040		/* signature option present */
-#define	TOF_SIGLEN	0x0080		/* sigature length valid (RFC2385) */
+#define	TOF_SIGLEN	0x0080		/* signature length valid (RFC2385) */
 
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
 #define	sototcpcb(so)	(intotcpcb(sotoinpcb(so)))
