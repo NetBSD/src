@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlclose_thread.c,v 1.4 2026/07/16 02:50:11 riastradh Exp $	*/
+/*	$NetBSD: t_dlclose_thread.c,v 1.5 2026/07/16 15:30:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dlclose_thread.c,v 1.4 2026/07/16 02:50:11 riastradh Exp $");
+__RCSID("$NetBSD: t_dlclose_thread.c,v 1.5 2026/07/16 15:30:25 riastradh Exp $");
 
 #include <atf-c.h>
 #include <dlfcn.h>
@@ -38,6 +38,30 @@ __RCSID("$NetBSD: t_dlclose_thread.c,v 1.4 2026/07/16 02:50:11 riastradh Exp $")
 #include <unistd.h>
 
 #include "h_macros.h"
+
+/*
+ * abortafter(sec)
+ *
+ *	Arrange to deliver SIGABRT after the specified number of
+ *	seconds.  We use SIGABRT rather than SIGALRM in order to get a
+ *	core dump so the atf test harness will give a stack trace.
+ */
+static void
+abortafter(unsigned sec)
+{
+	timer_t t;
+	struct sigevent sigev = {
+		.sigev_notify = SIGEV_SIGNAL,
+		.sigev_signo = SIGABRT, /* yields core dump -> stack trace */
+	};
+	const struct itimerspec it = {
+		.it_value = {sec,0},
+		.it_interval = {0,0},
+	};
+
+	RL(timer_create(CLOCK_MONOTONIC, &sigev, &t));
+	RL(timer_settime(t, TIMER_RELTIME, &it, NULL));
+}
 
 pthread_barrier_t bar;
 atomic_bool stop = false;
@@ -81,6 +105,7 @@ test_dlclose_thread(const char *const *dsos, size_t ndsos)
 	(void)pthread_barrier_wait(&bar);
 	(void)sleep(5);
 	atomic_store_explicit(&stop, true, memory_order_relaxed);
+	abortafter(5);
 	for (i = 0; i < 2*ndsos; i++)
 		RZ(pthread_join(t[i], NULL));
 }
@@ -99,6 +124,7 @@ ATF_TC_BODY(dlclose_thread, tc)
 		"libh_helper_dso2.so",
 		"libh_helper_dso3.so",
 	};
+
 	test_dlclose_thread(dsos, __arraycount(dsos));
 }
 
@@ -118,7 +144,7 @@ ATF_TC_BODY(dlclose_thread_recursive, tc)
 		"libh_helper_recurdso.so",
 	};
 
-	atf_tc_expect_fail("PR lib/59751: dlclose is not MT-safe"
+	atf_tc_expect_signal(SIGABRT, "PR lib/59751: dlclose is not MT-safe"
 	    " depending on the libraries unloaded");
 
 	test_dlclose_thread(dsos, __arraycount(dsos));
@@ -141,7 +167,7 @@ ATF_TC_BODY(dlclose_thread_recursive2, tc)
 		"libh_helper_recurdso2.so",
 	};
 
-	atf_tc_expect_fail("PR lib/59751: dlclose is not MT-safe"
+	atf_tc_expect_signal(SIGABRT, "PR lib/59751: dlclose is not MT-safe"
 	    " depending on the libraries unloaded");
 
 	test_dlclose_thread(dsos, __arraycount(dsos));
@@ -156,20 +182,8 @@ ATF_TC_HEAD(dlclose_recursive, tc)
 }
 ATF_TC_BODY(dlclose_recursive, tc)
 {
-	timer_t t;
-	struct sigevent sigev = {
-		.sigev_notify = SIGEV_SIGNAL,
-		.sigev_signo = SIGABRT, /* yields core dump -> stack trace */
-	};
-	const struct itimerspec it = {
-		.it_value = {5,0},
-		.it_interval = {0,0},
-	};
 	void *handle;
 	int error;
-
-	RL(timer_create(CLOCK_MONOTONIC, &sigev, &t));
-	RL(timer_settime(t, TIMER_RELTIME, &it, NULL));
 
 	/*
 	 * Really, the issue is the followup to the fix for the PR
@@ -177,6 +191,7 @@ ATF_TC_BODY(dlclose_recursive, tc)
 	 */
 	atf_tc_expect_signal(SIGABRT, "PR lib/59751: dlclose is not MT-safe"
 	    " depending on the libraries unloaded");
+	abortafter(5);
 
 	handle = dlopen("libh_helper_recurdso.so", RTLD_LAZY | RTLD_LOCAL);
 	ATF_REQUIRE_MSG(handle != NULL, "%s", dlerror());
@@ -193,20 +208,8 @@ ATF_TC_HEAD(dlclose_recursive2, tc)
 }
 ATF_TC_BODY(dlclose_recursive2, tc)
 {
-	timer_t t;
-	struct sigevent sigev = {
-		.sigev_notify = SIGEV_SIGNAL,
-		.sigev_signo = SIGABRT, /* yields core dump -> stack trace */
-	};
-	const struct itimerspec it = {
-		.it_value = {5,0},
-		.it_interval = {0,0},
-	};
 	void *handle;
 	int error;
-
-	RL(timer_create(CLOCK_MONOTONIC, &sigev, &t));
-	RL(timer_settime(t, TIMER_RELTIME, &it, NULL));
 
 	/*
 	 * Really, the issue is the followup to the fix for the PR
@@ -214,6 +217,7 @@ ATF_TC_BODY(dlclose_recursive2, tc)
 	 */
 	atf_tc_expect_signal(SIGABRT, "PR lib/59751: dlclose is not MT-safe"
 	    " depending on the libraries unloaded");
+	abortafter(5);
 
 	handle = dlopen("libh_helper_recurdso2.so", RTLD_LAZY | RTLD_LOCAL);
 	ATF_REQUIRE_MSG(handle != NULL, "%s", dlerror());
