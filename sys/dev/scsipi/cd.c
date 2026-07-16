@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.356 2024/12/01 20:23:45 andvar Exp $	*/
+/*	$NetBSD: cd.c,v 1.357 2026/07/16 06:19:25 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.356 2024/12/01 20:23:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.357 2026/07/16 06:19:25 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,6 +284,8 @@ cdattach(device_t parent, device_t self, void *aux)
 		dtype = DKTYPE_SCSI;
 		if (periph->periph_version == 0)
 			cd->flags |= CDF_ANCIENT;
+		if (periph->periph_version >= 2)
+			periph->periph_quirks |= PQUIRK_ONLYBIG;
 		break; 
 	case SCSIPI_BUSTYPE_ATAPI:
 		dtype = DKTYPE_ATAPI;
