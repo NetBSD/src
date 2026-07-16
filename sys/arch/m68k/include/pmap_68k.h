@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.21 2026/07/15 04:58:26 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.22 2026/07/16 14:15:15 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -458,8 +458,6 @@ void	pmap_db_write_text_exit(struct pmap_db_write_text_context *);
  *
  * XXX Clean this up eventually.
  */
-pt_entry_t *		pmap_kernel_pte(vaddr_t);
-
 paddr_t		vtophys(vaddr_t);
 
 extern char *	vmmap;

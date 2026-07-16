@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.75 2026/07/06 14:33:55 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.76 2026/07/16 14:15:15 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.75 2026/07/06 14:33:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.76 2026/07/16 14:15:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1545,10 +1545,8 @@ static pt_entry_t *kernel_ptes;
  *	access adjacent PTEs up until the address indicated by
  *	virtual_end!  That means, "pte++" is totally fine until you
  *	get to the current limit of the kernel virtual address space!
- *
- *	XXX This is exported because db_memrw.c needs it.
  */
-pt_entry_t *
+static pt_entry_t *
 pmap_kernel_pte(vaddr_t va)
 {
 	/*
