@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.33 2025/07/11 22:19:54 andvar Exp $ */
+/* $NetBSD: moused.c,v 1.34 2026/07/16 21:35:49 andvar Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.33 2025/07/11 22:19:54 andvar Exp $");
+__RCSID("$NetBSD: moused.c,v 1.34 2026/07/16 21:35:49 andvar Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -196,7 +196,7 @@ static symtab_t	rmodels[] = {
 
 /* PnP EISA/product IDs */
 static symtab_t pnpprod[] = {
-    /* Kensignton ThinkingMouse */
+    /* Kensington ThinkingMouse */
     { "KML0001",	MOUSE_PROTO_THINK,	MOUSE_MODEL_THINK },
     /* MS IntelliMouse */
     { "MSH0001",	MOUSE_PROTO_INTELLI,	MOUSE_MODEL_INTELLI },
