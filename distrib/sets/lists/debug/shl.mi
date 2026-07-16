@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.409 2026/07/08 13:43:45 christos Exp $
+# $NetBSD: shl.mi,v 1.410 2026/07/16 02:50:10 riastradh Exp $
 #
 # Note: Like base/shl.mi, entries here for shared libraries should
 #       generally NOT be marked `obsolete' and instead should be
@@ -393,6 +393,8 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso3.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_recurdso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_recurdso2.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_onlyctor_dynamic.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_onlydef.so.1.debug		tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_onlyuse_dynamic.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
