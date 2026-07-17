@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.425 2026/07/16 15:37:43 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.426 2026/07/17 16:12:41 nia Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1007,6 +1007,7 @@ MADT	multiple APIC descriptor table
 MAMR	microwave-assisted magnetic recording
 MB	megabyte
 MBA	multi-boot agent
+MBCS	multi-byte character set
 MBR	master boot record
 MBS	megabits per second
 MC	memory controller
@@ -1546,6 +1547,8 @@ SASL	simple authentication [and] security layer
 SATA	serial advanced technology attachment
 SAX	simple API for XML
 SB	sound blaster
+SBC	single-board computer
+SBCS	single-byte character set
 SBI	supervisor binary interface
 SBOM	Software Bill of Materials
 SBSA	server base system architecture
