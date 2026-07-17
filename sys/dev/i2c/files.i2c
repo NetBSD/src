@@ -1,10 +1,10 @@
-#	$NetBSD: files.i2c,v 1.138 2026/06/03 11:12:09 jdc Exp $
+#	$NetBSD: files.i2c,v 1.139 2026/07/17 17:35:41 thorpej Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
 define	i2cexec
 
-device	iic { [addr = -1] } : i2c_bitbang
+device	iic { [addr = -1] }
 attach	iic at i2cbus
 file	dev/i2c/i2c.c				iic	needs-flag
 file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec
