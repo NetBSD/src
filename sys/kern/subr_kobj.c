@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.79 2026/01/04 03:19:25 riastradh Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.80 2026/07/17 14:37:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.79 2026/01/04 03:19:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.80 2026/07/17 14:37:18 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -217,6 +217,25 @@ kobj_load(kobj_t ko)
 		error = SET_ERROR(ENOEXEC);
 		goto out;
 	}
+
+	/*
+	 * On some architectures, we may need to filter objects based
+	 * on their flags.
+	 */
+#if (ELFSIZE == 32) && defined(ELF32_MACHDEP_FLAGS_OK)
+#define	FLAGS_OK(x)	ELF32_MACHDEP_FLAGS_OK(x)
+#elif (ELFSIZE == 64) && defined(ELF64_MACHDEP_FLAGS_OK)
+#define	FLAGS_OK(x)	ELF64_MACHDEP_FLAGS_OK(x)
+#endif
+#ifdef FLAGS_OK
+	if (! FLAGS_OK(hdr->e_flags)) {
+		kobj_error(ko, "unsupported flags 0x%"PRIxMAX,
+		    (uintmax_t)hdr->e_flags);
+		error = SET_ERROR(ENOEXEC);
+		goto out;
+	}
+#endif
+#undef FLAGS_OK
 
 	ko->ko_nprogtab = 0;
 	ko->ko_shdr = 0;
