@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.25 2021/05/12 23:48:41 thorpej Exp $
+#	$NetBSD: files.shark,v 1.26 2026/07/17 17:34:55 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -61,7 +61,7 @@ device	sequoia { }: ofisa_subclass
 attach	sequoia at ofbus
 
 # Shark I2C (for DRAM SPD)
-device	sharkiic: i2cbus
+device	sharkiic: i2cbus, i2c_bitbang
 attach	sharkiic at sequoia
 file	arch/shark/shark/shark_iic.c		sharkiic
 
