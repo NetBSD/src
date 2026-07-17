@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.39 2025/04/01 03:16:41 ozaki-r Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.40 2026/07/17 02:16:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010, 2019 The NetBSD Foundation, Inc.
@@ -73,8 +73,12 @@
  *	be very lightweight, e.g. avoid blocking.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.39 2025/04/01 03:16:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.40 2026/07/17 02:16:16 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,6 +92,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.39 2025/04/01 03:16:41 ozaki-r Exp 
 
 #ifdef _RUMPKERNEL
 #include "rump_private.h"
+#endif
+
+#if !defined(MULTIPROCESSOR) && !defined(_RUMPKERNEL)
+#define	XCALL_SLIM
 #endif
 
 /* Cross-call state box. */
@@ -105,6 +113,7 @@ typedef struct {
 /* Bit indicating high (1) or low (0) priority. */
 #define	XC_PRI_BIT	(1ULL << 63)
 
+#ifndef XCALL_SLIM
 /* Low priority xcall structures. */
 static xc_state_t	xc_low_pri	__cacheline_aligned;
 
@@ -122,6 +131,7 @@ static void		xc_thread(void *);
 static inline uint64_t	xc_highpri(xcfunc_t, void *, void *, struct cpu_info *,
 			    unsigned int);
 static inline uint64_t	xc_lowpri(xcfunc_t, void *, void *, struct cpu_info *);
+#endif /* ! XCALL_SLIM */
 
 /* The internal form of IPL */
 #define XC_IPL_MASK		0xff00
@@ -135,6 +145,7 @@ static inline uint64_t	xc_lowpri(xcfunc_t, void *, void *, struct cpu_info *);
 #define XC_IPL_SOFTCLOCK	3
 #define XC_IPL_MAX		XC_IPL_SOFTCLOCK
 
+#ifndef XCALL_SLIM
 CTASSERT(XC_IPL_MAX <= __arraycount(xc_sihs));
 
 /*
@@ -185,6 +196,7 @@ xc_init(void)
 	evcnt_attach_dynamic(&xc_broadcast_ev, EVCNT_TYPE_MISC, NULL,
 	   "crosscall", "broadcast");
 }
+#endif /* ! XCALL_SLIM */
 
 /*
  * Encode an IPL to a form that can be embedded into flags of xc_broadcast
@@ -215,6 +227,7 @@ xc_encode_ipl(int ipl)
 	panic("Invalid IPL: %d", ipl);
 }
 
+#ifndef XCALL_SLIM
 /*
  * Extract an XC_IPL from flags of xc_broadcast or xc_unicast.
  */
@@ -224,6 +237,7 @@ xc_extract_ipl(unsigned int flags)
 
 	return __SHIFTOUT(flags, XC_IPL_MASK);
 }
+#endif
 
 /*
  * xc_init_cpu:
@@ -234,6 +248,7 @@ xc_extract_ipl(unsigned int flags)
 void
 xc_init_cpu(struct cpu_info *ci)
 {
+#ifndef XCALL_SLIM
 	static bool again = false;
 	int error __diagused;
 
@@ -246,6 +261,7 @@ xc_init_cpu(struct cpu_info *ci)
 	error = kthread_create(PRI_XCALL, KTHREAD_MPSAFE, ci, xc_thread,
 	    NULL, NULL, "xcall/%u", ci->ci_index);
 	KASSERT(error == 0);
+#endif /* ! XCALL_SLIM */
 }
 
 /*
@@ -261,6 +277,16 @@ xc_broadcast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2)
 	KASSERT(!cpu_softintr_p());
 	ASSERT_SLEEPABLE();
 
+#ifdef XCALL_SLIM
+	if (flags & XC_HIGHPRI) {
+		int s = splsoftserial();
+		(*func)(arg1, arg2);
+		splx(s);
+	} else {
+		(*func)(arg1, arg2);
+	}
+	return 0;
+#else
 	if (__predict_false(!mp_online)) {
 		int s, bound;
 
@@ -282,14 +308,17 @@ xc_broadcast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2)
 	} else {
 		return xc_lowpri(func, arg1, arg2, NULL);
 	}
+#endif /* XCALL_SLIM */
 }
 
+#ifndef XCALL_SLIM
 static void
 xc_nop(void *arg1, void *arg2)
 {
 
 	return;
 }
+#endif
 
 /*
  * xc_barrier:
@@ -299,10 +328,14 @@ xc_nop(void *arg1, void *arg2)
 void
 xc_barrier(unsigned int flags)
 {
+#ifdef XCALL_SLIM
+	(void)flags;
+#else
 	uint64_t where;
 
 	where = xc_broadcast(flags, xc_nop, NULL, NULL);
 	xc_wait(where);
+#endif
 }
 
 /*
@@ -316,6 +349,11 @@ xc_unicast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2,
 {
 
 	KASSERT(ci != NULL);
+
+#ifdef XCALL_SLIM
+	KASSERT(ci == curcpu());
+	return xc_broadcast(flags, func, arg1, arg2);
+#else
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
 	ASSERT_SLEEPABLE();
@@ -344,6 +382,7 @@ xc_unicast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2,
 	} else {
 		return xc_lowpri(func, arg1, arg2, ci);
 	}
+#endif /* XCALL_SLIM */
 }
 
 /*
@@ -354,11 +393,15 @@ xc_unicast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2,
 void
 xc_wait(uint64_t where)
 {
-	xc_state_t *xc;
 
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
 	ASSERT_SLEEPABLE();
+
+#ifdef XCALL_SLIM
+	(void)where;
+#else
+	xc_state_t *xc;
 
 	if (__predict_false(!mp_online)) {
 		return;
@@ -385,8 +428,10 @@ xc_wait(uint64_t where)
 		cv_wait(&xc->xc_busy, &xc->xc_lock);
 	}
 	mutex_exit(&xc->xc_lock);
+#endif /* XCALL_SLIM */
 }
 
+#ifndef XCALL_SLIM
 /*
  * xc_lowpri:
  *
@@ -477,6 +522,7 @@ xc_thread(void *cookie)
 	}
 	/* NOTREACHED */
 }
+#endif /* ! XCALL_SLIM */
 
 /*
  * xc_ipi_handler:
@@ -486,6 +532,7 @@ xc_thread(void *cookie)
 void
 xc_ipi_handler(void)
 {
+#ifndef XCALL_SLIM
 	xc_state_t *xc = & xc_high_pri;
 
 	KASSERT(xc->xc_ipl < __arraycount(xc_sihs));
@@ -493,6 +540,7 @@ xc_ipi_handler(void)
 
 	/* Executes xc__highpri_intr() via software interrupt. */
 	softint_schedule(xc_sihs[xc->xc_ipl]);
+#endif
 }
 
 /*
@@ -503,6 +551,9 @@ xc_ipi_handler(void)
 void
 xc__highpri_intr(void *dummy)
 {
+#ifdef XCALL_SLIM
+	(void)dummy;
+#else
 	xc_state_t *xc = &xc_high_pri;
 	void *arg1, *arg2;
 	xcfunc_t func;
@@ -535,8 +586,10 @@ xc__highpri_intr(void *dummy)
 		cv_broadcast(&xc->xc_busy);
 	}
 	mutex_exit(&xc->xc_lock);
+#endif /* XCALL_SLIM */
 }
 
+#ifndef XCALL_SLIM
 /*
  * xc_highpri:
  *
@@ -592,3 +645,4 @@ xc_highpri(xcfunc_t func, void *arg1, void *arg2, struct cpu_info *ci,
 	/* Indicate a high priority ticket. */
 	return (where | XC_PRI_BIT);
 }
+#endif /* ! XCALL_SLIM */

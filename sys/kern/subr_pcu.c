@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.28 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.29 2026/07/17 02:17:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2014 The NetBSD Foundation, Inc.
@@ -51,8 +51,10 @@
  *	only be cleared by the CPU which has the PCU state loaded.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.28 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.29 2026/07/17 02:17:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -61,6 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.28 2023/04/09 09:18:09 riastradh Exp 
 #include <sys/ipi.h>
 
 #if PCU_UNIT_COUNT > 0
+
+#if !defined(MULTIPROCESSOR) && !defined(_RUMPKERNEL)
+#define PCU_SLIM
+#endif
 
 static inline void pcu_do_op(const pcu_ops_t *, lwp_t * const, const int);
 static void pcu_lwp_op(const pcu_ops_t *, lwp_t *, const int);
@@ -71,6 +77,7 @@ static void pcu_lwp_op(const pcu_ops_t *, lwp_t *, const int);
 #define	PCU_CMD_SAVE		0x01	/* save PCU state to the LWP */
 #define	PCU_CMD_RELEASE		0x02	/* release PCU state on the CPU */
 
+#ifndef PCU_SLIM
 /*
  * Message structure for another CPU passed via ipi(9).
  */
@@ -79,6 +86,7 @@ typedef struct {
 	lwp_t *		owner;
 	const int	flags;
 } pcu_ipi_msg_t;
+#endif /* ! PCU_SLIM */
 
 /*
  * PCU IPIs run at IPL_HIGH (aka IPL_PCU in this code).
@@ -225,6 +233,7 @@ pcu_do_op(const pcu_ops_t *pcu, lwp_t * const l, const int flags)
 	}
 }
 
+#ifndef PCU_SLIM
 /*
  * pcu_cpu_ipi: helper routine to call pcu_do_op() via ipi(9).
  */
@@ -248,6 +257,7 @@ pcu_cpu_ipi(void *arg)
 	}
 	pcu_do_op(pcu, l, pcu_msg->flags);
 }
+#endif /* ! PCU_SLIM */
 
 /*
  * pcu_lwp_op: perform PCU state save, release or both operations on LWP.
@@ -282,7 +292,9 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, const int flags)
 		splx(s);
 		return;
 	}
-
+#ifdef PCU_SLIM
+	panic("%s", __func__);
+#else
 	/*
 	 * The state is on the remote CPU: perform the operation(s) there.
 	 */
@@ -295,6 +307,7 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, const int flags)
 	ipi_wait(&ipi_msg);
 
 	KASSERT((flags & PCU_CMD_RELEASE) == 0 || l->l_pcu_cpu[id] == NULL);
+#endif /* PCU_SLIM */
 }
 
 /*
@@ -334,6 +347,9 @@ pcu_load(const pcu_ops_t *pcu)
 		return;
 	}
 
+#ifdef PCU_SLIM
+	KASSERT(ci == NULL);
+#else
 	/* If PCU state of this LWP is on the remote CPU - save it there. */
 	if (ci) {
 		pcu_ipi_msg_t pcu_msg = { .pcu = pcu, .owner = l,
@@ -350,6 +366,7 @@ pcu_load(const pcu_ops_t *pcu)
 		s = splpcu();
 		curci = curcpu();
 	}
+#endif /* PCU_SLIM */
 	KASSERT(l->l_pcu_cpu[id] == NULL);
 
 	/* Save the PCU state on the current CPU, if there is any. */
