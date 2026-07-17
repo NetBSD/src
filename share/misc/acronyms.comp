@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.426 2026/07/17 16:12:41 nia Exp $
+$NetBSD: acronyms.comp,v 1.427 2026/07/17 16:13:53 nia Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -382,6 +382,7 @@ DBA	database administrator
 DBA	dynamic bandwidth allocation
 DBB	data bus buffer
 DBC	design by contract
+DBCS	double-byte character set
 DBL	dynamic buffer limiting
 DBMS	database management system
 DBS	database server
