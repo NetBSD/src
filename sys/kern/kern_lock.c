@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.196 2026/07/17 02:15:04 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.197 2026/07/17 07:47:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020, 2023
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.196 2026/07/17 02:15:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.197 2026/07/17 07:47:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -295,8 +295,10 @@ void
 _kernel_lock(int nlocks)
 {
 	struct cpu_info *ci;
+#ifdef MULTIPROCESSOR
 	LOCKSTAT_TIMER(spintime);
 	LOCKSTAT_FLAG(lsflag);
+#endif
 	int s;
 	struct lwp *l = curlwp;
 
