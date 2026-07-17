@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.38 2025/09/06 15:44:03 thorpej Exp $
+#	$NetBSD: files.exynos,v 1.39 2026/07/17 17:33:52 thorpej Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -82,8 +82,8 @@ file	arch/arm/samsung/exynos_ehci.c		exynos_ehci
 attach	dwcmmc at fdt with exynos_dwcmmc: fdt_clock, fdt_gpio
 file	arch/arm/samsung/exynos_dwcmmc.c	exynos_dwcmmc
 
-# I2C support, bitbanging through GPIO
-device	exyoi2c: fdt_i2c, i2cbus, i2c_bitbang
+# I2C support
+device	exyoi2c: fdt_i2c, i2cbus
 attach	exyoi2c at fdt with exynos_i2c
 file	arch/arm/samsung/exynos_i2c.c		exynos_i2c needs-flag
 

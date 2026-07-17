@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.24 2025/09/16 11:55:17 thorpej Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.25 2026/07/17 17:33:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.24 2025/09/16 11:55:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.25 2026/07/17 17:33:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.24 2025/09/16 11:55:17 thorpej Exp 
 #include <dev/gpio/gpiovar.h>
 
 #include <dev/i2c/i2cvar.h>
-#include <dev/i2c/i2c_bitbang.h>
 
 #include <dev/fdt/fdtvar.h>
 

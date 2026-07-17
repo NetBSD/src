@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.17 2025/09/15 13:23:02 thorpej Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.18 2026/07/17 17:33:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.17 2025/09/15 13:23:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.18 2026/07/17 17:33:53 thorpej Exp $");
 
 #include "locators.h"
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.17 2025/09/15 13:23:02 thorpej Exp
 #include <mips/alchemy/dev/ausmbus_pscreg.h>
 
 #include <dev/i2c/i2cvar.h>
-#include <dev/i2c/i2c_bitbang.h>
 
 struct ausmbus_softc {
 	device_t			sc_dev;
