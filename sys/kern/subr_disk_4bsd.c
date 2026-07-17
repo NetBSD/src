@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_4bsd.c,v 1.1 2026/04/04 00:23:09 thorpej Exp $	*/
+/*	$NetBSD: subr_disk_4bsd.c,v 1.2 2026/07/17 01:11:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_4bsd.c,v 1.1 2026/04/04 00:23:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_4bsd.c,v 1.2 2026/07/17 01:11:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,10 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	    DEV_BSIZE - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			if (msg == NULL)
-				msg = "no disk label";
+			/*
+			 * don't print a message about lack of a disk
+			 * label.
+			 */
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
 			   dkcksum(dlp) != 0)
 			msg = "disk label corrupted";
