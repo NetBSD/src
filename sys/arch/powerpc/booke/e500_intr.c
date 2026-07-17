@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.50 2026/07/17 12:32:08 martin Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.51 2026/07/17 19:25:53 martin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.50 2026/07/17 12:32:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.51 2026/07/17 19:25:53 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mpc85xx.h"
@@ -1329,13 +1329,12 @@ e500_ipi_kpreempt(void)
 }
 #endif
 
+#ifdef MULTIPROCESSOR
 static void
 e500_ipi_suspend(void)
 {
 
-#ifdef MULTIPROCESSOR
 	cpu_pause(NULL);
-#endif	/* MULTIPROCESSOR */
 }
 
 static void
@@ -1344,7 +1343,6 @@ e500_ipi_ast(void)
 	curcpu()->ci_onproc->l_md.md_astpending = 1;
 }
 
-#ifdef MULTIPROCESSOR
 static const ipifunc_t e500_ipifuncs[] = {
 	[ilog2(IPI_XCALL)] =	xc_ipi_handler,
 	[ilog2(IPI_GENERIC)] =	ipi_cpu_handler,
