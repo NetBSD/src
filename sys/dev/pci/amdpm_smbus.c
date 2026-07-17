@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.26 2025/09/15 13:23:03 thorpej Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.27 2026/07/17 17:34:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.26 2025/09/15 13:23:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.27 2026/07/17 17:34:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.26 2025/09/15 13:23:03 thorpej Exp
 #include <dev/pci/pcidevs.h>
 
 #include <dev/i2c/i2cvar.h>
-#include <dev/i2c/i2c_bitbang.h>
 
 #include <dev/pci/amdpmreg.h>
 #include <dev/pci/amdpmvar.h>
