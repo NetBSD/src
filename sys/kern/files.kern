@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.61 2024/12/22 23:24:20 riastradh Exp $
+#	$NetBSD: files.kern,v 1.62 2026/07/17 01:09:27 thorpej Exp $
 
 #
 # kernel sources
@@ -127,7 +127,7 @@ file	kern/subr_extent.c		kern
 file	kern/subr_fault.c		fault
 file	kern/subr_hash.c		kern
 file	kern/subr_humanize.c		kern
-file	kern/subr_interrupt.c		kern
+file	kern/subr_interrupt.c		kern & multiprocessor
 file	kern/subr_iostat.c		kern
 file	kern/subr_ipi.c			kern
 file	kern/subr_kcpuset.c		kern
