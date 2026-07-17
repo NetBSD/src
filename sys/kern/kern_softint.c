@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.76 2024/03/01 04:32:38 mrg Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.77 2026/07/17 02:13:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -169,8 +169,10 @@
  *	interrupt other threads.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.76 2024/03/01 04:32:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.77 2026/07/17 02:13:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -352,8 +354,10 @@ softint_init(struct cpu_info *ci)
 void *
 softint_establish(u_int flags, void (*func)(void *), void *arg)
 {
+#ifdef MULTIPROCESSOR
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
+#endif
 	softcpu_t *sc;
 	softhand_t *sh;
 	u_int level, index;
@@ -380,12 +384,14 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	}
 	sih = (void *)((uint8_t *)&sc->sc_hand[index] - (uint8_t *)sc);
 
+#ifdef MULTIPROCESSOR
 	if (flags & SOFTINT_RCPU) {
 		if ((ipi_id = ipi_register(softint_schedule, sih)) == 0) {
 			mutex_exit(&softint_lock);
 			return NULL;
 		}
 	}
+#endif
 
 	/* Set up the handler on each CPU. */
 	if (ncpu < 2) {
@@ -397,7 +403,9 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 		sh->sh_arg = arg;
 		sh->sh_flags = flags;
 		sh->sh_ipi_id = ipi_id;
-	} else for (CPU_INFO_FOREACH(cii, ci)) {
+	}
+#ifdef MULTIPROCESSOR
+	else for (CPU_INFO_FOREACH(cii, ci)) {
 		sc = ci->ci_data.cpu_softcpu;
 		sh = &sc->sc_hand[index];
 		sh->sh_isr = &sc->sc_int[level];
@@ -406,6 +414,7 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 		sh->sh_flags = flags;
 		sh->sh_ipi_id = ipi_id;
 	}
+#endif
 	mutex_exit(&softint_lock);
 
 	SDT_PROBE4(sdt, kernel, softint, establish,  sih, func, arg, flags);
@@ -443,9 +452,11 @@ softint_disestablish(void *arg)
 	 */
 	sc = curcpu()->ci_data.cpu_softcpu;
 	sh = (softhand_t *)((uint8_t *)sc + offset);
+#ifdef MULTIPROCESSOR
 	if (sh->sh_ipi_id) {
 		ipi_unregister(sh->sh_ipi_id);
 	}
+#endif
 
 	/*
 	 * Run a dummy softint at the same level on all CPUs and wait for
@@ -536,6 +547,7 @@ softint_schedule_cpu(void *arg, struct cpu_info *ci)
 {
 	KASSERT(kpreempt_disabled());
 
+#ifdef MULTIPROCESSOR
 	if (curcpu() != ci) {
 		const softcpu_t *sc = ci->ci_data.cpu_softcpu;
 		const uintptr_t offset = (uintptr_t)arg;
@@ -547,6 +559,9 @@ softint_schedule_cpu(void *arg, struct cpu_info *ci)
 		ipi_trigger(sh->sh_ipi_id, ci);
 		return;
 	}
+#else
+	KASSERT(ci == curcpu());
+#endif
 
 	/* Just a local CPU. */
 	softint_schedule(arg);

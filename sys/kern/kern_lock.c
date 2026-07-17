@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.195 2026/03/29 08:36:43 kre Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.196 2026/07/17 02:15:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020, 2023
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.195 2026/03/29 08:36:43 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.196 2026/07/17 02:15:04 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #endif
 
 #include <sys/param.h>
@@ -152,6 +153,7 @@ lockops_t _kernel_lock_ops = {
 #include <ddb/ddb.h>
 #endif
 
+#ifdef MULTIPROCESSOR
 static void
 kernel_lock_trace_ipi(void *cookie)
 {
@@ -252,6 +254,7 @@ out:
 #endif
 	return;
 }
+#endif /* MULTIPROCESSOR */
 
 /*
  * Initialize the kernel lock.
@@ -294,8 +297,6 @@ _kernel_lock(int nlocks)
 	struct cpu_info *ci;
 	LOCKSTAT_TIMER(spintime);
 	LOCKSTAT_FLAG(lsflag);
-	struct lwp *owant;
-	u_int starttime;
 	int s;
 	struct lwp *l = curlwp;
 
@@ -326,6 +327,12 @@ _kernel_lock(int nlocks)
 		splx(s);
 		return;
 	}
+
+#ifndef MULTIPROCESSOR
+	panic("%s: contended ???", __func__);
+#else
+	struct lwp *owant;
+	u_int starttime;
 
 	/*
 	 * To remove the ordering constraint between adaptive mutexes
@@ -405,6 +412,7 @@ _kernel_lock(int nlocks)
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_enter();
 #endif
+#endif /* MULTIPROCESSOR */
 }
 
 /*
