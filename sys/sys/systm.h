@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.308 2026/05/26 14:57:25 simonb Exp $	*/
+/*	$NetBSD: systm.h,v 1.309 2026/07/17 02:18:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -180,6 +180,7 @@ extern void (*v_putc)(int); /* Virtual console putc routine */
 void	voidop(void);
 int	nullop(void *);
 void*	nullret(void);
+int	trueop(void);
 int	enodev(void);
 int	enosys(void);
 int	enoioctl(void);

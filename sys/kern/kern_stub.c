@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.54 2026/04/07 14:47:23 thorpej Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.55 2026/07/17 02:19:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.54 2026/04/07 14:47:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.55 2026/07/17 02:19:29 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ktrace.h"
@@ -172,6 +172,17 @@ __weak_alias(interrupt_construct_intrids, nullret);
 __weak_alias(interrupt_destruct_intrids, voidop);
 __weak_alias(interrupt_distribute, eopnotsupp);
 __weak_alias(interrupt_distribute_handler, eopnotsupp);
+
+__weak_alias(ipi_register, trueop);	/* just a low non-zero value */
+__weak_alias(ipi_unregister, voidop);
+__weak_alias(ipi_trigger, voidop);
+__weak_alias(ipi_trigger_multi, voidop);
+__weak_alias(ipi_trigger_broadcast, voidop);
+
+__weak_alias(ipi_unicast, trueop);
+__weak_alias(ipi_multicast, voidop);
+__weak_alias(ipi_broadcast, voidop);
+__weak_alias(ipi_wait, voidop);
 
 /*
  * Scheduler activations system calls.  These need to remain until libc's
@@ -309,6 +320,15 @@ nullop(void *v)
 {
 
 	return (0);
+}
+
+/*
+ * Generic "true" operation, always returns true (but as an int).
+ */
+int
+trueop(void)
+{
+	return true;
 }
 
 /*

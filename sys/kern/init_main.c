@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.552 2025/05/08 05:31:16 imil Exp $	*/
+/*	$NetBSD: init_main.c,v 1.553 2026/07/17 02:18:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2023 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.552 2025/05/08 05:31:16 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.553 2026/07/17 02:18:56 thorpej Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.552 2025/05/08 05:31:16 imil Exp $")
 #include "opt_splash.h"
 #include "opt_kernhist.h"
 #include "opt_gprof.h"
+#include "opt_multiprocessor.h"
 
 #if defined(SPLASHSCREEN) && defined(makeoptions_SPLASHSCREEN_IMAGE)
 extern void *_binary_splash_image_start;
@@ -362,8 +363,10 @@ main(void)
 	 */
 	bpf_setops();
 
+#if defined(MULTIPROCESSOR)
 	/* Initialize what we can in ipi(9) before CPUs are detected. */
 	ipi_sysinit();
+#endif
 
 	/* Start module system. */
 	module_init();
@@ -573,8 +576,10 @@ main(void)
 
 	configure2();
 
+#if defined(MULTIPROCESSOR)
 	/* Initialize the rest of ipi(9) after CPUs have been detected. */
 	ipi_percpu_init();
+#endif
 
 	futex_sys_init();
 
