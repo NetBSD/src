@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.14 2017/01/07 21:11:14 christos Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.15 2026/07/17 10:57:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.14 2017/01/07 21:11:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.15 2026/07/17 10:57:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kthread.h>
@@ -718,7 +718,7 @@ const struct dmover_algdesc swdmover_algdescs[] = {
 /*
  * swdmoverattach:
  *
- *	Pesudo-device attach routine.
+ *	Pseudo-device attach routine.
  */
 void
 swdmoverattach(int count)

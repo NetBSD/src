@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.62 2022/05/03 20:52:30 andvar Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.63 2026/07/17 10:57:07 andvar Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.62 2022/05/03 20:52:30 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.63 2026/07/17 10:57:07 andvar Exp $");
 
 #include "grfrt.h"
 #include "ite.h"
@@ -65,7 +65,7 @@ int retina_inited;
 
 /*
  * This driver for the MacroSystem Retina board was only possible,
- * because MacroSystem provided information about the pecularities
+ * because MacroSystem provided information about the peculiarities
  * of the board. THANKS! Competition in Europe among gfx board
  * manufacturers is rather tough, so Lutz Vieweg, who wrote the
  * initial driver, has made an agreement with MS not to document

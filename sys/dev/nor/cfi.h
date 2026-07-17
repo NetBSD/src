@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.h,v 1.8 2022/01/05 16:01:54 andvar Exp $	*/
+/*	$NetBSD: cfi.h,v 1.9 2026/07/17 10:57:08 andvar Exp $	*/
 
 #ifndef _CFI_H_
 #define _CFI_H_
@@ -8,7 +8,7 @@
 
 /*
  * minimum size to bus_space_map for probe/identify QRY:
- * larget offset needed is CFI_QUERY_MODE_ALT_ADDRESS
+ * largest offset needed is CFI_QUERY_MODE_ALT_ADDRESS
  * scaled by maximum attempted port width, so
  *	min >= (0x555 * sizeof(uint32_t))
  */

@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410_kbd.c,v 1.12 2022/01/26 11:48:53 andvar Exp $ */
+/* $NetBSD: smdk2410_kbd.c,v 1.13 2026/07/17 10:57:07 andvar Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.12 2022/01/26 11:48:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.13 2026/07/17 10:57:07 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,7 @@ sskbd_spi_intr(void *arg)
 	uint32_t reg;
 
 	if (sc->reading == 0)
-		return 1;	/* Ignore garbate input. */
+		return 1;	/* Ignore garbage input. */
 
 	sc->reading = 0;
 

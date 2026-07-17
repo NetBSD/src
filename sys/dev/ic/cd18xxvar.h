@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xxvar.h,v 1.5 2014/11/15 19:18:18 christos Exp $	*/
+/*	$NetBSD: cd18xxvar.h,v 1.6 2026/07/17 10:57:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -106,7 +106,7 @@ struct cd18xx_softc {
 	/*
 	 * cd18xx has weird interrupt acknowledgement and configuration,
 	 * so we have to defer this to our parent.  this function must
-	 * do whatever is required to genereate *iack signals that are
+	 * do whatever is required to generate *iack signals that are
 	 * required for the cd180.  this probably also depends on the
 	 * values of the sc_rsmr, sc_tsmr and sc_msmr variables.  the
 	 * function is called with the provided argument, and with any
