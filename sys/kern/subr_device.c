@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.21 2026/05/26 14:50:52 simonb Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.22 2026/07/17 02:20:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021, 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.21 2026/05/26 14:50:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.22 2026/07/17 02:20:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -178,6 +178,9 @@ devhandle_impl_subclass(struct devhandle_impl *new_impl,
     device_call_t (*new_lookup)(devhandle_t, const char *, devhandle_t *))
 {
 	new_impl->type = super->type;
+	if (new_impl->type == DEVHANDLE_TYPE_INVALID) {
+		new_impl->type = DEVHANDLE_TYPE_PRIVATE;
+	}
 	new_impl->super = super;
 	new_impl->lookup_device_call = new_lookup;
 }
