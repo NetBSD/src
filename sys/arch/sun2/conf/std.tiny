@@ -1,0 +1,6 @@
+# $NetBSD: std.tiny,v 1.1 2026/07/18 01:36:16 thorpej Exp $
+
+# Extra size reduction.
+makeoptions	COPTS+="-ffunction-sections -fdata-sections"
+makeoptions	EXTRA_LINKFLAGS="--gc-sections"
+makeoptions	KERNLDSCRIPT="${SUN2}/conf/kern.ldscript"

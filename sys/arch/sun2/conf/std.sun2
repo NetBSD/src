@@ -1,4 +1,4 @@
-# $NetBSD: std.sun2,v 1.10 2026/03/21 17:29:17 thorpej Exp $
+# $NetBSD: std.sun2,v 1.11 2026/07/18 01:36:16 thorpej Exp $
 
 # Standard information for Sun2 machines.
 machine	sun2 m68k sun68k
@@ -16,4 +16,6 @@ options 	_SUN2_
 # hard limit. Otherwise, it freezes before adding swap even with 7MB
 # memory. -fno-omit-frame-pointer is necessary for backtraces in DDB.
 options		NO_KERNEL_RCSIDS
-makeoptions	COPTS="-Os -fno-inline-small-functions -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-omit-frame-pointer"
+no options	VMSWAP_ENCRYPTION
+makeoptions	COPTS="-Os -fno-unwind-tables -fno-omit-frame-pointer"
+makeoptions	COPTS+="-fno-inline-small-functions -fno-defer-pop"

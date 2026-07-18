@@ -1,16 +1,13 @@
-# $NetBSD: INSTALL,v 1.54 2021/08/30 20:22:52 christos Exp $
+# $NetBSD: INSTALL,v 1.55 2026/07/18 01:36:16 thorpej Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
 include "arch/sun2/conf/std.sun2"
+include "arch/sun2/conf/std.tiny"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.54 $"
-
-makeoptions	COPTS="-Os -ffunction-sections -fdata-sections"	# optimize for size
-makeoptions	EXTRA_LINKFLAGS="--gc-sections"
-makeoptions	KERNLDSCRIPT="${SUN2}/conf/kern.ldscript"
+#ident 		"INSTALL-$Revision: 1.55 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE

@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.61 2021/08/30 18:59:57 christos Exp $
+# $NetBSD: RAMDISK,v 1.62 2026/07/18 01:36:16 thorpej Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -10,12 +10,9 @@
 # Supports root on: ie0, sd*, ...
 
 include "arch/sun2/conf/std.sun2"
+include "arch/sun2/conf/std.tiny"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-
-makeoptions	COPTS="-Os -ffunction-sections -fdata-sections"	# optimize for size
-makeoptions	EXTRA_LINKFLAGS="--gc-sections"
-makeoptions	KERNLDSCRIPT="${SUN2}/conf/kern.ldscript"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -236,3 +233,8 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
+
+no options AIO
+no options BUFQ_FCFS
+no options RFC2292
+no options MQUEUE
