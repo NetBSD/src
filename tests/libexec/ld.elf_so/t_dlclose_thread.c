@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlclose_thread.c,v 1.5 2026/07/16 15:30:25 riastradh Exp $	*/
+/*	$NetBSD: t_dlclose_thread.c,v 1.6 2026/07/18 04:26:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dlclose_thread.c,v 1.5 2026/07/16 15:30:25 riastradh Exp $");
+__RCSID("$NetBSD: t_dlclose_thread.c,v 1.6 2026/07/18 04:26:42 riastradh Exp $");
 
 #include <atf-c.h>
 #include <dlfcn.h>
@@ -144,9 +144,6 @@ ATF_TC_BODY(dlclose_thread_recursive, tc)
 		"libh_helper_recurdso.so",
 	};
 
-	atf_tc_expect_signal(SIGABRT, "PR lib/59751: dlclose is not MT-safe"
-	    " depending on the libraries unloaded");
-
 	test_dlclose_thread(dsos, __arraycount(dsos));
 }
 
@@ -167,9 +164,6 @@ ATF_TC_BODY(dlclose_thread_recursive2, tc)
 		"libh_helper_recurdso2.so",
 	};
 
-	atf_tc_expect_signal(SIGABRT, "PR lib/59751: dlclose is not MT-safe"
-	    " depending on the libraries unloaded");
-
 	test_dlclose_thread(dsos, __arraycount(dsos));
 }
 
@@ -185,12 +179,6 @@ ATF_TC_BODY(dlclose_recursive, tc)
 	void *handle;
 	int error;
 
-	/*
-	 * Really, the issue is the followup to the fix for the PR
-	 * which is that I broke recursive dlopen/dlclose!
-	 */
-	atf_tc_expect_signal(SIGABRT, "PR lib/59751: dlclose is not MT-safe"
-	    " depending on the libraries unloaded");
 	abortafter(5);
 
 	handle = dlopen("libh_helper_recurdso.so", RTLD_LAZY | RTLD_LOCAL);
@@ -211,12 +199,6 @@ ATF_TC_BODY(dlclose_recursive2, tc)
 	void *handle;
 	int error;
 
-	/*
-	 * Really, the issue is the followup to the fix for the PR
-	 * which is that I broke recursive dlopen/dlclose!
-	 */
-	atf_tc_expect_signal(SIGABRT, "PR lib/59751: dlclose is not MT-safe"
-	    " depending on the libraries unloaded");
 	abortafter(5);
 
 	handle = dlopen("libh_helper_recurdso2.so", RTLD_LAZY | RTLD_LOCAL);

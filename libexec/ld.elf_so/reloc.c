@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.121 2026/07/01 19:29:57 riastradh Exp $	 */
+/*	$NetBSD: reloc.c,v 1.122 2026/07/18 04:26:42 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.121 2026/07/01 19:29:57 riastradh Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.122 2026/07/18 04:26:42 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -266,18 +266,19 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 	int ok = 1;
 
 	for (obj = first; obj != NULL; obj = obj->next) {
-		if (obj->relocated)
+		if (obj->relocstate != OBJRELOC_READY)
 			continue;
-		obj->relocated = true;
 		_rtld_objrelocpending--;
 		if ((!obj->sysv_hash && !obj->gnu_hash) ||
 		    obj->symtab == NULL || obj->strtab == NULL) {
 			_rtld_error("%s: Shared object has no run-time"
 			    " symbol table", obj->path);
+			obj->relocstate = OBJRELOC_FAILED;
 			return -1;
 		}
 		if (obj->nbuckets == UINT32_MAX) {
 			_rtld_error("%s: Symbol table too large", obj->path);
+			obj->relocstate = OBJRELOC_FAILED;
 			return -1;
 		}
 		rdbg((" relocating %s (%ld/%ld rel/rela, %ld/%ld plt rel/rela)",
@@ -297,6 +298,7 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 				PROT_READ | PROT_WRITE) == -1) {
 				_rtld_error("%s: Cannot write-enable text "
 				    "segment: %s", obj->path, xstrerror(errno));
+				obj->relocstate = OBJRELOC_FAILED;
 				return -1;
 			}
 		}
@@ -310,6 +312,7 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 				     PROT_READ | PROT_EXEC) == -1) {
 				_rtld_error("%s: Cannot write-protect text "
 				    "segment: %s", obj->path, xstrerror(errno));
+				obj->relocstate = OBJRELOC_FAILED;
 				return -1;
 			}
 		}
@@ -321,17 +324,22 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 			if (_rtld_relocate_plt_objects(obj) < 0)
 				ok = 0;
 		}
-		if (!ok)
+		if (!ok) {
+			obj->relocstate = OBJRELOC_FAILED;
 			return -1;
+		}
 
 		dbg(("fixing up PLTGOT"));
 		/* Set the special PLTGOT entries. */
 		if (obj->pltgot != NULL)
 			_rtld_setup_pltgot(obj);
 #ifdef GNU_RELRO
-		if (_rtld_relro(obj, false) == -1)
+		if (_rtld_relro(obj, false) == -1) {
+			obj->relocstate = OBJRELOC_FAILED;
 			return -1;
+		}
 #endif
+		obj->relocstate = OBJRELOC_DONE;
 	}
 	return 0;
 }

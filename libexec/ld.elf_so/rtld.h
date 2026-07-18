@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.156 2026/07/01 19:29:57 riastradh Exp $	 */
+/*	$NetBSD: rtld.h,v 1.157 2026/07/18 04:26:42 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -208,6 +208,7 @@ typedef struct Struct_Obj_Entry {
 			mainref:1,	/* True if on _rtld_list_main */
 			globalref:1,	/* True if on _rtld_list_global */
 			init_done:1,	/* True if .init has been added */
+			init_blocked:1,	/* True if blocked in recursive dl* */
 			init_called:1,	/* True if .init function has been
 					 * called */
 			fini_called:1,	/* True if .fini function has been
@@ -334,8 +335,13 @@ typedef struct Struct_Obj_Entry {
 	int		initfinilockwaiter; /* thread waiting to init/fini */
 	int		neededrefcount;	/* #threads loading obj's deps */
 	int		neededwaiter;	/* thread waiting for neededrefcount */
-	bool		relocated;	/* true if already relocated */
-	bool		dlclosing;	/* true if being dlclosed now */
+	enum {
+		OBJRELOC_NOTYET = 0,	/* object created, NEEDED not loaded */
+		OBJRELOC_READY,		/* NEEDED loaded, dldags inited */
+		OBJRELOC_DONE,		/* relocation successful */
+		OBJRELOC_FAILED,	/* relocation failed */
+	}		relocstate;
+	unsigned	dlclosing;	/* true if being dlclosed now */
 } Obj_Entry;
 
 typedef struct Struct_DoneList {
