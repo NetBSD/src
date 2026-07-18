@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.276 2026/05/02 21:45:34 mrg Exp $
+# $NetBSD: GENERIC,v 1.277 2026/07/18 14:08:52 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.276 $"
+#ident 		"GENERIC-$Revision: 1.277 $"
 
 maxusers	32
 
@@ -531,6 +531,9 @@ qe*	at qec?					# Mace Ethernet (10MBd)
 
 ## Happy Meal Ethernet
 hme*	at sbus? slot ? offset ?
+
+## Gigabit Ethernet
+gem*	at sbus? slot ? offset ?
 
 # PCMCIA ethernet devices
 #ep*	at pcmcia?
