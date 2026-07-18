@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.20 2026/06/11 16:50:18 kre Exp $
+# $NetBSD: tzdata2netbsd,v 1.21 2026/07/18 09:46:28 kre Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -1084,6 +1084,9 @@ checkfilecontents()
 
 	for file
 	do
+		case "${file}" in
+		*.orig | *.rej)	continue;;	# Patch noise
+		esac
 		if ! test -e "${file}"
 		then
 			printf 'In distribution but not in new tree: %s\n' \
@@ -1099,6 +1102,7 @@ checkfilecontents()
 			continue
 		fi
 
+		printf 'Checking for differences in %s\n' "${file}"
 		cmp -s "${EXTRACTDIR}/${file}" "${file}" && continue
 
 		if "${auto}"
@@ -1324,7 +1328,7 @@ setlistupdate()
 			rm -f mi.unsorted
 			sed -f "${WORKDIR}/sedcmds" < mi > mi.new || exit 7
 			! test -s mi.new || cmp -s mi mi.new && {
-				printf 'Failed to make changes to set lists'
+				printf 'Failed to make changes to set lists\n'
 				exit 8
 			}
 			mv mi.new mi || exit 9
@@ -1336,7 +1340,7 @@ setlistupdate()
 				DOIT cvs -d "${CVSROOT}" commit -m "${MSG}" mi||
 					exit 11
 			fi
-			printf 'Sets list successfully updated'
+			printf 'Sets list successfully updated\n'
 			exit 0
 		) || {
 			printf '%s: %d\n%s %s\n' 'Sets list update failed' "$?"\
@@ -1344,12 +1348,12 @@ setlistupdate()
 				'(src/distrib/sets/lists/base/mi) manually'
 			if [ -s "${WORKDIR}"/removedzones ]
 			then
-				printf 'Removed Zones:'
+				printf 'Removed Zones:\n'
 				sed 's/^/	/' < "${WORKDIR}"/removedzones
 			fi
 			if [ -s "${WORKDIR}"/addedzones ]
 			then
-				printf 'Added Zones:'
+				printf 'Added Zones:\n'
 				sed 's/^/	/' < "${WORKDIR}"/addedzones
 			fi
 		}
