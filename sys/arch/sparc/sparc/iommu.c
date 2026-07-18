@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.102 2023/12/01 05:22:01 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.103 2026/07/18 13:54:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.102 2023/12/01 05:22:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.103 2026/07/18 13:54:26 thorpej Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.102 2023/12/01 05:22:01 thorpej Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/vmem.h>
+#include <sys/mbuf.h>
 
 #include <uvm/uvm.h>
 
@@ -90,6 +91,9 @@ CFATTACH_DECL_NEW(iommu, sizeof(struct iommu_softc),
     iommu_match, iommu_attach, NULL, NULL);
 
 /* IOMMU DMA map functions */
+static int	iommu_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
+                                 bus_size_t, struct proc *, int);
+
 int	iommu_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 			bus_size_t, int, bus_dmamap_t *);
 int	iommu_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
@@ -565,13 +569,9 @@ iommu_dvma_alloc(struct iommu_softc *sc, bus_dmamap_t map,
 	return (error);
 }
 
-/*
- * Prepare buffer for DMA transfer.
- */
-int
-iommu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
-		  void *buf, bus_size_t buflen,
-		  struct proc *p, int flags)
+static int
+iommu_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	struct iommu_softc *sc = t->_cookie;
 	bus_size_t sgsize;
@@ -581,10 +581,8 @@ iommu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
 	pmap_t pmap;
 	int error;
 
-	/*
-	 * Make sure that on error condition we return "no valid mappings".
-	 */
-	map->dm_nsegs = 0;
+	if (map->dm_nsegs >= map->_dm_segcnt)
+		return SET_ERROR(EFBIG);
 
 	/* Allocate IOMMU resources */
 	if ((error = iommu_dvma_alloc(sc, map, va, buflen, flags,
@@ -598,11 +596,10 @@ iommu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
 	/*
 	 * We always use just one segment.
 	 */
-	map->dm_mapsize = buflen;
-	map->dm_nsegs = 1;
-	map->dm_segs[0].ds_addr = dva + (va & (pagesz - 1));
-	map->dm_segs[0].ds_len = buflen;
-	map->dm_segs[0]._ds_sgsize = sgsize;
+	map->dm_segs[map->dm_nsegs].ds_addr = dva + (va & (pagesz - 1));
+	map->dm_segs[map->dm_nsegs].ds_len = buflen;
+	map->dm_segs[map->dm_nsegs]._ds_sgsize = sgsize;
+	map->dm_nsegs++;
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -614,10 +611,8 @@ iommu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
 		/*
 		 * Get the physical address for this page.
 		 */
-		if (!pmap_extract(pmap, va, &pa)) {
-			iommu_dmamap_unload(t, map);
-			return (EFAULT);
-		}
+		if (!pmap_extract(pmap, va, &pa))
+			return SET_ERROR(EFAULT);
 
 		iommu_enter(sc, dva, pa);
 
@@ -630,14 +625,55 @@ iommu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
 }
 
 /*
+ * Prepare buffer for DMA transfer.
+ */
+int
+iommu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
+		  void *buf, bus_size_t buflen,
+		  struct proc *p, int flags)
+{
+	int error;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_mapsize = buflen;
+	map->dm_nsegs = 0;
+
+	error = iommu_dmamap_load_buffer(t, map, buf, buflen, p, flags);
+	if (error)
+		iommu_dmamap_unload(t, map);
+
+	return (error);
+}
+
+/*
  * Like _bus_dmamap_load(), but for mbufs.
  */
 int
 iommu_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
-		       struct mbuf *m, int flags)
+		       struct mbuf *m0, int flags)
 {
+	struct mbuf *m;
+	int error = 0;
 
-	panic("_bus_dmamap_load_mbuf: not implemented");
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_mapsize = m0->m_pkthdr.len;
+	map->dm_nsegs = 0;
+
+	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
+		error = iommu_dmamap_load_buffer(t, map, m->m_data, m->m_len,
+		    NULL, flags);
+	}
+
+	if (error)
+		iommu_dmamap_unload(t, map);
+
+	return (error);
 }
 
 /*
