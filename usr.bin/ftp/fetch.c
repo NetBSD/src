@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.247 2026/07/06 07:07:00 mlelstv Exp $	*/
+/*	$NetBSD: fetch.c,v 1.248 2026/07/18 09:03:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2026 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.247 2026/07/06 07:07:00 mlelstv Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.248 2026/07/18 09:03:53 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -358,17 +358,20 @@ base64_encode(const unsigned char *clear, size_t len, unsigned char *encoded)
 {
 	static const unsigned char enc[] =
 	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	unsigned char	*cp;
+	unsigned char	*cp, c0, c1, c2;
 	size_t	 i;
 
 	cp = encoded;
 	for (i = 0; i < len; i += 3) {
-		*(cp++) = enc[((clear[i + 0] >> 2))];
-		*(cp++) = enc[((clear[i + 0] << 4) & 0x30)
-			    | ((clear[i + 1] >> 4) & 0x0f)];
-		*(cp++) = enc[((clear[i + 1] << 2) & 0x3c)
-			    | ((clear[i + 2] >> 6) & 0x03)];
-		*(cp++) = enc[((clear[i + 2]	 ) & 0x3f)];
+		c0 = clear[i + 0];
+		c1 = i + 1 < len ? clear[i + 1] : 0;
+		c2 = i + 2 < len ? clear[i + 2] : 0;
+		*(cp++) = enc[((c0 >> 2))];
+		*(cp++) = enc[((c0 << 4) & 0x30)
+			    | ((c1 >> 4) & 0x0f)];
+		*(cp++) = enc[((c1 << 2) & 0x3c)
+			    | ((c2 >> 6) & 0x03)];
+		*(cp++) = enc[((c2     ) & 0x3f)];
 	}
 	*cp = '\0';
 	while (i-- > len)
