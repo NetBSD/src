@@ -1,4 +1,4 @@
-/*	$NetBSD: gemreg.h,v 1.16 2021/08/17 22:00:31 andvar Exp $ */
+/*	$NetBSD: gemreg.h,v 1.17 2026/07/18 14:06:37 thorpej Exp $ */
 
 /*
  *
@@ -142,6 +142,7 @@
 
 /*
  * Bits in GEM_SBUS_CONFIG register
+ * (Section 3.1.2.2, Table 3-2)
  */
 #define GEM_SBUS_CFG_BSIZE32	0x00000001
 #define GEM_SBUS_CFG_BSIZE64	0x00000002
