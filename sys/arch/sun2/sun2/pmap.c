@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 2026/07/06 16:05:10 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 2026/07/18 15:41:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2026/07/06 16:05:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2026/07/18 15:41:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -464,7 +464,7 @@ pmeg_p(int sme)
 
 #define is_pmeg_wired(pmegp) (pmegp->pmeg_wired != 0)
 
-static void 
+static void
 pmeg_set_wiring(pmeg_t pmegp, vaddr_t va, int flag)
 {
 	int idx, mask;
@@ -483,7 +483,7 @@ pmeg_set_wiring(pmeg_t pmegp, vaddr_t va, int flag)
  */
 
 /* part of pmap_bootstrap */
-static void 
+static void
 context_init(void)
 {
 	int i;
@@ -508,7 +508,7 @@ context_init(void)
 }
 
 /* Get us a context (steal one if necessary). */
-static void 
+static void
 context_allocate(pmap_t pmap)
 {
 	context_t context;
@@ -560,7 +560,7 @@ context_allocate(pmap_t pmap)
 /*
  * Unload the context and put it on the free queue.
  */
-static void 
+static void
 context_free(pmap_t pmap)
 {
 	int saved_ctxnum, ctxnum;
@@ -658,7 +658,7 @@ pmeg_init(void)
  * Reserve a pmeg (forever) for use by PROM, etc.
  * Contents are left as-is.  Called very early...
  */
-void 
+void
 pmeg_reserve(int sme)
 {
 	pmeg_t pmegp;
@@ -686,7 +686,7 @@ pmeg_reserve(int sme)
  * Examine PMEGs used by the monitor, and either
  * reserve them (keep=1) or clear them (keep=0)
  */
-static void 
+static void
 pmeg_mon_init(vaddr_t sva, vaddr_t eva, int keep)
 {
 	vaddr_t pgva, endseg;
@@ -730,7 +730,7 @@ pmeg_mon_init(vaddr_t sva, vaddr_t eva, int keep)
  * This is used only during pmap_bootstrap, so we can
  * get away with borrowing a slot in the segmap.
  */
-static void 
+static void
 pmeg_clean(pmeg_t pmegp)
 {
 	int sme;
@@ -755,7 +755,7 @@ pmeg_clean(pmeg_t pmegp)
  * puts them at the end.  The ending condition is finding the first
  * queue element at the head of the queue again.
  */
-static void 
+static void
 pmeg_clean_free(void)
 {
 	pmeg_t pmegp, pmegp_first;
@@ -787,7 +787,7 @@ pmeg_clean_free(void)
  * Allocate a PMEG by whatever means necessary.
  * (May invalidate some mappings!)
  */
-static pmeg_t 
+static pmeg_t
 pmeg_allocate(pmap_t pmap, vaddr_t va)
 {
 	pmeg_t pmegp;
@@ -865,7 +865,7 @@ pmeg_allocate(pmap_t pmap, vaddr_t va)
  * This happens when we lose our context.  We may reclaim
  * this pmeg later if it is still in the inactive queue.
  */
-static void 
+static void
 pmeg_release(pmeg_t pmegp)
 {
 
@@ -886,7 +886,7 @@ pmeg_release(pmeg_t pmegp)
  * Move the pmeg to the free queue from wherever it is.
  * The pmeg will be clean.  It might be in kernel_pmap.
  */
-static void 
+static void
 pmeg_free(pmeg_t pmegp)
 {
 
@@ -930,7 +930,7 @@ pmeg_free(pmeg_t pmegp)
  * Find a PMEG that was put on the inactive queue when we
  * had our context stolen.  If found, move to active queue.
  */
-static pmeg_t 
+static pmeg_t
 pmeg_cache(pmap_t pmap, vaddr_t va)
 {
 	int sme, segnum;
@@ -997,7 +997,7 @@ pmeg_cache(pmap_t pmap, vaddr_t va)
 }
 
 #ifdef	PMAP_DEBUG
-static void 
+static void
 pmeg_verify_empty(vaddr_t va)
 {
 	vaddr_t eva;
@@ -1020,7 +1020,7 @@ pmeg_verify_empty(vaddr_t va)
  * there is one list head for each physical page, and
  * at most one element for each PMEG slot.
  */
-static void 
+static void
 pv_init(void)
 {
 	int npp, nvp, sz;
@@ -1074,7 +1074,7 @@ pv_init(void)
  * Set or clear bits in all PTEs mapping a page.
  * Also does syncflags work while we are there...
  */
-static void 
+static void
 pv_changepte(paddr_t pa, int set_bits, int clear_bits)
 {
 	pv_entry_t *head, pv;
@@ -1180,7 +1180,7 @@ pv_changepte(paddr_t pa, int set_bits, int clear_bits)
  * Return ref and mod bits from pvlist,
  * and turns off same in hardware PTEs.
  */
-static u_int 
+static u_int
 pv_syncflags(pv_entry_t pv)
 {
 	pmap_t pmap;
@@ -1274,7 +1274,7 @@ pv_syncflags(pv_entry_t pv)
 }
 
 /* Remove all mappings for the physical page. */
-static void 
+static void
 pv_remove_all(paddr_t pa)
 {
 	pv_entry_t *head, pv;
@@ -1311,7 +1311,7 @@ pv_remove_all(paddr_t pa)
  * Returns PV_NC if the (new) pvlist says that the address cannot
  * be cached.
  */
-static int 
+static int
 pv_link(pmap_t pmap, int pte, vaddr_t va)
 {
 	paddr_t pa;
@@ -1389,7 +1389,7 @@ pv_link(pmap_t pmap, int pte, vaddr_t va)
  * definition nonempty, since it must have at least two elements
  * in it to have PV_NC set, and we only remove one here.)
  */
-static void 
+static void
 pv_unlink(pmap_t pmap, int pte, vaddr_t va)
 {
 	paddr_t pa;
@@ -1466,7 +1466,7 @@ pv_unlink(pmap_t pmap, int pte, vaddr_t va)
  * Bootstrap and Initialization, etc.
  */
 
-void 
+void
 pmap_common_init(pmap_t pmap)
 {
 	memset(pmap, 0, sizeof(struct pmap));
@@ -1481,7 +1481,7 @@ pmap_common_init(pmap_t pmap)
  * after the "start/end" globals are set.
  * This function must NOT leave context zero.
  */
-paddr_t 
+paddr_t
 pmap_bootstrap(vaddr_t nextva)
 {
 	vaddr_t va, eva;
@@ -1713,7 +1713,7 @@ pmap_bootstrap(vaddr_t nextva)
  * because this lets pmap_remove() and pmap_protect()
  * use a S/W copy of the segmap to avoid function calls.
  */
-void 
+void
 pmap_kernel_init(pmap_t pmap)
 {
 	vaddr_t va;
@@ -1739,7 +1739,7 @@ pmap_kernel_init(pmap_t pmap)
  * How much virtual space does this kernel have?
  * (After mapping kernel text, data, etc.)
  */
-void 
+void
 pmap_virtual_space(vaddr_t *v_start, vaddr_t *v_end)
 {
 	*v_start = virtual_avail;
@@ -1751,7 +1751,7 @@ pmap_virtual_space(vaddr_t *v_start, vaddr_t *v_end)
  *	Called by vm_init, to initialize any structures that the pmap
  *	system needs to map virtual memory.
  */
-void 
+void
 pmap_init(void)
 {
 	pv_init();
@@ -1767,7 +1767,7 @@ pmap_init(void)
  * record the mapping for kernel text/data/bss.
  * Return VA following the mapped range.
  */
-vaddr_t 
+vaddr_t
 pmap_map(vaddr_t va, paddr_t pa, paddr_t endpa, int prot)
 {
 	int sz;
@@ -1783,7 +1783,7 @@ pmap_map(vaddr_t va, paddr_t pa, paddr_t endpa, int prot)
 	return(va);
 }
 
-void 
+void
 pmap_user_init(pmap_t pmap)
 {
 	int i;
@@ -1805,7 +1805,7 @@ pmap_user_init(pmap_t pmap)
  *	the map will be used in software only, and
  *	is bounded by that size.
  */
-pmap_t 
+pmap_t
 pmap_create(void)
 {
 	pmap_t pmap;
@@ -1820,7 +1820,7 @@ pmap_create(void)
  * Called when a pmap initialized by pmap_pinit is being released.
  * Should only be called if the map contains no valid mappings.
  */
-void 
+void
 pmap_release(struct pmap *pmap)
 {
 	int s;
@@ -1850,7 +1850,7 @@ pmap_release(struct pmap *pmap)
  *	Should only be called if the map contains
  *	no valid mappings.
  */
-void 
+void
 pmap_destroy(pmap_t pmap)
 {
 	int count;
@@ -1871,7 +1871,7 @@ pmap_destroy(pmap_t pmap)
 /*
  *	Add a reference to the specified pmap.
  */
-void 
+void
 pmap_reference(pmap_t pmap)
 {
 
@@ -1895,7 +1895,7 @@ pmap_reference(pmap_t pmap)
  *	or lose information.  That is, this routine must actually
  *	insert this page into the given map NOW.
  */
-int 
+int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int new_pte, s;
@@ -1943,7 +1943,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	return 0;
 }
 
-static void 
+static void
 pmap_enter_kernel(vaddr_t pgva, int new_pte, bool wired)
 {
 	pmap_t pmap = kernel_pmap;
@@ -2089,7 +2089,7 @@ add_pte:	/* can be destructive */
 }
 
 
-static void 
+static void
 pmap_enter_user(pmap_t pmap, vaddr_t pgva, int new_pte, bool wired)
 {
 	int do_pv, old_pte, sme;
@@ -2264,7 +2264,7 @@ pmap_enter_user(pmap_t pmap, vaddr_t pgva, int new_pte, bool wired)
 	pmegp->pmeg_vpages++;
 }
 
-void 
+void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int new_pte, s;
@@ -2377,7 +2377,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	splx(s);
 }
 
-void 
+void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
 	pmap_t pmap = kernel_pmap;
@@ -2490,7 +2490,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
  *
  * XXX: Merge this with the next function?
  */
-int 
+int
 pmap_fault(struct vm_map *map, vaddr_t va, vm_prot_t ftype)
 {
 	pmap_t pmap;
@@ -2531,7 +2531,7 @@ pmap_fault(struct vm_map *map, vaddr_t va, vm_prot_t ftype)
  *	it has a valid PTE at va.
  * Otherwise return zero and let VM code handle it.
  */
-int 
+int
 pmap_fault_reload(pmap_t pmap, vaddr_t pgva, vm_prot_t ftype)
 {
 	int rv, s, pte, chkpte, sme;
@@ -2704,7 +2704,7 @@ pmap_is_referenced(struct vm_page *pg)
  * This is called by locore.s:cpu_switch() when it is
  * switching to a new process.  Load new translations.
  */
-void 
+void
 _pmap_switch(pmap_t pmap)
 {
 
@@ -2730,7 +2730,7 @@ _pmap_switch(pmap_t pmap)
  * If (p == curlwp) do like cpu_switch would do; otherwise just
  * take this as notification that the process has a new pmap.
  */
-void 
+void
 pmap_activate(struct lwp *l)
 {
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
@@ -2743,7 +2743,7 @@ pmap_activate(struct lwp *l)
 /*
  * Deactivate the address space of the specified process.
  */
-void 
+void
 pmap_deactivate(struct lwp *l)
 {
 	/* Nothing to do. */
@@ -2756,7 +2756,7 @@ pmap_deactivate(struct lwp *l)
  *	In/out conditions:
  *			The mapping must already exist in the pmap.
  */
-void 
+void
 pmap_unwire(pmap_t pmap, vaddr_t va)
 {
 	int s, sme;
@@ -2814,7 +2814,7 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
  * This extracts the PMEG associated with the given map/virtual
  * address pair.  Returns SEGINV if VA not valid.
  */
-int 
+int
 _pmap_extract_pmeg(pmap_t pmap, vaddr_t va)
 {
 	int s, saved_ctx, segnum, sme;
@@ -2843,7 +2843,7 @@ _pmap_extract_pmeg(pmap_t pmap, vaddr_t va)
  *		with the given map/virtual_address pair.
  *	Returns zero if VA not valid.
  */
-bool 
+bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	int s, sme, segnum, ptenum, pte;
@@ -2906,7 +2906,7 @@ pmap_phys_address(paddr_t addr)
  *
  *	  Lower the permission for all mappings to a given page.
  */
-void 
+void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -2936,7 +2936,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  * Initialize a preallocated and zeroed pmap structure,
  * such as one in a vmspace structure.
  */
-void 
+void
 pmap_pinit(pmap_t pmap)
 {
 	pmap_common_init(pmap);
@@ -2991,7 +2991,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
  * (guaranteed to be within one segment)
  * similar to pmap_remove1()
  */
-void 
+void
 pmap_protect1(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	int old_ctx, s, sme;
@@ -3046,7 +3046,7 @@ out:
  * where that PMEG is currently in the MMU.
  * The current context is already correct.
  */
-void 
+void
 pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	vaddr_t pgva, segva __diagused;
@@ -3129,7 +3129,7 @@ pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
  * Remove write permissions, all in one PMEG,
  * where it is not currently in any context.
  */
-void 
+void
 pmap_protect_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	int old_ctx, pte, sme, segnum;
@@ -3195,7 +3195,7 @@ pmap_protect_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
  *	It is assumed that the start and end are properly
  *	rounded to the page size.
  */
-void 
+void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	vaddr_t va, neva;
@@ -3227,7 +3227,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 /*
  * Remove user mappings, all within one segment
  */
-void 
+void
 pmap_remove1(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	int old_ctx, s, sme;
@@ -3283,7 +3283,7 @@ out:
  * The current context is already correct.
  * If no PTEs remain valid in the PMEG, free it.
  */
-void 
+void
 pmap_remove_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	pmeg_t pmegp;
@@ -3412,7 +3412,7 @@ pmap_remove_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
  * Remove some mappings, all in one PMEG,
  * where it is not currently in any context.
  */
-void 
+void
 pmap_remove_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	pmeg_t pmegp;
@@ -3508,7 +3508,7 @@ pmap_remove_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
  * Count resident pages in this pmap.
  * See: kern_sysctl.c:pmap_resident_count
  */
-segsz_t 
+segsz_t
 pmap_resident_pages(pmap_t pmap)
 {
 	int i, sme, pages;
@@ -3532,7 +3532,7 @@ pmap_resident_pages(pmap_t pmap)
  * Count wired pages in this pmap.
  * See vm_mmap.c:pmap_wired_count
  */
-segsz_t 
+segsz_t
 pmap_wired_pages(pmap_t pmap)
 {
 	int i, mask, sme, pages;
@@ -3564,7 +3564,7 @@ pmap_wired_pages(pmap_t pmap)
  *	bcopy to copy the page, one machine dependent page at a
  *	time.
  */
-void 
+void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
 	int pte;
@@ -3614,7 +3614,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
  *	bzero to clear its contents, one machine dependent page
  *	at a time.
  */
-void 
+void
 pmap_zero_page(paddr_t pa)
 {
 	int pte;
@@ -3660,7 +3660,7 @@ pmap_zero_page(paddr_t pa)
  * least likely to cause cache aliases.
  * (This will just seg-align mappings.)
  */
-void 
+void
 pmap_prefer(vaddr_t fo, vaddr_t *va, int td)
 {
 	long d;
@@ -3680,7 +3680,7 @@ pmap_prefer(vaddr_t fo, vaddr_t *va, int td)
  * Fill in the sun2-specific part of the kernel core header
  * for dumpsys().  (See machdep.c for the rest.)
  */
-void 
+void
 pmap_kcore_hdr(struct sun2_kcore_hdr *sh)
 {
 	vaddr_t va;
@@ -3709,7 +3709,7 @@ pmap_kcore_hdr(struct sun2_kcore_hdr *sh)
  * Copy the pagemap RAM into the passed buffer (one page)
  * starting at OFF in the pagemap RAM.
  */
-void 
+void
 pmap_get_pagemap(int *pt, int off)
 {
 	vaddr_t va, va_end;
@@ -3803,8 +3803,8 @@ set_pte_pmeg(int pmeg_num, int page_num, int pte)
  * 
  *	Function:
  *		Synchronize caches corresponding to [addr, addr+len) in p.
- */   
-void 
+ */
+void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
 }
@@ -3863,7 +3863,7 @@ pmap_db_write_text_exit(struct pmap_db_write_text_context *ctx)
 #ifdef	PMAP_DEBUG
 /* Things to call from the debugger. */
 
-void 
+void
 pmap_print(pmap_t pmap)
 {
 	db_printf(" pm_ctxnum=%d\n", pmap->pm_ctxnum);
@@ -3871,7 +3871,7 @@ pmap_print(pmap_t pmap)
 	db_printf(" pm_segmap=%p\n", pmap->pm_segmap);
 }
 
-void 
+void
 pmeg_print(pmeg_t pmegp)
 {
 	db_printf("link_next=%p  link_prev=%p\n",
@@ -3885,7 +3885,7 @@ pmeg_print(pmeg_t pmegp)
 		  pmegp->pmeg_qstate);
 }
 
-void 
+void
 pv_print(paddr_t pa)
 {
 	pv_entry_t pv;
