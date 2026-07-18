@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.248 2026/07/18 09:03:53 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.249 2026/07/18 22:47:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2026 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.248 2026/07/18 09:03:53 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.249 2026/07/18 22:47:59 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1234,6 +1234,11 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 		if (EMPTYSTRING(location)) {
 			warnx(
 			"No redirection Location provided by server");
+			goto cleanup_fetch_url;
+		}
+		if (STRNEQUAL(location, FILE_URL)) {
+			warnx("Unsupported redirection Location `%s'",
+			    location);
 			goto cleanup_fetch_url;
 		}
 		if (redirect_loop++ > 5) {
