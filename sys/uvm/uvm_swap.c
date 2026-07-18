@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.234 2026/06/27 14:56:29 riastradh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.235 2026/07/18 01:06:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.234 2026/06/27 14:56:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.235 2026/07/18 01:06:15 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -66,8 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.234 2026/06/27 14:56:29 riastradh Exp
 
 #include <miscfs/specfs/specdev.h>
 
+#ifdef VMSWAP_ENCRYPTION
 #include <crypto/aes/aes.h>
 #include <crypto/aes/aes_cbc.h>
+#endif /* VMSWAP_ENCRYPTION */
 
 /*
  * uvm_swap.c: manage configuration and i/o to swap space.
@@ -144,9 +146,11 @@ struct swapdev {
 	struct vnode		*swd_vp;	/* backing vnode */
 	TAILQ_ENTRY(swapdev)	swd_next;	/* priority tailq */
 
+#ifdef VMSWAP_ENCRYPTION
 	struct aesenc		swd_enckey;	/* AES key expanded for enc */
 	struct aesdec		swd_deckey;	/* AES key expanded for dec */
 	bool			swd_encinit;	/* true if keys initialized */
+#endif /* VMSWAP_ENCRYPTION */
 
 	/*
 	 * the following members are only used for swap on VREG file.
@@ -215,9 +219,11 @@ static void sw_reg_start(struct swapdev *);
 
 static int uvm_swap_io(struct vm_page **, int, int, int);
 
+#ifdef VMSWAP_ENCRYPTION
 static void uvm_swap_genkey(struct swapdev *);
 static void uvm_swap_encryptpage(struct swapdev *, void *, int);
 static void uvm_swap_decryptpage(struct swapdev *, void *, int);
+#endif /* VMSWAP_ENCRYPTION */
 
 /*
  * uvm_swap_init: init the swap system data structures and locks
@@ -1051,6 +1057,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	/* mark all expect the `saved' region free. */
 	blist_free(sdp->swd_blist, addr, size);
 
+#ifdef VMSWAP_ENCRYPTION
 	/*
 	 * mark the keys uninitialized so we generate them lazily.
 	 *
@@ -1059,6 +1066,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	 * for the benefit of machines without HWRNG.
 	 */
 	sdp->swd_encinit = false;
+#endif /* VMSWAP_ENCRYPTION */
 
 	/*
 	 * if the vnode we are swapping to is the root vnode
@@ -1238,8 +1246,10 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	vmem_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize);
 	blist_destroy(sdp->swd_blist);
 	bufq_free(sdp->swd_tab);
+#ifdef VMSWAP_ENCRYPTION
 	explicit_memset(&sdp->swd_enckey, 0, sizeof sdp->swd_enckey);
 	explicit_memset(&sdp->swd_deckey, 0, sizeof sdp->swd_deckey);
+#endif /* VMSWAP_ENCRYPTION */
 	mutex_destroy(&sdp->swd_lock);
 	kmem_free(sdp, sizeof(*sdp));
 	return (0);
@@ -1328,6 +1338,7 @@ iobuf_redirect(struct buf *bp, struct vnode *vp)
 	bp->b_objlock = vp->v_interlock;
 }
 
+#ifdef VMSWAP_ENCRYPTION
 struct sw_physio_decrypt_context {
 	void *orig_buf;
 	void *orig_private;
@@ -1363,6 +1374,7 @@ sw_physio_decrypt_iodone(struct buf *bp)
 	kmem_intr_free(ctx, sizeof(*ctx));
 	(cb)(bp);	/* call the original b_iodone callback */
 }
+#endif /* VMSWAP_ENCRYPTION */
 
 /*
  * swstrategy: perform I/O on the drum
@@ -1411,6 +1423,7 @@ swstrategy(struct buf *bp)
 		return;
 	}
 
+#ifdef VMSWAP_ENCRYPTION
 	/*
 	 * B_RAW here implies user i/o on /dev/drum, for which we need
 	 * to handle encryption/decryption here.
@@ -1448,6 +1461,7 @@ swstrategy(struct buf *bp)
 		bp->b_private = ctx;
 		bp->b_iodone = sw_physio_decrypt_iodone;
 	}
+#endif /* VMSWAP_ENCRYPTION */
 
 	/*
 	 * convert drum page number to block number on this swapdev.
@@ -1951,6 +1965,7 @@ uvm_swap_get(struct vm_page *page, int swslot, int flags)
 	return error;
 }
 
+#ifdef VMSWAP_ENCRYPTION
 static void
 uvm_swap_encrypt_pages(int startslot, void *p, int npages)
 {
@@ -2035,6 +2050,7 @@ uvm_swap_decrypt_pages(int startslot, void *p, int npages)
 		    (void *)((uint8_t *)p + (vsize_t)i*PAGE_SIZE), s);
 	}
 }
+#endif /* VMSWAP_ENCRYPTION */
 
 /*
  * uvm_swap_io: do an i/o operation to swap
@@ -2046,7 +2062,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	struct	buf *bp;
 	vaddr_t kva;
 	int	error, mapinflags;
-	bool write, async, swap_encrypt;
+	bool write, async;
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pdhist,
 	    "<- called, startslot=%jd, npages=%jd, flags=%#jx",
@@ -2054,7 +2070,9 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 
 	write = (flags & B_READ) == 0;
 	async = (flags & B_ASYNC) != 0;
-	swap_encrypt = atomic_load_relaxed(&uvm_swap_encrypt);
+#ifdef VMSWAP_ENCRYPTION
+	bool swap_encrypt = atomic_load_relaxed(&uvm_swap_encrypt);
+#endif
 
 	/*
 	 * allocate a buf for the i/o.
@@ -2078,16 +2096,20 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	mapinflags = !write ?
 	    UVMPAGER_MAPIN_WAITOK|UVMPAGER_MAPIN_READ :
 	    UVMPAGER_MAPIN_WAITOK|UVMPAGER_MAPIN_WRITE;
+#ifdef VMSWAP_ENCRYPTION
 	if (write && swap_encrypt)	/* need to encrypt in-place */
 		mapinflags |= UVMPAGER_MAPIN_READ;
+#endif /* VMSWAP_ENCRYPTION */
 	kva = uvm_pagermapin(pps, npages, mapinflags);
 
+#ifdef VMSWAP_ENCRYPTION
 	/*
 	 * encrypt writes in place if requested
 	 */
 	if (write) {
 		uvm_swap_encrypt_pages(startslot, (void *)kva, npages);
 	}
+#endif /* VMSWAP_ENCRYPTION */
 
 	/*
 	 * fill in the bp/sbp.   we currently route our i/o through
@@ -2148,12 +2170,14 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	if (error)
 		goto out;
 
+#ifdef VMSWAP_ENCRYPTION
 	/*
 	 * decrypt reads in place if needed
 	 */
 	if (!write) {
 		uvm_swap_decrypt_pages(startslot, (void *)kva, npages);
 	}
+#endif /* VMSWAP_ENCRYPTION */
 out:
 	/*
 	 * kill the pager mapping
@@ -2174,6 +2198,7 @@ out:
 	return (error);
 }
 
+#ifdef VMSWAP_ENCRYPTION
 /*
  * uvm_swap_genkey(sdp)
  *
@@ -2280,3 +2305,4 @@ SYSCTL_SETUP(sysctl_uvmswap_setup, "sysctl uvmswap setup")
 	    sysctl_kern_uvm_swap_encrypt, 0, NULL, 0,
 	    CTL_VM, CTL_CREATE, CTL_EOL);
 }
+#endif /* VMSWAP_ENCRYPTION */

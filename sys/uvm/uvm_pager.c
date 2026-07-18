@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.136 2026/05/03 16:02:37 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.137 2026/07/18 01:06:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.136 2026/05/03 16:02:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.137 2026/07/18 01:06:15 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -547,7 +547,7 @@ uvm_aio_aiodone(struct buf *bp)
 		    (uintptr_t)pgs[i], 0, 0);
 	}
 
-#if defined(VMSWAP)
+#if defined(VMSWAP) && defined(VMSWAP_ENCRYPTION)
 	if (__predict_false(error != 0) &&
 	    ((pgs[0]->flags & PG_SWAPBACKED) != 0)) {
 		int swslot = uvm_page_swapslot(pgs[0]);
