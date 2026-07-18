@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.41 2026/01/17 05:33:51 skrll Exp $ */
+/* $NetBSD: spi.c,v 1.42 2026/07/18 06:03:30 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.41 2026/01/17 05:33:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.42 2026/07/18 06:03:30 mlelstv Exp $");
 
 #include "locators.h"
 
@@ -720,6 +720,11 @@ spi_done(struct spi_transfer *st, int err)
  * not full duplex.  If you want full duplex, you can't use these convenience
  * wrappers.
  *
+ * spi_send_and_recv - sends data to the bus and receives. Sending and
+ * receiving takes places at the same time. If the send buffer is larger,
+ * the final received bytes are dropped. If the receive buffer is larger,
+ * the backend driver sends out zero bytes.
+ *
  * spi_sendv - scatter send data to the bus
  */
 int
@@ -774,6 +779,39 @@ spi_send_recv(spi_handle_t sh, int scnt, const uint8_t *snd,
 	spi_chunk_init(&chunk2, rcnt, NULL, rcv);
 	spi_transfer_add(&trans, &chunk1);
 	spi_transfer_add(&trans, &chunk2);
+
+	/* enqueue it and wait for it to complete */
+	spi_transfer(sh, &trans);
+	spi_wait(&trans);
+
+	if (trans.st_flags & SPI_F_ERROR)
+		return trans.st_errno;
+
+	return 0;
+}
+
+int
+spi_send_and_recv(spi_handle_t sh, int scnt, const uint8_t *snd,
+    int rcnt, uint8_t *rcv)
+{
+	struct spi_transfer	trans;
+	struct spi_chunk	chunk1, chunk2;
+	int cnt;
+
+	spi_transfer_init(&trans);
+
+	cnt = scnt < rcnt ? scnt : rcnt;
+
+	spi_chunk_init(&chunk1, cnt, snd, rcv);
+	spi_transfer_add(&trans, &chunk1);
+
+	if (scnt > cnt) {
+		spi_chunk_init(&chunk2, scnt - cnt, snd + cnt, NULL);
+		spi_transfer_add(&trans, &chunk2);
+	} else if (rcnt > cnt) {
+		spi_chunk_init(&chunk2, rcnt - cnt, NULL, rcv + cnt);
+		spi_transfer_add(&trans, &chunk2);
+	}
 
 	/* enqueue it and wait for it to complete */
 	spi_transfer(sh, &trans);

@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.26 2025/10/10 18:36:17 brad Exp $ */
+/* $NetBSD: spivar.h,v 1.27 2026/07/18 06:03:30 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -201,6 +201,7 @@ struct spi_chunk_q {
 int	spi_send(spi_handle_t, int, const uint8_t *);
 int	spi_recv(spi_handle_t, int, uint8_t *);
 int	spi_send_recv(spi_handle_t, int, const uint8_t *, int, uint8_t *);
+int	spi_send_and_recv(spi_handle_t, int, const uint8_t *, int, uint8_t *);
 int	spi_sendv(spi_handle_t, const struct iovec *, int);
 
 #endif	/* _DEV_SPI_SPIVAR_H_ */
