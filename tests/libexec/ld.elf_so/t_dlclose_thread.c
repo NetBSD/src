@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlclose_thread.c,v 1.1.2.3 2026/07/03 18:36:36 martin Exp $	*/
+/*	$NetBSD: t_dlclose_thread.c,v 1.1.2.4 2026/07/19 16:17:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,15 +27,41 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dlclose_thread.c,v 1.1.2.3 2026/07/03 18:36:36 martin Exp $");
+__RCSID("$NetBSD: t_dlclose_thread.c,v 1.1.2.4 2026/07/19 16:17:13 martin Exp $");
 
 #include <atf-c.h>
 #include <dlfcn.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdatomic.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "h_macros.h"
+
+/*
+ * abortafter(sec)
+ *
+ *	Arrange to deliver SIGABRT after the specified number of
+ *	seconds.  We use SIGABRT rather than SIGALRM in order to get a
+ *	core dump so the atf test harness will give a stack trace.
+ */
+static void
+abortafter(unsigned sec)
+{
+	timer_t t;
+	struct sigevent sigev = {
+		.sigev_notify = SIGEV_SIGNAL,
+		.sigev_signo = SIGABRT, /* yields core dump -> stack trace */
+	};
+	const struct itimerspec it = {
+		.it_value = {sec,0},
+		.it_interval = {0,0},
+	};
+
+	RL(timer_create(CLOCK_MONOTONIC, &sigev, &t));
+	RL(timer_settime(t, TIMER_RELTIME, &it, NULL));
+}
 
 pthread_barrier_t bar;
 atomic_bool stop = false;
@@ -45,25 +71,43 @@ int sleep_fini;
 int dlopen_cookie;
 int dlclose_cookie;
 
-static const char *const libh_helper_dso[] = {
-	"libh_helper_dso1.so",
-	"libh_helper_dso2.so",
-	"libh_helper_dso3.so",
-};
+#define	MAXNDSOS	5
 
 static void *
 dlclose_thread(void *cookie)
 {
-	const unsigned i = (uintptr_t)cookie % __arraycount(libh_helper_dso);
+	const char *const path = cookie;
 	void *handle;
 
 	(void)pthread_barrier_wait(&bar);
 	while (!atomic_load_explicit(&stop, memory_order_relaxed)) {
-		handle = dlopen(libh_helper_dso[i], RTLD_LAZY | RTLD_LOCAL);
+		handle = dlopen(path, RTLD_LAZY | RTLD_LOCAL);
 		ATF_REQUIRE(handle != NULL);
 		dlclose(handle);
 	}
 	return NULL;
+}
+
+static void
+test_dlclose_thread(const char *const *dsos, size_t ndsos)
+{
+	pthread_t t[2*MAXNDSOS];
+	unsigned i;
+
+	ATF_REQUIRE_MSG(ndsos <= MAXNDSOS, "ndso=%zu", ndsos);
+
+	RZ(pthread_barrier_init(&bar, NULL, 1 + 2*ndsos));
+	for (i = 0; i < 2*ndsos; i++) {
+		const char *const dso = dsos[i % ndsos];
+		RZ(pthread_create(&t[i], NULL, &dlclose_thread,
+			__UNCONST(dso)));
+	}
+	(void)pthread_barrier_wait(&bar);
+	(void)sleep(5);
+	atomic_store_explicit(&stop, true, memory_order_relaxed);
+	abortafter(5);
+	for (i = 0; i < 2*ndsos; i++)
+		RZ(pthread_join(t[i], NULL));
 }
 
 ATF_TC(dlclose_thread);
@@ -75,23 +119,101 @@ ATF_TC_HEAD(dlclose_thread, tc)
 }
 ATF_TC_BODY(dlclose_thread, tc)
 {
-	pthread_t t[2*__arraycount(libh_helper_dso)];
-	unsigned i;
+	static const char *const dsos[] = {
+		"libh_helper_dso1.so",
+		"libh_helper_dso2.so",
+		"libh_helper_dso3.so",
+	};
 
-	RZ(pthread_barrier_init(&bar, NULL, 1 + __arraycount(t)));
-	for (i = 0; i < __arraycount(t); i++) {
-		RZ(pthread_create(&t[i], NULL, &dlclose_thread,
-			(void *)(uintptr_t)i));
-	}
-	(void)pthread_barrier_wait(&bar);
-	(void)sleep(5);
-	atomic_store_explicit(&stop, true, memory_order_relaxed);
-	for (i = 0; i < __arraycount(t); i++)
-		RZ(pthread_join(t[i], NULL));
+	test_dlclose_thread(dsos, __arraycount(dsos));
+}
+
+ATF_TC(dlclose_thread_recursive);
+ATF_TC_HEAD(dlclose_thread_recursive, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test concurrent dlopen/dlclose with recursive dlopen/dlclose");
+	atf_tc_set_md_var(tc, "timeout", "20");
+}
+ATF_TC_BODY(dlclose_thread_recursive, tc)
+{
+	static const char *const dsos[] = {
+		"libh_helper_dso1.so",
+		"libh_helper_dso2.so",
+		"libh_helper_dso3.so",
+		"libh_helper_recurdso.so",
+	};
+
+	test_dlclose_thread(dsos, __arraycount(dsos));
+}
+
+ATF_TC(dlclose_thread_recursive2);
+ATF_TC_HEAD(dlclose_thread_recursive2, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test concurrent dlopen/dlclose with recursive^2 dlopen/dlclose");
+	atf_tc_set_md_var(tc, "timeout", "20");
+}
+ATF_TC_BODY(dlclose_thread_recursive2, tc)
+{
+	static const char *const dsos[] = {
+		"libh_helper_dso1.so",
+		"libh_helper_dso2.so",
+		"libh_helper_dso3.so",
+		"libh_helper_recurdso.so",
+		"libh_helper_recurdso2.so",
+	};
+
+	test_dlclose_thread(dsos, __arraycount(dsos));
+}
+
+ATF_TC(dlclose_recursive);
+ATF_TC_HEAD(dlclose_recursive, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test dlopen/dlclose with recursive dlopen/dlclose in init/fini");
+	atf_tc_set_md_var(tc, "timeout", "20");
+}
+ATF_TC_BODY(dlclose_recursive, tc)
+{
+	void *handle;
+	int error;
+
+	abortafter(5);
+
+	handle = dlopen("libh_helper_recurdso.so", RTLD_LAZY | RTLD_LOCAL);
+	ATF_REQUIRE_MSG(handle != NULL, "%s", dlerror());
+	ATF_REQUIRE_MSG((error = dlclose(handle)) == 0,
+	    "error=%d (%s)", error, dlerror());
+}
+
+ATF_TC(dlclose_recursive2);
+ATF_TC_HEAD(dlclose_recursive2, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test recursive dlopen/dlclose in init/fini with dependencies");
+	atf_tc_set_md_var(tc, "timeout", "20");
+}
+ATF_TC_BODY(dlclose_recursive2, tc)
+{
+	void *handle;
+	int error;
+
+	abortafter(5);
+
+	handle = dlopen("libh_helper_recurdso2.so", RTLD_LAZY | RTLD_LOCAL);
+	ATF_REQUIRE_MSG(handle != NULL, "%s", dlerror());
+	ATF_REQUIRE_MSG((error = dlclose(handle)) == 0,
+	    "error=%d (%s)", error, dlerror());
 }
 
 ATF_TP_ADD_TCS(tp)
 {
+
+	ATF_TP_ADD_TC(tp, dlclose_recursive);
+	ATF_TP_ADD_TC(tp, dlclose_recursive2);
 	ATF_TP_ADD_TC(tp, dlclose_thread);
+	ATF_TP_ADD_TC(tp, dlclose_thread_recursive);
+	ATF_TP_ADD_TC(tp, dlclose_thread_recursive2);
 	return atf_no_error();
 }

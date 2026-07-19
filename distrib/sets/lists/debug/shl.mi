@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.367.2.11 2026/06/27 16:39:32 martin Exp $
+# $NetBSD: shl.mi,v 1.367.2.12 2026/07/19 16:17:14 martin Exp $
 #
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -374,6 +374,8 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso3.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_recurdso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_recurdso2.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_onlyctor_dynamic.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_onlydef.so.1.debug		tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_onlyuse_dynamic.so.1.debug	tests-libexec-debug	debug,compattestfile,atf

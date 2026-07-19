@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.221.2.3 2026/07/03 18:36:36 martin Exp $	 */
+/*	$NetBSD: rtld.c,v 1.221.2.4 2026/07/19 16:17:13 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.221.2.3 2026/07/03 18:36:36 martin Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.221.2.4 2026/07/19 16:17:13 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -132,11 +132,11 @@ register Elf_Addr *_GLOBAL_OFFSET_TABLE_ asm("r12");
 #endif /* RTLD_DEBUG */
 extern Elf_Dyn  _DYNAMIC;
 
-static void _rtld_call_fini_functions(sigset_t *, int);
-static void _rtld_call_init_functions(sigset_t *);
+static void _rtld_call_fini_functions(Obj_Entry *, sigset_t *, int);
+static void _rtld_call_init_functions(Obj_Entry *, sigset_t *);
 static void _rtld_call_preinit_functions(sigset_t *);
-static void _rtld_initlist_visit(Objlist *, Obj_Entry *, int);
-static void _rtld_initlist_tsort(Objlist *, int);
+static bool _rtld_initlist_visit(Objlist *, Obj_Entry *, int);
+static void _rtld_initlist_tsort(Objlist *, int, Obj_Entry *);
 static Obj_Entry *_rtld_dlcheck(void *);
 static void _rtld_init_dag(Obj_Entry *);
 static void _rtld_init_dag1(Obj_Entry *, Obj_Entry *);
@@ -300,11 +300,17 @@ _rtld_initfini_enter(Obj_Entry **objp, sigset_t *mask)
 	 * routine for this object, claim the object for this thread
 	 * and return true without releasing or reacquiring the rtld
 	 * exclusive lock.
+	 *
+	 * Recursive entry here should not be possible: the topological
+	 * sort detects when a constructor or destructor is already
+	 * running for an object, and excludes that object and anything
+	 * needing that object from the sorted list.
 	 */
 	if (__predict_true(obj->initfinilock == 0)) {
 		obj->initfinilock = _lwp_self();
 		return true;
 	}
+	assert(obj->initfinilock != _lwp_self());
 
 	/*
 	 * Remember whether anyone else is waiting for the lock, and
@@ -509,7 +515,7 @@ _rtld_call_fini_function(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
 }
 
 static void
-_rtld_call_fini_functions(sigset_t *mask, int force)
+_rtld_call_fini_functions(Obj_Entry *dlobj, sigset_t *mask, int force)
 {
 	Objlist_Entry *elm;
 	Objlist finilist;
@@ -520,7 +526,7 @@ _rtld_call_fini_functions(sigset_t *mask, int force)
 restart:
 	cur_objgen = _rtld_objgen;
 	SIMPLEQ_INIT(&finilist);
-	_rtld_initlist_tsort(&finilist, 1);
+	_rtld_initlist_tsort(&finilist, 1, dlobj);
 
 	/* First pass: objects _not_ marked with DF_1_INITFIRST. */
 	SIMPLEQ_FOREACH(elm, &finilist, link) {
@@ -533,6 +539,7 @@ restart:
 				_rtld_objlist_clear(&finilist);
 				goto restart;
 			}
+			assert(obj->relocstate == OBJRELOC_DONE);
 			_rtld_call_fini_function(obj, mask, cur_objgen);
 			_rtld_initfini_exit(obj);
 			if (_rtld_objgen != cur_objgen) {
@@ -553,6 +560,7 @@ restart:
 			_rtld_objlist_clear(&finilist);
 			goto restart;
 		}
+		assert(obj->relocstate == OBJRELOC_DONE);
 		_rtld_call_fini_function(obj, mask, cur_objgen);
 		_rtld_initfini_exit(obj);
 		if (_rtld_objgen != cur_objgen) {
@@ -602,6 +610,7 @@ _rtld_call_ifunc_functions(sigset_t *mask, Obj_Entry *obj, u_int cur_objgen)
 {
 	if (!_rtld_initfini_enter(&obj, mask))
 		return true;
+	assert(obj->relocstate == OBJRELOC_DONE);
 	if (obj->ifunc_remaining
 #if defined(IFUNC_NONPLT)
 	    || obj->ifunc_remaining_nonplt
@@ -637,7 +646,7 @@ _rtld_call_preinit_functions(sigset_t *mask)
 }
 
 static void
-_rtld_call_init_functions(sigset_t *mask)
+_rtld_call_init_functions(Obj_Entry *dlobj, sigset_t *mask)
 {
 	Objlist_Entry *elm;
 	Objlist initlist;
@@ -648,7 +657,7 @@ _rtld_call_init_functions(sigset_t *mask)
 restart:
 	cur_objgen = _rtld_objgen;
 	SIMPLEQ_INIT(&initlist);
-	_rtld_initlist_tsort(&initlist, 0);
+	_rtld_initlist_tsort(&initlist, 0, dlobj);
 
 	/* First pass: objects with IRELATIVE relocations. */
 	SIMPLEQ_FOREACH(elm, &initlist, link) {
@@ -669,6 +678,7 @@ restart:
 	 * the head of _rtld_objlist that _rtld_initlist_tsort skipped.
 	 */
 	assert(_rtld_objlist->refcount != 0);
+	assert(_rtld_objlist->initfinilock != _lwp_self());
 	if (_rtld_call_ifunc_functions(mask, _rtld_objlist, cur_objgen)) {
 		dbg(("restarting init iteration"));
 		_rtld_objlist_clear(&initlist);
@@ -687,6 +697,7 @@ restart:
 				_rtld_objlist_clear(&initlist);
 				goto restart;
 			}
+			assert(obj->relocstate == OBJRELOC_DONE);
 			_rtld_call_init_function(obj, mask, cur_objgen);
 			_rtld_initfini_exit(obj);
 			if (_rtld_objgen != cur_objgen) {
@@ -708,6 +719,7 @@ restart:
 			_rtld_objlist_clear(&initlist);
 			goto restart;
 		}
+		assert(obj->relocstate == OBJRELOC_DONE);
 		_rtld_call_init_function(obj, mask, cur_objgen);
 		_rtld_initfini_exit(obj);
 		if (_rtld_objgen != cur_objgen) {
@@ -804,7 +816,7 @@ _rtld_exit(void)
 
 	_rtld_exclusive_enter(&mask);
 
-	_rtld_call_fini_functions(&mask, 1);
+	_rtld_call_fini_functions(NULL, &mask, 1);
 
 	_rtld_exclusive_exit(&mask);
 }
@@ -1111,6 +1123,10 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	dbg(("loading needed objects"));
 	if (_rtld_load_needed_objects(_rtld_objmain, _RTLD_MAIN, NULL) == -1)
 		_rtld_die();
+	for (obj = _rtld_objlist; obj != NULL; obj = obj->next) {
+		assert(obj->relocstate == OBJRELOC_NOTYET);
+		obj->relocstate = OBJRELOC_READY;
+	}
 
 	dbg(("checking for required versions"));
 	for (obj = _rtld_objlist; obj != NULL; obj = obj->next) {
@@ -1178,7 +1194,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	_rtld_call_preinit_functions(&mask);
 
 	dbg(("calling _init functions"));
-	_rtld_call_init_functions(&mask);
+	_rtld_call_init_functions(NULL, &mask);
 
 	dbg(("control at program entry point = %p, obj = %p, exit = %p",
 	     _rtld_objmain->entry, _rtld_objmain, _rtld_exit));
@@ -1242,10 +1258,41 @@ _rtld_dlcheck(void *handle)
 	return obj;
 }
 
-static void
-_rtld_initlist_visit(Objlist* list, Obj_Entry *obj, int rev)
+/*
+ * _rtld_initlist_visit(list, obj, rev)
+ *
+ *	Visit obj in a depth-first search for a topological ordering of
+ *	objects by DT_NEEDED relations.  Recursively traverse all its
+ *	DT_NEEDED objects, and add it to list if appropriate, at the
+ *	end if rev is 0 or the beginning if rev is 1.  Returns true if
+ *	the current object is blocked because we're currently in its
+ *	constructor/destructor, or in the constructor/destructor of an
+ *	object this one needs.
+ *
+ *	Objects which have not yet been relocated are skipped: they may
+ *	appear in the list during a concurrent dlopen in
+ *	_rtld_load_needed_objects, before that call to dlopen has run
+ *	_rtld_relocate_objects.  They can't be relevant to the
+ *	constructor or destructor order of the object currently being
+ *	dlopened or dlclosed.
+ *
+ *	Objects which are currently being initialized or finalized by
+ *	_this thread_, i.e., objects whose constructors or destructors
+ *	call dlopen/dlclose, can't be initialized or finalized.
+ *	Neither can any objects that depend on objects currently being
+ *	initialized or finalized, until this dlopen/dlclose call has
+ *	returned (at which point rtld will notice the object list has
+ *	changed, tsort afresh, and pick up where it left off).  So
+ *	_rtld_initlist_visit returns a boolean flag indicating whether
+ *	initialization/finalization for this object is blocked (true)
+ *	or not (false).  Blocked objects are not included in the
+ *	topologically sorted list at all.
+ */
+static bool
+_rtld_initlist_visit(Objlist *list, Obj_Entry *obj, int rev)
 {
-	Needed_Entry* elm;
+	Needed_Entry *elm;
+	bool blocked = false;
 
 	/* dbg(("_rtld_initlist_visit(%s)", obj->path)); */
 
@@ -1255,8 +1302,18 @@ _rtld_initlist_visit(Objlist* list, Obj_Entry *obj, int rev)
 	 * eventually, but it isn't ordered with respect to any
 	 * initializers we have to run.
 	 */
-	if (!obj->relocated)
-		return;
+	switch (obj->relocstate) {
+	case OBJRELOC_NOTYET:
+	case OBJRELOC_READY:
+		/*
+		 * Not blocked but also not relevant -- don't put it in
+		 * the list.
+		 */
+		return false;
+	case OBJRELOC_DONE:
+	case OBJRELOC_FAILED:
+		break;
+	}
 
 	/*
 	 * If the object has already been visited, we have nothing to
@@ -1265,13 +1322,21 @@ _rtld_initlist_visit(Objlist* list, Obj_Entry *obj, int rev)
 	 * initializers have actually run yet.
 	 */
 	if (obj->init_done)
-		return;
+		return obj->init_blocked;
 	obj->init_done = 1;
+	assert(obj->initfinilock != _lwp_self());
 
 	for (elm = obj->needed; elm != NULL; elm = elm->next) {
 		if (elm->obj != NULL) {
-			_rtld_initlist_visit(list, elm->obj, rev);
+			if (_rtld_initlist_visit(list, elm->obj, rev)) {
+				blocked = true;
+			}
 		}
+	}
+
+	obj->init_blocked = blocked;
+	if (blocked) {
+		return true;
 	}
 
 	if (rev) {
@@ -1279,14 +1344,31 @@ _rtld_initlist_visit(Objlist* list, Obj_Entry *obj, int rev)
 	} else {
 		_rtld_objlist_push_tail(list, obj);
 	}
+	return false;
 }
 
+/*
+ * _rtld_initlist_tsort(list, rev, dlobj)
+ *
+ *	Compute a topological sort of objects by DT_NEEDED
+ *	dependencies.
+ *
+ *	If rev (reverse) is false, object A comes before object B if B
+ *	has a DT_NEEDED entry for A, i.e., dependencies come before
+ *	objects that depend on them, for initialization.  If rev is
+ *	true, the order is reversed.
+ *
+ *	If we are currently dlopening or dlclosing an object (dlobj),
+ *	and we detect that we are currently running a constructor or
+ *	destructor for some object, then that object and anything that
+ *	depends on it is excluded from the topological sort results.
+ */
 static void
-_rtld_initlist_tsort(Objlist* list, int rev)
+_rtld_initlist_tsort(Objlist *list, int rev, Obj_Entry *dlobj)
 {
 	dbg(("_rtld_initlist_tsort"));
 
-	Obj_Entry* obj;
+	Obj_Entry *obj;
 
 	/*
 	 * We don't include objmain here (starting from next)
@@ -1294,10 +1376,41 @@ _rtld_initlist_tsort(Objlist* list, int rev)
 	 */
 	for (obj = _rtld_objlist->next; obj; obj = obj->next) {
 		obj->init_done = 0;
+		obj->init_blocked = 0;
 	}
 
+	/*
+	 * Consider:
+	 *
+	 *	libB.so has NEEDED libA.so
+	 *	libY.so has NEEDED libX.so
+	 *	libA.so's constructor dlopens libY.so
+	 *
+	 * In other words, we have the following ordering constraints:
+	 *
+	 *	A -> B
+	 *	X -> Y
+	 *
+	 * plus, _while A's constructor is running_, we discover that
+	 * we need Y.  We must not include A or B in the result,
+	 * because A's constructor is still running until after dlopen
+	 * returns, and B's constructor can't run until A's constructor
+	 * has finished.  We block the sort at A, as well as anything
+	 * else that needs it.  Once the constructor returns, it will
+	 * notice that the objects have changed, tsort afresh, and run
+	 * the downstream constructors as needed.
+	 */
+	if (dlobj) {
+		for (obj = _rtld_objlist->next; obj; obj = obj->next) {
+			if (__predict_false(obj->initfinilock ==
+				_lwp_self())) {
+				obj->init_done = 1;
+				obj->init_blocked = 1;
+			}
+		}
+	}
 	for (obj = _rtld_objlist->next; obj; obj = obj->next) {
-		_rtld_initlist_visit(list, obj, rev);
+		(void)_rtld_initlist_visit(list, obj, rev);
 	}
 }
 
@@ -1313,6 +1426,21 @@ _rtld_init_dag1(Obj_Entry *root, Obj_Entry *obj)
 {
 	const Needed_Entry *needed;
 
+	/*
+	 * Now that all objects reachable from root have been loaded,
+	 * they are ready to be relocated.  Before they were all
+	 * loaded, a concurrent thread relocating objects might fail to
+	 * symbols.
+	 *
+	 * That's not quite right: they are actually not ready yet
+	 * until all the dldags lists have been updated.  But we hold
+	 * the rtld exclusive lock and won't drop it or attempt symbol
+	 * lookups until after _rtld_init_dag has traversed the DAG.
+	 */
+	if (obj->relocstate == OBJRELOC_NOTYET) {
+		obj->relocstate = OBJRELOC_READY;
+	}
+
 	if (!obj->mainref) {
 		if (_rtld_objlist_find(&obj->dldags, root))
 			return;
@@ -1321,9 +1449,12 @@ _rtld_init_dag1(Obj_Entry *root, Obj_Entry *obj)
 		_rtld_objlist_push_tail(&obj->dldags, root);
 		_rtld_objlist_push_tail(&root->dagmembers, obj);
 	}
-	for (needed = obj->needed; needed != NULL; needed = needed->next)
-		if (needed->obj != NULL)
+	for (needed = obj->needed; needed != NULL; needed = needed->next) {
+		if (needed->obj != NULL) {
+			assert(needed->obj->refcount > 0);
 			_rtld_init_dag1(root, needed->obj);
+		}
+	}
 }
 
 /*
@@ -1344,44 +1475,66 @@ _rtld_unload_object(sigset_t *mask, Obj_Entry *root, bool do_fini_funcs)
 		assert(!root->ref_nodel);
 
 		/*
+		 * Set root->dlclosing to notify other threads that we
+		 * are busy dlclosing root, so they don't pull the rug
+		 * out from under us while we wait for various things.
+		 */
+		root->dlclosing++;
+		SIMPLEQ_FOREACH(elm, &root->dagmembers, link) {
+			elm->obj->dlclosing++;
+		}
+
+		/*
 		 * A concurrent dlopen of some other library might have
 		 * picked up this object while loading needed entries.
 		 * Wait for that to complete.  The root can't go away
-		 * at this point: we already hold the last actual
-		 * reference to it.
+		 * at this point: we have set root->dlclosing.
 		 */
 		obj = root;
 		(void)_rtld_wait_for_load_needed(&obj, mask);
+		assert(root->dlclosing);
 		assert(root->refcount == 0);
 		assert(root->dl_refcount == 0);
 		assert(!root->z_nodelete);
 		assert(!root->ref_nodel);
 
 		/*
-		 * Finalize objects that are about to be unmapped.  Set
-		 * root->dlclosing while we do this so concurrent
+		 * Finalize objects that are about to be unmapped.
+		 * Since we set root->dlclosing above, concurrent
 		 * dlclose calls, which can run while the rtld
 		 * exclusive lock is dropped across fini calls, will
 		 * skip this when garbage-collecting the object list.
 		 */
 		if (do_fini_funcs) {
-			root->dlclosing = true;
-			_rtld_call_fini_functions(mask, 0);
+			_rtld_call_fini_functions(root, mask, 0);
 			assert(root->dlclosing);
 			assert(root->refcount == 0);
 			assert(root->dl_refcount == 0);
-			root->dlclosing = false;
 		}
 
 		/* Remove the DAG from all objects' DAG lists. */
-		SIMPLEQ_FOREACH(elm, &root->dagmembers, link)
+		SIMPLEQ_FOREACH(elm, &root->dagmembers, link) {
+			assert(elm->obj->dlclosing);
 			_rtld_objlist_remove(&elm->obj->dldags, root);
+			elm->obj->dlclosing--;
+		}
 
 		/* Remove the DAG from the RTLD_GLOBAL list. */
 		if (root->globalref) {
 			root->globalref = 0;
 			_rtld_objlist_remove(&_rtld_list_global, root);
 		}
+
+		/*
+		 * We are done closing root.  Allow it to be
+		 * garbage-collected -- probably by this thread, but
+		 * possibly by another thread if we have to drop the
+		 * lock to wait before freeing an object in the GC loop
+		 * below.  Further direct references to root are now
+		 * forbidden.
+		 */
+		assert(root->dlclosing);
+		root->dlclosing--;
 
 		/*
 		 * Unmap all objects that are no longer referenced.
@@ -1562,7 +1715,7 @@ dlopen(const char *name, int mode)
 				_rtld_unload_object(&mask, obj, false);
 				obj = NULL;
 			} else {
-				_rtld_call_init_functions(&mask);
+				_rtld_call_init_functions(obj, &mask);
 			}
 		}
 		if (obj != NULL) {
