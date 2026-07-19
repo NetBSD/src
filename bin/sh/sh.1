@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.278 2026/07/13 10:46:21 kre Exp $
+.\"	$NetBSD: sh.1,v 1.279 2026/07/19 16:03:58 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -412,7 +412,9 @@ Ignore EOFs from input when interactive.
 (After a large number of consecutive EOFs the shell will exit anyway.)
 .It Fl i Em interactive
 Force the shell to behave interactively.
-If not set on the command line,
+If not cleared
+.Pq Cm \&+i
+on the command line,
 this option is set automatically at shell startup if
 the shell is reading from standard input (no
 .Fl c ,
@@ -422,6 +424,15 @@ given at invocation of
 .Nm ) ,
 and standard input and standard error refer to
 terminal type devices.
+Attempting to force set the
+.Fl i
+flag from the command line will usually be ignored.
+Altering the value of this flag after initialisation
+using the
+.Ic set
+built-in command is non-standard,
+and can have negative effects upon the operation of the shell.
+It should normally be avoided.
 .It Fl L Em local_lineno
 When set, before a function is defined,
 causes the variable
