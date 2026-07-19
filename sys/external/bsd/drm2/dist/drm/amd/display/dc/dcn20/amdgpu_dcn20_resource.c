@@ -3819,7 +3819,7 @@ struct resource_pool *dcn20_create_resource_pool(
 	if (dcn20_resource_construct(init_data->num_virtual_links, dc, pool))
 		return &pool->base;
 
-	BREAK_TO_DEBUGGER();
 	kfree(pool);
+	BREAK_TO_DEBUGGER();
 	return NULL;
 }
