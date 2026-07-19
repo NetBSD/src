@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.133 2026/07/09 08:20:25 sborrill Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.134 2026/07/19 10:22:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -12905,5 +12905,10 @@ external/gpl2/groff/tmac/mdoc.local		(manually edited)
 sys/sys/param.h					(manually edited)
 
 	Welcome to 11.0_RC6!
+	[martin]
+
+distrib/notes/common/main			(manually edited)
+
+	Dedication to former core member Alan P Barret
 	[martin]
 
