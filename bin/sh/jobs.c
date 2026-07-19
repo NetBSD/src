@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.129 2026/07/19 16:16:04 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.130 2026/07/19 19:18:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.129 2026/07/19 16:16:04 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.130 2026/07/19 19:18:13 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ setjobctl(int on)
 	int ldisc;
 #endif
 
-	if (on == jobctl || rootshell == 0 || iflag == 0)
+	if (on == jobctl || rootshell == 0)
 		return;
 	if (on) {
 #if defined(FIOCLEX) || defined(FD_CLOEXEC)
