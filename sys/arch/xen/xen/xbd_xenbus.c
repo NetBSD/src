@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.135 2025/07/29 19:07:53 andvar Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.135.2.1 2026/07/19 15:59:35 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.135 2025/07/29 19:07:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.135.2.1 2026/07/19 15:59:35 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -501,11 +501,13 @@ xbd_xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
 		reqcnt++;
 	KASSERT(reqcnt == __arraycount(sc->sc_reqs));
 
-	int incnt = 0;
-	struct xbd_indirect *in;
-	SLIST_FOREACH(in, &sc->sc_indirect_head, in_next)
-		incnt++;
-	KASSERT(incnt == __arraycount(sc->sc_indirect));
+	if (sc->sc_features & BLKIF_FEATURE_INDIRECT) {
+		int incnt = 0;
+		struct xbd_indirect *in;
+		SLIST_FOREACH(in, &sc->sc_indirect_head, in_next)
+		    incnt++;
+		KASSERT(incnt == __arraycount(sc->sc_indirect));
+	}
 #endif
 
 	mutex_exit(&sc->sc_lock);
