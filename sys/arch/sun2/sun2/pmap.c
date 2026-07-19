@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 2026/07/19 06:06:24 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 2026/07/19 14:36:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2026/07/19 06:06:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2026/07/19 14:36:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -275,13 +275,10 @@ static struct pv_entry *pv_free_list;
 static u_char *pv_flags_tbl;
 
 /* These are as in the MMU but shifted by PV_SHIFT. */
-#define PV_SHIFT	20
-#define PV_VALID  (PG_VALID >> PV_SHIFT)
-#define PV_NC     (PG_NC >> PV_SHIFT)
-#define PV_TYPE   (PG_TYPE >> PV_SHIFT)
-#define PV_REF    (PG_REF >> PV_SHIFT)
-#define PV_MOD    (PG_MOD >> PV_SHIFT)
-
+#define	PV_SHIFT	20
+#define	PV_NC		(PG_NC >> PV_SHIFT)
+#define	PV_REF		(PG_REF >> PV_SHIFT)
+#define	PV_MOD		(PG_MOD >> PV_SHIFT)
 
 /*
  * context structures, and queues
@@ -634,7 +631,7 @@ context_free(pmap_t pmap)
  * PMEG management functions.
  */
 
-static void 
+static void
 pmeg_init(void)
 {
 	int x;
@@ -1695,7 +1692,7 @@ pmap_bootstrap(vaddr_t nextva)
 	}
 #endif
 
-	uvmexp.pagesize = NBPG;
+	uvmexp.pagesize = PAGE_SIZE;
 	uvm_md_init();
 
 	/* after setting up some structures */
@@ -3803,7 +3800,7 @@ set_pte_pmeg(int pmeg_num, int page_num, int pte)
 
 /*
  *	Routine:        pmap_procwr
- * 
+ *
  *	Function:
  *		Synchronize caches corresponding to [addr, addr+len) in p.
  */

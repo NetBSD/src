@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.188 2026/07/19 06:06:25 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.189 2026/07/19 14:36:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188 2026/07/19 06:06:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.189 2026/07/19 14:36:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -225,7 +225,7 @@ int tmp_vpages_inuse;
 
 static int pmap_version = 1;
 static struct pmap kernel_pmap_store;
-struct pmap *const kernel_pmap_ptr  = &kernel_pmap_store;
+struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 #define kernel_pmap (kernel_pmap_ptr)
 static u_char kernel_segmap[NSEGMAP];
 
@@ -282,16 +282,10 @@ static struct pv_entry *pv_free_list;
 static u_char *pv_flags_tbl;
 
 /* These are as in the MMU but shifted by PV_SHIFT. */
-#define PV_SHIFT	24
-#define PV_VALID  0x80
-#define PV_WRITE  0x40
-#define PV_SYSTEM 0x20
-#define PV_NC     0x10
-#define PV_PERM   0xF0
-#define PV_TYPE   0x0C
-#define PV_REF    0x02
-#define PV_MOD    0x01
-
+#define	PV_SHIFT	24
+#define	PV_NC		(PG_NC >> PV_SHIFT)
+#define	PV_REF		(PG_REF >> PV_SHIFT)
+#define	PV_MOD		(PG_MOD >> PV_SHIFT)
 
 /*
  * context structures, and queues
@@ -708,7 +702,7 @@ pmeg_mon_init(vaddr_t sva, vaddr_t eva, int keep)
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_SEGMAP)
 		prom_printf("pmeg_mon_init(0x%x, 0x%x, %d)\n",
-			   sva, eva, keep);
+			    sva, eva, keep);
 #endif
 
 	sva &= ~(NBSG - 1);
@@ -727,7 +721,7 @@ pmeg_mon_init(vaddr_t sva, vaddr_t eva, int keep)
 #ifdef	PMAP_DEBUG
 			if (pmap_debug & PMD_SEGMAP)
 				prom_printf(" sva=0x%x seg=0x%x valid=%d\n",
-					   sva, sme, valid);
+					    sva, sme, valid);
 #endif
 			if (keep && valid)
 				pmeg_reserve(sme);
@@ -1125,8 +1119,9 @@ pv_changepte(paddr_t pa, int set_bits, int clear_bits)
 		/* Is the PTE currently accessible in some context? */
 		in_ctx = false;
 		sme = SEGINV;	/* kill warning */
-		if (pmap == kernel_pmap)
+		if (pmap == kernel_pmap) {
 			in_ctx = true;
+		}
 		else if (has_context(pmap)) {
 			/* PMEG may be inactive. */
 			set_context(pmap->pm_ctxnum);
@@ -1222,8 +1217,9 @@ pv_syncflags(pv_entry_t pv)
 
 		/* Is the PTE currently accessible in some context? */
 		in_ctx = false;
-		if (pmap == kernel_pmap)
+		if (pmap == kernel_pmap) {
 			in_ctx = true;
+		}
 		else if (has_context(pmap)) {
 			/* PMEG may be inactive. */
 			set_context(pmap->pm_ctxnum);
@@ -1325,7 +1321,6 @@ pv_link(pmap_t pmap, int pte, vaddr_t va)
 	paddr_t pa;
 	pv_entry_t *head, pv;
 	u_char *pv_flags;
-	int flags;
 
 	if (!pv_initialized)
 		return 0;
@@ -1352,7 +1347,7 @@ pv_link(pmap_t pmap, int pte, vaddr_t va)
 	}
 #endif
 
-	flags = (pte & (PG_NC | PG_MODREF)) >> PV_SHIFT;
+	int flags = (pte & (PG_NC | PG_MODREF)) >> PV_SHIFT;
 	*pv_flags |= flags;
 
 #ifdef HAVECACHE
