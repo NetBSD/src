@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.227 2026/07/18 04:26:42 riastradh Exp $	 */
+/*	$NetBSD: rtld.c,v 1.228 2026/07/19 19:56:06 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.227 2026/07/18 04:26:42 riastradh Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.228 2026/07/19 19:56:06 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -752,6 +752,7 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 	_rtld_objself.relocbase = relocbase;
 	_rtld_objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
 	_rtld_objself.strtab = "_rtld_sym_zero";
+	_rtld_objself.refcount = 1;
 
 	/*
 	 * Set value to -relocbase so that
