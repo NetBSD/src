@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.26 2026/07/18 05:06:38 riastradh Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.27 2026/07/19 19:55:24 riastradh Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.26 2026/07/18 05:06:38 riastradh Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.27 2026/07/19 19:55:24 riastradh Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -145,7 +145,7 @@ static	u_int nmalloc[NBUCKETS];
 #endif
 
 #if defined(MALLOC_DEBUG)
-#define	ASSERT(p)	(__predict_false(p) ? botch(#p) : (void)0)
+#define	ASSERT(p)	(__predict_false(!(p)) ? botch(#p) : (void)0)
 static void
 botch(const char *s)
 {
