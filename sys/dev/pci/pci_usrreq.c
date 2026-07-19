@@ -146,6 +146,77 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			sizeof dnameonbus->name);
 		return 0;
 
+	case PCI_IOC_MAP_BAR:
+	{
+		struct pciio_bar_map *barmap = data;
+		struct pci_child *dev_child = NULL;
+		pcitag_t dev_tag;
+		int reg;
+		pcireg_t bar_value;
+		int idx, dev_idx, range_idx;
+		struct pci_child *c;
+		struct pci_range *r;
+
+		if (barmap->bus > 255 || barmap->function > 7 ||
+		   barmap->barnum > 5 || barmap->device > 31)
+			return EINVAL;
+
+		dev_tag = pci_make_tag(sc->sc_pc, barmap->bus, barmap->device,
+		   barmap->function);
+
+		reg = PCI_BAR(barmap->barnum);
+		bar_value = pci_conf_read(sc->sc_pc, dev_tag, reg);
+
+		for (dev_idx = 0; dev_idx < __arraycount(sc->sc_devices);
+		   dev_idx++) {
+			c = &sc->sc_devices[dev_idx];
+			if (c->c_dev == NULL)
+				continue;
+
+			for (range_idx = 0;
+			   range_idx < __arraycount(c->c_range);
+			   range_idx++) {
+				r = &c->c_range[range_idx];
+				if (r->r_size == 0)
+					break;
+
+				if ((r->r_offset & ~0x0F) ==
+				   (bar_value & ~0x0F)) {
+					dev_child = c;
+					break;
+				}
+			}
+			if (dev_child != NULL)
+				break;
+		}
+
+		if (dev_child == NULL) {
+			barmap->offset = bar_value & ~0x0F;
+			barmap->size = 4096;
+			return 0;
+		}
+
+		for (idx = 0; idx < __arraycount(dev_child->c_range); idx++) {
+			if (dev_child->c_range[idx].r_size == 0)
+				break;
+
+			if ((dev_child->c_range[idx].r_offset & ~0x0F) ==
+			   (bar_value & ~0x0F)) {
+				barmap->offset = dev_child->c_range[idx].r_offset;
+				barmap->size = dev_child->c_range[idx].r_size;
+				break;
+			}
+		}
+
+		if (barmap->offset == 0 && barmap->size == 0) {
+			barmap->offset = bar_value & ~0x0F;
+			barmap->size = dev_child->c_range[0].r_size != 0 ?
+			   dev_child->c_range[0].r_size : 4096;
+		}
+
+		return 0;
+	}
+
 	default:
 		return ENOTTY;
 	}
