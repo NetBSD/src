@@ -1,0 +1,13 @@
+#	$NetBSD: std.hb68010,v 1.1 2026/07/19 01:48:20 thorpej Exp $
+#
+# Options/devices that all 68010 homebrews should have
+#
+
+include		"arch/hb68k/conf/std.hb68k"
+
+options 	M68010
+# MMU option is machine-specific
+
+no options	VMSWAP_ENCRYPTION
+options 	NO_KERNEL_RCSIDS
+makeoptions	COPTS+="-fno-inline-small-functions -fno-defer-pop"

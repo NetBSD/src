@@ -1,0 +1,8 @@
+# $NetBSD: md.hb68k,v 1.1 2026/07/19 01:48:19 thorpej Exp $
+#
+./usr/bin/fdformat				base-util-bin
+./usr/sbin/ofctl				base-sysutil-bin
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share

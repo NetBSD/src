@@ -1,0 +1,9 @@
+#	$NetBSD: files.generic,v 1.1 2026/07/19 01:48:21 thorpej Exp $
+#
+# Configuration information for generic homebrew 68k support.
+#
+
+# Interrupts
+# ==> Consumes syscon.
+device	genintc: fdt_syscon
+file	arch/hb68k/generic/genintc.c		genintc

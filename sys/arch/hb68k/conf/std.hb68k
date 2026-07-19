@@ -1,0 +1,46 @@
+#	$NetBSD: std.hb68k,v 1.1 2026/07/19 01:48:20 thorpej Exp $
+#
+# Options/devices that all hb68ks should have
+#
+
+machine hb68k m68k
+include		"conf/std"			# MI standard options
+include		"arch/m68k/conf/std.m68k"	# m68k standard options
+
+#
+# We always use -Os here; smaller code is critical on constrained systems
+# like 68010, and often beneficial on 68020 and 68030 because the I-cache
+# is quite small (256 bytes).
+#
+# Turn off all unwind tables; they're not terribly useful in our
+# kernel environment and add a lot of needless bulk.
+#
+# -fno-omit-frame-pointer because we want traditional backtracing
+# to work in DDB.
+#
+makeoptions	COPTS="-Os -fno-unwind-tables -fno-omit-frame-pointer"
+
+options 	FDT		# Device Tree is used on every system
+options 	FDT_MEMORY_RANGES=16
+pseudo-device	openfirm	# /dev/openfirm
+
+options 	MODULAR		# new kernel module system
+options 	MODULAR_DEFAULT_AUTOLOAD # auto-load modules when possible
+options 	INSECURE	# needed for modules to work properly
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+
+# initrd support
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_DYNAMIC
+pseudo-device	md
+
+# Device tree support
+fdtroot0	at root
+simplebus*	at fdt? pass 0
+
+# Clocks
+fclock*		at fdt? pass 1
+ffclock*	at fdt? pass 1

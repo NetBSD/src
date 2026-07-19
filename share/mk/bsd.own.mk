@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1483 2026/07/07 04:25:35 thorpej Exp $
+#      $NetBSD: bsd.own.mk,v 1.1484 2026/07/19 01:48:19 thorpej Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -808,7 +808,7 @@ MACHINES.coldfire=	evbcf
 MACHINES.hppa=		hppa
 MACHINES.i386=		i386
 MACHINES.ia64=		ia64
-MACHINES.m68000=	sun2
+MACHINES.m68000=	sun2 hb68k
 MACHINES.m68k=		amiga atari cesfic hp300 luna68k mac68k \
 			mvme68k news68k next68k sun3 virt68k x68k
 MACHINES.m68ksf=	mac68k

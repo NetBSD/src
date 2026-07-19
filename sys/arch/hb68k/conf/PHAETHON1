@@ -1,0 +1,82 @@
+# $NetBSD: PHAETHON1,v 1.1 2026/07/19 01:48:20 thorpej Exp $
+#
+# PHAETHON1 machine description file
+#
+# - 10MHz 68010 CPU
+# - custom MMU
+# - firmware passes Device Tree to kernel via Linux-style bootinfo
+# - 8MB base memory
+# - memory expansion on "Not Quite VME" expansion bus
+# - peripheral expansion on "Not Quite VME" expansion bus
+# 
+
+include 	"arch/hb68k/conf/std.hb68010"
+options 	M68K_MMU_PGMMU		# custom Phaethon 1 MMU
+options 	CONFIG_LINUX_BOOTINFO
+options 	CONFIG_MACH_PHAETHON1
+makeoptions	GENASSYM_EXTRAS+="${HB68K}/pg68k/genassym.cf"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"PHAETHON1-$Revision: 1.1 $"
+
+maxusers	8
+
+options 	DDB		# in-kernel debugger
+options 	DIAGNOSTIC	# extra sanity checks
+#options 	LOCKDEBUG
+#options 	DEBUG
+
+#options 	KTRACE
+
+options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Only the basics included, here; we'll load everything else as
+# a module.
+file-system 	FFS		# Berkeley Fast File System
+
+# File system options
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+
+# Networking options
+options 	INET		# IPv4
+#options 	INET6		# IPv6
+#options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	GATEWAY		# IP packet forwarding
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+# Shared memory options
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SYSVSHM		# System V-like memory sharing
+
+## "generic" boot (put root on boot device)
+config netbsd		root on ? type ?
+
+pseudo-device	loop
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	ksyms			# /dev/ksyms
+
+# Phaethon 1 control space.  This is required in order to enable
+# interrupts.
+pgctrl*		at fdt? pass 1
+
+# Generic m68k interrupts.
+genintc*	at fdt? pass 2
+
+# System timer
+pgtimer*	at fdt? pass 3
+
+# I2C controller and devices
+pcfiic*		at fdt? pass 4
+iic*		at i2cbus?
+dsrtc*		at iic?
+
+# On-board serial ports
+com*		at fdt? pass 5
+
+# ATA disk interface
+wdc*		at fdt?
+atabus*		at ata?
+wd*		at atabus? drive?

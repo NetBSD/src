@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$NetBSD: Makefile,v 1.11 2025/02/05 17:07:18 skrll Exp $
+#	$NetBSD: Makefile,v 1.12 2026/07/19 01:48:19 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,8 @@
 	|| ${MACHINE_CPU} == "aarch64" \
 	|| ${MACHINE} == "sparc" \
 	|| ${MACHINE} == "evbmips" \
-	|| ${MACHINE_CPU} == "riscv"
+	|| ${MACHINE_CPU} == "riscv" \
+	|| ${MACHINE} == "hb68k"
 
 PROG=	ofctl
 

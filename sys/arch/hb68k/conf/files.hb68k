@@ -1,0 +1,125 @@
+#	$NetBSD: files.hb68k,v 1.1 2026/07/19 01:48:20 thorpej Exp $
+
+# config file for hb68k
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
+
+# Generic devices
+include "dev/ata/files.ata"			# ATA
+include "dev/scsipi/files.scsipi"		# SCSI
+
+##
+## HOMEBREW PLATFORM CONFIG OPTIONS
+##
+## We're not attempting to have a single kernel image that can
+## boot on anything here, as there is going to be a pretty wide
+## variety of hardware configurations we're trying to bring under
+## a single umbrella.
+##
+## NOTE: All kernels are expected to use Flattened Device Tree
+## for hardware description.  The main difference how the FDT
+## is provided to the kernel (either via firmware / boot loader
+## via some mechanism, or by having a static device tree blob
+## included in the kernel binary).
+##
+
+#
+# CONFIG_LINUX_BOOTINFO --
+#
+# Machine uses Linux/m68k-style "bootinfo" to get information about
+# CPU, memory, etc. configuration.  May also include a Device Tree
+# blob and symbol information.
+#
+defflag	opt_hb68k_config.h	CONFIG_LINUX_BOOTINFO
+file arch/m68k/m68k/linux_bootinfo.c		config_linux_bootinfo
+
+#
+# CONFIG_FDT_BOOTSTRAP --
+#
+# Macine uses FDT information for early bootstrap (rather than
+# Linux/m68k-style "bootinfo").
+#
+# N.B. This only works for machines where the kernel is mapped VA==PA.
+#
+defflag	opt_hb68k_config.h	CONFIG_FDT_BOOTSTRAP
+file arch/m68k/fdt/fdt_bootstrap.c		config_fdt_bootstrap
+
+#
+# CONFIG_STATIC_DEVICE_TREE --
+#
+# Machine uses a static Flattened Device Tree blob.
+#
+defflag opt_hb68k_config.h	CONFIG_STATIC_DEVICE_TREE
+
+#
+# CONFIG_BUS_DMA --
+#
+# Machine supports DMA, and so bus_dma(9) support should be included.
+#
+defflag	opt_hb68k_config.h	CONFIG_BUS_DMA
+
+##
+## COMMON SUPPORT FILES
+##
+
+file arch/hb68k/hb68k/autoconf.c
+file arch/hb68k/hb68k/clock.c
+file arch/hb68k/hb68k/machdep.c
+
+file arch/m68k/m68k/delay.s
+file arch/m68k/m68k/dumpsys.c
+
+file arch/m68k/m68k/bus_dma.c			config_bus_dma
+file arch/m68k/m68k/bus_space_simple.c
+file arch/m68k/m68k/bus_dma_stub.c		!config_bus_dma
+
+file arch/m68k/m68k/m68k_intr.c
+file arch/m68k/m68k/m68k_intr_stubs.s
+
+file kern/subr_disk_4bsd.c
+
+include	"arch/hb68k/conf/majors.hb68k"
+
+##
+## GENERIC DEVICES
+##
+
+file dev/cons.c
+
+# Memory disk for installer
+file dev/md_root.c				memory_disk_hooks
+
+##
+## FDT support
+##
+
+file	dev/fdt/fdt_platform.c			fdt
+
+device	fdtroot: fdt
+attach	fdtroot at root
+file	arch/hb68k/generic/fdtroot.c		fdtroot
+
+# Generic m68k interrupts for FDT
+device	genintc: fdt_syscon
+attach	genintc at fdt
+file	arch/hb68k/generic/genintc.c		genintc
+
+##
+## PHAETHON 1 DEVICES
+##
+
+defflag	opt_m68k_arch.h		M68K_MMU_PGMMU: M68K_MMU_CUSTOM
+defflag	opt_hb68k_config.h	CONFIG_MACH_PHAETHON1
+
+file	arch/hb68k/pg68k/pmap_pgmmu.c		m68k_mmu_pgmmu
+file	arch/hb68k/pg68k/ph1_machdep.c		config_mach_phaethon1
+file	arch/hb68k/pg68k/pgromcalls.c		config_mach_phaethon1
+
+device	pgctrl: fdt_syscon
+attach	pgctrl at fdt
+file	arch/hb68k/pg68k/pgctrl.c		pgctrl
+
+device	pgtimer
+attach	pgtimer at fdt
+file	arch/hb68k/pg68k/pgtimer.c		pgtimer

@@ -1,4 +1,4 @@
-/*	$NetBSD: buserr_10.s,v 1.2 2026/04/13 19:36:37 thorpej Exp $	*/
+/*	$NetBSD: buserr_10.s,v 1.3 2026/07/19 01:48:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,12 +53,29 @@
         .file	"buserr_10.s"
         .text
 
-#if !defined(M68K_MMU_SUN2)
-#error Why are we even here?
+#define	MULTIMMU	((defined(M68K_MMU_SUN2) +		\
+			  defined(M68K_MMU_PGMMU))		\
+			 > 1)
+
+#if MULTIMMU
+#error No MULTIMMU configuration for 68010.
 #endif
 
-#define	MULTIMMU	((defined(M68K_MMU_SUN2))		\
-			 > 1)
+/*
+ * The Sun2 MMU and the Phaethon 1 MMU are very similar, and bus error
+ * handling for them is nearly identical.
+ */
+#if defined(M68K_MMU_SUN2)
+#define	BE_REG		BUSERR_REG
+#define	BE_PGFAULT	BUSERR_PROTERR
+#define	BE_MOVS		movsw
+#elif defined(M68K_MMU_PGMMU)
+#define	BE_REG		PGMMU_REG_BUSERROR
+#define	BE_PGFAULT	PGMMU_BERR_PAGEFAULT
+#define	BE_MOVS		movsb
+#else
+#error Why are we even here?
+#endif
 
 ENTRY_NOPROFILE(busaddrerr10)
 GLOBAL(buserr10)
@@ -78,33 +95,25 @@ GLOBAL(addrerr10)
 	cmpw	#12,%d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
 
-#if defined(M68K_MMU_SUN2)
+#if defined(M68K_MMU_SUN2) || defined(M68K_MMU_PGMMU)
 /*
- * Sun2 MMU handling.
+ * Sun2 / Phaethon 1 MMU handling.
  */
-#if MULTIMMU
-#error No MULTIMMU configuration for Sun2.
-#endif
-Lbuserr10_sun2_mmu:
-	clrl	%d0			| make sure top bits are cleared too
+Lbuserr10_sun2_or_ph1_mmu:
+	moveq	#0,%d0			| make sure top bits are cleared too
 	movl	%d1,%sp@-		| save %d1
 	movc	%sfc,%d1		| save %sfc to %d1
-	moveq	#FC_CONTROL,%d0		| %sfc = FC_CONTROL
+	moveq	#FC_CONTROL,%d0		| %sfc = control space
 	movc	%d0,%sfc
-	movsw	BUSERR_REG,%d0		| get value of bus error register
+	BE_MOVS	BE_REG,%d0		| get value of bus error register
 	movc	%d1,%sfc		| restore %sfc
 	movl	%sp@+,%d1		| restore %d1
-#ifdef DEBUG
+#if defined(M68K_MMU_SUN2) && defined(DEBUG)
 	movw	%d0,_C_LABEL(buserr_reg) | save bus error register value
 #endif
-	andb	#BUSERR_PROTERR,%d0	| is this an MMU
-					|  (protection *or* page unavailable)
-					|  fault?
+	andb	#BE_PGFAULT,%d0		| is this an MMU fault?
 	jeq	_ASM_LABEL(buserr_common) | non-MMU bus error
-#if MULTIMMU
-	jra	Lismerr			| MMU fault
-#endif
-#endif /* M68K_MMU_SUN2 */
+#endif /* M68K_MMU_SUN2 || M68K_MMU_PGMMU */
 
 Lismerr:
 	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
