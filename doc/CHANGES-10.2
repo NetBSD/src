@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.114 2026/07/09 08:03:02 sborrill Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.115 2026/07/19 16:02:09 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5540,4 +5540,61 @@ usr.sbin/syslogd/tls.h				1.4
 	  because the tls_opt is in BSS and SLIST_INIT() assigns NULL.
 	- Cleanups (KNF, fix typos and G.C.).
 	[msaitoh, ticket #1310]
+
+xsrc/external/mit/xorg-server/dist/ChangeLog         up to 1.1.1.34
+xsrc/external/mit/xorg-server/dist/configure         up to 1.27
+xsrc/external/mit/xorg-server/dist/configure.ac      up to 1.29
+xsrc/external/mit/xorg-server/dist/meson.build       up to 1.1.1.24
+xsrc/external/mit/xorg-server/dist/meson_options.txt up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/Xext/saver.c      up to 1.6
+xsrc/external/mit/xorg-server/dist/Xext/sync.c       up to 1.16
+xsrc/external/mit/xorg-server/dist/Xi/xichangecursor.c up to 1.5
+xsrc/external/mit/xorg-server/dist/Xi/xipassivegrab.c up to 1.9
+xsrc/external/mit/xorg-server/dist/dix/colormap.c    up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/dix/dixfonts.c    up to 1.10
+xsrc/external/mit/xorg-server/dist/fb/fbglyph.c      up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/glamor/glamor_font.c up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/glamor/glamor_glyphblt.c up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/glx/glxcmds.c     up to 1.17
+xsrc/external/mit/xorg-server/dist/glx/glxcmdsswap.c up to 1.5
+xsrc/external/mit/xorg-server/dist/glx/single2.c     up to 1.5
+xsrc/external/mit/xorg-server/dist/glx/single2swap.c up to 1.5
+xsrc/external/mit/xorg-server/dist/glx/vndcmds.c     up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/glx/vndservermapping.c up to 1.1.1.3
+xsrc/external/mit/xorg-server/dist/hw/xfree86/dri2/dri2.c up to 1.7
+xsrc/external/mit/xorg-server/dist/hw/xquartz/GL/Makefile.am up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/hw/xquartz/GL/Makefile.in up to 1.1.1.20
+xsrc/external/mit/xorg-server/dist/hw/xquartz/GL/indirect.c up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/hw/xquartz/GL/meson.build up to 1.1.1.2
+xsrc/external/mit/xorg-server/dist/include/closestr.h up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/mi/miglblt.c      up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/miext/sync/misync.c up to 1.1.1.6
+xsrc/external/mit/xorg-server/dist/present/present_notify.c up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/xkb/XKBGAlloc.c   up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/xkb/maprules.c    up to 1.1.1.6
+xsrc/external/mit/xorg-server/dist/xkb/xkb.c         up to 1.14
+xsrc/external/mit/xorg-server/dist/xkb/xkbtext.c     up to 1.1.1.9
+xsrc/external/mit/xorg-server/include/dix-config.h   up to 1.60
+xsrc/external/mit/xorg-server/include/version-config.h up to 1.30
+xsrc/external/mit/xorg-server/include/xorg-config.h  up to 1.40
+xsrc/external/mit/xorg-server/include/xorg-server.h  up to 1.40
+xsrc/external/mit/libXfont2/dist/src/bitmap/bitscale.c	(apply patch)
+xsrc/external/mit/libXfont2/dist/src/bitmap/pcfread.c	(apply patch)
+share/mk/bsd.x11.mk					(apply patch)
+
+	Import xorg-server 21.1.24.
+	Apply security patches to libXfont2 to fix
+	CVE-2026-56003/ZDI-CAN-30560, CVE-2026-56002/ZDI-CAN-30559,
+	CVE-2026-56001/ZDI-CAN-30558
+	[mrg, ticket #1311]
+
+sys/kern/kern_event.c				1.153
+
+	kqueue(2): PR 60436: fix null pointer deref under memory pressure.
+	[riastradh, ticket #1312]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.136
+
+	xbd(4): PR 60448: fix bad assertion on suspend.
+	[riastradh, ticket #1313]
 
