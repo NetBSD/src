@@ -275,6 +275,222 @@ linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap,
 	return 0;
 }
 
+/* sendfile(2) */
+int
+linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
+	register_t *retval)
+{
+	/*
+	 * syscallarg(int) out_fd;
+	 * syscallarg(int) in_fd;
+	 * syscallarg(off_t *) offset;
+	 * syscallarg(size_t) count;
+	 */
+	
+	/* Args from the syscall */
+	int in_fd = SCARG(uap, in_fd);
+	int out_fd = SCARG(uap, out_fd);
+	off_t *user_offset = SCARG(uap, offset);
+	size_t count = SCARG(uap, count);
+	
+	file_t *in_fp = NULL;
+	file_t *out_fp = NULL;
+	
+	off_t in_offset = 0;
+	off_t in_offset_before_reads;
+	bool has_user_offset = (user_offset != NULL);
+	size_t bytes_left;
+	size_t total_bytes_copied = 0;
+	const size_t MAX_BYTES_TO_TRANSFER = 2147479552;
+	const off_t OFF_MAX = __type_max(off_t);
+
+	/* Structures for actual copy */
+	char *buffer = NULL;
+	struct uio auio;
+	struct iovec aiov;
+
+	int error = 0;
+
+	/*	The count must not be more than what the man page specifies */
+	if (count > MAX_BYTES_TO_TRANSFER)
+		count = MAX_BYTES_TO_TRANSFER;
+	
+	if (has_user_offset) {
+		error = copyin(user_offset, &in_offset, sizeof(in_offset));
+		if (error)
+			goto out;
+	}
+
+	if (count > OFF_MAX - in_offset) {
+		error = EOVERFLOW;
+		goto out;
+	}
+
+	in_fp = fd_getfile(in_fd);
+	out_fp = fd_getfile(out_fd);
+
+	if ((in_fp == NULL) || (out_fp == NULL)) {
+		error = EBADF;
+		goto out;
+	} 
+
+	/*	
+	 *	Normally, in_fd can only be a regular file, however, if out_fd
+	 * 	is a pipe the linux sendfile desugars to a splice, allowing
+	 * 	in_fd to be a socket, but NOT a pipe (even though splice accepts).
+	 */
+	switch (in_fp->f_type) {
+
+	case DTYPE_VNODE:
+		struct vnode *in_vn = in_fp->f_vnode;
+		
+		if (in_vn->v_type != VREG) {
+			error = EINVAL;
+			goto out;
+		}
+		break;
+
+	case DTYPE_SOCKET:
+		/*	If in_fd is a socket, user_offset must be NULL */
+		if (has_user_offset) {
+			error = EINVAL;
+			goto out;
+		}
+		if (out_fp->f_type != DTYPE_PIPE) {
+			error = EINVAL;
+			goto out;
+		}
+		break;
+	default:
+		error = EINVAL;
+		goto out;
+	}
+
+	/*	out_fp may be a regular file, a pipe or a socket */
+	switch (out_fp->f_type) {
+
+	case DTYPE_VNODE:
+		struct vnode *out_vn = out_fp->f_vnode;
+
+		if (out_vn->v_type != VREG) {
+			error = EINVAL;
+			goto out;
+		}
+		break;
+
+	case DTYPE_SOCKET:
+		break;
+
+	case DTYPE_PIPE:
+		break;
+
+	default:
+		error = EINVAL;
+		goto out;
+	}
+
+	if ((in_fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out;
+	}
+	
+	if (((out_fp->f_flag & FWRITE) == 0) || 
+		((out_fp->f_flag & FAPPEND) != 0)) {
+		error = EBADF;
+		goto out;
+	}
+
+	buffer = kmem_alloc(MAXBSIZE, KM_SLEEP);
+
+	bytes_left = count;
+	in_offset_before_reads = in_fp->f_offset;
+	if (has_user_offset) 
+		in_fp->f_offset = in_offset;
+
+	while (bytes_left > 0) {
+
+		size_t to_copy = MIN(bytes_left, MAXBSIZE);
+		size_t bytes_read = 0;
+		size_t bytes_written = 0;
+
+		/* Set up iovec and uio for reading */
+		aiov.iov_base = buffer;
+		aiov.iov_len = to_copy;
+		auio.uio_resid = to_copy;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_rw = UIO_READ;
+		UIO_SETUP_SYSSPACE(&auio);
+
+		/*	Read the in_fp */
+		error = (*in_fp->f_ops->fo_read)(in_fp, &in_fp->f_offset, &auio, 
+			in_fp->f_cred, 0);
+
+		if (error) 
+			break; /* Error when reading */
+
+		bytes_read = to_copy - auio.uio_resid;
+		
+		if (bytes_read == 0) {
+			/*	EOF reached */
+			break; 
+		}
+		
+		/* Set up iovec and uio for writing */
+		aiov.iov_base = buffer;
+		aiov.iov_len = bytes_read;
+		auio.uio_resid = bytes_read;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_rw = UIO_WRITE;
+		UIO_SETUP_SYSSPACE(&auio);
+
+		/*	Write to out_fp */
+		error = (*out_fp->f_ops->fo_write)(out_fp, &out_fp->f_offset, &auio,
+            out_fp->f_cred, 0);
+
+		bytes_written = bytes_read - auio.uio_resid;
+
+		if (error) {
+			if (error == ENOBUFS) {
+				error = EAGAIN;	/*	What the syscall expects */
+			}
+			break; /* Error when writing */
+		}
+		
+		in_fp->f_offset += bytes_written;
+		out_fp->f_offset += bytes_written;
+
+		total_bytes_copied += bytes_written;
+		bytes_left -= bytes_written;
+	}
+
+	if (total_bytes_copied > 0) {
+		error = 0;
+	}
+	
+	if (has_user_offset) {
+		int copy_err = copyout(&in_fp->f_offset, user_offset, sizeof(in_offset));
+		in_fp->f_offset = in_offset_before_reads; /* returns to original */
+		/*	Overrides error only if there's something wrong with the copyout */
+		if (copy_err) 
+			error = copy_err;
+	}
+
+	*retval = total_bytes_copied;
+
+	goto out;
+
+out:
+	if (buffer) 
+		kmem_free(buffer, MAXBSIZE);
+	if (in_fp) 
+		fd_putfile(in_fd);
+	if (out_fp)
+		fd_putfile(out_fd);
+	return error;
+}
+
 /*
  * Most actions in the fcntl() call are straightforward; simply
  * pass control to the NetBSD system call. A few commands need
