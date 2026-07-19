@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.30 2023/06/24 05:31:05 msaitoh Exp $	*/
+/*	$NetBSD: mon.h,v 1.31 2026/07/19 01:02:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -345,6 +345,10 @@ struct sunromvec {
 #define mon_exit_to_mon (romVectorPtr->exitToMon)
 #define mon_reboot (romVectorPtr->reBoot)
 
+void    sunmon_abort(void);
+void    sunmon_halt(void);
+void    sunmon_init(void);
+void    sunmon_reboot(const char *);
 
 /*
  * Sun3 specific stuff...

@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k_trap.c,v 1.1 2026/04/02 03:56:44 thorpej Exp $	*/
+/*	$NetBSD: sun68k_trap.c,v 1.2 2026/07/19 01:03:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun68k_trap.c,v 1.1 2026/04/02 03:56:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun68k_trap.c,v 1.2 2026/07/19 01:03:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,11 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: sun68k_trap.c,v 1.1 2026/04/02 03:56:44 thorpej Exp 
 #include <machine/psl.h>
 #include <machine/trap.h>
 
-#ifdef __mc68010__	/* XXX tidy this up sil vous plait */
 #include <machine/promlib.h>
-#else
-#include <sun3/sun3/machdep.h>
-#endif /* __mc68010__ */
 
 /*
  * This is used if we hit a kernel breakpoint or trace trap
@@ -114,11 +110,8 @@ _nodb_trap(int type, struct trapframe *tf)
 	printf(", frame=%p\r\n", tf);
 	printf("No debugger; doing PROM abort.\r\n");
 	printf("To continue, type: c <RETURN>\r\n");
-#ifdef __mc68010__	/* XXX tidy this up sil vous plait */
 	prom_abort();
-#else
-	sunmon_abort();
-#endif
+
 	/* OK then, just resume... */
 	tf->tf_sr &= ~PSL_T;
 	return(1);

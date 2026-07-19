@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.29 2021/02/23 07:13:53 mrg Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.30 2026/07/19 01:03:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,15 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.29 2021/02/23 07:13:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.30 2026/07/19 01:03:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 
 #include <machine/db_machdep.h>
 #include <machine/pte.h>
+#include <machine/mon.h>
 
-#include <sun3/sun3/machdep.h>
 #ifdef	_SUN3_
 #include <sun3/sun3/control.h>
 #endif	/* SUN3 */

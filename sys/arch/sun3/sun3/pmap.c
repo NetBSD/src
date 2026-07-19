@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.186 2026/07/06 16:08:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.187 2026/07/19 01:03:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186 2026/07/06 16:08:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187 2026/07/19 01:03:00 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186 2026/07/06 16:08:13 thorpej Exp $");
 #include <machine/fcode.h>
 #include <machine/idprom.h>
 #include <machine/kcore.h>
-#include <machine/mon.h>
+#include <machine/promlib.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
@@ -676,12 +676,12 @@ pmeg_reserve(int sme)
 	pmegp = &pmeg_array[sme];
 
 	if (pmegp->pmeg_reserved) {
-		mon_printf("pmeg_reserve: already reserved\n");
-		sunmon_abort();
+		prom_printf("pmeg_reserve: already reserved\n");
+		prom_abort();
 	}
 	if (pmegp->pmeg_owner) {
-		mon_printf("pmeg_reserve: already owned\n");
-		sunmon_abort();
+		prom_printf("pmeg_reserve: already owned\n");
+		prom_abort();
 	}
 
 	/* Owned by kernel, but not really usable... */
@@ -704,7 +704,7 @@ pmeg_mon_init(vaddr_t sva, vaddr_t eva, int keep)
 
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_SEGMAP)
-		mon_printf("pmeg_mon_init(0x%x, 0x%x, %d)\n",
+		prom_printf("pmeg_mon_init(0x%x, 0x%x, %d)\n",
 			   sva, eva, keep);
 #endif
 
@@ -723,7 +723,7 @@ pmeg_mon_init(vaddr_t sva, vaddr_t eva, int keep)
 			}
 #ifdef	PMAP_DEBUG
 			if (pmap_debug & PMD_SEGMAP)
-				mon_printf(" sva=0x%x seg=0x%x valid=%d\n",
+				prom_printf(" sva=0x%x seg=0x%x valid=%d\n",
 					   sva, sme, valid);
 #endif
 			if (keep && valid)
@@ -1516,7 +1516,7 @@ pmap_bootstrap(vaddr_t nextva)
 	nextpa = nextva - KERNBASE3;
 
 	if (rvec->romvecVersion < 1) {
-		mon_printf("Warning: ancient PROM version=%d\n",
+		prom_printf("Warning: ancient PROM version=%d\n",
 			   rvec->romvecVersion);
 		/* Guess that PROM version 0.X used two pages. */
 		phys_seg_list[0].ps_end = *rvec->memorySize - (2*PAGE_SIZE);
@@ -1539,8 +1539,8 @@ pmap_bootstrap(vaddr_t nextva)
 		hole_start = m68k_trunc_page(OBMEM_BW50_ADDR);
 		hole_size  = m68k_round_page(OBMEM_BW2_SIZE);
 		if (nextpa > hole_start) {
-			mon_printf("kernel too large for Sun3/50\n");
-			sunmon_abort();
+			prom_printf("kernel too large for Sun3/50\n");
+			prom_abort();
 		}
 		phys_seg_list[1].ps_start = hole_start + hole_size;
 		phys_seg_list[1].ps_end = phys_seg_list[0].ps_end;
@@ -1579,8 +1579,8 @@ pmap_bootstrap(vaddr_t nextva)
 	for ( ; va < virtual_avail; va += NBSG) {
 		sme = get_segmap(va);
 		if (sme == SEGINV) {
-			mon_printf("kernel text/data/bss not mapped\n");
-			sunmon_abort();
+			prom_printf("kernel text/data/bss not mapped\n");
+			prom_abort();
 		}
 		pmeg_reserve(sme);
 	}
@@ -1659,7 +1659,7 @@ pmap_bootstrap(vaddr_t nextva)
 	while (va < eva) {
 		pte = get_pte(va);
 		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
-			mon_printf("invalid page at 0x%x\n", va);
+			prom_printf("invalid page at 0x%x\n", va);
 		}
 		pte &= ~(PG_WRITE|PG_NC);
 		/* Kernel text is read-only */
@@ -1671,7 +1671,7 @@ pmap_bootstrap(vaddr_t nextva)
 	while (va < nextva) {
 		pte = get_pte(va);
 		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
-			mon_printf("invalid page at 0x%x\n", va);
+			prom_printf("invalid page at 0x%x\n", va);
 		}
 		pte &= ~(PG_NC);
 		pte |= (PG_SYSTEM | PG_WRITE);
@@ -1690,13 +1690,13 @@ pmap_bootstrap(vaddr_t nextva)
 #ifdef	DIAGNOSTIC
 	/* Note: PROM setcxsegmap function needs sfc=dfc=FC_CONTROL */
 	if ((getsfc() != FC_CONTROL) || (getdfc() != FC_CONTROL)) {
-		mon_printf("pmap_bootstrap: bad dfc or sfc\n");
-		sunmon_abort();
+		prom_printf("pmap_bootstrap: bad dfc or sfc\n");
+		prom_abort();
 	}
 	/* Near the beginning of locore.s we set context zero. */
 	if (get_context() != 0) {
-		mon_printf("pmap_bootstrap: not in context zero?\n");
-		sunmon_abort();
+		prom_printf("pmap_bootstrap: not in context zero?\n");
+		prom_abort();
 	}
 #endif	/* DIAGNOSTIC */
 	for (va = 0; va < (vaddr_t) (NBSG * NSEGMAP); va += NBSG) {
@@ -1720,8 +1720,8 @@ pmap_bootstrap(vaddr_t nextva)
 	virtual_avail += NBSG;
 #ifdef	DIAGNOSTIC
 	if (temp_seg_va & SEGOFSET) {
-		mon_printf("pmap_bootstrap: temp_seg_va\n");
-		sunmon_abort();
+		prom_printf("pmap_bootstrap: temp_seg_va\n");
+		prom_abort();
 	}
 #endif
 

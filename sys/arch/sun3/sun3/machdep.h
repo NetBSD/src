@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.45 2026/04/26 10:52:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.h,v 1.46 2026/07/19 01:03:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -123,11 +123,6 @@ void	isr_config(void);
 void	netintr(void);
 
 void	obio_init(void);
-
-void	sunmon_abort(void);
-void	sunmon_halt(void);
-void	sunmon_init(void);
-void	sunmon_reboot(const char *);
 
 void	swapconf(void);
 
