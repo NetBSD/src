@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.116 2026/07/07 09:57:27 sborrill Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.117 2026/07/19 11:30:15 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1569,3 +1569,13 @@ lib/libc/citrus/modules/citrus_iconv_std.c	1.18
 	- PR lib/60413: iconv_samples test crashes on sparc*
 	[riastradh, ticket #2035]
 
+xsrc/external/mit/libXfont2/dist/src/bitmap/bitscale.c		(apply patch)
+xsrc/external/mit/libXfont2/dist/src/bitmap/pcfread.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/fb/fbglyph.c			(apply patch)
+xsrc/external/mit/xorg-server/dist/glamor/glamor_font.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/glamor/glamor_glyphblt.c	(apply patch)
+xsrc/external/mit/xorg-server/dist/glx/vndcmds.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/mi/miglblt.c			(apply patch)
+
+	Apply upstream fixes for xorg-server and libXfont2.
+	[mrg, ticket #2037]
