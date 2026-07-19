@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.24 2024/11/30 01:04:06 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.24.2.1 2026/07/19 15:57:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -56,7 +56,28 @@ typedef	__greg_t	__gregset_t[_NGREG];
  * which requires 16 byte alignment. However the mcontext version
  * is never directly accessed.
  */
-typedef char __fpregset_t[512] __aligned(8);
+typedef union {
+	char	__fxsave[512] __aligned(8);
+	struct {
+		/*
+		 * `The XSAVE feature set does not use bytes 511:416;
+		 *  bytes 463:416 are reserved.'
+		 *
+		 * We take a part out of this to form a pointer to an
+		 * external XSAVE area.  This way, we can replicate the
+		 * FXSAVE parts for the benefit of userland programs
+		 * that aren't aware of the XSAVE pointer, have used
+		 * the extended CPU registers (ymmN/zmmN/&c.), and want
+		 * to examine the x87/SSE register state in a signal
+		 * handler.  The kernel does not use this part.
+		 */
+		char		__fxsave[416];
+		char		__rsvd[48];
+		__greg_t	__xsaveptr;
+		__greg_t	__xsavelen;
+		char		__pad[32];
+	}	__xsave;
+} __fpregset_t;
 
 typedef struct {
 	__gregset_t	__gregs;
@@ -75,6 +96,7 @@ typedef struct {
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #define	_UC_TLSBASE	_UC_MD_BIT19
+#define	_UC_XSAVE	_UC_MD_BIT20
 
 /*
  * mcontext extensions to handle signal delivery.
@@ -127,6 +149,13 @@ typedef struct {
 		struct {
 			char	__fp_xmm[512];
 		} __fp_xmm_state;
+		struct {
+			char		__fxsave[416];
+			char		__rsvd[48];
+			__greg32_t	__xsaveptr;
+			__greg32_t	__xsavelen;
+			char		__pad[40];
+		} __xsave;
 	} __fp_reg_set;
 	int	__fp_pad[33];			/* Historic padding */
 } __fpregset32_t;

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.96.2.1 2026/06/29 19:52:22 martin Exp $
+# $NetBSD: Makefile,v 1.96.2.2 2026/07/19 15:57:27 martin Exp $
 
 NOMAN=		# defined
 
@@ -27,6 +27,7 @@ TESTS_C+=	t_open_pr_57260
 TESTS_C+=	t_proccwd
 TESTS_C+=	t_pty
 TESTS_C+=	t_semtimedop
+TESTS_C+=	t_signal_and_fpu
 TESTS_C+=	t_signal_and_sp
 TESTS_C+=	t_sysv
 TESTS_C+=	t_subr_prf
@@ -106,6 +107,21 @@ ARCHDIR:=		${.PARSEDIR}/arch/${MACHINE_ARCH}
 ARCHDIR:=		${.PARSEDIR}/arch/${MACHINE_CPU}
 .endif
 .PATH:			${ARCHDIR}
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+X86ARCHDIR:=		${.PARSEDIR}/arch/x86
+.PATH:			${X86ARCHDIR}
+SIG_FPU_DIR=		${X86ARCHDIR}
+.else
+SIG_FPU_DIR=		${ARCHDIR}
+.endif
+
+SRCS.t_signal_and_fpu+=		t_signal_and_fpu.c
+LDADD.t_signal_and_fpu+=	-pthread
+.if exists(${SIG_FPU_DIR}/sig_fpu.c)
+CPPFLAGS.t_signal_and_fpu.c+=	-I${SIG_FPU_DIR} -DHAVE_SIG_FPU_H
+SRCS.t_signal_and_fpu+=		sig_fpu.c
+.endif
 
 .if exists(${ARCHDIR}/stack_pointer.h)
 CPPFLAGS.t_signal_and_sp.c+=	-I${ARCHDIR} -DHAVE_STACK_POINTER_H

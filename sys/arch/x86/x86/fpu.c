@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.93.2.1 2026/01/25 16:36:40 martin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.93.2.2 2026/07/19 15:57:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.93.2.1 2026/01/25 16:36:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.93.2.2 2026/07/19 15:57:27 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1038,4 +1038,141 @@ process_write_xstate(struct lwp *l, const struct xstate *xstate)
 #undef COPY_COMPONENT
 
 	return 0;
+}
+
+/*
+ * process_xsave_needed_p(l)
+ *
+ *	True if l's FPU state requires XSAVE, false if it can be
+ *	faithfully saved and restored with only FXSAVE at most.  Since
+ *	FXSAVE has been available for longer in mcontext_t (and thus
+ *	more likely to be understood by userland software), and
+ *	requires no external buffer for userland mcontext_t, it is
+ *	preferable to use FXSAVE where possible instead of XSAVE.
+ */
+bool
+process_xsave_needed_p(struct lwp *l)
+{
+	union savefpu *fpu_save;
+
+	/*
+	 * If we're not using XSAVE at all on this CPU, then this
+	 * thread doesn't require it.
+	 */
+	if (x86_fpu_save < FPU_SAVE_XSAVE)
+		return false;
+
+	/*
+	 * If we only use x87 and SSE state on this CPU, then this
+	 * thread doesn't require XSAVE -- FXSAVE is good enough.
+	 */
+	if ((x86_xsave_features & ~(XCR0_X87|XCR0_SSE)) == 0)
+		return false;
+
+	/*
+	 * If _this thread_ has yet to use any state other than x87 or
+	 * SSE, then it doesn't require XSAVE -- FXSAVE is good enough.
+	 */
+	fpu_save = fpu_lwp_area(l);
+	if ((fpu_save->sv_xsave_hdr.xsh_xstate_bv & ~(XCR0_X87|XCR0_SSE)) == 0)
+		return false;
+	return true;
+}
+
+/*
+ * process_read_xsave(l, &xsavebuf, &xsavelen)
+ *
+ *	Set xsavebuf to l's current XSAVE area, and xsavelen to the
+ *	size of that area to copy out to userland.  It can later be
+ *	restored with process_write_xsave.
+ */
+void
+process_read_xsave(struct lwp *l, const struct xsave_header **xsavebufp,
+    size_t *xsavelenp)
+{
+	union savefpu *area = fpu_lwp_area(l);
+
+	*xsavebufp = &area->sv_xsave_hdr;
+	KASSERT(((*xsavebufp)->xsh_xstate_bv & ~x86_xsave_features) == 0);
+
+	/*
+	 * XXX Consider shrinking this to just the components that are
+	 * actually represented in XSTATE_BV.
+	 */
+	*xsavelenp = x86_fpu_save_size;
+}
+
+/*
+ * process_verify_xsavelen(l, xsavelen)
+ *
+ *	Verify that a putative XSAVE area length is plausible, before
+ *	copying that many bytes in from userland.  Return 0 on success,
+ *	nonzero error code on failure.
+ */
+int
+process_verify_xsavelen(struct lwp *l, size_t xsavelen)
+{
+
+	if (xsavelen < sizeof(struct xsave_header))
+		return EINVAL;
+	if (xsavelen > x86_fpu_save_size)
+		return EINVAL;
+	return 0;
+}
+
+/*
+ * process_verify_xsave(l, xsavebuf, xsavelen)
+ *
+ *	Verify that a putative XSAVE area from userland is valid.
+ *	Return 0 on success, nonzero error code on failure.  Caller
+ *	must have already checked process_verify_xsavelen, before even
+ *	trying to copyin the content of xsavebuf.
+ */
+int
+process_verify_xsave(struct lwp *l, const struct xsave_header *xsavebuf,
+    size_t xsavelen)
+{
+
+	KASSERT(process_verify_xsavelen(l, xsavelen) == 0);
+
+	if ((xsavebuf->xsh_xstate_bv & ~x86_xsave_features) != 0)
+		return EINVAL;
+	/*
+	 * XXX Consider verifying that any components claimed present
+	 * are actually there within xsavelen.  Not a big deal if they
+	 * aren't, though: we will just zero-fill them, so it is as if
+	 * they were there but all zero.
+	 */
+	return 0;
+}
+
+/*
+ * process_write_xsave(l, xsavebuf, xsavelen)
+ *
+ *	Given an XSAVE area copied in from userland, load l's FPU state
+ *	from that area.  If xstatelen is shorter than the CPU's
+ *	x86_fpu_save_size, zero-fill it.  Caller must validate it first
+ *	with process_verify_xsave, along with any other mcontext
+ *	validation before modifying l's state.
+ *
+ *	Additionally, clear any invalid bits in the mxcsr, like
+ *	process_write_fpregs_xmm does.  XXX Is this necessary if
+ *	there's no SSE state being restored?  Can that happen?
+ */
+void
+process_write_xsave(struct lwp *l, const struct xsave_header *xsavebuf,
+    size_t xsavelen)
+{
+	union savefpu *fpu_save = fpu_lwp_area(l);
+
+	KASSERT(process_verify_xsave(l, xsavebuf, xsavelen) == 0);
+
+	memcpy(fpu_save, xsavebuf, xsavelen);
+	memset((char *)fpu_save + xsavelen, 0, x86_fpu_save_size - xsavelen);
+
+	/*
+	 * Invalid bits in mxcsr or mxcsr_mask will cause faults.
+	 */
+	fpu_save->sv_xmm.fx_mxcsr_mask &= x86_fpu_mxcsr_mask;
+	fpu_save->sv_xmm.fx_mxcsr &= fpu_save->sv_xmm.fx_mxcsr_mask;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.849 2025/05/05 16:57:41 imil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.849.2.1 2026/07/19 15:57:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.849 2025/05/05 16:57:41 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.849.2.1 2026/07/19 15:57:28 martin Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -252,6 +252,9 @@ void init386(paddr_t);
 void initgdt(union descriptor *);
 
 static void i386_proc0_pcb_ldt_init(void);
+
+static int cpu_getmcontext_xsave(struct lwp *, mcontext_t *, unsigned *,
+    const struct xsave_header *, size_t, struct xsave_header *);
 
 int *esym;
 int *eblob;
@@ -670,11 +673,72 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigacts *ps = p->p_sigacts;
 	int onstack, error;
 	int sig = ksi->ksi_signo;
-	struct sigframe_siginfo *fp = getframe(l, sig, &onstack), frame;
+	struct sigframe_siginfo *fp, frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct trapframe *tf = l->l_md.md_regs;
+	const struct xsave_header *xsavebuf = NULL;
+	size_t xsavelen = 0;
+	struct xsave_header *user_xsave = NULL;
+	char *sp;
 
 	KASSERT(mutex_owned(p->p_lock));
 
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack) {
+		KASSERT(l->l_sigstk.ss_size >= MINSIGSTKSZ);
+		sp = ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
+	} else {
+		sp = (char *)tf->tf_esp;
+	}
+
+	/*
+	 * The maximum amount of space we might use, including padding
+	 * for alignment, had better fit in MINSIGSTKSZ.
+	 *
+	 * If this changes because you have increased XSAVE_MAX_BYTES,
+	 * you need to work out the ABI change for MINSIGSTKSZ.
+	 */
+	__CTASSERT(STACK_ALIGNBYTES + sizeof(struct sigframe_siginfo) +
+	    (XSAVE_ALIGN - 1) + XSAVE_MAX_BYTES <= MINSIGSTKSZ);
+
+	/*
+	 * Find whether we need to allocate a separate XSAVE area,
+	 * because the user program has used extended CPU state beyond
+	 * the x87/SSE registers, or whether we can get by with just an
+	 * FXSAVE area.
+	 */
+	if (process_xsave_needed_p(l)) {
+		process_read_xsave(l, &xsavebuf, &xsavelen);
+		KASSERT(xsavebuf != NULL);
+		KASSERT(xsavelen <= XSAVE_MAX_BYTES);
+
+		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+		KASSERT(!onstack ||
+		    sp - (char *)l->l_sigstk.ss_sp >= xsavelen);
+		sp -= xsavelen;
+
+		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+		KASSERT(!onstack ||
+		    sp - (char *)l->l_sigstk.ss_sp >= XSAVE_ALIGN - 1);
+		sp = (char *)((uintptr_t)sp & ~(XSAVE_ALIGN - 1));
+
+		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+		KASSERT(((uintptr_t)sp & (XSAVE_ALIGN - 1)) == 0);
+		user_xsave = (void *)sp;
+	}
+
+	/*
+	 * Reserve space for an aligned struct sigframe_siginfo.
+	 */
+	KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+	KASSERT(!onstack || (size_t)(sp - (char *)l->l_sigstk.ss_sp) >=
+	    STACK_ALIGNBYTES + sizeof(struct sigframe_siginfo));
+	fp = (struct sigframe_siginfo *)sp;
 	fp--;
 	fp = (struct sigframe_siginfo *)((uintptr_t)fp & ~STACK_ALIGNBYTES);
 
@@ -694,7 +758,20 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+
+	/*
+	 * If we have to use XSAVE, copy out that area separately --
+	 * and be ready to bail if it failed.
+	 */
+	if (xsavebuf) {
+		error = cpu_getmcontext_xsave(l, &frame.sf_uc.uc_mcontext,
+		    &frame.sf_uc.uc_flags, xsavebuf, xsavelen, user_xsave);
+		if (error != 0)
+			goto relock;
+	}
+
 	error = copyout(&frame, fp, sizeof(frame));
+relock:
 	mutex_enter(p->p_lock);
 
 	if (error != 0) {
@@ -1660,6 +1737,50 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	*flags |= _UC_FXSAVE | _UC_FPU;
 }
 
+/*
+ * cpu_getmcontext_xsave(l, mcp, flags, xsavebuf, xsavelen, user_xsave)
+ *
+ *	Copy out xsavebuf[0..xsavelen) to user_xsave, set mcp to point
+ *	there, and set _UC_XSAVE in flags.  Caller must have already
+ *	used cpu_getmcontext to initialize mcp's FXSAVE area.
+ *
+ *	May fail if the copyout fails.
+ */
+static int
+cpu_getmcontext_xsave(struct lwp *l, mcontext_t *mcp, unsigned int *flags,
+    const struct xsave_header *xsavebuf, size_t xsavelen,
+    struct xsave_header *user_xsave)
+{
+	int error;
+
+	KASSERT(*flags & _UC_FPU);
+	KASSERT(*flags & _UC_FXSAVE);
+
+	/*
+	 * Copy out the XSAVE area.
+	 */
+	error = copyout(xsavebuf, user_xsave, xsavelen);
+	if (error != 0)
+		return error;
+
+	/*
+	 * Record a pointer to the real XSAVE area in the
+	 * architecturally unused bits mcontext_t's FXSAVE area.
+	 */
+	mcp->__fpregs.__fp_reg_set.__xsave.__xsaveptr =
+	    (__greg_t)(uintptr_t)user_xsave;
+	mcp->__fpregs.__fp_reg_set.__xsave.__xsavelen = (__greg_t)xsavelen;
+
+	/*
+	 * Set the _UC_XSAVE flag so cpu_setmcontext will be able to
+	 * restore the full state from the XSAVE area.
+	 */
+	*flags |= _UC_XSAVE;
+
+	/* Success! */
+	return 0;
+}
+
 int
 cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
@@ -1686,7 +1807,35 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
 	struct proc *p = l->l_proc;
+	struct xsave_header *xsavebuf = NULL;
+	size_t xsavelen = 0;
 	int error;
+
+	/*
+	 * If there's an external XSAVE area, copy it in and validate
+	 * it before we irreversibly modify the trapframe.
+	 *
+	 * We could check the length against the state components
+	 * included, but we currently don't: if it's truncated, it will
+	 * be as if the truncated part were zero-filled -- this is
+	 * implemented in process_write_xsave, called a little below.
+	 */
+	if ((flags & _UC_XSAVE) != 0) {
+		const __greg_t user_xsave =
+		    mcp->__fpregs.__fp_reg_set.__xsave.__xsaveptr;
+
+		xsavelen = mcp->__fpregs.__fp_reg_set.__xsave.__xsavelen;
+		error = process_verify_xsavelen(l, xsavelen);
+		if (error != 0)
+			goto out;
+		xsavebuf = kmem_alloc(xsavelen, KM_SLEEP);
+		error = copyin((const void *)user_xsave, xsavebuf, xsavelen);
+		if (error != 0)
+			goto out;
+		error = process_verify_xsave(l, xsavebuf, xsavelen);
+		if (error != 0)
+			goto out;
+	}
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
@@ -1719,7 +1868,10 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
 	/* Restore floating point register context, if given. */
-	if ((flags & _UC_FPU) != 0) {
+	if ((flags & _UC_XSAVE) != 0) {
+		KASSERT(xsavebuf != NULL);
+		process_write_xsave(l, xsavebuf, xsavelen);
+	} else if ((flags & _UC_FPU) != 0) {
 		__CTASSERT(sizeof (struct fxsave) ==
 		    sizeof mcp->__fpregs.__fp_reg_set.__fp_xmm_state);
 		__CTASSERT(sizeof (struct save87) ==
@@ -1740,7 +1892,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
-	return (0);
+
+	/* Success! */
+	error = 0;
+
+out:	if (xsavebuf)
+		kmem_free(xsavebuf, xsavelen);
+	return error;
 }
 
 #define	DEV_IO 14		/* iopl for compat_10 */
