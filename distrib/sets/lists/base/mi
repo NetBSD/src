@@ -393,6 +393,7 @@
 ./sbin/fsck_v7fs				base-sysutil-root	v7fs
 ./sbin/fsdb					base-sysutil-root
 ./sbin/fsirand					base-sysutil-root
+./sbin/fullfsctl				base-miscfs-root	fullfs
 ./sbin/gpt					base-sysutil-root
 ./sbin/halt					base-sysutil-root
 ./sbin/ifconfig					base-netutil-root
@@ -420,6 +421,7 @@
 ./sbin/mount_fdesc				base-miscfs-root	fdescfs
 ./sbin/mount_ffs				base-sysutil-root
 ./sbin/mount_filecore				base-filecorefs-root	filecorefs
+./sbin/mount_full				base-miscfs-root	fullfs
 ./sbin/mount_hfs				base-hfs-root		hfs
 ./sbin/mount_hfsp				base-obsolete		obsolete
 ./sbin/mount_kernfs				base-sysutil-root	kernfs
@@ -1128,6 +1130,7 @@
 ./usr/include/miscfs				base-c-usr
 ./usr/include/miscfs/fdesc			base-c-usr
 ./usr/include/miscfs/fifofs			base-c-usr
+./usr/include/miscfs/fullfs			base-c-usr
 ./usr/include/miscfs/genfs			base-c-usr
 ./usr/include/miscfs/kernfs			base-c-usr
 ./usr/include/miscfs/nullfs			base-c-usr

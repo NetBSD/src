@@ -1,0 +1,134 @@
+.\"	$NetBSD$
+.\"
+.\"
+.Dd March 6, 2026
+.Dt MOUNT_FULL 8
+.Os
+.Sh NAME
+.Nm mount_full
+.Nd mount a disk-full simulation filesystem layer
+.Sh SYNOPSIS
+.Nm
+.Op Fl o Ar options
+.Ar target
+.Ar mount-point
+.Sh DESCRIPTION
+The
+.Nm
+command mounts a
+.Em fullfs
+layer over
+.Ar target ,
+making it accessible at
+.Ar mount-point .
+.Pp
+.Em fullfs
+is a stackable filesystem layer built on the same layerfs infrastructure as
+.Xr mount_null 8 .
+It presents the contents of
+.Ar target
+unchanged, but intercepts any vnode operation that would allocate disk space
+and returns
+.Er ENOSPC
+immediately, without touching the underlying filesystem.
+.Pp
+This makes it possible to test an application's handling of disk-full
+conditions without filling an actual disk.
+The failure behavior is runtime-configurable via
+.Xr fullfsctl 8 ,
+which can change the fail mode, error code, and operation mask
+without remounting.
+.Pp
+Both
+.Ar target
+and
+.Ar mount-point
+are converted to absolute paths before use.
+.Sh BEHAVIOR
+The following operations fail by default with
+.Er ENOSPC
+through a fullfs mount:
+.Bl -bullet -compact
+.It
+.Xr write 2
+.It
+.Xr open 2
+with
+.Dv O_CREAT
+(new file creation)
+.It
+.Xr mkdir 2
+.It
+.Xr mknod 2
+.It
+.Xr symlink 2
+.It
+.Xr link 2
+.El
+.Pp
+The following operations pass through to the underlying filesystem unchanged:
+.Bl -bullet -compact
+.It
+.Xr read 2 ,
+.Xr readdir 2 ,
+.Xr stat 2 ,
+and other read-only operations
+.It
+.Xr unlink 2
+and
+.Xr rmdir 2
+(these free space rather than allocating it)
+.It
+.Xr rename 2
+.El
+.Pp
+.Xr statvfs 2
+reports zero free and available blocks and inodes whenever the fail mode
+is anything other than
+.Cm pass .
+In
+.Cm pass
+mode the underlying filesystem's real free space is reported unchanged.
+See
+.Xr fullfsctl 8
+for the fail modes.
+.Sh OPTIONS
+.Bl -tag -width Fl
+.It Fl o
+Options are specified with a
+.Fl o
+flag followed by a comma-separated string of options.
+See the
+.Xr mount 8
+man page for possible options and their meanings.
+.El
+.Sh EXAMPLES
+Mount
+.Pa /var/db
+under
+.Pa /mnt/full
+to test how a program behaves when the database volume is full:
+.Pp
+.Dl mount_full /var/db /mnt/full
+.Pp
+Verify that the layer is working correctly:
+.Bd -literal -offset indent
+# Existing data is still readable:
+ls /mnt/full
+
+# Writes fail immediately:
+echo hello >> /mnt/full/somefile
+echo $?    # non-zero; "No space left on device"
+
+# Free space is reported as zero:
+df /mnt/full
+.Ed
+.Sh SEE ALSO
+.Xr fullfsctl 8 ,
+.Xr mount 8 ,
+.Xr mount_null 8
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 11 .

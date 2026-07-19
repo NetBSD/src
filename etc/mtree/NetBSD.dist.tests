@@ -29,6 +29,7 @@
 ./usr/libdata/debug/usr/tests/fs/cd9660
 ./usr/libdata/debug/usr/tests/fs/ffs
 ./usr/libdata/debug/usr/tests/fs/fifofs
+./usr/libdata/debug/usr/tests/fs/fullfs
 ./usr/libdata/debug/usr/tests/fs/hfs
 ./usr/libdata/debug/usr/tests/fs/kernfs
 ./usr/libdata/debug/usr/tests/fs/lfs
@@ -235,6 +236,7 @@
 ./usr/tests/fs/cd9660
 ./usr/tests/fs/ffs
 ./usr/tests/fs/fifofs
+./usr/tests/fs/fullfs
 ./usr/tests/fs/hfs
 ./usr/tests/fs/kernfs
 ./usr/tests/fs/lfs

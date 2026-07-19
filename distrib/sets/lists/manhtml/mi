@@ -2624,6 +2624,7 @@
 ./usr/share/man/html8/ftp-proxy.html		man-pf-htmlman		pf,html
 ./usr/share/man/html8/ftpd.html			man-netutil-htmlman	html
 ./usr/share/man/html8/fusermount.html		man-refuse-htmlman	html
+./usr/share/man/html8/fullfsctl.html		man-miscfs-htmlman	fullfs,html
 ./usr/share/man/html8/fwctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/getNAME.html		man-man-htmlman		!makemandb,html
 ./usr/share/man/html8/getencstat.html		man-sysutil-htmlman	html
@@ -2788,6 +2789,7 @@
 ./usr/share/man/html8/mount_fdesc.html		man-miscfs-htmlman	fdescfs,html
 ./usr/share/man/html8/mount_ffs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_filecore.html	man-filecorefs-htmlman	filecorefs,html
+./usr/share/man/html8/mount_full.html		man-miscfs-htmlman	fullfs,html
 ./usr/share/man/html8/mount_hfs.html		man-hfs-htmlman		hfs,html
 ./usr/share/man/html8/mount_kernfs.html		man-sysutil-htmlman	kernfs,html
 ./usr/share/man/html8/mount_lfs.html		man-sysutil-htmlman	lfs,html

@@ -1,0 +1,187 @@
+.\"	$NetBSD$
+.\"
+.\"
+.Dd March 6, 2026
+.Dt FULLFSCTL 8
+.Os
+.Sh NAME
+.Nm fullfsctl
+.Nd control fullfs runtime fail state
+.Sh SYNOPSIS
+.Nm
+.Fl m Ar mode
+.Op Fl e Ar errno
+.Op Fl o Ar ops
+.Op Fl d Ar doom
+.Op Fl r Ar rate
+.Ar path
+.Nm
+.Fl s
+.Ar path
+.Sh DESCRIPTION
+The
+.Nm
+utility controls the runtime failure behavior of a mounted
+.Em fullfs
+filesystem.
+By default, a freshly mounted
+.Em fullfs
+fails all space-allocating operations with
+.Er ENOSPC .
+.Nm
+allows the fail mode, error code, operation mask, and countdown
+parameters to be changed at any time without remounting.
+.Pp
+.Ar path
+may be the mountpoint or any file within the fullfs mount.
+.Pp
+The
+.Fl m
+flag is required for all set operations.
+Flags omitted on the set path take their default values.
+.Pp
+The second synopsis form,
+.Fl s ,
+queries and displays the current state in the form:
+.Pp
+.Dl mode=<mode> error=<n> opmask=0x<mask> doom=<n> rate=<n>
+.Pp
+It cannot be combined with other flags.
+.Sh OPTIONS
+.Bl -tag -width "-e errno"
+.It Fl m Ar mode
+Set the fail mode.
+One of:
+.Bl -tag -width "random" -compact
+.It Cm pass
+All operations succeed; transparent passthrough.
+.It Cm fail
+All masked operations fail with the configured error.
+.It Cm count
+Allow
+.Ar doom
+masked operations, then fail subsequent ones.
+Operations not in the mask pass through without decrementing the counter.
+.It Cm bytes
+Allow
+.Ar doom
+bytes of writes, then fail.
+Non-write operations always pass through.
+If a write exceeds the remaining budget, it is rejected entirely;
+no partial writes occur.
+.It Cm random
+Each masked operation independently fails with the probability
+set by
+.Fl r .
+Unmasked operations pass through without rolling.
+.El
+.It Fl e Ar errno
+Error code to return on failure.
+Accepts a symbolic name
+.Po
+.Li enospc ,
+.Li eio ,
+.Li edquot ,
+.Li efbig ,
+.Li eperm ,
+.Li eacces ,
+.Li erofs
+.Pc
+or a positive integer.
+Default:
+.Er ENOSPC .
+.It Fl o Ar ops
+Comma-separated list of operations to mask.
+Valid names:
+.Li write ,
+.Li create ,
+.Li mkdir ,
+.Li mknod ,
+.Li symlink ,
+.Li link ,
+.Li all ,
+.Li none .
+Default:
+.Li all .
+.It Fl d Ar doom
+Doom counter.
+In
+.Cm count
+mode, the number of masked operations to allow before failing.
+In
+.Cm bytes
+mode, the byte budget for writes.
+Must be positive when the mode is
+.Cm count
+or
+.Cm bytes .
+Default: 0.
+.It Fl r Ar rate
+Failure rate percentage for
+.Cm random
+mode, from 1 to 99.
+Boundary values 0 and 100 are rejected; use
+.Cm pass
+or
+.Cm fail
+instead.
+Default: 0.
+.It Fl s
+Show the current state of the fullfs mount and exit.
+Cannot be combined with
+.Fl m
+or other flags.
+.El
+.Sh EXAMPLES
+Fail all operations with
+.Er ENOSPC :
+.Pp
+.Dl fullfsctl -m fail /mnt/full
+.Pp
+Fail all operations with
+.Er EIO :
+.Pp
+.Dl fullfsctl -m fail -e eio /mnt/full
+.Pp
+Fail only writes, allowing file creation:
+.Pp
+.Dl fullfsctl -m fail -o write /mnt/full
+.Pp
+Allow 5 operations, then fail:
+.Pp
+.Dl fullfsctl -m count -d 5 /mnt/full
+.Pp
+Allow 1024 bytes of writes, then fail:
+.Pp
+.Dl fullfsctl -m bytes -d 1024 /mnt/full
+.Pp
+Fail 50% of masked operations at random:
+.Pp
+.Dl fullfsctl -m random -r 50 /mnt/full
+.Pp
+Pass all operations through (disable failure injection):
+.Pp
+.Dl fullfsctl -m pass /mnt/full
+.Pp
+Show the current state:
+.Pp
+.Dl fullfsctl -s /mnt/full
+.Sh CAVEATS
+Writes performed via
+.Xr mmap 2
+and
+.Xr msync 2
+bypass
+.Em fullfs
+and are not subject to failure injection.
+This is a layerfs architectural constraint;
+.Fn putpages
+operates at the VM page level, not the VOP level.
+.Sh SEE ALSO
+.Xr mount 8 ,
+.Xr mount_full 8
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 11 .

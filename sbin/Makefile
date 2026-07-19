@@ -92,6 +92,11 @@ SUBDIR+= mount_ntfs
 SUBDIR+= mount_null
 .endif
 
+.if (${MKFULLFS} != "no")
+SUBDIR+= fullfsctl
+SUBDIR+= mount_full
+.endif
+
 .if (${MKOVERLAYFS} != "no")
 SUBDIR+= mount_overlay
 .endif

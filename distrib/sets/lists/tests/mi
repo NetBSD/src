@@ -37,6 +37,7 @@
 ./usr/libdata/debug/usr/tests/fs/cd9660			tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/ffs			tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/fifofs			tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/fullfs			tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/hfs			tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/kernfs			tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/lfs			tests-fs-debug		compattestfile,atf
@@ -1683,6 +1684,10 @@
 ./usr/tests/fs/fifofs/Atffile				tests-fs-tests		atf,rump
 ./usr/tests/fs/fifofs/Kyuafile				tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/fifofs/t_fifo				tests-fs-tests		atf,rump
+./usr/tests/fs/fullfs					tests-fs-tests		compattestfile,atf
+./usr/tests/fs/fullfs/Atffile				tests-fs-tests		atf,rump
+./usr/tests/fs/fullfs/Kyuafile				tests-fs-tests		atf,rump,kyua
+./usr/tests/fs/fullfs/t_basic				tests-fs-tests		atf,rump
 ./usr/tests/fs/h_funcs.subr				tests-fs-tests		atf,rump
 ./usr/tests/fs/hfs					tests-fs-tests		compattestfile,atf
 ./usr/tests/fs/hfs/Atffile				tests-fs-tests		atf,rump
