@@ -193,6 +193,13 @@ static void gmch_ggtt_invalidate(struct i915_ggtt *ggtt)
 	intel_gtt_chipset_flush();
 }
 
+static u64 gen8_ggtt_pte_encode(dma_addr_t addr,
+				enum i915_cache_level level,
+				u32 flags)
+{
+	return addr | _PAGE_PRESENT;
+}
+
 #ifdef __NetBSD__
 static inline void
 gen8_set_pte(bus_space_tag_t bst, bus_space_handle_t bsh, unsigned i,
@@ -228,9 +235,9 @@ static void gen8_ggtt_insert_page(struct i915_address_space *vm,
 
 #ifdef __NetBSD__
 	gen8_set_pte(ggtt->gsmt, ggtt->gsmh, offset / I915_GTT_PAGE_SIZE,
-	    gen8_pte_encode(addr, level, 0));
+	    gen8_ggtt_pte_encode(addr, level, 0));
 #else
-	gen8_set_pte(pte, gen8_pte_encode(addr, level, 0));
+	gen8_set_pte(pte, gen8_ggtt_pte_encode(addr, level, 0));
 #endif
 
 	ggtt->invalidate(ggtt);
@@ -241,16 +248,19 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 				     enum i915_cache_level level,
 				     u32 flags)
 {
+	const gen8_pte_t pte_encode = gen8_ggtt_pte_encode(0, level, 0);
 	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
 #ifdef __NetBSD__
 	bus_dmamap_t map = vma->pages->sgl[0].sg_dmamap;
 	unsigned seg;
 	unsigned pgno;
+	unsigned pgend;
 #else
 	struct sgt_iter sgt_iter;
 	gen8_pte_t __iomem *gtt_entries;
+	gen8_pte_t __iomem *gte;
+	gen8_pte_t __iomem *end;
 #endif
-	const gen8_pte_t pte_encode = gen8_pte_encode(0, level, 0);
 	dma_addr_t addr;
 
 	/*
@@ -260,6 +270,7 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 
 #ifdef __NetBSD__
 	pgno = vma->node.start / I915_GTT_PAGE_SIZE;
+	pgend = pgno + vma->node.size / I915_GTT_PAGE_SIZE;
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		addr = map->dm_segs[seg].ds_addr;
 		bus_size_t len = map->dm_segs[seg].ds_len;
@@ -272,12 +283,25 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 			    pte_encode | addr);
 		}
 		KASSERT(len == 0);
+		/* Fill the allocated but "unused" space beyond the end of the buffer */
+		KASSERT(pgno <= pgend);
+		for (;pgno<pgend;)
+		{
+			gen8_set_pte(ggtt->gsmt, ggtt->gsmh, pgno++, vm->scratch[0].encode);
+		}
 	}
 #else
-	gtt_entries = (gen8_pte_t __iomem *)ggtt->gsm;
-	gtt_entries += vma->node.start / I915_GTT_PAGE_SIZE;
-	for_each_sgt_daddr(addr, sgt_iter, vma->pages)
-		gen8_set_pte(gtt_entries++, pte_encode | addr);
+	gte = (gen8_pte_t __iomem *)ggtt->gsm;
+	gte += vma->node.start / I915_GTT_PAGE_SIZE;
+	end = gte + vma->node.size / I915_GTT_PAGE_SIZE;
+
+	for_each_sgt_daddr(addr, iter, vma->pages)
+		gen8_set_pte(gte++, pte_encode | addr);
+	GEM_BUG_ON(gte > end);
+
+	/* Fill the allocated but "unused" space beyond the end of the buffer */
+	while (gte < end)
+		gen8_set_pte(gte++, vm->scratch[0].encode);
 #endif
 
 	/*
@@ -329,8 +353,8 @@ static void gen6_ggtt_insert_entries(struct i915_address_space *vm,
 	unsigned seg;
 	unsigned pgno;
 #else
-	gen6_pte_t __iomem *entries = (gen6_pte_t __iomem *)ggtt->gsm;
-	unsigned int i = vma->node.start / I915_GTT_PAGE_SIZE;
+	gen6_pte_t __iomem *gte;
+	gen6_pte_t __iomem *end;
 	struct sgt_iter iter;
 #endif
 	dma_addr_t addr;
@@ -355,8 +379,17 @@ static void gen6_ggtt_insert_entries(struct i915_address_space *vm,
 		/* XXX KASSERT(pgno <= ...)?  */
 	}
 #else
+	gte = (gen6_pte_t __iomem *)ggtt->gsm;
+	gte += vma->node.start / I915_GTT_PAGE_SIZE;
+	end = gte + vma->node.size / I915_GTT_PAGE_SIZE;
+
 	for_each_sgt_daddr(addr, iter, vma->pages)
-		iowrite32(vm->pte_encode(addr, level, flags), &entries[i++]);
+		iowrite32(vm->pte_encode(addr, level, flags), gte++);
+	GEM_BUG_ON(gte > end);
+
+	/* Fill the allocated but "unused" space beyond the end of the buffer */
+	while (gte < end)
+		iowrite32(vm->scratch[0].encode, gte++);
 #endif
 
 	/*
@@ -1064,7 +1097,7 @@ static int gen8_gmch_probe(struct i915_ggtt *ggtt)
 	ggtt->vm.vma_ops.set_pages   = ggtt_set_pages;
 	ggtt->vm.vma_ops.clear_pages = clear_pages;
 
-	ggtt->vm.pte_encode = gen8_pte_encode;
+	ggtt->vm.pte_encode = gen8_ggtt_pte_encode;
 
 	setup_private_pat(ggtt->vm.gt->uncore);
 
