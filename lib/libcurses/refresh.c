@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.134 2026/07/02 04:37:48 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.135 2026/07/19 06:39:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.134 2026/07/02 04:37:48 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.135 2026/07/19 06:39:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -492,9 +492,11 @@ wrefresh(WINDOW *win)
 		if ((win->flags & __ISDERWIN) == __ISDERWIN) {
 			pbegx = win->derx;
 			pbegy = win->dery;
-	__CTRACE(__CTRACE_REFRESH, "wrefresh: derwin, begy = %d, begx = %x\n",
-		pbegy, pbegx);
+			__CTRACE(__CTRACE_REFRESH, "wrefresh: derwin, "
+			    "begy = %d, begx = %x\n",
+			    pbegy, pbegx);
 		}
+		wsyncdown(win);
 		retval = _wnoutrefresh(win, pbegy, pbegx, win->begy, win->begx,
 		    win->maxy, win->maxx);
 	} else
@@ -817,8 +819,13 @@ cleanup:
 		for (i = 0; i < curscr->maxy; i++) {
 			for (j = 0; j < curscr->maxx; j++)
 				__CTRACE(__CTRACE_REFRESH,
-				    "[%d,%d](%x,%x,%d,%x,%p)-(%x,%x,%d,%x,%p)\n",
+				    "[%d,%d](%x,%x,%d,%x,%p)-(%x,%x,%d,%x,%p)-(%x,%x,%d,%x,%p)\n",
 				    i, j,
+				    stdscr->alines[i]->line[j].ch,
+				    stdscr->alines[i]->line[j].attr,
+				    stdscr->alines[i]->line[j].wcols,
+				    stdscr->alines[i]->line[j].cflags,
+				    stdscr->alines[i]->line[j].nsp,
 				    curscr->alines[i]->line[j].ch,
 				    curscr->alines[i]->line[j].attr,
 				    curscr->alines[i]->line[j].wcols,
@@ -1373,9 +1380,8 @@ makech(int wy)
 			 *    match.
 			 *  - Or the character is marked background
 			 */
-			if ((clr_eol != NULL) && (wx >= nlsp) &&
-			    ((nsp->ch == blank.ch) &&
-			    (__do_color_init == 1 || nsp->attr == blank.attr)))
+			if ((clr_eol != NULL) && (wx >= nlsp)  &&
+			    (nsp->ch == blank.ch) && (nsp->attr == blank.attr))
 			{
 				/*
 				 * work out how to clear the line.  If:
@@ -1394,10 +1400,10 @@ makech(int wy)
 				      (! __using_color))) {
 					if (wlp->line[wx].attr & win->screen->nca) {
 						__unsetattr(0);
-					} else if (__using_color &&
-					    (__do_color_init == 1)) {
+					} else if (__using_color /*&&
+					    (__do_color_init == 1)*/) {
 						__set_color(curscr,
-						    curscr->wattr & __COLOR);
+						    blank.attr);
 					}
 					tputs(ce, 0, __cputchar);
 					_cursesi_screen->lx = wx + win->begx;
@@ -1741,7 +1747,7 @@ done:
 	if (buf[0].ch != curscr->bch) {
 		for (i = 0; i < BLANKSIZE; i++) {
 			buf[i].ch = curscr->bch;
-			buf[i].attr = 0;
+			buf[i].attr = curscr->battr;
 			buf[i].cflags = CA_BACKGROUND;
 		}
 	}
@@ -1751,7 +1757,7 @@ done:
 			buf[i].ch = curscr->bch;
 			if (_cursesi_copy_nsp(curscr->bnsp, &buf[i]) == ERR)
 				return;
-			buf[i].attr = 0;
+			buf[i].attr = curscr->battr;
 			buf[i].cflags = CA_BACKGROUND;
 			buf[i].wcols = curscr->wcols;
 		}
@@ -2102,6 +2108,11 @@ __unsetattr(int checkms)
 		tputs(exit_alt_charset_mode, 0, __cputchar);
 		curscr->wattr &= ~__ALTCHARSET;
 	}
+
+	/* Don't leave the screen with colour set (check against ms). */
+	if (__using_color && isms)
+		__unset_color(curscr);
+
 }
 
 /* compare two line segments */
