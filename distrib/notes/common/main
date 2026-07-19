@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.578.2.4 2026/07/19 15:34:00 martin Exp $
+.\"	$NetBSD: main,v 1.578.2.5 2026/07/19 15:41:04 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -507,7 +507,7 @@ would not exist.
 .Pp
 .
 .Nx
-\n[major].0 is dedicated to the memory of Alan P Barrett, who
+\n[major].0 is dedicated to the memories of Alan P Barrett, who
 passed away in May 2026, and Berndt Josef Wulf, who died
 already in June 2023 but we only noticed recently.
 .Pp
