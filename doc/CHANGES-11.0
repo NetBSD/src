@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.134 2026/07/19 10:22:28 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.135 2026/07/19 16:33:52 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -12909,6 +12909,171 @@ sys/sys/param.h					(manually edited)
 
 distrib/notes/common/main			(manually edited)
 
-	Dedication to former core member Alan P Barret
+	Dedication to former core member Alan P Barrett
+	and Berndt Josef Wulf
 	[martin]
+
+xsrc/external/mit/xorg-server/dist/ChangeLog         up to 1.1.1.34
+xsrc/external/mit/xorg-server/dist/configure         up to 1.27
+xsrc/external/mit/xorg-server/dist/configure.ac      up to 1.29
+xsrc/external/mit/xorg-server/dist/meson.build       up to 1.1.1.24
+xsrc/external/mit/xorg-server/dist/Xi/xichangecursor.c up to 1.5
+xsrc/external/mit/xorg-server/dist/dix/colormap.c    up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/dix/dixfonts.c    up to 1.10
+xsrc/external/mit/xorg-server/dist/fb/fbglyph.c      up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/glamor/glamor_font.c up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/glamor/glamor_glyphblt.c up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/glx/vndcmds.c     up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/glx/vndservermapping.c up to 1.1.1.3
+xsrc/external/mit/xorg-server/dist/hw/xquartz/GL/Makefile.am up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/hw/xquartz/GL/Makefile.in up to 1.1.1.20
+xsrc/external/mit/xorg-server/dist/hw/xquartz/GL/indirect.c up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/hw/xquartz/GL/meson.build up to 1.1.1.2
+xsrc/external/mit/xorg-server/dist/mi/miglblt.c      up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/xkb/maprules.c    up to 1.1.1.6
+xsrc/external/mit/xorg-server/include/dix-config.h   up to 1.60
+xsrc/external/mit/xorg-server/include/version-config.h up to 1.30
+xsrc/external/mit/xorg-server/include/xorg-config.h  up to 1.40
+xsrc/external/mit/xorg-server/include/xorg-server.h  up to 1.40
+share/mk/bsd.x11.mk				1.168
+
+	Import xorg-server 21.1.24.
+	[mrg, ticket #377]
+
+xsrc/external/mit/libXfont2/dist/test/gen_evil_pcf_bitmapscale.py up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test/gen_evil_pcf_encoding.py up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test/gen_evil_pcf_norepad.py up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test/gen_evil_pcf_props.py up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test/gen_evil_pcf_repad.py up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test/pcf-test-common.c up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test/pcf-test-common.h up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test/test-pcf-bitmapscale.c up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test/test-pcf-encoding.c up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test/test-pcf-norepad.c up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test/test-pcf-props.c up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test/test-pcf-repad.c up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/test-driver         up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/ChangeLog           up to 1.1.1.7
+xsrc/external/mit/libXfont2/dist/Makefile.am         up to 1.1.1.4
+xsrc/external/mit/libXfont2/dist/Makefile.in         up to 1.1.1.7
+xsrc/external/mit/libXfont2/dist/aclocal.m4          up to 1.1.1.7
+xsrc/external/mit/libXfont2/dist/compile             up to 1.1.1.4
+xsrc/external/mit/libXfont2/dist/config.guess        up to 1.1.1.5
+xsrc/external/mit/libXfont2/dist/config.h.in         up to 1.1.1.6
+xsrc/external/mit/libXfont2/dist/config.sub          up to 1.1.1.6
+xsrc/external/mit/libXfont2/dist/configure           up to 1.1.1.7
+xsrc/external/mit/libXfont2/dist/configure.ac        up to 1.1.1.7
+xsrc/external/mit/libXfont2/dist/depcomp             up to 1.1.1.4
+xsrc/external/mit/libXfont2/dist/install-sh          up to 1.1.1.5
+xsrc/external/mit/libXfont2/dist/ltmain.sh           up to 1.1.1.6
+xsrc/external/mit/libXfont2/dist/missing             up to 1.1.1.4
+xsrc/external/mit/libXfont2/dist/doc/Makefile.in     up to 1.1.1.7
+xsrc/external/mit/libXfont2/dist/include/X11/fonts/bdfint.h up to 1.1.1.2
+xsrc/external/mit/libXfont2/dist/m4/libtool.m4       up to 1.1.1.2
+xsrc/external/mit/libXfont2/dist/m4/ltoptions.m4     up to 1.1.1.2
+xsrc/external/mit/libXfont2/dist/m4/ltsugar.m4       up to 1.1.1.2
+xsrc/external/mit/libXfont2/dist/m4/ltversion.m4     up to 1.1.1.2
+xsrc/external/mit/libXfont2/dist/m4/lt~obsolete.m4   up to 1.1.1.2
+xsrc/external/mit/libXfont2/dist/src/FreeType/ftenc.c up to 1.1.1.3
+xsrc/external/mit/libXfont2/dist/src/bitmap/bdfread.c up to 1.1.1.4
+xsrc/external/mit/libXfont2/dist/src/bitmap/pcfread.c up to 1.1.1.5
+xsrc/external/mit/libXfont2/dist/src/builtins/render.c up to 1.1.1.2
+xsrc/external/mit/libXfont2/dist/src/fc/fsio.c       up to 1.1.1.3
+xsrc/external/mit/libXfont2/dist/test/utils/font-test-utils.c up to 1.1.1.4
+
+	Import libXfont2 2.0.8.
+	[mrg, ticket #378]
+
+sys/kern/kern_event.c				1.153
+
+	kqueue(2): PR 60436: fix null pointer deref under memory pressure.
+	[riastradh, ticket #379]
+
+sys/netinet/tcp_subr.c				1.300
+sys/netinet/tcp_timer.h				1.31
+
+	tcp: set initial RTO to 1s per RFC 6298.
+	[kbowling, ticket #380]
+
+distrib/sets/lists/debug/mi			1.516
+distrib/sets/lists/tests/mi			1.1424
+sys/arch/amd64/amd64/machdep.c			1.380
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.143
+sys/arch/amd64/include/mcontext.h		1.25
+sys/arch/i386/i386/machdep.c			1.852
+sys/arch/i386/include/mcontext.h		1.20
+sys/arch/x86/include/cpu_extended_state.h	1.20
+sys/arch/x86/include/fpu.h			1.24
+sys/arch/x86/include/specialreg.h		1.222
+sys/arch/x86/x86/fpu.c				1.95
+sys/arch/x86/x86/identcpu.c			1.140
+sys/arch/x86/x86/identcpu.c			1.141
+tests/kernel/Makefile				1.98
+tests/kernel/arch/x86/sig_fpu.c			1.1
+tests/kernel/arch/x86/sig_fpu.h			1.1
+tests/kernel/t_signal_and_fpu.c			1.1,1.2,1.3
+
+	x86: PR 60426: avoid trashing extended CPU state like AVX on
+	signal delivery.
+	[riastradh, ticket #381]
+
+external/bsd/unbound/etc/rc.d/unbound		1.4
+
+	/etc/rc.d/unbound: PR 60447:: fix order of migration and
+	trust anchor setup.
+	[riastradh, ticket #382]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.136
+
+	xbd(4): PR 60448: fix bad assertion on suspend.
+	[riastradh, ticket #383]
+
+sys/arch/sparc/sparc/iommu.c			1.103
+
+	sparc: PR 60453: add support for bus_dmamap_load_mbuf().
+	[thorpej, ticket #384]
+
+sys/arch/sparc/conf/GENERIC			1.277
+sys/dev/sbus/if_gem_sbus.c			1.16
+
+	gem(4): PR 60453: adapt the SBus config register for 32-bit SPARC
+	systems and enable GEM Ethernet in the GENERIC SPARC configuration.
+	[thorpej, ticket #385]
+
+distrib/sets/lists/debug/shl.mi			1.410
+distrib/sets/lists/tests/shl.mi			1.18
+libexec/ld.elf_so/reloc.c			1.122
+libexec/ld.elf_so/rtld.c			1.227
+libexec/ld.elf_so/rtld.h			1.157
+libexec/ld.elf_so/xmalloc.c			1.26
+tests/libexec/ld.elf_so/Makefile		1.36
+tests/libexec/ld.elf_so/helper_recurdso/Makefile 1.1
+tests/libexec/ld.elf_so/helper_recurdso/h_helper_recurdso.c 1.1
+tests/libexec/ld.elf_so/helper_recurdso2/Makefile 1.1
+tests/libexec/ld.elf_so/helper_recurdso2/h_helper_recurdso2.c 1.1
+tests/libexec/ld.elf_so/t_dlclose_thread.c	1.4-1.6
+
+	ld.elf_so(1): PR 59751: fix deadlock in recursive
+	dlopen/dlclose.
+	[riastradh, ticket #386]
+
+external/public-domain/tz/dist/Makefile         up to 1.6
+external/public-domain/tz/dist/NEWS             up to 1.8
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.46
+external/public-domain/tz/dist/africa           up to 1.4
+external/public-domain/tz/dist/australasia      up to 1.13
+external/public-domain/tz/dist/europe           up to 1.6
+external/public-domain/tz/dist/leap-seconds.list up to 1.12
+external/public-domain/tz/dist/leapseconds      up to 1.12
+external/public-domain/tz/dist/northamerica     up to 1.7
+external/public-domain/tz/dist/theory.html      up to 1.6
+external/public-domain/tz/dist/version          up to 1.19
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.12
+external/public-domain/tz/dist/zone.tab         up to 1.6
+external/public-domain/tz/dist/zone1970.tab     up to 1.7
+external/public-domain/tz/dist/zonenow.tab      up to 1.8
+doc/3RDPARTY					(apply patch)
+
+	Import tzdata2026cgtz.
+	[kre, ticket #387]
 
