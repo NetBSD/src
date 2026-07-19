@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.30 2019/08/06 15:48:18 riastradh Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.30.34.1 2026/07/19 15:51:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #define	TCPTV_MSL	( 30*PR_SLOWHZ)		/* max seg lifetime (hah!) */
 #define	TCPTV_SRTTBASE	0			/* base roundtrip time;
 						   if 0, no idea yet */
-#define	TCPTV_SRTTDFLT	(  3*PR_SLOWHZ)		/* assumed RTT if no info */
+#define	TCPTV_SRTTDFLT	(  1*PR_SLOWHZ)		/* initial RTO; RFC 6298 (2.1) */
 
 #define	TCPTV_PERSMIN	(  5*PR_SLOWHZ)		/* retransmit persistance */
 #define	TCPTV_PERSMAX	( 60*PR_SLOWHZ)		/* maximum persist interval */
