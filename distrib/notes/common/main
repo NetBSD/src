@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.578.2.1 2026/07/19 10:19:59 martin Exp $
+.\"	$NetBSD: main,v 1.578.2.2 2026/07/19 15:13:46 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -513,7 +513,7 @@ passed away in May 2026.
 Alan joined the NetBSD project in 2005 and was a member of the
 core team from 2011 to 2016.
 .Pp
-Over the years he commited nearly 1.200 changes to NetBSD,
+Over the years he commited nearly 1200 changes to NetBSD,
 all over the source tree.
 .Pp
 He was smart, friendly and willing to share his knowledge.
