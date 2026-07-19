@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.578.2.2 2026/07/19 15:13:46 martin Exp $
+.\"	$NetBSD: main,v 1.578.2.3 2026/07/19 15:32:25 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -508,16 +508,19 @@ would not exist.
 .
 .Nx
 \n[major].0 is dedicated to the memory of Alan P Barret, who
-passed away in May 2026.
+passed away in May 2026, and Berndt Josef Wulf, who died
+already in June 2023 but we only noticed recently.
 .Pp
 Alan joined the NetBSD project in 2005 and was a member of the
 core team from 2011 to 2016.
-.Pp
 Over the years he commited nearly 1200 changes to NetBSD,
 all over the source tree.
 .Pp
-He was smart, friendly and willing to share his knowledge.
-The project lost an excellent contributor.
+Berndt joined in 1999 an made more than 100 changes both
+to pkgsrc and the base system.
+.Pp
+Both were smart, friendly and willing to share their knowledge.
+The project lost two excellent contributors.
 .Pp
 .\} \"  \n[FOR_RELEASE]
 .ie \n[RELEASE_BRANCH] .Ss Changes Between The NetBSD \n[oldvers] \
