@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.189 2026/07/19 14:36:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.190 2026/07/19 22:51:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.189 2026/07/19 14:36:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190 2026/07/19 22:51:02 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3535,7 +3535,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	set_pte(tmp_vpages[1], pte);
 	copypage((char *) tmp_vpages[0], (char *) tmp_vpages[1]);
 	set_pte(tmp_vpages[0], PG_INVAL);
-	set_pte(tmp_vpages[0], PG_INVAL);
+	set_pte(tmp_vpages[1], PG_INVAL);
 
 #ifdef DIAGNOSTIC
 	tmp_vpages_inuse--;
