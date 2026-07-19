@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.14 2022/09/25 18:03:04 thorpej Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.14.12.1 2026/07/19 16:08:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.14 2022/09/25 18:03:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.14.12.1 2026/07/19 16:08:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ gemattach_sbus(device_t parent, device_t self, void *aux)
 	struct gem_sbus_softc *gsc = device_private(self);
 	struct gem_softc *sc = &gsc->gsc_gem;
 	uint8_t enaddr[ETHER_ADDR_LEN];
+	uint32_t sbus_cfg;
 
 	sc->sc_dev = self;
 
@@ -134,8 +135,14 @@ gemattach_sbus(device_t parent, device_t self, void *aux)
 	 */
 	(void) bus_space_read_4(sa->sa_bustag, sc->sc_h2, GEM_SBUS_RESET);
 	delay(100);
-	bus_space_write_4(sa->sa_bustag, sc->sc_h2, GEM_SBUS_CONFIG,
-	    GEM_SBUS_CFG_BSIZE128|GEM_SBUS_CFG_PARITY|GEM_SBUS_CFG_BMODE64);
+
+#if defined(__sparc64__)
+	sbus_cfg = GEM_SBUS_CFG_BSIZE128 | GEM_SBUS_CFG_PARITY |
+	    GEM_SBUS_CFG_BMODE64;
+#else
+	sbus_cfg = GEM_SBUS_CFG_BSIZE64;
+#endif
+	bus_space_write_4(sa->sa_bustag, sc->sc_h2, GEM_SBUS_CONFIG, sbus_cfg);
 	sc->sc_chiprev = bus_space_read_4(sa->sa_bustag, sc->sc_h2,
 	    GEM_SBUS_REVISION);
 
