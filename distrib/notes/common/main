@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.578 2025/06/14 08:42:30 gson Exp $
+.\"	$NetBSD: main,v 1.578.2.1 2026/07/19 10:19:59 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -502,6 +502,24 @@ possible,
 .Nx
 would not exist.
 .
+.if \n[FOR_RELEASE] \{\
+.Ss "Dedication"
+.Pp
+.
+.Nx
+\n[major].0 is dedicated to the memory of Alan P Barret, who
+passed away in May 2026.
+.Pp
+Alan joined the NetBSD project in 2005 and was a member of the
+core team from 2011 to 2016.
+.Pp
+Over the years he commited nearly 1.200 changes to NetBSD,
+all over the source tree.
+.Pp
+He was smart, friendly and willing to share his knowledge.
+The project lost an excellent contributor.
+.Pp
+.\} \"  \n[FOR_RELEASE]
 .ie \n[RELEASE_BRANCH] .Ss Changes Between The NetBSD \n[oldvers] \
 and \n[major] Releases
 .el .Ss Changes Between The NetBSD \n[oldvers] and \
