@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.128 2026/07/19 16:03:58 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.129 2026/07/19 16:16:04 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.128 2026/07/19 16:03:58 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.129 2026/07/19 16:16:04 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -587,8 +587,8 @@ jobscmd(int argc, char **argv)
 
 
 /*
- * Print a list of jobs.  If "change" is nonzero, only print jobs whose
- * statuses have changed since the last call to showjobs.
+ * Print a list of jobs.  If mode includes SHOW_CHANGED, only print jobs
+ * whose statuses have changed since the last call to showjobs.
  *
  * If the shell is interrupted in the process of creating a job, the
  * result may be a job structure containing zero processes.  Such structures
