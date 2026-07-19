@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 2026/07/19 14:36:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63 2026/07/19 17:09:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2026/07/19 14:36:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2026/07/19 17:09:13 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -195,8 +195,6 @@ int pmap_db_watchpmeg = -1;
  *
  * For simplicity, this interface retains the variables
  * that were used in the old interface (without NONCONTIG).
- * These are set in pmap_bootstrap() and used in
- * pmap_next_page().
  */
 vaddr_t virtual_avail, virtual_end;
 paddr_t avail_start, avail_end;
