@@ -1,4 +1,4 @@
-#	$NetBSD: driver.mk,v 1.8.2.1 2026/07/05 19:54:10 martin Exp $
+#	$NetBSD: driver.mk,v 1.8.2.2 2026/07/20 09:07:59 martin Exp $
 
 # stuff both dri and gallium drivers need.
 
@@ -64,6 +64,7 @@ CPPFLAGS.UTILdebug.c+=		-I${X11SRCDIR.Mesa}/src/util \
 				-I${X11SRCDIR.Mesa}/src/gallium/include
 CPPFLAGS.format_srgb.c+=	-I${X11SRCDIR.Mesa}/src/util
 CPPFLAGS.u_hash_table.c+=	-I${X11SRCDIR.Mesa}/src/gallium/auxiliary
+CPPFLAGS.strtod.c+=		-D_GNU_SOURCE -DHAVE_STRTOD_L
 
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/util/debug.c UTILdebug.c
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/util/log.c UTILlog.c
