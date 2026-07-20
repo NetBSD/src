@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.28 2026/07/01 19:29:57 riastradh Exp $	 */
+/*	$NetBSD: search.c,v 1.29 2026/07/20 01:49:48 riastradh Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: search.c,v 1.28 2026/07/01 19:29:57 riastradh Exp $");
+__RCSID("$NetBSD: search.c,v 1.29 2026/07/20 01:49:48 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -102,7 +102,7 @@ _rtld_search_library_path(const char *name, size_t namelen,
 		path->sp_path = xstrdup(pathname);
 		path->sp_next = _rtld_invalid_paths;
 		_rtld_invalid_paths = path;
-	} else {
+	} else if (__predict_true(obj != OBJ_ERR)) {
 		assert(obj->refcount > 0);
 	}
 	return obj;
