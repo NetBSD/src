@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.92 2026/07/06 16:21:48 thorpej Exp $
+#	$NetBSD: files.sun3,v 1.93 2026/07/20 13:45:02 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -18,7 +18,7 @@ file arch/sun3/sun3/enable.c			_sun3_
 file arch/sun3/sun3/locore2.c			_sun3_
 file arch/sun3/sun3/machdep.c			_sun3_
 file arch/sun3/sun3/mm_md.c			_sun3_
-file arch/sun3/sun3/pmap.c			_sun3_
+file arch/sun68k/sun68k/pmap_sunmmu.c		_sun3_
 
 # Standard stuff (Sun3X-specific)
 file arch/sun3/sun3x/bus_subr.c			_sun3x_
