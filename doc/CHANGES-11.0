@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.135 2026/07/19 16:33:52 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.136 2026/07/20 09:23:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -13076,4 +13076,30 @@ doc/3RDPARTY					(apply patch)
 
 	Import tzdata2026cgtz.
 	[kre, ticket #387]
+
+lib/libc/locale/iswctype_mb.c			1.15
+lib/libc/locale/runetable.c			1.30
+
+	libc: PR 59067: locale fixes (wctrans).
+	[kre, ticket #388]
+
+usr.bin/xinstall/xinstall.c			1.131
+
+	install(1): PR 58577: fix a few obscure issues.
+	[kre, ticket #389]
+
+xsrc/external/mit/MesaLib.old/dist/src/util/strtod.c	1.2
+xsrc/external/mit/MesaLib/dist/src/util/strtod.c	1.2
+external/mit/xorg/lib/driver.mk			1.10
+external/mit/xorg/lib/driver.old.mk		1.3
+
+	mesa: PR 59858: make Mesa parse floats in the "C" locale
+	when parsing its config.
+	[kre, ticket #390]
+
+libexec/ld.elf_so/rtld.c			1.228
+libexec/ld.elf_so/xmalloc.c			1.27
+
+	ld.elf_so(1): PR 59751: fix assertions and debug builds.
+	[riastradh, ticket #391]
 
