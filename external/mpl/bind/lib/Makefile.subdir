@@ -1,0 +1,11 @@
+#	$NetBSD: Makefile.subdir,v 1.1 2026/07/20 13:58:32 riastradh Exp $
+
+SUBDIR+=	${BINDLIB}libisc
+SUBDIR+=	.WAIT
+SUBDIR+=	${BINDLIB}libdns
+SUBDIR+=	${BINDLIB}libisccc
+SUBDIR+=	.WAIT
+SUBDIR+=	${BINDLIB}libisccfg
+SUBDIR+=	${BINDLIB}libns
+SUBDIR+=	.WAIT
+SUBDIR+=	${BINDLIB}plugins
