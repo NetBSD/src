@@ -1,4 +1,4 @@
-/* $NetBSD: iswctype_mb.c,v 1.14 2024/06/07 13:53:23 riastradh Exp $ */
+/* $NetBSD: iswctype_mb.c,v 1.14.4.1 2026/07/20 08:52:03 martin Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_mb.c,v 1.14 2024/06/07 13:53:23 riastradh Exp $");
+__RCSID("$NetBSD: iswctype_mb.c,v 1.14.4.1 2026/07/20 08:52:03 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -129,7 +129,7 @@ wctrans_l(const char *charmap, locale_t loc)
 	for (i = 0; i < _WCTRANS_NINDEXES; ++i) {
 		_DIAGASSERT(rl->rl_wctrans[i].te_name != NULL);
 		if (!strcmp(rl->rl_wctrans[i].te_name, charmap))
-			return (wctrans_t)__UNCONST(&rl->rl_wctype[i]);
+			return (wctrans_t)__UNCONST(&rl->rl_wctrans[i]);
 	}
 	return (wctrans_t)NULL;
 }
