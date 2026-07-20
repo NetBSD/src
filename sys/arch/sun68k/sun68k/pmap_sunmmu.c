@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_sunmmu.c,v 1.2 2026/07/20 13:39:56 thorpej Exp $	*/
+/*	$NetBSD: pmap_sunmmu.c,v 1.3 2026/07/20 14:38:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.2 2026/07/20 13:39:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.3 2026/07/20 14:38:29 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -154,7 +154,15 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.2 2026/07/20 13:39:56 thorpej Exp 
 #define db_printf printf
 #endif
 
-#ifdef __mc68010__	/* This will serve as a proxy for "is Sun-2" */
+#ifdef __mc68010__
+#define	IS_SUN2		1
+#define	IS_SUN3		0
+#else
+#define	IS_SUN2		0
+#define	IS_SUN3		1
+#endif /* __mc68010__ */
+
+#if IS_SUN2
 
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/machdep.h>
@@ -189,7 +197,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.2 2026/07/20 13:39:56 thorpej Exp 
  */
 #define	BADALIAS(a1, a2)	(0)
 
-#else
+#else /* IS_SUN3 */
 
 #include <sun3/sun3/control.h>
 #include <sun3/sun3/machdep.h>
@@ -234,7 +242,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.2 2026/07/20 13:39:56 thorpej Exp 
  */
 #define	BADALIAS(a1, a2)	(((int)(a1) ^ (int)(a2)) & SEGOFSET)
 
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 
 /* Verify this correspondence between definitions. */
 #if	(PMAP_OBIO << PG_MOD_SHIFT) != PGT_OBIO
@@ -284,7 +292,7 @@ int pmap_db_watchpmeg = -1;
 vaddr_t virtual_avail, virtual_end;
 paddr_t avail_start, avail_end;
 
-#ifndef __mc68010__
+#if IS_SUN3
 /* used to skip the Sun3/50 video RAM */
 static vaddr_t hole_start, hole_size;
 #endif
@@ -297,13 +305,13 @@ static vaddr_t temp_seg_va;
  * to be used in copy/zero operations.
  */
 vaddr_t tmp_vpages[2] = {
-#ifdef __mc68010__
+#if IS_SUN2
 	PAGE_SIZE * 8,
 	PAGE_SIZE * 9
 #else
 	SUN3_MONSHORTSEG,
 	SUN3_MONSHORTSEG + PAGE_SIZE
-#endif /* __mc68010__ */
+#endif
 };
 int tmp_vpages_inuse;
 
@@ -366,7 +374,7 @@ static struct pv_entry *pv_free_list;
 static u_char *pv_flags_tbl;
 
 /* These are as in the MMU but shifted by PV_SHIFT. */
-#ifdef __mc68010__
+#if IS_SUN2
 #define	PV_SHIFT	20
 #else
 #define	PV_SHIFT	24
@@ -389,20 +397,20 @@ typedef struct context_state *context_t;
 #define INVALID_CONTEXT -1	/* impossible value */
 #define EMPTY_CONTEXT 0
 #define FIRST_CONTEXT 1
-#ifdef __mc68010__
+#if IS_SUN2
 #define KERNEL_CONTEXT 0
 #define	kernel_context_enter()	int saved_ctx = get_context()
 #define	kernel_context_exit()	set_context(saved_ctx)
 #define	set_kernel_segmap(v, s)	set_segmap((v), (s))
 #define	set_kernel_context()	set_context(KERNEL_CONTEXT)
 #define	has_context(pmap)	(((pmap)->pm_ctxnum != EMPTY_CONTEXT) == ((pmap) != kernel_pmap))
-#else
+#else /* IS_SUN3 */
 #define	kernel_context_enter()	__nothing
 #define	kernel_context_exit()	__nothing
 #define	set_kernel_segmap(v, s)	set_segmap_allctx((v), (s))
 #define	set_kernel_context()	__nothing
 #define	has_context(pmap)	((pmap)->pm_ctxnum != EMPTY_CONTEXT)
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 
 TAILQ_HEAD(context_tailq, context_state)
 	context_free_queue, context_active_queue;
@@ -1610,7 +1618,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 */
 	phys_seg_list[0].ps_start = 0;
 
-#ifdef __mc68010__
+#if IS_SUN2
 	nextpa = nextva;
 
 	phys_seg_list[0].ps_end = m68k_trunc_page(prom_memsize());
@@ -1628,7 +1636,7 @@ pmap_bootstrap(vaddr_t nextva)
 		/* PROM version 1 or later. */
 		phys_seg_list[0].ps_end = *rvec->memoryAvail;
 	}
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 
 	/*
 	 * Report the actual amount of physical memory,
@@ -1636,7 +1644,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 */
 	physmem = (btoc(phys_seg_list[0].ps_end) + 0xF) & ~0xF;
 
-#ifndef __mc68010__
+#if IS_SUN3
 	/*
 	 * On the Sun3/50, the video frame buffer is located at
 	 * physical address 1MB so we must step over it.
@@ -1652,7 +1660,7 @@ pmap_bootstrap(vaddr_t nextva)
 		phys_seg_list[1].ps_end = phys_seg_list[0].ps_end;
 		phys_seg_list[0].ps_end = hole_start;
 	}
-#endif /* ! __mc68010__ */
+#endif /* IS_SUN3 */
 
 	/*
 	 * Done allocating PAGES of virtual space, so
@@ -1671,7 +1679,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 */
 	pmeg_init();
 
-#ifdef __mc68010__
+#if IS_SUN2
 	va = KERNBASE;
 #else
 	/*
@@ -1680,7 +1688,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 */
 	for (va = 0; va < KERNBASE3; va += NBSG)
 		set_segmap(va, SEGINV);
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 
 	/*
 	 * Reserve PMEGS for kernel text/data/bss
@@ -1704,7 +1712,7 @@ pmap_bootstrap(vaddr_t nextva)
 	for ( ; va < virtual_end; va += NBSG)
 		set_segmap(va, SEGINV);
 
-#ifdef __mc68010__
+#if IS_SUN2
 	/*
 	 * Reserve PMEGs used by the PROM monitor (device mappings).
 	 * Free up any pmegs in this range which have no mappings.
@@ -1718,7 +1726,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * VA range: [0x00F00000 .. 0x00FE0000]
 	 */
 	pmeg_mon_init(SUN2_MONEND, SUN2_MONEND + DVMA_MAP_SIZE, false);
-#else
+#else /* IS_SUN3 */
 	/*
 	 * Reserve PMEGs used by the PROM monitor (device mappings).
 	 * Free up any pmegs in this range which have no mappings.
@@ -1745,7 +1753,7 @@ pmap_bootstrap(vaddr_t nextva)
 	pmeg_reserve(sme);
 	for ( ; va < eva; va += PAGE_SIZE)
 		set_pte(va, PG_INVAL);
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 
 	/*
 	 * Done reserving PMEGs and/or clearing out mappings.
@@ -1756,7 +1764,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * mapped with everything non-cached...
 	 */
 
-#ifdef __mc68010__
+#if IS_SUN2
 	/*
 	 * On a Sun2, the boot loader loads the kernel exactly where
 	 * it is linked, at physical/virtual 0x6000 (KERNBASE).  This
@@ -1808,7 +1816,7 @@ pmap_bootstrap(vaddr_t nextva)
 		pte |= (PG_SYSTEM | PG_WRITE);
 		set_pte(va, pte);
 	}
-#else /* ! __mc68010__ */
+#else /* IS_SUN3 */
 	/*
 	 * Map the message buffer page at a constant location
 	 * (physical address zero) so its contents will be
@@ -1827,7 +1835,7 @@ pmap_bootstrap(vaddr_t nextva)
 	pte |= (PG_SYSTEM | PG_WRITE);
 	set_pte(va, pte);
 	va += PAGE_SIZE;
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 
 	/*
 	 * Next is the kernel text.
@@ -1864,13 +1872,13 @@ pmap_bootstrap(vaddr_t nextva)
 	/*
 	 * Sanity checks for context initialization below...
 	 */
-#ifndef __mc68010__
+#if IS_SUN3
 	/* Note: PROM setcxsegmap function needs sfc=dfc=FC_CONTROL */
 	if ((getsfc() != FC_CONTROL) || (getdfc() != FC_CONTROL)) {
 		prom_printf("pmap_bootstrap: bad dfc or sfc\n");
 		prom_abort();
 	}
-#endif /* __mc68010__ */
+#endif
 	/* Near the beginning of locore.s we set context zero. */
 	if (get_context() != 0) {
 		prom_printf("pmap_bootstrap: not in context zero?\n");
@@ -1878,7 +1886,7 @@ pmap_bootstrap(vaddr_t nextva)
 	}
 #endif /* DIAGNOSTIC */
 
-#ifdef __mc68010__
+#if IS_SUN2
 	/*
 	 * Initialize all of the other contexts.
 	 */
@@ -1889,7 +1897,7 @@ pmap_bootstrap(vaddr_t nextva)
 		}
 	}
 	set_context(KERNEL_CONTEXT);
-#else /* ! __mc68010__ */
+#else /* IS_SUN3 */
 	/*
 	 * Duplicate all mappings in the current context into
 	 * every other context.  We have to let the PROM do the
@@ -1906,7 +1914,7 @@ pmap_bootstrap(vaddr_t nextva)
 			(*rvec->setcxsegmap)(i, va, sme);
 		}
 	}
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 
 	/*
 	 * Reserve a segment for the kernel to use to access a pmeg
@@ -2927,7 +2935,7 @@ pmap_is_referenced(struct vm_page *pg)
 static inline void
 _pmap_switch(pmap_t pmap)
 {
-#ifdef __mc68010__
+#if IS_SUN2
 	/*
 	 * Since we maintain completely separate user and kernel address
 	 * spaces, whenever we switch to a process, we need to make sure
@@ -2941,7 +2949,7 @@ _pmap_switch(pmap_t pmap)
 			       pmap, pmap->pm_ctxnum);
 #endif
 	}
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 	set_context(pmap->pm_ctxnum);
 	ICIA();
 }
@@ -3253,7 +3261,7 @@ pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 #ifdef	DIAGNOSTIC
 	if (
-#ifndef __mc68010__
+#if IS_SUN3
 	    pmap != kernel_pmap &&
 #endif
 	    pmap->pm_ctxnum != get_context()) {
@@ -3348,7 +3356,7 @@ pmap_protect_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	 * (On Sun-2, we have to use the temporary segment.)
 	 */
 	old_ctx = get_context();
-#ifdef __mc68010__
+#if IS_SUN2
 	set_context(KERNEL_CONTEXT);
 	set_segmap(temp_seg_va, sme);
 #ifdef DIAGNOSTIC
@@ -3358,10 +3366,10 @@ pmap_protect_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 #endif
 	sva += (temp_seg_va - segva);
 	eva += (temp_seg_va - segva);
-#else
+#else /* IS_SUN3 */
 	set_context(EMPTY_CONTEXT);
 	set_segmap(segva, sme);
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 
 	/* Remove write permission in the given range. */
 	for (pgva = sva; pgva < eva; pgva += PAGE_SIZE) {
@@ -3382,14 +3390,14 @@ pmap_protect_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	 *
 	 * (On Sun-2, release the temporary segment.)
 	 */
-#ifdef __mc68010__
+#if IS_SUN2
 	set_segmap(temp_seg_va, SEGINV);
 #ifdef DIAGNOSTIC
 	temp_seg_inuse--;
 #endif
-#else
+#else /* IS_SUN3 */
 	set_segmap(segva, SEGINV);
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 	set_context(old_ctx);
 }
 
@@ -3501,7 +3509,7 @@ pmap_remove_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 #ifdef	DIAGNOSTIC
 	if (
-#ifndef __mc68010__
+#if IS_SUN3
 	    pmap != kernel_pmap &&
 #endif
 	    pmap->pm_ctxnum != get_context()) {
@@ -3650,7 +3658,7 @@ pmap_remove_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	 * (On Sun-2, use the temporary segment.)
 	 */
 	old_ctx = get_context();
-#ifdef __mc68010__
+#if IS_SUN2
 	set_context(KERNEL_CONTEXT);
 #ifdef DIAGNOSTIC
 	if (temp_seg_inuse)
@@ -3660,10 +3668,10 @@ pmap_remove_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	set_segmap(temp_seg_va, sme);
 	sva += (temp_seg_va - segva);
 	eva += (temp_seg_va - segva);
-#else
+#else /* IS_SUN3 */
 	set_context(EMPTY_CONTEXT);
 	set_segmap(segva, sme);
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 
 	/* Invalidate the PTEs in the given range. */
 	for (pgva = sva; pgva < eva; pgva += PAGE_SIZE) {
@@ -3673,7 +3681,7 @@ pmap_remove_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			if (IS_MAIN_MEM(pte)) {
 				save_modref_bits(pte);
 				pv_unlink(pmap, pte,
-#ifdef __mc68010__
+#if IS_SUN2
 					  pgva - (temp_seg_va - segva)
 #else
 					  pgva
@@ -3700,14 +3708,14 @@ pmap_remove_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	 *
 	 * (On Sun-2, release the temporary segment.)
 	 */
-#ifdef __mc68010__
+#if IS_SUN2
 	set_segmap(temp_seg_va, SEGINV);
 #ifdef DIAGNOSTIC
 	temp_seg_inuse--;
 #endif
-#else
+#else /* IS_SUN3 */
 	set_segmap(segva, SEGINV);
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 	set_context(old_ctx);
 
 	KASSERT(pmegp->pmeg_vpages >= 0);
@@ -3910,7 +3918,7 @@ pmap_kcore_hdr(struct sun3_kcore_hdr *sh)
 	kernel_context_enter();
 
 	/* Copy the kernel segmap (256 bytes). */
-#ifdef __mc68010__
+#if IS_SUN2
 	va = KERNBASE;
 #else
 	va = KERNBASE3;
@@ -3936,14 +3944,14 @@ pmap_get_pagemap(int *pt, int off)
 	vaddr_t va, va_end;
 	int sme, sme_end;	/* SegMap Entry numbers */
 
-#ifdef __mc68010__
+#if IS_SUN2
 	sme = (off / (NPAGSEG * sizeof(*pt)));		/* PMEG to start on */
 	sme_end =
 	    sme + (PAGE_SIZE / (NPAGSEG * sizeof(*pt)));/* where to stop */
 #else
 	sme = (off >> 6);				/* PMEG to start on */
 	sme_end = sme + 128;				/* where to stop */
-#endif /* __mc68010__ */
+#endif /* IS_SUN2 */
 	va_end = temp_seg_va + NBSG;
 
 	kernel_context_enter();
@@ -4035,7 +4043,7 @@ set_pte_pmeg(int pmeg_num, int page_num, int pte)
 void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
-#ifndef __mc68010__
+#if IS_SUN3
 	(void)cachectl1(0x80000004, va, len, p);
 #endif
 }
