@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_sunmmu.c,v 1.1 2026/07/19 23:19:59 thorpej Exp $	*/
+/*	$NetBSD: pmap_sunmmu.c,v 1.2 2026/07/20 13:39:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.1 2026/07/19 23:19:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.2 2026/07/20 13:39:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1588,17 +1588,13 @@ pmap_common_init(pmap_t pmap)
 paddr_t
 pmap_bootstrap(vaddr_t nextva)
 {
-	struct sunromvec *rvec;
 	vaddr_t va, eva;
 	int i, pte, sme;
 	extern char etext[];
 	extern void *msgbufaddr;
 	paddr_t nextpa;
 
-	/* XXX Merge Sun2 changes */
-
 	nextva = m68k_round_page(nextva);
-	rvec = romVectorPtr;
 
 	/* Steal some special-purpose, already mapped pages? */
 
@@ -1611,11 +1607,18 @@ pmap_bootstrap(vaddr_t nextva)
 
 	/*
 	 * Determine the range of physical memory available.
-	 * Physical memory at zero was remapped to KERNBASE.
 	 */
 	phys_seg_list[0].ps_start = 0;
+
+#ifdef __mc68010__
+	nextpa = nextva;
+
+	phys_seg_list[0].ps_end = m68k_trunc_page(prom_memsize());
+#else
+	/* Physical memory at zero was remapped to KERNBASE. */
 	nextpa = nextva - KERNBASE3;
 
+	struct sunromvec *rvec = romVectorPtr;
 	if (rvec->romvecVersion < 1) {
 		prom_printf("Warning: ancient PROM version=%d\n",
 			   rvec->romvecVersion);
@@ -1625,6 +1628,7 @@ pmap_bootstrap(vaddr_t nextva)
 		/* PROM version 1 or later. */
 		phys_seg_list[0].ps_end = *rvec->memoryAvail;
 	}
+#endif /* __mc68010__ */
 
 	/*
 	 * Report the actual amount of physical memory,
@@ -1632,6 +1636,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 */
 	physmem = (btoc(phys_seg_list[0].ps_end) + 0xF) & ~0xF;
 
+#ifndef __mc68010__
 	/*
 	 * On the Sun3/50, the video frame buffer is located at
 	 * physical address 1MB so we must step over it.
@@ -1647,6 +1652,7 @@ pmap_bootstrap(vaddr_t nextva)
 		phys_seg_list[1].ps_end = phys_seg_list[0].ps_end;
 		phys_seg_list[0].ps_end = hole_start;
 	}
+#endif /* ! __mc68010__ */
 
 	/*
 	 * Done allocating PAGES of virtual space, so
@@ -1665,12 +1671,16 @@ pmap_bootstrap(vaddr_t nextva)
 	 */
 	pmeg_init();
 
+#ifdef __mc68010__
+	va = KERNBASE;
+#else
 	/*
 	 * Unmap user virtual segments.
 	 * VA range: [0 .. KERNBASE]
 	 */
 	for (va = 0; va < KERNBASE3; va += NBSG)
 		set_segmap(va, SEGINV);
+#endif /* __mc68010__ */
 
 	/*
 	 * Reserve PMEGS for kernel text/data/bss
@@ -1694,6 +1704,21 @@ pmap_bootstrap(vaddr_t nextva)
 	for ( ; va < virtual_end; va += NBSG)
 		set_segmap(va, SEGINV);
 
+#ifdef __mc68010__
+	/*
+	 * Reserve PMEGs used by the PROM monitor (device mappings).
+	 * Free up any pmegs in this range which have no mappings.
+	 * VA range: [0x00E00000 .. 0x00F00000]
+	 */
+	pmeg_mon_init(SUN2_MONSTART, SUN2_MONEND, true);
+
+	/*
+	 * Unmap any pmegs left in DVMA space by the PROM.
+	 * DO NOT kill the last one! (owned by the PROM!)
+	 * VA range: [0x00F00000 .. 0x00FE0000]
+	 */
+	pmeg_mon_init(SUN2_MONEND, SUN2_MONEND + DVMA_MAP_SIZE, false);
+#else
 	/*
 	 * Reserve PMEGs used by the PROM monitor (device mappings).
 	 * Free up any pmegs in this range which have no mappings.
@@ -1720,6 +1745,7 @@ pmap_bootstrap(vaddr_t nextva)
 	pmeg_reserve(sme);
 	for ( ; va < eva; va += PAGE_SIZE)
 		set_pte(va, PG_INVAL);
+#endif /* __mc68010__ */
 
 	/*
 	 * Done reserving PMEGs and/or clearing out mappings.
@@ -1730,6 +1756,59 @@ pmap_bootstrap(vaddr_t nextva)
 	 * mapped with everything non-cached...
 	 */
 
+#ifdef __mc68010__
+	/*
+	 * On a Sun2, the boot loader loads the kernel exactly where
+	 * it is linked, at physical/virtual 0x6000 (KERNBASE).  This
+	 * means there are twelve physical/virtual pages before the
+	 * kernel text begins.
+	 */
+	va = 0;
+
+	/*
+	 * Physical/virtual pages zero through three are used by the
+	 * PROM.  prom_init has already saved the PTEs, but we don't
+	 * want to unmap the pages until we've installed our own
+	 * vector table - just in case something happens before then
+	 * and we drop into the PROM.
+	 */
+	eva = va + PAGE_SIZE * 4;
+	va = eva;
+
+	/*
+	 * We use pages four through seven for the msgbuf.
+	 */
+	eva = va + PAGE_SIZE * 4;
+	msgbufaddr = (void *)va;
+	for (; va < eva; va += PAGE_SIZE) {
+		pte = get_pte(va);
+		pte |= (PG_SYSTEM | PG_WRITE | PG_NC);
+		set_pte(va, pte);
+	}
+
+	/*
+	 * On the Sun3, two of the three dead pages in SUN3_MONSHORTSEG
+	 * are used for tmp_vpages.  The Sun2 doesn't have this
+	 * short-segment concept, so we reserve virtual pages eight
+	 * and nine for this.
+	 */
+	set_pte(va, PG_INVAL);
+	va += PAGE_SIZE;
+	set_pte(va, PG_INVAL);
+	va += PAGE_SIZE;
+
+	/*
+	 * Pages ten and eleven remain for the temporary kernel stack,
+	 * which is set up by locore.s.  Hopefully this is enough space.
+	 */
+	eva = va + PAGE_SIZE * 2;
+	for (; va < eva ; va += PAGE_SIZE) {
+		pte = get_pte(va);
+		pte &= ~(PG_NC);
+		pte |= (PG_SYSTEM | PG_WRITE);
+		set_pte(va, pte);
+	}
+#else /* ! __mc68010__ */
 	/*
 	 * Map the message buffer page at a constant location
 	 * (physical address zero) so its contents will be
@@ -1748,6 +1827,7 @@ pmap_bootstrap(vaddr_t nextva)
 	pte |= (PG_SYSTEM | PG_WRITE);
 	set_pte(va, pte);
 	va += PAGE_SIZE;
+#endif /* __mc68010__ */
 
 	/*
 	 * Next is the kernel text.
@@ -1780,6 +1860,36 @@ pmap_bootstrap(vaddr_t nextva)
 		va += PAGE_SIZE;
 	}
 
+#ifdef DIAGNOSTIC
+	/*
+	 * Sanity checks for context initialization below...
+	 */
+#ifndef __mc68010__
+	/* Note: PROM setcxsegmap function needs sfc=dfc=FC_CONTROL */
+	if ((getsfc() != FC_CONTROL) || (getdfc() != FC_CONTROL)) {
+		prom_printf("pmap_bootstrap: bad dfc or sfc\n");
+		prom_abort();
+	}
+#endif /* __mc68010__ */
+	/* Near the beginning of locore.s we set context zero. */
+	if (get_context() != 0) {
+		prom_printf("pmap_bootstrap: not in context zero?\n");
+		prom_abort();
+	}
+#endif /* DIAGNOSTIC */
+
+#ifdef __mc68010__
+	/*
+	 * Initialize all of the other contexts.
+	 */
+	for (va = 0; va < (vaddr_t) (NBSG * NSEGMAP); va += NBSG) {
+		for (i = 1; i < NCONTEXT; i++) {
+			set_context(i);
+			set_segmap(va, SEGINV);
+		}
+	}
+	set_context(KERNEL_CONTEXT);
+#else /* ! __mc68010__ */
 	/*
 	 * Duplicate all mappings in the current context into
 	 * every other context.  We have to let the PROM do the
@@ -1788,18 +1898,6 @@ pmap_bootstrap(vaddr_t nextva)
 	 * identically mapped in all contexts.  The PROM can do
 	 * the job using hardware-dependent tricks...
 	 */
-#ifdef	DIAGNOSTIC
-	/* Note: PROM setcxsegmap function needs sfc=dfc=FC_CONTROL */
-	if ((getsfc() != FC_CONTROL) || (getdfc() != FC_CONTROL)) {
-		prom_printf("pmap_bootstrap: bad dfc or sfc\n");
-		prom_abort();
-	}
-	/* Near the beginning of locore.s we set context zero. */
-	if (get_context() != 0) {
-		prom_printf("pmap_bootstrap: not in context zero?\n");
-		prom_abort();
-	}
-#endif	/* DIAGNOSTIC */
 	for (va = 0; va < (vaddr_t) (NBSG * NSEGMAP); va += NBSG) {
 		/* Read the segmap entry from context zero... */
 		sme = get_segmap(va);
@@ -1808,6 +1906,7 @@ pmap_bootstrap(vaddr_t nextva)
 			(*rvec->setcxsegmap)(i, va, sme);
 		}
 	}
+#endif /* __mc68010__ */
 
 	/*
 	 * Reserve a segment for the kernel to use to access a pmeg
