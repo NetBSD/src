@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2526 2026/06/09 19:21:20 christos Exp $
+#	$NetBSD: mi,v 1.2527 2026/07/20 18:45:38 riastradh Exp $
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		binutils
@@ -4061,8 +4061,8 @@
 ./usr/lib/libdevmapper_p.a			comp-lvm-proflib	compatfile,lvm,profile
 ./usr/lib/libdm.a				comp-c-lib		compatfile
 ./usr/lib/libdm_p.a				comp-c-proflib		compatfile,profile
-./usr/lib/libdns.a				comp-bind-lib		compatfile
-./usr/lib/libdns_p.a				comp-bind-proflib	compatfile,profile
+./usr/lib/libdns.a				comp-bind-lib		compatfile,bind
+./usr/lib/libdns_p.a				comp-bind-proflib	compatfile,bind,profile
 ./usr/lib/libdns_sd.a				comp-mdns-lib		compatfile,mdns
 ./usr/lib/libdns_sd_p.a				comp-mdns-proflib	compatfile,mdns,profile
 ./usr/lib/libdtrace.a				comp-c-lib		compatfile,dtrace
@@ -4126,12 +4126,12 @@
 ./usr/lib/libipsec_p.a				comp-c-proflib		ipsec,compatfile,profile
 ./usr/lib/libirs.a				comp-obsolete		obsolete
 ./usr/lib/libirs_p.a				comp-obsolete		obsolete,profile
-./usr/lib/libisc.a				comp-bind-lib		compatfile
-./usr/lib/libisc_p.a				comp-bind-lib		compatfile,profile
-./usr/lib/libisccc.a				comp-bind-lib		compatfile
-./usr/lib/libisccc_p.a				comp-bind-proflib	compatfile,profile
-./usr/lib/libisccfg.a				comp-bind-lib		compatfile
-./usr/lib/libisccfg_p.a				comp-bind-proflib	compatfile,profile
+./usr/lib/libisc.a				comp-bind-lib		compatfile,bind
+./usr/lib/libisc_p.a				comp-bind-lib		compatfile,bind,profile
+./usr/lib/libisccc.a				comp-bind-lib		compatfile,bind
+./usr/lib/libisccc_p.a				comp-bind-proflib	compatfile,bind,profile
+./usr/lib/libisccfg.a				comp-bind-lib		compatfile,bind
+./usr/lib/libisccfg_p.a				comp-bind-proflib	compatfile,bind,profile
 ./usr/lib/libiscsi.a				comp-iscsi-lib		compatfile,iscsi
 ./usr/lib/libiscsi_p.a				comp-iscsi-proflib	compatfile,iscsi,profile
 ./usr/lib/libisns.a				comp-isns-lib		compatfile
@@ -4204,8 +4204,8 @@
 ./usr/lib/libnetpgpverify_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libnpf.a				comp-npf-lib		compatfile,npf
 ./usr/lib/libnpf_p.a				comp-npf-proflib	compatfile,npf,profile
-./usr/lib/libns.a				comp-bind-lib		compatfile
-./usr/lib/libns_p.a				comp-bind-proflib	compatfile,profile
+./usr/lib/libns.a				comp-bind-lib		compatfile,bind
+./usr/lib/libns_p.a				comp-bind-proflib	compatfile,bind,profile
 ./usr/lib/libntp.a				comp-obsolete		obsolete
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libnvmm.a				comp-c-lib		nvmm

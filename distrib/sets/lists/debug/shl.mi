@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.410 2026/07/16 02:50:10 riastradh Exp $
+# $NetBSD: shl.mi,v 1.411 2026/07/20 18:45:38 riastradh Exp $
 #
 # Note: Like base/shl.mi, entries here for shared libraries should
 #       generally NOT be marked `obsolete' and instead should be
@@ -112,7 +112,7 @@
 ./usr/libdata/debug/usr/lib/libdes.so.16.0.debug			comp-crypto-debug	debug,compatfile,openssl=35
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug		comp-lvm-debug	debug,compatfile,lvm
 ./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libdns.so.26.0.debug 		comp-bind-debug debug,compatfile
+./usr/libdata/debug/usr/lib/libdns.so.26.0.debug 		comp-bind-debug debug,compatfile,bind
 ./usr/libdata/debug/usr/lib/libdns_sd.so.0.0.debug		comp-mdns-debug	debug,compatfile,mdns
 ./usr/libdata/debug/usr/lib/libdtrace.so.3.0.debug		comp-sys-debug	debug,compatfile,dtrace
 ./usr/libdata/debug/usr/lib/libdwarf.so.2.0.debug		comp-sys-debug	debug,compatfile
@@ -144,9 +144,9 @@
 ./usr/libdata/debug/usr/lib/libhx509.so.7.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libintl.so.1.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libipsec.so.3.0.debug		comp-net-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libisc.so.23.0.debug		comp-bind-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libisccc.so.23.0.debug		comp-bind-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libisccfg.so.23.1.debug		comp-bind-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libisc.so.23.0.debug		comp-bind-debug	debug,compatfile,bind
+./usr/libdata/debug/usr/lib/libisccc.so.23.0.debug		comp-bind-debug	debug,compatfile,bind
+./usr/libdata/debug/usr/lib/libisccfg.so.23.1.debug		comp-bind-debug	debug,compatfile,bind
 ./usr/libdata/debug/usr/lib/libiscsi.so.2.0.debug		comp-iscsi-debug	debug,compatfile,iscsi
 ./usr/libdata/debug/usr/lib/libisns.so.0.0.debug		comp-isns-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libjemalloc.so.0.0.debug		comp-sys-debug	debug,compatfile
@@ -173,7 +173,7 @@
 ./usr/libdata/debug/usr/lib/libnetpgp.so.4.0.debug		comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libnetpgpverify.so.5.0.debug	comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libnpf.so.0.1.debug			comp-npf-debug	debug,compatfile,npf
-./usr/libdata/debug/usr/lib/libns.so.23.0.debug			comp-bind-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libns.so.23.0.debug			comp-bind-debug	debug,compatfile,bind
 ./usr/libdata/debug/usr/lib/libnvmm.so.0.1.debug		comp-sys-shlib		nvmm,pic,debug
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug		comp-sys-debug	debug,compatfile,gcc
@@ -338,7 +338,7 @@
 ./usr/libdata/debug/usr/lib/libzfs.so.0.0.debug			comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libzfs_core.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libzpool.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
-./usr/libdata/debug/usr/lib/named/filter-aaaa.so.0.debug	comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/named/filter-aaaa.so.0.debug	comp-sys-debug	debug,compatfile,bind
 ./usr/libdata/debug/usr/lib/npf/ext_log.so.0.0.debug		comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/ext_normalise.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/ext_rndblock.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
