@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.27 2026/07/19 19:55:24 riastradh Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.28 2026/07/20 18:46:37 riastradh Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.27 2026/07/19 19:55:24 riastradh Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.28 2026/07/20 18:46:37 riastradh Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -229,6 +229,8 @@ xmalloc_aligned(size_t size, size_t align, size_t offset)
 	void *mem;
 	union overhead *ov;
 	uintptr_t x;
+
+	ASSERT((align & (align - 1)) == 0);
 
 	if (align < FIRST_BUCKET_SIZE)
 		align = FIRST_BUCKET_SIZE;
