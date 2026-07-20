@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.30 2026/07/20 18:46:37 riastradh Exp $	*/
+/*	$NetBSD: tls.c,v 1.31 2026/07/20 22:42:00 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.30 2026/07/20 18:46:37 riastradh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.31 2026/07/20 22:42:00 riastradh Exp $");
 
 /*
  * Thread-local storage
@@ -294,7 +294,7 @@ _rtld_tls_allocate_locked(void)
 	Obj_Entry *obj;
 	struct tls_tcb *tcb;
 	uint8_t *p, *q;
-	uint8_t *lo __diagused, *hi __diagused; /* bounds of TLS space */
+	uint8_t *lo __debugused, *hi __debugused; /* bounds of TLS space */
 
 #ifdef __HAVE_TLS_VARIANT_II
 #ifdef __HAVE___LWP_SETTCB
