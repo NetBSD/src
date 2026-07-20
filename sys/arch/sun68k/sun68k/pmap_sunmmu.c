@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_sunmmu.c,v 1.3 2026/07/20 14:38:29 thorpej Exp $	*/
+/*	$NetBSD: pmap_sunmmu.c,v 1.4 2026/07/20 14:47:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.3 2026/07/20 14:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.4 2026/07/20 14:47:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3902,11 +3902,17 @@ pmap_prefer(vaddr_t fo, vaddr_t *va, int td)
 }
 
 /*
- * Fill in the sun3x-specific part of the kernel core header
+ * Fill in the sun-specific part of the kernel core header
  * for dumpsys().  (See machdep.c for the rest.)
  */
 void
-pmap_kcore_hdr(struct sun3_kcore_hdr *sh)
+pmap_kcore_hdr(
+#if IS_SUN2
+    struct sun2_kcore_hdr *sh
+#else
+    struct sun3_kcore_hdr *sh
+#endif
+)
 {
 	vaddr_t va;
 	u_char *cp, *ep;
