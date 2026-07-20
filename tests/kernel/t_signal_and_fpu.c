@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_fpu.c,v 1.3 2026/07/10 20:36:11 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_fpu.c,v 1.4 2026/07/20 22:37:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_fpu.c,v 1.3 2026/07/10 20:36:11 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_fpu.c,v 1.4 2026/07/20 22:37:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -215,6 +215,10 @@ ATF_TC_HEAD(double, tc)
 }
 ATF_TC_BODY(double, tc)
 {
+#if defined __sparc__ && !defined __sparc64__
+	atf_tc_expect_fail("PR port-sparc/60460:"
+	    " sparc fails to save/restore FPU registers on signal delivery");
+#endif
 	test_signal_fpu(NULL, &test_double, &trash_double, NULL);
 }
 
@@ -281,6 +285,10 @@ ATF_TC_HEAD(float, tc)
 }
 ATF_TC_BODY(float, tc)
 {
+#if defined __sparc__ && !defined __sparc64__
+	atf_tc_expect_fail("PR port-sparc/60460:"
+	    " sparc fails to save/restore FPU registers on signal delivery");
+#endif
 	test_signal_fpu(NULL, &test_float, &trash_float, NULL);
 }
 
@@ -352,6 +360,10 @@ ATF_TC_HEAD(ldouble, tc)
 }
 ATF_TC_BODY(ldouble, tc)
 {
+#if defined __sparc__ && !defined __sparc64__
+	atf_tc_expect_fail("PR port-sparc/60460:"
+	    " sparc fails to save/restore FPU registers on signal delivery");
+#endif
 	test_signal_fpu(NULL, &test_ldouble, &trash_ldouble, NULL);
 }
 
