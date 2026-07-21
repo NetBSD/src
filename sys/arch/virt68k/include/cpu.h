@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 2024/01/20 00:15:33 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 2026/07/21 14:35:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,22 +38,14 @@
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
 
-#ifndef _MACHINE_CPU_H_
-#define _MACHINE_CPU_H_
+#ifndef _VIRT68K_CPU_H_
+#define _VIRT68K_CPU_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#endif
-
-/*
- * Get common m68k CPU definitions.
- */
 #include <m68k/cpu.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(_MODULE)
 void	cpu_set_reset_func(void (*)(void *, int), void *);
 int	nmihand(void *);
+#endif /* _KERNEL && ! _MODULE */
 
-#endif /* _KERNEL */
-
-#endif /* _MACHINE_CPU_H_ */
+#endif /* _VIRT68K_CPU_H_ */
