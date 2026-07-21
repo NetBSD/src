@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.72 2019/06/23 22:47:22 christos Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.73 2026/07/21 14:38:18 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,9 @@
 #define REQ_HELP       1006
 
 /* Macros */
+#undef MAX
 #define MAX(x,y) ((x)>(y)?(x):(y))
+#undef MIN
 #define MIN(x,y) ((x)<(y)?(x):(y))
 
 /* Initialization state. */
