@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.47 2022/10/19 06:09:27 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.47.2.1 2026/07/21 08:13:50 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.47 2022/10/19 06:09:27 blymn Exp $");
+__RCSID("$NetBSD: color.c,v 1.47.2.1 2026/07/21 08:13:50 sborrill Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -596,6 +596,7 @@ __unset_color(WINDOW *win)
 		if (orig_pair != NULL) {
 			tputs(orig_pair, 0, __cputchar);
 			win->wattr &= __mask_op;
+			curscr->wattr &= __mask_op;
 		}
 		break;
 	case COLOR_HP:
@@ -662,8 +663,14 @@ __change_pair(short pair)
 						lp->line[x].attr &= ~__COLOR;
 				}
 			}
-		} else {
-			/* Mark dirty those positions with colour pair "pair" */
+		} /*  Disable dirtying the window on colour change as it
+			dirties stdscr and if stdscr is not being used then
+			it causes the screen to blank - apps don't need to
+			write to stdscr, they can use windows on top so it
+			is easy for stdscr to be blank which stomps the other
+			windows.  XXXX remove this later pending no issues XXX
+			else {
+			* Mark dirty those positions with colour pair "pair" *
 			for (y = 0; y < win->maxy; y++) {
 				lp = win->alines[y];
 				for (x = 0; x < win->maxx; x++)
@@ -671,11 +678,11 @@ __change_pair(short pair)
 					    __COLOR) == cl) {
 						if (!(lp->flags & __ISDIRTY))
 							lp->flags |= __ISDIRTY;
-						/*
+						*
 						 * firstchp/lastchp are shared
 						 * between parent window and
 						 * sub-window.
-						 */
+						 *
 						if (*lp->firstchp > x)
 							*lp->firstchp = x;
 
@@ -691,6 +698,6 @@ __change_pair(short pair)
 					    *win->alines[y]->lastchp);
 #endif
 			}
-		}
+		}*/
 	}
 }
