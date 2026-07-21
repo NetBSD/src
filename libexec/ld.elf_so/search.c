@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.29 2026/07/20 01:49:48 riastradh Exp $	 */
+/*	$NetBSD: search.c,v 1.30 2026/07/21 04:05:06 riastradh Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: search.c,v 1.29 2026/07/20 01:49:48 riastradh Exp $");
+__RCSID("$NetBSD: search.c,v 1.30 2026/07/21 04:05:06 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -194,7 +194,6 @@ found:
 	if (obj == OBJ_ERR)
 		return NULL;
 
-	assert(obj->refcount > 0);
+	assert(obj == NULL || obj->refcount > 0);
 	return obj;
 }
-
