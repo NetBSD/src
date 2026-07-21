@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.62 2026/07/14 13:34:37 thorpej Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.63 2026/07/21 14:37:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.62 2026/07/14 13:34:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.63 2026/07/21 14:37:24 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbr.h"
@@ -485,13 +485,16 @@ look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 	    dp->mbrp_type == MBR_PTYPE_NETBSD) {
 		rval = validate_label(a, ptn_base);
 
-#if RAW_PART == 3
-		/* Put actual location where we found the label into ptn 2 */
-		if (rval == SCAN_FOUND || a->lp->d_partitions[2].p_size == 0) {
+		/*
+		 * If RAW_PART == 3 ('d'), put actual location where we found
+		 * the label into ptn 2 ('c').
+		 */
+		if (RAW_PART == 3 &&
+		    (rval == SCAN_FOUND ||
+		     a->lp->d_partitions[2].p_size == 0)) {
 			a->lp->d_partitions[2].p_size = le32toh(dp->mbrp_size);
 			a->lp->d_partitions[2].p_offset = ptn_base;
 		}
-#endif
 
 		/* If we got a netbsd label look no further */
 		if (rval == SCAN_FOUND)
