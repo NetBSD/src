@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 2024/01/02 07:41:00 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 2026/07/21 14:35:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -30,8 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_DISKLABEL_H_
-#define _MACHINE_DISKLABEL_H_
+#ifndef _VIRT68K_DISKLABEL_H_
+#define _VIRT68K_DISKLABEL_H_
+
+#if defined(_KERNEL) && !defined(_MODULE)
 
 /* number of boot pieces , ie xxboot bootxx */
 #define NUMBOOT		0
@@ -52,4 +54,6 @@ struct cpu_disklabel {
 	char	cd_block[512];
 };
 
-#endif /* _MACHINE_DISKLABEL_H_ */
+#endif /* _KERNEL && ! _MODULE */
+
+#endif /* _VIRT68K_DISKLABEL_H_ */
