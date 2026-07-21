@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.h,v 1.2 2026/04/04 00:55:45 thorpej Exp $	*/
+/*	$NetBSD: vectors.h,v 1.3 2026/07/21 14:34:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 
 #include <m68k/vectors.h>
 
+#if !defined(_MODULE)
 #define	MACHINE_AV0_HANDLER	intrstub_autovec
 #define	MACHINE_AV1_HANDLER	intrstub_autovec
 #define	MACHINE_AV2_HANDLER	intrstub_autovec
@@ -44,6 +45,7 @@
 #define	MACHINE_AV5_HANDLER	intrstub_autovec
 #define	MACHINE_AV6_HANDLER	intrstub_autovec
 #define	MACHINE_AV7_HANDLER	intrstub_autovec
+#endif /* ! _MODULE */
 
 #endif /* _KERNEL */
 
