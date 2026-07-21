@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.28 2016/09/05 00:40:28 sevan Exp $	*/
+/*	$NetBSD: eject.c,v 1.29 2026/07/21 14:31:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,12 +36,11 @@ __COPYRIGHT("@(#) Copyright (c) 1999\
 #endif				/* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.28 2016/09/05 00:40:28 sevan Exp $");
+__RCSID("$NetBSD: eject.c,v 1.29 2026/07/21 14:31:52 thorpej Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
 #include <sys/cdio.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/ucred.h>
