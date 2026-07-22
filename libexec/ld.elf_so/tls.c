@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.31 2026/07/20 22:42:00 riastradh Exp $	*/
+/*	$NetBSD: tls.c,v 1.32 2026/07/22 15:22:23 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.31 2026/07/20 22:42:00 riastradh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.32 2026/07/22 15:22:23 riastradh Exp $");
 
 /*
  * Thread-local storage
@@ -318,7 +318,12 @@ _rtld_tls_allocate_locked(void)
 	assert(ALIGNED_P(p, alignof(struct tls_tcb)));
 	tcb = (struct tls_tcb *)p;
 	p += sizeof(struct tls_tcb);
+#ifdef __HAVE___LWP_SETTCB
 	assert(ALIGNED_P(p, _rtld_tls_static_max_align));
+#else
+	assert((uintptr_t)p % _rtld_tls_static_max_align ==
+	    sizeof(struct tls_tcb) % _rtld_tls_static_max_align);
+#endif
 	lo = p;
 #else
 	lo = p;
@@ -538,15 +543,21 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 #ifdef __HAVE_TLS_VARIANT_I
 	offset = roundup2(_rtld_tls_static_offset, obj->tlsalign);
 	next_offset = offset + obj->tlssize;
-#ifndef __HAVE___LWP_GETTCB_FAST
+#ifdef __HAVE___LWP_GETTCB_FAST
+	assert(ALIGNED_P(offset, obj->tlsalign));
+#else
 	offset -= sizeof(struct tls_tcb);
+	assert(obj->tlsalign == 0 ||
+	    offset % obj->tlsalign ==
+	    (-(ptrdiff_t)sizeof(struct tls_tcb)) % obj->tlsalign);
+	assert(ALIGNED_P(offset + sizeof(struct tls_tcb), obj->tlsalign));
 #endif
 #else
 	offset = roundup2(_rtld_tls_static_offset + obj->tlssize,
 	    obj->tlsalign);
 	next_offset = offset;
-#endif
 	assert(ALIGNED_P(offset, obj->tlsalign));
+#endif
 
 	/*
 	 * Check if the static allocation was already done.
