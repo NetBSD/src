@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.384 2024/12/30 09:03:07 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.385 2026/07/22 14:44:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.384 2024/12/30 09:03:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.385 2026/07/22 14:44:49 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -162,7 +162,11 @@ struct vfsops ffs_vfsops = {
 	.vfs_reinit = ffs_reinit,
 	.vfs_done = ffs_done,
 	.vfs_mountroot = ffs_mountroot,
+#ifndef FFS_NO_SNAPSHOT
 	.vfs_snapshot = ffs_snapshot,
+#else
+	.vfs_snapshot = (void *)eopnotsupp,
+#endif
 	.vfs_extattrctl = ffs_extattrctl,
 	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
@@ -188,6 +192,15 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_bufrd = ffs_bufrd,
 	.uo_bufwr = ffs_bufwr,
 };
+
+#ifdef FFS_NO_SNAPSHOT
+void
+ffs_snapgone(struct vnode *vp)
+{
+
+	panic("%s: unexpected snapshot", __func__);
+}
+#endif
 
 static int
 ffs_checkrange(struct mount *mp, ino_t ino)
@@ -728,7 +741,11 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			}
 #endif /* WAPBL */
 			if (fs->fs_snapinum[0] != 0)
+#ifndef FFS_NO_SNAPSHOT
 				ffs_snapshot_mount(mp);
+#else
+				return EINVAL;
+#endif
 		}
 
 #ifdef WAPBL
@@ -1198,7 +1215,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	mutex_init(&ump->um_lock, MUTEX_DEFAULT, IPL_NONE);
+#ifndef FFS_NO_SNAPSHOT
 	error = ffs_snapshot_init(ump);
+#endif
 	if (error) {
 		DPRINTF("ffs_snapshot_init returned %d", error);
 		goto out;
@@ -1565,8 +1584,14 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 	spec_node_setmountedfs(devvp, mp);
-	if (ronly == 0 && fs->fs_snapinum[0] != 0)
+	if (ronly == 0 && fs->fs_snapinum[0] != 0) {
+#ifndef FFS_NO_SNAPSHOT
 		ffs_snapshot_mount(mp);
+#else
+		error = EINVAL;
+		goto out1;
+#endif
+	}
 #ifdef WAPBL
 	if (!ronly) {
 		KDASSERT(fs->fs_ronly == 0);
@@ -1825,7 +1850,9 @@ ffs_unmount(struct mount *mp, int mntflags)
 	if (ump->um_oldfscompat != NULL)
 		kmem_free(ump->um_oldfscompat, 512 + 3*sizeof(int32_t));
 	mutex_destroy(&ump->um_lock);
+#ifndef FFS_NO_SNAPSHOT
 	ffs_snapshot_fini(ump);
+#endif
 	kmem_free(ump, sizeof(*ump));
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
@@ -1864,7 +1891,9 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 #endif
 	if ((error = vflush(mp, 0, SKIPSYSTEM | flags)) != 0)
 		return (error);
+#ifndef FFS_NO_SNAPSHOT
 	ffs_snapshot_unmount(mp);
+#endif
 	/*
 	 * Flush all the files.
 	 */

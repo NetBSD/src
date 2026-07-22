@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.174 2025/06/27 19:55:38 andvar Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.175 2026/07/22 14:44:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.174 2025/06/27 19:55:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.175 2026/07/22 14:44:49 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1741,8 +1741,10 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 
 	dev = devvp->v_rdev;
 	ump = VFSTOUFS(spec_node_getmountedfs(devvp));
+#ifndef FFS_NO_SNAPSHOT
 	if (ffs_snapblkfree(fs, devvp, bno, size, inum))
 		return;
+#endif
 
 	error = ffs_check_bad_allocation(__func__, fs, bno, size, dev, inum);
 	if (error)

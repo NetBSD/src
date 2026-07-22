@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.131 2020/07/31 04:07:30 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.132 2026/07/22 14:44:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.131 2020/07/31 04:07:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.132 2026/07/22 14:44:49 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -307,7 +307,11 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		return (EFBIG);
 
 	if ((oip->i_flags & SF_SNAPSHOT) != 0)
+#ifndef FFS_NO_SNAPSHOT
 		ffs_snapremove(ovp);
+#else
+		panic("%s: unexpected snapshot", __func__);
+#endif
 
 	osize = oip->i_size;
 	aflag = ioflag & IO_SYNC ? B_SYNC : 0;

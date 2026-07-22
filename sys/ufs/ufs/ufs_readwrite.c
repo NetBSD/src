@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.130 2026/01/22 03:24:19 riastradh Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.131 2026/07/22 14:44:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.130 2026/01/22 03:24:19 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.131 2026/07/22 14:44:49 hannken Exp $");
 
 #include <sys/bitops.h>
 #include <sys/sdt.h>
@@ -94,7 +94,11 @@ READ(void *v)
 		return 0;
 
 	if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) == SF_SNAPSHOT)
+#ifndef FFS_NO_SNAPSHOT
 		return ffs_snapshot_read(vp, uio, ioflag);
+#else
+		panic("%s: unexpected snapshot", __func__);
+#endif
 
 	if (uio->uio_offset >= ip->i_size)
 		goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.156 2026/05/03 16:02:36 thorpej Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.157 2026/07/22 14:44:49 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.156 2026/05/03 16:02:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.157 2026/07/22 14:44:49 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -88,7 +88,6 @@ struct snap_info {
 	uint32_t si_gen;			/* Incremented on change */
 };
 
-#if !defined(FFS_NO_SNAPSHOT)
 typedef int (*acctfunc_t)
     (struct vnode *, void *, int, int, struct fs *, daddr_t, int);
 
@@ -111,16 +110,13 @@ static int snapacct(struct vnode *, void *, int, int, struct fs *,
     daddr_t, int);
 static int mapacct(struct vnode *, void *, int, int, struct fs *,
     daddr_t, int);
-#endif /* !defined(FFS_NO_SNAPSHOT) */
 
 static int ffs_copyonwrite(void *, struct buf *, bool);
 static int snapblkaddr(struct vnode *, daddr_t, daddr_t *);
 static int rwfsblk(struct vnode *, int, void *, daddr_t);
 static int syncsnap(struct vnode *);
 static int wrsnapblk(struct vnode *, void *, daddr_t);
-#if !defined(FFS_NO_SNAPSHOT)
 static int blocks_in_journal(struct fs *);
-#endif
 
 static inline bool is_active_snapshot(struct snap_info *, struct inode *);
 static inline daddr_t db_get(struct inode *, int);
@@ -171,10 +167,6 @@ ffs_snapshot_fini(struct ufsmount *ump)
 int
 ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 {
-#if defined(FFS_NO_SNAPSHOT)
-	return EOPNOTSUPP;
-}
-#else /* defined(FFS_NO_SNAPSHOT) */
 	bool suspended = false;
 	int error, redo = 0, snaploc;
 	void *sbbuf = NULL;
@@ -1372,7 +1364,6 @@ blocks_in_journal(struct fs *fs)
 	bpj /= fs->fs_bsize;
 	return (bpj > 0 ? bpj : 1);
 }
-#endif /* defined(FFS_NO_SNAPSHOT) */
 
 /*
  * Decrement extra reference on snapshot when last name is removed.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.52 2025/11/06 15:45:32 perseant Exp $
+#	$NetBSD: files.ufs,v 1.53 2026/07/22 14:44:49 hannken Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -53,7 +53,7 @@ file	ufs/ffs/ffs_balloc.c		ffs
 file	ufs/ffs/ffs_bswap.c		(ffs | mfs) & ffs_ei
 file	ufs/ffs/ffs_extattr.c		ffs
 file	ufs/ffs/ffs_inode.c		ffs
-file	ufs/ffs/ffs_snapshot.c		ffs
+file	ufs/ffs/ffs_snapshot.c		ffs & ! ffs_no_snapshot
 file	ufs/ffs/ffs_subr.c		ffs
 file	ufs/ffs/ffs_tables.c		ffs
 file	ufs/ffs/ffs_vfsops.c		ffs
