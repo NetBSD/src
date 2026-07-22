@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.32 2026/07/22 15:22:23 riastradh Exp $	*/
+/*	$NetBSD: tls.c,v 1.33 2026/07/22 15:22:48 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.32 2026/07/22 15:22:23 riastradh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.33 2026/07/22 15:22:48 riastradh Exp $");
 
 /*
  * Thread-local storage
@@ -475,11 +475,25 @@ _rtld_tls_module_allocate(struct tls_tcb *tcb, size_t idx)
 		_rtld_die();
 	}
 	if (obj->tls_static) {
+		uint8_t *lo __debugused, *hi __debugused;
+
+		assert(obj->tlsoffset <= _rtld_tls_static_space);
+		assert(obj->tlssize <= _rtld_tls_static_space);
 #ifdef __HAVE_TLS_VARIANT_I
+		assert(obj->tlsoffset <= _rtld_tls_static_space -
+		    obj->tlssize);
 		p = (uint8_t *)tcb + obj->tlsoffset + sizeof(struct tls_tcb);
+		lo = (uint8_t *)tcb + sizeof(struct tls_tcb);
+		hi = lo + _rtld_tls_static_space;
 #else
+		assert(obj->tlssize <= obj->tlsoffset);
 		p = (uint8_t *)tcb - obj->tlsoffset;
+		hi = (uint8_t *)tcb;
+		lo = hi - _rtld_tls_static_space;
 #endif
+		assert(ALIGNED_P(p, obj->tlsalign));
+		assert(lo <= p);
+		assert(p + obj->tlssize <= hi);
 		return p;
 	}
 
