@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/05/31 06:24:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2026/07/22 08:39:20 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,8 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man
+
+.include "../../xorg-pkg-ver.mk"
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

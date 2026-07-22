@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2026/07/12 01:23:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2026/07/22 08:39:20 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ CPPFLAGS+=-DNO_I18N
 CPPFLAGS+=-I${DESTDIR}${X11INCDIR}/freetype2/freetype
 
 APPDEFS=XClock XClock-color
+APPDEFS+=XClock-ampm XClock-grandfather
 
 
 LDADD+=	-lXft -lfontconfig -lfreetype -lexpat -lXrender

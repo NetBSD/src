@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/05/31 06:46:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2026/07/22 08:39:21 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,9 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 
 .PATH:	${X11SRCDIR.xclipboard}
 .PATH:	${X11SRCDIR.xclipboard}/man
+
+XORG_PKG_VER_PROG=	xclipboard
+.include "../../xorg-pkg-ver.mk"
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

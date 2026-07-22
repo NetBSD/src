@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.178 2025/11/17 00:14:23 nia Exp $
+# $NetBSD: mi,v 1.179 2026/07/22 08:39:21 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -304,7 +304,9 @@
 ./usr/X11R7/lib/X11/app-defaults/XCalc-color		xbase-xcalc-bin		xorg
 ./usr/X11R7/lib/X11/app-defaults/XClipboard		xbase-xclipboard-bin	xorg
 ./usr/X11R7/lib/X11/app-defaults/XClock			xbase-xclock-bin	xorg
+./usr/X11R7/lib/X11/app-defaults/XClock-ampm		xbase-xclock-bin	xorg
 ./usr/X11R7/lib/X11/app-defaults/XClock-color		xbase-xclock-bin	xorg
+./usr/X11R7/lib/X11/app-defaults/XClock-grandfather	xbase-xclock-bin	xorg
 ./usr/X11R7/lib/X11/app-defaults/XConsole		xbase-xconsole-bin	xorg
 ./usr/X11R7/lib/X11/app-defaults/XFontSel		xbase-xfontsel-bin	xorg
 ./usr/X11R7/lib/X11/app-defaults/XLoad			xbase-xload-bin		xorg
