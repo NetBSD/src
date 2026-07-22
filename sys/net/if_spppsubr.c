@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.305 2026/07/14 06:01:50 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.306 2026/07/22 07:32:10 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.305 2026/07/14 06:01:50 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.306 2026/07/22 07:32:10 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5484,6 +5484,8 @@ sppp_keepalive(void *dummy)
 			SPPP_DLOG(sp, "no activity for %lu seconds\n",
 				(unsigned long)(now - last_activity));
 			sppp_disconnect(sp);
+			if (!sp->pp_ondemand)
+				sppp_connect(sp);
 			SPPP_UNLOCK(sp);
 			continue;
 		    }
