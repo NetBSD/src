@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.138 2026/07/22 05:23:28 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.139 2026/07/22 05:26:24 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -13138,4 +13138,9 @@ libexec/ld.elf_so/xmalloc.c			1.28
 	in diagnostics.
 	[riastradh, ticket #393]
 
+external/gpl2/groff/tmac/mdoc.local		(manually edited)
+sys/sys/param.h					(manually edited)
+
+	Welcome to 11.0_RC7!
+	[martin]
 
