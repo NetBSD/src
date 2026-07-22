@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.33 2026/07/22 15:22:48 riastradh Exp $	*/
+/*	$NetBSD: tls.c,v 1.34 2026/07/22 15:23:33 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.33 2026/07/22 15:22:48 riastradh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.34 2026/07/22 15:23:33 riastradh Exp $");
 
 /*
  * Thread-local storage
@@ -248,20 +248,10 @@ _rtld_tls_initial_allocation(void)
 	_rtld_tls_static_space = _rtld_tls_static_offset +
 	    RTLD_STATIC_TLS_RESERVATION;
 
-#ifndef __HAVE_TLS_VARIANT_I
+#ifdef __HAVE_TLS_VARIANT_II
 	_rtld_tls_static_space = roundup2(_rtld_tls_static_space,
 	    _rtld_tls_static_max_align);
-
-#ifdef __HAVE___LWP_SETTCB
-	if (_rtld_tls_static_max_align > sizeof(struct tls_tcb))
-		_rtld_tls_static_space +=
-		     _rtld_tls_static_max_align - sizeof(struct tls_tcb);
-	assert(_rtld_tls_static_space % _rtld_tls_static_max_align ==
-	    sizeof(struct tls_tcb) % _rtld_tls_static_max_align);
-#else
 	assert(ALIGNED_P(_rtld_tls_static_space, _rtld_tls_static_max_align));
-#endif
-
 #endif
 
 	dbg(("_rtld_tls_static_space %zu", _rtld_tls_static_space));
@@ -297,12 +287,7 @@ _rtld_tls_allocate_locked(void)
 	uint8_t *lo __debugused, *hi __debugused; /* bounds of TLS space */
 
 #ifdef __HAVE_TLS_VARIANT_II
-#ifdef __HAVE___LWP_SETTCB
-	assert(_rtld_tls_static_space % _rtld_tls_static_max_align ==
-	    sizeof(struct tls_tcb) % _rtld_tls_static_max_align);
-#else
 	assert(ALIGNED_P(_rtld_tls_static_space, _rtld_tls_static_max_align));
-#endif
 #endif
 
 	p = xmalloc_aligned(_rtld_tls_static_space + sizeof(struct tls_tcb),
