@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.96 2026/07/22 17:44:22 joe Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.97 2026/07/22 20:46:54 joe Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.96 2026/07/22 17:44:22 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.97 2026/07/22 20:46:54 joe Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1266,7 +1266,7 @@ rf_swap_components(RF_Raid_t *raidPtr, int a, int b)
 
 
 	/* This function *MUST* be called with all IO suspended. */
-	RF_ASSERT(raidPtr->accesses_suspended == 1);
+	RF_ASSERT(raidPtr->accesses_suspended > 0);
 	
 	/* Swap the component names... */
 	snprintf(tmpdevname, sizeof(tmpdevname), "%s", raidPtr->Disks[a].devname);
