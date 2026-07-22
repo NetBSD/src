@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.137 2026/07/21 08:05:43 sborrill Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.138 2026/07/22 05:23:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -13127,4 +13127,15 @@ tests/lib/libcurses/check_files/window_hierarchy.chk	1.2
 	  stdscr blank. (fixes 60431)
 	Updates to check files due to output changes from bug fixes.
 	[blymn, ticket #392]
+
+libexec/ld.elf_so/search.c			1.29,1.30
+libexec/ld.elf_so/tls.c				1.30,1.31
+libexec/ld.elf_so/xmalloc.c			1.28
+
+	ld.elf_so(1): PR 60469, PR 59751, PR 60472:
+	fix thread-local storage alignment on TLS variant II
+	platforms (x86, sparc), and fix various assertions that were used
+	in diagnostics.
+	[riastradh, ticket #393]
+
 
