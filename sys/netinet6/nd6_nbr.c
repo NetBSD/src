@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.186 2025/04/28 11:39:10 joe Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.187 2026/07/23 19:52:48 riastradh Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.186 2025/04/28 11:39:10 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.187 2026/07/23 19:52:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -184,7 +184,8 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 
 	if (ndopts.nd_opts_src_lladdr) {
 		lladdr = (char *)(ndopts.nd_opts_src_lladdr + 1);
-		lladdrlen = ndopts.nd_opts_src_lladdr->nd_opt_len << 3;
+		lladdrlen = (ndopts.nd_opts_src_lladdr->nd_opt_len << 3) -
+		    sizeof(*ndopts.nd_opts_src_lladdr);
 	}
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src) && lladdr) {
@@ -680,7 +681,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		struct psref psref_ll;
 
 		lladdr = (char *)(ndopts.nd_opts_tgt_lladdr + 1);
-		lladdrlen = ndopts.nd_opts_tgt_lladdr->nd_opt_len << 3;
+		lladdrlen = (ndopts.nd_opts_tgt_lladdr->nd_opt_len << 3) -
+		    sizeof(*ndopts.nd_opts_tgt_lladdr);
 
 		if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
 			nd6log(LOG_INFO, "lladdrlen mismatch for %s "
