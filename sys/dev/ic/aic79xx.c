@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.70 2024/02/02 22:39:10 andvar Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.71 2026/07/23 14:56:49 gutteridge Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.70 2024/02/02 22:39:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.71 2026/07/23 14:56:49 gutteridge Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -8554,7 +8554,7 @@ ahd_probe_stack_size(struct ahd_softc *ahd)
 		/*
 		 * We avoid using 0 as a pattern to avoid
 		 * confusion if the stack implementation
-		 * "back-fills" with zeros when "poping'
+		 * "back-fills" with zeros when "popping"
 		 * entries.
 		 */
 		for (i = 1; i <= last_probe+1; i++) {
