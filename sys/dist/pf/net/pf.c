@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.87 2022/11/04 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: pf.c,v 1.88 2026/07/23 17:17:10 riastradh Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.87 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.88 2026/07/23 17:17:10 riastradh Exp $");
 
 #include "pflog.h"
 
@@ -5776,6 +5776,15 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	m = *m0;	/* pf_normalize messes with m0 */
 	h = mtod(m, struct ip *);
 
+#ifdef __NetBSD__
+	if ((pf_mtag = pf_get_mtag(m)) == NULL) {
+		DPFPRINTF(PF_DEBUG_URGENT,
+		    ("pf_test: pf_get_mtag returned NULL\n"));
+		action = PF_DROP;
+		goto done;
+	}
+#endif
+
 	off = h->ip_hl << 2;
 	if (off < (int)sizeof(*h)) {
 		action = PF_DROP;
@@ -6132,6 +6141,15 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	}
 	m = *m0;	/* pf_normalize messes with m0 */
 	h = mtod(m, struct ip6_hdr *);
+
+#ifdef __NetBSD__
+	if ((pf_mtag = pf_get_mtag(m)) == NULL) {
+		DPFPRINTF(PF_DEBUG_URGENT,
+		    ("pf_test: pf_get_mtag returned NULL\n"));
+		action = PF_DROP;
+		goto done;
+	}
+#endif
 
 #if 1
 	/*
