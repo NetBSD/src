@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.187 2026/07/23 19:52:48 riastradh Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.188 2026/07/23 20:25:49 riastradh Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.187 2026/07/23 19:52:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.188 2026/07/23 20:25:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -109,7 +109,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	struct in6_addr myaddr6;
 	char *lladdr = NULL;
 	struct ifaddr *ifa = NULL;
-	int lladdrlen = 0;
+	int lladdroptlen = 0;
 	int anycast = 0, proxy = 0, tentative = 0;
 	int router = ip6_forwarding;
 	int tlladdr;
@@ -184,8 +184,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 
 	if (ndopts.nd_opts_src_lladdr) {
 		lladdr = (char *)(ndopts.nd_opts_src_lladdr + 1);
-		lladdrlen = (ndopts.nd_opts_src_lladdr->nd_opt_len << 3) -
-		    sizeof(*ndopts.nd_opts_src_lladdr);
+		lladdroptlen = ndopts.nd_opts_src_lladdr->nd_opt_len << 3;
 	}
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src) && lladdr) {
@@ -283,11 +282,12 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_DUPLICATED)
 		goto freeit;
 
-	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
+	if (lladdr && roundup2(ifp->if_addrlen + sizeof(struct nd_opt_hdr), 8)
+	    != lladdroptlen) {
 		nd6log(LOG_INFO, "lladdrlen mismatch for %s "
-		    "(if %d, NS packet %d)\n",
+		    "(if %u, NS packet %zu)\n",
 		    IN6_PRINT(ip6buf, &taddr6),
-		    ifp->if_addrlen, lladdrlen - 2);
+		    ifp->if_addrlen, lladdroptlen - sizeof(struct nd_opt_hdr));
 		goto bad;
 	}
 
@@ -323,7 +323,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 			if (lladdr != NULL)
 				sdlp = sockaddr_dl_init(&sdl, sizeof(sdl),
 				    ifp->if_index, ifp->if_type,
-				    NULL, 0, lladdr, lladdrlen);
+				    NULL, 0, lladdr, ifp->if_addrlen);
 			else
 				sdlp = NULL;
 			nd6_dad_input(ifa, ndopts.nd_opts_nonce, sdlp);
@@ -365,7 +365,8 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		goto freeit;
 	}
 
-	nd6_cache_lladdr(ifpc, &saddr6, lladdr, lladdrlen, ND_NEIGHBOR_SOLICIT, 0);
+	nd6_cache_lladdr(ifpc, &saddr6, lladdr, lladdr ? ifp->if_addrlen : 0,
+	    ND_NEIGHBOR_SOLICIT, 0);
 
 	nd6_na_output(ifp, &saddr6, &taddr6,
 	    ((anycast || proxy || !tlladdr) ? 0 : ND_NA_FLAG_OVERRIDE) |
@@ -620,7 +621,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	int is_override;
 	int rt_cmd;
 	char *lladdr = NULL;
-	int lladdrlen = 0;
+	int lladdroptlen = 0;
 	struct ifaddr *ifa;
 	struct llentry *ln = NULL;
 	union nd_opts ndopts;
@@ -681,14 +682,15 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		struct psref psref_ll;
 
 		lladdr = (char *)(ndopts.nd_opts_tgt_lladdr + 1);
-		lladdrlen = (ndopts.nd_opts_tgt_lladdr->nd_opt_len << 3) -
-		    sizeof(*ndopts.nd_opts_tgt_lladdr);
+		lladdroptlen = ndopts.nd_opts_tgt_lladdr->nd_opt_len << 3;
 
-		if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
+		if (lladdr && roundup2(ifp->if_addrlen +
+			sizeof(struct nd_opt_hdr), 8) != lladdroptlen) {
 			nd6log(LOG_INFO, "lladdrlen mismatch for %s "
-			    "(if %d, NA packet %d)\n",
+			    "(if %u, NA packet %zu)\n",
 			    IN6_PRINT(ip6buf, &taddr6),
-			    ifp->if_addrlen, lladdrlen - 2);
+			    ifp->if_addrlen,
+			    lladdroptlen - sizeof(struct nd_opt_hdr));
 			goto bad;
 		}
 
@@ -718,7 +720,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			if (lladdr != NULL)
 				sdlp = sockaddr_dl_init(&sdl, sizeof(sdl),
 				    ifp->if_index, ifp->if_type,
-				    NULL, 0, lladdr, lladdrlen);
+				    NULL, 0, lladdr, ifp->if_addrlen);
 			else
 				sdlp = NULL;
 			nd6_dad_input(ifa, NULL, sdlp);
