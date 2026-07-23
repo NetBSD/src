@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_syncache.c,v 1.7 2024/06/29 12:59:08 riastradh Exp $	*/
+/*	$NetBSD: tcp_syncache.c,v 1.8 2026/07/23 17:45:17 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.7 2024/06/29 12:59:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.8 2026/07/23 17:45:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -893,6 +893,13 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	win = sbspace(&so->so_rcv);
 	if (win > TCP_MAXWIN)
 		win = TCP_MAXWIN;
+
+	/*
+	 * memset may be suboptimal for a ~800-byte structure, but it's
+	 * a pain to prove every relevant part of tb is initialized
+	 * before use.
+	 */
+	memset(&tb, 0, sizeof(tb));
 
 #ifdef TCP_SIGNATURE
 	if (optp || (tp->t_flags & TF_SIGNATURE))
