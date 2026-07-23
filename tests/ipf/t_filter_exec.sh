@@ -1,4 +1,4 @@
-# $NetBSD: t_filter_exec.sh,v 1.9 2026/07/23 16:57:52 riastradh Exp $
+# $NetBSD: t_filter_exec.sh,v 1.10 2026/07/23 16:58:51 riastradh Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -135,7 +135,7 @@ failing_test_case f27 dotest "Known to be broken" hex text
 test_case f30 dotest text text
 test_case ipv6_1 dotest6 hex hex
 test_case ipv6_2 dotest6 hex hex
-failing_test_case ipv6_3 dotest6 "PR kern/60484: ipfilter: null pointer deref in icmp6 parsing" hex hex
+test_case ipv6_3 dotest6 hex hex
 test_case ipv6_5 dotest6 hex hex
 test_case ipv6_6 dotest6 hex text
 
