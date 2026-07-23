@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.78 2024/04/19 05:04:06 ozaki-r Exp $	*/
+/*	$NetBSD: frag6.c,v 1.79 2026/07/23 19:52:22 riastradh Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.78 2024/04/19 05:04:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.79 2026/07/23 19:52:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -246,11 +246,9 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	/*
 	 * Enforce upper bound on number of fragments.
 	 * If maxfrag is 0, never accept fragments.
-	 * If maxfrag is -1, accept all fragments without limitation.
+	 * If maxfrag is -1, treat it as INT_MAX.
 	 */
-	if (ip6_maxfrags < 0)
-		;
-	else if (frag6_nfrags >= (u_int)ip6_maxfrags)
+	if (frag6_nfrags >= MIN((u_int)ip6_maxfrags, INT_MAX))
 		goto dropfrag;
 
 	for (q6 = ip6q.ip6q_next; q6 != &ip6q; q6 = q6->ip6q_next)
@@ -350,6 +348,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 				int erroff = af6->ip6af_offset;
 
 				/* dequeue the fragment. */
+				KASSERT(q6->ip6q_nfrag > 0);
+				KASSERT(frag6_nfrags >= q6->ip6q_nfrag);
+				q6->ip6q_nfrag--;
+				frag6_nfrags--;
 				frag6_deq(af6);
 				kmem_intr_free(af6, sizeof(struct ip6asfrag));
 
@@ -423,6 +425,8 @@ insert:
 	 * Stick new segment in its place.
 	 */
 	frag6_enq(ip6af, af6->ip6af_up);
+	KASSERT(q6->ip6q_nfrag <= frag6_nfrags);
+	KASSERT(frag6_nfrags < INT_MAX);
 	frag6_nfrags++;
 	q6->ip6q_nfrag++;
 
