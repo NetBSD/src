@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.21 2025/07/26 19:41:34 palle Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.22 2026/07/23 17:43:01 palle Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -216,9 +216,10 @@ int	vdsk_submit_cmd(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_complete_cmd(struct vdsk_softc *sc, struct scsipi_xfer *, int);
 void	vdsk_scsi_inq(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_inquiry(struct vdsk_softc *sc, struct scsipi_xfer *);
-void	vdsk_scsi_mode_sense(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_mode_sense_6(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_mode_sense_10(struct vdsk_softc *sc, struct scsipi_xfer *);
-void	vdsk_scsi_mode_select(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_mode_select_6(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_mode_select_10(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_read_toc(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_test_unit_ready(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_start_stop(struct vdsk_softc *sc, struct scsipi_xfer *);
@@ -1113,21 +1114,26 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 			
 		case SCSI_MODE_SENSE_6:
 			DPRINTF(("SCSI_MODE_SENSE_6\n"));
-			vdsk_scsi_mode_sense(sc, xs);
+			vdsk_scsi_mode_sense_6(sc, xs);
 			return;
 
 		case SCSI_MODE_SELECT_6:
 			DPRINTF(("MODE_SELECT_6\n"));
-			vdsk_scsi_mode_select(sc, xs);
+			vdsk_scsi_mode_select_6(sc, xs);
 			return;
 
+		case SCSI_MODE_SELECT_10:
+			DPRINTF(("MODE_SELECT_10\n"));
+			vdsk_scsi_mode_select_10(sc, xs);
+			return;
+			
 		case SCSI_MAINTENANCE_IN:
 			DPRINTF(("MAINTENANCE_IN\n"));
 			vdsk_scsi_maintenance_in(sc, xs);
 			return;
 
 		case SCSI_MODE_SENSE_10:
-			panic("SCSI_MODE_SENSE_10 (not implemented)\n");
+			DPRINTF(("SCSI_MODE_SENSE_10\n"));
 			vdsk_scsi_mode_sense_10(sc, xs);
 			return;
 			
@@ -1367,17 +1373,8 @@ vdsk_scsi_inquiry(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 }
 
 void
-vdsk_scsi_mode_sense(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+vdsk_scsi_mode_sense_6(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 {
-	struct {
-		struct scsi_mode_parameter_header_6 hdr;
-		struct scsi_general_block_descriptor blk_desc;
-	} data;
-
-	bzero(&data, sizeof(data));
-	data.hdr.blk_desc_len = sizeof(data.blk_desc);
-	_lto3b(sc->sc_vdisk_block_size, data.blk_desc.blklen);
-	bcopy(&data, xs->data, MIN(sizeof(data), xs->datalen));
 	vdsk_scsi_done(xs, XS_NOERROR);
 }
 
@@ -1388,7 +1385,13 @@ vdsk_scsi_mode_sense_10(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 }
 
 void
-vdsk_scsi_mode_select(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+vdsk_scsi_mode_select_6(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_mode_select_10(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 {
 	vdsk_scsi_done(xs, XS_NOERROR);
 }
