@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.320 2026/05/29 02:45:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.321 2026/07/23 21:49:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.320 2026/05/29 02:45:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.321 2026/07/23 21:49:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -734,6 +734,14 @@ arpintr(void *arg __unused)
 		switch (ntohs(ar->ar_pro)) {
 		case ETHERTYPE_IP:
 		case ETHERTYPE_IPTRAILERS:
+			switch (ntohs(ar->ar_op)) {
+			case ARPOP_REQUEST:
+			case ARPOP_REPLY:
+				break;
+			default:
+				ARP_STATINC(ARP_STAT_RCVBADPROTO);
+				goto free;
+			}
 			in_arpinput(m);
 			continue;
 		default:
@@ -790,6 +798,7 @@ in_arpinput(struct mbuf *m)
 		goto out;
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
+	KASSERT(op == ARPOP_REPLY || op == ARPOP_REQUEST);
 
 	if (ah->ar_pln != sizeof(struct in_addr))
 		goto out;
@@ -1112,8 +1121,8 @@ reply:
 		la = NULL;
 	}
 	if (op != ARPOP_REQUEST) {
-		if (op == ARPOP_REPLY)
-			ARP_STATINC(ARP_STAT_RCVREPLY);
+		KASSERT(op == ARPOP_REPLY);
+		ARP_STATINC(ARP_STAT_RCVREPLY);
 		goto out;
 	}
 	ARP_STATINC(ARP_STAT_RCVREQUEST);
