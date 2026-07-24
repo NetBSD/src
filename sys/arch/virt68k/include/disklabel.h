@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 2026/07/23 12:26:52 martin Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 2026/07/24 06:27:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -33,13 +33,11 @@
 #ifndef _VIRT68K_DISKLABEL_H_
 #define _VIRT68K_DISKLABEL_H_
 
-#define MAXPARTITIONS	8			/* number of partitions */
-
-#if defined(_KERNEL) && !defined(_MODULE)
 
 /* number of boot pieces , ie xxboot bootxx */
 #define NUMBOOT		0
 
+#define MAXPARTITIONS	8			/* number of partitions */
 #define LABELUSESMBR	0			/* no MBR partitionning */
 #define LABELSECTOR     0                       /* sector containing label */
 #define LABELOFFSET	64			/* offset of label in sector */
@@ -54,7 +52,5 @@
 struct cpu_disklabel {
 	char	cd_block[512];
 };
-
-#endif /* _KERNEL && ! _MODULE */
 
 #endif /* _VIRT68K_DISKLABEL_H_ */
