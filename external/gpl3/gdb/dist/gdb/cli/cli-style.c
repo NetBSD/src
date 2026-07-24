@@ -45,7 +45,11 @@ bool disassembler_styling = true;
 
 /* User-settable variable controlling emoji output.  */
 
+#ifdef __NetBSD__
+static auto_boolean emoji_styling = AUTO_BOOLEAN_FALSE;
+#else
 static auto_boolean emoji_styling = AUTO_BOOLEAN_AUTO;
+#endif
 
 /* Names of intensities; must correspond to
    ui_file_style::intensity.  */
