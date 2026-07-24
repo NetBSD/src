@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.2 2023/09/03 08:48:20 skrll Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.3 2026/07/24 12:18:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.2 2023/09/03 08:48:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.3 2026/07/24 12:18:17 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.2 2023/09/03 08:48:20 skrll Exp $");
 #include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
-#include <uvm/pmap/pmap_synci.h>
-#include <uvm/pmap/pmap_tlb.h>
 
 static void ipi_halt(void) __dead;
 
