@@ -1,4 +1,4 @@
-.\"     $NetBSD: mcclock.4,v 1.6 2008/04/30 13:10:54 martin Exp $
+.\"     $NetBSD: mcclock.4,v 1.7 2026/07/24 10:33:04 jdc Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,12 +27,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 18, 2001
+.Dd June 19, 2026
 .Dt MCCLOCK 4
 .Os
 .Sh NAME
 .Nm mcclock
-.Nd DS1287 real-time clock
+.Nd MC146816, DS1287, and compatibles real-time clock
 .Sh SYNOPSIS
 .Ss algor
 .Cd "mcclock* at isa? port 0x70"
@@ -43,6 +43,8 @@
 .Cd "mcclock* at jensenio? port ?"
 .Ss arc
 .Cd "mcclock* at jazzio?"
+.Ss cobalt
+.Cd "mcclock0 at mainbus? addr 0x10000070"
 .Ss evbmips
 .Cd "mcclock* at isa? port 0x70"
 .Ss pmax
@@ -50,12 +52,18 @@
 .Cd "mcclock* at ioasic? offset ?"
 .Ss sgimips
 .Cd "mcclock* at mace0 offset 0x3a0000"
+.Ss shark
+.Cd "mcclock* at ofisa?"
+.Ss sparc64
+.Cd "rtc* at ebus?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the DS1287 real-time clock (RTC).  Note
-that the kernel expects the RTC to run in UTC.
+driver provides support for the MC146818, DS1287 and compatibles
+real-time clock (RTC).
+Note, that the kernel expects the RTC to run in UTC.
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr ebus 4 ,
 .Xr ioasic 4 ,
 .Xr isa 4
