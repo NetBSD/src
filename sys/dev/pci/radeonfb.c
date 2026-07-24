@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.124 2026/07/12 11:36:25 rkujawa Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.125 2026/07/24 07:40:47 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.124 2026/07/12 11:36:25 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.125 2026/07/24 07:40:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1229,13 +1229,13 @@ radeonfb_ioctl(void *v, void *vs,
 			return radeonfb_getcmap(dp,
 			    (struct wsdisplay_cmap *)d);
 		return EINVAL;
-		
+
 	case WSDISPLAYIO_PUTCMAP:
 		if (dp->rd_bpp == 8)
 			return radeonfb_putcmap(dp,
 			    (struct wsdisplay_cmap *)d);
 		return EINVAL;
-		
+
 	case WSDISPLAYIO_LINEBYTES:
 		*(unsigned *)d = dp->rd_stride;
 		return 0;
@@ -1246,7 +1246,7 @@ radeonfb_ioctl(void *v, void *vs,
 			if ((dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) ||
 			    (dp->rd_wsmode == WSDISPLAYIO_MODE_DUMBFB))
 				radeonfb_map(sc);
-			
+
 			if ((dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) &&
 			    (dp->rd_vd.active)) {
 				radeonfb_engine_init(dp);
@@ -2673,7 +2673,7 @@ radeonfb_blank(struct radeonfb_display *dp, int blank)
 
 		/*
 		 * XXX
-		 * I don't know how to turn the sunc outputs off for DPMS
+		 * I don't know how to turn the sync outputs off for DPMS
 		 * power control, so for now just turn the entire CRTC off
 		 */
 		if (blank) {
@@ -2690,12 +2690,14 @@ radeonfb_blank(struct radeonfb_display *dp, int blank)
 
 		if (dp->rd_crtcs[i].rc_number) {
 			reg = RADEON_CRTC2_GEN_CNTL;
-			mask = RADEON_CRTC2_DISP_DIS;
+			mask = RADEON_CRTC2_DISP_DIS | RADEON_CRTC2_HSYNC_DIS | 
+			       RADEON_CRTC2_VSYNC_DIS;
 			fpreg = RADEON_FP2_GEN_CNTL;
 			fpval = RADEON_FP2_ON;
 		} else {
 			reg = RADEON_CRTC_EXT_CNTL;
-			mask = RADEON_CRTC_DISPLAY_DIS;
+			mask = RADEON_CRTC_DISPLAY_DIS | RADEON_CRTC_HSYNC_DIS |
+			       RADEON_CRTC_VSYNC_DIS;
 			fpreg = RADEON_FP_GEN_CNTL;
 			fpval = RADEON_FP_FPON;
 		}
@@ -2704,9 +2706,6 @@ radeonfb_blank(struct radeonfb_display *dp, int blank)
 			SET32(sc, reg, mask);
 			CLR32(sc, fpreg, fpval);
 		} else {
-			if (dp->rd_crtcs[i].rc_number == 0)
-				mask |= RADEON_CRTC_HSYNC_DIS |
-				    RADEON_CRTC_VSYNC_DIS;
 			CLR32(sc, reg, mask);
 			SET32(sc, fpreg, fpval);
 		}
@@ -4374,7 +4373,6 @@ radeonfb_cursor_visible(struct radeonfb_display *dp)
 			CLR32(dp->rd_softc, gencntl, bit);
 		if (IS_AVIVO(sc))
 			CLR32(sc, AVIVO_D1CUR_UPDATE, AVIVO_D1CURSOR_UPDATE_LOCK);
-		
 	}
 }
 
@@ -4406,7 +4404,7 @@ radeonfb_cursor_update(struct radeonfb_display *dp, unsigned which)
 	int		i;
 
 	sc = dp->rd_softc;
-	
+
 	for (i = 0; i < dp->rd_ncrtcs; i++) {
 		if (dp->rd_crtcs[i].rc_number) {
 			if (IS_AVIVO(sc)) {
