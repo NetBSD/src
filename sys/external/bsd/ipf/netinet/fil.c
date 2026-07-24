@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.38 2026/07/23 16:58:51 riastradh Exp $	*/
+/*	$NetBSD: fil.c,v 1.39 2026/07/24 23:41:26 gutteridge Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -141,7 +141,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.38 2026/07/23 16:58:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.39 2026/07/24 23:41:26 gutteridge Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -4395,7 +4395,7 @@ ipf_rule_compare(frentry_t *fr1, frentry_t *fr2)
 /* Returns:     int - 0 == success, > 0 == errno value                      */
 /* Parameters:  unit(I)     - device for which this is for                  */
 /*              req(I)      - ioctl command (SIOC*)                         */
-/*              data(I)     - pointr to ioctl data                          */
+/*              data(I)     - pointer to ioctl data                         */
 /*              set(I)      - 1 or 0 (filter set)                           */
 /*              makecopy(I) - flag indicating whether data points to a rule */
 /*                            in kernel space & hence doesn't need copying. */
