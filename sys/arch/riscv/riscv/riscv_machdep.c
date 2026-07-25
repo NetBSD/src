@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.50 2026/04/08 04:06:41 thorpej Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.51 2026/07/25 15:49:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.50 2026/04/08 04:06:41 thorpej Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.51 2026/07/25 15:49:49 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -768,7 +768,7 @@ init_riscv(register_t hartid, paddr_t dtb)
 	const uint64_t memory_limit = ptoa(maxppn);
 
 	if (memory_end > memory_limit) {
-		fdt_memory_remove_range(memory_limit, memory_end);
+		fdt_memory_remove_range(memory_limit, memory_end - memory_limit);
 		memory_end = memory_limit;
 	}
 
@@ -845,7 +845,7 @@ init_riscv(register_t hartid, paddr_t dtb)
 	/* XXX check all ranges for last one with a big enough hole */
 	msgbufaddr = memory_end - MSGBUFSIZE;
 	KASSERT(msgbufaddr != 0);	/* no space for msgbuf */
-	fdt_memory_remove_range(msgbufaddr, msgbufaddr + MSGBUFSIZE);
+	fdt_memory_remove_range(msgbufaddr, MSGBUFSIZE);
 	msgbufaddr = RISCV_PA_TO_KVA(msgbufaddr);
 	VPRINTF("msgbufaddr = %#lx\n", msgbufaddr);
 	initmsgbuf((void *)msgbufaddr, MSGBUFSIZE);
