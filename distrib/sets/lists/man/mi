@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1837 2026/07/11 21:20:11 nia Exp $
+# $NetBSD: mi,v 1.1838 2026/07/25 08:31:43 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -5141,6 +5141,7 @@
 ./usr/share/man/man4/lc.4			man-sys-man		.man
 ./usr/share/man/man4/ld.4			man-sys-man		.man
 ./usr/share/man/man4/le.4			man-sys-man		.man
+./usr/share/man/man4/led.4			man-sys-man		.man
 ./usr/share/man/man4/lg3303.4			man-sys-man		.man
 ./usr/share/man/man4/lii.4			man-sys-man		.man
 ./usr/share/man/man4/lkm.4			man-obsolete		obsolete

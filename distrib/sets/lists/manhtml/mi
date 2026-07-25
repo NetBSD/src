@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.55 2026/07/11 21:20:12 nia Exp $
+# $NetBSD: mi,v 1.56 2026/07/25 08:31:43 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1382,6 +1382,7 @@
 ./usr/share/man/html4/lc.html			man-sys-htmlman		html
 ./usr/share/man/html4/ld.html			man-sys-htmlman		html
 ./usr/share/man/html4/le.html			man-sys-htmlman		html
+./usr/share/man/html4/led.html			man-sys-htmlman		html
 ./usr/share/man/html4/lg3303.html		man-sys-htmlman		html
 ./usr/share/man/html4/lii.html			man-sys-htmlman		html
 ./usr/share/man/html4/lkm.html			man-obsolete		obsolete
