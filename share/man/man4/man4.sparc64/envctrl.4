@@ -1,4 +1,4 @@
-.\"	$NetBSD: envctrl.4,v 1.6 2026/07/25 08:35:16 jdc Exp $
+.\"	$NetBSD: envctrl.4,v 1.7 2026/07/25 20:17:39 uwe Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,19 +33,21 @@
 .Tn Sun
 Ultra Enterprise 250 and 450 environmental monitoring
 .Sh SYNOPSIS
-.Cd "envctrl*	at ebus?"
+.Cd "envctrl* at ebus?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides thermal monitoring of processors and power supplies,
 as well as automatic fan regulation.
-The driver attaches to the SUNW,envctrl subsystem found on
-Ultra Enterprise 450 systems, and to the SUNW,envctrltwo subsystem found on
-Ultra Enterprise 250 systems.
+The driver attaches to the
+.Ql SUNW,envctrl
+subsystem found on Ultra Enterprise 450 systems, and to the
+.Ql SUNW,envctrltwo
+subsystem found on Ultra Enterprise 250 systems.
 .Pp
 On Enterprise 450 systems, the following sensors can be queried with
 .Xr envstat 8 :
-.Bl -column "xxxxxxxxxxxxx" "Unit" "Description" -offset indent
+.Bl -column -offset indent ".Li cpufan voltage" "count"
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Description"
 .It Li "CPU0" Ta "degC" Ta "Processor 0 temperature"
 .It Li "CPU1" Ta "degC" Ta "Processor 1 temperature"
@@ -57,11 +59,12 @@ On Enterprise 450 systems, the following sensors can be queried with
 .It Li "ambient" Ta "degC" Ta "Ambient temperature"
 .It Li "cpufan voltage" Ta "V" Ta "Voltage used to drive processor fans"
 .It Li "psfan voltage" Ta "V" Ta "Voltage used to drive power supply fans"
-.It Li "ps failed" Ta "count" Ta "number of failed power supplies"
-.It Li "fans failed" Ta "count" Ta "number of failed fans"
+.It Li "ps failed" Ta "count" Ta "Number of failed power supplies"
+.It Li "fans failed" Ta "count" Ta "Number of failed fans"
 .El
+.Pp
 whilst the following sensors can be queried on Enterprise 250 systems:
-.Bl -column "xxxxxxxxxxxxx" "Unit" "Description" -offset indent
+.Bl -column -offset indent ".Li cpufan voltage" "count"
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Description"
 .It Li "PDB" Ta "degC" Ta "Power distribution board temperature"
 .It Li "SCSI" Ta "degC" Ta "SCSI temperature"
