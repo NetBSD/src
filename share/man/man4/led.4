@@ -1,4 +1,4 @@
-.\"	$NetBSD: led.4,v 1.1 2026/07/25 08:30:26 jdc Exp $
+.\"	$NetBSD: led.4,v 1.2 2026/07/25 20:23:53 uwe Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,13 +38,15 @@ The
 .Nm
 framework exposes controllable LED's through a
 .Xr sysctl 7
-hw.led subtree.
+.Li hw.led
+subtree.
 A value of 1 means that the corresponding LED is lit, and a value of 0
 means that it is unlit.
 Writing a value of 1 will switch on the LED, and writing a value of 0
 will switch it off.
 .Sh SEE ALSO
-.Xr sysctl 7
+.Xr sysctl 7 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
@@ -54,4 +56,4 @@ driver first appeared in
 The
 .Nm
 driver was written by
-.An Jared McNeill Aq Mt jmcneill@netbsd.org .
+.An Jared McNeill Aq Mt jmcneill@NetBSD.org .
