@@ -23156,7 +23156,16 @@ arm_compute_frame_layout (void)
   if (crtl->is_leaf && frame_size == 0
       /* However if it calls alloca(), we have a dynamically allocated
 	 block of BIGGEST_ALIGNMENT on stack, so still do stack alignment.  */
-      && ! cfun->calls_alloca)
+      && ! cfun->calls_alloca
+      /* If queries to the thread pointer go through __aeabi_read_tp,
+	 we must ensure the stack has correct alignment even though we
+	 think of this as a leaf routine.  Even if __aeabi_read_tp
+	 itself doesn't use the stack, resolving the symbol may take a
+	 detour through a procedure call to the dynamic linker.  We
+	 should really enforce alignment only if the procedure actually
+	 uses __aeabi_read_tp (load_tp_soft*) but I don't know how to
+	 query that here.  */
+      && !TARGET_SOFT_TP)
     {
       offsets->outgoing_args = offsets->soft_frame;
       offsets->locals_base = offsets->soft_frame;
