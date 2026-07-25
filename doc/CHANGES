@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3281 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3282 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -347,5 +347,22 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	sysctl(3): Add new user.* nodes that allow determining the
 		currently installed libc version, much in the same
 		way as the kern.* sysctl nodes. [kre 20260710]
+	veritefb(4): New framebuffer driver for Rendition Verite
+		V2100/V2200 PCI/AGP cards. 2D acceleration is
+		supported. [rkujawa 20260711]
+	hppa: Support runtime configuration of color depth in
+		summitfb(4). [macallan 20260712]
 	tzcode: Updated to 2026c. [christos 20260713]
+	veritefb(4): Add experimental 3D acceleration interface;
+		requires separate userland libraries. [rkujawa 20260715]
+	amd64: Add support for extended CPU state (XSAVE) beyond
+		x87/SSE, with the intent of supporting AVX2
+		instructions. [riastradh 20260715]
 	tzdata: Updated to 2026c (using 2026cgtz) [kre 20260718]
+	ftp(1): Forbid Location redirection to file:// URLs.
+		[lukem 20260718]
+	sparc: Add support for gem(4) Ethernet devices on sun4m
+		machines, from Erik LaBine. Based on prior work
+		by Mark Kettenis. [thorpej 20260718]
+	sun2, sun3: Introduce a unified pmap(9) module for all
+		68k-based Sun machines. [thorpej 20260719]
