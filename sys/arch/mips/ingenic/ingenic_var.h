@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_var.h,v 1.6 2017/05/21 06:49:13 skrll Exp $ */
+/*	$NetBSD: ingenic_var.h,v 1.7 2026/07/26 20:15:17 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -44,6 +44,7 @@ struct apbus_attach_args {
 
 extern bus_space_tag_t ingenic_memt;
 void apbus_init(void);
+int ingenic_cdr_set(uint32_t, uint32_t);
 
 uint32_t mips_cp0_corectrl_read(void);
 uint32_t mips_cp0_corestatus_read(void);
@@ -54,5 +55,11 @@ void mips_cp0_corectrl_write(uint32_t);
 void mips_cp0_corestatus_write(uint32_t);
 void mips_cp0_corereim_write(uint32_t);
 void mips_cp0_corembox_write(u_int, uint32_t);
+
+#if 0 /* MULTIPROCESSOR */
+struct cpu_info;
+int ingenic_send_ipi(struct cpu_info *, int);
+#define	INGENIC_IPI_CLOCK	31
+#endif
 
 #endif /* INGENIC_VAR_H */

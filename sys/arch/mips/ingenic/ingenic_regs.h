@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.28 2025/01/07 18:51:40 andvar Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.29 2026/07/26 20:15:17 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -275,7 +275,9 @@ readreg(uint32_t reg)
 #define JZ_SPCR1	0x100000bc
 #define JZ_SRBC		0x100000c4	/* Soft Reset & Bus Control */
 
-/* clock divider registers */
+/* clock divider registers, handshake bits common to all of them */
+	#define CDR_CE		0x20000000	/* change enable */
+	#define CDR_BUSY	0x10000000	/* divider update in progress */
 #define JZ_MSC0CDR	0x10000068
 	#define MSCCDR_SCLK_A	0x40000000
 	#define MSCCDR_MPLL	0x80000000
@@ -414,6 +416,15 @@ gpio_set(uint32_t g, int pin, int level)
 
 	reg += (level == 0) ? JZ_GPIO_PAT0C : JZ_GPIO_PAT0S;
 	writereg(reg, mask);
+}
+
+static inline bool
+gpio_get(uint32_t g, int pin)
+{
+	uint32_t mask = 1 << pin;
+	uint32_t reg = JZ_GPIO_A_BASE + (g << 8);
+
+	return (readreg(reg + JZ_GPIO_PIN) & mask) != 0;
 }
 
 static inline void
@@ -656,8 +667,8 @@ gpio_as_input(uint32_t g, int pin)
 	#define JZ_IO_ABORT	0x00000800
 	#define JZ_BUS_WIDTH_M	0x00000600
 	#define JZ_BUS_1BIT	0x00000000
-	#define JZ_BUS_4BIT	0x00000200
-	#define JZ_BUS_8BIT	0x00000300
+	#define JZ_BUS_4BIT	0x00000400	/* bit 10 (not 9!), per Linux */
+	#define JZ_BUS_8BIT	0x00000600
 	#define JZ_INIT		0x00000080 /* send 80 clk init before cmd */
 	#define JZ_BUSY		0x00000040
 	#define JZ_STREAM	0x00000020
@@ -673,7 +684,7 @@ gpio_as_input(uint32_t g, int pin)
 	#define JZ_RES_R6	0x00000006
 	#define JZ_RES_R7	0x00000007
 #define JZ_MSC_RESTO	0x10 /* 16bit response timeout in MSC_CLK */
-#define JZ_MSC_RDTO RW	0x14 /* 32bit read timeout in MSC_CLK */
+#define JZ_MSC_RDTO	0x14 /* 32bit read timeout in MSC_CLK */
 #define JZ_MSC_BLKLEN	0x18 /* 16bit block length */
 #define JZ_MSC_NOB	0x1c /* 16bit block counter */
 #define JZ_MSC_SNOB	0x20 /* 16bit successful block counter */
@@ -723,16 +734,19 @@ gpio_as_input(uint32_t g, int pin)
 	#define JZ_INCR_64	0x08
 	#define JZ_DMASEL	0x02 /* 1 - SoC DMAC, 0 - MSC built-in */
 	#define JZ_DMAEN	0x01 /* enable DMA */
-#define JZ_MSC_DMANDA	0x48 /* next descriptor paddr */
-#define JZ_MSC_DMADA	0x4c /* current descriptor */
-#define JZ_MSC_DMALEN	0x50 /* transfer tength */
+#define JZ_MSC_DMANDA	0x48 /* next descriptor paddr, 16-byte aligned */
+#define JZ_MSC_DMADA	0x4c /* current descriptor data address */
+#define JZ_MSC_DMALEN	0x50 /* transfer length */
+/*
+ * Read-only shadow of the current descriptor's CMD word
+ */
 #define JZ_MSC_DMACMD	0x54
 	#define JZ_DMA_IDI_M	0xff000000
 	#define JZ_DMA_ID_M	0x00ff0000
 	#define JZ_DMA_AOFST_M	0x00000600
 	#define JZ_DMA_ALIGN	0x00000100
-	#define JZ_DMA_ENDI	0x00000002
-	#define JZ_DMA_LINK	0x00000001
+	#define JZ_DMA_ENDI	0x00000002 /* interrupt at this descriptor's end */
+	#define JZ_DMA_LINK	0x00000001 /* 0 - fetch next from NDA, 1 - end of chain (sets DMAEND) */
 #define JZ_MSC_CTRL2	0x58
 	#define JZ_PIP		0x1f000000	/* 1 - intr trigger on high */
 	#define JZ_RST_EN	0x00800000

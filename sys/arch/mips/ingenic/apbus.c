@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.23 2026/01/15 16:57:39 skrll Exp $ */
+/*	$NetBSD: apbus.c,v 1.24 2026/07/26 20:15:17 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.23 2026/01/15 16:57:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.24 2026/07/26 20:15:17 rkujawa Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -229,7 +229,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	gpio_as_dev0(1, 30);
 	gpio_as_dev0(1, 31);
 
-#ifndef INGENIC_DEBUG
+#ifdef INGENIC_DEBUG
 	printf("JZ_CLKGR0 %08x\n", readreg(JZ_CLKGR0));
 	printf("JZ_CLKGR1 %08x\n", readreg(JZ_CLKGR1));
 	printf("JZ_SPCR0  %08x\n", readreg(JZ_SPCR0));
@@ -282,6 +282,23 @@ apbus_print(void *aux, const char *pnp)
 	if ((pnp == NULL) && (aa->aa_irq != -1))
 		aprint_normal(" irq %d", aa->aa_irq);
 	return (UNCONF);
+}
+
+/*
+ * Program a CGU clock divider register
+ */
+int
+ingenic_cdr_set(uint32_t clkreg, uint32_t val)
+{
+	int timo;
+
+	writereg(clkreg, val | CDR_CE);
+	for (timo = 1000; timo > 0; timo--) {
+		if ((readreg(clkreg) & CDR_BUSY) == 0)
+			return 0;
+		delay(10);
+	}
+	return ETIMEDOUT;
 }
 
 #define CHIP	   		apbus
