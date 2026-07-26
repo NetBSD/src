@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.76 2019/09/20 14:20:45 christos Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.77 2026/07/26 23:43:27 thorpej Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -86,7 +86,8 @@ struct isposinfo {
 	uint32_t		loop_down_limit;
 	uint32_t		gone_device_time;
 	unsigned int		: 16,
-				: 8,
+				: 7,
+		use_dma64	: 1,
 		gdt_running	: 1,
 		loop_checked	: 1,
 		mbox_sleeping	: 1,
@@ -102,6 +103,7 @@ struct isposinfo {
 	uint16_t		exec_throttle;
 	struct lwp *		thread;
 };
+#define	isp_use_dma64		isp_osinfo.use_dma64
 #define	isp_dmatag		isp_osinfo.dmatag
 #define	isp_rqdmap		isp_osinfo.rqdmap
 #define	isp_rsdmap		isp_osinfo.rsdmap

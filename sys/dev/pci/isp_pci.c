@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.122 2019/11/10 21:16:36 chs Exp $ */
+/* $NetBSD: isp_pci.c,v 1.123 2026/07/26 23:43:27 thorpej Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.122 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.123 2026/07/26 23:43:27 thorpej Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -710,7 +710,18 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_normal("%s", dstring);
 	}
 
-	isp->isp_dmatag = pa->pa_dmat;
+	/*
+	 * XXX isp_intr() seems to have some logic error
+	 * XXX with respect to RQSTYPE_A64, so just avoid
+	 * XXX it for now.
+	 */
+#if 0
+	if (pci_dma64_available(pa)) {
+		isp->isp_dmatag = pa->pa_dmat64;
+		isp->isp_use_dma64 = 1;
+	} else
+#endif
+		isp->isp_dmatag = pa->pa_dmat;
 	isp->isp_revision = rev;
 
 	/*
@@ -1343,7 +1354,7 @@ isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, void *arg)
 		int error;
 		uint32_t flag, flg2;
 
-		if (sizeof (bus_addr_t) > 4) {
+		if (isp->isp_use_dma64) {
 			if (rq->req_header.rqs_entry_type == RQSTYPE_T2RQS) {
 				rq->req_header.rqs_entry_type = RQSTYPE_T3RQS;
 			} else if (rq->req_header.rqs_entry_type == RQSTYPE_REQUEST) {
