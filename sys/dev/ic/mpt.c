@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.21 2019/09/23 16:19:33 skrll Exp $	*/
+/*	$NetBSD: mpt.c,v 1.22 2026/07/26 17:56:37 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.21 2019/09/23 16:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.22 2026/07/26 17:56:37 jdc Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -203,7 +203,7 @@ mpt_soft_reset(mpt_softc_t *mpt)
 
 	/* Have to use hard reset if we are not in Running state */
 	if (MPT_STATE(mpt_rd_db(mpt)) != MPT_DB_STATE_RUNNING) {
-		mpt_prt(mpt, "soft reset failed: device not running");
+		mpt_prt(mpt, "unable to soft reset: device not running");
 		return MPT_FAIL;
 	}
 
@@ -212,7 +212,7 @@ mpt_soft_reset(mpt_softc_t *mpt)
 	 * processing. So don't waste our time.
 	 */
 	if (MPT_DB_IS_IN_USE(mpt_rd_db(mpt))) {
-		mpt_prt(mpt, "soft reset failed: doorbell wedged");
+		mpt_prt(mpt, "unable to soft reset: doorbell wedged");
 		return MPT_FAIL;
 	}
 
