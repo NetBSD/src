@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.72 2024/04/18 10:32:03 andvar Exp $	*/
+/*	$NetBSD: if_media.h,v 1.73 2026/07/26 20:57:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2020 The NetBSD Foundation, Inc.
@@ -999,6 +999,7 @@ int	ifmedia_ioctl(struct ifnet *, struct ifreq *, struct ifmedia *, u_long);
 
 /* Look up a media entry. */
 struct ifmedia_entry *ifmedia_match(struct ifmedia *, u_int, u_int);
+struct ifmedia_entry *ifmedia_match_locked(struct ifmedia *, u_int, u_int);
 
 /* Delete all media for a given media instance */
 void	ifmedia_delete_instance(struct ifmedia *, u_int);
