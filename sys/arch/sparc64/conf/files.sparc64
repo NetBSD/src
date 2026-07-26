@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.171 2026/07/07 12:44:48 jdc Exp $
+#	$NetBSD: files.sparc64,v 1.172 2026/07/26 12:55:51 jdc Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -98,6 +98,10 @@ file	arch/sparc64/dev/rtc.c			rtc
 device bq4802rtc: sysmon_envsys
 attach bq4802rtc at ebus with bq4802rtc_ebus
 file	arch/sparc64/dev/bq4802_ebus.c		bq4802rtc
+
+device auxfan: sysmon_envsys
+attach auxfan at iic
+file	arch/sparc64/dev/auxfan.c		auxfan
 
 device psm: sysmon_power
 attach psm at ebus

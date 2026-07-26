@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.249 2026/07/07 14:15:03 jdc Exp $
+# $NetBSD: GENERIC,v 1.250 2026/07/26 12:55:51 jdc Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.249 $"
+#ident		"GENERIC-$Revision: 1.250 $"
 
 maxusers	64
 
@@ -844,6 +844,8 @@ adt7462sm* 	at iic? addr?	# U45
 seeprom*	at iic? addr?	# i2c-at24c64 fru's
 pcagpio* 	at iic? addr?	# V210/V240 GPIO's
 pcf8574io* 	at iic? addr?	# E250 GPIO's
+
+auxfan* 	at iic? addr?	# iic fan sensor found on SB2500
 
 ### Other pseudo-devices
 
