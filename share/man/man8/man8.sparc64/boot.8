@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.18 2014/10/27 16:18:38 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.19 2026/07/26 15:16:40 jdc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd November 9, 2008
+.Dd July 26, 2026
 .Dt BOOT 8 sparc64
 .Os
 .Sh NAME
@@ -122,7 +122,7 @@ The secondary boot loader,
 .Nm ofwboot ,
 takes
 .Nm
-commands virtually the same as Open Firmware.
+virtually the same commands as Open Firmware.
 Thus, the following examples apply equally to
 .Nm ofwboot
 as well as Open Firmware.
@@ -152,6 +152,11 @@ If booting from the net device, there is no partition involved.
 .Pp
 The boot device is an optional first part of the boot string, if no device
 is specified the default device is used (see below).
+.Pp
+Note that Open Firmware can only boot from the first 4Gb of the disk.
+If the boot partition is larger than 4Gb, then the boot loader or
+system kernel can be located after 4Gb on the disk, thus causing the disk
+to become unbootable.
 .Sh FIRMWARE ENVIRONMENT VARIABLES
 All Open Firmware environment variables can be printed with the
 .Ic printenv
@@ -259,6 +264,3 @@ provides no way to boot
 .Tn UltraSPARC
 systems from floppy disks.
 This is unlikely to change, due to very low demand for this feature.
-.Pp
-The OBP on Ultra 1 and Ultra 2 machines can only boot from the first
-4Gb of the disk.
