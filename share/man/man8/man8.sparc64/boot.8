@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.19 2026/07/26 15:16:40 jdc Exp $
+.\"	$NetBSD: boot.8,v 1.20 2026/07/26 16:30:38 uwe Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm boot
 .Op Fl adqsv
 .Oo
-.Ar --
+.Fl Fl
 .Aq Ar boot string
 .Oc
 .Sh DESCRIPTION
@@ -66,7 +66,7 @@ Open Firmware performs a Power On Self Test
 and then will boot an operating system according to
 configuration in Open Firmware environment variables.
 .Ss Boot program options
-.Bl -tag -width xxx
+.Bl -tag -width Fl
 .It Fl a
 Prompt for the root file system device, the system crash dump
 device, and the path to
@@ -85,7 +85,9 @@ Boot the system in verbose mode.
 .Pp
 Any extra flags or arguments, or the
 .Aq Ar boot string
-after the -- separator are passed to the boot PROM.
+after the
+.Fl Fl
+separator are passed to the boot PROM.
 Other flags are currently ignored.
 .Pp
 At any time you can halt the running system and get back to the Open Firmware.
@@ -93,16 +95,16 @@ If the console is the
 .Tn Sun
 framebuffer and keyboard,
 press the
-.Sq STOP
+.Aq Tn STOP
 and
-.Sq A
+.Aq Tn A
 keys at the same time on the keyboard.
 On older models of
 .Tn Sun
 keyboards, the
-.Sq STOP
+.Aq Tn STOP
 key is labeled
-.Sq L1 .
+.Aq Tn L1 .
 .Pp
 If the console is a serial port the same is
 achieved by sending a
@@ -127,9 +129,11 @@ Thus, the following examples apply equally to
 .Nm ofwboot
 as well as Open Firmware.
 .Pp
-A typical list of usable boot devices (extracted from the output of
-the Open Firmware command
-.Ic devalias )
+A typical list of usable boot devices
+.Po
+extracted from the output of the Open Firmware command
+.Ic devalias
+.Pc
 is:
 .Bd -literal -offset indent
 net                      /sbus/SUNW,hme@e,8c00000
@@ -144,11 +148,18 @@ disk1                    /sbus/SUNW,fas@e,8800000/sd@1,0
 disk0                    /sbus/SUNW,fas@e,8800000/sd@0,0
 .Ed
 .Pp
-If a device specification includes a partition letter (for example
-.Em cdrom
-in above list), that partition is used by default, otherwise the first (a)
+If a device specification includes a partition letter
+.Po
+for example
+.Ql cdrom
+in the above list
+.Pc ,
+that partition is used by default, otherwise the first
+.Pq Ql a
 partition is used.
-If booting from the net device, there is no partition involved.
+If booting from the
+.Ql net
+device, there is no partition involved.
 .Pp
 The boot device is an optional first part of the boot string, if no device
 is specified the default device is used (see below).
@@ -177,10 +188,10 @@ diag-switch?          false
 .Pp
 Of course you may select any other boot device,
 if you do not want to boot from the device aliased to
-.Em disk ,
+.Ql disk ,
 see the discussion on devices above.
 .Sh FILES
-.Bl -tag -width /usr/mdec/ofwboot.netxx -compact
+.Bl -tag -width Pa -compact
 .It Pa /netbsd
 system code
 .It Pa /ofwboot
@@ -201,7 +212,7 @@ boot cdrom
 Note that some multi-architecture CDs are not able to use the
 default sparc64 partition for
 .Tn CD-ROMs
-.Pq f ,
+.Pq Ql f ,
 so they may require an explicit partition letter, for example
 .Bd -literal -offset indent
 boot cdrom:c
