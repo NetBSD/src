@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.108 2026/04/08 05:26:10 wiz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.109 2026/07/27 17:55:12 joe Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -607,6 +607,9 @@ configuration is loaded.
 The log packets can be written to a file using the
 .Xr npfd 8
 daemon.
+.It Cm route : Ar interface
+This is used to route packets via the defined interface.
+Packets that take this route bypass the kernel's routing table.
 .It Cm normalize : Ar option1 Ns Op Li \&, Ar option2 ...
 Modify packets according to the specified normalization options.
 This requires the
@@ -626,9 +629,6 @@ Enforce a minimum value for the IPv4 Time To Live (TTL) parameter.
 Remove the Don't Fragment (DF) flag from IPv4 packets.
 .It Cm \*qrandom-id\*q
 Randomize the IPv4 ID parameter.
-.It Cm routing : Ar interface
-This is used to route packets via the defined interface.
-Packets that take this route bypass the kernel's routing table.
 .El
 .Pp
 For example:
