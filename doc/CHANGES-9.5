@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.118 2026/07/28 10:50:10 sborrill Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.119 2026/07/28 11:23:19 sborrill Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1587,4 +1587,15 @@ sys/dev/hdaudio/hdaudio.c			1.19
 	can't change the configuration.
 	PR kern/60492: hdaudio(4): setconfig is allowed unprivileged
 	[riastradh, ticket #2038]
+
+sys/external/bsd/ipf/netinet/fil.c		1.38
+tests/ipf/t_filter_exec.sh			1.9
+tests/ipf/expected/ipv6.3			1.2
+tests/ipf/input/ipv6.3				1.3
+tests/ipf/t_filter_exec.sh			1.10
+
+	ipfilter: Fix remotely triggerable null pointer dereference and
+	add an automatic test for it.
+	PR kern/60484: ipfilter: null pointer deref in icmp6 parsing
+	[[riastradh, ticket #2039]
 
