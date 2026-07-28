@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.117 2026/07/19 11:30:15 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.118 2026/07/28 10:50:10 sborrill Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1579,3 +1579,12 @@ xsrc/external/mit/xorg-server/dist/mi/miglblt.c			(apply patch)
 
 	Apply upstream fixes for xorg-server and libXfont2.
 	[mrg, ticket #2037]
+
+sys/dev/hdaudio/hdaudio.c			1.19
+
+	hdaudio(4): Apply access checks to ioctl commands so that
+	unprivileged users without write permission on /dev/hdaudioN
+	can't change the configuration.
+	PR kern/60492: hdaudio(4): setconfig is allowed unprivileged
+	[riastradh, ticket #2038]
+
