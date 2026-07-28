@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.9.2.2 2020/12/28 20:21:54 martin Exp $ */
+/* $NetBSD: hdaudio.c,v 1.9.2.3 2026/07/28 10:49:02 sborrill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,16 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.9.2.2 2020/12/28 20:21:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.9.2.3 2026/07/28 10:49:02 sborrill Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/conf.h>
+#include <sys/types.h>
+
 #include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/fcntl.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/systm.h>
 
 #include "hdaudiovar.h"
 #include "hdaudioreg.h"
@@ -1581,16 +1583,32 @@ hdaudioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case HDAUDIO_FGRP_INFO:
+		if (!(flag & FREAD)) {
+			err = EACCES;
+			break;
+		}
 		err = hdaudioioctl_fgrp_info(sc, request, response);
 		break;
 	case HDAUDIO_FGRP_GETCONFIG:
+		if (!(flag & FREAD)) {
+			err = EACCES;
+			break;
+		}
 		err = hdaudioioctl_fgrp_getconfig(sc, request, response);
 		break;
 	case HDAUDIO_FGRP_SETCONFIG:
+		if (!(flag & FWRITE)) {
+			err = EACCES;
+			break;
+		}
 		err = hdaudioioctl_fgrp_setconfig(sc, request, response);
 		break;
 	case HDAUDIO_FGRP_CODEC_INFO:
 	case HDAUDIO_FGRP_WIDGET_INFO:
+		if (!(flag & FREAD)) {
+			err = EACCES;
+			break;
+		}
 		err = hdaudio_dispatch_fgrp_ioctl(sc, cmd, request, response);
 		break;
 	default:
