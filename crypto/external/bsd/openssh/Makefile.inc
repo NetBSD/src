@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2025/12/28 11:15:00 nia Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2026/07/28 23:49:07 mrg Exp $
 
 WARNS?=	4
 
@@ -65,7 +65,7 @@ LINTFLAGS+=	-X 351	# missing header declaration
 
 # We install libssh in /usr/lib/private so applications don't
 # accidentally link against it.  Set LIBSUBDIR so libssh.so.N and
-# libssh.so.N.M will be installed there there, and set PROGDPSUBDIRS so
+# libssh.so.N.M will be installed there, and set PROGDPSUBDIRS so
 # ssh/sshd/sshd-session/&c. will find it at link-time.
 LIBSUBDIR=	private
 PROGDPSUBDIRS+=	private
