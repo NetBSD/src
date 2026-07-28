@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.119 2026/07/28 13:39:47 sborrill Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.120 2026/07/28 13:46:12 sborrill Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5647,4 +5647,10 @@ sys/dist/pf/net/pf.c				1.88
 	pf: Fix use-after-free in fragment reassembly.
 	PR kern/60485: pf(4): uaf in fragment reassembly
 	[riastradh, ticket #1318]
+
+sys/netinet/tcp_syncache.c			1.8
+
+	tcp: Plug a 4-byte leak of kernel stack data through timestamps.
+	Addresses PR kern/60486
+	[riastradh, ticket #1319]
 
