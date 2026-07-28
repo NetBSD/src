@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.118 2026/07/28 13:32:05 sborrill Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.119 2026/07/28 13:39:47 sborrill Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5641,4 +5641,10 @@ tests/ipf/t_filter_exec.sh			1.10
 	add an automatic test for it.
 	PR kern/60484: ipfilter: null pointer deref in icmp6 parsing
 	[riastradh, ticket #1317]
+
+sys/dist/pf/net/pf.c				1.88
+
+	pf: Fix use-after-free in fragment reassembly.
+	PR kern/60485: pf(4): uaf in fragment reassembly
+	[riastradh, ticket #1318]
 
