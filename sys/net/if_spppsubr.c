@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.306 2026/07/22 07:32:10 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.307 2026/07/28 07:01:23 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.306 2026/07/22 07:32:10 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.307 2026/07/28 07:01:23 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.306 2026/07/22 07:32:10 yamaguchi 
 #include <sys/atomic.h>
 #include <sys/compat_stub.h>
 #include <sys/cpu.h>
+#include <sys/once.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -550,6 +551,17 @@ static const struct cp *cps[IDX_COUNT] = {
 	&pap,			/* IDX_PAP */
 	&chap,			/* IDX_CHAP */
 };
+
+static int
+spppinit(void)
+{
+	spppq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
+
+	callout_init(&keepalive_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&keepalive_ch, sppp_keepalive, NULL);
+
+	return 0;
+}
 
 static inline u_int
 sppp_proto2authproto(u_short proto)
@@ -1149,18 +1161,11 @@ bad:
 void
 sppp_attach(struct ifnet *ifp)
 {
+	static ONCE_DECL(control);
 	struct sppp *sp = (struct sppp *) ifp;
 	char xnamebuf[MAXCOMLEN];
 
-	/* Initialize keepalive handler. */
-	if (! spppq) {
-		callout_init(&keepalive_ch, CALLOUT_MPSAFE);
-		callout_setfunc(&keepalive_ch, sppp_keepalive, NULL);
-		callout_schedule(&keepalive_ch, hz * sppp_keepalive_interval);
-	}
-
-	if (! spppq_lock)
-		spppq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
+	RUN_ONCE(&control, spppinit);
 
 	sp->pp_if.if_type = IFT_PPP;
 	sp->pp_if.if_output = sppp_output;
@@ -1208,6 +1213,8 @@ sppp_attach(struct ifnet *ifp)
 	SPPP_UNLOCK(sp);
 
 	SPPPQ_LOCK();
+	if (spppq == NULL)
+		callout_schedule(&keepalive_ch, hz * sppp_keepalive_interval);
 	/* Insert new entry into the keepalive list. */
 	sp->pp_next = spppq;
 	spppq = sp;
@@ -1226,14 +1233,10 @@ sppp_detach(struct ifnet *ifp)
 			*q = p->pp_next;
 			break;
 		}
-	SPPPQ_UNLOCK();
 
-	if (! spppq) {
-		/* Stop keepalive handler. */
+	if (spppq == NULL)
 		callout_stop(&keepalive_ch);
-		mutex_obj_free(spppq_lock);
-		spppq_lock = NULL;
-	}
+	SPPPQ_UNLOCK();
 
 	sysctl_teardown(&sp->pp_sysctl_log);
 	sppp_cp_fini(&lcp, sp);
