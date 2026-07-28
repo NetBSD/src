@@ -1,4 +1,4 @@
-#	$NetBSD: common.sh,v 1.3 2026/07/28 08:03:18 yamaguchi Exp $
+#	$NetBSD: common.sh,v 1.4 2026/07/28 08:07:11 yamaguchi Exp $
 #
 # Copyright (c) Internet Initiative Japan Inc.
 # All rights reserved.
@@ -77,6 +77,8 @@ setup_pppoe_server_client()
 		rump_server_add_iface $S pppoe0
 		atf_ifconfig shmif0 up
 		atf_pppoectl -e shmif0 pppoe0
+		atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+		atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	done
 
 	if $DEBUG; then
@@ -160,7 +162,6 @@ pppoe_connect()
 
 	for S in $SERVER_ $CLIENT_; do
 		export RUMP_SERVER=$S
-		atf_ifconfig -w 10
 		$DEBUG && rump.ifconfig
 	done
 }
@@ -179,7 +180,6 @@ pppoe_connect_ncp()
 
 	for S in $SERVER_ $CLIENT_; do
 		export RUMP_SERVER=$S
-		atf_ifconfig -w 10
 		$DEBUG && rump.ifconfig
 	done
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe_ondemand.sh,v 1.5 2026/07/28 08:04:52 yamaguchi Exp $
+#	$NetBSD: t_pppoe_ondemand.sh,v 1.6 2026/07/28 08:07:11 yamaguchi Exp $
 #
 # Copyright (c) Internet Initiative Japan Inc.
 # All rights reserved.
@@ -82,7 +82,7 @@ pppoe_ondemand_body()
 
 		export RUMP_SERVER=$CLIENT
 
-		# Set a generous idle timeout for `ifconfig -w 10`
+		# Set a generous idle timeout to prevent disconnection
 		atf_pppoectl pppoe0 idle-timeout=$t_idle
 
 		# Send trigger packet
@@ -92,7 +92,6 @@ pppoe_ondemand_body()
 		atf_check -s exit:0 -o match:'UP.*RUNNING' \
 		    rump.ifconfig pppoe0
 		wait_for "IPCP" "opened"
-		atf_ifconfig -w 10
 		atf_check -s exit:0 -o ignore \
 		    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 
@@ -128,7 +127,6 @@ pppoe_ondemand_body()
 	atf_check -s exit:0 -o match:'UP.*RUNNING' \
 	    rump.ifconfig pppoe0
 	wait_for "IPCP" "opened"
-	atf_ifconfig -w 10
 	atf_check -s exit:0 -o ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 
@@ -272,7 +270,6 @@ pppoe_ondemand_maxpadi_body()
 	# The connection should be established
 	atf_check -s exit:0 -o match:'UP.*RUNNING' rump.ifconfig pppoe0
 	wait_for "IPCP" "opened"
-	atf_ifconfig -w 10
 	atf_check -s exit:0 -o ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 }
@@ -422,7 +419,7 @@ pppoe_sppp_filter_body()
 	echo "Test output packet types for activity detection"
 
 	export RUMP_SERVER=$CLIENT
-	# Set a generous idle timeout for `ifconfig -w 10`
+	# Set a generous idle timeout to prevent disconnection
 	atf_pppoectl pppoe0 idle-timeout=$t_idle
 
 	# Send a trigger packet
@@ -433,7 +430,6 @@ pppoe_sppp_filter_body()
 	    rump.ifconfig pppoe0
 	wait_for "IPCP"   "opened"
 	wait_for "IPv6CP" "opened"
-	atf_ifconfig -w 10
 	atf_check -s exit:0 -o ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 	atf_check -s exit:0 -o ignore -e ignore \
@@ -460,7 +456,7 @@ pppoe_sppp_filter_body()
 	echo "Test input packet types for activity detection"
 
 	export RUMP_SERVER=$CLIENT
-	# Set a generous idle timeout for `ifconfig -w 10`
+	# Set a generous idle timeout to prevent disconnection
 	atf_pppoectl pppoe0 idle-timeout=$t_idle
 
 	# Send a trigger packet
@@ -470,7 +466,6 @@ pppoe_sppp_filter_body()
 	atf_check -s exit:0 -o match:'UP.*RUNNING' \
 	    rump.ifconfig pppoe0
 	wait_for "IPCP" "opened"
-	atf_ifconfig -w 10
 	atf_check -s exit:0 -o ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 
@@ -486,7 +481,7 @@ pppoe_sppp_filter_body()
 	wait_for "LCP" "starting"
 
 	export RUMP_SERVER=$CLIENT
-	# Set a generous idle timeout for `ifconfig -w 10`
+	# Set a generous idle timeout to prevent disconnection
 	atf_pppoectl pppoe0 idle-timeout=$t_idle
 
 	atf_check -s exit:0 -o     match:'UP'      rump.ifconfig pppoe0
