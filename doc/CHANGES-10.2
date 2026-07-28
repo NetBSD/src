@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.116 2026/07/21 08:15:42 sborrill Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.117 2026/07/28 10:28:39 sborrill Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5622,4 +5622,12 @@ tests/lib/libcurses/check_files/window_hierarchy.chk	1.2
 	  stdscr blank. (fixes 60431)
 	Updates to check files due to output changes from bug fixes.
 	[blymn, ticket #1314]
+
+sys/dev/hdaudio/hdaudio.c			1.19
+
+	hdaudio(4): Apply access checks to ioctl commands so that
+	unprivileged users without write permission on /dev/hdaudioN
+	can't change the configuration.
+	PR kern/60492: hdaudio(4): setconfig is allowed unprivileged
+	[riastradh, ticket #1316]
 
