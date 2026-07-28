@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.55 2026/07/14 06:03:11 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.56 2026/07/28 07:10:43 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -205,6 +205,26 @@ struct sppp {
 	 */
 	void	(*pp_tls)(struct sppp *);
 	void	(*pp_tlf)(struct sppp *);
+
+#ifdef SPPP_FILTER
+	/*
+	 * Filter for trigger packets of on-demand dialing,
+	 * protected by pp_lock (SPPP_LOCK()).
+	 */
+	struct	bpf_program	 pp_dial_filt;
+
+	/*
+	 * Filter for idle-timeout packets,
+	 * protected by pserialize and psref.
+	 */
+	pserialize_t		 pp_psz;
+	bool			 pp_active_filt_enabled;
+	struct sppp_bpf {
+		struct psref_target	sb_psref;
+		size_t			sb_len;
+		struct bpf_insn		sb_insns[];
+	} *pp_active_filt_in, *pp_active_filt_out;
+#endif
 };
 
 #define PP_IFDOWN	0x01	/* if_down() when no ECHO_REPLY received

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.307 2026/07/28 07:01:23 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.308 2026/07/28 07:10:42 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.307 2026/07/28 07:01:23 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.308 2026/07/28 07:10:42 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.307 2026/07/28 07:01:23 yamaguchi 
 #include "opt_compat_netbsd.h"
 #include "opt_net_mpsafe.h"
 #include "opt_sppp.h"
+#include "opt_sppp_filter.h"
 #endif
 
 #include <sys/param.h>
@@ -71,6 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.307 2026/07/28 07:01:23 yamaguchi 
 #include <sys/compat_stub.h>
 #include <sys/cpu.h>
 #include <sys/once.h>
+#ifdef SPPP_FILTER
+#include <sys/pserialize.h>
+#include <sys/psref.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -307,6 +312,9 @@ unsigned int		 sppp_keepalive_interval __read_mostly
 			    = SPPP_KEEPALIVE_INTERVAL;
 
 pktq_rps_hash_func_t sppp_pktq_rps_hash_p;
+#ifdef SPPP_FILTER
+static struct psref_class *sppp_psref_class __read_mostly = NULL;
+#endif
 
 #define SPPPQ_LOCK()	if (spppq_lock) \
 				mutex_enter(spppq_lock);
@@ -486,6 +494,13 @@ static void sppp_notify_down(struct sppp *);
 static void sppp_notify_tls_wlocked(struct sppp *);
 static void sppp_notify_tlf_wlocked(struct sppp *);
 
+#ifdef SPPP_FILTER
+static void	sppp_update_last_activity(struct sppp *, struct mbuf *,
+		    struct sppp_bpf **);
+static int	sppp_set_filter(struct sppp *, struct bpf_program *,
+		    struct sppp_bpf **);
+#endif
+
 /* our control protocol descriptors */
 static const struct cp lcp = {
 	PPP_LCP, IDX_LCP, CP_LCP, "lcp",
@@ -560,6 +575,9 @@ spppinit(void)
 	callout_init(&keepalive_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&keepalive_ch, sppp_keepalive, NULL);
 
+#ifdef SPPP_FILTER
+	sppp_psref_class = psref_class_create("sppp_psref", IPL_SOFTNET);
+#endif
 	return 0;
 }
 
@@ -773,7 +791,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	case PPP_IP:
 		SPPP_LOCK(sp, RW_READER);
 		if (sp->scp[IDX_IPCP].state == STATE_OPENED) {
-			atomic_store_relaxed(&sp->pp_last_activity, time_uptime32);
 			pktq = ip_pktq;
 			rps_hash = atomic_load_relaxed(&sppp_pktq_rps_hash_p);
 		}
@@ -801,7 +818,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	case PPP_IPV6:
 		SPPP_LOCK(sp, RW_READER);
 		if (sp->scp[IDX_IPV6CP].state == STATE_OPENED) {
-			atomic_store_relaxed(&sp->pp_last_activity, time_uptime32);
 			pktq = ip6_pktq;
 			rps_hash = atomic_load_relaxed(&sppp_pktq_rps_hash_p);
 		}
@@ -813,6 +829,12 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	if ((ifp->if_flags & IFF_UP) == 0 || pktq == NULL) {
 		goto drop;
 	}
+
+#ifdef SPPP_FILTER
+	sppp_update_last_activity(sp, m, &sp->pp_active_filt_in);
+#else
+	atomic_store_relaxed(&sp->pp_last_activity, time_uptime32);
+#endif
 
 	/* Check queue. */
 	const uint32_t hash = rps_hash ? pktq_rps_hash(&rps_hash, m) : 0;
@@ -853,7 +875,11 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	uint16_t protocol;
 	size_t pktlen;
 
+#ifdef SPPP_FILTER
+	sppp_update_last_activity(sp, m, &sp->pp_active_filt_out);
+#else
 	atomic_store_relaxed(&sp->pp_last_activity, time_uptime32);
+#endif
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -880,6 +906,20 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 				if_statinc(ifp, if_oerrors);
 				return (ENETDOWN);
 			}
+#ifdef SPPP_FILTER
+			if (sp->pp_dial_filt.bf_insns != NULL &&
+			    bpf_filter(sp->pp_dial_filt.bf_insns,
+			    (u_char *)m, m_length(m), 0) == 0) {
+				SPPP_UNLOCK(sp);
+
+				SPPP_DLOG(sp,
+				    "%s filtered by pass filter, dropped\n",
+				    __func__);
+				IF_DROP(&ifp->if_snd);
+				m_freem(m);
+				return 0;
+			}
+#endif
 			/*
 			 * Interface is not yet running, but auto-dial.  Need
 			 * to start LCP for it.
@@ -1191,6 +1231,9 @@ sppp_attach(struct ifnet *ifp)
 	sppp_wq_set(&sp->work_ifdown, sppp_ifdown, NULL);
 	memset(sp->scp, 0, sizeof(sp->scp));
 	rw_init(&sp->pp_lock);
+#ifdef SPPP_FILTER
+	sp->pp_psz = pserialize_create();
+#endif
 	sppp_sysctl_setup(sp);
 
 	if_alloc_sadl(ifp);
@@ -1255,6 +1298,20 @@ sppp_detach(struct ifnet *ifp)
 	if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
 
 	IFQ_LOCK_DESTROY(&sp->pp_fastq);
+#ifdef SPPP_FILTER
+	{
+		struct bpf_program bp_zero = { .bf_insns = NULL, .bf_len = 0};
+		struct bpf_program *bpp = &sp->pp_dial_filt;
+		if (bpp->bf_insns != NULL)
+			kmem_free(bpp->bf_insns,
+			    sizeof(bpp->bf_insns[0]) * bpp->bf_len);
+		*bpp = bp_zero;
+		sppp_set_filter(sp, &bp_zero, &sp->pp_active_filt_in);
+		sppp_set_filter(sp, &bp_zero, &sp->pp_active_filt_out);
+	}
+
+	pserialize_destroy(sp->pp_psz);
+#endif
 	rw_destroy(&sp->pp_lock);
 }
 
@@ -1338,6 +1395,10 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct lwp *l = curlwp;	/* XXX */
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *) data;
+#ifdef SPPP_FILTER
+	struct spppfilter *sf = (struct spppfilter *)data;
+	struct bpf_program *nbp = &sf->bf;
+#endif
 	struct sppp *sp = (struct sppp *) ifp;
 	int error=0, going_up, going_down;
 	u_long lcp_mru;
@@ -1468,6 +1529,57 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPGETIPV6CPSTATUS:
 		error = sppp_params(sp, cmd, data);
 		break;
+
+#ifdef SPPP_FILTER
+	case SPPPIOCSDIALFILT: {
+		/* sp->pp_dial_filt is protected by pp_lock (SPP_LOCK()) */
+		struct bpf_program *bp = &sp->pp_dial_filt;
+
+		if (nbp->bf_len > BPF_MAXINSNS)
+			return EINVAL;
+
+		SPPP_LOCK(sp, RW_WRITER);
+		if (bp->bf_insns != NULL) {
+			kmem_free(bp->bf_insns,
+			    sizeof(bp->bf_insns[0]) * bp->bf_len);
+			bp->bf_insns = NULL;
+			bp->bf_len = 0;
+		}
+
+		if (nbp->bf_len != 0) {
+			struct bpf_insn *newcode;
+			size_t newsize = sizeof(newcode[0]) * nbp->bf_len;
+
+			newcode = kmem_alloc(newsize, KM_SLEEP);
+			error = copyin((void *)nbp->bf_insns,
+			    (void *)newcode, newsize);
+			if (error != 0) {
+				SPPP_UNLOCK(sp);
+				kmem_free(newcode, newsize);
+				return error;
+			}
+
+			if (!bpf_validate(newcode, nbp->bf_len)) {
+				SPPP_UNLOCK(sp);
+				kmem_free(newcode, newsize);
+				return EINVAL;
+			}
+
+			bp->bf_insns = newcode;
+			bp->bf_len = nbp->bf_len;
+		}
+		SPPP_UNLOCK(sp);
+		break;
+	}
+	case SPPPIOCSIACTIVE:
+		/* sp->pp_active_filt_in is protected by pserialize & psref */
+		error = sppp_set_filter(sp, nbp, &sp->pp_active_filt_in);
+		break;
+	case SPPPIOCSOACTIVE:
+		/* sp->pp_active_filt_out is protected by pserialize & psref */
+		error = sppp_set_filter(sp, nbp, &sp->pp_active_filt_out);
+		break;
+#endif
 
 	default:
 		error = ifioctl_common(ifp, cmd, data);
@@ -6109,6 +6221,10 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 
 		SPPP_LOCK(sp, RW_WRITER);
 		sp->pp_idle_timeout = MIN(to->idle_seconds, INT32_MAX/2);
+#ifdef SPPP_FILTER
+		atomic_store_relaxed(&sp->pp_active_filt_enabled,
+		    sp->pp_idle_timeout != 0 ? true : false);
+#endif
 		SPPP_UNLOCK(sp);
 	    }
 	    break;
@@ -6643,6 +6759,83 @@ sppp_wq_wait(struct workqueue *wq, struct sppp_work *work)
 	atomic_swap_uint(&work->state, SPPP_WK_UNAVAIL);
 	workqueue_wait(wq, &work->work);
 }
+
+#ifdef SPPP_FILTER
+static void
+sppp_update_last_activity(struct sppp *sp, struct mbuf *m,
+    struct sppp_bpf **sbp)
+{
+	struct sppp_bpf *sb;
+	struct psref psref;
+	int s, bound;
+
+	if (!atomic_load_relaxed(&sp->pp_active_filt_enabled))
+		return;
+
+	s = pserialize_read_enter();
+	sb = atomic_load_acquire(sbp);
+	if (sb != NULL) {
+		bound = curlwp_bind();
+		psref_acquire(&psref, &sb->sb_psref, sppp_psref_class);
+	}
+	pserialize_read_exit(s);
+
+	if (sb == NULL ||
+	    bpf_filter(sb->sb_insns, (u_char *)m, m_length(m), 0))
+		atomic_store_relaxed(&sp->pp_last_activity, time_uptime32);
+
+	if (sb != NULL) {
+		psref_release(&psref, &sb->sb_psref, sppp_psref_class);
+		curlwp_bindx(bound);
+	}
+}
+
+static int
+sppp_set_filter(struct sppp *sp, struct bpf_program *nbp,
+    struct sppp_bpf **dst)
+{
+	struct sppp_bpf *new = NULL, *old;
+
+	if (nbp->bf_len > BPF_MAXINSNS)
+		return EINVAL;
+
+	if (nbp->bf_len != 0) {
+		size_t inssize = sizeof(new->sb_insns[0]) * nbp->bf_len;
+		size_t newsize = sizeof(*new) + inssize;
+		int error;
+
+		new = kmem_alloc(newsize, KM_SLEEP);
+		new->sb_len = nbp->bf_len;
+		error = copyin((void *)nbp->bf_insns,
+		    (void *)new->sb_insns, inssize);
+		if (error != 0) {
+			kmem_free(new, newsize);
+			return error;
+		}
+
+		if (!bpf_validate(new->sb_insns, new->sb_len)) {
+			kmem_free(new, newsize);
+			return EINVAL;
+		}
+
+		psref_target_init(&new->sb_psref, sppp_psref_class);
+	}
+
+	SPPP_LOCK(sp, RW_WRITER);
+	old = *dst;
+	atomic_store_release(dst, new);
+	SPPP_UNLOCK(sp);
+	pserialize_perform(sp->pp_psz);
+	if (old != NULL) {
+		size_t oldlen = sizeof(*old) +
+		    sizeof(old->sb_insns[0]) * old->sb_len;
+		psref_target_destroy(&old->sb_psref, sppp_psref_class);
+		kmem_free(old, oldlen);
+	}
+
+	return 0;
+}
+#endif
 
 /*
  * This file is large.  Tell emacs to highlight it nevertheless.

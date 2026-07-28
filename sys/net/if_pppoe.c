@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.188 2026/06/24 07:03:33 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.189 2026/07/28 07:10:42 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.188 2026/06/24 07:03:33 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.189 2026/07/28 07:10:42 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
+#include "opt_sppp_filter.h"
 #include "opt_pppoe.h"
 #include "opt_net_mpsafe.h"
 #endif

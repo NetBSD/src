@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.36 2021/05/14 08:41:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.37 2026/07/28 07:10:42 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -244,6 +244,17 @@ struct spppncpcfg {
 
 #define SPPPGETNCPCFG		_IOWR('i', 138, struct spppncpcfg)
 #define SPPPSETNCPCFG		_IOW('i', 139, struct spppncpcfg)
+
+/* SPPP_FILTER commands */
+#include <net/bpf.h>
+struct spppfilter {
+	char		ifname[IFNAMSIZ];
+	struct bpf_program
+			bf;
+};
+#define SPPPIOCSDIALFILT	_IOW('i', 144, struct spppfilter)
+#define SPPPIOCSIACTIVE		_IOW('i', 145, struct spppfilter)
+#define SPPPIOCSOACTIVE		_IOW('i', 146, struct spppfilter)
 
 #endif /* !_NET_IF_SPPP_H_ */
 
