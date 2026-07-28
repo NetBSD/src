@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.31 2022/08/07 11:06:18 andvar Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.32 2026/07/28 07:28:02 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.31 2022/08/07 11:06:18 andvar Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.32 2026/07/28 07:28:02 yamaguchi Exp $");
 #endif
 
 
@@ -51,6 +51,9 @@ __RCSID("$NetBSD: pppoectl.c,v 1.31 2022/08/07 11:06:18 andvar Exp $");
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
+#ifdef SPPP_FILTER
+#include <pcap.h>
+#endif
 
 __dead static void usage(void);
 __dead static void print_error(const char *ifname, int error, const char * str);
@@ -66,6 +69,9 @@ static const char *authflags(int flags);
 static const char *pppoe_state_name(int state);
 static const char *ppp_state_name(int state);
 static void pppoectl_argument(char *arg);
+#ifdef SPPP_FILTER
+static void set_spppfilter(struct spppfilter *, const char *, const char *);
+#endif
 
 #define	ISSET(x, a)	((x) & (a))
 #define PPPOECTL_IOCTL(_ifname, _s, _cmd, _st)	do {	\
@@ -95,6 +101,12 @@ static struct spppauthfailurestats authfailstats;
 static struct spppauthfailuresettings authfailset;
 static struct spppdnssettings dnssettings;
 static struct spppkeepalivesettings keepalivesettings;
+#ifdef SPPP_FILTER
+static struct spppfilter	 spppfilter;
+static const char		*filter_dialing = NULL;
+static const char		*filter_active_in = NULL;
+static const char		*filter_active_out = NULL;
+#endif
 
 int
 main(int argc, char **argv)
@@ -222,6 +234,10 @@ main(int argc, char **argv)
 	strncpy(dnssettings.ifname, ifname, sizeof dnssettings.ifname);
 	memset(&keepalivesettings, 0, sizeof keepalivesettings);
 	strncpy(keepalivesettings.ifname, ifname, sizeof keepalivesettings.ifname);
+#ifdef SPPP_FILTER
+	memset(&spppfilter, 0, sizeof spppfilter);
+	strlcpy(spppfilter.ifname, ifname, sizeof spppfilter.ifname);
+#endif
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CLOCKRATE;
@@ -358,6 +374,27 @@ main(int argc, char **argv)
 		if (ioctl(s, SPPPSETKEEPALIVE, &keepalivesettings) == -1)
 			err(EX_OSERR, "SPPPSETKEEPALIVE");
 	}
+
+#ifdef SPPP_FILTER
+	if (filter_dialing != NULL) {
+		const char *cmdstr = "SPPPIOCSDIALFILT";
+		set_spppfilter(&spppfilter, filter_dialing, cmdstr);
+		if (ioctl(s, SPPPIOCSDIALFILT, &spppfilter) == -1)
+			err(EX_OSERR, "%s", cmdstr);
+	}
+	if (filter_active_in != NULL) {
+		const char *cmdstr = "SPPPIOCSIACTIVE";
+		set_spppfilter(&spppfilter, filter_active_in, cmdstr);
+		if (ioctl(s, SPPPIOCSIACTIVE, &spppfilter) == -1)
+			err(EX_OSERR, "%s", cmdstr);
+	}
+	if (filter_active_out != NULL) {
+		const char *cmdstr = "SPPPIOCSOACTIVE";
+		set_spppfilter(&spppfilter, filter_active_out, cmdstr);
+		if (ioctl(s, SPPPIOCSOACTIVE, &spppfilter) == -1)
+			err(EX_OSERR, "%s", cmdstr);
+	}
+#endif
 
 	if (verbose) {
 		if (ioctl(s, SPPPGETAUTHFAILURES, &authfailstats) == -1)
@@ -506,6 +543,14 @@ pppoectl_argument(char *arg)
 	} else if (strcmp(arg, "noipv6cp") == 0) {
 		set_ncpflags &= ~SPPP_NCP_IPV6CP;
 		clr_ncpflags |= SPPP_NCP_IPV6CP;
+#ifdef SPPP_FILTER
+	} else if (startswith(arg, "filter-dialing=")) {
+		filter_dialing = arg + off;
+	} else if (startswith(arg, "filter-active-in=")) {
+		filter_active_in = arg + off;
+	} else if (startswith(arg, "filter-active-out=")) {
+		filter_active_out = arg + off;
+#endif
 	} else
 		errx(EX_DATAERR, "bad parameter: \"%s\"", arg);
 }
@@ -525,6 +570,10 @@ usage(void)
 	    "       %s [-v] ifname lcp-timeout=ms|idle-timeout=s|\n"
 	    "                      max-noreceive=s|max-alive-missed=cnt|\n"
 	    "                      max-auth-failure=count|clear-auth-failure\n"
+#ifdef SPPP_FILTER
+	    "                      filter-dialing=...|\n"
+	    "                      filter-active-in=...|filter-active-out=...\n"
+#endif
 	    "           to set general parameters\n"
 	    "   or\n"
 	    "       %s -e ethernet-ifname ifname\n"
@@ -786,3 +835,42 @@ print_error(const char *ifname, int error, const char * str)
 		fprintf(stderr, "%s: %s: %s\n", ifname, str, strerror(error));
 	exit(EX_DATAERR);
 }
+
+#ifdef SPPP_FILTER
+static void
+set_spppfilter(struct spppfilter *sf, const char *pcap_str,
+    const char *cmdstr)
+{
+
+	if (strcmp(pcap_str, "none") == 0) {
+		/* filter matches no packets */
+		static const struct bpf_insn null_insns[] = {
+			BPF_STMT(BPF_RET+BPF_K, (u_int)0)
+		};
+		const struct bpf_program null_bf = {
+			.bf_len = __arraycount(null_insns),
+			.bf_insns = __UNCONST(null_insns),
+		};
+		sf->bf = null_bf;
+	} else if (strcmp(pcap_str, "all") == 0) {
+		sf->bf.bf_len = 0;
+		sf->bf.bf_insns = NULL;
+	} else {
+		pcap_t *pcap;
+		/*
+		 * bpf_filter() is called before PPP encapsulation in
+		 * sppp_output and after PPP decapsulation in sppp_input.
+		 * It therefore sees raw IP packets rather than PPP frames,
+		 * so use DLT_RAW instead of DLT_PPP_ETHER.
+		 */
+		pcap = pcap_open_dead(DLT_RAW, 65535);
+		if (pcap == NULL)
+			err(EX_OSERR, "%s: pcap_open_dead failed", cmdstr);
+		if (pcap_compile(pcap, &sf->bf, pcap_str, 1, 0))
+			errx(EX_OSERR, "%s: filter compile error: %s",
+			    cmdstr, pcap_geterr(pcap));
+
+		pcap_close(pcap);
+	}
+}
+#endif
