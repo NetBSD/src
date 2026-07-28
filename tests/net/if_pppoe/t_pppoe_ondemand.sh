@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe_ondemand.sh,v 1.3 2026/07/14 05:05:21 yamaguchi Exp $
+#	$NetBSD: t_pppoe_ondemand.sh,v 1.4 2026/07/28 08:03:18 yamaguchi Exp $
 #
 # Copyright (c) Internet Initiative Japan Inc.
 # All rights reserved.
@@ -30,6 +30,8 @@ CLIENT=unix://pppoe_client
 
 SERVER_IP=10.3.3.1
 CLIENT_IP=10.3.3.3
+SERVER_IP6=fc00::1
+CLIENT_IP6=fc00::3
 AUTHNAME=foobar@baz.com
 SECRET=oink
 BUS=bus0
@@ -286,9 +288,253 @@ pppoe_ondemand_maxpadi_cleanup()
 	cleanup
 }
 
+atf_test_case pppoe_sppp_filter cleanup
+pppoe_sppp_filter_head()
+{
+
+	atf_set "descr" "Test for a part of SPPP_FILTER"
+	atf_set "require.progs" "rump_server pppoectl"
+}
+
+pppoe_sppp_filter_body()
+{
+	# A generous idle timeout to prevent accidental disconnects
+	local t_idle=300
+
+	local fragment="ip[6:2] & 0x3fff != 0"
+	local icmp="ip proto 1"
+	local igmp="ip proto 2"
+	local icmp_echo="icmp[icmptype] == icmp-echo"
+	local ports="port 67 or port 68 or port 123 or port 137 or port 520"
+	local non_trigger_ports="\
+	    port 67 or port 68 or port 123 or port 137 or port 520"
+	local  non_active_ports="$non_trigger_ports or port 53"
+	local filter_dialing="ip and ($fragment or $icmp_echo or \
+	    (not $icmp and not $igmp and not ($non_trigger_ports)))"
+	local filter_active_in="none"
+	local filter_active_out="ip and ($fragment or $icmp_echo or \
+	    (not $icmp and not $igmp and not ($non_active_ports)))"
+	local NON_TRIGGER_PORTS=$(\
+	    echo "$non_trigger_ports" | sed -E 's/(port|or)//g')
+
+	export RUMP_PPPOE_KEEPALIVE_INTERVAL=1
+	setup_pppoe_server_client $SERVER $CLIENT $BUS bpf
+	setup_auth_params chap $AUTHNAME $SECRET
+	setup_ipcp_addrs   $SERVER_IP $CLIENT_IP
+	setup_ipv6cp_addrs $SERVER_IP6 $CLIENT_IP6
+
+	# Enabled on-demand dialing
+	export RUMP_SERVER=$CLIENT
+	atf_ifconfig pppoe0 link1
+	atf_check -s exit:0 -o ignore \
+	    rump.route add -inet  default -ifp pppoe0 0.0.0.1
+	atf_check -s exit:0 -o ignore \
+	    rump.route add -inet6 default -ifp pppoe0 fe80::1
+
+	pppoe_connect "expected-failure"
+
+	export RUMP_SERVER=$CLIENT
+	# Set a generous idle timeout
+	atf_pppoectl pppoe0 idle-timeout=$t_idle
+
+	echo 'Test default filter that is `all`'
+	for P in $NON_TRIGGER_PORTS; do
+		for PROTO in tcp udp; do
+			# disconnect
+			atf_ifconfig pppoe0 down
+			atf_ifconfig pppoe0 up
+			wait_for "LCP" "initial"
+
+			# send packet
+			atf_sendpkt $SERVER_IP $P/$PROTO
+			atf_check -s exit:0 -o match:'UP.*RUNNING' \
+			    rump.ifconfig pppoe0
+			wait_for "IPCP" "opened"
+		done
+	done
+
+	atf_ifconfig pppoe0 down
+	atf_ifconfig pppoe0 up
+	wait_for "LCP" "initial"
+
+	# Set pass and active filters
+	atf_pppoectl pppoe0 \
+	    filter-dialing="\"$filter_dialing\"" \
+	    filter-active-in="\"$filter_active_in\"" \
+	    filter-active-out="\"$filter_active_out\""
+
+	#
+	# Test trigger packet types (SPPPIOCSOPASS)
+	#
+	echo "Trigger Packet Type Testing (IPv4)"
+
+	export RUMP_SERVER=$CLIENT
+	# TFTP, SSH, TELNET, HTTP(s), syslog, IMAPS, RDP
+	TRIGGER_TEST_PORT="21 22 23 80 443 514 993 3389"
+	for P in $TRIGGER_TEST_PORT; do
+		for PROTO in tcp udp; do
+			# disconnect
+			atf_ifconfig pppoe0 down
+			atf_ifconfig pppoe0 up
+			wait_for "LCP" "initial"
+
+			# send packet
+			atf_sendpkt $SERVER_IP $P/$PROTO
+			atf_check -s exit:0 -o match:'UP.*RUNNING' \
+			    rump.ifconfig pppoe0
+			wait_for "IPCP" "opened"
+		done
+	done
+
+	atf_ifconfig pppoe0 down
+	atf_ifconfig pppoe0 up
+	wait_for "LCP" "initial"
+
+	echo "Non-Trigger IPv4 Packet Testing"
+	for P in $NON_TRIGGER_PORTS; do
+		for PROTO in tcp udp; do
+			atf_sendpkt $SERVER_IP $P/$PROTO
+			atf_check -s exit:0 -o     match:'UP'\
+			    rump.ifconfig pppoe0
+			atf_check -s exit:0 -o not-match:'RUNNING' \
+			    rump.ifconfig pppoe0
+			wait_for "LCP" "initial"
+		done
+	done
+
+	echo "Test that not all IPv6 packets are triggers"
+	atf_check -s not-exit:0 -o ignore -e ignore \
+	    rump.ping6 -c 1 -X $TIMEOUT $SERVER_IP6
+	atf_check -s exit:0 -o     match:'UP'      rump.ifconfig pppoe0
+	atf_check -s exit:0 -o not-match:'RUNNING' rump.ifconfig pppoe0
+	wait_for "LCP" "initial"
+
+	for P in $TRIGGER_TEST_PORT; do
+		for PROTO in tcp udp; do
+			atf_sendpkt $SERVER_IP6 $P/$PROTO
+			atf_check -s exit:0 -o     match:'UP' \
+			    rump.ifconfig pppoe0
+			atf_check -s exit:0 -o not-match:'RUNNING' \
+			    rump.ifconfig pppoe0
+			wait_for "LCP" "initial"
+		done
+	done
+
+	#
+	# Test output packet types for activity detection (SPPPIOCSOACTIVE)
+	#
+	echo "Test output packet types for activity detection"
+
+	export RUMP_SERVER=$CLIENT
+	# Set a generous idle timeout for `ifconfig -w 10`
+	atf_pppoectl pppoe0 idle-timeout=$t_idle
+
+	# Send a trigger packet
+	atf_sendpkt $SERVER_IP 80/tcp
+
+	# Wait for connection established
+	atf_check -s exit:0 -o match:'UP.*RUNNING' \
+	    rump.ifconfig pppoe0
+	wait_for "IPCP"   "opened"
+	wait_for "IPv6CP" "opened"
+	atf_ifconfig -w 10
+	atf_check -s exit:0 -o ignore \
+	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
+	atf_check -s exit:0 -o ignore -e ignore \
+	    rump.ping6 -c 1 -X $TIMEOUT $SERVER_IP6
+
+	# Set a short timeout for testing
+	atf_pppoectl pppoe0 idle-timeout=3
+
+	# ICMPv4 packet updates pp_last_activity
+	atf_check -s exit:0 -o ignore \
+	    rump.ping  -i 1 -c 5 -w 5 $SERVER_IP
+
+	# ICMPv6 doesn't updates pp_last_activity
+	atf_check -s not-exit:0 -o ignore -e ignore \
+	    rump.ping6 -i 1 -c 5 -X 5 $SERVER_IP6
+
+	atf_check -s exit:0 -o     match:'UP'      rump.ifconfig pppoe0
+	atf_check -s exit:0 -o not-match:'RUNNING' rump.ifconfig pppoe0
+	wait_for "LCP" "initial"
+
+	#
+	# Test input packet types for activity detection (SPPPIOCSIACTIVE)
+	#
+	echo "Test input packet types for activity detection"
+
+	export RUMP_SERVER=$CLIENT
+	# Set a generous idle timeout for `ifconfig -w 10`
+	atf_pppoectl pppoe0 idle-timeout=$t_idle
+
+	# Send a trigger packet
+	atf_sendpkt $SERVER_IP 80/tcp
+
+	# Wait for connection established
+	atf_check -s exit:0 -o match:'UP.*RUNNING' \
+	    rump.ifconfig pppoe0
+	wait_for "IPCP" "opened"
+	atf_ifconfig -w 10
+	atf_check -s exit:0 -o ignore \
+	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
+
+	# Set a short timeout for testing
+	atf_pppoectl pppoe0 idle-timeout=3
+
+	# Generate input traffic
+	export RUMP_SERVER=$SERVER
+	for n in $(seq 1 5); do
+		atf_sendpkt $CLIENT_IP 80/tcp
+		sleep 1
+	done
+	wait_for "LCP" "starting"
+
+	export RUMP_SERVER=$CLIENT
+	# Set a generous idle timeout for `ifconfig -w 10`
+	atf_pppoectl pppoe0 idle-timeout=$t_idle
+
+	atf_check -s exit:0 -o     match:'UP'      rump.ifconfig pppoe0
+	atf_check -s exit:0 -o not-match:'RUNNING' rump.ifconfig pppoe0
+	wait_for "LCP" "initial"
+
+	# Set all pass filter that is default value
+	echo "Test disabling output pass filter"
+	atf_pppoectl pppoe0 \
+	    filter-dialing="all" \
+	    filter-active-in="all" \
+	    filter-active-out="all"
+
+	for P in $NON_TRIGGER_PORTS; do
+		for PROTO in tcp udp; do
+			# disconnect
+			atf_ifconfig pppoe0 down
+			atf_ifconfig pppoe0 up
+			wait_for "LCP" "initial"
+
+			# send packet
+			atf_sendpkt $SERVER_IP $P/$PROTO
+			atf_check -s exit:0 -o match:'UP.*RUNNING' \
+			    rump.ifconfig pppoe0
+			wait_for "IPCP" "opened"
+		done
+	done
+
+	atf_ifconfig pppoe0 down
+	atf_ifconfig pppoe0 up
+	wait_for "LCP" "initial"
+}
+
+pppoe_sppp_filter_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case pppoe_ondemand
 	atf_add_test_case pppoe_ondemand_maxpadi
+	atf_add_test_case pppoe_sppp_filter
 }

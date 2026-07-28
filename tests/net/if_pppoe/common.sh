@@ -1,4 +1,4 @@
-#	$NetBSD: common.sh,v 1.2 2026/07/14 05:05:21 yamaguchi Exp $
+#	$NetBSD: common.sh,v 1.3 2026/07/28 08:03:18 yamaguchi Exp $
 #
 # Copyright (c) Internet Initiative Japan Inc.
 # All rights reserved.
@@ -51,12 +51,25 @@ setup_pppoe_server_client()
 	SERVER_=$1
 	CLIENT_=$2
 	BUS_=$3
+	local bpf=false
+	shift 3
+
+	if [ "$1" = "bpf" ]; then
+		bpf=true
+		shift
+	fi
 
 	# IPCP is disabled and IPv6CP is enabled by default
 	NCP_="IPv6CP"
 
-	rump_server_start $SERVER_ netinet6 pppoe
-	rump_server_start $CLIENT_ netinet6 pppoe
+	if $bpf; then
+		rump_server_bpf_start $SERVER_ netinet6 pppoe "$@"
+		rump_server_bpf_start $CLIENT_ netinet6 pppoe "$@"
+
+	else
+		rump_server_start $SERVER_ netinet6 pppoe "$@"
+		rump_server_start $CLIENT_ netinet6 pppoe "$@"
+	fi
 
 	for S in $SERVER_ $CLIENT_; do
 		export RUMP_SERVER=$S
@@ -246,3 +259,36 @@ cleanup_bus()
 	done
 }
 
+atf_sendpkt()
+{
+	local dst="$1"
+	local port="${2%/*}"
+	local proto="${2#*/}"
+
+	if [ "$dst" != "${dst#*:}" ]; then
+		# $addr is an IPv6 address
+		opt="-6"
+	else
+		# $addr is an IPv4 address
+		opt="-4"
+	fi
+
+	opt="$opt -w 1 -z"
+
+	# NOTE: Sending 3 packets as a workaround to prevent
+	# occasional outgoing packet drops to stabilize testing
+	for n in $(seq 1 3); do
+		case $proto in
+		"tcp")
+			atf_check -s ignore -o ignore -e ignore \
+			    -x "$HIJACKING nc $opt $dst $port"
+			;;
+		"udp")
+			atf_check -s ignore -o ignore -e ignore \
+			    -x "printf UDP_Packet | $HIJACKING nc -u $opt $dst $port"
+			;;
+		esac
+
+		sleep 0.1
+	done
+}
