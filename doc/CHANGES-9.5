@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.119 2026/07/28 11:23:19 sborrill Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.120 2026/07/28 11:27:51 sborrill Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1597,5 +1597,11 @@ tests/ipf/t_filter_exec.sh			1.10
 	ipfilter: Fix remotely triggerable null pointer dereference and
 	add an automatic test for it.
 	PR kern/60484: ipfilter: null pointer deref in icmp6 parsing
-	[[riastradh, ticket #2039]
+	[riastradh, ticket #2039]
+
+sys/dist/pf/net/pf.c				1.88
+
+	pf: Fix use-after-free in fragment reassembly.
+	PR kern/60485: pf(4): uaf in fragment reassembly
+	[riastradh, ticket #2040]
 
