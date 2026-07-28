@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe_ondemand.sh,v 1.4 2026/07/28 08:03:18 yamaguchi Exp $
+#	$NetBSD: t_pppoe_ondemand.sh,v 1.5 2026/07/28 08:04:52 yamaguchi Exp $
 #
 # Copyright (c) Internet Initiative Japan Inc.
 # All rights reserved.
@@ -85,10 +85,8 @@ pppoe_ondemand_body()
 		# Set a generous idle timeout for `ifconfig -w 10`
 		atf_pppoectl pppoe0 idle-timeout=$t_idle
 
-		# Due to implementation constraints,
-		# the first packet is dropped.
-		atf_check -s not-exit:0 -o ignore -e ignore \
-		    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
+		# Send trigger packet
+		atf_sendpkt $SERVER_IP 80/tcp
 
 		# The connection should be established
 		atf_check -s exit:0 -o match:'UP.*RUNNING' \
@@ -124,9 +122,9 @@ pppoe_ondemand_body()
 	    max-alive-missed=$n \
 	    max-noreceive=0
 
-	# Connect by the trigger packet
-	atf_check -s not-exit:0 -o ignore -e ignore \
-	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
+	# Send trigger packet
+	atf_sendpkt $SERVER_IP 80/tcp
+
 	atf_check -s exit:0 -o match:'UP.*RUNNING' \
 	    rump.ifconfig pppoe0
 	wait_for "IPCP" "opened"
@@ -247,9 +245,8 @@ pppoe_ondemand_maxpadi_body()
 	atf_check -s exit:0 -o not-match:'RUNNING' rump.ifconfig pppoe0
 	wait_for "LCP" "initial"
 
-	# Due to implementation constraints, the first packet is dropped.
-	atf_check -s not-exit:0 -o ignore -e ignore \
-	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
+	# Send trigger packet
+	atf_sendpkt $SERVER_IP 80/tcp
 
 	# The client starts connection
 	atf_check -s exit:0 -o match:'UP.*RUNNING' rump.ifconfig pppoe0
@@ -269,9 +266,8 @@ pppoe_ondemand_maxpadi_body()
 
 	export RUMP_SERVER=$CLIENT
 
-	# Trigger packet
-	atf_check -s not-exit:0 -o ignore -e ignore \
-	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
+	# Send trigger packet
+	atf_sendpkt $SERVER_IP 80/tcp
 
 	# The connection should be established
 	atf_check -s exit:0 -o match:'UP.*RUNNING' rump.ifconfig pppoe0
