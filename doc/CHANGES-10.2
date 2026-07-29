@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.120 2026/07/28 13:46:12 sborrill Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.121 2026/07/29 10:17:13 sborrill Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5653,4 +5653,11 @@ sys/netinet/tcp_syncache.c			1.8
 	tcp: Plug a 4-byte leak of kernel stack data through timestamps.
 	Addresses PR kern/60486
 	[riastradh, ticket #1319]
+
+sys/dev/raidframe/rf_disks.c			1.96-1.97
+
+	Use the right assertions to ensure that all IOs are suspended.
+	zero indicates that IOs resume.
+	PR kern/60477
+	[joe, ticket #1315]
 
