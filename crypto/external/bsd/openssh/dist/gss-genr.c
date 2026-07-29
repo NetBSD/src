@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-genr.c,v 1.16 2026/04/08 18:58:40 christos Exp $	*/
+/*	$NetBSD: gss-genr.c,v 1.17 2026/07/29 08:24:09 rin Exp $	*/
 /* $OpenBSD: gss-genr.c,v 1.31 2026/02/08 19:54:31 dtucker Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: gss-genr.c,v 1.17 2026/07/29 08:24:09 rin Exp $");
 #ifdef GSSAPI
 
 #include <sys/types.h>
