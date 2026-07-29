@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2528 2026/07/29 20:22:26 riastradh Exp $
+#	$NetBSD: mi,v 1.2529 2026/07/29 21:31:08 wiz Exp $
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		binutils
@@ -3238,6 +3238,7 @@
 ./usr/include/openssl/fipskey.h			comp-c-include		openssl=30
 ./usr/include/openssl/fipskey.h			comp-c-include		openssl=35
 ./usr/include/openssl/hmac.h			comp-c-include
+./usr/include/openssl/hpke.h			comp-c-include		openssl=35
 ./usr/include/openssl/http.h			comp-c-include		openssl=30
 ./usr/include/openssl/http.h			comp-c-include		openssl=35
 ./usr/include/openssl/httperr.h			comp-c-include		openssl=30
