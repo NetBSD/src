@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.120 2026/07/28 11:27:51 sborrill Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.121 2026/07/29 10:33:21 sborrill Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1604,4 +1604,10 @@ sys/dist/pf/net/pf.c				1.88
 	pf: Fix use-after-free in fragment reassembly.
 	PR kern/60485: pf(4): uaf in fragment reassembly
 	[riastradh, ticket #2040]
+
+sys/netinet/tcp_input.c				patch
+
+	tcp: Plug a 4-byte leak of kernel stack data through timestamps.
+	Addresses PR kern/60486
+	[riastradh, ticket #2041]
 
