@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.131 2026/04/26 12:57:03 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.132 2026/07/29 08:57:27 yurix Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -594,6 +594,7 @@ sunxiusbphy* 	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy* 	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy* 	at fdt?			# NVIDIA Tegra USB PHY
 usbnopphy* 	at fdt? pass 9		# Generic USB PHY
+timotgphy*	at fdt?				# TI AM335X USB PHY
 
 imxusbc* 	at fdt?
 tiotg* 		at fdt?			# TI dual port OTG

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.31 2026/07/05 21:40:09 yurix Exp $
+#	$NetBSD: files.ti,v 1.32 2026/07/29 08:57:27 yurix Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -155,6 +155,10 @@ file	arch/arm/ti/ti_omapmusb.c	omapmusb
 device	am18xxusbphy: fdt_phy, fdt_clock
 attach	am18xxusbphy at fdt
 file	arch/arm/ti/am18xx_usbphy.c am18xxusbphy
+
+device	timotgphy: fdt_phy
+attach	timotgphy at fdt
+file	arch/arm/ti/ti_motgphy.c		timotgphy
 
 # RNG
 device	tirng

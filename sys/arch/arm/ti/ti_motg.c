@@ -1,4 +1,4 @@
-/* $NetBSD: ti_motg.c,v 1.5 2024/02/02 22:14:04 andvar Exp $ */
+/* $NetBSD: ti_motg.c,v 1.6 2026/07/29 08:57:27 yurix Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_motg.c,v 1.5 2024/02/02 22:14:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_motg.c,v 1.6 2026/07/29 08:57:27 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,16 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ctrlih = fdtbus_intr_establish_xname(phandle, 0, IPL_USB, 0,
 	    ti_motg_intr, sc, device_xname(self));
 	sc->sc_motg.sc_bus.ub_dmatag = faa->faa_dmat;
+
+	struct fdtbus_phy *phy = fdtbus_phy_get_index(phandle, 0);
+	if (phy == NULL) {
+		aprint_error(": couldn't get phy\n");
+		return;
+	}
+	if (fdtbus_phy_enable(phy, true) != 0) {
+		aprint_error(": couldn't enable phy\n");
+		return;
+	}
 
 	val = TIOTG_USBC_READ4(sc, USBCTRL_REV);
 	aprint_normal(": 0x%x version v%d.%d.%d", val,

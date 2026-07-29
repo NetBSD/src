@@ -1,4 +1,4 @@
-/* $NetBSD: ti_otgreg.h,v 1.2 2026/07/13 09:59:20 yurix Exp $ */
+/* $NetBSD: ti_otgreg.h,v 1.3 2026/07/29 08:57:27 yurix Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -71,3 +71,10 @@
 
 #define USB_CORE_OFFSET		0x400
 #define USB_CORE_SIZE		0x400
+
+/* USB control module register */
+#define CM_USBCTRL(n)			(2 * sizeof(uint32_t))
+#define CM_USBCTRL_CM_PWRDN		__BIT(0)
+#define CM_USBCTRL_OTG_PWRDN		__BIT(1)
+#define CM_USBCTRL_OTGVDET_EN		__BIT(19)
+#define CM_USBCTRL_OTGSESSENDEN		__BIT(20)
