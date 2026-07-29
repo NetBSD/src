@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.7 2026/07/04 16:13:26 christos Exp $ */
+/* $NetBSD: main.c,v 1.8 2026/07/29 21:24:25 gutteridge Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.7 2026/07/04 16:13:26 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2026/07/29 21:24:25 gutteridge Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
@@ -242,7 +242,7 @@ typedef enum {
 
 #define IS_MBR_SIG_FORCE(o)	((o).mbr_sig_write == MBR_SIG_WRITE_FORCE)
 
-static struct options {	/* setable options */
+static struct options {	/* settable options */
 #define _X(t,n,v)	t n;
 	OPT_LIST
 #undef _X

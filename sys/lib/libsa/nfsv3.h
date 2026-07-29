@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsv3.h,v 1.1 2023/12/12 09:12:55 mlelstv Exp $	*/
+/*	$NetBSD: nfsv3.h,v 1.2 2026/07/29 21:24:26 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2023 Michael van Elst
@@ -54,7 +54,7 @@ struct nfsv3_spec {
 };
 
 /*
- * File attributes and setable attributes.
+ * File attributes and settable attributes.
  */
 struct nfsv3_fattr {
 	n_long	fa_type;

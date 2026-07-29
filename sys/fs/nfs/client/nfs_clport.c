@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clport.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $	*/
+/*	$NetBSD: nfs_clport.c,v 1.3 2026/07/29 21:24:26 gutteridge Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clport.c 299413 2016-05-11 06:35:46Z kib "); */
-__RCSID("$NetBSD: nfs_clport.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_clport.c,v 1.3 2026/07/29 21:24:26 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -820,7 +820,7 @@ nfsmout:
 }
 
 /*
- * Fill in the setable attributes. The full argument indicates whether
+ * Fill in the settable attributes. The full argument indicates whether
  * to fill in them all or just mode and time.
  */
 void

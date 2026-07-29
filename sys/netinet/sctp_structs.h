@@ -1,5 +1,5 @@
 /*	$KAME: sctp_structs.h,v 1.13 2005/03/06 16:04:18 itojun Exp $	*/
-/*	$NetBSD: sctp_structs.h,v 1.5 2026/04/05 10:19:57 andvar Exp $ */
+/*	$NetBSD: sctp_structs.h,v 1.6 2026/07/29 21:24:26 gutteridge Exp $ */
 
 #ifndef __SCTP_STRUCTS_H__
 #define __SCTP_STRUCTS_H__
@@ -548,7 +548,7 @@ struct sctp_association {
 	u_int16_t streamoutcnt;
 
 	/* my maximum number of retrans of INIT and SEND */
-	/* copied from SCTP but should be individually setable */
+	/* copied from SCTP but should be individually settable */
 	u_int16_t max_init_times;
 	u_int16_t max_send_times;
 

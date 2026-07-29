@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdserv.c,v 1.6 2024/07/05 04:31:52 rin Exp $	*/
+/*	$NetBSD: nfs_nfsdserv.c,v 1.7 2026/07/29 21:24:26 gutteridge Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdserv.c 299514 2016-05-12 05:03:12Z cem "); */
-__RCSID("$NetBSD: nfs_nfsdserv.c,v 1.6 2024/07/05 04:31:52 rin Exp $");
+__RCSID("$NetBSD: nfs_nfsdserv.c,v 1.7 2026/07/29 21:24:26 gutteridge Exp $");
 
 /*
  * nfs version 2, 3 and 4 server calls to vnode ops
@@ -2812,7 +2812,7 @@ nfsrvd_open(struct nfsrv_descript *nd, __unused int isdgram,
 		    case NFSCREATE_UNCHECKED:
 			if (named.ni_vp) {
 				/*
-				 * Clear the setable attribute bits, except
+				 * Clear the settable attribute bits, except
 				 * for Size, if it is being truncated.
 				 */
 				NFSZERO_ATTRBIT(&attrbits);

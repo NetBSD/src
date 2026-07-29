@@ -1,4 +1,4 @@
-/*	$NetBSD: oldnfsproto.h,v 1.1.1.1 2013/09/30 07:19:34 dholland Exp $	*/
+/*	$NetBSD: oldnfsproto.h,v 1.2 2026/07/29 21:24:26 gutteridge Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  *	@(#)nfsproto.h  8.2 (Berkeley) 3/30/95
  * FreeBSD: head/sys/nfs/nfsproto.h 164725 2006-11-28 19:33:28Z rees 
- * $NetBSD: oldnfsproto.h,v 1.1.1.1 2013/09/30 07:19:34 dholland Exp $
+ * $NetBSD: oldnfsproto.h,v 1.2 2026/07/29 21:24:26 gutteridge Exp $
  */
 
 #ifndef _NFS_NFSPROTO_H_
@@ -438,11 +438,11 @@ struct nfsv4_changeinfo {
 typedef struct nfsv4_changeinfo nfsv4changeinfo;
 
 /*
- * File attributes and setable attributes. These structures cover both
+ * File attributes and settable attributes. These structures cover both
  * NFS version 2 and the version 3 protocol. Note that the union is only
  * used so that one pointer can refer to both variants. These structures
  * go out on the wire and must be densely packed, so no quad data types
- * are used. (all fields are longs or u_longs or structures of same)
+ * are used. (All fields are longs or u_longs or structures of same.)
  * NB: You can't do sizeof(struct nfs_fattr), you must use the
  *     NFSX_FATTR(v3) macro.
  */

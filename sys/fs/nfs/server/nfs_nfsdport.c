@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdport.c,v 1.4 2021/03/29 02:13:38 simonb Exp $	*/
+/*	$NetBSD: nfs_nfsdport.c,v 1.5 2026/07/29 21:24:26 gutteridge Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdport.c 308212 2016-11-02 12:43:15Z kib "); */
-__RCSID("$NetBSD: nfs_nfsdport.c,v 1.4 2021/03/29 02:13:38 simonb Exp $");
+__RCSID("$NetBSD: nfs_nfsdport.c,v 1.5 2026/07/29 21:24:26 gutteridge Exp $");
 
 #if 0
 #include <sys/capsicum.h>
@@ -2416,7 +2416,7 @@ nfsmout:
 }
 
 /*
- * Handle the setable attributes for V4.
+ * Handle the settable attributes for V4.
  * Returns NFSERR_BADXDR if it can't be parsed, 0 otherwise.
  */
 int
@@ -2439,7 +2439,7 @@ nfsv4_sattr(struct nfsrv_descript *nd, vnode_t vp, struct nfsvattr *nvap,
 	attrsize = fxdr_unsigned(int, *tl);
 
 	/*
-	 * Loop around getting the setable attributes. If an unsupported
+	 * Loop around getting the settable attributes. If an unsupported
 	 * one is found, set nd_repstat == NFSERR_ATTRNOTSUPP and return.
 	 */
 	if (retnotsup) {
