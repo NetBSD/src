@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.106 2026/06/23 19:29:12 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.107 2026/07/29 15:40:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2026/06/23 19:29:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2026/07/29 15:40:36 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -941,6 +941,18 @@ pmap_deactivate(struct lwp *l)
 	    l->l_lid, 0, 0);
 }
 
+static void
+pmap_shootdown(struct pmap *pmap)
+{
+#if defined(MULTIPROCESSOR) && defined(PMAP_TLB_NEED_SHOOTDOWN)
+	KASSERT(kpreempt_disabled());
+
+	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
+	if (pending && pmap_tlb_shootdown_bystanders(pmap))
+		PMAP_COUNT(shootdown_ipis);
+#endif
+}
+
 void
 pmap_update(struct pmap *pmap)
 {
@@ -949,11 +961,9 @@ pmap_update(struct pmap *pmap)
 	PMAP_COUNT(update);
 
 	kpreempt_disable();
-#if defined(MULTIPROCESSOR) && defined(PMAP_TLB_NEED_SHOOTDOWN)
-	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
-	if (pending && pmap_tlb_shootdown_bystanders(pmap))
-		PMAP_COUNT(shootdown_ipis);
-#endif
+
+	pmap_shootdown(pmap);
+
 	pmap_tlb_miss_lock_enter();
 #if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	pmap_tlb_check(pmap, pmap_md_tlb_check_entry);
@@ -1269,7 +1279,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 				    VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 				pmap_protect(pmap, va, va + PAGE_SIZE, prot);
 				KASSERT(pv->pv_pmap == pmap);
-				pmap_update(pmap);
+			        pmap_shootdown(pmap);
 				if (gen != VM_PAGEMD_PVLIST_READLOCK(mdpg)) {
 					pv = &mdpg->mdpg_first;
 				} else {
@@ -1963,7 +1973,7 @@ pmap_clear_attribute(struct vm_page *pg,
 		pte_set(ptep, npte);
 		pmap_tlb_invalidate_addr(pmap, va);
 		pmap_tlb_miss_lock_exit();
-		pmap_update(pmap);
+	        pmap_shootdown(pmap);
 		if (__predict_false(gen != VM_PAGEMD_PVLIST_READLOCK(mdpg))) {
 			/*
 			 * The list changed!  So restart from the beginning.
