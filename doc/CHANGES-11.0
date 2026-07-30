@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.139 2026/07/22 05:26:24 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.140 2026/07/30 11:00:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -13143,4 +13143,22 @@ sys/sys/param.h					(manually edited)
 
 	Welcome to 11.0_RC7!
 	[martin]
+
+sys/netinet/tcp_syncache.c			1.8
+
+	tcp syncache: PR 60486: don't leak kernel stack data
+	through timestamps.
+	[riastradh, ticket #399]
+
+crypto/external/apache2/openssl/lib/libcrypto/Makefile 1.4
+distrib/sets/lists/comp/mi			1.2528
+distrib/sets/lists/comp/mi			1.2529
+
+	openssl: PR 60511: install byteorder.h, hpke.h, and ml_kem.h.
+	[riastradh, ticket #407]
+
+crypto/external/bsd/openssh/dist/sshd-session.c	1.14
+
+	sshd-session: PR 60512: for libwrap, only check "sshd".
+	[rin, ticket #408]
 
