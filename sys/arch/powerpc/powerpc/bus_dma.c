@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.59 2026/06/22 12:34:20 rkujawa Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.60 2026/07/30 14:41:00 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.59 2026/06/22 12:34:20 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.60 2026/07/30 14:41:00 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -502,6 +502,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		}
 
 		lastaddr = curaddr + sgsize;
+		busaddr += sgsize;
 		size -= sgsize;
 		if ((isgsize -= sgsize) == 0) {
 			if (++iseg == nsegs) {
