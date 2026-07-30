@@ -1,4 +1,4 @@
-/* $NetBSD $ */
+/* $NetBSD: am18xx_intc.c,v 1.2 2026/07/30 15:08:08 yurix Exp $ */
 
 /*-
 * Copyright (c) 2025 The NetBSD Foundation, Inc.

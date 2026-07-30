@@ -1,4 +1,4 @@
-/* $NetBSD: ti_motgphy.c,v 1.2 2026/07/29 15:28:46 skrll Exp $ */
+/* $NetBSD: ti_motgphy.c,v 1.3 2026/07/30 15:08:08 yurix Exp $ */
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD $");
+__KERNEL_RCSID(0, "$NetBSD: ti_motgphy.c,v 1.3 2026/07/30 15:08:08 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

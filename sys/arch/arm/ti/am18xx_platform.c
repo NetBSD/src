@@ -1,4 +1,4 @@
-/* $NetBSD $ */
+/* $NetBSD: am18xx_platform.c,v 1.2 2026/07/30 15:08:08 yurix Exp $ */
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD $");
+__KERNEL_RCSID(0, "$NetBSD: am18xx_platform.c,v 1.2 2026/07/30 15:08:08 yurix Exp $");
 
 #include <uvm/uvm_extern.h>
 

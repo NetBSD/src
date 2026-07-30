@@ -1,4 +1,4 @@
-/* $NetBSD $ */
+/* $NetBSD: am18xx_usbphyclk.c,v 1.3 2026/07/30 15:08:08 yurix Exp $ */
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
