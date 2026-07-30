@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.140 2026/07/30 11:00:29 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.141 2026/07/30 15:23:12 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -13161,4 +13161,10 @@ crypto/external/bsd/openssh/dist/sshd-session.c	1.14
 
 	sshd-session: PR 60512: for libwrap, only check "sshd".
 	[rin, ticket #408]
+
+external/gpl2/groff/tmac/mdoc.local		(manually edited)
+sys/sys/param.h					(manually edited)
+
+	Welcome to 11.0!
+	[martin]
 
