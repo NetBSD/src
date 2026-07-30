@@ -1,4 +1,4 @@
-.\"	$NetBSD: groups.7,v 1.8 2020/04/02 20:57:20 roy Exp $
+.\"	$NetBSD: groups.7,v 1.9 2026/07/30 14:33:25 riastradh Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,8 +86,8 @@ group to the kernel so that all nodes in
 .Pa /dev/pts
 or equivalent are in the group too.
 .It Em operator
-Users authorized to take backups of disk devices and shut down the
-machine.
+Users authorized to take snapshots and backups of disk devices, and
+shut down the machine.
 .Pp
 The disk device nodes in
 .Pa /dev
@@ -98,14 +98,28 @@ are in the group
 and group-readable so users in the group can read from disk devices,
 for example with
 .Xr dump 8 .
-The tape device nodes in
+The file system snapshot and tape device nodes in
 .Pa /dev
 such as
+.Pa /dev/fss0
+.Pq Xr fss 4 ,
 .Pa /dev/rst0
+.Pq Xr st 4 ,
+and
+.Pa /dev/rwt0
+.Pq Xr wt 4
 are in the group
 .Em operator
 and are both group-readable and group-writable so users in the group
-can write to tape devices.
+can take file system snapshots and write to tape devices.
+.Pp
+If
+.Xr dump 8
+is run with the
+.Fl n
+option, when it needs input, it will notify all users in this group
+with
+.Xr wall 1 .
 .Pp
 The
 .Xr shutdown 8
@@ -328,3 +342,13 @@ Pseudo-group.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SEE ALSO
 .Xr users 7
+.Rs
+.%A Marshall Kirk McKusick
+.%A Keith Bostic
+.%A Michael J. Karels
+.%A Samuel J. Leffler
+.%A Mike Hibler
+.%T Installing and Operating 4.4BSD UNIX
+.%D May 14, 1994
+.%U /usr/share/doc/smm/setup
+.Re

@@ -1,4 +1,4 @@
-.\"	$NetBSD: users.7,v 1.5 2020/04/02 20:57:20 roy Exp $
+.\"	$NetBSD: users.7,v 1.6 2026/07/30 14:33:25 riastradh Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,9 +89,16 @@ with the
 .Fl s
 flag.
 .It Em operator
-Historic user.
-Unused in modern
-.Nx .
+User in the
+.Em operator
+group authorized to take snapshots of file systems, read disk devices,
+read and write tapes, and shut down the machine; see
+.Xr groups 7
+for details.
+.Pp
+Not used directly in
+.Nx
+but available for unprivileged backup setups.
 .It Em bin
 Historic user.
 Unused in modern
@@ -204,3 +211,13 @@ avoid such account names.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SEE ALSO
 .Xr groups 7
+.Rs
+.%A Marshall Kirk McKusick
+.%A Keith Bostic
+.%A Michael J. Karels
+.%A Samuel J. Leffler
+.%A Mike Hibler
+.%T Installing and Operating 4.4BSD UNIX
+.%D May 14, 1994
+.%U /usr/share/doc/smm/setup
+.Re
