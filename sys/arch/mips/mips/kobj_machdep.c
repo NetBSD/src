@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.2 2023/04/28 07:33:56 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.3 2026/07/30 22:39:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: kobj_machdep.c,v 1.3 2026/07/30 22:39:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
