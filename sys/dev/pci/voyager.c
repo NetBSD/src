@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.21 2026/06/18 00:44:20 rkujawa Exp $	*/
+/*	$NetBSD: voyager.c,v 1.22 2026/07/30 16:17:08 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.21 2026/06/18 00:44:20 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.22 2026/07/30 16:17:08 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,22 +160,23 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_dev = self;
 
-	voyager_cookie = sc;
-
 	pci_aprint_devinfo(pa, NULL);
 
 	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_memt, &sc->sc_regh, &sc->sc_reg, &sc->sc_regsize)) {
-		aprint_error("%s: failed to map registers.\n",
-		    device_xname(sc->sc_dev));
+		aprint_error_dev(self, "failed to map registers\n");
+		return;
 	}
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_LINEAR,
 	    &sc->sc_memt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		aprint_error("%s: failed to map the frame buffer.\n",
-		    device_xname(sc->sc_dev));
+		aprint_error_dev(self, "failed to map the frame buffer\n");
+		bus_space_unmap(sc->sc_memt, sc->sc_regh, sc->sc_regsize);
+		return;
 	}
+
+	voyager_cookie = sc;
 
 	/* disable all interrupts */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_INTR_MASK, 0);
