@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2497.2.7 2026/07/05 07:29:09 martin Exp $
+#	$NetBSD: mi,v 1.2497.2.8 2026/07/30 10:54:45 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3018,6 +3018,7 @@
 ./usr/include/openssl/asn1.h			comp-c-include
 ./usr/include/openssl/asn1_mac.h		comp-c-include		openssl=11
 ./usr/include/openssl/asn1_mac.h		comp-c-include		openssl=30
+./usr/include/openssl/asn1_mac.h		comp-obsolete		obsolete,openssl=35
 ./usr/include/openssl/asn1err.h			comp-c-include
 ./usr/include/openssl/asn1t.h			comp-c-include
 ./usr/include/openssl/async.h			comp-c-include
@@ -3029,6 +3030,7 @@
 ./usr/include/openssl/bnerr.h			comp-c-include
 ./usr/include/openssl/buffer.h			comp-c-include
 ./usr/include/openssl/buffererr.h		comp-c-include
+./usr/include/openssl/byteorder.h		comp-c-include		openssl=35
 ./usr/include/openssl/camellia.h		comp-c-include
 ./usr/include/openssl/cast.h			comp-c-include
 ./usr/include/openssl/cmac.h			comp-c-include
@@ -3106,6 +3108,7 @@
 ./usr/include/openssl/fipskey.h			comp-c-include		openssl=30
 ./usr/include/openssl/fipskey.h			comp-c-include		openssl=35
 ./usr/include/openssl/hmac.h			comp-c-include
+./usr/include/openssl/hpke.h			comp-c-include		openssl=35
 ./usr/include/openssl/http.h			comp-c-include		openssl=30
 ./usr/include/openssl/http.h			comp-c-include		openssl=35
 ./usr/include/openssl/httperr.h			comp-c-include		openssl=30
@@ -3123,6 +3126,7 @@
 ./usr/include/openssl/md4.h			comp-c-include
 ./usr/include/openssl/md5.h			comp-c-include
 ./usr/include/openssl/mdc2.h			comp-c-include
+./usr/include/openssl/ml_kem.h			comp-c-include		openssl=35
 ./usr/include/openssl/modes.h			comp-c-include
 ./usr/include/openssl/obj_mac.h			comp-c-include
 ./usr/include/openssl/objects.h			comp-c-include

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2025/11/20 18:46:44 martin Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2026/07/30 10:54:46 martin Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -82,6 +82,7 @@ bn.h \
 bnerr.h \
 buffer.h \
 buffererr.h \
+byteorder.h \
 camellia.h \
 cast.h \
 cmac.h \
@@ -135,8 +136,10 @@ evperr.h \
 fips_names.h \
 fipskey.h \
 hmac.h \
+hpke.h \
 http.h \
 httperr.h \
+idea.h \
 indicator.h \
 kdf.h \
 kdferr.h \
@@ -145,6 +148,8 @@ macros.h \
 md2.h \
 md4.h \
 md5.h \
+mdc2.h \
+ml_kem.h \
 modes.h \
 obj_mac.h \
 objects.h \
@@ -171,6 +176,7 @@ rand.h \
 randerr.h \
 rc2.h \
 rc4.h \
+rc5.h \
 ripemd.h \
 rsa.h \
 rsaerr.h \
@@ -189,8 +195,8 @@ stack.h \
 store.h \
 storeerr.h \
 symhacks.h \
-tls1.h \
 thread.h \
+tls1.h \
 trace.h \
 ts.h \
 tserr.h \
@@ -204,16 +210,8 @@ x509_acert.h \
 x509_vfy.h \
 x509err.h \
 x509v3.h \
-x509v3err.h
-
-# IDEA - patented, but we install the header anyways
-INCS+=	idea.h
-
-# RC5 - patented, but we install the header anyways
-INCS+=	rc5.h
-
-# MDC2 - patented, but we install the header anyways
-INCS+=	mdc2.h
+x509v3err.h \
+# end of INCS
 
 .if (${USE_FIPS} != "no")
 # FIPS
