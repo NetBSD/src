@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.225 2026/07/15 00:41:35 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.226 2026/07/31 04:55:09 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1005,8 +1005,8 @@ remove_relative_missing(StringList *missingFiles, const char *p, char *sdirs[])
     char **sdp;
 
     for (sdp = sdirs; *sdp != NULL; sdp++) {
-	snprintf(buf, sizeof(buf), "%s/%s", *sdp, p);
-	remove_missing(missingFiles, buf);
+	if ((size_t)snprintf(buf, sizeof(buf), "%s/%s", *sdp, p) < sizeof(buf))
+	    remove_missing(missingFiles, buf);
     }
 }
 
@@ -1021,9 +1021,9 @@ meta_resolve_path(char *buf, size_t bufsz, const char *p,
 	return cwd;
 
     for (sdp = sdirs; *sdp != NULL; sdp++) {
-	snprintf(buf, bufsz, "%s/%s", *sdp, p);
-	if (cached_stat(buf, cstp) == 0)
-	    return buf;
+	if ((size_t)snprintf(buf, bufsz, "%s/%s", *sdp, p) < bufsz)
+	    if (cached_stat(buf, cstp) == 0)
+		return buf;
     }
     return NULL;
 }
@@ -1479,14 +1479,15 @@ meta_oodate(GNode *gn, bool oodate)
 			/*
 			 * it is missing or we should have found it
 			 */
-			snprintf(fname1, sizeof(fname1), "%s/%s",
-			  lcwd, p);
+			if ((size_t)snprintf(fname1, sizeof(fname1), "%s/%s",
+			    lcwd, p) < sizeof(fname1)) {
 #ifdef DEBUG_META_MODE
-			DEBUG3(META, "%s:%u: maybe missing: %s\n",
-			  fname, lineno, fname1);
+			    DEBUG3(META, "%s:%u: maybe missing: %s\n",
+			      fname, lineno, fname1);
 #endif
-			append_if_new(&missingFiles, fname1);
-			break;
+			    append_if_new(&missingFiles, fname1);
+			    break;
+			}
 		    }
 		    if (Lst_IsEmpty(&metaBailiwick))
 			break;
