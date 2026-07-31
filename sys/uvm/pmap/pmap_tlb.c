@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.69 2026/06/06 13:27:16 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.70 2026/07/31 15:37:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.69 2026/06/06 13:27:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.70 2026/07/31 15:37:45 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -650,28 +650,27 @@ pmap_tlb_shootdown_process(void)
 bool
 pmap_tlb_shootdown_bystanders(pmap_t pm)
 {
-	/*
-	 * We don't need to deal with our own TLB.
-	 */
-
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist, "pm %#jx", (uintptr_t)pm, 0, 0, 0);
 
 	KASSERT(kpreempt_disabled());
 
 	const struct cpu_info * const ci = curcpu();
+	const bool kernel_p = (pm == pmap_kernel());
+	bool ipi_sent = false;
 
 	kcpuset_t *pm_active = ci->ci_shootdowncpus;
 	kcpuset_copy(pm_active, pm->pm_active);
+
+	/*
+	 * We don't need to deal with our own TLB.
+	 */
 	kcpuset_remove(pm_active, cpu_tlb_info(curcpu())->ti_kcpuset);
-	const bool kernel_p = (pm == pmap_kernel());
-	bool ipi_sent = false;
 
 	/*
 	 * If pm_active gets more bits set, then it's after all our changes
 	 * have been made so they will already be cognizant of them.
 	 */
-
 	for (size_t i = 0; !kcpuset_iszero(pm_active); i++) {
 		KASSERT(i < pmap_ntlbs);
 		struct pmap_tlb_info * const ti = pmap_tlbs[i];
