@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.43 2024/04/05 18:57:10 riastradh Exp $	*/
+/*	$NetBSD: motg.c,v 1.44 2026/07/31 15:35:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.43 2024/04/05 18:57:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.44 2026/07/31 15:35:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2175,7 +2175,6 @@ static void
 motg_abortx(struct usbd_xfer *xfer)
 {
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
-	uint8_t csr;
 	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 
@@ -2187,35 +2186,35 @@ motg_abortx(struct usbd_xfer *xfer)
 	 * software that we're done.
 	 */
 	if (sc->sc_dying) {
-		goto dying;
+		return;
 	}
 
+	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
+
 	if (otgpipe->hw_ep->xfer == xfer) {
+		DPRINTF("... on ep %jd", otgpipe->hw_ep->ep_number, 0, 0, 0);
+
 		otgpipe->hw_ep->xfer = NULL;
-		if (otgpipe->hw_ep->ep_number > 0) {
-			/* select endpoint */
-			UWRITE1(sc, MUSB2_REG_EPINDEX,
-			    otgpipe->hw_ep->ep_number);
-			if (otgpipe->hw_ep->phase == DATA_OUT) {
+		/* select endpoint */
+		UWRITE1(sc, MUSB2_REG_EPINDEX, otgpipe->hw_ep->ep_number);
+		if (otgpipe->hw_ep->phase == DATA_OUT) {
+			uint8_t csr = UREAD1(sc, MUSB2_REG_TXCSRL);
+			while (csr & MUSB2_MASK_CSRL_TXFIFONEMPTY) {
+				csr |= MUSB2_MASK_CSRL_TXFFLUSH;
+				UWRITE1(sc, MUSB2_REG_TXCSRL, csr);
 				csr = UREAD1(sc, MUSB2_REG_TXCSRL);
-				while (csr & MUSB2_MASK_CSRL_TXFIFONEMPTY) {
-					csr |= MUSB2_MASK_CSRL_TXFFLUSH;
-					UWRITE1(sc, MUSB2_REG_TXCSRL, csr);
-					csr = UREAD1(sc, MUSB2_REG_TXCSRL);
-				}
-				UWRITE1(sc, MUSB2_REG_TXCSRL, 0);
-			} else if (otgpipe->hw_ep->phase == DATA_IN) {
-				csr = UREAD1(sc, MUSB2_REG_RXCSRL);
-				while (csr & MUSB2_MASK_CSRL_RXPKTRDY) {
-					csr |= MUSB2_MASK_CSRL_RXFFLUSH;
-					UWRITE1(sc, MUSB2_REG_RXCSRL, csr);
-					csr = UREAD1(sc, MUSB2_REG_RXCSRL);
-				}
-				UWRITE1(sc, MUSB2_REG_RXCSRL, 0);
 			}
-			otgpipe->hw_ep->phase = IDLE;
+			UWRITE1(sc, MUSB2_REG_TXCSRL, 0);
+		} else if (otgpipe->hw_ep->phase == DATA_IN) {
+			uint8_t csr = UREAD1(sc, MUSB2_REG_RXCSRL);
+			while (csr & MUSB2_MASK_CSRL_RXPKTRDY) {
+				csr |= MUSB2_MASK_CSRL_RXFFLUSH;
+				UWRITE1(sc, MUSB2_REG_RXCSRL, csr);
+				csr = UREAD1(sc, MUSB2_REG_RXCSRL);
+			}
+			UWRITE1(sc, MUSB2_REG_RXCSRL, 0);
 		}
+		otgpipe->hw_ep->phase = IDLE;
 	}
-dying:
-	KASSERT(mutex_owned(&sc->sc_lock));
+	DPRINTF("<-- done (xfer %#jx)", (uintptr_t)xfer, 0, 0, 0);
 }
