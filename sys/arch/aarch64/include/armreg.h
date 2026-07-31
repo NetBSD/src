@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.77 2026/07/03 12:05:09 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.78 2026/07/31 13:48:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1555,11 +1555,28 @@ AARCH64REG_READ_INLINE(cntfrq_el0)
 
 AARCH64REG_READ_INLINE(cnthctl_el2)
 AARCH64REG_WRITE_INLINE(cnthctl_el2)
-
-#define	CNTHCTL_EVNTDIR		__BIT(3)
-#define	CNTHCTL_EVNTEN		__BIT(2)
-#define	CNTHCTL_EL1PCEN		__BIT(1)
-#define	CNTHCTL_EL1PCTEN	__BIT(0)
+/*
+ * Common fields independent of FEAT_VHE configuration
+ */
+#define CNTHCTL_EL2_CNTPMASK       __BIT(19)
+#define CNTHCTL_EL2_CNTVMASK       __BIT(18)
+#define CNTHCTL_EL2_EVNTIS         __BIT(17)
+#define CNTHCTL_EL2_EL1NVVCT       __BIT(16)
+#define CNTHCTL_EL2_EL1NVPCT       __BIT(15)
+#define CNTHCTL_EL2_EL1TVCT        __BIT(14)
+#define CNTHCTL_EL2_EL1TVT         __BIT(13)
+#define CNTHCTL_EL2_ECV            __BIT(12)
+#define CNTHCTL_EL2_EVNTI          __BITS(7,4)
+#define CNTHCTL_EL2_EVNTDIR        __BIT(3)
+#define CNTHCTL_EL2_EVNTEN         __BIT(2)
+/* FEAT_VHE Layout (HCR_EL2.E2H == 1) */
+#define CNTHCTL_EL2_VHE_EL0PTEN    __BIT(9)
+#define CNTHCTL_EL2_VHE_EL0VTEN    __BIT(8)
+#define CNTHCTL_EL2_VHE_EL0VCTEN   __BIT(1)
+#define CNTHCTL_EL2_VHE_EL0PCTEN   __BIT(0)
+/* Non-FEAT_VHE Layout (HCR_EL2.E2H == 0) */
+#define CNTHCTL_EL2_NVHE_EL1PCEN   __BIT(1)
+#define CNTHCTL_EL2_NVHE_EL1PCTEN  __BIT(0)
 
 AARCH64REG_READ_INLINE(cntkctl_el1)
 AARCH64REG_WRITE_INLINE(cntkctl_el1)

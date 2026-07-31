@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.43 2026/06/22 07:52:32 skrll Exp $
+# $NetBSD: genassym.cf,v 1.44 2026/07/31 13:48:31 skrll Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -306,8 +306,8 @@ define	DAIF_I			DAIF_I
 define	DAIF_F			DAIF_F
 define	DAIF_MASK		DAIF_MASK
 
-define	CNTHCTL_EL1PCTEN	CNTHCTL_EL1PCTEN
-define	CNTHCTL_EL1PCEN		CNTHCTL_EL1PCEN
+define	CNTHCTL_NVHE_EL1PCTEN	CNTHCTL_EL2_NVHE_EL1PCTEN
+define	CNTHCTL_NVHE_EL1PCEN	CNTHCTL_EL2_NVHE_EL1PCEN
 define	CNTKCTL_EL0VCTEN	CNTKCTL_EL0VCTEN
 define	SPSR_SS_SHIFT		SPSR_SS_SHIFT
 define	SPSR_F			SPSR_F
