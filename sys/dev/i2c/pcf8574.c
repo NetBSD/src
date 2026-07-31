@@ -1,4 +1,4 @@
-/* $NetBSD: pcf8574.c,v 1.10 2021/06/21 03:12:54 christos Exp $ */
+/* $NetBSD: pcf8574.c,v 1.11 2026/07/31 06:48:11 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.10 2021/06/21 03:12:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.11 2026/07/31 06:48:11 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 			continue;
 		spptr += 1;
 		strncpy(name, spptr, 31);
-		sc->sc_pins[i].pin_active = act;
+		sc->sc_pins[num].pin_active = act;
 		if (!strncmp(nptr, "LED ", 4)) {
 			sc->sc_mask &= ~(1 << num);
 			pcf8574_attach_led(sc, name, num, act, def);
