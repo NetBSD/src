@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.129 2026/04/23 19:34:07 rillig Exp $
+#	$NetBSD: Makefile,v 1.130 2026/07/31 04:55:56 sjg Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -76,6 +76,9 @@ FILEMON_H?=	/usr/include/dev/filemon/filemon.h
 COPTS.filemon_dev.c+= \
 		-DHAVE_FILEMON_H -I${FILEMON_H:H}
 .      endif
+.    elif ${USE_FILEMON} == "ktrace"
+COPTS.filemon_ktrace.c+= \
+		-Wno-unused-parameter
 .    endif
 .  endif
 .endif
