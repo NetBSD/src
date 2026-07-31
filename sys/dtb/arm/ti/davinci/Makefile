@@ -1,4 +1,4 @@
-#	$NetBSD $
+#	$NetBSD: Makefile,v 1.4 2026/07/31 19:46:10 andvar Exp $
 
 # Important: Regenerate dtb set lists by running 'make update-sets' in
 # sys/arch/dtb after changing this file.
