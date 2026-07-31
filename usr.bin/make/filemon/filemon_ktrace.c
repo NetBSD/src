@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_ktrace.c,v 1.15 2021/07/31 09:30:17 rillig Exp $	*/
+/*	$NetBSD: filemon_ktrace.c,v 1.16 2026/07/31 04:54:03 sjg Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -87,6 +87,9 @@ static filemon_syscall_t *const filemon_syscalls[] = {
 	[SYS_symlink] = &filemon_sys_symlink,
 	[SYS_unlink] = &filemon_sys_unlink,
 	[SYS_rename] = &filemon_sys_rename,
+#ifdef SYS___posix_rename
+	[SYS___posix_rename] = &filemon_sys_rename,
+#endif
 };
 
 struct filemon {
