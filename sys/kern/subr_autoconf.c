@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.320 2026/03/24 13:28:06 yamt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.321 2026/08/01 20:33:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.320 2026/03/24 13:28:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.321 2026/08/01 20:33:46 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.320 2026/03/24 13:28:06 yamt Exp
 #include <sys/devmon.h>
 #include <sys/dirent.h>
 #include <sys/disk.h>
-#include <sys/disklabel.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
