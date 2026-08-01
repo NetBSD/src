@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.516 2026/07/09 02:05:45 riastradh Exp $
+# $NetBSD: mi,v 1.517 2026/08/01 20:48:02 thorpej Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -329,11 +329,11 @@
 ./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-sysutil-debug	lfs,debug
 ./usr/libdata/debug/netbsd			comp-sysutil-debug	debug,kernel_dir
 ./usr/libdata/debug/netbsd-@CONFIG@.debug	comp-sysutil-debug	debugkernel
-./usr/libdata/debug/sbin/amrctl.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/amrctl.debug		comp-sysutil-debug	raid,debug
 ./usr/libdata/debug/sbin/apmlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/atactl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/badsect.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/bioctl.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/bioctl.debug		comp-sysutil-debug	raid,debug
 ./usr/libdata/debug/sbin/blacklistctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/sbin/blacklistd.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/sbin/blkdiscard.debug	comp-sysutil-debug	debug
@@ -341,7 +341,7 @@
 ./usr/libdata/debug/sbin/blocklistd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/brconfig.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/canconfig.debug	comp-netutil-debug	debug
-./usr/libdata/debug/sbin/ccdconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/ccdconfig.debug	comp-sysutil-debug	raid,debug
 ./usr/libdata/debug/sbin/cgdconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/chown.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/clri.debug		comp-sysutil-debug	debug
@@ -428,7 +428,7 @@
 ./usr/libdata/debug/sbin/ping.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/ping6.debug		comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/sbin/pppoectl.debug		comp-netutil-debug	debug
-./usr/libdata/debug/sbin/raidctl.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/raidctl.debug		comp-sysutil-debug	raid,debug
 ./usr/libdata/debug/sbin/rcorder.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/reboot.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/resize_ffs.debug	comp-sysutil-debug	debug
@@ -1146,7 +1146,7 @@
 ./usr/libdata/debug/usr/sbin/inetd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/installboot.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/intrctl.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/iopctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/iopctl.debug	comp-sysutil-debug	raid,debug
 ./usr/libdata/debug/usr/sbin/iostat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ip6addrctl.debug	comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/ipfs.debug		comp-ipf-debug		ipfilter,debug
@@ -1197,7 +1197,7 @@
 ./usr/libdata/debug/usr/sbin/mkalias.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/mknetid.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/mld6query.debug	comp-netutil-debug	use_inet6,debug
-./usr/libdata/debug/usr/sbin/mlxctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/mlxctl.debug	comp-sysutil-debug	raid,debug
 ./usr/libdata/debug/usr/sbin/mmcformat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mopchk.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/mopcopy.debug	comp-bootserver-debug	debug

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.57 2026/07/26 12:59:52 jdc Exp $
+# $NetBSD: mi,v 1.58 2026/08/01 20:48:02 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2111,7 +2111,7 @@
 ./usr/share/man/html5/bounce.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/canonical.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/capfile.html		man-sys-htmlman		html
-./usr/share/man/html5/ccd.conf.html		man-sysutil-htmlman	html
+./usr/share/man/html5/ccd.conf.html		man-sysutil-htmlman	raid,html
 ./usr/share/man/html5/cdb.html			man-sys-htmlman		html
 ./usr/share/man/html5/changelist.html		man-sys-htmlman		html
 ./usr/share/man/html5/cidr_table.html		man-postfix-htmlman	postfix,html
@@ -2478,7 +2478,7 @@
 ./usr/share/man/html8/amiga/installboot.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/amldb.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/amq.html			man-amd-htmlman		html
-./usr/share/man/html8/amrctl.html		man-sysutil-man		html
+./usr/share/man/html8/amrctl.html		man-sysutil-man		raid,html
 ./usr/share/man/html8/anvil.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/apm.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/apmd.html			man-sysutil-htmlman	html
@@ -2497,7 +2497,7 @@
 ./usr/share/man/html8/autounmountd.html		man-sysutil-htmlman	autofs,html
 ./usr/share/man/html8/bad144.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/badsect.html		man-sysutil-htmlman	html
-./usr/share/man/html8/bioctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/bioctl.html		man-sysutil-htmlman	raid,html
 ./usr/share/man/html8/blacklistctl.html		man-obsolete		obsolete
 ./usr/share/man/html8/blacklistd.html		man-obsolete		obsolete
 ./usr/share/man/html8/blkdiscard.html		man-sysutil-htmlman	html
@@ -2520,7 +2520,7 @@
 ./usr/share/man/html8/btpand.html		man-sysutil-htmlman	bluetooth,html
 ./usr/share/man/html8/canconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html8/catman.html		man-man-htmlman		html
-./usr/share/man/html8/ccdconfig.html		man-sysutil-htmlman	html
+./usr/share/man/html8/ccdconfig.html		man-sysutil-htmlman	raid,html
 ./usr/share/man/html8/certctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/cgdconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/chat.html			man-ppp-htmlman		html
@@ -2678,7 +2678,7 @@
 ./usr/share/man/html8/installboot.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/intrctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/intro.html		man-sys-htmlman		html
-./usr/share/man/html8/iopctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/iopctl.html		man-sysutil-htmlman	raid,html
 ./usr/share/man/html8/iostat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/ip6addrctl.html		man-netutil-htmlman	inet6,html
 ./usr/share/man/html8/ipf.html			man-ipf-htmlman		ipfilter,html
@@ -2773,7 +2773,7 @@
 ./usr/share/man/html8/mknetid.html		man-nis-htmlman		yp,html
 ./usr/share/man/html8/mknod.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mld6query.html		man-netutil-htmlman	use_inet6,html
-./usr/share/man/html8/mlxctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/mlxctl.html		man-sysutil-htmlman	raid,html
 ./usr/share/man/html8/mmcformat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/modload.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/modstat.html		man-sysutil-htmlman	html
@@ -2946,7 +2946,7 @@
 ./usr/share/man/html8/quotarestore.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/racoon.html		man-netutil-htmlman	ipsec,html
 ./usr/share/man/html8/racoonctl.html		man-netutil-htmlman	ipsec,html
-./usr/share/man/html8/raidctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/raidctl.html		man-sysutil-htmlman	raid,html
 ./usr/share/man/html8/rarpd.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/rbootd.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/rc.d.html			man-rc-htmlman		html

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.145 2025/12/28 19:07:42 thorpej Exp $
+#	$NetBSD: Makefile,v 1.146 2026/08/01 20:48:03 thorpej Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -6,13 +6,13 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	amrctl apmlabel atactl badsect bioctl blkdiscard brconfig \
-	canconfig ccdconfig cgdconfig chown \
+SUBDIR=	apmlabel atactl badsect blkdiscard brconfig \
+	canconfig cgdconfig chown \
 	devpubd disklabel dkctl dkscan_bsdlabel dmesg dmctl drvctl \
 	fastboot fdisk fsck fsirand gpt ifconfig init ldconfig luactl \
 	mbrlabel mknod modload modstat modunload mount \
 	newbtconf nologin nvmectl \
-	ping pppoectl raidctl reboot rcorder rndctl route routed \
+	ping pppoectl reboot rcorder rndctl route routed \
 	savecore scsictl shutdown slattach svhlabel swapctl sysctl \
 	ttyflags umount veriexecctl wdogctl wsconsctl
 
@@ -148,6 +148,10 @@ SUBDIR+= iscsictl iscsid
 
 .if (${MKIPSEC} != "no")
 SUBDIR+= setkey
+.endif
+
+.if (${MKRAID} != "no")
+SUBDIR+= amrctl bioctl ccdconfig raidctl
 .endif
 
 .if (${MKUSB} != "no")

@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1484 2026/07/19 01:48:19 thorpej Exp $
+#      $NetBSD: bsd.own.mk,v 1.1485 2026/08/01 20:48:03 thorpej Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1364,6 +1364,7 @@ _MKVARS.yes= \
 	MKPROFILE \
 	MKPTYFS \
 	MKQEMUFWCFG \
+	MKRAID \
 	MKRUMP \
 	MKSHARE \
 	MKSKEY \
@@ -1422,6 +1423,7 @@ MKPF.m68000?=		no
 MKPOSTFIX.m68000?=	no
 MKPROCFS.m68000?=	no
 MKQEMUFWCFG.m68000?=	no
+MKRAID.m68000?=		no
 MKRUMP.m68000?=		no
 MKSSH.m68000?=		no
 MKSYSVBFS.m68000?=	no

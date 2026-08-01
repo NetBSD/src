@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1839 2026/07/26 12:59:52 jdc Exp $
+# $NetBSD: mi,v 1.1840 2026/08/01 20:48:02 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -2311,7 +2311,7 @@
 ./usr/share/man/cat5/bounce.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/canonical.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/capfile.0			man-sys-catman		.cat
-./usr/share/man/cat5/ccd.conf.0			man-sysutil-catman	.cat
+./usr/share/man/cat5/ccd.conf.0			man-sysutil-catman	raid,.cat
 ./usr/share/man/cat5/cdb.0			man-sys-catman		.cat
 ./usr/share/man/cat5/changelist.0		man-sys-catman		.cat
 ./usr/share/man/cat5/cidr_table.0		man-postfix-catman	postfix,.cat
@@ -2714,7 +2714,7 @@
 ./usr/share/man/cat8/amiga/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/amldb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/amq.0			man-amd-catman		.cat
-./usr/share/man/cat8/amrctl.0			man-sysutil-man		.cat
+./usr/share/man/cat8/amrctl.0			man-sysutil-man		raid,.cat
 ./usr/share/man/cat8/anvil.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/apm.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/apmd.0			man-sysutil-catman	.cat
@@ -2747,7 +2747,7 @@
 ./usr/share/man/cat8/badsect.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bebox/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bebox/makedev.0		man-obsolete		obsolete
-./usr/share/man/cat8/bioctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/bioctl.0			man-sysutil-catman	raid,.cat
 ./usr/share/man/cat8/blacklistctl.0		man-obsolete		obsolete
 ./usr/share/man/cat8/blacklistd.0		man-obsolete		obsolete
 ./usr/share/man/cat8/blkdiscard.0		man-sysutil-catman	.cat
@@ -2775,7 +2775,7 @@
 ./usr/share/man/cat8/catman.0			man-man-catman		.cat
 ./usr/share/man/cat8/cats/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cats/makedev.0		man-obsolete		obsolete
-./usr/share/man/cat8/ccdconfig.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/ccdconfig.0		man-sysutil-catman	raid,.cat
 ./usr/share/man/cat8/certctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/cesfic/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cesfic/makedev.0		man-obsolete		obsolete
@@ -2984,7 +2984,7 @@
 ./usr/share/man/cat8/installboot.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/intrctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/intro.0			man-sys-catman		.cat
-./usr/share/man/cat8/iopctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/iopctl.0			man-sysutil-catman	raid,.cat
 ./usr/share/man/cat8/iostat.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ip6addrctl.0		man-netutil-catman	inet6,.cat
 ./usr/share/man/cat8/ipf.0			man-ipf-catman		ipfilter,.cat
@@ -3094,7 +3094,7 @@
 ./usr/share/man/cat8/mknetid.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat8/mknod.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/mld6query.0		man-netutil-catman	use_inet6,.cat
-./usr/share/man/cat8/mlxctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/mlxctl.0			man-sysutil-catman	raid,.cat
 ./usr/share/man/cat8/mmcformat.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mmeye/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mmeye/makedev.0		man-obsolete		obsolete
@@ -3316,7 +3316,7 @@
 ./usr/share/man/cat8/quotarestore.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/racoon.0			man-netutil-catman	ipsec,.cat
 ./usr/share/man/cat8/racoonctl.0		man-netutil-catman	ipsec,.cat
-./usr/share/man/cat8/raidctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/raidctl.0			man-sysutil-catman	raid,.cat
 ./usr/share/man/cat8/rarpd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/rbootd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/rc.0			man-rc-catman		.cat
@@ -5918,7 +5918,7 @@
 ./usr/share/man/man5/bounce.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/canonical.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/capfile.5			man-sys-man		.man
-./usr/share/man/man5/ccd.conf.5			man-sysutil-man		.man
+./usr/share/man/man5/ccd.conf.5			man-sysutil-man		raid,.man
 ./usr/share/man/man5/cdb.5			man-sys-man		.man
 ./usr/share/man/man5/changelist.5		man-sys-man		.man
 ./usr/share/man/man5/cidr_table.5		man-postfix-man		postfix,.man
@@ -6320,7 +6320,7 @@
 ./usr/share/man/man8/amiga/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/amldb.8			man-sysutil-man		.man
 ./usr/share/man/man8/amq.8			man-amd-man		.man
-./usr/share/man/man8/amrctl.8			man-sysutil-man		.man
+./usr/share/man/man8/amrctl.8			man-sysutil-man		raid,.man
 ./usr/share/man/man8/anvil.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/apm.8			man-sysutil-man		.man
 ./usr/share/man/man8/apmd.8			man-sysutil-man		.man
@@ -6353,7 +6353,7 @@
 ./usr/share/man/man8/badsect.8			man-sysutil-man		.man
 ./usr/share/man/man8/bebox/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/bebox/makedev.8		man-obsolete		obsolete
-./usr/share/man/man8/bioctl.8			man-sysutil-man		.man
+./usr/share/man/man8/bioctl.8			man-sysutil-man		raid,.man
 ./usr/share/man/man8/blacklistctl.8		man-obsolete		obsolete
 ./usr/share/man/man8/blacklistd.8		man-obsolete		obsolete
 ./usr/share/man/man8/blkdiscard.8		man-sysutil-man		.man
@@ -6381,7 +6381,7 @@
 ./usr/share/man/man8/catman.8			man-man-man		.man
 ./usr/share/man/man8/cats/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/cats/makedev.8		man-obsolete		obsolete
-./usr/share/man/man8/ccdconfig.8		man-sysutil-man		.man
+./usr/share/man/man8/ccdconfig.8		man-sysutil-man		raid,.man
 ./usr/share/man/man8/certctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/cesfic/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/cesfic/makedev.8		man-obsolete		obsolete
@@ -6591,7 +6591,7 @@
 ./usr/share/man/man8/installboot.8		man-sysutil-man		.man
 ./usr/share/man/man8/intrctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/intro.8			man-sys-man		.man
-./usr/share/man/man8/iopctl.8			man-sysutil-man		.man
+./usr/share/man/man8/iopctl.8			man-sysutil-man		raid,.man
 ./usr/share/man/man8/iostat.8			man-sysutil-man		.man
 ./usr/share/man/man8/ip6addrctl.8		man-netutil-man		inet6,.man
 ./usr/share/man/man8/ipf.8			man-ipf-man		ipfilter,.man
@@ -6701,7 +6701,7 @@
 ./usr/share/man/man8/mknetid.8			man-nis-man		yp,.man
 ./usr/share/man/man8/mknod.8			man-sysutil-man		.man
 ./usr/share/man/man8/mld6query.8		man-netutil-man		use_inet6,.man
-./usr/share/man/man8/mlxctl.8			man-sysutil-man		.man
+./usr/share/man/man8/mlxctl.8			man-sysutil-man		raid,.man
 ./usr/share/man/man8/mmcformat.8		man-sysutil-man		.man
 ./usr/share/man/man8/mmeye/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/mmeye/makedev.8		man-obsolete		obsolete
@@ -6923,7 +6923,7 @@
 ./usr/share/man/man8/quotarestore.8		man-sysutil-man		.man
 ./usr/share/man/man8/racoon.8			man-netutil-man		ipsec,.man
 ./usr/share/man/man8/racoonctl.8		man-netutil-man		ipsec,.man
-./usr/share/man/man8/raidctl.8			man-sysutil-man		.man
+./usr/share/man/man8/raidctl.8			man-sysutil-man		raid,.man
 ./usr/share/man/man8/rarpd.8			man-bootserver-man	.man
 ./usr/share/man/man8/rbootd.8			man-bootserver-man	.man
 ./usr/share/man/man8/rc.8			man-rc-man		.man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1387 2026/06/11 19:51:15 rumble Exp $
+# $NetBSD: mi,v 1.1388 2026/08/01 20:48:02 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -348,11 +348,11 @@
 ./rescue					base-sys-root
 ./root						base-sys-root
 ./sbin						base-sys-root
-./sbin/amrctl					base-sysutil-root
+./sbin/amrctl					base-sysutil-root	raid
 ./sbin/apmlabel					base-sysutil-root
 ./sbin/atactl					base-sysutil-root
 ./sbin/badsect					base-sysutil-root
-./sbin/bioctl					base-sysutil-root
+./sbin/bioctl					base-sysutil-root	raid
 ./sbin/blacklistctl				base-obsolete		obsolete
 ./sbin/blacklistd				base-obsolete		obsolete
 ./sbin/blkdiscard				base-sysutil-root
@@ -360,7 +360,7 @@
 ./sbin/blocklistd				base-sysutil-root
 ./sbin/brconfig					base-netutil-root
 ./sbin/canconfig				base-netutil-root
-./sbin/ccdconfig				base-sysutil-root
+./sbin/ccdconfig				base-sysutil-root	raid
 ./sbin/cgdconfig				base-sysutil-root
 ./sbin/chown					base-sysutil-root
 ./sbin/clri					base-sysutil-root
@@ -469,7 +469,7 @@
 ./sbin/poweroff					base-sysutil-root
 ./sbin/pppoectl					base-netutil-root
 ./sbin/quotacheck				base-obsolete		obsolete
-./sbin/raidctl					base-sysutil-root
+./sbin/raidctl					base-sysutil-root	raid
 ./sbin/rcorder					base-sysutil-root
 ./sbin/rdump					base-sysutil-root
 ./sbin/rdump_lfs				base-sysutil-root	lfs
@@ -1561,7 +1561,7 @@
 ./usr/sbin/inetd				base-netutil-bin
 ./usr/sbin/installboot				base-sysutil-bin
 ./usr/sbin/intrctl				base-sysutil-bin
-./usr/sbin/iopctl				base-sysutil-bin
+./usr/sbin/iopctl				base-sysutil-bin	raid
 ./usr/sbin/iostat				base-sysutil-bin
 ./usr/sbin/ip6addrctl				base-netutil-bin	inet6
 ./usr/sbin/ipfs					base-ipf-bin		ipfilter
@@ -1620,7 +1620,7 @@
 ./usr/sbin/mkalias				base-nis-bin		yp
 ./usr/sbin/mknetid				base-nis-bin		yp
 ./usr/sbin/mld6query				base-netutil-bin	use_inet6
-./usr/sbin/mlxctl				base-sysutil-bin
+./usr/sbin/mlxctl				base-sysutil-bin	raid
 ./usr/sbin/mmcformat				base-sysutil-bin
 ./usr/sbin/mopa.out				base-obsolete		obsolete
 ./usr/sbin/mopchk				base-bootserver-bin

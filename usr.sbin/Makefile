@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.302 2025/12/28 19:35:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.303 2026/08/01 20:48:03 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -10,11 +10,11 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	edquota eeprom emcfanctl envstat etcupdate extattrctl \
 	flashctl fssconfig fstyp fusermount fwctl \
 	gpioctl grfconfig gspa \
-	i2cscan ifwatchd inetd installboot intrctl iopctl iostat ipwctl irdaattach \
+	i2cscan ifwatchd inetd installboot intrctl iostat ipwctl irdaattach \
 	isibootd iteconfig \
 	kgmon \
 	lastlogin ldpd link lockstat lpr \
-	mailwrapper makefs map-mbone mdconfig memswitch mlxctl mmcformat \
+	mailwrapper makefs map-mbone mdconfig memswitch mmcformat \
 	mopd moused mrinfo mrouted mscdlabel mtrace mtree \
 	ndbootd netgroup_mkdb \
 	ofctl \
@@ -89,6 +89,10 @@ SUBDIR+=npf
 # PF
 .if (${MKPF} != "no")
 SUBDIR+=pf
+.endif
+
+.if (${MKRAID} != "no")
+SUBDIR+= mlxctl iopctl 
 .endif
 
 .if (${MKWLAN} != "no")

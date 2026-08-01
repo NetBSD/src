@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.6 2025/12/28 19:07:43 thorpej Exp $
+# $NetBSD: mi,v 1.7 2026/08/01 20:48:02 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11,7 +11,7 @@
 ./rescue/bzcat					base-rescue-root
 ./rescue/bzip2					base-rescue-root
 ./rescue/cat					base-rescue-root
-./rescue/ccdconfig				base-rescue-root
+./rescue/ccdconfig				base-rescue-root	raid
 ./rescue/cgdconfig				base-rescue-root
 ./rescue/chgrp					base-rescue-root
 ./rescue/chio					base-rescue-root
@@ -117,7 +117,7 @@
 ./rescue/progress				base-rescue-root
 ./rescue/ps					base-rescue-root
 ./rescue/pwd					base-rescue-root
-./rescue/raidctl				base-rescue-root
+./rescue/raidctl				base-rescue-root	raid
 ./rescue/rcmd					base-rescue-root
 ./rescue/rcorder				base-rescue-root
 ./rescue/rcp					base-rescue-root
