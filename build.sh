@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.403 2026/07/19 01:48:18 thorpej Exp $
+#	$NetBSD: build.sh,v 1.404 2026/08/01 00:14:44 sjg Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1878,7 +1878,8 @@ rebuildmake()
 	make="$(print_tooldir_make)"
 	if [ -n "${make}" ] && [ -x "${make}" ]
 	then
-		for f in usr.bin/make/*.[ch]
+		for f in tools/make/configure tools/make/*.in \
+                        usr.bin/make/*.[ch]
 		do
 			if [ "${f}" -nt "${make}" ]
 			then
@@ -2228,7 +2229,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.403 2026/07/19 01:48:18 thorpej Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.404 2026/08/01 00:14:44 sjg Exp $
 # with these arguments: ${_args}
 #
 
