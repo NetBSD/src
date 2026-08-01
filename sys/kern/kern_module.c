@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.175 2026/01/04 01:36:03 riastradh Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.176 2026/08/01 11:56:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.175 2026/01/04 01:36:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.176 2026/08/01 11:56:40 skrll Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -696,8 +696,10 @@ module_load(const char *filename, int flags, prop_dictionary_t props,
 	module_t *mod;
 	int error;
 
-	/* Test if we already have the module loaded before
-	 * authorizing so we have the opportunity to return EEXIST. */
+	/*
+	 * Test if we already have the module loaded before
+	 * authorizing so we have the opportunity to return EEXIST.
+	 */
 	kernconfig_lock();
 	mod = module_lookup(filename);
 	if (mod != NULL) {
