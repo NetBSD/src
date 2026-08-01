@@ -1,4 +1,4 @@
-/*	$NetBSD: virtioreg.h,v 1.15 2026/04/10 03:44:43 isaki Exp $	*/
+/*	$NetBSD: virtioreg.h,v 1.16 2026/08/01 20:35:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -67,28 +67,63 @@
 
 #include <sys/types.h>
 
-/* Virtio product id (all subsystems) */
-#define VIRTIO_DEVICE_ID_NETWORK	 1
-#define VIRTIO_DEVICE_ID_BLOCK		 2
-#define VIRTIO_DEVICE_ID_CONSOLE	 3
-#define VIRTIO_DEVICE_ID_ENTROPY	 4
-#define VIRTIO_DEVICE_ID_BALLOON	 5
-#define VIRTIO_DEVICE_ID_IOMEM		 6
-#define VIRTIO_DEVICE_ID_RPMSG		 7
-#define VIRTIO_DEVICE_ID_SCSI		 8
-#define VIRTIO_DEVICE_ID_9P		 9
-#define VIRTIO_DEVICE_ID_GPU		16
+/*
+ * Virtio product id (all subsystems)
+ *
+ * Each device ID is marked with the version of the VirtIO specification
+ * in which the device was first described.  Devices that were documented
+ * in pre-1.0 drafts also have the "0.9" version identifier.  If a device
+ * has both "0.9" and "1.0", then it is a so-called "transitional device"
+ * whose behavior when using the legacy interface is described in the
+ * VirtIO 1.0 specification.  If a device has only a "0.9" identifier, then
+ * it was described in the pre-1.0 drafts and subsequently dropped.
+ *
+ * Device IDs without a first-version marking have mentions in at least
+ * one version of the VirtIO specification, but no formal description in
+ * the specification.
+ */
+#define VIRTIO_DEVICE_ID_NETWORK	1	/* 0.9, 1.0 */
+#define VIRTIO_DEVICE_ID_BLOCK		2	/* 0.9, 1.0 */
+#define VIRTIO_DEVICE_ID_CONSOLE	3	/* 0.9, 1.0 */
+#define VIRTIO_DEVICE_ID_ENTROPY	4	/* 0.9, 1.0 */
+#define VIRTIO_DEVICE_ID_BALLOON	5	/* 0.9, 1.0  (traditional) */
+#define VIRTIO_DEVICE_ID_IOMEM		6
+#define VIRTIO_DEVICE_ID_RPMSG		7	/* 0.9 */
+#define VIRTIO_DEVICE_ID_SCSI		8	/* 0.9, 1.0 */
+#define VIRTIO_DEVICE_ID_9P		9
+#define VIRTIO_DEVICE_ID_MAC80211_WLAN	10
+#define VIRTIO_DEVICE_ID_RPROC_SERIAL	11
+#define VIRTIO_DEVICE_ID_CAIF		12
+#define VIRTIO_DEVICE_ID_MEMORY_BALLOON	12	/* (new?) */
+#define VIRTIO_DEVICE_ID_GPU		16	/* 1.1 */
+#define VIRTIO_DEVICE_ID_TIMER_CLOCK	17
+#define VIRTIO_DEVICE_ID_INPUT_DEVICE	18	/* 1.1 */
+#define VIRTIO_DEVICE_ID_SOCKET		19	/* 1.1 */
+#define VIRTIO_DEVICE_ID_CRYPTO		20	/* 1.1 */
+#define VIRTIO_DEVICE_ID_IOMMU		23	/* 1.2 */
+#define VIRTIO_DEVICE_ID_MEMORY		24	/* 1.2 */
+#define VIRTIO_DEVICE_ID_FILE_SYSTEM	26	/* 1.2 */
+#define VIRTIO_DEVICE_ID_SOUND		25	/* 1.2 */
+#define VIRTIO_DEVICE_ID_PMEM		27	/* 1.2 */
+#define VIRTIO_DEVICE_ID_RPMB		28	/* 1.2 */
+#define VIRTIO_DEVICE_ID_SCMI		32	/* 1.2 */
+#define VIRTIO_DEVICE_ID_I2C_ADAPTER	34	/* 1.2 */
+#define VIRTIO_DEVICE_ID_GPIO		41	/* 1.2 */
 
 /* common device/guest features */
-#define VIRTIO_F_NOTIFY_ON_EMPTY	__BIT(24)
+#define VIRTIO_F_NOTIFY_ON_EMPTY	__BIT(24) /* not in 1.0 */
 #define VIRTIO_F_RING_INDIRECT_DESC	__BIT(28)
 #define VIRTIO_F_RING_EVENT_IDX		__BIT(29)
 #define VIRTIO_F_BAD_FEATURE		__BIT(30)
 #define VIRTIO_F_VERSION_1		__BIT(32)
 #define VIRTIO_F_ACCESS_PLATFORM	__BIT(33)
 #define VIRTIO_F_RING_PACKED		__BIT(34)
+#define VIRTIO_F_ORDER			__BIT(35)
 #define VIRTIO_F_ORDER_PLATFORM		__BIT(36)
 #define VIRTIO_F_SR_IOV			__BIT(37)
+#define VIRTIO_F_NOTIFICATION_DATA	__BIT(38)
+#define VIRTIO_F_NOTIF_CONFIG_DATA	__BIT(39)
+#define VIRTIO_F_RING_RESET		__BIT(40)
 
 /* common device status flags */
 #define VIRTIO_CONFIG_DEVICE_STATUS_RESET		  0
