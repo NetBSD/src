@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.176 2026/08/01 11:56:40 skrll Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.177 2026/08/01 11:57:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.176 2026/08/01 11:56:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.177 2026/08/01 11:57:24 skrll Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -513,7 +513,7 @@ module_start_unload_thread(void)
 /*
  * module_builtin_require_force
  *
- * Require MODCTL_MUST_FORCE to load any built-in modules that have 
+ * Require MODCTL_MUST_FORCE to load any built-in modules that have
  * not yet been initialized
  */
 void
