@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.404 2026/08/01 00:14:44 sjg Exp $
+#	$NetBSD: build.sh,v 1.405 2026/08/01 20:14:38 thorpej Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -706,8 +706,8 @@ MACHINE=evbsh3		MACHINE_ARCH=		NO_DEFAULT
 MACHINE=evbsh3		MACHINE_ARCH=sh3eb	ALIAS=evbsh3-eb
 MACHINE=evbsh3		MACHINE_ARCH=sh3el	ALIAS=evbsh3-el
 MACHINE=ews4800mips	MACHINE_ARCH=mipseb
-MACHINE=hb68k		MACHINE_ARCH=		NO_DEFAULT
 MACHINE=hb68k		MACHINE_ARCH=m68000	ALIAS=hb68010
+MACHINE=hb68k		MACHINE_ARCH=m68k	DEFAULT
 MACHINE=hp300		MACHINE_ARCH=m68k
 MACHINE=hppa		MACHINE_ARCH=hppa
 MACHINE=hpcarm		MACHINE_ARCH=earmv4	ALIAS=hpcearm DEFAULT
@@ -2229,7 +2229,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.404 2026/08/01 00:14:44 sjg Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.405 2026/08/01 20:14:38 thorpej Exp $
 # with these arguments: ${_args}
 #
 
