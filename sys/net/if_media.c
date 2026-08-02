@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.54 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_media.c,v 1.54.12.1 2026/08/02 13:33:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2020 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.54 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.54.12.1 2026/08/02 13:33:27 martin Exp $");
 
 #define	__IFMEDIA_PRIVATE
 
@@ -92,8 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.54 2022/09/03 02:47:59 thorpej Exp $"
 
 static void	ifmedia_status(struct ifmedia *, struct ifnet *,
 		    struct ifmediareq *);
-static struct ifmedia_entry *
-		ifmedia_match_locked(struct ifmedia *, u_int, u_int);
 
 /*
  * Compile-time options:
@@ -541,7 +539,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 /*
  * Find media entry matching a given ifm word.
  */
-static struct ifmedia_entry *
+struct ifmedia_entry *
 ifmedia_match_locked(struct ifmedia *ifm, u_int target, u_int mask)
 {
 	struct ifmedia_entry *match, *next;
