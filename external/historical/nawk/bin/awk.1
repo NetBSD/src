@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.36 2026/02/08 11:21:55 rillig Exp $
+.\"	$NetBSD: awk.1,v 1.37 2026/08/02 23:13:45 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -641,11 +641,6 @@ any string (constant or variable) may be used
 as a regular expression, except in the position of an isolated regular expression
 in a pattern.
 .Pp
-A pattern may consist of two patterns separated by a comma;
-in this case, the action is performed for all lines
-from an occurrence of the first pattern
-up to and including an occurrence of the second.
-.Pp
 A relational expression is one of the following:
 .Bl -tag -offset indent -width Fn -compact
 .It Ar expression matchop regular-expression
@@ -669,6 +664,14 @@ A conditional is an arithmetic expression,
 a relational expression,
 or a Boolean combination
 of these.
+.Pp
+A
+.Em range
+pattern consists of two patterns separated by a comma;
+in this case, the action is performed for all lines
+from an occurrence of the first pattern
+up to and including an occurrence of the second.
+A range pattern cannot be part of any other pattern.
 .Pp
 The special patterns
 .Ic BEGIN
