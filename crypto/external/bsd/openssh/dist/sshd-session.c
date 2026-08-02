@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-session.c,v 1.14 2026/07/30 01:28:25 rin Exp $	*/
+/*	$NetBSD: sshd-session.c,v 1.15 2026/08/02 11:51:16 christos Exp $	*/
 /* $OpenBSD: sshd-session.c,v 1.23 2026/03/11 09:10:59 dtucker Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.14 2026/07/30 01:28:25 rin Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.15 2026/08/02 11:51:16 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1344,7 +1344,9 @@ cleanup_exit(int i)
 		pfilter_notify(1);
 		_exit(EXIT_AUTH_ATTEMPTED);
 	}
-	if (i == 255 && monitor_invalid_user())
+	if (i == 255 && monitor_invalid_user()) {
+		pfilter_notify(1);
 		_exit(EXIT_INVALID_USER);
+	}
 	_exit(i);
 }
