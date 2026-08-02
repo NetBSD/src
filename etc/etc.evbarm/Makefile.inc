@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.141 2026/08/02 08:26:07 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.142 2026/08/02 12:29:16 mlelstv Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -214,13 +214,13 @@ SNAP_MD_POST_DEPS_BOOTABLE+=	smp_rpi_inst-${board}.img.gz
 .endif
 
 smp_hashes:
-	.if exists(${IMAGE.dir})
-		@echo "===> Making hash files: ${HASHES}"
+.if exists(${IMAGE.dir})
+	@echo "===> Making hash files: ${HASHES}"
 .for hash in ${HASHES}
-		cat ${IMAGE.dir}/*.${hash} > ${IMAGE.dir}/${hash} \
-		&& rm -f ${IMAGE.dir}/*.${hash}
+	cat ${IMAGE.dir}/*.${hash} > ${IMAGE.dir}/${hash} \
+	&& rm -f ${IMAGE.dir}/*.${hash}
 .endfor
-	.endif
+.endif
 
 SNAP_MD_POST_DEPS_HASHES+=	smp_hashes
 
