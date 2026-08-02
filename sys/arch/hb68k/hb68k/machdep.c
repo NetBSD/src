@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2026/08/02 15:01:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2026/08/02 15:32:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2026/08/02 15:01:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2026/08/02 15:32:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -132,6 +132,17 @@ int	delay_divisor = DELAY_DIVISOR_DEFAULT;
 
 /* Machine-dependent initialization routines. */
 void	machine_init(paddr_t);
+
+#if defined(M68K_MMU_MOTOROLA)
+struct pmap_bootmap machine_bootmap[MACHINE_BOOTMAP_ENTRY_COUNT+1] = {
+	/*
+	 * pmap_bootstrap1() will skip any entry with pmbm_size == 0.
+	 * The machine-specific bootstrap() function simply needs to
+	 * fill in machine_bootmap[] entries it wishes to use.
+	 */
+	[MACHINE_BOOTMAP_ENTRY_COUNT] = { .pmbm_vaddr = -1 }
+};
+#endif /* M68K_MMU_MOTOROLA */
 
 bool
 machine_fdt_init(void *addr)

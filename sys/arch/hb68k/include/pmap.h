@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 2026/07/19 01:48:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 2026/08/02 15:32:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include "opt_m68k_arch.h"
 
 #if defined(M68K_MMU_MOTOROLA)
+
+#define	MACHINE_BOOTMAP_ENTRY_COUNT	4
 
 #ifndef __HAVE_NEW_PMAP_68K
 #error Only pmap_68k is supported on this platform.
