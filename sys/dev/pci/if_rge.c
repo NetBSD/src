@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.53 2026/03/24 07:23:46 skrll Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.54 2026/08/02 15:52:54 pgoyette Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.42 2026/01/26 01:45:18 kevlo Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.53 2026/03/24 07:23:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.54 2026/08/02 15:52:54 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -174,6 +174,7 @@ CFATTACH_DECL_NEW(rge, sizeof(struct rge_softc), rge_match, rge_attach,
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .id = PCI_ID_CODE(PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_E3000) },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_E5000) },
 	{ .id = PCI_ID_CODE(PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8125) },
 	{ .id = PCI_ID_CODE(PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8126) },
 	{ .id = PCI_ID_CODE(PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8127) },
