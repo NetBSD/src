@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2026/07/19 01:48:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2026/08/02 15:01:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2026/07/19 01:48:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2026/08/02 15:01:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -133,17 +133,19 @@ int	delay_divisor = DELAY_DIVISOR_DEFAULT;
 /* Machine-dependent initialization routines. */
 void	machine_init(paddr_t);
 
-void
+bool
 machine_fdt_init(void *addr)
 {
 	static bool fdt_initialized;
 
 	if (fdt_initialized) {
-		return;
+		return true;
 	}
 
-	fdtbus_init(addr);
-	fdt_initialized = true;
+	if (fdtbus_init(addr)) {
+		fdt_initialized = true;
+	}
+	return fdt_initialized;
 }
 
 const struct fdt_platform *

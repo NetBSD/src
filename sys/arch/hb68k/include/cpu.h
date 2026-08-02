@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2026/07/19 01:48:21 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2026/08/02 15:01:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,7 +54,7 @@
 struct fdt_platform;
 struct fdt_attach_args;
 
-void		machine_fdt_init(void *);
+bool		machine_fdt_init(void *);
 void		machine_init_attach_args(struct fdt_attach_args *);
 const char *	machine_set_bootspec(const char *);
 
