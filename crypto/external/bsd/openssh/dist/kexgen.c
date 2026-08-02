@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgen.c,v 1.8.2.1 2026/05/07 17:49:23 martin Exp $	*/
+/*	$NetBSD: kexgen.c,v 1.8.2.2 2026/08/02 13:41:00 martin Exp $	*/
 /* $OpenBSD: kexgen.c,v 1.12 2026/03/03 09:57:25 dtucker Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: kexgen.c,v 1.8.2.2 2026/08/02 13:41:00 martin Exp $");
 
 #include <sys/types.h>
 
