@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2025/09/18 03:36:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.35 2026/08/02 14:27:57 riastradh Exp $
 
 # $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -129,7 +129,7 @@ LFLAGS+=-l
 
 YFLAGS+=-d
 
-CLEANFILES=	dt_errtags.c dt_names.c dt_grammar.h
+CLEANFILES+=	dt_errtags.c dt_names.c dt_grammar.h
 
 MKERRTAGS=${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/mkerrtags.sh 
 dt_errtags.c: ${MKERRTAGS} ${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/dt_errtags.h 
