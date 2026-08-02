@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.121 2026/07/29 10:33:21 sborrill Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.122 2026/08/02 14:08:02 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1610,4 +1610,34 @@ sys/netinet/tcp_input.c				patch
 	tcp: Plug a 4-byte leak of kernel stack data through timestamps.
 	Addresses PR kern/60486
 	[riastradh, ticket #2041]
+
+sys/dev/fss.c					1.116
+
+	ffs: PR 59663: fix deadlocks during revocation of ttys.
+	[hannken, ticket #2042]
+
+sys/netinet/raw_ip.c				1.187 (patch)
+
+	inet: respect IP_TOS and IP_TTL for raw sockets.
+	[he, ticket #2043]
+
+external/public-domain/tz/dist/Makefile         up to 1.6
+external/public-domain/tz/dist/NEWS             up to 1.8
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.46
+external/public-domain/tz/dist/africa           up to 1.4
+external/public-domain/tz/dist/australasia      up to 1.13
+external/public-domain/tz/dist/europe           up to 1.6
+external/public-domain/tz/dist/leap-seconds.list up to 1.12
+external/public-domain/tz/dist/leapseconds      up to 1.12
+external/public-domain/tz/dist/northamerica     up to 1.7
+external/public-domain/tz/dist/theory.html      up to 1.6
+external/public-domain/tz/dist/version          up to 1.19
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.12
+external/public-domain/tz/dist/zone.tab         up to 1.6
+external/public-domain/tz/dist/zone1970.tab     up to 1.7
+external/public-domain/tz/dist/zonenow.tab      up to 1.8
+doc/3RDPARTY					(apply patch)
+
+	Updates tzdata to 2023cgtz.
+	[kre, ticket #2044]
 
