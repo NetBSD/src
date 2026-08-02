@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.75 2026/08/02 17:44:21 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.76 2026/08/02 17:46:33 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.75 2026/08/02 17:44:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.76 2026/08/02 17:46:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1175,7 +1175,7 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
-/* these are for both FBIOSCURSOR and FBIOGCURSOR */
+
 #define p ((struct wsdisplay_cursor *)data)
 #define cc (&sc->sc_cursor)
 
@@ -1221,7 +1221,8 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		}
 
 		/* parameters are OK; do it */
-		if (w & (WSDISPLAY_CURSOR_DOCUR | WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
+		if (w & (WSDISPLAY_CURSOR_DOCUR | WSDISPLAY_CURSOR_DOPOS |
+			 WSDISPLAY_CURSOR_DOHOT)) {
 			if (w & WSDISPLAY_CURSOR_DOCUR)
 				cc->cc_enable = p->enable;
 			if (w & WSDISPLAY_CURSOR_DOPOS) {
