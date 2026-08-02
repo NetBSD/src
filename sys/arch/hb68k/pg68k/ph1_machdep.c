@@ -1,4 +1,4 @@
-/*	$NetBSD: ph1_machdep.c,v 1.1 2026/07/19 01:48:24 thorpej Exp $	*/
+/*	$NetBSD: ph1_machdep.c,v 1.2 2026/08/02 16:45:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ph1_machdep.c,v 1.1 2026/07/19 01:48:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ph1_machdep.c,v 1.2 2026/08/02 16:45:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,19 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: ph1_machdep.c,v 1.1 2026/07/19 01:48:24 thorpej Exp 
 #include <dev/fdt/fdt_platform.h>
 
 #include <dev/ofw/openfirm.h>
-
-/*
- * plat_machine_init --
- *	Perform any machine-specific initialization.  "nextpa" is
- *	the next free physical memory page, from which any memory
- *	can be stolen on a whole-page basis as needed.  Returns the
- *	next free physical memory page.
- */
-static paddr_t
-ph1_plat_machine_init(paddr_t nextpa)
-{
-	return nextpa;
-}
 
 /*
  * plat_device_register --
@@ -149,20 +136,6 @@ ph1_plat_halt(void)
 }
 
 /*
- * plat_powerdown --
- *	Power-down the machine, if possible.  If not, then halt.
- */
-static void
-ph1_plat_powerdown(void)
-{
-	/*
-	 * The Phaethon 1 doesn't have software power control.  It
-	 * provides a poweroff vector, but it just halts.
-	 */
-	ph1_plat_halt();
-}
-
-/*
  * plat_reboot --
  *	Reboot the system according to "howto".  Attempt to
  *	use "bootstr" as the arguments for the resulting system
@@ -188,9 +161,7 @@ ph1_plat_uart_freq(void)
 }
 
 static const struct fdt_platform phaethon1_platform = {
-	.fp_machine_init = ph1_plat_machine_init,
 	.fp_device_register = ph1_plat_device_register,
-	.fp_powerdown = ph1_plat_powerdown,
 	.fp_halt = ph1_plat_halt,
 	.fp_reboot = ph1_plat_reboot,
 	.fp_uart_freq = ph1_plat_uart_freq,
