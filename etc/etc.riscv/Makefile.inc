@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2025/03/22 09:25:14 hgutch Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2026/08/02 02:59:14 brook Exp $
 #
 #	etc.riscv/Makefile.inc -- riscv-specific etc Makefile targets
 #
@@ -14,8 +14,6 @@ MKIMAGE= 	${NETBSDSRCDIR}/distrib/utils/embedded/mkimage
 IMAGE.rel=      ${RELEASEDIR}/${RELEASEMACHINEDIR}
 IMAGE.dir=      ${IMAGE.rel}/binary/gzimg
 IMAGE.kern=     ${IMAGE.rel}/binary/kernel
-
-#	TOOL_MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE} \
 
 __mkimage: .USE
 	TOOL_MAKE=${MAKE} \
@@ -34,11 +32,12 @@ __mkimage: .USE
 	MACHINE=${MACHINE} \
 	MKDTB=${MKDTB} \
 	MKPOSTFIX=${MKPOSTFIX} \
-	CKSUM=${CKSUM} \
-	IMAGEDIR=${IMAGE.dir} \
 	${HOST_SH} ${MKIMAGE} -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
             -S ${NETBSDSRCDIR} ${MKI_OPTS.${.TARGET}} \
             ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
+	for hash in ${HASHES}; do \
+		(cd ${IMAGE.dir} && ${TOOL_CKSUM} -a $${hash} ${.TARGET:S/smp_//}.img.gz > ${.TARGET:S/smp_//}.img.gz.$${hash}) \
+	done
 
 
 .if ${MACHINE_ARCH} == "riscv64"
@@ -51,18 +50,29 @@ INSTALLATION_DIRS+=	installation/misc
 .endif
 
 smp_riscv64: __mkimage
-MKI_OPTS.smp_riscv64=	-K ${IMAGE.kern}
-SNAP_MD_POST_DEPS+=	smp_riscv64
+MKI_OPTS.smp_riscv64=		-K ${IMAGE.kern}
+SNAP_MD_POST_DEPS_IMGZ+=	smp_riscv64
 .endif
 
 
 .if ${MACHINE_ARCH} == "riscv32"
 smp_riscv32: __mkimage
-MKI_OPTS.smp_riscv32=	-K ${IMAGE.kern}
-SNAP_MD_POST_DEPS+=	smp_riscv32
+MKI_OPTS.smp_riscv32=		-K ${IMAGE.kern}
+SNAP_MD_POST_DEPS_IMGZ+=	smp_riscv32
 .endif
 
-snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS}
+
+smp_hashes:
+	@echo "===> Making hash files: ${HASHES}"
+.for hash in ${HASHES}
+	cat ${IMAGE.dir}/*.${hash} > ${IMAGE.dir}/${hash} \
+	&& rm -f ${IMAGE.dir}/*.${hash}
+.endfor
+SNAP_MD_POST_DEPS_HASHES+=	smp_hashes
+
+snap_md_post_images: ${SNAP_MD_POST_DEPS_IMGZ} .WAIT ${SNAP_MD_POST_DEPS_HASHES}
+
+snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS} snap_md_post_images
 
 INSTALLATION_DIRS+=	binary/gzimg		\
 			installation/instkernel

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.139 2026/07/05 23:38:34 brook Exp $
+#	$NetBSD: Makefile.inc,v 1.140 2026/08/02 02:59:14 brook Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -96,22 +96,27 @@ __mkimage: .USE
 	MACHINE=${MACHINE} \
 	MKDTB=${MKDTB} \
 	MKPOSTFIX=${MKPOSTFIX} \
-	CKSUM=${CKSUM} \
-	IMAGEDIR=${IMAGE.dir} \
-	${HOST_SH} ${MKIMAGE} -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
+	${HOST_SH} ${MKIMAGE} -h ${.TARGET:R:S/smp_//} -D ${DESTDIR} \
 	    -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
-	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img
-.for f in ${INSTALLBOOT_BOARDS}
-	@echo "===> Making bootable image ${IMAGE.dir:T}/${.TARGET:S/smp_//}-${f}.img.gz"
-	@cp ${IMAGE.dir}/${.TARGET:S/smp_//}.img ${IMAGE.dir}/${.TARGET:S/smp_//}-${f}.img
-	@${TOOL_INSTALLBOOT} -m ${MACHINE} -o board=${f} \
-			${IMAGE.dir}/${.TARGET:S/smp_//}-${f}.img \
-		&& (cd ${IMAGE.dir} && (for i in MD5 SHA512; do ${CKSUM} -a $${i} ${.TARGET:S/smp_//}-${f}.img >> $${i}; done)) \
-		&& ${TOOL_GZIP} -f ${IMAGE.dir}/${.TARGET:S/smp_//}-${f}.img \
-		|| rm ${IMAGE.dir}/${.TARGET:S/smp_//}-${f}.img
+	    ${IMAGE.dir}/${.TARGET:S/smp_//}
+
+__mkbootimage: .USE
+	@echo "===> Making bootable image ${IMAGE.dir:T}/${.TARGET:S/smp_//}"
+	cp ${IMAGE.dir}/${.TARGET:R:S/smp_//:C/-.*//}.img ${IMAGE.dir}/${.TARGET:R:S/smp_//}
+	${TOOL_INSTALLBOOT} -m ${MACHINE} -o board=${.TARGET:R:R:C/smp_[^-]*-//} \
+			${IMAGE.dir}/${.TARGET:R:S/smp_//} \
+	&& ${TOOL_GZIP} -f ${IMAGE.dir}/${.TARGET:R:S/smp_//} \
+	&& for hash in ${HASHES}; do \
+		(cd ${IMAGE.dir} && ${TOOL_CKSUM} -a $${hash} ${.TARGET:S/smp_//} > ${.TARGET:S/smp_//}.$${hash}) \
+	done \
+	|| rm ${IMAGE.dir}/${.TARGET:R:S/smp_//}*
+
+__mkcompressed: .USE
+	@echo "===> Compressing image ${IMAGE.dir}/${.TARGET:R:S/smp_//}"
+	${TOOL_GZIP} -f ${GZIP_N_FLAG} -9 ${IMAGE.dir}/${.TARGET:R:S/smp_//}
+.for hash in ${HASHES}
+	(cd ${IMAGE.dir} && ${TOOL_CKSUM} -a ${hash} ${.TARGET:S/smp_//} > ${.TARGET:S/smp_//}.${hash})
 .endfor
-	@echo "===> Compressing image ${IMAGE.dir}/${.TARGET:S/smp_//}.img"
-	${TOOL_GZIP} -f ${GZIP_N_FLAG} -9 ${IMAGE.dir}/${.TARGET:S/smp_//}.img
 
 ARCHES.earmv4=		armv4
 ARCHES.earmv4eb=	armv4
@@ -150,34 +155,75 @@ INSTALLATION_DIRS+=	installation/misc
 .endif
 
 .if !empty(MACHINE_ARCH:M*armv7*) && empty(ALL_KERNELS)
-smp_armv7: __mkimage
-MKI_OPTS.smp_armv7=	-K ${IMAGE.kern} -x
-SNAP_MD_POST_DEPS+=	smp_armv7
+smp_armv7.img: __mkimage
+smp_armv7.img.gz: __mkcompressed
+MKI_OPTS.smp_armv7.img=		-K ${IMAGE.kern} -x
+SNAP_MD_POST_DEPS_IMG+=		smp_armv7.img
+SNAP_MD_POST_DEPS_IMGZ+=	smp_armv7.img.gz
+.for board in ${INSTALLBOOT_BOARDS}
+smp_armv7-${board}.img.gz: __mkbootimage
+SNAP_MD_POST_DEPS_BOOTABLE+=	smp_armv7-${board}.img.gz
+.endfor
 .endif
 
 .if !empty(MACHINE_ARCH:Maarch64*) && empty(ALL_KERNELS)
-smp_arm64: __mkimage
-MKI_OPTS.smp_arm64=	-K ${IMAGE.kern} -x
-SNAP_MD_POST_DEPS+=	smp_arm64
-smp_arm64mbr: __mkimage
-MKI_OPTS.smp_arm64mbr=	-K ${IMAGE.kern} -x
-SNAP_MD_POST_DEPS+=	smp_arm64mbr
+smp_arm64.img: __mkimage
+smp_arm64.img.gz: __mkcompressed
+MKI_OPTS.smp_arm64.img=		-K ${IMAGE.kern} -x
+SNAP_MD_POST_DEPS_IMG+=		smp_arm64.img
+SNAP_MD_POST_DEPS_IMGZ+=	smp_arm64.img.gz
+.for board in ${INSTALLBOOT_BOARDS}
+smp_arm64-${board}.img.gz: __mkbootimage
+SNAP_MD_POST_DEPS_BOOTABLE+=	smp_arm64-${board}.img.gz
+.endfor
+smp_arm64mbr.img: __mkimage
+smp_arm64mbr.img.gz: __mkcompressed
+MKI_OPTS.smp_arm64mbr.img=	-K ${IMAGE.kern} -x
+SNAP_MD_POST_DEPS_IMG+=		smp_arm64mbr.img
+SNAP_MD_POST_DEPS_IMGZ+=	smp_arm64mbr.img.gz
+.for board in ${INSTALLBOOT_BOARDS}
+smp_arm64mbr-${board}.img.gz: __mkbootimage
+SNAP_MD_POST_DEPS_BOOTABLE+=	smp_arm64mbr-${board}.img.gz
+.endfor
 .endif
 
 .if !empty(KERNEL_SETS:MRPI)
-smp_rpi: __mkimage
+smp_rpi.img: __mkimage
+smp_rpi.img.gz: __mkcompressed
 .if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI)
-MKI_OPTS.smp_rpi=	-K ${IMAGE.kern}/netbsd-RPI.img.gz -x
-SNAP_MD_POST_DEPS+=	smp_rpi
+MKI_OPTS.smp_rpi.img=		-K ${IMAGE.kern}/netbsd-RPI.img.gz -x
+SNAP_MD_POST_DEPS_IMG+=		smp_rpi.img
+SNAP_MD_POST_DEPS_IMGZ+=	smp_rpi.img.gz
+.for board in ${INSTALLBOOT_BOARDS}
+smp_rpi-${board}.img.gz: __mkbootimage
+SNAP_MD_POST_DEPS_BOOTABLE+=	smp_rpi-${board}.img.gz
+.endfor
 .endif
-smp_rpi_inst: ${IMAGE.instk}/netbsd-RPI_INSTALL.img.gz __mkimage
+smp_rpi_inst.img: ${IMAGE.instk}/netbsd-RPI_INSTALL.img.gz
+smp_rpi_inst.img: __mkimage
+smp_rpi_inst.img.gz: __mkcompressed
 .if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI_INSTALL)
-MKI_OPTS.smp_rpi_inst=	-b -K ${IMAGE.instk}/netbsd-RPI_INSTALL.img.gz -x
-SNAP_MD_POST_DEPS+=	smp_rpi_inst
+MKI_OPTS.smp_rpi_inst.img=	-b -K ${IMAGE.instk}/netbsd-RPI_INSTALL.img.gz -x
+SNAP_MD_POST_DEPS_IMG+=		smp_rpi_inst.img
+SNAP_MD_POST_DEPS_IMGZ+=	smp_rpi_inst.img.gz
+.for board in ${INSTALLBOOT_BOARDS}
+smp_rpi_inst-${board}.img.gz: __mkbootimage
+SNAP_MD_POST_DEPS_BOOTABLE+=	smp_rpi_inst-${board}.img.gz
+.endfor
 .endif
 .endif
 
-snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS}
+smp_hashes:
+	@echo "===> Making hash files: ${HASHES}"
+.for hash in ${HASHES}
+	cat ${IMAGE.dir}/*.${hash} > ${IMAGE.dir}/${hash} \
+	&& rm -f ${IMAGE.dir}/*.${hash}
+.endfor
+SNAP_MD_POST_DEPS_HASHES+=	smp_hashes
+
+snap_md_post_images: ${SNAP_MD_POST_DEPS_IMG} .WAIT ${SNAP_MD_POST_DEPS_BOOTABLE} .WAIT ${SNAP_MD_POST_DEPS_IMGZ} .WAIT ${SNAP_MD_POST_DEPS_HASHES}
+
+snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS} snap_md_post_images
 
 .if !empty(MACHINE_ARCH:Maarch64*)
 KERNEL_SUFFIXES=	img

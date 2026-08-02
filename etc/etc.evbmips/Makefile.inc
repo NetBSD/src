@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32 2025/03/22 09:25:14 hgutch Exp $
+#	$NetBSD: Makefile.inc,v 1.33 2026/08/02 02:59:14 brook Exp $
 #
 #	etc.evbmips/Makefile.inc -- evbmips-specific etc Makefile targets
 #
@@ -70,11 +70,13 @@ __mkimage: .USE
 	MACHINE=${MACHINE} \
 	MKDTB=${MKDTB} \
 	MKPOSTFIX=${MKPOSTFIX} \
-	CKSUM=${CKSUM} \
-	IMAGEDIR=${IMAGE.dir} \
 	${HOST_SH} ${MKIMAGE} -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
             -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
             ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
+	@echo "===> Making hash files: ${HASHES}"
+	for hash in ${HASHES}; do \
+		(cd ${IMAGE.dir} && ${TOOL_CKSUM} -a $${hash} ${.TARGET:S/smp_//}.img.gz > $${hash}); \
+	done
 
 .if !empty(MACHINE_ARCH:Mmips*64eb)
 smp_octeon: __mkimage

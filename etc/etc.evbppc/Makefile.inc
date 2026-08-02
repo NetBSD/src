@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2026/01/10 06:56:58 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2026/08/02 02:59:14 brook Exp $
 #
 #	etc.evbppc/Makefile.inc -- evbppc-specific etc Makefile targets
 #
@@ -58,11 +58,13 @@ __mkimage: .USE
 	MACHINE=${MACHINE} \
 	MKDTB=${MKDTB} \
 	MKPOSTFIX=${MKPOSTFIX} \
-	CKSUM=${CKSUM} \
-	IMAGEDIR=${IMAGE.dir} \
 	${HOST_SH} -x ${MKIMAGE} -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
             -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
             ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
+	@echo "===> Making hash files: ${HASHES}"
+	for hash in ${HASHES}; do \
+		(cd ${IMAGE.dir} && ${TOOL_CKSUM} -a $${hash} ${.TARGET:S/smp_//}.img.gz > $${hash}); \
+	done
 
 smp_nintendo: __mkimage
 	cd ${KERNSRCDIR}/arch/evbppc/stand/wii && ${MAKE} release
