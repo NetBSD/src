@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.74 2025/04/14 10:05:26 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.75 2026/08/02 17:44:21 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.74 2025/04/14 10:05:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.75 2026/08/02 17:44:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ cg6_ras_nuke_cursor(struct rasops_info *ri)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct cgsix_softc *sc = scr->scr_cookie;
 	int wi, he, x, y;
-		
+
 	if (ri->ri_flg & RI_CURSOR) {
 		wi = ri->ri_font->fontwidth;
 		he = ri->ri_font->fontheight;
@@ -485,7 +485,7 @@ cg6_ras_eraserows(void *cookie, int row, int n, long int attr)
 	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
 
 	fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xff];
-	if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
+	if (row == 0 && n == ri->ri_rows) {
 		fbc->fbc_arecty = 0;
 		fbc->fbc_arectx = 0;
 		fbc->fbc_arecty = ri->ri_height - 1;
@@ -508,7 +508,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri = &cg6_console_screen.scr_ri;
 	unsigned long defattr;
-	
+
 	fb->fb_driver = &cg6_fbdriver;
 
 	/* Don't have to map the pfour register on the cgsix. */
@@ -541,7 +541,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	sc->sc_width = fb->fb_type.fb_width;
 	sc->sc_stride = fb->fb_type.fb_width;
 	sc->sc_height = fb->fb_type.fb_height;
-	
+
 	printf("%s: framebuffer size: %d MB\n", device_xname(sc->sc_dev), 
 	    sc->sc_ramsize >> 20);
 
@@ -552,7 +552,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	sc->sc_bg = WS_DEFAULT_BG;
 	sc->sc_fb_is_open = FALSE;
-	
+
 	vcons_init(&sc->vd, sc, &cgsix_defaultscreen, &cgsix_accessops);
 	sc->vd.init_screen = cgsix_init_screen;
 
@@ -567,11 +567,11 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 		vcons_init_screen(&sc->vd, &cg6_console_screen, 1,
 		    &defattr);
 		sc->sc_bg = (defattr >> 16) & 0xf; /* yes, this is an index into devcmap */
-		
+
 		/*
 		 * XXX
 		 * Is this actually necessary? We're going to use the blitter later on anyway.
-		 */ 
+		 */
 		/* We need unaccelerated initial screen clear on old revisions */
 		if (sc->sc_fhcrev < 2) {
 			memset(sc->sc_fb.fb_pixels, ri->ri_devcmap[sc->sc_bg],
@@ -580,7 +580,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 			cgsix_clearscreen(sc);
 
 		cg6_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
-		
+
 		cgsix_defaultscreen.textops = &ri->ri_ops;
 		cgsix_defaultscreen.capabilities = ri->ri_caps;
 		cgsix_defaultscreen.nrows = ri->ri_rows;
@@ -596,7 +596,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
-		}	
+		}
 		vcons_replay_msgbuf(&cg6_console_screen);
 	} else {
 		/*
@@ -1095,6 +1095,34 @@ cg6_setup_palette(struct cgsix_softc *sc)
 	cg6_loadcmap(sc, 0, 256);
 }
 
+static void
+bitflip(uint32_t *buffer, int len)
+{
+	uint32_t latch, tmp;
+	int i;
+
+	for (i = 0; i < len; i++) {
+		latch = 0;
+		tmp = buffer[i] & 0x80808080;
+		latch |= tmp >> 7;
+		tmp = buffer[i] & 0x40404040;
+		latch |= tmp >> 5;
+		tmp = buffer[i] & 0x20202020;
+		latch |= tmp >> 3;
+		tmp = buffer[i] & 0x10101010;
+		latch |= tmp >> 1;
+		tmp = buffer[i] & 0x08080808;
+		latch |= tmp << 1;
+		tmp = buffer[i] & 0x04040404;
+		latch |= tmp << 3;
+		tmp = buffer[i] & 0x02020202;
+		latch |= tmp << 5;
+		tmp = buffer[i] & 0x01010101;
+		latch |= tmp << 7;
+		buffer[i] = latch;
+	}
+}
+
 int
 cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
@@ -1147,7 +1175,109 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
-		case WSDISPLAYIO_GET_FBINFO:
+/* these are for both FBIOSCURSOR and FBIOGCURSOR */
+#define p ((struct wsdisplay_cursor *)data)
+#define cc (&sc->sc_cursor)
+
+	case WSDISPLAYIO_SCURSOR:
+		/*
+		 * For setcmap and setshape, verify parameters, so that
+		 * we do not get halfway through an update and then crap
+		 * out with the software state screwed up.
+		 */
+		union cursor_cmap tcm;
+		int w = p->which, error, count;
+		uint32_t image[32], mask[32];
+		if (w & WSDISPLAY_CURSOR_DOCMAP) {
+			/*
+			 * This use of a temporary copy of the cursor
+			 * colormap is not terribly efficient, but these
+			 * copies are small (8 bytes)...
+			 */
+			struct fbcmap c;
+			c.index = p->cmap.index;
+			c.count = p->cmap.count;
+			c.red = p->cmap.red;
+			c.green = p->cmap.green;
+			c.blue = p->cmap.blue;
+
+			tcm = cc->cc_color;
+			error = bt_putcmap(&c, (union bt_cmap *)&tcm, 2, 1);
+			if (error)
+				return error;
+		}
+		if (w & WSDISPLAY_CURSOR_DOSHAPE) {
+			if ((u_int)p->size.x > 32 || (u_int)p->size.y > 32)
+				return EINVAL;
+			count = p->size.y * 32 / NBBY;
+			error = copyin(p->image, image, count);
+			if (error)
+				return error;
+			error = copyin(p->mask, mask, count);
+			if (error)
+				return error;
+			bitflip(image, 32);
+			bitflip(mask, 32);
+		}
+
+		/* parameters are OK; do it */
+		if (w & (WSDISPLAY_CURSOR_DOCUR | WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
+			if (w & WSDISPLAY_CURSOR_DOCUR)
+				cc->cc_enable = p->enable;
+			if (w & WSDISPLAY_CURSOR_DOPOS) {
+				cc->cc_pos.x = p->pos.x;
+				cc->cc_pos.y = p->pos.y;
+			}
+			if (w & WSDISPLAY_CURSOR_DOHOT) {
+				cc->cc_hot.x = p->hot.x;
+				cc->cc_hot.y = p->hot.y;
+			}
+			cg6_setcursor(sc);
+		}
+		if (w & WSDISPLAY_CURSOR_DOCMAP) {
+			cc->cc_color = tcm;
+			cg6_loadomap(sc); /* XXX defer to vertical retrace */
+		}
+		if (w & WSDISPLAY_CURSOR_DOSHAPE) {
+			cc->cc_size.x = p->size.x;
+			cc->cc_size.y = p->size.y;
+			count = p->size.y * 32 / NBBY;
+			memset(cc->cc_bits, 0, sizeof cc->cc_bits);
+			memcpy(cc->cc_bits[1], image, count);
+			memcpy(cc->cc_bits[0], mask, count);
+			cg6_loadcursor(sc);
+		}
+		return 0;
+
+#undef p
+#undef cc
+
+	case WSDISPLAYIO_GCURPOS:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
+
+			cp->x = sc->sc_cursor.cc_pos.x;
+			cp->y = sc->sc_cursor.cc_pos.y;
+		}
+		return 0;
+	case WSDISPLAYIO_SCURPOS:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
+
+			sc->sc_cursor.cc_pos.x = cp->x;
+			sc->sc_cursor.cc_pos.y = cp->y;
+			cg6_setcursor(sc);
+		}
+		return 0;
+	case WSDISPLAYIO_GCURMAX:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
+
+			cp->x = 32;
+			cp->y = 32;
+		}
+		return 0;
+	case WSDISPLAYIO_GET_FBINFO:
 			{
 				struct wsdisplayio_fbinfo *fbi = data;
 
@@ -1166,7 +1296,7 @@ cgsix_mmap(void *v, void *vs, off_t offset, int prot)
 	if (offset < sc->sc_ramsize) {
 		return bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
 		    CGSIX_RAM_OFFSET + offset, prot,
-		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
+		    BUS_SPACE_MAP_LINEAR);
 	}
 	return -1;
 }
@@ -1244,7 +1374,7 @@ cgsix_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
 	av = sc->sc_ramsize - (sc->sc_height * sc->sc_stride);
-	ri->ri_flg = RI_CENTER  | RI_8BIT_IS_RGB;
+	ri->ri_flg = RI_CENTER  | RI_8BIT_IS_RGB | RI_FULLCLEAR;
 	if (av > (128 * 1024)) {
 		ri->ri_flg |= RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 	}
@@ -1332,13 +1462,13 @@ cgsix_setup_mono(struct cgsix_softc *sc, int x, int y, int wi, int he,
 	/* now feed the data into the chip */
 }
 
-void 
+void
 cgsix_feed_line(struct cgsix_softc *sc, int count, uint8_t *data)
 {
 	int i;
 	uint32_t latch, res = 0, shift;
 	volatile struct cg6_fbc *fbc = sc->sc_fbc;
-	
+
 	if (sc->sc_mono_width > 32) {
 		/* ARGH! */
 	} else
@@ -1351,7 +1481,7 @@ cgsix_feed_line(struct cgsix_softc *sc, int count, uint8_t *data)
 		}
 		fbc->fbc_font = res;
 	}
-}	
+}
 
 void
 cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
@@ -1365,7 +1495,7 @@ cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
 	uint8_t *data;
 	int x, y, wi, he;
 	int inv;
-	
+
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
 		return;
 
@@ -1397,7 +1527,7 @@ cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
 		uc = c - font->firstchar;
 		data = (uint8_t *)font->data + uc * ri->ri_fontscale;
 
-		cgsix_setup_mono(sc, x, y, wi, 1, fg, bg);		
+		cgsix_setup_mono(sc, x, y, wi, 1, fg, bg);
 		for (i = 0; i < he; i++) {
 			cgsix_feed_line(sc, font->stride, data);
 			data += font->stride;
@@ -1521,10 +1651,10 @@ cgsix_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct cgsix_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		if (on) {
 			if (ri->ri_flg & RI_CURSOR) {
@@ -1549,10 +1679,10 @@ void
 cgsix_clearscreen(struct cgsix_softc *sc)
 {
 	struct rasops_info *ri = &cg6_console_screen.scr_ri;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		volatile struct cg6_fbc *fbc = sc->sc_fbc;
-		
+
 		CG6_WAIT_READY(fbc);
 
 		fbc->fbc_alu = CG6_ALU_FILL;
@@ -1572,7 +1702,7 @@ void
 cg6_invert(struct cgsix_softc *sc, int x, int y, int wi, int he)
 {
 	volatile struct cg6_fbc *fbc = sc->sc_fbc;
-	
+
 	CG6_WAIT_READY(fbc);
 
 	fbc->fbc_alu = CG6_ALU_FLIP;
