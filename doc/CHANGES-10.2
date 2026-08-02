@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.121 2026/07/29 10:17:13 sborrill Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.122 2026/08/02 14:03:28 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5660,4 +5660,34 @@ sys/dev/raidframe/rf_disks.c			1.96-1.97
 	zero indicates that IOs resume.
 	PR kern/60477
 	[joe, ticket #1315]
+
+sys/dev/fss.c					1.116
+
+	ffs: PR 59663: fix deadlocks during revocation of ttys.
+	[hannken, ticket #1320]
+
+sys/netinet/raw_ip.c				1.187
+
+	inet: respect IP_TOS and IP_TTL for raw sockets.
+	[he, ticket #1321]
+
+external/public-domain/tz/dist/Makefile         up to 1.6
+external/public-domain/tz/dist/NEWS             up to 1.8
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.46
+external/public-domain/tz/dist/africa           up to 1.4
+external/public-domain/tz/dist/australasia      up to 1.13
+external/public-domain/tz/dist/europe           up to 1.6
+external/public-domain/tz/dist/leap-seconds.list up to 1.12
+external/public-domain/tz/dist/leapseconds      up to 1.12
+external/public-domain/tz/dist/northamerica     up to 1.7
+external/public-domain/tz/dist/theory.html      up to 1.6
+external/public-domain/tz/dist/version          up to 1.19
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.12
+external/public-domain/tz/dist/zone.tab         up to 1.6
+external/public-domain/tz/dist/zone1970.tab     up to 1.7
+external/public-domain/tz/dist/zonenow.tab      up to 1.8
+doc/3RDPARTY					(apply patch)
+
+	Updated tzdata to 2023cgtz.
+	[kre, ticket #1322]
 
