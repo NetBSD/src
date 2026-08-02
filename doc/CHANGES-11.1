@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.1 2026/08/02 13:12:40 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.2 2026/08/02 14:10:41 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -10,4 +10,72 @@ external/gpl2/groff/tmac/mdoc.local		patched by hand
 sys/sys/param.h 				patched by hand
 
 	Welcome to 11.0_STABLE!
+
+sys/dev/raidframe/rf_disks.c			1.96,1.97
+
+	raid(4): PR 60477: fix assertions in raidframe spare reconstruction.
+	[joe, ticket #394]
+
+libexec/ld.elf_so/tls.c				1.32-1.34
+
+	ld.elf_so: PR 60469: fix assertions for TLS alignment.
+	[riastradh, ticket #395]
+
+sys/dev/hdaudio/hdaudio.c			1.19
+
+	hdaudio(4): PR 60492: apply access checks to ioctl routines.
+	[riastradh, ticket #396]
+
+sys/external/bsd/ipf/netinet/fil.c		1.38
+tests/ipf/expected/ipv6.3			1.2
+tests/ipf/input/ipv6.3				1.3
+tests/ipf/t_filter_exec.sh			1.9,1.10
+
+	ipfilter: PR 60484: fix remotely triggerable null pointer deref.
+	[riastradh, ticket #397]
+
+sys/dist/pf/net/pf.c				1.88
+
+	pf(4): PR 60485: fix use-after-free in fragment reassembly.
+	[riastradh, ticket #398]
+
+sys/arch/evbarm/fdt/fdt_machdep.c		1.113
+sys/arch/riscv/riscv/riscv_machdep.c		1.51
+
+	riscv, evbarm: fix some fdt_memory_remove_range calls.
+	[skrll, ticket #400]
+
+sys/net/if_media.c				1.55
+sys/net/if_media.h				1.73
+
+	PR 60494: expose ifmedia_match_locked().
+	[thorpej, ticket #401]
+
+sys/dev/ic/tulip.c				1.215
+
+	tlp(4): PR 60494: fix locking.
+	[thorpej, ticket #402]
+
+sys/dev/ic/isp_netbsd.h				1.77
+sys/dev/pci/isp_pci.c				1.123
+
+	isp(4): fix selection of 64bit DMA window, and disable
+	it by default for now.
+	[thorpej, ticket #403]
+
+crypto/external/bsd/openssh/dist/gss-genr.c	1.17
+crypto/external/bsd/openssh/dist/kexgen.c	1.10
+
+	openssh: fix up NetBSD RCSID. No functional change.
+	[rin, ticket #404]
+
+sys/dev/fss.c					1.116
+
+	ffs: PR 59663: fix deadlocks during revocation of ttys.
+	[hannken, ticket #409]
+
+sys/dev/usb/motg.c				1.44
+
+	motg: support control transfers (endpoint zero) aborts.
+	[skrll, ticket #410]
 
