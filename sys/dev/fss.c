@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.107.4.1 2019/10/23 20:35:52 martin Exp $	*/
+/*	$NetBSD: fss.c,v 1.107.4.2 2026/08/02 13:46:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.107.4.1 2019/10/23 20:35:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.107.4.2 2026/08/02 13:46:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1079,9 +1079,13 @@ static int
 fss_bs_io(struct fss_softc *sc, fss_io_type rw,
     u_int32_t cl, off_t off, int len, void *data, size_t *resid)
 {
+	struct mount *mp = sc->sc_bs_vp->v_mount;
 	int error;
 
 	off += FSS_CLTOB(sc, cl);
+
+	/* Request must succeed while suspending backing store fs. */
+	fstrans_start_lazy(mp);
 
 	vn_lock(sc->sc_bs_vp, LK_EXCLUSIVE|LK_RETRY);
 
@@ -1096,6 +1100,8 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 	}
 
 	VOP_UNLOCK(sc->sc_bs_vp);
+
+	fstrans_done(mp);
 
 	return error;
 }
