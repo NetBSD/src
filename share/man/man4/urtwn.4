@@ -1,4 +1,4 @@
-.\" $NetBSD: urtwn.4,v 1.19 2024/05/26 09:27:20 nia Exp $
+.\" $NetBSD: urtwn.4,v 1.20 2026/08/02 10:19:43 uwe Exp $
 .\" $OpenBSD: urtwn.4,v 1.15 2011/11/26 06:39:33 ckuethe Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -45,7 +45,7 @@ It operates in the 2GHz spectrum only.
 These are the modes the
 .Nm
 driver can operate in:
-.Bl -tag -width "IBSS-masterXX"
+.Bl -tag -width "monitor mode"
 .It BSS mode
 Also known as
 .Em infrastructure
@@ -77,7 +77,9 @@ The
 driver can be configured to use
 Wired Equivalent Privacy (WEP) or
 Wi-Fi Protected Access (WPA-PSK and WPA2-PSK).
-WPA is the de facto encryption standard for wireless networks.
+WPA is the
+.Em de\~facto
+encryption standard for wireless networks.
 It is strongly recommended that WEP
 not be used as the sole mechanism
 to secure wireless communication,
@@ -93,20 +95,20 @@ or on boot with
 The driver needs the following firmware files,
 which are loaded when an interface is attached:
 .Pp
-.Bl -tag -width Ds -offset indent -compact
-.It /libdata/firmware/if_urtwn/rtl8188eufw.bin
-.It /libdata/firmware/if_urtwn/rtl8192cfw.bin
-.It /libdata/firmware/if_urtwn/rtl8192cfwU.bin
-.It /libdata/firmware/if_urtwn/rtl8192efw.bin
+.Bl -tag -width Pa -offset indent -compact
+.It Pa /libdata/firmware/if_urtwn/rtl8188eufw.bin
+.It Pa /libdata/firmware/if_urtwn/rtl8192cfw.bin
+.It Pa /libdata/firmware/if_urtwn/rtl8192cfwU.bin
+.It Pa /libdata/firmware/if_urtwn/rtl8192efw.bin
 .El
 .Sh HARDWARE
 The following adapters should work:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Airlink101 AWLL5088
-.It Aus. Linx AL-9604R1S
 .It ASUSTeK USB-N10 NANO
-.\".It ASUSTek USB-N13 B1
+.\"It ASUSTek USB-N13 B1
+.It Aus. Linx AL-9604R1S
 .It B-Link BL-LW05-5R
 .It Belkin F7D1102 Surf Wireless Micro
 .It D-Link DWA-121
@@ -142,9 +144,11 @@ The following adapters should work:
 .Sh EXAMPLES
 The following
 .Xr ifconfig.if 5
-example configures urtwn0 to join whatever network is available on boot,
+example configures
+.Li urtwn0
+to join whatever network is available on boot,
 using WEP key
-.Dq 0x1deadbeef1 ,
+.Ql 0x1deadbeef1 ,
 channel 11, obtaining an IP address using DHCP:
 .Bd -literal -offset indent
 nwkey 0x1deadbeef1 chan 11
@@ -152,7 +156,7 @@ dhcp
 .Ed
 .Pp
 Join an existing BSS network,
-.Dq my_net :
+.Ql my_net :
 .Bd -literal -offset indent
 # ifconfig urtwn0 192.168.1.1 netmask 0xffffff00 nwid my_net
 .Ed
