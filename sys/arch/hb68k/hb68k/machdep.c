@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2026/08/02 15:32:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2026/08/02 15:44:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2026/08/02 15:32:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2026/08/02 15:44:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -479,7 +479,11 @@ machine_powerdown(void)
 {
 	const struct fdt_platform *plat = machine_platform();
 
-	(*plat->fp_powerdown)();
+	if (plat->fp_powerdown != NULL) {
+		(*plat->fp_powerdown)();
+	} else {
+		machine_powerdown_default();
+	}
 }
 
 void
@@ -487,7 +491,11 @@ machine_halt(void)
 {
 	const struct fdt_platform *plat = machine_platform();
 
-	(*plat->fp_halt)();
+	if (plat->fp_halt != NULL) {
+		(*plat->fp_halt)();
+	} else {
+		machine_halt_default();
+	}
 }
 
 void
@@ -495,7 +503,9 @@ machine_reboot(int howto, char *bootstr)
 {
 	const struct fdt_platform *plat = machine_platform();
 
-	(*plat->fp_reboot)(howto, bootstr);
+	if (plat->fp_reboot != NULL) {
+		(*plat->fp_reboot)(howto, bootstr);
+	}
 }
 
 /*
