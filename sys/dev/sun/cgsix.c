@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.76 2026/08/02 17:46:33 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.77 2026/08/03 08:02:57 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.76 2026/08/02 17:46:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.77 2026/08/03 08:02:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1180,6 +1180,7 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 #define cc (&sc->sc_cursor)
 
 	case WSDISPLAYIO_SCURSOR:
+	{
 		/*
 		 * For setcmap and setshape, verify parameters, so that
 		 * we do not get halfway through an update and then crap
@@ -1249,6 +1250,7 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			cg6_loadcursor(sc);
 		}
 		return 0;
+	}
 
 #undef p
 #undef cc
