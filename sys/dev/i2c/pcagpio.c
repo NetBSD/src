@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.14 2026/07/07 12:15:33 jdc Exp $ */
+/* $NetBSD: pcagpio.c,v 1.15 2026/08/03 12:51:29 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.14 2026/07/07 12:15:33 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.15 2026/08/03 12:51:29 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ pcagpio_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct pcagpio_softc *sc = sme->sme_cookie;
 	int pin = sc->sc_pins[edata->sensor].pin_sensor;
 	int act = sc->sc_pins[pin].pin_active;
-	u_int8_t prev_state = sc->sc_in;
+	u_int32_t prev_state = sc->sc_in;
 
 	sc->sc_in = pcagpio_readreg(sc, PCAGPIO_INPUT);
 	if (act)
