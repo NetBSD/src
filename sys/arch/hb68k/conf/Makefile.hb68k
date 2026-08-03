@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hb68k,v 1.1 2026/07/19 01:48:20 thorpej Exp $
+#	$NetBSD: Makefile.hb68k,v 1.2 2026/08/03 15:36:48 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -75,6 +75,22 @@ MD_LIBS=	${FPSP}
 MD_CFILES=
 MD_SFILES=	${HB68K}/hb68k/locore.s
 
+.if defined(STATIC_DEVICE_TREE)
+STATIC_DEVICE_TREE_BASENAME= static_device_tree
+STATIC_DEVICE_TREE_SFILE= ${STATIC_DEVICE_TREE_BASENAME}.S
+STATIC_DEVICE_TREE_OBJ= ${STATIC_DEVICE_TREE_BASENAME}.o
+${STATIC_DEVICE_TREE_SFILE}: ${STATIC_DEVICE_TREE}
+	${_MKTARGET_CREATE}
+	${TOOL_DTC} -O asm -o ${.TARGET}.tmp ${STATIC_DEVICE_TREE} && \
+	${TOOL_DTC} -O asm -o ${.TARGET}.tmp ${STATIC_DEVICE_TREE} && \
+	${TOOL_SED} -e '/\.globl.*dt_/b' \
+	            -e '/\.globl/d' ${.TARGET}.tmp > \
+	    ${.TARGET}
+	rm -f ${.TARGET}.tmp
+MD_SFILES+=	${STATIC_DEVICE_TREE_SFILE}
+MD_OBJS+=	${STATIC_DEVICE_TREE_OBJ}
+CLEANFILES+=	${STATIC_DEVICE_TREE_SFILE}
+.endif
 
 locore.o: ${HB68K}/hb68k/locore.s assym.h
 	${NORMAL_S}
