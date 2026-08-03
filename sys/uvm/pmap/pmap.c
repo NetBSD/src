@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 2026/07/29 15:40:36 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.108 2026/08/03 15:52:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2026/07/29 15:40:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2026/08/03 15:52:35 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1326,7 +1326,7 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 			struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
 			pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED);
-			if (VM_PAGEMD_EXECPAGE_P(mdpg) || (prot & VM_PROT_EXECUTE)) {
+			if (VM_PAGEMD_EXECPAGE_P(mdpg)) {
 				KASSERT(!VM_PAGEMD_PVLIST_EMPTY_P(mdpg));
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
 				if (VM_PAGEMD_CACHED_P(mdpg)) {
