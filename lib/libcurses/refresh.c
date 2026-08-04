@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.135 2026/07/19 06:39:04 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.136 2026/08/04 07:36:08 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.135 2026/07/19 06:39:04 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.136 2026/08/04 07:36:08 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1283,12 +1283,6 @@ makech(int wy)
 	 */
 	if (clr_eol && !_cursesi_screen->curwin && (!(__using_color)
 	    || (__using_color && back_color_erase))) {
-
-		if (__using_color && back_color_erase) {
-			assume_default_colors(
-			    _cursesi_screen->colour_pairs[PAIR_NUMBER(win->battr)].fore,
-			    _cursesi_screen->colour_pairs[PAIR_NUMBER(win->battr)].back);
-		}
 
 		nlsp = win->maxx - 1;
 		cp = &win->alines[wy]->line[win->maxx - 1];
