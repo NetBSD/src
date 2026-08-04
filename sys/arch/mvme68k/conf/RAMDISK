@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.30 2015/01/23 03:40:25 chs Exp $
+#	$NetBSD: RAMDISK,v 1.31 2026/08/04 15:33:29 thorpej Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -13,8 +13,6 @@
 include		"arch/mvme68k/conf/std.mvme68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-
-makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 # Boards this kernel supports
 options 	MVME147

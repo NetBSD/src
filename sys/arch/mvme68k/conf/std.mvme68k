@@ -1,4 +1,4 @@
-#	$NetBSD: std.mvme68k,v 1.15 2025/11/17 06:21:59 thorpej Exp $
+#	$NetBSD: std.mvme68k,v 1.16 2026/08/04 15:33:29 thorpej Exp $
 #
 # Options/devices that all mvme68ks should have
 #
@@ -6,6 +6,18 @@
 machine mvme68k m68k
 include		"conf/std"			# MI standard options
 include		"arch/m68k/conf/std.m68k"	# m68k standard options
+
+#
+# We always use -Os here; smaller code is often beneficial on 68030 because
+# the I-cache is quite small (256 bytes).
+#
+# Turn off all unwind tables; they're not terribly useful in our
+# kernel environment and add a lot of needless bulk.
+#
+# -fno-omit-frame-pointer because we want traditional backtracing
+# to work in DDB.
+#
+makeoptions	COPTS="-Os -fno-unwind-tables -fno-omit-frame-pointer"
 
 # Experimental shiny object
 #options 	__HAVE_NEW_PMAP_68K

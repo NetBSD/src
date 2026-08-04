@@ -1,0 +1,13 @@
+#	$NetBSD: std.mvme16x_17x,v 1.1 2026/08/04 15:33:29 thorpej Exp $
+
+# Standard devices found on all MVME16x and MVME17x systems.
+pcctwo0		at mainbus0
+vmetwo0		at mainbus0
+memc*		at mainbus0
+clock0		at pcctwo? ipl 5
+ie0		at pcctwo? ipl 3
+osiop0		at pcctwo? ipl 2
+
+vme0		at vmetwo0
+
+scsibus*	at osiop?
