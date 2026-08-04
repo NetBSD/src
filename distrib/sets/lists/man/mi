@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1840 2026/08/01 20:48:02 thorpej Exp $
+# $NetBSD: mi,v 1.1841 2026/08/04 13:33:05 andvar Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -5379,6 +5379,7 @@
 ./usr/share/man/man4/puc.4			man-sys-man		.man
 ./usr/share/man/man4/pud.4			man-sys-man		.man
 ./usr/share/man/man4/puffs.4			man-sys-man		.man
+./usr/share/man/man4/pv.4			man-sys-man		.man
 ./usr/share/man/man4/pwdog.4			man-sys-man		.man
 ./usr/share/man/man4/px.4			man-sys-man		.man
 ./usr/share/man/man4/pxagpio.4			man-sys-man		.man
