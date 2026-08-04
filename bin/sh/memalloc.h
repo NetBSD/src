@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.h,v 1.22 2026/04/18 14:35:16 kre Exp $	*/
+/*	$NetBSD: memalloc.h,v 1.23 2026/08/04 22:58:22 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -76,6 +76,7 @@ char *ststrcat(size_t *, ...);
 #define STUNPUTC(p)	(++sstrnleft, --p)
 #define STTOPC(p)	p[-1]
 #define STADJUST(amount, p)	(p += (amount), sstrnleft -= (amount))
+#define STSTRLEN()	(stackblocksize() - sstrnleft)
 #define grabstackstr(p)	stalloc((p) - stackblock())
 
 #define ckfree(p)	free((pointer)(p))
