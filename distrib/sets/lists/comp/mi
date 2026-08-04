@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2529 2026/07/29 21:31:08 wiz Exp $
+#	$NetBSD: mi,v 1.2530 2026/08/04 21:31:06 andvar Exp $
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		binutils
@@ -11790,6 +11790,7 @@
 ./usr/share/man/cat3/werase.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wgetch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wgetnstr.0			comp-c-catman		.cat
+./usr/share/man/cat3/wgetscrreg.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wgetstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/whline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/winch.0			comp-c-catman		.cat
@@ -20734,6 +20735,7 @@
 ./usr/share/man/html3/werase.html		comp-c-htmlman		html
 ./usr/share/man/html3/wgetch.html		comp-c-htmlman		html
 ./usr/share/man/html3/wgetnstr.html		comp-c-htmlman		html
+./usr/share/man/html3/wgetscrreg.html		comp-c-htmlman		html
 ./usr/share/man/html3/wgetstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/whline.html		comp-c-htmlman		html
 ./usr/share/man/html3/winch.html		comp-c-htmlman		html
@@ -29748,6 +29750,7 @@
 ./usr/share/man/man3/werase.3			comp-c-man		.man
 ./usr/share/man/man3/wgetch.3			comp-c-man		.man
 ./usr/share/man/man3/wgetnstr.3			comp-c-man		.man
+./usr/share/man/man3/wgetscrreg.3		comp-c-man		.man
 ./usr/share/man/man3/wgetstr.3			comp-c-man		.man
 ./usr/share/man/man3/whline.3			comp-c-man		.man
 ./usr/share/man/man3/winch.3			comp-c-man		.man
