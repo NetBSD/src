@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.15 2026/07/14 06:56:01 martin Exp $	*/
+/*	$NetBSD: vpci.c,v 1.16 2026/08/04 18:11:05 palle Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.15 2026/07/14 06:56:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.16 2026/08/04 18:11:05 palle Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -374,6 +374,7 @@ vpci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	struct vpci_pbm *pbm = pa->pa_pc->cookie;
 	uint64_t devhandle = pbm->vp_devhandle;
 	uint64_t devino = INTINO(*ihp);
+	DPRINTF(VDB_INTR, ("vpci_intr_map(): devhandle 0x%lx\n", devhandle));
 	DPRINTF(VDB_INTR, ("vpci_intr_map(): devino 0x%lx\n", devino));
 	uint64_t sysino;
 	int err;
@@ -603,18 +604,18 @@ vpci_intr_establish(bus_space_tag_t t, int ihandle, int level,
 
 	err = hv_intr_settarget(sysino, cpus->ci_cpuid);
 	if (err != H_EOK)
-		printf("hv_intr_settarget(%lu, %u) failed - err = %d\n", 
+		panic("hv_intr_settarget(%lu, %u) failed - err = %d\n", 
 		       (long unsigned int)sysino, cpus->ci_cpuid, err);
 
 	/* Clear pending interrupts. */
 	err = hv_intr_setstate(sysino, INTR_IDLE);
 	if (err != H_EOK)
-	  printf("hv_intr_setstate(%lu, INTR_IDLE) failed - err = %d\n", 
+	  panic("hv_intr_setstate(%lu, INTR_IDLE) failed - err = %d\n", 
 		(long unsigned int)sysino, err);
 
 	err = hv_intr_setenabled(sysino, INTR_ENABLED);
 	if (err != H_EOK)
-	  printf("hv_intr_setenabled(%lu) failed - err = %d\n", 
+	  panic("hv_intr_setenabled(%lu) failed - err = %d\n", 
 		(long unsigned int)sysino, err);
 
 	DPRINTF(VDB_INTR, ("%s() returning %p\n", __func__, ih));
