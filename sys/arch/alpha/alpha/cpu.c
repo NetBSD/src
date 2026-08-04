@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.108 2024/03/06 07:22:45 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.109 2026/08/04 13:29:16 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2020 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.108 2024/03/06 07:22:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.109 2026/08/04 13:29:16 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -696,7 +696,7 @@ cpu_boot_secondary_processors(void)
 		if ((cpus_booted & (1UL << i)) == 0)
 			continue;
 
-		/* Patch MP-criticial kernel routines. */
+		/* Patch MP-critical kernel routines. */
 		if (did_patch == false) {
 			alpha_patch(true);
 			did_patch = true;
