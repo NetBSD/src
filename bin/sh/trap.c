@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.63 2026/07/01 12:06:27 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.64 2026/08/04 22:58:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.63 2026/07/01 12:06:27 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.64 2026/08/04 22:58:28 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -808,9 +808,11 @@ void
 dotrap(void)
 {
 	int i;
-	char *tr;
+	char * volatile tr;
 	int savestatus;
 	struct skipsave saveskip;
+	struct jmploc jmploc;
+	struct jmploc * const savehandler = handler;
 
 	CTRACE(DBG_TRAP|DBG_SIG, ("dotrap[%d]: %d pending, traps %sinvalid\n",
 	    in_dotrap, pendingsigs, traps_invalid ? "" : "not "));
@@ -842,9 +844,16 @@ dotrap(void)
 			last_trapsig = i;
 			save_skipstate(&saveskip);
 			savestatus = exitstatus;
-
 			tr = savestr(tr);	/* trap code may free trap[i] */
-			evalstring(tr, 0);
+
+			if (setjmp(jmploc.loc)) {
+				ckfree(tr);
+				handler = savehandler;
+				longjmp(handler->loc, 1);
+			} else {
+				handler = &jmploc;
+				evalstring(tr, 0);
+			}
 			ckfree(tr);
 
 			if (current_skipstate() == SKIPNONE ||
@@ -855,6 +864,32 @@ dotrap(void)
 		}
 	}
 }
+
+#ifndef SMALL
+/* dotrap() in an environment where the stack is in use */
+void
+run_traps(int string_growing)
+{
+	struct stackmark smark;
+	struct jmploc jmploc;
+	struct jmploc * const savehandler = handler;
+
+	setstackmark(&smark);
+	if (string_growing)
+		grabstackstr(stackblock() + STSTRLEN());
+
+	if (setjmp(jmploc.loc)) {
+		popstackmark(&smark);
+		handler = savehandler;
+		longjmp(handler->loc, 1);
+	} else {
+		handler = &jmploc;
+		dotrap();
+	}
+	handler = savehandler;
+	popstackmark(&smark);
+}
+#endif
 
 int
 lastsig(void)

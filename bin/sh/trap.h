@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.26 2024/10/09 13:43:33 kre Exp $	*/
+/*	$NetBSD: trap.h,v 1.27 2026/08/04 22:58:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,3 +51,7 @@ void exitshell(int) __dead;
 void exitshell_savedstatus(void) __dead;
 int lastsig(void);
 int signame_to_signum(const char *);
+
+#ifndef SMALL
+void run_traps(int);
+#endif
