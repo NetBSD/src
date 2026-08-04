@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.279 2026/07/19 16:03:58 kre Exp $
+.\"	$NetBSD: sh.1,v 1.280 2026/08/04 22:58:33 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd May 28, 2026
+.Dd Aug 4, 2026
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLlmnpqruVvXx
@@ -3745,7 +3745,7 @@ the program will use
 and the built-in uses a separately cached value.
 .\"
 .Pp
-.It Ic read Oo Fl br Oc Oo Fl d Ar delim Oc Oo Fl n Ar max Oc Oo Fl p Ar prompt Oc Ar variable Op Ar ...
+.It Ic read Oo Fl bcr Oc Oo Fl d Ar delim Oc Oo Fl n Ar max Oc Oo Fl p Ar prompt Oc Ar variable Op Ar ...
 .Pp
 The
 .Ic read
@@ -3767,6 +3767,15 @@ utility actually processes,
 causing some data from standard input to be unavailable
 to any subsequent utility that expects to obtain them,
 though this will be avoided wherever possible.
+.It Fl c
+Continue the
+.Ic read
+if a trapped signal
+.Pq other than SIGINT in an interactive shell
+is received while waiting for input.
+In interactive shells, a SIGINT, trapped or not,
+received while waiting for input always aborts the
+.Ic read .
 .It Fl d Ar delim
 End the read when the first byte of
 .Ar delim
@@ -3871,8 +3880,7 @@ If the
 .Fl r
 option was not given,
 and the two character sequence
-.Sq \&\e
-.Sq \en
+.So \&\e Sc Ns \&\  Ns Sq \en
 is encountered,
 those two characters are simply deleted,
 and provided that
@@ -3910,8 +3918,7 @@ but before data has been
 assigned to any variables,
 all escape characters are removed.
 Note that the two character sequence
-.Sq \&\e
-.Sq \&\e
+.So \&\e Sc Ns \&\  Ns Sq \e
 can be used to enter the escape character as data,
 the first acts as the escape character, the second
 becomes just a normal data character.
@@ -3956,12 +3963,26 @@ no variables will be altered,
 .Ic read
 will issue a diagnostic to standard error,
 and exit with a status greater than 1.
+If the
+.Ic read
+was interrupted by a trapped signal, and the
+.Fl c
+flag was not given, or the signal was SIGINT in an interactive shell,
+the exit status will be 130, and variables might have been altered,
+as described, or not.
 .Pp
-The
-.Fl b
+In SMALL shells, the
+.Fl b ,
+.Fl c
 and
 .Fl n
-options are not available in SMALL shells.
+options are not available,
+an input I/O error is treated as if it were EOF,
+trapped signals interrupt the read,
+act similarly to receiving EOF,
+and the trap will not be executed until after the
+.Ic read
+has completed.
 .\"
 .Pp
 .It Ic readonly Ar name Ns Oo =value Oc ...
