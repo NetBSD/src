@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3282 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3283 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -44,8 +44,6 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		controls lights depending on CPU usage. [macallan 20250908]
 	m68k: Change softfloat build to libc/softfloat. [nat 20250910]
 	fsck_ffs(8): Expand flags with -a and -i. [perseant 20250914]
-	ctype(3): New environment variable LIBC_ALLOWCTYPEABUSE.
-		[riastradh 20250915]
 	dumplfs(8): Add -n flag to allow dumping of a given inode from an
 		inode block, or every inode in a block. [perseant 20250914]
 	lfs: Add working in-kernel roll forward. [perseant 20250917]
@@ -96,12 +94,12 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	iwm(4): Update driver code, improving performance and stability.
 		[mlelstv 20251201]
 	lfs: Various stability improvements. [perseant 20251202]
-	evbppc: Enable PaX security features in WII kernel configuration.
-		[nia 20251204]
 	viaide(4): Identify and attach VT6420 IDE (PATA) controller.
 		[andvar 20251204]
 	diff(1), diff3(1): Import BSD-licensed diff to replace GNU
 		diffutils, build with MKBSDDIFF=yes. [nia 20251204]
+	evbppc: Enable PaX security features in WII kernel configuration.
+		[nia 20251204]
 	amd64: Support ramdisks when booting in GENPVH mode.
 		[khorben 20251205]
 	ftp(1): Fix ASCII transfers with progress bar. [lukem 20251206]
@@ -124,8 +122,6 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	sun2: Add various MK build knobs and disable them on sun2 to trim
 		down the installation. [thorpej 20251228]
 	diff(1): Switch the default to MKBSDDIFF=yes. [nia 20260102]
-	makefs(8): Honour -m option to set a maximum FS size for
-		cd9660 images. [nia 20260107]
 	i386, amd64, sparc64: Exclude various base features from the
 		CD-ROM installer and add checks that cause ISO image
 		creation to fail if the size is above 700 MB.
@@ -165,8 +161,6 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	hppa: hyperfb: Add support for translucent fonts and the glyph
 		cache. [macallan 20260203]
 	evbppc: wiiu: Add RTC support. [jmcneill 20260203]
-	ftp(1): simplify socket buffer handling to improve performance.
-		[lukem 20260207]
 	ftp(1): send custom HTTP headers in provided order, not reverse.
 		[lukem 20260208]
 	tmux(1): Import version 3.6a. [wiz 20260209]
@@ -220,7 +214,6 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	zfs: Improve performance of removing files. [yamt 20260322]
 	m68k: Use a common delay(9) implementation, except for atari,
 		mac68k, and virt68k. [thorpej 20260328]
-	drum(4): Make the device MPSAFE. [yamt 20260330]
 	evbarm: Add FDT-based clkgate, power and sleep controller, and
 		interrupt controller drivers for am18xx.
 		[yurix 20260330]
@@ -270,8 +263,6 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	mac68k: Switch to the new machine-independent m68k pmap.
 		[thorpej 20260513]
 	bind: Import version 9.20.23. [christos 20260520]
-	kernel: tcp: Reduce the Initial RTO from 3 seconds to
-		1 second as allowed by RFC6298. [kbowling 20260520]
 	unbound(8): Import 1.25.1. [christos 20260521]
 	mkimage: New `-C <config>' option. Enables use of
 		out-of-tree config files. [riastradh 20260522]
