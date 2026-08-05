@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 2026/08/04 22:58:28 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.65 2026/08/05 15:43:15 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.64 2026/08/04 22:58:28 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.65 2026/08/05 15:43:15 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -854,6 +854,7 @@ dotrap(void)
 				handler = &jmploc;
 				evalstring(tr, 0);
 			}
+			handler = savehandler;
 			ckfree(tr);
 
 			if (current_skipstate() == SKIPNONE ||
