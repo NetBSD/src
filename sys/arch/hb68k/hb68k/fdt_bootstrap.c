@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_bootstrap.c,v 1.1 2026/08/05 01:32:56 thorpej Exp $	*/
+/*	$NetBSD: fdt_bootstrap.c,v 1.2 2026/08/05 01:34:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_bootstrap.c,v 1.1 2026/08/05 01:32:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_bootstrap.c,v 1.2 2026/08/05 01:34:06 thorpej Exp $");
 
 #include "opt_hb68k_config.h"
 #include "opt_m68k_arch.h"
@@ -87,11 +87,11 @@ static const struct device_compatible_entry cpu_compat_data[] = {
 #endif
 #if defined(M68040)
 	{ .compat = "motorola,68040",	.data = &cpu_data040 },
-	{ .compat = "motorola,680lc40",	.data = &cpu_data040 },
+	{ .compat = "motorola,68lc040",	.data = &cpu_data040 },
 #endif
 #if defined(M68060)
 	{ .compat = "motorola,68060",	.data = &cpu_data060 },
-	{ .compat = "motorola,680lc60",	.data = &cpu_data060 },
+	{ .compat = "motorola,68lc060",	.data = &cpu_data060 },
 #endif
 	DEVICE_COMPAT_EOL
 };
