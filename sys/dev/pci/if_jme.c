@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.57 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.58 2026/08/05 20:47:59 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.57 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.58 2026/08/05 20:47:59 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -1862,7 +1862,7 @@ jme_set_filter(jme_softc_t *sc)
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-#ifdef JEMDBUG
+#ifdef JMEDEBUG
 		printf("%s: addrs %s %s\n", __func__,
 		   ether_sprintf(enm->enm_addrlo),
 		   ether_sprintf(enm->enm_addrhi));
