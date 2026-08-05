@@ -1,4 +1,4 @@
-#	$NetBSD: VME162,v 1.36 2026/08/05 00:55:29 thorpej Exp $
+#	$NetBSD: VME162,v 1.37 2026/08/05 01:01:47 thorpej Exp $
 #
 # Minimal kernel configuration file for MVME162.
 #
@@ -9,9 +9,6 @@ include 	"arch/mvme68k/conf/std.mvme68k"
 
 # Boards this kernel supports; need at least one
 options 	MVME162
-
-# Needed on m68040 boards to emulate some missing FP instructions
-options 	FPSP
 
 maxusers	8
 

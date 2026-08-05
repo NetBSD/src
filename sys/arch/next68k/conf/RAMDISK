@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.6 2024/01/29 18:27:14 christos Exp $
+#	$NetBSD: RAMDISK,v 1.7 2026/08/05 01:01:47 thorpej Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -127,7 +127,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 # NeXT specific options
 options 	M68040
 options 	M68030
-options 	FPSP
 #options 	FPU_EMULATE
 
 options 	ZS_CONSOLE_ABORT	# drop to debugger on break

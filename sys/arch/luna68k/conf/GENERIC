@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.138 2025/06/04 18:23:10 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.139 2026/08/05 01:01:46 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138 $"
+#ident 		"GENERIC-$Revision: 1.139 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -32,7 +32,6 @@ maxusers	8
 
 options 	M68030
 options 	M68040
-options 	FPSP	# on m68040 to emulate some missing FP instructions
 
 # Needs to be set per system.  i.e change these as you see fit
 

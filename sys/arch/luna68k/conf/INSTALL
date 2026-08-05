@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.36 2023/10/13 16:35:14 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.37 2026/08/05 01:01:46 thorpej Exp $
 #
 # config for installation ramdisk kernel
 #
@@ -10,7 +10,6 @@ maxusers	4
 
 options 	M68030
 options 	M68040
-options 	FPSP	# on m68040 to emulate some missing FP instructions
 
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk

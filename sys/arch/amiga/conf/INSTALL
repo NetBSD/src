@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.142 2024/01/29 18:27:10 christos Exp $
+# $NetBSD: INSTALL,v 1.143 2026/08/05 01:01:46 thorpej Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.142 $"
+#ident 		"GENERIC-$Revision: 1.143 $"
 
 makeoptions	COPTS="-Os -fno-omit-frame-pointer"
 
@@ -51,9 +51,7 @@ options 	P5PPC68KBOARD	# Phase5 PPC/68K board support
 # processors this kernel should support
 #
 options 	M68060		# support for 060
-options 	M060SP		# MC68060 software support (Required for 060)
 options 	M68040		# support for 040
-options 	FPSP		# MC68040 floating point support
 options 	M68030		# support for 030
 options 	M68020		# support for 020/851
 options 	FPU_EMULATE	# FPU emulation

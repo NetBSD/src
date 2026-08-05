@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.32 2026/08/05 00:55:29 thorpej Exp $
+#	$NetBSD: RAMDISK,v 1.33 2026/08/05 01:01:47 thorpej Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -22,12 +22,6 @@ options 	MVME172
 options 	MVME177
 
 maxusers	2
-
-# Needed on m68040 boards to emulate some missing FP instructions
-options 	FPSP
-
-# Needed on m68060 boards
-options 	M060SP
 
 include "arch/mvme68k/conf/std.minimal"
 

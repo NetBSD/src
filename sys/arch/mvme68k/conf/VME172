@@ -1,4 +1,4 @@
-#	$NetBSD: VME172,v 1.36 2026/08/05 00:55:29 thorpej Exp $
+#	$NetBSD: VME172,v 1.37 2026/08/05 01:01:47 thorpej Exp $
 #
 # Minimal kernel configuration file for MVME172.
 #
@@ -9,8 +9,6 @@ include 	"arch/mvme68k/conf/std.mvme68k"
 
 # Boards this kernel supports; need at least one
 options 	MVME172
-
-options 	M060SP
 
 maxusers	8
 

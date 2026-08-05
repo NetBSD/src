@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.72 2025/05/01 06:11:21 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.73 2026/08/05 01:01:46 thorpej Exp $
 #
 # INSTALL machine description file
 #
@@ -38,7 +38,6 @@ options 	HP385
 options 	HP400
 options 	HP425
 options 	HP433
-options 	FPSP		# floating point interface for 68040
 #options 	FPU_EMULATE	# software fpu emulation for MC68030
 
 # Standard system options

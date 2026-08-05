@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.64 2024/01/29 18:27:14 christos Exp $
+# $NetBSD: SLAB,v 1.65 2026/08/05 01:01:47 thorpej Exp $
 #
 # deberg's development machine
 #
@@ -91,7 +91,6 @@ options 	INET6		# IPV6
 # NeXT specific options
 options 	M68040
 options 	M68030
-options 	FPSP
 #options 	FPU_EMULATE
 
 options 	ZS_CONSOLE_ABORT	# drop to debugger on break

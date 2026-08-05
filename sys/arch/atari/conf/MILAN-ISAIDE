@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.99 2022/08/15 04:58:52 tsutsui Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.100 2026/08/05 01:01:46 thorpej Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -15,8 +15,6 @@ options HZ=64 # Set the clock-rate (48/64/96)
 options INSECURE # disable kernel security levels
 options M68040 # support for 040
 options M68060 # support for 060
-options FPSP # 68040 Floatingpoint support
-options M060SP # MC68060 software support (Required for 060)
 options INET # IP + ICMP + TCP + UDP
 options INET6 # IPV6
 options PPP_BSDCOMP # BSD-Compress compression support for PPP

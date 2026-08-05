@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.217 2025/11/29 23:15:54 thorpej Exp $
+# $NetBSD: GENERIC,v 1.218 2026/08/05 01:01:46 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -27,7 +27,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.217 $"
+#ident 		"GENERIC-$Revision: 1.218 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -51,7 +51,6 @@ options 	HP385
 options 	HP400
 options 	HP425
 options 	HP433
-options 	FPSP		# floating point interface for 68040
 #options 	FPU_EMULATE	# software fpu emulation for MC68030
 
 # Standard system options

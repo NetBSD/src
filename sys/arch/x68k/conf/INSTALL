@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.123 2026/05/19 21:18:10 andvar Exp $
+#	$NetBSD: INSTALL,v 1.124 2026/08/05 01:01:47 thorpej Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.123 $"
+#ident 		"INSTALL-$Revision: 1.124 $"
 
 makeoptions	COPTS="-Os -fno-unwind-tables" # Optimise for space. Implies -O2
 
@@ -39,8 +39,6 @@ options 	M68060
 
 options 	EXTENDED_MEMORY		# support for >16MB memory
 options 	FPU_EMULATE		# software fpu emulation for MC68030
-options 	FPSP			# floating point emulation for MC68040
-options 	M060SP			# int/fp emulation for MC68060
 #options 	JUPITER			# support for "Jupiter-X" accelerator
 #options 	ZSCONSOLE,ZSCN_SPEED="9600"	# use serial console
 

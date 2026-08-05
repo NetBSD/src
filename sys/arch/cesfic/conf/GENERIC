@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.78 2023/02/12 14:50:38 abs Exp $
+# $NetBSD: GENERIC,v 1.79 2026/08/05 01:01:46 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -30,8 +30,6 @@ makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 maxusers	32
 
 #options 	LEDEBUG
-
-options 	FPSP
 
 # Standard system options
 options 	USERCONF	# userconf(4) support

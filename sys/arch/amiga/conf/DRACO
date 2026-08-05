@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.202 2024/01/29 18:27:10 christos Exp $
+# $NetBSD: DRACO,v 1.203 2026/08/05 01:01:46 thorpej Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.202 $"
+#ident 		"GENERIC-$Revision: 1.203 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -46,7 +46,6 @@ options 	DRACO
 # processors this kernel should support
 #
 options 	M68060		# support for 060
-options 	M060SP		# MC68060 software support (Required for 060)
 
 #
 # Networking options

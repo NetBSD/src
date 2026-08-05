@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.211 2026/05/19 21:18:10 andvar Exp $
+# $NetBSD: GENERIC,v 1.212 2026/08/05 01:01:47 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.211 $"
+#ident 		"GENERIC-$Revision: 1.212 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -48,8 +48,6 @@ options 	M68060
 
 options 	EXTENDED_MEMORY		# support for >16MB memory
 options 	FPU_EMULATE		# software fpu emulation for MC68030
-options 	FPSP			# floating point emulation for MC68040
-options 	M060SP			# int/fp emulation for MC68060
 #options 	JUPITER			# support for "Jupiter-X" accelerator
 #options 	ZSCONSOLE,ZSCN_SPEED="9600"	# use serial console
 

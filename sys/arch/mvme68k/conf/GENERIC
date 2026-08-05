@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.108 2026/08/05 00:55:29 thorpej Exp $
+# $NetBSD: GENERIC,v 1.109 2026/08/05 01:01:47 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mvme68k/conf/std.mvme68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.108 $"
+#ident 		"GENERIC-$Revision: 1.109 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -32,12 +32,6 @@ options 	MVME172
 options 	MVME177
 
 maxusers	4
-
-# Needed on m68040 boards to emulate some missing FP instructions
-options 	FPSP
-
-# Needed on m68060 boards
-options 	M060SP
 
 #options 	DDB
 #options 	DIAGNOSTIC
