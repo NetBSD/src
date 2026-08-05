@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.156 2026/08/05 08:13:55 msaitoh Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.157 2026/08/05 08:17:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.156 2026/08/05 08:13:55 msaitoh Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.157 2026/08/05 08:17:41 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -1613,6 +1613,7 @@ printsys(char *msg)
 	klog_linebufoff = 0;
 	for (p = msg; *p != '\0'; ) {
 		bool bsdsyslog = true;
+		char *line_start = p;
 
 		is_printf = 1;
 		flags = ISKERNEL | ADDDATE | BSDSYSLOG;
@@ -1643,7 +1644,7 @@ printsys(char *msg)
 		if (*q != '\0')
 			*q++ = '\0';
 		else {
-			memcpy(klog_linebuf, p, klog_linebufoff = q - p);
+			memcpy(klog_linebuf, line_start, klog_linebufoff = q - line_start);
 			break;
 		}
 
