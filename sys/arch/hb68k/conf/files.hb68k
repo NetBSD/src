@@ -1,4 +1,4 @@
-#	$NetBSD: files.hb68k,v 1.1 2026/07/19 01:48:20 thorpej Exp $
+#	$NetBSD: files.hb68k,v 1.2 2026/08/05 01:32:56 thorpej Exp $
 
 # config file for hb68k
 
@@ -43,7 +43,7 @@ file arch/m68k/m68k/linux_bootinfo.c		config_linux_bootinfo
 # N.B. This only works for machines where the kernel is mapped VA==PA.
 #
 defflag	opt_hb68k_config.h	CONFIG_FDT_BOOTSTRAP
-file arch/m68k/fdt/fdt_bootstrap.c		config_fdt_bootstrap
+file arch/hb68k/hb68k/fdt_bootstrap.c		config_fdt_bootstrap
 
 #
 # CONFIG_STATIC_DEVICE_TREE --
