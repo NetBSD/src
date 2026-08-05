@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.24 2021/02/27 18:10:46 palle Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.25 2026/08/05 15:25:09 jdc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.24 2021/02/27 18:10:46 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.25 2026/08/05 15:25:09 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -684,7 +684,8 @@ OF_poweroff(void)
 	args.name = ADR2CELL("SUNW,power-off");
 	args.nargs = 0;
 	args.nreturns = 0;
-	openfirmware(&args);
+	if (openfirmware(&args) != -1)
+		delay(2000000);	/* Some machines return before power-off */
 	panic("OF_poweroff failed");
 }
 
