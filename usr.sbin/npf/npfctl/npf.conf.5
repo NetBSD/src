@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.109 2026/07/27 17:55:12 joe Exp $
+.\"    $NetBSD: npf.conf.5,v 1.110 2026/08/05 22:43:58 gutteridge Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 7, 2026
+.Dd August 5, 2026
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -121,6 +121,20 @@ The
 .Cm lpm
 tables can contain networks and they will perform the longest
 prefix match on lookup.
+.Pp
+.Cm const
+provides the best combination of performance and lighter memory consumption.
+.Cm ipset
+offers fast lookups, with possibly higher memory usage than
+.Cm const .
+Given its additional capability,
+.Cm lpm
+has potentially higher lookup costs and memory needs.
+Note that tables can be replaced by other tables using
+.Xr npfctl 8 ,
+so for example, a
+.Cm const
+table could be replaced at runtime.
 .Ss Interfaces
 In NPF, an interface can be referenced directly by using its name, or can be
 passed to an extraction function which will return a list of IP addresses
