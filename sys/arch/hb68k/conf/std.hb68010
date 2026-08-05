@@ -1,4 +1,4 @@
-#	$NetBSD: std.hb68010,v 1.1 2026/07/19 01:48:20 thorpej Exp $
+#	$NetBSD: std.hb68010,v 1.2 2026/08/05 01:43:11 thorpej Exp $
 #
 # Options/devices that all 68010 homebrews should have
 #
@@ -7,6 +7,8 @@ include		"arch/hb68k/conf/std.hb68k"
 
 options 	M68010
 # MMU option is machine-specific
+
+no options	__HAVE_NEW_PMAP_68K	# Not applicable here.
 
 no options	VMSWAP_ENCRYPTION
 options 	NO_KERNEL_RCSIDS
