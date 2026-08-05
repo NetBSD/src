@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.189 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.190 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -14254,6 +14254,8 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		controller found in VMware ESXi. [skrll 20250804]
 	posix_openpt(3): Support O_CLOFORK. [gutteridge 20250806]
 	sh(1): cd "" is now an error, as required by POSIX 2024. [kre 20250812]
+	man(1): Add -l flag to parse argument as file name.
+		[christos 20250902]
 	ctype(3): New environment variable LIBC_ALLOWCTYPEABUSE.
 		[riastradh 20250915]
 	riscv: Handle XTheadMae vs. Svpbmt, allowing boot on Allwinner
@@ -14277,6 +14279,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		cd9660 images. [nia 20260107]
 	ftp(1): simplify socket buffer handling to improve performance.
 		[lukem 20260207]
+	zfs: Improve performance of removing files. [yamt 20260322]
 	drum(4): Make the device MPSAFE. [yamt 20260330]
 	kernel: tcp: Reduce the Initial RTO from 3 seconds to
 		1 second as allowed by RFC6298. [kbowling 20260520]
