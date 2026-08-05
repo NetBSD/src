@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.15 2022/09/29 07:00:47 skrll Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.16 2026/08/05 21:48:37 andvar Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.15 2022/09/29 07:00:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.16 2026/08/05 21:48:37 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -456,7 +456,7 @@ rmixl_cpuinfo_print(u_int cpuindex)
 		printf("ci_divisor_delay %ld\n", ci->ci_divisor_delay);
 		printf("ci_divisor_recip %ld\n", ci->ci_divisor_recip);
 		printf("ci_curlwp %p\n", ci->ci_curlwp);
-		printf("ci_onproc %p\n", dp->ci_onproc);
+		printf("ci_onproc %p\n", ci->ci_onproc);
 		printf("ci_want_resched %d\n", ci->ci_want_resched);
 		printf("ci_mtx_count %d\n", ci->ci_mtx_count);
 		printf("ci_mtx_oldspl %d\n", ci->ci_mtx_oldspl);
