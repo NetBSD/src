@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.107 2026/08/04 15:33:29 thorpej Exp $
+# $NetBSD: GENERIC,v 1.108 2026/08/05 00:55:29 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,9 +20,9 @@
 
 include 	"arch/mvme68k/conf/std.mvme68k"
 
-options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.107 $"
+#ident 		"GENERIC-$Revision: 1.108 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -43,12 +43,16 @@ options 	M060SP
 #options 	DIAGNOSTIC
 #options 	DEBUG
 
+options 	MODULAR		# new kernel module system
+#options 	MODULAR_DEFAULT_AUTOLOAD # auto-load modules when possible
+#options 	INSECURE	# needed for module auto-load to work properly
+
 #options 	SYSVSHM
 options 	KTRACE
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
-options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
@@ -57,9 +61,9 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 file-system 	FFS
 file-system 	NFS
-file-system 	KERNFS
-file-system 	MFS
-file-system 	CD9660
+#file-system 	KERNFS
+#file-system 	MFS
+#file-system 	CD9660
 #file-system	MSDOSFS
 #file-system	UNION
 file-system	PTYFS		# /dev/pts/N support
@@ -72,7 +76,7 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-options 	NFSSERVER	# Network File System server
+#options 	NFSSERVER	# Network File System server
 
 # Networking options
 options 	INET
@@ -114,31 +118,31 @@ options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 #
 # accept filters
-pseudo-device   accf_data		# "dataready" accept filter
-pseudo-device   accf_http		# "httpready" accept filter
+#pseudo-device   accf_data		# "dataready" accept filter
+#pseudo-device   accf_http		# "httpready" accept filter
 
-pseudo-device	sl
-pseudo-device	ppp 
-pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	sl
+#pseudo-device	ppp 
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	loop
 pseudo-device	bpfilter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-pseudo-device	vlan			# IEEE 802.1q encapsulation
-pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	vether			# Virtual Ethernet for bridge
-pseudo-device	agr			# IEEE 802.3ad link aggregation
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	vnd 
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	fss			# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	npf			# NPF packet filter
-pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
+#pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # random number generator pseudo-device
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
@@ -148,42 +152,20 @@ pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 mainbus0	at root
 
-# MVME147 specific devices
-pcc0		at mainbus0
-vmepcc0 	at pcc?
-clock0		at pcc? ipl 5
-zsc*		at pcc? ipl 4
-le0		at pcc? ipl 3
-wdsc0		at pcc? ipl 2
-lpt0		at pcc? ipl 1
+# MVME147 devices
+include "arch/mvme68k/conf/std.mvme147"
 
-# MVME16x and MVME17x shared devices
-pcctwo0		at mainbus0
-vmetwo0 	at mainbus0
-memc*		at mainbus0
-clock0		at pcctwo? ipl 5
-ie0		at pcctwo? ipl 3
-osiop0		at pcctwo? ipl 2
+# MVME16x and MVME17x common devices
+include "arch/mvme68k/conf/std.mvme16x_17x"
 
 # MVME162/MVME172 specific devices
-zsc*		at pcctwo? ipl 4
+include "arch/mvme68k/conf/std.mvme162_172"
 
 # MVME167/MVME177 specific devices
-clmpcc0		at pcctwo? ipl 4
-lpt0		at pcctwo? ipl 1
-
-# Common front-end for MVME147 and MVME162 `zs' device
-zstty*		at zsc? channel ?
-
-# MI VMEbus Interface
-vme0		at vmepcc0
-vme0		at vmetwo0
+include "arch/mvme68k/conf/std.mvme167_177"
 
 # Example VMEbus device
 #foo0		at vme0 addr 0x00ef0000 irq 3 vect 0x80
-
-scsibus*	at wdsc?
-scsibus*	at osiop?
 
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
