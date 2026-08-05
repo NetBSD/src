@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2026/06/01 20:34:18 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2026/08/05 21:51:59 andvar Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2026/06/01 20:34:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2026/08/05 21:51:59 andvar Exp $");
 
 #define __INTR_PRIVATE
 
@@ -751,7 +751,7 @@ mem_clusters_init(
 	rmixlfw_mmap_t *avail_mem_map)
 {
 	rmixlfw_mmap_t *map = NULL;
-	const char *mapname;
+	const char *mapname __diagused;
 	uint64_t sz;
 	uint64_t sum;
 	u_int cnt;
