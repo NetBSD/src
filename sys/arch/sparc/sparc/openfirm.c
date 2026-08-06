@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.25 2026/08/05 15:25:09 jdc Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.26 2026/08/06 08:28:08 jdc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.25 2026/08/05 15:25:09 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.26 2026/08/06 08:28:08 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -684,8 +684,12 @@ OF_poweroff(void)
 	args.name = ADR2CELL("SUNW,power-off");
 	args.nargs = 0;
 	args.nreturns = 0;
+#ifdef _KERNEL
 	if (openfirmware(&args) != -1)
 		delay(2000000);	/* Some machines return before power-off */
+#else
+	openfirmware(&args);
+#endif
 	panic("OF_poweroff failed");
 }
 
