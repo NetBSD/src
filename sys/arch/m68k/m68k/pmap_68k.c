@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.76 2026/07/16 14:15:15 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.77 2026/08/06 13:15:54 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -200,7 +200,7 @@
  * - Multi-user mode on 68040 (NeXTstation, 20MB RAM)
  *
  * - Ports that have been adapted: hp300, luna68k, mac68k (default),
- *   mvme68k (not tested), news68k (see below), next68k (default),
+ *   mvme68k (default), news68k (see below), next68k (default),
  *   virt68k (default), x68k.
  *
  * XXX TODO XXX
@@ -225,7 +225,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.76 2026/07/16 14:15:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.77 2026/08/06 13:15:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
