@@ -1,0 +1,71 @@
+# $NetBSD: WRAP030,v 1.1 2026/08/06 14:41:09 thorpej Exp $
+#
+# WRAP030 machine description file
+#
+# https://techav.net/post/714948735442010112/introducing-wrap030-atx
+# 
+
+include 	"arch/hb68k/conf/std.hb68k"
+options 	M68030
+options 	CONFIG_MACH_WRAP030
+options 	CONFIG_FDT_BOOTSTRAP
+options 	CONFIG_STATIC_DEVICE_TREE
+makeoptions	STATIC_DEVICE_TREE="${HB68K}/wrap030/wrap030.dts"
+makeoptions	TEXTADDR=0		# ROM uses fixed load address
+options 	HZ=1000			# wrap030 timer doesn't divide clk :(
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"WRAP030-$Revision: 1.1 $"
+
+maxusers	8
+
+options 	DDB		# in-kernel debugger
+options 	DIAGNOSTIC	# extra sanity checks
+#options 	LOCKDEBUG
+#options 	DEBUG
+
+#options 	KTRACE
+
+options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Firmware loads programs from FAT.
+file-system 	FFS		# Berkeley Fast File System
+file-system 	MSDOSFS		# MS-DOS File System
+
+# File system options
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+
+# Networking options
+options 	INET		# IPv4
+#options 	INET6		# IPv6
+#options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	GATEWAY		# IP packet forwarding
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+# Shared memory options
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SYSVSHM		# System V-like memory sharing
+
+## "generic" boot (put root on boot device)
+config netbsd		root on ? type ?
+
+pseudo-device	loop
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	ksyms			# /dev/ksyms
+
+# Generic m68k interrupts.
+genintc*	at fdt? pass 2
+
+# System timer
+wraptmr*	at fdt? pass 3
+
+# On-board serial ports
+com*		at fdt? pass 5
+
+# ATA disk interface
+wdc*		at fdt?
+atabus*		at ata?
+wd*		at atabus? drive?

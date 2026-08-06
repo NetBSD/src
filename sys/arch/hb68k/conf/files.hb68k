@@ -1,4 +1,4 @@
-#	$NetBSD: files.hb68k,v 1.2 2026/08/05 01:32:56 thorpej Exp $
+#	$NetBSD: files.hb68k,v 1.3 2026/08/06 14:41:09 thorpej Exp $
 
 # config file for hb68k
 
@@ -123,3 +123,14 @@ file	arch/hb68k/pg68k/pgctrl.c		pgctrl
 device	pgtimer
 attach	pgtimer at fdt
 file	arch/hb68k/pg68k/pgtimer.c		pgtimer
+
+##
+## WRAP030 DEVICES
+##
+
+defflag opt_hb68k_config.h	CONFIG_MACH_WRAP030
+file	arch/hb68k/wrap030/wrap030_machdep.c	config_mach_wrap030
+
+device	wraptmr
+attach	wraptmr at fdt
+file	arch/hb68k/wrap030/wrap030_timer.c	wraptmr

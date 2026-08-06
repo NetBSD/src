@@ -1,0 +1,158 @@
+/dts-v1/;
+
+/ {
+	interrupt-parent = <&intc>;
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	model = "Wrap030";
+	compatible = "techav,wrap030";
+
+	chosen {
+		/*
+		 * Original Wrap030 port hard-codes:
+		 * RB_ASKNAME | RB_SINGLE | AB_VERBOSE | AB_DEBUG
+		 */
+		bootargs = "-asvx";
+		stdout-path = "serial0:9600n8";
+		netbsd,hardclock = "timer0";
+	};
+
+	aliases {
+		ata0 = "/obio/ata@80200000";
+
+		serial0 = "/obio/serial@80300000";
+		serial1 = "/obio/serial@80300008";
+
+		timer0 = "/obio/timer@80f00000";
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu0: cpu@0 {
+			compatible = "motorola,68030";
+			device_type = "cpu";
+			reg = <0>;
+			clock-frequency = <25000000>;
+		};
+	};
+
+	clocks {
+		cpu_osc: osc25M_clk {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <25000000>;
+		};
+
+		/*
+		 * The FPU clock is actually jumper-selectable between
+		 * the cpu_osc and the fpu_osc, but there is no way to
+		 * know the selection in software.
+		 */
+		fpu_osc: osc16M_clk {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <16000000>;
+		};
+	};
+
+	memory@0 {
+		/*
+		 * Original Wrap030 port hard-wired 16MB, and so do we,
+		 * for now.  Eventually, the kernel will have to size
+		 * the memory dynamically somehow.
+		 */
+		device_type = "memory";
+		reg = <0x0 0x1000000>;
+	};
+
+	intc: interrupt-controller {
+		/*
+		 * Interrupt cells:
+		 * - Interrupt priority level (1-7)
+		 * - Interrupt vector (0 == auto-vector)
+		 */
+		compatible = "motorola,68000-generic-interrupts";
+		interrupt-controller;
+		#interrupt-cells = <2>;
+	};
+
+	obio {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		serial@80300000 {
+			compatible = "ns16550a";
+			reg = <0x80300000 0x8>;
+			clock-frequency = <1843200>;
+			interrupts = <2 0>;
+		};
+
+		serial@80300008 {
+			compatible = "ns16550a";
+			reg = <0x80300008 0x8>;
+			clock-frequency = <1843200>;
+			interrupts = <2 0>;
+		};
+
+		serial@80300010 {
+			compatible = "ns16550a";
+			reg = <0x80300010 0x8>;
+			clock-frequency = <1843200>;
+			interrupts = <2 0>;
+		};
+
+		serial@80300018 {
+			compatible = "ns16550a";
+			reg = <0x80300018 0x8>;
+			clock-frequency = <1843200>;
+			interrupts = <2 0>;
+		};
+
+		serial@80300020 {
+			compatible = "ns16550a";
+			reg = <0x80300020 0x8>;
+			clock-frequency = <1843200>;
+			interrupts = <2 0>;
+		};
+
+		serial@80300028 {
+			compatible = "ns16550a";
+			reg = <0x80300028 0x8>;
+			clock-frequency = <1843200>;
+			interrupts = <2 0>;
+		};
+
+		serial@80300030 {
+			compatible = "ns16550a";
+			reg = <0x80300030 0x8>;
+			clock-frequency = <1843200>;
+			interrupts = <2 0>;
+		};
+
+		serial@80300038 {
+			compatible = "ns16550a";
+			reg = <0x80300038 0x8>;
+			clock-frequency = <1843200>;
+			interrupts = <2 0>;
+		};
+
+		ata@80200000 {
+			compatible = "ata-generic";
+			reg = <0x80200000 0x10>,	/* command */
+			      <0x8020200c 0x10>;	/* control */
+			reg-shift = <1>;
+			ata-generic,use16bit;
+		};
+
+		timer@80f00000 {
+			compatible = "techav,wrap030-timer";
+			reg = <0x80f00000 0x10000>;
+			clocks = <&cpu_osc>;
+			interrupts = <4 0>;
+		};
+	};
+};
