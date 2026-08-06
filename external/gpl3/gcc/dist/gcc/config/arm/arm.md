@@ -6523,7 +6523,10 @@
      data and load its address to a register.  Offsets have been split off
      already.  */
   if (arm_tls_referenced_p (operands[1]))
-    operands[1] = legitimize_tls_address (operands[1], tmp);
+    {
+      operands[1] = legitimize_tls_address (operands[1], tmp);
+      cfun->machine->uses_tls = true;
+    }
   else if (flag_pic
 	   && (CONSTANT_P (operands[1])
 	       || symbol_mentioned_p (operands[1])

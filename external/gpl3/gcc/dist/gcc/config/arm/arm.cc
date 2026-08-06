@@ -9529,6 +9529,8 @@ arm_legitimize_address (rtx x, rtx orig_x, machine_mode mode)
 
       x = legitimize_tls_address (x, NULL_RTX);
 
+      cfun->machine->uses_tls = true;
+
       if (addend)
 	{
 	  x = gen_rtx_PLUS (SImode, x, addend);
@@ -21981,6 +21983,9 @@ arm_output_function_prologue (FILE *f)
 	       frame_pointer_needed,
 	       cfun->machine->uses_anonymous_args);
 
+  asm_fprintf (f, "\t%@ uses_tls = %d, is_leaf = %d\n",
+	       cfun->machine->uses_tls, crtl->is_leaf);
+
   if (cfun->machine->lr_save_eliminated)
     asm_fprintf (f, "\t%@ link register save eliminated.\n");
 
@@ -23162,10 +23167,10 @@ arm_compute_frame_layout (void)
 	 think of this as a leaf routine.  Even if __aeabi_read_tp
 	 itself doesn't use the stack, resolving the symbol may take a
 	 detour through a procedure call to the dynamic linker.  We
-	 should really enforce alignment only if the procedure actually
-	 uses __aeabi_read_tp (load_tp_soft*) but I don't know how to
-	 query that here.  */
-      && !TARGET_SOFT_TP)
+	 enforce alignment only if the procedure actually uses
+	 __aeabi_read_tp (load_tp_soft*).  */
+      && ! TARGET_SOFT_TP
+      && ! cfun->machine->uses_tls)
     {
       offsets->outgoing_args = offsets->soft_frame;
       offsets->locals_base = offsets->soft_frame;

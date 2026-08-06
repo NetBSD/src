@@ -1651,6 +1651,8 @@ typedef struct GTY(()) machine_function
   /* Set to 1 when pointer authentication operation uses value of SP other
      than the incoming stack pointer value.  */
   int pacspval_needed;
+  /* Set to 1 if this function accesses thread-local storage */
+  int uses_tls;
 }
 machine_function;
 #endif
