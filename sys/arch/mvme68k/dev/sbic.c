@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.37 2024/09/08 09:36:49 rillig Exp $	*/
+/*	$NetBSD: sbic.c,v 1.38 2026/08/06 01:23:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.37 2024/09/08 09:36:49 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.38 2026/08/06 01:23:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.37 2024/09/08 09:36:49 rillig Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <mvme68k/mvme68k/isr.h>
 #include <mvme68k/dev/dmavar.h>
 #include <mvme68k/dev/sbicreg.h>
 #include <mvme68k/dev/sbicvar.h>
