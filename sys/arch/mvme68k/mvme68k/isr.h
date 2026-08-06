@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.13 2024/01/16 01:26:34 thorpej Exp $	*/
+/*	$NetBSD: isr.h,v 1.14 2026/08/06 01:28:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -45,14 +45,6 @@ isrinit(void)
 
 	m68k_intr_init(NULL);
 	m68k_intr_establish(nmihand, NULL, NULL, 0, 7, 0, 0);
-}
-
-static inline void
-isrlink_autovec(int (*func)(void *), void *arg, int ipl, int isrpri,
-    struct evcnt *ev)
-{
-	/* XXX leaks interrupt handle. */
-	m68k_intr_establish(func, arg, ev, 0, ipl, isrpri, 0);
 }
 
 static inline void
