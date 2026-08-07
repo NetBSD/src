@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.41 2025/09/06 22:53:49 thorpej Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.42 2026/08/07 14:25:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.41 2025/09/06 22:53:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.42 2026/08/07 14:25:55 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -93,26 +93,28 @@ fdtbus_set_decoderegprop(bool decode)
 	fdtbus_decoderegprop = decode;
 }
 
+static int
+fdtbus_get_u32prop_with_default(int phandle, const char *prop, int dflt)
+{
+	uint32_t val;
+
+	if (of_getprop_uint32(phandle, prop, &val)) {
+		val = dflt;
+	}
+
+	return val;
+}
+
 int
 fdtbus_get_addr_cells(int phandle)
 {
-	uint32_t addr_cells;
-
-	if (of_getprop_uint32(phandle, "#address-cells", &addr_cells))
-		addr_cells = 2;
-
-	return addr_cells;
+	return fdtbus_get_u32prop_with_default(phandle, "#address-cells", 2);
 }
 
 int
 fdtbus_get_size_cells(int phandle)
 {
-	uint32_t size_cells;
-
-	if (of_getprop_uint32(phandle, "#size-cells", &size_cells))
-		size_cells = 0;
-
-	return size_cells;
+	return fdtbus_get_u32prop_with_default(phandle, "#size-cells", 0);
 }
 
 int
