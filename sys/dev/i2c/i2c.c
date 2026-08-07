@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.107 2026/01/15 16:56:22 skrll Exp $	*/
+/*	$NetBSD: i2c.c,v 1.108 2026/08/07 13:24:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021, 2022, 2025 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.107 2026/01/15 16:56:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.108 2026/08/07 13:24:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1008,7 +1008,7 @@ CFATTACH_DECL3_NEW(iic, sizeof(struct iic_softc),
     iic_match, iic_attach, iic_detach, NULL, iic_rescan, iic_child_detach,
     DVF_DETACH_SHUTDOWN);
 
-MODULE(MODULE_CLASS_DRIVER, iic, "i2cexec,i2c_bitbang,i2c_subr");
+MODULE(MODULE_CLASS_DRIVER, iic, "i2cexec,i2c_subr");
 
 #ifdef _MODULE
 #include "ioconf.c"
