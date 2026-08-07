@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.315 2026/07/12 20:58:00 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.316 2026/08/07 02:25:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.315 2026/07/12 20:58:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.316 2026/08/07 02:25:54 thorpej Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1987,6 +1987,24 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 #endif
 
 	if (flags & ATA_DRIVE_NOSTREAM) {
+#if !defined(__BUS_SPACE_HAS_STREAM_METHODS) && _BYTE_ORDER == _BIG_ENDIAN
+		/*
+		 * Because consumers of IDENTIFY are too lazy to byte-swap
+		 * their own payload, we have to do it ourselves here.
+		 * XXX THIS IS SO DUMB!  FIX CONSUMERS OF IDENTIFY!!!
+		 *
+		 * Don't even try to deal with 32-bit PIO in this situation.
+		 */
+		KASSERT((flags & ATA_DRIVE_CAP32) == 0);
+		uint16_t *p16 = bf;
+		for (; len > 1; len -= 2) {
+			*p16++ =
+			    bswap16(bus_space_read_2(wdr->cmd_iot,
+						     wdr->cmd_iohs[wd_data],
+						     0));
+		}
+		bf = (void *)p16;
+#else
 		if ((flags & ATA_DRIVE_CAP32) && len > 3) {
 			bus_space_read_multi_4(wdr->data32iot,
 			    wdr->data32ioh, 0, bf, len >> 2);
@@ -1999,6 +2017,7 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 			bf = (char *)bf + (len & ~1);
 			len &= 1;
 		}
+#endif
 	} else {
 		if ((flags & ATA_DRIVE_CAP32) && len > 3) {
 			bus_space_read_multi_stream_4(wdr->data32iot,
@@ -2021,6 +2040,9 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 #ifndef __NO_STRICT_ALIGNMENT
 unaligned:
 	if (flags & ATA_DRIVE_NOSTREAM) {
+#if !defined(__BUS_SPACE_HAS_STREAM_METHODS) && _BYTE_ORDER == _BIG_ENDIAN
+		KASSERT((flags & ATA_DRIVE_CAP32) == 0);
+#else
 		if (flags & ATA_DRIVE_CAP32) {
 			while (len > 3) {
 				uint32_t val;
@@ -2032,11 +2054,15 @@ unaligned:
 				len -= 4;
 			}
 		}
+#endif
 		while (len > 1) {
 			uint16_t val;
 
 			val = bus_space_read_2(wdr->cmd_iot,
 			    wdr->cmd_iohs[wd_data], 0);
+#if !defined(__BUS_SPACE_HAS_STREAM_METHODS) && _BYTE_ORDER == _BIG_ENDIAN
+			val = bswap16(val);
+#endif
 			memcpy(bf, &val, 2);
 			bf = (char *)bf + 2;
 			len -= 2;
@@ -2070,6 +2096,14 @@ static void
 wdc_dataout_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
+
+#if !defined(__BUS_SPACE_HAS_STREAM_METHODS) && _BYTE_ORDER == _BIG_ENDIAN
+	/*
+	 * This should absolutely never be necessary.  If it is, we
+	 * have bigger problems.
+	 */
+	KASSERT((flags & ATA_DRIVE_NOSTREAM) == 0);
+#endif
 
 	if ((chp->ch_atac->atac_cap & ATAC_CAP_DATA16) == 0) {
 		/*
