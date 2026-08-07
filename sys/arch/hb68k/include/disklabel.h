@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 2026/07/19 01:48:22 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 2026/08/07 01:59:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -30,26 +30,36 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_DISKLABEL_H_
-#define _MACHINE_DISKLABEL_H_
+#ifndef _HB68K_DISKLABEL_H_
+#define _HB68K_DISKLABEL_H_
 
 /* number of boot pieces , ie xxboot bootxx */
 #define NUMBOOT		0
 
-#define LABELUSESMBR	0			/* no MBR partitionning */
-#define LABELSECTOR     0                       /* sector containing label */
-#define LABELOFFSET	64			/* offset of label in sector */
-#define MAXPARTITIONS	8			/* number of partitions */
-#define RAW_PART	2			/* raw partition: xx?c */
-
 /*
- * This holds a copy of the whole label block, saved in here by
- * readdisklabel() so that writedisklabel() can preserve the
- * parts of the label block outside of the actual label.
- * (i.e. Sun label info, bad block table, etc.)
+ * Use the traditional hp300 layout.  Rationale:
+ * - Room at the beginning of the disk to load a small primary bootstrap
+ *   if that's what the ROM wants to do.  The bootstrap can encapsulate
+ *   the disklabel; installboot(8) simply needs to understand that the
+ *   label needs to be preserved.
+ * - Room at the beginning of the disk for an MBR table to be there, if
+ *   that's necessary for some reason, although we don't do much with
+ *   that MBR table other than allow it to exist.
+ *
+ * The implementation of readdisklabel() in subr_disk_4bsd.c will check
+ * this location first, and if not found, will scan the first 3 disk
+ * sectors looking for it, and use that same location in writedisklabel()
+ * if updating an existing label.
  */
+#define	LABELUSESMBR	0			/* no MBR partitionning */
+#define	LABELSECTOR	2			/* sector containing label */
+#define	LABELOFFSET	0			/* offset of label in sector */
+#define	MAXPARTITIONS	8			/* number of partitions */
+#define	RAW_PART	2			/* raw partition: xx?c */
+
+/* Just a dummy. */
 struct cpu_disklabel {
-	char	cd_block[512];
+	int	cd_dummy;			/* must have one element */
 };
 
-#endif /* _MACHINE_DISKLABEL_H_ */
+#endif /* _HB68K_DISKLABEL_H_ */
