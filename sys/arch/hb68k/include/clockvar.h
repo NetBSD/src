@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.1 2026/07/19 01:48:21 thorpej Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.2 2026/08/07 23:37:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002, 2023 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #endif
 
 #include <sys/evcnt.h>
+#include <sys/queue.h>
 #include <dev/clock_subr.h>
 
 extern	int clock_statvar;
@@ -48,23 +49,24 @@ struct clockframe;
 #define	CLOCK_STATCLOCK		1
 #define	NCLOCKS			2
 
-struct clock_attach_args {
-	void			(*ca_delaycal)(void *, unsigned int *);
-	void			(*ca_initfunc)(void *, unsigned int,
-				    struct evcnt *ev,
-				    void (*func)(struct clockframe *));
-	void			*ca_arg;
-	struct evcnt		*ca_parent_evcnt;
-	int			ca_which;
+struct clock_if {
+	TAILQ_ENTRY(clock_if)	clk_list;
+
+	/* Initialized by clock hardware driver */
+	device_t		clk_dev;
+	struct evcnt		*clk_parent_evcnt;
+	void			(*clk_delaycal)(struct clock_if *,
+						unsigned int *);
+	int			(*clk_init)(struct clock_if *, int (*)(void *));
+	int			(*clk_arm)(struct clock_if *, unsigned int);
+	void			(*clk_intr)(struct clock_if *);
+	void			(*clk_disarm)(struct clock_if *);
+
+	/* Initialized by clock_attach() */
+	int			clk_which;
 };
 
-const char *clock_name(int);
-void	clock_attach(device_t, struct clock_attach_args *);
-#ifdef FDT
-int	clock_from_phandle(int);
-#endif
-
-extern void *clock_devices[NCLOCKS];
+void	clock_attach(struct clock_if *);
 
 /*
  * Macro to compute a new randomized interval.  The intervals are

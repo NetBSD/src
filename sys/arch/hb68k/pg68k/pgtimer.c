@@ -1,4 +1,4 @@
-/*	$NetBSD: pgtimer.c,v 1.1 2026/07/19 01:48:24 thorpej Exp $	*/
+/*	$NetBSD: pgtimer.c,v 1.2 2026/08/07 23:37:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pgtimer.c,v 1.1 2026/07/19 01:48:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pgtimer.c,v 1.2 2026/08/07 23:37:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,9 +49,7 @@ struct pgtimer_softc {
 	uint32_t	sc_reg_shift;
 	void		*sc_ih;
 	uint32_t	sc_freq;
-	struct clock_attach_args sc_clock_args;
-	void		(*sc_handler)(struct clockframe *);
-	struct evcnt	*sc_evcnt;
+	struct clock_if sc_clkif;
 };
 
 #define	TIMER_CSR	0
@@ -86,15 +84,39 @@ pgtimer_us_to_ticks(struct pgtimer_softc *sc, unsigned int interval_us)
 	return (uint32_t)ticks;
 }
 
-static void
-pgtimer_initclock(void *arg, unsigned int interval_us,
-    struct evcnt *ev, void (*func)(struct clockframe *))
+static int
+pgtimer_init(struct clock_if *clk, int (*intrfunc)(void *))
 {
-	struct pgtimer_softc *sc = arg;
-	const uint32_t ticks = pgtimer_us_to_ticks(sc, interval_us);
+	struct pgtimer_softc *sc =
+	    container_of(clk, struct pgtimer_softc, sc_clkif);
+	int phandle = devhandle_to_of(device_handle(sc->sc_dev));
+	char intrstr[128];
 
-	sc->sc_handler = func;
-	sc->sc_evcnt = ev;
+	KASSERT(sc->sc_dev == clk->clk_dev);
+
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(sc->sc_dev, "failed to decode interrupt\n");
+		return ENXIO;
+	}
+
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SCHED,
+	    FDT_INTR_MPSAFE, intrfunc, NULL, device_xname(sc->sc_dev));
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to establish interrupt at %s\n", intrstr);
+		return ENXIO;
+	}
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
+
+	return 0;
+}
+
+static int
+pgtimer_arm(struct clock_if *clk, unsigned int interval_us)
+{
+	struct pgtimer_softc *sc =
+	    container_of(clk, struct pgtimer_softc, sc_clkif);
+	const uint32_t ticks = pgtimer_us_to_ticks(sc, interval_us);
 
 	/*
 	 * Changing the counter reload value implicitly disables the
@@ -105,42 +127,30 @@ pgtimer_initclock(void *arg, unsigned int interval_us,
 	REG_WRITE(sc, TIMER_VAL, (uint8_t)(ticks >> 8));
 	REG_WRITE(sc, TIMER_VAL, (uint8_t)ticks);
 	REG_WRITE(sc, TIMER_CSR, CSR_ENAB);
+
+	return 0;
 }
 
-#define	CLOCK_HANDLER()							\
-do {									\
-	/* Clear interrupt condition. */				\
-	REG_READ(sc, TIMER_CSR);					\
-									\
-	/* Timer auto-reloads. */					\
-									\
-	/* Increment the counter and call the handler. */		\
-	sc->sc_evcnt->ev_count++;					\
-	sc->sc_handler((struct clockframe *)v);				\
-} while (/*CONSTCOND*/0)
-
-static int
-pgtimer_hardclock(void *v)
+static void
+pgtimer_intr(struct clock_if *clk)
 {
-	struct pgtimer_softc *sc = clock_devices[CLOCK_HARDCLOCK];
+	struct pgtimer_softc *sc =
+	    container_of(clk, struct pgtimer_softc, sc_clkif);
 
-	CLOCK_HANDLER();
-	return 1;
+	/* Clear interrupt condition. */
+	REG_READ(sc, TIMER_CSR);
+
+	/* Timer auto-reloads. */
 }
 
-static int
-pgtimer_statclock(void *v)
+static void
+pgtimer_disarm(struct clock_if *clk)
 {
-	struct pgtimer_softc *sc = clock_devices[CLOCK_STATCLOCK];
+	struct pgtimer_softc *sc =
+	    container_of(clk, struct pgtimer_softc, sc_clkif);
 
-	CLOCK_HANDLER();
-	return 1;
+	REG_WRITE(sc, TIMER_CSR, 0);
 }
-
-static void *pgtimer_isrs[NCLOCKS] = {
-[CLOCK_HARDCLOCK]	=	pgtimer_hardclock,
-[CLOCK_STATCLOCK]	=	pgtimer_statclock,
-};
 
 static int
 pgtimer_match(device_t parent, cfdata_t cf, void *aux)
@@ -158,10 +168,9 @@ pgtimer_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
-	char intrstr[128];
 	struct clk *clk;
 	uint32_t clk_div;
-	int which, error;
+	int error;
 
 	sc->sc_dev = self;
 	sc->sc_st = faa->faa_bst;
@@ -191,11 +200,6 @@ pgtimer_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
-		aprint_error(": failed to decode interrupt\n");
-		return;
-	}
-
 	/*
 	 * The input to the I/O controller is the main system clock,
 	 * which the timer divides itself internally.  Firmware will
@@ -211,24 +215,12 @@ pgtimer_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": frequency %u Hz\n", sc->sc_freq);
 
-	which = clock_from_phandle(phandle);
-	if (which == CLOCK_NONE || pgtimer_isrs[which] == NULL) {
-		return;
-	}
-
-	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SCHED,
-	    FDT_INTR_MPSAFE, pgtimer_isrs[which], NULL, device_xname(self));
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt at %s\n",
-		    intrstr);
-		return;
-	}
-	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
-
-	sc->sc_clock_args.ca_initfunc = pgtimer_initclock;
-	sc->sc_clock_args.ca_arg = sc;
-	sc->sc_clock_args.ca_which = which;
-	clock_attach(self, &sc->sc_clock_args);
+	sc->sc_clkif.clk_dev = self;
+	sc->sc_clkif.clk_init = pgtimer_init;
+	sc->sc_clkif.clk_arm = pgtimer_arm;
+	sc->sc_clkif.clk_intr = pgtimer_intr;
+	sc->sc_clkif.clk_disarm = pgtimer_disarm;
+	clock_attach(&sc->sc_clkif);
 }
 
 CFATTACH_DECL_NEW(pgtimer, sizeof(struct pgtimer_softc),

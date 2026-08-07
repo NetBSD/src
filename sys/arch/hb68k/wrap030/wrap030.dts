@@ -15,7 +15,6 @@
 		 */
 		bootargs = "-asvx";
 		stdout-path = "serial0:9600n8";
-		netbsd,hardclock = "timer0";
 	};
 
 	aliases {

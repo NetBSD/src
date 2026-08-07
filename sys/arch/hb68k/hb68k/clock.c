@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.1 2026/07/19 01:48:21 thorpej Exp $	*/
+/*      $NetBSD: clock.c,v 1.2 2026/08/07 23:37:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2026/07/19 01:48:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2026/08/07 23:37:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -84,21 +84,20 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2026/07/19 01:48:21 thorpej Exp $");
 #include <machine/bus.h>
 
 static struct clock_vars {
-	struct clock_attach_args *args;
-	struct evcnt counter;
-} m68k_clocks[NCLOCKS];
-
-static struct clock_handlers {
 	const char *name;
-	void (*func)(struct clockframe *);
-} m68k_clock_handlers[] = {
-[CLOCK_HARDCLOCK]	=	{ .name = "hardclock",
-				  .func = hardclock },
-[CLOCK_STATCLOCK]	=	{ .name = "statclock",
-				  .func = statclock },
+	struct clock_if *clkif;
+	struct evcnt counter;
+} m68k_clocks[NCLOCKS] = {
+	[CLOCK_HARDCLOCK] = {
+		.name = "hardclock",
+	},
+	[CLOCK_STATCLOCK] = {
+		.name = "statclock",
+	},
 };
 
-void	*clock_devices[NCLOCKS];
+static TAILQ_HEAD(, clock_if) clock_candidates =
+    TAILQ_HEAD_INITIALIZER(clock_candidates);
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -112,15 +111,15 @@ void	*clock_devices[NCLOCKS];
 int	clock_statvar = 8192;
 int	clock_statmin;		/* statclock interval - (1/2 * variance) */
 
-#ifdef FDT
 #include <dev/fdt/fdtvar.h>
+#include <dev/ofw/openfirm.h>
 #include <libfdt.h>
 
 /*
  * Given a device phandle, see if it is one of the system clock
  * sources.
  */
-int
+static int
 clock_from_phandle(int phandle)
 {
 	static const char * propnames[NCLOCKS] = {
@@ -153,43 +152,58 @@ clock_from_phandle(int phandle)
 	}
 	return CLOCK_NONE;
 }
-#endif /* FDT */
+
+static int
+clock_hardclock_intr(void *v)
+{
+	struct clock_if * const clk = m68k_clocks[CLOCK_HARDCLOCK].clkif;
+
+	/* ACK interrupt, re-load timer. */
+	(*clk->clk_intr)(clk);
+
+	m68k_clocks[CLOCK_HARDCLOCK].counter.ev_count++;
+	hardclock((struct clockframe *)v);
+
+	return 1;
+}
+
+static int
+clock_statclock_intr(void *v)
+{
+	struct clock_if * const clk = m68k_clocks[CLOCK_STATCLOCK].clkif;
+
+	/* ACK interrupt, re-load timer. */
+	/* XXX add variance */
+	(*clk->clk_intr)(clk);
+
+	m68k_clocks[CLOCK_STATCLOCK].counter.ev_count++;
+	statclock((struct clockframe *)v);
+
+	return 1;
+}
 
 /*
  * Common parts of clock autoconfiguration.
  */
 void
-clock_attach(device_t dev, struct clock_attach_args *ca)
+clock_attach(struct clock_if *clk)
 {
-	/* Hook up that which we need. */
-	KASSERT(ca->ca_which >= 0 || ca->ca_which == CLOCK_NONE);
-	KASSERT(ca->ca_which < NCLOCKS);
-
-	/*
-	 * If this isn't a clock source, then just ignore it.
-	 */
-	if (ca->ca_which == CLOCK_NONE) {
-		return;
+	clk->clk_which =
+	    clock_from_phandle(devhandle_to_of(device_handle(clk->clk_dev)));
+	if (clk->clk_which == CLOCK_NONE) {
+		TAILQ_INSERT_TAIL(&clock_candidates, clk, clk_list);
+	} else {
+		TAILQ_INSERT_HEAD(&clock_candidates, clk, clk_list);
 	}
-
-	KASSERT(clock_devices[ca->ca_which] == NULL);
-	KASSERT(m68k_clocks[ca->ca_which].args == NULL);
-
-	clock_devices[ca->ca_which] = ca->ca_arg;
-	m68k_clocks[ca->ca_which].args = ca;
-
-	evcnt_attach_dynamic(&m68k_clocks[ca->ca_which].counter,
-	    EVCNT_TYPE_INTR, ca->ca_parent_evcnt,
-	    device_xname(dev), m68k_clock_handlers[ca->ca_which].name);
 }
 
-const char *
+static const char *
 clock_name(int which)
 {
 	KASSERT(which >= 0);
 	KASSERT(which < NCLOCKS);
 
-	return m68k_clock_handlers[which].name;
+	return m68k_clocks[which].name;
 }
 
 /*
@@ -202,8 +216,27 @@ void
 cpu_initclocks(void)
 {
 	int i, statint = 0, minint = 0;
+	struct clock_if *clk;
 
-	if (m68k_clocks[CLOCK_HARDCLOCK].args == NULL) {
+	/*
+	 * Assign the clocks.  All the clocks with pre-assigned roles
+	 * are at the head of the list, and all of the unassigned clocks
+	 * are at the end.
+	 */
+	TAILQ_FOREACH(clk, &clock_candidates, clk_list) {
+		if (clk->clk_which != CLOCK_NONE) {
+			KASSERT(m68k_clocks[clk->clk_which].clkif == NULL);
+			m68k_clocks[clk->clk_which].clkif = clk;
+		} else if (m68k_clocks[CLOCK_HARDCLOCK].clkif == NULL) {
+			clk->clk_which = CLOCK_HARDCLOCK;
+			m68k_clocks[CLOCK_HARDCLOCK].clkif = clk;
+		} else if (m68k_clocks[CLOCK_STATCLOCK].clkif == NULL) {
+			clk->clk_which = CLOCK_STATCLOCK;
+			m68k_clocks[CLOCK_STATCLOCK].clkif = clk;
+		}
+	}
+
+	if (m68k_clocks[CLOCK_HARDCLOCK].clkif == NULL) {
 		panic("Clock not configured");
 	}
 
@@ -213,7 +246,7 @@ cpu_initclocks(void)
 		tick = 1000000 / hz;
 	}
 
-	if (m68k_clocks[CLOCK_STATCLOCK].args == NULL) {
+	if (m68k_clocks[CLOCK_STATCLOCK].clkif == NULL) {
 		aprint_normal("No statclock; using hardclock.\n");
 		stathz = 0;
 		statint = 0;
@@ -233,32 +266,50 @@ cpu_initclocks(void)
 	}
 
 	for (i = 0; i < NCLOCKS; i++) {
-		struct clock_attach_args *ca = m68k_clocks[i].args;
+		clk = m68k_clocks[i].clkif;
 		unsigned int freq, interval;
+		int (*func)(void *);
+		int error;
 
-		if (ca == NULL) {
+		if (clk == NULL) {
 			continue;
 		}
 		switch (i) {
 		case CLOCK_HARDCLOCK:
 			freq = hz;
 			interval = tick;
+			func = clock_hardclock_intr;
 			break;
 
 		case CLOCK_STATCLOCK:
 			freq = stathz;
 			interval = statint;
+			func = clock_statclock_intr;
 			break;
 
 		default:
 			KASSERT(0);
 		}
 
-		aprint_normal("Initialzing %s: freq=%u Hz, interval=%u usec\n",
+		evcnt_attach_dynamic(&m68k_clocks[i].counter,
+		    EVCNT_TYPE_INTR, clk->clk_parent_evcnt,
+		    device_xname(clk->clk_dev), m68k_clocks[i].name);
+
+		aprint_normal_dev(clk->clk_dev,
+		    "%s: freq=%u Hz, interval=%u usec\n",
 		    clock_name(i), freq, interval);
-		ca->ca_initfunc(ca->ca_arg, interval,
-		    &m68k_clocks[i].counter,
-		    m68k_clock_handlers[i].func);
+		error = (*clk->clk_init)(clk, func);
+		if (error) {
+			panic("Failed to initialize %s for %s (error %d)",
+			    device_xname(clk->clk_dev),
+			    clock_name(i), error);
+		}
+		error = (*clk->clk_arm)(clk, interval);
+		if (error) {
+			panic("Failed to arm %s for %s (error %d)",
+			    device_xname(clk->clk_dev),
+			    clock_name(i), error);
+		}
 	}
 }
 

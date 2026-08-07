@@ -1,4 +1,4 @@
-/*	$NetBSD: wrap030_timer.c,v 1.1 2026/08/06 14:41:09 thorpej Exp $	*/
+/*	$NetBSD: wrap030_timer.c,v 1.2 2026/08/07 23:37:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wrap030_timer.c,v 1.1 2026/08/06 14:41:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wrap030_timer.c,v 1.2 2026/08/07 23:37:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,9 +49,7 @@ struct wraptmr_softc {
 	void		*sc_ih;
 	uint32_t	sc_freq;
 	uint32_t	sc_reload;
-	struct clock_attach_args sc_clock_args;
-	void		(*sc_handler)(struct clockframe *);
-	struct evcnt	*sc_evcnt;
+	struct clock_if sc_clkif;
 };
 
 #define	TIMER_ARM(sc)							\
@@ -79,40 +77,62 @@ wraptmr_us_to_ticks(struct wraptmr_softc *sc, unsigned int interval_us)
 	return (uint32_t)ticks;
 }
 
-static void
-wraptmr_initclock(void *arg, unsigned int interval_us,
-    struct evcnt *ev, void (*func)(struct clockframe *))
+static int
+wraptmr_init(struct clock_if *clk, int (*intrfunc)(void *))
 {
-	struct wraptmr_softc *sc = arg;
+	struct wraptmr_softc *sc =
+	    container_of(clk, struct wraptmr_softc, sc_clkif);
+	int phandle = devhandle_to_of(device_handle(sc->sc_dev));
+	char intrstr[128];
+
+	KASSERT(sc->sc_dev == clk->clk_dev);
+
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(sc->sc_dev, "failed to decode interrupt\n");
+		return ENXIO;
+	}
+
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SCHED,
+	    FDT_INTR_MPSAFE, intrfunc, NULL, device_xname(sc->sc_dev));
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to establish interrupt at %s\n", intrstr);
+		return ENXIO;
+	}
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
+
+	return 0;
+}
+
+static int
+wraptmr_arm(struct clock_if *clk, unsigned int interval_us)
+{
+	struct wraptmr_softc *sc =
+	    container_of(clk, struct wraptmr_softc, sc_clkif);
 
 	sc->sc_reload = wraptmr_us_to_ticks(sc, interval_us);
-	sc->sc_handler = func;
-	sc->sc_evcnt = ev;
+	TIMER_ARM(sc);
+
+	return 0;
+}
+
+static void
+wraptmr_intr(struct clock_if *clk)
+{
+	struct wraptmr_softc *sc =
+	    container_of(clk, struct wraptmr_softc, sc_clkif);
 
 	TIMER_ARM(sc);
 }
 
-#define	CLOCK_HANDLER()							\
-do {									\
-	TIMER_ARM(sc);							\
-									\
-	/* Increment the counter and call the handler. */		\
-	sc->sc_evcnt->ev_count++;					\
-	sc->sc_handler((struct clockframe *)v);				\
-} while (/*CONSTCOND*/0)
-
-static int
-wraptmr_hardclock(void *v)
+static void
+wraptmr_disarm(struct clock_if *clk)
 {
-	struct wraptmr_softc *sc = clock_devices[CLOCK_HARDCLOCK];
+	struct wraptmr_softc *sc =
+	    container_of(clk, struct wraptmr_softc, sc_clkif);
 
-	CLOCK_HANDLER();
-	return 1;
+	TIMER_DISARM(sc);
 }
-
-static void *wraptmr_isrs[NCLOCKS] = {
-[CLOCK_HARDCLOCK]	=	wraptmr_hardclock,
-};
 
 static int
 wraptmr_match(device_t parent, cfdata_t cf, void *aux)
@@ -130,9 +150,8 @@ wraptmr_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
-	char intrstr[128];
 	struct clk *clk;
-	int which, error;
+	int error;
 
 	sc->sc_dev = self;
 	sc->sc_st = faa->faa_bst;
@@ -157,34 +176,17 @@ wraptmr_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
-		aprint_error(": failed to decode interrupt\n");
-		return;
-	}
-
 	sc->sc_freq = clk_get_rate(clk);
 
 	aprint_naive("\n");
 	aprint_normal(": frequency %u Hz\n", sc->sc_freq);
 
-	which = clock_from_phandle(phandle);
-	if (which == CLOCK_NONE || wraptmr_isrs[which] == NULL) {
-		return;
-	}
-
-	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_SCHED,
-	    FDT_INTR_MPSAFE, wraptmr_isrs[which], NULL, device_xname(self));
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt at %s\n",
-		    intrstr);
-		return;
-	}
-	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
-
-	sc->sc_clock_args.ca_initfunc = wraptmr_initclock;
-	sc->sc_clock_args.ca_arg = sc;
-	sc->sc_clock_args.ca_which = which;
-	clock_attach(self, &sc->sc_clock_args);
+	sc->sc_clkif.clk_dev = self;
+	sc->sc_clkif.clk_init = wraptmr_init;
+	sc->sc_clkif.clk_arm = wraptmr_arm;
+	sc->sc_clkif.clk_intr = wraptmr_intr;
+	sc->sc_clkif.clk_disarm = wraptmr_disarm;
+	clock_attach(&sc->sc_clkif);
 }
 
 CFATTACH_DECL_NEW(wraptmr, sizeof(struct wraptmr_softc),
