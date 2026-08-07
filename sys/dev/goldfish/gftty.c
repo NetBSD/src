@@ -1,4 +1,4 @@
-/*	$NetBSD: gftty.c,v 1.5 2025/12/11 07:25:11 andvar Exp $	*/
+/*	$NetBSD: gftty.c,v 1.6 2026/08/07 23:48:20 tls Exp $	*/
 
 /*-     
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gftty.c,v 1.5 2025/12/11 07:25:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gftty.c,v 1.6 2026/08/07 23:48:20 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -377,7 +377,7 @@ gftty_softrx(void *v)
 	struct gftty_softc *sc = v;
 	struct tty *tp = sc->sc_tty;
 	int i, len;
-	char *cp;
+	unsigned char *cp;
 
 	ttylock(tp);
 	cp = sc->sc_rxbuf;
