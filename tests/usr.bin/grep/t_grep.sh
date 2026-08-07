@@ -1,4 +1,4 @@
-# $NetBSD: t_grep.sh,v 1.8 2024/11/23 09:38:02 rillig Exp $
+# $NetBSD: t_grep.sh,v 1.9 2026/08/07 23:09:46 gutteridge Exp $
 #
 # Copyright (c) 2008, 2009, 2021, 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -118,7 +118,7 @@ word_locale_body()
 	atf_check -o file:"input" \
 	    env LC_ALL=C grep -w "array" "input"
 
-	# XXX: In an UTF-8 locale, GNU Grep treats '[' as a word character.
+	# XXX: In a UTF-8 locale, GNU Grep treats '[' as a word character.
 	atf_check -s exit:1 -o empty \
 	    env LC_ALL="C.UTF-8" grep -w "array" "input"
 }
