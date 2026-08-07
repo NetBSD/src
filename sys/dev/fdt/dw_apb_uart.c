@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.13 2025/09/06 22:53:48 thorpej Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.14 2026/08/07 14:31:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.13 2025/09/06 22:53:48 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.14 2026/08/07 14:31:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,10 +91,8 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (of_getprop_uint32(phandle, "reg-shift", &reg_shift)) {
-		/* missing or bad reg-shift property, assume 2 */
-		reg_shift = 2;
-	}
+	reg_shift = fdtbus_get_reg_shift(phandle, 2);
+
 	if (of_getprop_uint32(phandle, "reg-io-width", &reg_iowidth)) {
 		/* missing or bad reg-io-width property, assume 1 */
 		reg_iowidth = 1;
@@ -179,10 +177,8 @@ dw_apb_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 		speed = 115200;	/* default */
 	flags = fdtbus_get_stdout_flags();
 
-	if (of_getprop_uint32(phandle, "reg-shift", &reg_shift)) {
-		/* missing or bad reg-shift property, assume 2 */
-		reg_shift = 2;
-	}
+	reg_shift = fdtbus_get_reg_shift(phandle, 2);
+
 	if (of_getprop_uint32(phandle, "reg-io-width", &reg_iowidth)) {
 		/* missing or bad reg-io-width property, assume 1 */
 		reg_iowidth = 1;

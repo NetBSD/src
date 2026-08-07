@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.86 2025/09/08 13:06:16 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.87 2026/08/07 14:31:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -85,6 +85,7 @@ int		fdtbus_get_reg_byname(int, const char *, bus_addr_t *,
 int		fdtbus_get_reg64(int, u_int, uint64_t *, uint64_t *);
 int		fdtbus_get_addr_cells(int);
 int		fdtbus_get_size_cells(int);
+int		fdtbus_get_reg_shift(int, int);
 uint64_t	fdtbus_get_cells(const uint8_t *, int);
 int		fdtbus_get_phandle(int, const char *);
 int		fdtbus_get_phandle_with_data(int, const char *, const char *,

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.42 2026/08/07 14:25:55 thorpej Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.43 2026/08/07 14:31:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.42 2026/08/07 14:25:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.43 2026/08/07 14:31:36 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -115,6 +115,12 @@ int
 fdtbus_get_size_cells(int phandle)
 {
 	return fdtbus_get_u32prop_with_default(phandle, "#size-cells", 0);
+}
+
+int
+fdtbus_get_reg_shift(int phandle, int dflt)
+{
+	return fdtbus_get_u32prop_with_default(phandle, "reg-shift", dflt);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_fdt.c,v 1.1 2026/07/06 23:45:48 thorpej Exp $	*/
+/*	$NetBSD: wdc_fdt.c,v 1.2 2026/08/07 14:31:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_fdt.c,v 1.1 2026/07/06 23:45:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_fdt.c,v 1.2 2026/08/07 14:31:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -127,10 +127,7 @@ wdc_fdt_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	uint32_t reg_shift;
-	if (of_getprop_uint32(phandle, "reg-shift", &reg_shift) < 0) {
-		reg_shift = 0;
-	}
+	uint32_t reg_shift = fdtbus_get_reg_shift(phandle, 0);
 
 	for (int i = 0; i < WDC_NREG; i++) {
 		error = bus_space_subregion(wdr->cmt_iot, wdr->cmd_baseioh,

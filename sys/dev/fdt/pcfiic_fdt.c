@@ -1,4 +1,4 @@
-/*	$NetBSD: pcfiic_fdt.c,v 1.1 2026/07/12 04:23:59 thorpej Exp $	*/
+/*	$NetBSD: pcfiic_fdt.c,v 1.2 2026/08/07 14:31:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcfiic_fdt.c,v 1.1 2026/07/12 04:23:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcfiic_fdt.c,v 1.2 2026/08/07 14:31:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,10 +151,7 @@ pcfiic_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("\n");
 
-	uint32_t reg_shift;
-	if (of_getprop_uint32(phandle, "reg-shift", &reg_shift) < 0) {
-		reg_shift = 0;
-	}
+	uint32_t reg_shift = fdtbus_get_reg_shift(phandle, 0);
 
 	sc->sc_pcfdev.sc_regmap[PCF8584_S0] = PCF8584_S0 << reg_shift;
 	sc->sc_pcfdev.sc_regmap[PCF8584_S1] = PCF8584_S1 << reg_shift;
