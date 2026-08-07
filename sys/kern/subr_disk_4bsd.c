@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_4bsd.c,v 1.2 2026/07/17 01:11:58 thorpej Exp $	*/
+/*	$NetBSD: subr_disk_4bsd.c,v 1.3 2026/08/07 13:49:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_4bsd.c,v 1.2 2026/07/17 01:11:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_4bsd.c,v 1.3 2026/08/07 13:49:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,71 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_4bsd.c,v 1.2 2026/07/17 01:11:58 thorpej E
 /*
  * Implementation of readdisklabel() and writedisklabel() for the simple
  * "basic scheme from 4BSD".
- *
- * Lifted verbatim from the hp300 copy.
  */
+
+/*
+ * We prefer the platform's "native" label sector / offset.  Look for
+ * it there first.  Otherwise, scan the first 3 disk sectors for the
+ * label.  When updating a label, we will write it to where we found
+ * it.  If writing a new label from scratch, we will write it to the
+ * "native" location.
+ */
+static int label_sectors[] = { LABELSECTOR,  0,  1,  2 };
+static int label_offsets[] = { LABELOFFSET, -1, -1, -1 };
+
+#define	DISKLABEL_SIZE(x)						\
+	(offsetof(struct disklabel, d_partitions) +			\
+	 (sizeof(struct partition) * (x)))
+
+/* Smallest 4.4BSD disklabel that was ever in use. */
+#define	DISKLABEL_MINSIZE	DISKLABEL_SIZE(8)
+
+static bool
+taste_label(const struct disklabel *lp, void *buf, size_t secsize)
+{
+	uint16_t npartitions;
+
+	if (lp->d_magic != DISKMAGIC || lp->d_magic2 != DISKMAGIC) {
+		return false;
+	}
+
+	npartitions = lp->d_npartitions;
+
+	if ((uintptr_t)lp + DISKLABEL_SIZE(npartitions) >
+	    (uintptr_t)buf + secsize) {
+		/* doesn't fit in the sector. */
+		return false;
+	}
+
+	if (npartitions > MAXPARTITIONS || dkcksum(lp)) {
+		/* disklabel is corrupted. */
+		return false;
+	}
+
+	return true;
+}
+
+static struct disklabel *
+find_label_in_sector(void *buf, size_t secsize, int offs)
+{
+	struct disklabel *lp = buf;
+	uintptr_t lp_lim = ((uintptr_t)buf + secsize - DISKLABEL_MINSIZE);
+
+	if (offs != -1) {
+		lp = (void *)((uintptr_t)lp + offs);
+		return taste_label(lp, buf, secsize) ? lp : NULL;
+	}
+
+	for (;; lp = (void *)((uintptr_t)lp + sizeof(uint32_t))) {
+		if ((uintptr_t)lp > lp_lim) {
+			/* Not found in this sector. */
+			return NULL;
+		}
+		if (taste_label(lp, buf, secsize)) {
+			return lp;
+		}
+	}
+}
 
 /*
  * Attempt to read a disk label from a device using the indicated strategy
@@ -87,31 +149,22 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
-	bp->b_blkno = LABELSECTOR;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
-	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
-	(*strat)(bp);
-	if (biowait(bp))
-		msg = "I/O error";
-	else for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)((char *)bp->b_data +
-	    DEV_BSIZE - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			/*
-			 * don't print a message about lack of a disk
-			 * label.
-			 */
-		} else if (dlp->d_npartitions > MAXPARTITIONS ||
-			   dkcksum(dlp) != 0)
-			msg = "disk label corrupted";
-		else {
+
+	for (i = 0; i < __arraycount(label_sectors); i++) {
+		if (disk_read_sectors(strat, lp, bp, label_sectors[i], 1)) {
+			msg = "I/O error";
+			goto done;
+		}
+
+		dlp = find_label_in_sector(bp->b_data, DEV_BSIZE,
+					   label_offsets[i]);
+		if (dlp != NULL) {
 			*lp = *dlp;
 			msg = NULL;
 			break;
 		}
 	}
+ done:
 	brelse(bp, 0);
 	return msg;
 }
@@ -126,7 +179,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	struct buf *bp;
 	struct disklabel *dlp;
 	int labelpart;
-	int error = 0;
+	int i, error = 0;
 
 	labelpart = DISKPART(dev);
 	if (lp->d_partitions[labelpart].p_offset != 0) {
@@ -136,18 +189,16 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	}
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
-	bp->b_blkno = LABELSECTOR;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
-	(*strat)(bp);
-	if ((error = biowait(bp)) != 0)
-		goto done;
-	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)
-	      ((char *)bp->b_data + lp->d_secsize - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
-		    dkcksum(dlp) == 0) {
+
+	for (i = 0; i < __arraycount(label_sectors); i++) {
+		if ((error = disk_read_sectors(strat, lp, bp,
+					       label_sectors[i], 1)) != 0) {
+			goto done;
+		}
+
+		dlp = find_label_in_sector(bp->b_data, DEV_BSIZE,
+					   label_offsets[i]);
+		if (dlp != NULL) {
 			*dlp = *lp;
 			bp->b_oflags &= ~(BO_DONE);
 			bp->b_flags &= ~(B_READ);
