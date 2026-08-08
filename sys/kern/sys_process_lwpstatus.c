@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process_lwpstatus.c,v 1.5 2025/01/11 19:42:04 christos Exp $	*/
+/*	$NetBSD: sys_process_lwpstatus.c,v 1.6 2026/08/08 00:45:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.5 2025/01/11 19:42:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.6 2026/08/08 00:45:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -163,14 +163,21 @@ proc_regio(struct lwp *l, struct uio *uio, size_t ks, ptrace_regrfunc_t r,
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	error = (*r)(l, buf, &ks);
+	lwp_lock(l);
+	if (l->l_stat != LSSTOP)
+		error = EBUSY;
+	else
+		error = (*r)(l, buf, &ks);
+	lwp_unlock(l);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		lwp_lock(l);
 		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
 			error = (*w)(l, buf, ks);
+		lwp_unlock(l);
 	}
 
 	uio->uio_offset = 0;
