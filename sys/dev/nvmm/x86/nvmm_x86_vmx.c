@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.96 2026/07/15 01:22:21 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.97 2026/08/08 12:47:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.96 2026/07/15 01:22:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.97 2026/08/08 12:47:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2454,11 +2454,13 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 		cpudata->gcr2 = rcr2();
 		vmx_htlb_flush_ack(cpudata, machgen);
-		exitcode = vmx_vmread(VMCS_EXIT_REASON);
-		exitcode &= __BITS(15,0);
-		if (exitcode == VMCS_EXITCODE_EXC_NMI) {
-			/* handle nmi before vmx_sti() */
-			vmx_exit_exc_nmi(mach, vcpu, exit);
+		if (__predict_true(ret == 0)) {
+			exitcode = vmx_vmread(VMCS_EXIT_REASON);
+			exitcode &= __BITS(15,0);
+			if (exitcode == VMCS_EXITCODE_EXC_NMI) {
+				/* handle nmi before vmx_sti() */
+				vmx_exit_exc_nmi(mach, vcpu, exit);
+			}
 		}
 		vmx_sti();
 		vmx_vcpu_guest_fpu_leave(vcpu);
