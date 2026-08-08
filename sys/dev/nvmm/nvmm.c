@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.48 2026/02/08 10:03:52 nia Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.49 2026/08/08 12:51:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.48 2026/02/08 10:03:52 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.49 2026/08/08 12:51:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,12 +668,11 @@ nvmm_vcpu_run(struct nvmm_owner *owner, struct nvmm_ioc_vcpu_run *args)
 		goto out;
 
 	error = nvmm_do_vcpu_run(mach, vcpu, &args->exit);
+	vcpu->comm->stop = 0;
 	nvmm_vcpu_put(vcpu);
 
 out:
 	nvmm_machine_put(mach);
-	if (vcpu)
-		vcpu->comm->stop = 0;
 	return error;
 }
 
