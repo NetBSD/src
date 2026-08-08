@@ -1,4 +1,4 @@
-# $NetBSD: t_grep.sh,v 1.10 2026/08/08 00:02:43 riastradh Exp $
+# $NetBSD: t_grep.sh,v 1.11 2026/08/08 00:16:54 riastradh Exp $
 #
 # Copyright (c) 2008, 2009, 2021, 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -369,16 +369,6 @@ pr_60552_body()
 	local d
 
 	d=$(atf_get_srcdir)
-	case $(uname -p) in
-	alpha|i?86|ia64|hppa|m68k*|mips|sh3*|sparc*|vax|x86_64)
-		# signed char
-		atf_expect_fail "PR bin/60552:" \
-		    "/usr/bin/grep failure under AMD64"
-		;;
-	arm*|aarch64*|powerpc*|riscv*)
-		# unsigned char
-		;;
-	esac
 	atf_check -o ignore grep -i est --color=always "$d/d_pr60552"
 }
 pr_60552_cleanup()
