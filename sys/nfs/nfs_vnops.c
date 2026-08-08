@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.327 2026/01/26 20:34:24 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.328 2026/08/08 00:08:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.327 2026/01/26 20:34:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.328 2026/08/08 00:08:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -47,28 +47,30 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.327 2026/01/26 20:34:24 christos Exp
 #endif
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
-#include <sys/resourcevar.h>
-#include <sys/mount.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
 #include <sys/condvar.h>
-#include <sys/disk.h>
-#include <sys/malloc.h>
-#include <sys/kmem.h>
-#include <sys/mbuf.h>
-#include <sys/mutex.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
+#include <sys/cprng.h>
 #include <sys/dirent.h>
+#include <sys/disk.h>
 #include <sys/fcntl.h>
 #include <sys/hash.h>
-#include <sys/lockf.h>
-#include <sys/stat.h>
-#include <sys/unistd.h>
 #include <sys/kauth.h>
-#include <sys/cprng.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/lockf.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/mount.h>
+#include <sys/mutex.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/stat.h>
+#include <sys/systm.h>
+#include <sys/unistd.h>
+#include <sys/vnode.h>
 
 #ifdef UVMHIST
 #include <uvm/uvm.h>
@@ -81,14 +83,14 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.327 2026/01/26 20:34:24 christos Exp
 #include <miscfs/genfs/genfs_node.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <nfs/rpcv2.h>
-#include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
-#include <nfs/nfsnode.h>
-#include <nfs/nfsmount.h>
-#include <nfs/xdr_subs.h>
-#include <nfs/nfsm_subs.h>
 #include <nfs/nfs_var.h>
+#include <nfs/nfsm_subs.h>
+#include <nfs/nfsmount.h>
+#include <nfs/nfsnode.h>
+#include <nfs/nfsproto.h>
+#include <nfs/rpcv2.h>
+#include <nfs/xdr_subs.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
