@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process_lwpstatus.c,v 1.6 2026/08/08 00:45:52 riastradh Exp $	*/
+/*	$NetBSD: sys_process_lwpstatus.c,v 1.7 2026/08/08 12:38:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.6 2026/08/08 00:45:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.7 2026/08/08 12:38:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -151,6 +151,10 @@ proc_regio(struct lwp *l, struct uio *uio, size_t ks, ptrace_regrfunc_t r,
 	char *kv;
 	size_t kl;
 
+	/*
+	 * Sanity-check the transfer and find the window inside the
+	 * register content that the user is doing I/O on.
+	 */
 	if (ks > sizeof(buf))
 		return E2BIG;
 
@@ -163,24 +167,58 @@ proc_regio(struct lwp *l, struct uio *uio, size_t ks, ptrace_regrfunc_t r,
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
+	/*
+	 * Read all the registers first, even if the caller is writing
+	 * to them, because the caller might be writing to only a part
+	 * of them.  But if the process is not stopped, refuse.  Must
+	 * hold the lwp lock to verify l->l_stat remains LSSTOP as we
+	 * read.
+	 */
 	lwp_lock(l);
 	if (l->l_stat != LSSTOP)
 		error = EBUSY;
 	else
 		error = (*r)(l, buf, &ks);
 	lwp_unlock(l);
-	if (error == 0)
-		error = uiomove(kv, kl, uio);
-	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+	if (error)
+		goto out;
+
+	/*
+	 * Copy (part of) the register content to or from the user's
+	 * I/O space.
+	 */
+	error = uiomove(kv, kl, uio);
+	if (error)
+		goto out;
+
+	/*
+	 * If we're writing registers (or part of the registers), write
+	 * them back.  Again, if the process is not stopped, refuse.
+	 * Must hold the lwp lock to verify l->l_stat remains LSSTOP as
+	 * we write.
+	 *
+	 * Note that there is a potential race condition or ABA problem
+	 * here: in the time between the lwp_unlock above and the
+	 * lwp_lock below, l->l_stat could transition from LSSTOP to
+	 * something else back to LSSTOP again, and the register
+	 * content could be scrambled.  We should really fail with
+	 * EBUSY if that happens at all, but there's no easy way to
+	 * detect that case, and we certainly can't hold the lwp locked
+	 * across uiomove(9) which might wait indefinitely for swap
+	 * I/O.
+	 */
+	if (uio->uio_rw == UIO_WRITE) {
 		lwp_lock(l);
 		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
 			error = (*w)(l, buf, ks);
 		lwp_unlock(l);
+		if (error)
+			goto out;
 	}
 
-	uio->uio_offset = 0;
+out:	uio->uio_offset = 0;
 	return error;
 }
 #endif
