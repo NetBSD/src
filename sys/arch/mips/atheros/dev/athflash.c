@@ -1,4 +1,4 @@
-/* $NetBSD: athflash.c,v 1.12 2021/01/04 17:42:29 thorpej Exp $ */
+/* $NetBSD: athflash.c,v 1.13 2026/08/08 23:01:01 andvar Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.12 2021/01/04 17:42:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.13 2026/08/08 23:01:01 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -398,7 +398,7 @@ flash_sector_erase(struct flash_softc *sc, bus_size_t offset)
 	bus_space_tag_t		iot = sc->sc_iot;
 	bus_space_handle_t	ioh = sc->sc_ioh;
 
-	DPRINTF(("flash_sector_erase offset = %08lx\n", offset));
+	DPRINTF(("flash_sector_erase offset = %08" PRIxBUSSIZE "\n", offset));
 
 	bus_space_write_2(iot, ioh, (0x5555 << 1), 0xAAAA);
 	bus_space_write_2(iot, ioh, (0x2AAA << 1), 0x5555);
