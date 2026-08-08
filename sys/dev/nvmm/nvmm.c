@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.49 2026/08/08 12:51:34 riastradh Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.50 2026/08/08 15:00:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.49 2026/08/08 12:51:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.50 2026/08/08 15:00:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,6 +373,9 @@ nvmm_machine_destroy(struct nvmm_owner *owner,
 	}
 
 	(*nvmm_impl->machine_destroy)(mach);
+
+	/* Free the comm uobj. */
+	uao_detach(mach->commuobj);
 
 	/* Free the machine vmspace. */
 	uvmspace_free(mach->vm);
