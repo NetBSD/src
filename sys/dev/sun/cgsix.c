@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.77 2026/08/03 08:02:57 martin Exp $ */
+/*	$NetBSD: cgsix.c,v 1.78 2026/08/08 13:15:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.77 2026/08/03 08:02:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.78 2026/08/08 13:15:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1189,6 +1189,7 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		union cursor_cmap tcm;
 		int w = p->which, error, count;
 		uint32_t image[32], mask[32];
+
 		if (w & WSDISPLAY_CURSOR_DOCMAP) {
 			/*
 			 * This use of a temporary copy of the cursor
@@ -1286,6 +1287,11 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 				return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 			}
+		return 0;
+	case WSDISPLAYIO_SVIDEO:
+		cg6_blank(sc, *(int *)data == WSDISPLAYIO_VIDEO_OFF);
+		return 0;
+
 	}
 	return EPASSTHROUGH;
 }
