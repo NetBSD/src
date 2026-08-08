@@ -1,4 +1,4 @@
-# $NetBSD: WRAP030,v 1.1 2026/08/06 14:41:09 thorpej Exp $
+# $NetBSD: WRAP030,v 1.2 2026/08/08 15:10:04 thorpej Exp $
 #
 # WRAP030 machine description file
 #
@@ -14,9 +14,13 @@ makeoptions	STATIC_DEVICE_TREE="${HB68K}/wrap030/wrap030.dts"
 makeoptions	TEXTADDR=0		# ROM uses fixed load address
 options 	HZ=1000			# wrap030 timer doesn't divide clk :(
 
+# reserve symbol space and copy the symbol table into it.  Needed
+# because Wrap030 doesn't have a loader to load the symbols (yet).
+makeoptions	COPY_SYMTAB=1
+
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"WRAP030-$Revision: 1.1 $"
+#ident 		"WRAP030-$Revision: 1.2 $"
 
 maxusers	8
 
