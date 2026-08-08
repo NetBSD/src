@@ -1,4 +1,4 @@
-$NetBSD: README.evbmips,v 1.3 2026/08/08 16:31:59 andvar Exp $
+$NetBSD: README.evbmips,v 1.4 2026/08/08 16:55:12 andvar Exp $
 
 The documentation is not final, more updates are coming.
 
@@ -9,7 +9,7 @@ ADM5210		2007/03/20	evbmips-el		Infineon ADM5120 (MIPS32 4Kc) based boards and r
 ADM5210-NB	2007/03/20	evbmips-el		ADM5120 netboot kernel.
 ADM5210-USB	2007/03/20	evbmips-el		ADM5120 netboot kernel with USB support.
 AP30		2006/06/06	evbmips-eb		Atheros AP30 development board (AR5312).
-CI20		2014/11/22	evbmips-eb		MIPS Creator CI20 (Ingenic JZ4780).
+CI20		2014/11/22	evbmips-el		MIPS Creator CI20 (Ingenic JZ4780).
 CPMBR1400	2011/07/28	evbmips-el		CradlePoint MBR1400 Router (Ralink RT3883 MIPS74K).
 DB120		2011/07/07	evbmips-eb		Qualcomm Atheros AR9344 (MIPS74K) DB120 evaluation board.
 DBAU1500	2006/02/08	evbmips-el,eb		AMD Alchemy DBAu1500 evaluation board.
