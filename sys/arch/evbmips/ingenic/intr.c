@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13 2017/05/21 06:49:12 skrll Exp $ */
+/*	$NetBSD: intr.c,v 1.14 2026/08/09 22:31:20 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2017/05/21 06:49:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14 2026/08/09 22:31:20 andvar Exp $");
 
 #define __INTR_PRIVATE
 
@@ -145,11 +145,11 @@ evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 {
 	uint32_t id;
 #ifdef INGENIC_INTR_DEBUG
+#if 0
 	char buffer[256];
 
-#if 0
 	snprintf(buffer, 256, "pending: %08x CR %08x\n", ipending,
-	   mipsNN_cp0_cause_read());
+	   mips_cp0_cause_read());
 	ingenic_puts(buffer);
 #endif
 #endif
