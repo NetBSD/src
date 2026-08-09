@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_4bsd.c,v 1.3 2026/08/07 13:49:24 thorpej Exp $	*/
+/*	$NetBSD: subr_disk_4bsd.c,v 1.4 2026/08/09 16:10:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_4bsd.c,v 1.3 2026/08/07 13:49:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_4bsd.c,v 1.4 2026/08/09 16:10:00 thorpej Exp $");
+
+#define	__SUBR_DISK_4BSD_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +116,9 @@ find_label_in_sector(void *buf, size_t secsize, int offs)
 	}
 }
 
+__weak_alias(readdisklabel, readdisklabel_4bsd);
+__weak_alias(writedisklabel, writedisklabel_4bsd);
+
 /*
  * Attempt to read a disk label from a device using the indicated strategy
  * routine.  The label must be partly set up before this: secpercyl and
@@ -122,8 +127,8 @@ find_label_in_sector(void *buf, size_t secsize, int offs)
  * string on failure.
  */
 const char *
-readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
-    struct cpu_disklabel *osdep)
+readdisklabel_4bsd(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -173,8 +178,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
-    struct cpu_disklabel *osdep)
+writedisklabel_4bsd(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;

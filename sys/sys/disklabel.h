@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.129 2026/01/10 16:26:29 rillig Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.130 2026/08/09 16:10:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -498,6 +498,13 @@ int	 bounds_check_with_label(struct disk *, struct buf *, int);
 int	 bounds_check_with_mediasize(struct buf *, int, uint64_t);
 const char *getfstypename(int);
 int	disklabel_dev_unit(dev_t);
+
+#ifdef __SUBR_DISK_4BSD_PRIVATE
+const char *readdisklabel_4bsd(dev_t, void (*)(struct buf *),
+	    struct disklabel *, struct cpu_disklabel *);
+int	 writedisklabel_4bsd(dev_t, void (*)(struct buf *), struct disklabel *,
+	    struct cpu_disklabel *);
+#endif /* __SUBR_DISK_4BSD_PRIVATE */
 #endif
 #endif /* _LOCORE */
 
