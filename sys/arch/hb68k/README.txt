@@ -1,4 +1,4 @@
-$NetBSD: README.txt,v 1.1 2026/07/19 01:48:20 thorpej Exp $
+$NetBSD: README.txt,v 1.2 2026/08/09 04:00:12 thorpej Exp $
 
 Greetings programs!  This is a space for your homebrew 680x0 projects!
 I know where are a few of them out there, so port NetBSD to your board
@@ -17,12 +17,12 @@ If you need help, advice, or emotional support, drop me a line!
 Homebrew systems supported by this port:
 
 - Phaethon 1: thorpej's 68010-based system with a custom MMU.
+- Wrap030: techav's 68030-based system that started life as a wire-wrapped
+  prototype, now lives on an ATX form-factor board.
 
 Other systems that I'd like to see supported by this port:
 
 - crmaykish's Mackerel-30
-- techav's Wrap030 (techav actually started with NetBSD on this machine
-  I think?)
 - KISS-68030 (you can find this on https://www.retrobrewcomputers.org/)
 - MAXI030 (https://www.aslak.net/index.php/category/68k/)
 
