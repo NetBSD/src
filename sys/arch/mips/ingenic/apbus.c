@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.24 2026/07/26 20:15:17 rkujawa Exp $ */
+/*	$NetBSD: apbus.c,v 1.25 2026/08/09 22:21:41 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.24 2026/07/26 20:15:17 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.25 2026/08/09 22:21:41 andvar Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -133,10 +133,10 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	apbus_init();
 
 #ifdef INGENIC_DEBUG
-	printf("core ctrl:   %08x\n", MFC0(12, 2));
-	printf("core status: %08x\n", MFC0(12, 3));
-	printf("REIM: %08x\n", MFC0(12, 4));
-	printf("ID: %08x\n", MFC0(15, 1));
+	printf("core ctrl:   %08x\n", mips_cp0_corectrl_read());
+	printf("core status: %08x\n", mips_cp0_corestatus_read());
+	printf("REIM: %08x\n", mips_cp0_corereim_read());
+	printf("ID: %08x\n", mipsNN_cp0_ebase_read());
 #endif
 	/* assuming we're using MPLL */
 	mpll = readreg(JZ_CPMPCR);

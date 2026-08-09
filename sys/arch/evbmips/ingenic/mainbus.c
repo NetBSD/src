@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2021/08/07 16:18:51 thorpej Exp $ */
+/*	$NetBSD: mainbus.c,v 1.10 2026/08/09 22:21:41 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2021/08/07 16:18:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2026/08/09 22:21:41 andvar Exp $");
 
+#include "opt_ingenic.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -39,8 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2021/08/07 16:18:51 thorpej Exp $");
 #include <mips/cpuregs.h>
 
 #include <mips/ingenic/ingenic_regs.h>
-
-#include "opt_ingenic.h"
+#ifdef INGENIC_DEBUG
+#include <mips/ingenic/ingenic_var.h>
+#endif
 
 #include "locators.h"
 
