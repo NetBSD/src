@@ -87,56 +87,56 @@
 			compatible = "ns16550a";
 			reg = <0x80300000 0x8>;
 			clock-frequency = <1843200>;
-			interrupts = <2 0>;
+			interrupts = <5 0>;
 		};
 
 		serial@80300008 {
 			compatible = "ns16550a";
 			reg = <0x80300008 0x8>;
 			clock-frequency = <1843200>;
-			interrupts = <2 0>;
+			interrupts = <5 0>;
 		};
 
 		serial@80300010 {
 			compatible = "ns16550a";
 			reg = <0x80300010 0x8>;
 			clock-frequency = <1843200>;
-			interrupts = <2 0>;
+			interrupts = <5 0>;
 		};
 
 		serial@80300018 {
 			compatible = "ns16550a";
 			reg = <0x80300018 0x8>;
 			clock-frequency = <1843200>;
-			interrupts = <2 0>;
+			interrupts = <5 0>;
 		};
 
 		serial@80300020 {
 			compatible = "ns16550a";
 			reg = <0x80300020 0x8>;
 			clock-frequency = <1843200>;
-			interrupts = <2 0>;
+			interrupts = <5 0>;
 		};
 
 		serial@80300028 {
 			compatible = "ns16550a";
 			reg = <0x80300028 0x8>;
 			clock-frequency = <1843200>;
-			interrupts = <2 0>;
+			interrupts = <5 0>;
 		};
 
 		serial@80300030 {
 			compatible = "ns16550a";
 			reg = <0x80300030 0x8>;
 			clock-frequency = <1843200>;
-			interrupts = <2 0>;
+			interrupts = <5 0>;
 		};
 
 		serial@80300038 {
 			compatible = "ns16550a";
 			reg = <0x80300038 0x8>;
 			clock-frequency = <1843200>;
-			interrupts = <2 0>;
+			interrupts = <5 0>;
 		};
 
 		ata@80200000 {
@@ -144,6 +144,7 @@
 			reg = <0x80200000 0x10>,	/* command */
 			      <0x8020200c 0x10>;	/* control */
 			reg-shift = <1>;
+			interrupts = <3 0>;
 			ata-generic,use16bit;
 		};
 
@@ -151,7 +152,7 @@
 			compatible = "techav,wrap030-timer";
 			reg = <0x80f00000 0x10000>;
 			clocks = <&cpu_osc>;
-			interrupts = <4 0>;
+			interrupts = <6 0>;
 		};
 	};
 };
