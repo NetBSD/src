@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.102 2025/01/07 14:21:11 joe Exp $	*/
+/*	$NetBSD: main.c,v 1.103 2026/08/10 13:36:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.102 2025/01/07 14:21:11 joe Exp $");
+__RCSID("$NetBSD: main.c,v 1.103 2026/08/10 13:36:10 thorpej Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -128,6 +128,8 @@ struct	hashtab *deaddevitab;	/* removed instances lookup */
 struct	hashtab *selecttab;	/* selects things that are "optional foo" */
 struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 struct	hashtab *opttab;	/* table of configured options */
+struct	hashtab *no_opttab;	/* table of explcitly deselected options */
+struct	hashtab *dep_opttab;	/* table of depended options */
 struct	hashtab *fsopttab;	/* table of configured file systems */
 struct	dlhash *defopttab;	/* options that have been "defopt"'d */
 struct	dlhash *defflagtab;	/* options that have been "defflag"'d */
@@ -378,6 +380,8 @@ main(int argc, char **argv)
 	selecttab = ht_new();
 	needcnttab = ht_new();
 	opttab = ht_new();
+	no_opttab = ht_new();
+	dep_opttab = ht_new();
 	mkopttab = ht_new();
 	fsopttab = ht_new();
 	deffstab = nvhash_create();
@@ -668,9 +672,15 @@ do_depend(struct nvlist *nv)
 				    nv->nv_name, a->a_name);
 			expandattr(a, selectattr);
 		} else {
-			if (ht_lookup(opttab, nv->nv_name) == NULL)
-				addoption(nv->nv_name, NULL);
-			dependopts_one(nv->nv_name);
+			if (ht_lookup(no_opttab, nv->nv_name)) {
+				CFGDBG(3,
+				  "depended option `%s' explcitly de-selected",
+				  nv->nv_name);
+			} else {
+				if (ht_lookup(opttab, nv->nv_name) == NULL)
+					addoption(nv->nv_name, NULL);
+				dependopts_one(nv->nv_name);
+			}
 		}
 	}
 }
@@ -846,6 +856,18 @@ add_fs_dependencies(struct nvlist *nv, struct nvlist *deps)
 static void
 add_opt_dependencies(struct defoptlist *dl, struct nvlist *deps)
 {
+	struct nvlist *nv;
+
+	/*
+	 * Mark all of the depedent options as being dependent options.
+	 * We need to know this later in case one of them is explicitly
+	 * de-selected.
+	 */
+	for (nv = deps; nv != NULL; nv = nv->nv_next) {
+		(void)ht_insert(dep_opttab, nv->nv_name,
+		    (void *)__UNCONST(nv->nv_name));
+	}
+
 	dl->dl_depends = deps;
 	check_dependencies(dl->dl_name, deps);
 }
@@ -1190,6 +1212,21 @@ addoption(const char *name, const char *value)
 void
 deloption(const char *name, int nowarn)
 {
+
+	/*
+	 * If it's a dependent-option that's being de-selected, it's
+	 * most likely not yet been seen (that happens in a subsequent
+	 * pass), so suppress warnings for it.
+	 */
+	if (ht_lookup(dep_opttab, name)) {
+		nowarn = 1;
+	}
+
+	/*
+	 * Record that this option has been explcitly de-selected so
+	 * that we can check that in the depedent-option pass.
+	 */
+	(void)ht_insert(no_opttab, name, (void *)__UNCONST(name));
 
 	CFGDBG(4, "deselecting opt `%s'", name);
 	if (undo_option(opttab, &options, &nextopt, name, "options", nowarn))
