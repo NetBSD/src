@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_var.h,v 1.7 2026/07/26 20:15:17 rkujawa Exp $ */
+/*	$NetBSD: ingenic_var.h,v 1.8 2026/08/10 07:29:26 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -56,10 +56,12 @@ void mips_cp0_corestatus_write(uint32_t);
 void mips_cp0_corereim_write(uint32_t);
 void mips_cp0_corembox_write(u_int, uint32_t);
 
+#ifdef MULTIPROCESSOR
+#define	INGENIC_IPI_CLOCK	31
 #if 0 /* MULTIPROCESSOR */
 struct cpu_info;
 int ingenic_send_ipi(struct cpu_info *, int);
-#define	INGENIC_IPI_CLOCK	31
+#endif
 #endif
 
 #endif /* INGENIC_VAR_H */
