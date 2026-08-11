@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.108 2026/02/17 09:40:54 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.109 2026/08/11 12:13:07 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.108 2026/02/17 09:40:54 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.109 2026/08/11 12:13:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1303,7 +1303,7 @@ mach64_set_dsp(struct mach64_softc *sc)
 	DPRINTF("mem %dkHz v %dkHz\n", sc->mem_freq, sc->vclk_freq);
 
 	y = (xclks_per_qw * fifo_depth) >> 11;
-		       
+
 	while (y) {
 		y >>= 1;
 		dsp_precision++;
@@ -1416,7 +1416,7 @@ mach64_set_pll(struct mach64_softc *sc, int clock)
 	DPRINTF("target: %d output: %d\n", clock, 
 	    (2 * sc->ref_freq * sc->vclk_fb_div) / 
 	    (sc->ref_div * sc->vclk_post_div));
-	
+
 	regwb_pll(sc, MCLK_FB_DIV, sc->mclk_fb_div);
 	reg = regrb_pll(sc, VCLK_POST_DIV);
 	reg &= ~(3 << clockshift);
@@ -1827,7 +1827,6 @@ mach64_bitblt(void *cookie, int xs, int ys, int xd, int yd, int width,
 {
 	struct mach64_softc *sc = cookie;
 	uint32_t dest_ctl = 0;
-	
 #if 0
 	wait_for_idle(sc);
 #else
@@ -2041,7 +2040,8 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 		 */
 		if (offset < (sc->memsize * 1024)) {
 			pa = bus_space_mmap(sc->sc_memt, sc->sc_aperbase,
-			    offset, prot, BUS_SPACE_MAP_LINEAR);
+			    offset, prot,
+			    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 			return pa;
 		}
 	} else if (sc->sc_mode == WSDISPLAYIO_MODE_MAPPED) {
