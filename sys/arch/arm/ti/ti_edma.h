@@ -1,4 +1,4 @@
-/* $NetBSD: ti_edma.h,v 1.1 2019/10/27 12:14:51 jmcneill Exp $ */
+/* $NetBSD: ti_edma.h,v 1.2 2026/08/12 09:36:49 yurix Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -134,40 +134,5 @@
 #define EDMA_PARAM_CIDX_SRCCIDX		__BITS(15,0)
 #define EDMA_PARAM_CCNT_REG(n)		(EDMA_PARAM_BASE(n) + 0x1c)
 #define EDMA_PARAM_CCNT_CCNT		__BITS(15,0)
-
-enum edma_type {
-	EDMA_TYPE_DMA,
-	EDMA_TYPE_QDMA
-};
-
-struct edma_param {
-	uint32_t	ep_opt;
-	uint32_t	ep_src;
-	uint32_t	ep_dst;
-	uint16_t	ep_bcnt;
-	uint16_t	ep_acnt;
-	uint16_t	ep_dstbidx;
-	uint16_t	ep_srcbidx;
-	uint16_t	ep_bcntrld;
-	uint16_t	ep_link;
-	uint16_t	ep_dstcidx;
-	uint16_t	ep_srccidx;
-	uint16_t	ep_ccnt;
-};
-
-struct edma_channel;
-
-struct edma_channel *edma_channel_alloc(enum edma_type, unsigned int,
-					void (*)(void *), void *);
-void edma_channel_free(struct edma_channel *);
-uint16_t edma_param_alloc(struct edma_channel *);
-void edma_param_free(struct edma_channel *, uint16_t);
-void edma_set_param(struct edma_channel *, uint16_t, struct edma_param *);
-int edma_transfer_enable(struct edma_channel *, uint16_t);
-int edma_transfer_start(struct edma_channel *);
-void edma_halt(struct edma_channel *);
-uint8_t edma_channel_index(struct edma_channel *);
-void edma_dump(struct edma_channel *);
-void edma_dump_param(struct edma_channel *, uint16_t);
 
 #endif /* !_TI_EDMA_H */

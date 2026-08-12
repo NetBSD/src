@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_sdhc.c,v 1.12 2022/02/06 15:52:20 jmcneill Exp $	*/
+/*	$NetBSD: ti_sdhc.c,v 1.13 2026/08/12 09:36:49 yurix Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.12 2022/02/06 15:52:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.13 2026/08/12 09:36:49 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.12 2022/02/06 15:52:20 jmcneill Exp $"
 #include <sys/bus.h>
 
 #include <arm/ti/ti_prcm.h>
-#include <arm/ti/ti_edma.h>
 #include <arm/ti/ti_sdhcreg.h>
 
 #include <dev/sdmmc/sdhcreg.h>
@@ -51,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.12 2022/02/06 15:52:20 jmcneill Exp $"
 #include <dev/sdmmc/sdmmcvar.h>
 
 #include <dev/fdt/fdtvar.h>
-
-#define EDMA_MAX_PARAMS		32
 
 #ifdef TISDHC_DEBUG
 int tisdhcdebug = 1;
@@ -121,11 +118,9 @@ struct ti_sdhc_softc {
 	struct sdhc_host	*sc_hosts[1];
 	void 			*sc_ih;		/* interrupt vectoring */
 
-	int			sc_edma_chan[EDMA_NCHAN];
-	struct edma_channel	*sc_edma_tx;
-	struct edma_channel	*sc_edma_rx;
-	uint16_t		sc_edma_param_tx[EDMA_MAX_PARAMS];
-	uint16_t		sc_edma_param_rx[EDMA_MAX_PARAMS];
+	struct fdtbus_dma	*sc_rx_dma;
+	struct fdtbus_dma	*sc_tx_dma;
+
 	kcondvar_t		sc_edma_cv;
 	bus_addr_t		sc_edma_fifo;
 	bool			sc_edma_pending;
@@ -144,7 +139,7 @@ static int ti_sdhc_rod(struct sdhc_softc *, int);
 static int ti_sdhc_write_protect(struct sdhc_softc *);
 static int ti_sdhc_card_detect(struct sdhc_softc *);
 
-static int ti_sdhc_edma_init(struct ti_sdhc_softc *, u_int, u_int);
+static int ti_sdhc_edma_init(struct ti_sdhc_softc *);
 static int ti_sdhc_edma_xfer_data(struct sdhc_softc *, struct sdmmc_command *);
 static void ti_sdhc_edma_done(void *);
 static int ti_sdhc_edma_transfer(struct sdhc_softc *, struct sdmmc_command *);
@@ -191,23 +186,8 @@ ti_sdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = addr;
 	sc->sc_bst = faa->faa_bst;
 
-	/* XXX use fdtbus_dma API */
-	int len;
-	const u_int *dmas = fdtbus_get_prop(phandle, "dmas", &len);
-	switch (len) {
-	case 24:
-		sc->sc_edma_chan[EDMA_CHAN_TX] = be32toh(dmas[1]);
-		sc->sc_edma_chan[EDMA_CHAN_RX] = be32toh(dmas[4]);
-		break;
-	case 32:
-		sc->sc_edma_chan[EDMA_CHAN_TX] = be32toh(dmas[1]);
-		sc->sc_edma_chan[EDMA_CHAN_RX] = be32toh(dmas[5]);
-		break;
-	default:
-		sc->sc_edma_chan[EDMA_CHAN_TX] = -1;
-		sc->sc_edma_chan[EDMA_CHAN_RX] = -1;
-		break;
-	}
+	sc->sc_rx_dma = fdtbus_dma_get(phandle, "rx", ti_sdhc_edma_done, sc);
+	sc->sc_tx_dma = fdtbus_dma_get(phandle, "tx", ti_sdhc_edma_done, sc);
 
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");
@@ -258,15 +238,10 @@ ti_sdhc_init(struct ti_sdhc_softc *sc, const struct ti_sdhc_config *conf)
 	int error, timo, clksft, n;
 	char intrstr[128];
 
-	const int tx_chan = sc->sc_edma_chan[EDMA_CHAN_TX];
-	const int rx_chan = sc->sc_edma_chan[EDMA_CHAN_RX];
+	if (sc->sc_rx_dma != NULL && sc->sc_tx_dma != NULL) {
+		aprint_normal_dev(dev,"DMA available\n");
 
-	if (tx_chan != -1 && rx_chan != -1) {
-		aprint_normal_dev(dev,
-		    "EDMA tx channel %d, rx channel %d\n",
-		    tx_chan, rx_chan);
-
-		if (ti_sdhc_edma_init(sc, tx_chan, rx_chan) != 0) {
+		if (ti_sdhc_edma_init(sc) != 0) {
 			aprint_error_dev(dev, "EDMA disabled\n");
 			goto no_dma;
 		}
@@ -462,27 +437,9 @@ ti_sdhc_bus_width(struct sdhc_softc *sc, int width)
 }
 
 static int
-ti_sdhc_edma_init(struct ti_sdhc_softc *sc, u_int tx_chan, u_int rx_chan)
+ti_sdhc_edma_init(struct ti_sdhc_softc *sc)
 {
-	int i, error, rseg;
-
-	/* Request tx and rx DMA channels */
-	sc->sc_edma_tx = edma_channel_alloc(EDMA_TYPE_DMA, tx_chan,
-	    ti_sdhc_edma_done, sc);
-	KASSERT(sc->sc_edma_tx != NULL);
-	sc->sc_edma_rx = edma_channel_alloc(EDMA_TYPE_DMA, rx_chan,
-	    ti_sdhc_edma_done, sc);
-	KASSERT(sc->sc_edma_rx != NULL);
-
-	/* Allocate some PaRAM pages */
-	for (i = 0; i < __arraycount(sc->sc_edma_param_tx); i++) {
-		sc->sc_edma_param_tx[i] = edma_param_alloc(sc->sc_edma_tx);
-		KASSERT(sc->sc_edma_param_tx[i] != 0xffff);
-	}
-	for (i = 0; i < __arraycount(sc->sc_edma_param_rx); i++) {
-		sc->sc_edma_param_rx[i] = edma_param_alloc(sc->sc_edma_rx);
-		KASSERT(sc->sc_edma_param_rx[i] != 0xffff);
-	}
+	int error, rseg;
 
 	/* Setup bounce buffer */
 	error = bus_dmamem_alloc(sc->sc.sc_dmat, MAXPHYS, 32, MAXPHYS,
@@ -504,13 +461,6 @@ ti_sdhc_edma_init(struct ti_sdhc_softc *sc, u_int tx_chan, u_int rx_chan)
 	    BUS_DMA_WAITOK, &sc->sc_edma_dmamap);
 	if (error) {
 		aprint_error_dev(sc->sc.sc_dev, "couldn't create dmamap: %d\n",
-		    error);
-		return error;
-	}
-	error = bus_dmamap_load(sc->sc.sc_dmat, sc->sc_edma_dmamap,
-	    sc->sc_edma_bbuf, MAXPHYS, NULL, BUS_DMA_WAITOK);
-	if (error) {
-		device_printf(sc->sc.sc_dev, "couldn't load dmamap: %d\n",
 		    error);
 		return error;
 	}
@@ -540,13 +490,22 @@ ti_sdhc_edma_xfer_data(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 #endif
 
 	if (bounce) {
+		error = bus_dmamap_load(sc->sc.sc_dmat, sc->sc_edma_dmamap,
+		    sc->sc_edma_bbuf, cmd->c_datalen, NULL,
+		    BUS_DMA_NOWAIT | BUS_DMA_WRITE | BUS_DMA_READ);
+		if (error) {
+			device_printf(sc->sc.sc_dev,
+			    "couldn't load dmamap: %d\n", error);
+			return error;
+		}
+
 		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
 			bus_dmamap_sync(sc->sc.sc_dmat, sc->sc_edma_dmamap, 0,
-			    MAXPHYS, BUS_DMASYNC_PREREAD);
+			    cmd->c_datalen, BUS_DMASYNC_PREREAD);
 		} else {
 			memcpy(sc->sc_edma_bbuf, cmd->c_data, cmd->c_datalen);
 			bus_dmamap_sync(sc->sc.sc_dmat, sc->sc_edma_dmamap, 0,
-			    MAXPHYS, BUS_DMASYNC_PREWRITE);
+			    cmd->c_datalen, BUS_DMASYNC_PREWRITE);
 		}
 
 		cmd->c_dmamap = sc->sc_edma_dmamap;
@@ -557,14 +516,16 @@ ti_sdhc_edma_xfer_data(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 	if (bounce) {
 		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
 			bus_dmamap_sync(sc->sc.sc_dmat, sc->sc_edma_dmamap, 0,
-			    MAXPHYS, BUS_DMASYNC_POSTREAD);
+			    cmd->c_datalen, BUS_DMASYNC_POSTREAD);
 		} else {
 			bus_dmamap_sync(sc->sc.sc_dmat, sc->sc_edma_dmamap, 0,
-			    MAXPHYS, BUS_DMASYNC_POSTWRITE);
+			    cmd->c_datalen, BUS_DMASYNC_POSTWRITE);
 		}
 		if (ISSET(cmd->c_flags, SCF_CMD_READ) && error == 0) {
 			memcpy(cmd->c_data, sc->sc_edma_bbuf, cmd->c_datalen);
 		}
+
+		bus_dmamap_unload(sc->sc.sc_dmat, sc->sc_edma_dmamap);
 
 		cmd->c_dmamap = map;
 	}
@@ -577,107 +538,55 @@ ti_sdhc_edma_transfer(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 {
 	struct ti_sdhc_softc *sc = device_private(sdhc_sc->sc_dev);
 	kmutex_t *plock = sdhc_host_lock(sc->sc_hosts[0]);
-	struct edma_channel *edma;
-	uint16_t *edma_param;
-	struct edma_param ep;
-	size_t seg;
-	int error, resid = cmd->c_datalen;
+	int error;
 	int blksize = MIN(cmd->c_datalen, cmd->c_blklen);
+
+	/*
+	 * In constant addressing mode, the address must be aligned
+	 * to 256-bits/32 bytes.
+	 */
+	KASSERT(cmd->c_dmamap->dm_nsegs == 1);
+	KASSERT((cmd->c_dmamap->dm_segs[0].ds_addr & 0x1f) == 0);
+
+	struct fdtbus_dma_req req;
+	memset(&req, 0, sizeof(req));
+	req.dreq_segs = cmd->c_dmamap->dm_segs;
+	req.dreq_nsegs = cmd->c_dmamap->dm_nsegs;
+	req.dreq_block_irq = 1;
+	req.dreq_block_multi = 1;
+	req.dreq_dev_opt.opt_bus_width = uimin(cmd->c_datalen, 64);
+	req.dreq_dev_opt.opt_burst_len = uimin(cmd->c_datalen, blksize);
+	req.dreq_dev_phys = sc->sc_edma_fifo;
+	req.dreq_sel = 1; /* use SAM/DAM mode */
+
+	sc->sc_edma_pending = true;
+	if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+		req.dreq_dir = FDT_DMA_READ;
+
+		fdtbus_dma_transfer(sc->sc_rx_dma, &req);
+	} else {
+		req.dreq_dir = FDT_DMA_WRITE;
+
+		fdtbus_dma_transfer(sc->sc_tx_dma, &req);
+	}
 
 	KASSERT(mutex_owned(plock));
 
-	edma = ISSET(cmd->c_flags, SCF_CMD_READ) ?
-	    sc->sc_edma_rx : sc->sc_edma_tx;
-	edma_param = ISSET(cmd->c_flags, SCF_CMD_READ) ?
-	    sc->sc_edma_param_rx : sc->sc_edma_param_tx;
-
-	DPRINTF(1, (sc->sc.sc_dev, "edma xfer: nsegs=%d ch# %d\n",
-	    cmd->c_dmamap->dm_nsegs, edma_channel_index(edma)));
-
-	if (cmd->c_dmamap->dm_nsegs > EDMA_MAX_PARAMS) {
-		return ENOMEM;
-	}
-
-	for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
-		KASSERT(resid > 0);
-		const int xferlen = uimin(resid,
-		    cmd->c_dmamap->dm_segs[seg].ds_len);
-		KASSERT(xferlen == cmd->c_dmamap->dm_segs[seg].ds_len ||
-			seg == cmd->c_dmamap->dm_nsegs - 1);
-		resid -= xferlen;
-		KASSERT((xferlen & 0x3) == 0);
-		ep.ep_opt = __SHIFTIN(2, EDMA_PARAM_OPT_FWID) /* 32-bit */;
-		ep.ep_opt |= __SHIFTIN(edma_channel_index(edma),
-				       EDMA_PARAM_OPT_TCC);
-		if (seg == cmd->c_dmamap->dm_nsegs - 1) {
-			ep.ep_opt |= EDMA_PARAM_OPT_TCINTEN;
-			ep.ep_link = 0xffff;
-		} else {
-			ep.ep_link = EDMA_PARAM_BASE(edma_param[seg+1]);
-		}
-		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
-			ep.ep_opt |= EDMA_PARAM_OPT_SAM;
-			ep.ep_src = sc->sc_edma_fifo;
-			ep.ep_dst = cmd->c_dmamap->dm_segs[seg].ds_addr;
-		} else {
-			ep.ep_opt |= EDMA_PARAM_OPT_DAM;
-			ep.ep_src = cmd->c_dmamap->dm_segs[seg].ds_addr;
-			ep.ep_dst = sc->sc_edma_fifo;
-		}
-
-		KASSERT(xferlen <= 65536 * 4);
-
-		/*
-		 * In constant addressing mode, the address must be aligned
-		 * to 256-bits.
-		 */
-		KASSERT((cmd->c_dmamap->dm_segs[seg].ds_addr & 0x1f) == 0);
-
-		/*
-		 * For unknown reason, the A-DMA transfers never completes for
-		 * transfers larger than 64 butes. So use a AB transfer,
-		 * with a 64 bytes A len
-		 */
-		ep.ep_bcntrld = 0;	/* not used for AB-synchronous mode */
-		ep.ep_opt |= EDMA_PARAM_OPT_SYNCDIM;
-		ep.ep_acnt = uimin(xferlen, 64);
-		ep.ep_bcnt = uimin(xferlen, blksize) / ep.ep_acnt;
-		ep.ep_ccnt = xferlen / (ep.ep_acnt * ep.ep_bcnt);
-		ep.ep_srcbidx = ep.ep_dstbidx = 0;
-		ep.ep_srccidx = ep.ep_dstcidx = 0;
-		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
-			ep.ep_dstbidx = ep.ep_acnt;
-			ep.ep_dstcidx = ep.ep_acnt * ep.ep_bcnt;
-		} else {
-			ep.ep_srcbidx = ep.ep_acnt;
-			ep.ep_srccidx = ep.ep_acnt * ep.ep_bcnt;
-		}
-
-		edma_set_param(edma, edma_param[seg], &ep);
-#ifdef TISDHC_DEBUG
-		if (tisdhcdebug >= 1) {
-			printf("target OPT: %08x\n", ep.ep_opt);
-			edma_dump_param(edma, edma_param[seg]);
-		}
-#endif
-	}
-
 	error = 0;
-	sc->sc_edma_pending = true;
-	edma_transfer_enable(edma, edma_param[0]);
 	while (sc->sc_edma_pending) {
 		error = cv_timedwait(&sc->sc_edma_cv, plock, hz*10);
 		if (error == EWOULDBLOCK) {
 			device_printf(sc->sc.sc_dev, "transfer timeout!\n");
-			edma_dump(edma);
-			edma_dump_param(edma, edma_param[0]);
-			edma_halt(edma);
 			sc->sc_edma_pending = false;
 			error = ETIMEDOUT;
 			break;
 		}
 	}
-	edma_halt(edma);
+	if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+		fdtbus_dma_halt(sc->sc_rx_dma);
+	} else {
+		fdtbus_dma_halt(sc->sc_tx_dma);
+	}
 
 	return error;
 }
