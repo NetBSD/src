@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.25 2026/06/10 21:02:49 wiz Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.26 2026/08/12 01:42:16 rin Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.25 2026/06/10 21:02:49 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.26 2026/08/12 01:42:16 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_igc.h"
@@ -1923,7 +1923,7 @@ igc_stop_locked(struct igc_softc *sc)
 	for (int iq = 0; iq < sc->sc_nqueues; iq++) {
 		struct rx_ring *rxr = &sc->rx_rings[iq];
 
-		callout_halt(&rxr->rx_refill, &rxr->rxr_lock);
+		callout_halt(&rxr->rx_refill, NULL);
 		igc_clear_receive_status(rxr);
 	}
 
@@ -3577,7 +3577,7 @@ igc_free_receive_buffers(struct rx_ring *rxr)
 {
 	struct igc_softc *sc = rxr->sc;
 
-	callout_halt(&rxr->rx_refill, &rxr->rxr_lock);
+	callout_halt(&rxr->rx_refill, NULL);
 	callout_destroy(&rxr->rx_refill);
 
 	if (rxr->rx_buffers != NULL) {
