@@ -1,4 +1,4 @@
-/* $NetBSD: ti_edma.c,v 1.5 2022/05/21 19:07:23 andvar Exp $ */
+/* $NetBSD: ti_edma.c,v 1.6 2026/08/12 09:22:58 yurix Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.5 2022/05/21 19:07:23 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.6 2026/08/12 09:22:58 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,9 +151,18 @@ edma_attach(device_t parent, device_t self, void *aux)
 		ch->ch_nparams = 0;
 	}
 
-	if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
-		aprint_error_dev(self, "couldn't enable module\n");
-		return;
+	if (of_hasprop(phandle, "power-domains")) {
+		/* clocks are configured through fdt_powerdomain */
+		if (fdtbus_powerdomain_enable(phandle) != 0) {
+			aprint_error(": couldn't enable powerdomain\n");
+			return;
+		}
+	} else {
+		/* clock are configured through the prcm system  */
+		if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
+			aprint_error(": couldn't enable module\n");
+			return;
+		}
 	}
 
 	edma_init(sc);

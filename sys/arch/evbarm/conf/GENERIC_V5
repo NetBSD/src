@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_V5,v 1.10 2026/07/31 19:46:10 andvar Exp $
+# $NetBSD: GENERIC_V5,v 1.11 2026/08/12 09:22:58 yurix Exp $
 #
 # GENERIC ARMv5 kernel
 #
@@ -69,6 +69,8 @@ am18xxtimer* 		at fdt? pass 2			# TI AM18XX timer
 
 # DMA controller
 imx23apbdma* 	at fdt? pass 1			# NXP i.MX23 DMA controller
+tiedma*			at fdt?	pass 5			# TI EDMA controller
+titptc*			at fdt?	pass 5			# TI EDMA controller
 
 # Clock Controllers
 imx23clkctrl*	at fdt? pass 1			# i.MX23 clock controller
