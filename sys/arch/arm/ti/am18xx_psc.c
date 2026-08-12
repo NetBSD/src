@@ -1,4 +1,4 @@
-/* $NetBSD: am18xx_psc.c,v 1.5 2026/07/31 05:21:45 skrll Exp $ */
+/* $NetBSD: am18xx_psc.c,v 1.6 2026/08/12 09:22:08 yurix Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -46,8 +46,6 @@
 
 #include <arm/fdt/arm_fdtvar.h>
 
-#define MAX_PARENT_CLOCKS 5
-
 struct am18xx_psc_clk {
 	struct clk clk_base; /* must be first */
 	int clk_index;
@@ -85,6 +83,9 @@ static struct clk *	am18xx_psc_clk_get_parent(void *, struct clk *);
 static void		am18xx_psc_clk_transition(struct am18xx_psc_softc *,
 						  struct am18xx_psc_clk *,
 						  uint32_t);
+static void 		am18xx_psc_powerdomain_enable(device_t,
+    						      const uint32_t *,
+    						      bool);
 
 CFATTACH_DECL_NEW(am18xxpsc, sizeof(struct am18xx_psc_softc),
 		  am18xx_psc_match, am18xx_psc_attach, NULL, NULL);
@@ -182,6 +183,27 @@ static const struct clk_funcs am18xx_psc_clk_funcs = {
 	.disable = am18xx_psc_clk_disable,
 	.get_parent = am18xx_psc_clk_get_parent
 };
+
+static const struct fdtbus_powerdomain_controller_func am18xx_psc_pdom_funcs = {
+	.pdc_enable = am18xx_psc_powerdomain_enable
+};
+
+static void
+am18xx_psc_powerdomain_enable(device_t dev, const uint32_t *data, bool enable)
+{
+	struct am18xx_psc_softc * const sc = device_private(dev);
+	uint32_t index = be32toh(data[1]);
+
+	KASSERT(index < sc->sc_clknum);
+
+	/* parts of the DTB use powerdomains as if they are clocks */
+	struct clk *powerdomain_clk = &sc->sc_clks[index].clk_base;
+	if (enable) {
+		am18xx_psc_clk_enable(sc, powerdomain_clk);
+	} else {
+		am18xx_psc_clk_disable(sc, powerdomain_clk);
+	}
+}
 
 /* should be called with sc->sc_lock held */
 static void
@@ -346,6 +368,8 @@ am18xx_psc_attach(device_t parent, device_t self, void *aux)
 	/* register it in the fdt subsystem */
 	fdtbus_register_clock_controller(self, phandle,
 					 &am18xx_psc_clk_fdt_funcs);
+	fdtbus_register_powerdomain_controller(self, phandle,
+					 &am18xx_psc_pdom_funcs);
 
 	aprint_normal("\n");
 }
