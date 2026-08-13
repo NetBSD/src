@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.57 2026/08/13 07:14:49 rin Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.58 2026/08/13 07:20:04 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.57 2026/08/13 07:14:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.58 2026/08/13 07:20:04 rin Exp $");
 
 #include "opt_pci.h"
 
@@ -462,7 +462,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 			    parent->niowin);
 			goto err;
 		}
-		pb->io_total |= pb->io_align - 1; /* Round up */
+		pb->io_total = roundup2(pb->io_total, pb->io_align);
 		pi = get_io_desc(parent, pb->io_total);
 		pi->dev = pd;
 		pi->reg = 0;
@@ -481,7 +481,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 			     parent->nmemwin);
 			goto err;
 		}
-		pb->mem_total |= pb->mem_align - 1; /* Round up */
+		pb->mem_total = roundup2(pb->mem_total, pb->mem_align);
 		pm = get_mem_desc(parent, pb->mem_total);
 		pm->dev = pd;
 		pm->reg = 0;
@@ -499,12 +499,12 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 			printf("pciconf: too many MEM windows\n");
 			goto err;
 		}
-		pb->pmem_total |= pb->pmem_align - 1; /* Round up */
+		pb->pmem_total = roundup2(pb->pmem_total, pb->pmem_align);
 		pm = get_mem_desc(parent, pb->pmem_total);
 		pm->dev = pd;
 		pm->reg = 0;
 		pm->size = pb->pmem_total;
-		pm->align = pb->pmem_align;	/* 1M alignment */
+		pm->align = pb->pmem_align;	/* 1M min alignment */
 		if (parent->pmem_align < pb->pmem_align)
 			parent->pmem_align = pb->pmem_align;
 		pm->prefetch = 1;
