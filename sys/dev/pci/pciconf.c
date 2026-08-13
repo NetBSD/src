@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.56 2026/06/10 21:24:10 andvar Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.57 2026/08/13 07:14:49 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.56 2026/06/10 21:24:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.57 2026/08/13 07:14:49 rin Exp $");
 
 #include "opt_pci.h"
 
@@ -143,10 +143,10 @@ typedef struct _s_pciconf_dev_t {
 typedef struct _s_pciconf_win_t {
 	pciconf_dev_t	*dev;
 	int		reg;			/* 0 for busses */
-	int		align;
 	int		prefetch;
 	uint64_t	size;
 	uint64_t	address;
+	uint64_t	align;
 } pciconf_win_t;
 
 typedef struct _s_pciconf_bus_t {
@@ -166,9 +166,6 @@ typedef struct _s_pciconf_bus_t {
 	int		io_32bit;
 	int		pmem_64bit;
 	int		mem_64bit;
-	int		io_align;
-	int		mem_align;
-	int		pmem_align;
 
 	int		ndevs;
 	pciconf_dev_t	device[MAX_CONF_DEV];
@@ -182,6 +179,9 @@ typedef struct _s_pciconf_bus_t {
 	bus_size_t	io_total;
 	bus_size_t	mem_total;
 	bus_size_t	pmem_total;
+	bus_size_t	io_align;
+	bus_size_t	mem_align;
+	bus_size_t	pmem_align;
 
 	struct pciconf_resource io_res;
 	struct pciconf_resource mem_res;
@@ -722,10 +722,9 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 			pi = get_io_desc(pb, size);
 			pi->dev = pd;
 			pi->reg = br;
-			pi->size = (uint64_t)size;
-			pi->align = 4;
-			if (pb->io_align < pi->size)
-				pb->io_align = pi->size;
+			pi->size = pi->align = size;
+			if (pb->io_align < pi->align)
+				pb->io_align = pi->align;
 			pi->prefetch = 0;
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
@@ -785,8 +784,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 			pm = get_mem_desc(pb, size);
 			pm->dev = pd;
 			pm->reg = br;
-			pm->size = size;
-			pm->align = 4;
+			pm->size = pm->align = size;
 			pm->prefetch = PCI_MAPREG_MEM_PREFETCHABLE(mask);
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
@@ -796,12 +794,12 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 			pb->nmemwin++;
 			if (pm->prefetch) {
 				pb->pmem_total += size;
-				if (pb->pmem_align < pm->size)
-					pb->pmem_align = pm->size;
+				if (pb->pmem_align < pm->align)
+					pb->pmem_align = pm->align;
 			} else {
 				pb->mem_total += size;
-				if (pb->mem_align < pm->size)
-					pb->mem_align = pm->size;
+				if (pb->mem_align < pm->align)
+					pb->mem_align = pm->align;
 			}
 		}
 	}
@@ -822,8 +820,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 			pm = get_mem_desc(pb, size);
 			pm->dev = pd;
 			pm->reg = PCI_MAPREG_ROM;
-			pm->size = size;
-			pm->align = 4;
+			pm->size = pm->align = size;
 			pm->prefetch = 0;
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
@@ -833,12 +830,12 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 			pb->nmemwin++;
 			if (pm->prefetch) {
 				pb->pmem_total += size;
-				if (pb->pmem_align < pm->size)
-					pb->pmem_align = pm->size;
+				if (pb->pmem_align < pm->align)
+					pb->pmem_align = pm->align;
 			} else {
 				pb->mem_total += size;
-				if (pb->mem_align < pm->size)
-					pb->mem_align = pm->size;
+				if (pb->mem_align < pm->align)
+					pb->mem_align = pm->align;
 			}
 		}
 	} else {
