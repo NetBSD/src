@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.82 2026/08/09 13:51:09 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.83 2026/08/13 06:59:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.82 2026/08/09 13:51:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.83 2026/08/13 06:59:47 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1321,7 +1321,7 @@ dwc2_init(struct dwc2_softc *sc)
 			goto fail2;
 		}
 		hsotg->hcd_enabled = 1;
-        }
+	}
 #endif
 
 	uint32_t snpsid = hsotg->hw_params.snpsid;
