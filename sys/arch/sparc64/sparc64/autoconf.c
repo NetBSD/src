@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.252 2026/07/09 07:47:40 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.253 2026/08/13 20:04:48 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.252 2026/07/09 07:47:40 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.253 2026/08/13 20:04:48 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -576,12 +576,21 @@ sun4v_set_soft_state(int state, const char *desc)
 void
 sun4v_interrupt_init(void)
 {
+	uint64_t major;
 	uint64_t minor;
 
-	if (prom_set_sun4v_api_version(HSVC_GROUP_INTERRUPT, 3, 0, &minor))
-		return;
-
-	sun4v_group_interrupt_major = 3;
+	for (major = 3; major > 0; major--) {
+		minor = 0;
+		if (prom_set_sun4v_api_version(HSVC_GROUP_INTERRUPT, major, minor, &minor)) {
+			printf("sun4v_interrupt_init: failed to set major version %lu\n",
+				   (long unsigned int)major);
+		} else {
+			break;
+		}
+	}
+	printf("sun4v_interrupt_init: using major %lu minor %lu\n",
+		   (long unsigned int)major, (long unsigned int)minor);
+	sun4v_group_interrupt_major = major;
 }
 
 #if 0
