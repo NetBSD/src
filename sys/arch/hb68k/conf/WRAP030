@@ -1,8 +1,8 @@
-# $NetBSD: WRAP030,v 1.2 2026/08/08 15:10:04 thorpej Exp $
+# $NetBSD: WRAP030,v 1.3 2026/08/14 14:25:10 thorpej Exp $
 #
 # WRAP030 machine description file
 #
-# https://techav.net/post/714948735442010112/introducing-wrap030-atx
+# https://github.com/techav-homebrew/Wrap030
 # 
 
 include 	"arch/hb68k/conf/std.hb68k"
@@ -12,7 +12,7 @@ options 	CONFIG_FDT_BOOTSTRAP
 options 	CONFIG_STATIC_DEVICE_TREE
 makeoptions	STATIC_DEVICE_TREE="${HB68K}/wrap030/wrap030.dts"
 makeoptions	TEXTADDR=0		# ROM uses fixed load address
-options 	HZ=1000			# wrap030 timer doesn't divide clk :(
+options 	HZ=400			# wrap030 timer doesn't divide clk :(
 
 # reserve symbol space and copy the symbol table into it.  Needed
 # because Wrap030 doesn't have a loader to load the symbols (yet).
@@ -20,7 +20,7 @@ makeoptions	COPY_SYMTAB=1
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"WRAP030-$Revision: 1.2 $"
+#ident 		"WRAP030-$Revision: 1.3 $"
 
 maxusers	8
 
