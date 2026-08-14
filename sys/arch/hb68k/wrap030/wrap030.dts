@@ -142,7 +142,7 @@
 		ata@80200000 {
 			compatible = "ata-generic";
 			reg = <0x80200000 0x10>,	/* command */
-			      <0x8020200c 0x10>;	/* control */
+			      <0x8020200c 0x4>;		/* control */
 			reg-shift = <1>;
 			interrupts = <3 0>;
 			ata-generic,use16bit;
