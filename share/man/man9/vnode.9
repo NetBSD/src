@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.84 2022/03/19 13:53:32 hannken Exp $
+.\"     $NetBSD: vnode.9,v 1.85 2026/08/14 21:36:43 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -257,7 +257,9 @@ Each vnode has three reference counts:
 .Em v_writecount
 and
 .Em v_holdcnt .
-The first is the number of active references within the
+.Bl -tag -width Em
+.It Em v_usecount
+Number of active references within the
 kernel to the vnode.
 This count is maintained by
 .Fn vref ,
@@ -265,19 +267,23 @@ This count is maintained by
 .Fn vrele_async ,
 and
 .Fn vput .
-The second is the number of active references within the kernel to the
+.It Em v_writecount
+Number of active references within the kernel to the
 vnode performing write access to the file.
 It is maintained by the
 .Xr open 2
 and
 .Xr close 2
 system calls.
-The third is the number of references within the kernel
+.It Em v_holdcnt
+Number of references within the kernel
 requiring the vnode to remain active and not be recycled.
 This count is maintained by
 .Fn vhold
 and
 .Fn holdrele .
+.El
+.Pp
 When both the
 .Em v_usecount
 and
