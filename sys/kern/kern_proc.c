@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.283 2026/05/20 21:05:12 andvar Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.284 2026/08/14 03:01:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.283 2026/05/20 21:05:12 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.284 2026/08/14 03:01:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2946,7 +2946,20 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie, bool allowaddr)
 	}
 }
 
-
+/*
+ * proc_find_locked(l, &p, pid, op)
+ *
+ *	Look up a process p by pid, taking l->l_proc if pid == -1, and
+ *	take the mutex p->p_lock if pid != -1.  Verify whether the
+ *	caller is allowed to see the target process before succeeding.
+ *	Return nonzero error on failure.
+ *
+ *	Invariant on successful return:
+ *
+ *		pid == -1 || mutex_owned(p->p_lock)
+ *
+ *	Caller is responsible for mutex_exit(p->p_lock) if pid != -1.
+ */
 int
 proc_find_locked(struct lwp *l, struct proc **p, pid_t pid)
 {
@@ -2959,9 +2972,9 @@ proc_find_locked(struct lwp *l, struct proc **p, pid_t pid)
 		*p = proc_find(pid);
 
 	if (*p == NULL) {
-		if (pid != -1)
-			mutex_exit(&proc_lock);
-		return SET_ERROR(ESRCH);
+		mutex_exit(&proc_lock);
+		error = SET_ERROR(ESRCH);
+		goto out;
 	}
 	if (pid != -1)
 		mutex_enter((*p)->p_lock);
@@ -2973,7 +2986,64 @@ proc_find_locked(struct lwp *l, struct proc **p, pid_t pid)
 	if (error) {
 		if (pid != -1)
 			mutex_exit((*p)->p_lock);
+		goto out;
 	}
+out:	KASSERT(error != 0 || pid == -1 || mutex_owned((*p)->p_lock));
+	return error;
+}
+
+/*
+ * proc_find_reflocked(l, &p, pid, op)
+ *
+ *	Look up a process p by pid, taking l->l_proc iff pid == -1, and
+ *	take p->p_reflock as a reader or writer according to op iff pid
+ *	!= -1.  Verify whether the caller is allowed to see the target
+ *	process before succeeding.  Return nonzero error on failure.
+ *
+ *	Invariants on successful return:
+ *
+ *		pid == -1 || rw_lock_held(p->p_lock)
+ *		pid == -1 || op != RW_READER || rw_read_held(p->p_lock)
+ *		pid == -1 || op != RW_WRITER || rw_write_held(p->p_lock)
+ *
+ *	Caller is responsible for rw_exit(&p->p_reflock) iff pid != -1.
+ */
+int
+proc_find_reflocked(struct lwp *l, struct proc **p, pid_t pid, krw_t op)
+{
+	int error;
+
+	mutex_enter(&proc_lock);
+	if (pid == -1)
+		*p = l->l_proc;
+	else
+		*p = proc_find(pid);
+
+	if (*p == NULL) {
+		mutex_exit(&proc_lock);
+		error = SET_ERROR(ESRCH);
+		goto out;
+	}
+	if (pid != -1) {
+		rw_enter(&(*p)->p_reflock, op);
+		mutex_enter((*p)->p_lock);
+	}
+	mutex_exit(&proc_lock);
+
+	error = kauth_authorize_process(l->l_cred,
+	    KAUTH_PROCESS_CANSEE, *p,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
+
+out:	if (pid != -1 && *p != NULL) {
+		mutex_exit((*p)->p_lock);
+		if (error)
+			rw_exit(&(*p)->p_reflock);
+	}
+	KASSERT(error != 0 || pid == -1 || rw_lock_held(&(*p)->p_reflock));
+	KASSERT(error != 0 || pid == -1 || op != RW_READER ||
+	    rw_read_held(&(*p)->p_reflock));
+	KASSERT(error != 0 || pid == -1 || op != RW_WRITER ||
+	    rw_write_held(&(*p)->p_reflock));
 	return error;
 }
 
