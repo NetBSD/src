@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.85 2026/08/14 21:36:43 riastradh Exp $
+.\"     $NetBSD: vnode.9,v 1.86 2026/08/14 22:48:40 uwe Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -188,23 +188,23 @@ There are some rather common exceptions detailed throughout this page.
 .Pp
 Files and file systems are inextricably linked with the virtual memory
 system and
-.Em v_uobj
+.Fa v_uobj
 contains the data maintained by the virtual memory system.
 For compatibility with code written before the integration of
 .Xr uvm 9
 into
 .Nx ,
 C-preprocessor directives are used to alias the members of
-.Em v_uobj .
+.Fa v_uobj .
 .Pp
 Vnode flags are recorded by
-.Em v_iflag ,
-.Em v_vflag
+.Fa v_iflag ,
+.Fa v_vflag
 and
-.Em v_uflag .
+.Fa v_uflag .
 Valid flags are:
 .Pp
-.Bl -tag -offset indent -width ".Dv VI_WRMAPDIRTY" -compact
+.Bl -tag -width Dv -offset indent -compact
 .It Dv VV_ROOT
 This vnode is the root of its file system.
 .It Dv VV_SYSTEM
@@ -244,21 +244,17 @@ flag is used to prevent multiple processes from entering
 the vnode reclamation code.
 It is also used as a flag to indicate that reclamation is in progress.
 Before
-.Em v_iflag
+.Fa v_iflag
 can be modified, the
-.Em v_interlock
+.Fa v_interlock
 mutex must be acquired.
 See
 .Xr lock 9
 for details on the kernel locking API.
 .Pp
 Each vnode has three reference counts:
-.Em v_usecount ,
-.Em v_writecount
-and
-.Em v_holdcnt .
-.Bl -tag -width Em
-.It Em v_usecount
+.Bl -tag -width Fa
+.It Fa v_usecount
 Number of active references within the
 kernel to the vnode.
 This count is maintained by
@@ -267,7 +263,7 @@ This count is maintained by
 .Fn vrele_async ,
 and
 .Fn vput .
-.It Em v_writecount
+.It Fa v_writecount
 Number of active references within the kernel to the
 vnode performing write access to the file.
 It is maintained by the
@@ -275,7 +271,7 @@ It is maintained by the
 and
 .Xr close 2
 system calls.
-.It Em v_holdcnt
+.It Fa v_holdcnt
 Number of references within the kernel
 requiring the vnode to remain active and not be recycled.
 This count is maintained by
@@ -285,24 +281,24 @@ and
 .El
 .Pp
 When both the
-.Em v_usecount
+.Fa v_usecount
 and
-.Em v_holdcnt
+.Fa v_holdcnt
 reach zero, the vnode is cached.
 The transition from the cache is handled by a kernel thread and
 .Fn vrecycle .
 Access to
-.Em v_usecount ,
-.Em v_writecount
+.Fa v_usecount ,
+.Fa v_writecount
 and
-.Em v_holdcnt
+.Fa v_holdcnt
 is also protected by the
-.Em v_interlock
+.Fa v_interlock
 mutex.
 .Pp
 The number of pending synchronous and asynchronous writes on the
 vnode are recorded in
-.Em v_numoutput .
+.Fa v_numoutput .
 It is used by
 .Xr fsync 2
 to wait for all writes to complete before returning to the user.
@@ -312,13 +308,13 @@ It does not track the number of dirty buffers attached to the
 vnode.
 .Pp
 The link to the file system which owns the vnode is recorded by
-.Em v_mount .
+.Fa v_mount .
 See
 .Xr vfsops 9
 for further information of file system mount status.
 .Pp
 The
-.Em v_op
+.Fa v_op
 pointer points to its vnode operations vector.
 This vector describes what operations can be done to the file associated
 with the vnode.
@@ -338,12 +334,12 @@ or
 is invoked to allocate a vnode and initialize it for the new file.
 .Pp
 The type of object the vnode represents is recorded by
-.Em v_type .
+.Fa v_type .
 It is used by generic code to perform checks to ensure operations are
 performed on valid file system objects.
 Valid types are:
 .Pp
-.Bl -tag -offset indent -width VFIFO -compact
+.Bl -tag -width Dv -offset indent -compact
 .It Dv VNON
 The vnode has no type.
 .It Dv VREG
@@ -369,14 +365,14 @@ Vnode tag types are used by external programs only (e.g.,
 and should never be inspected by the kernel.
 Its use is deprecated
 since new
-.Em v_tag
+.Fa v_tag
 values cannot be defined for loadable file systems.
 The
-.Em v_tag
+.Fa v_tag
 member is read-only.
 Valid tag types are:
 .Pp
-.Bl -tag -offset indent -width "VT_FILECORE " -compact
+.Bl -tag -width Dv -offset indent -compact
 .It Dv VT_NON
 non file system
 .It Dv VT_UFS
@@ -468,16 +464,16 @@ for details on the kernel locking API.
 .Pp
 Each file system underlying a vnode allocates its own private area and
 hangs it from
-.Em v_data .
+.Fa v_data .
 .Pp
 Most functions discussed in this page that operate on vnodes cannot be
 called from interrupt context.
 The members
-.Em v_numoutput ,
-.Em v_holdcnt ,
-.Em v_dirtyblkhd ,
+.Fa v_numoutput ,
+.Fa v_holdcnt ,
+.Fa v_dirtyblkhd ,
 and
-.Em v_cleanblkhd
+.Fa v_cleanblkhd
 are modified in interrupt context and must be protected by
 .Xr splbio 9
 unless it is certain that there is no chance an interrupt handler will
@@ -487,29 +483,29 @@ The vnode lock must not be acquired within interrupt context.
 .Bl -tag -width compact
 .It Fn vref "vp"
 Increment
-.Em v_usecount
+.Fa v_usecount
 of the vnode
-.Em vp .
+.Fa vp .
 Any kernel thread system which uses a vnode (e.g., during the operation
 of some algorithm or to store in a data structure) should call
 .Fn vref .
 .It Fn vrele "vp"
 Decrement
-.Em v_usecount
+.Fa v_usecount
 of unlocked vnode
-.Em vp .
+.Fa vp .
 Any code in the system which is using a vnode should call
 .Fn vrele
 when it is finished with the vnode.
 If
-.Em v_usecount
+.Fa v_usecount
 of the vnode reaches zero and
-.Em v_holdcnt
+.Fa v_holdcnt
 is greater than zero, the vnode is placed on the holdlist.
 If both
-.Em v_usecount
+.Fa v_usecount
 and
-.Em v_holdcnt
+.Fa v_holdcnt
 are zero, the vnode is cached.
 .It Fn vrele_async "vp"
 Will asynchronously release the vnode in different context than the caller,
@@ -532,7 +528,7 @@ directly.
 Mark the vnode
 .Fa vp
 as active by incrementing
-.Em vp->v_holdcnt .
+.Fa vp->v_holdcnt .
 Once held, the vnode will not be recycled until it is
 released with
 .Fn holdrele .
@@ -540,7 +536,7 @@ released with
 Mark the vnode
 .Fa vp
 as inactive by decrementing
-.Em vp->v_holdcnt .
+.Fa vp->v_holdcnt .
 .It Fn vcache_get "mp" "key" "key_len" "vpp"
 Allocate a new vnode.
 The new vnode is returned referenced in the address specified by
@@ -672,7 +668,8 @@ is specified, active vnodes that are found are detached.
 If
 .Dv WRITECLOSE
 is set, only flush out regular file vnodes open for writing.
-SKIPSYSTEM causes any vnodes marked
+.Dv SKIPSYSTEM
+causes any vnodes marked
 .Dv V_SYSTEM
 to be skipped.
 .It Fn bdevvp "dev" "vpp"
@@ -697,11 +694,11 @@ to
 .Fa maj .
 .It Fn vwakeup "bp"
 Update outstanding I/O count
-.Em vp->v_numoutput
+.Fa vp->v_numoutput
 for the vnode
-.Em bp->b_vp
+.Fa bp->b_vp
 and do a wakeup if requested and
-.Em vp->vflag
+.Fa vp->vflag
 has
 .Dv VBWAIT
 set.
@@ -713,9 +710,9 @@ The argument
 specifies whether the I/O should be synchronous and
 .Fn vflushbuf
 will sleep until
-.Em vp->v_numoutput
+.Fa vp->v_numoutput
 is zero and
-.Em vp->v_dirtyblkhd
+.Fa vp->v_dirtyblkhd
 is empty.
 .It Fn vinvalbuf "vp" "flags" "cred" "l" "slpflag" "slptimeo"
 Flush out and invalidate all buffers associated with locked vnode
