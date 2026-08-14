@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.100 2026/05/30 10:10:11 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.101 2026/08/14 09:10:45 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.100 2026/05/30 10:10:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.101 2026/08/14 09:10:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -763,7 +763,7 @@ fddone(register struct fd_softc *sc)
 	}
 	fd_state = FLP_IDLE;
 #ifdef FLP_DEBUG
-	printf("fddone: Staring job on unit %d\n", sc1->unit);
+	printf("fddone: Starting job on unit %d\n", sc1->unit);
 #endif
 	st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc1, &lock_stat, 0,
 	    NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.24 2021/08/13 11:40:43 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.25 2026/08/14 09:10:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.24 2021/08/13 11:40:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.25 2026/08/14 09:10:45 andvar Exp $");
 
 #include "opt_irqstats.h"
 
@@ -138,7 +138,7 @@ isa_icu_init(void)
 #endif
 
 	outb(IO_ICU2, 0x11);		/* reset; program device, four bytes */
-	outb(IO_ICU2+1, ICU_OFFSET+8);	/* staring at this vector index */
+	outb(IO_ICU2+1, ICU_OFFSET+8);	/* starting at this vector index */
 	outb(IO_ICU2+1, IRQ_SLAVE);
 #ifdef AUTO_EOI_2
 	outb(IO_ICU2+1, 2 | 1);		/* auto EOI, 8086 mode */

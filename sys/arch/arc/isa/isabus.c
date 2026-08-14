@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.54 2023/12/07 03:46:10 thorpej Exp $	*/
+/*	$NetBSD: isabus.c,v 1.55 2026/08/14 09:10:45 andvar Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.54 2023/12/07 03:46:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.55 2026/08/14 09:10:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -507,7 +507,7 @@ isabr_initicu(void)
 
 	/* reset; program device, four bytes */
 	isa_outb(IO_ICU2 + PIC_ICW1, ICW1_SELECT | ICW1_IC4);
-	/* staring at this vector index */
+	/* starting at this vector index */
 	isa_outb(IO_ICU2 + PIC_ICW2, 8);
 	/* slave connected to line 2 of master */
 	isa_outb(IO_ICU2 + PIC_ICW3, ICW3_SIC(IRQ_SLAVE));

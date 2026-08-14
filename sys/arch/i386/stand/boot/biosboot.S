@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.S,v 1.8 2011/01/05 23:13:01 jakllsch Exp $	*/
+/*	$NetBSD: biosboot.S,v 1.9 2026/08/14 09:10:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ boot_start_1:
 	lret				/* not playing if not */
 3:	mov	%cs, %ax
 	shr	$4, %cx
-	add	%cx, %ax		/* segment staring at boot_start */
+	add	%cx, %ax		/* segment starting at boot_start */
 	push	%ax
 	push	$4f
 	lret

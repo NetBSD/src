@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.25 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: i8259.c,v 1.26 2026/08/14 09:10:44 andvar Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.25 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.26 2026/08/14 09:10:44 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ i8259_default_setup(void)
 		/* reset; program device, four bytes */
 		outb(IO_ICU2 + PIC_ICW1, ICW1_SELECT | ICW1_IC4);
 
-	/* staring at this vector index */
+	/* starting at this vector index */
 	outb(IO_ICU2 + PIC_ICW2, ICU_OFFSET + 8);
 	/* slave connected to line 2 of master */
 	outb(IO_ICU2 + PIC_ICW3, ICW3_SIC(IRQ_SLAVE));

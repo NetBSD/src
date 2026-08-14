@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.31 2024/03/26 20:50:29 andvar Exp $	*/
+/*	$NetBSD: io.c,v 1.32 2026/08/14 09:10:44 andvar Exp $	*/
 
 /*
  * io.c			Larn is copyrighted 1986 by Noah Morgan.
@@ -60,7 +60,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.31 2024/03/26 20:50:29 andvar Exp $");
+__RCSID("$NetBSD: io.c,v 1.32 2026/08/14 09:10:44 andvar Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -609,7 +609,7 @@ cursor(x, y)
 }
 #else	/* VT100 */
 /*
- * cursor(x,y)	  Put cursor at specified coordinates staring at [1,1] (termcap)
+ * cursor(x,y)	  Put cursor at specified coordinates starting at [1,1] (termcap)
  */
 void
 cursor(int x, int y)

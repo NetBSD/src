@@ -1,4 +1,4 @@
-/*	$NetBSD: keymacro.c,v 1.25 2025/01/03 00:40:08 rillig Exp $	*/
+/*	$NetBSD: keymacro.c,v 1.26 2026/08/14 09:10:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: keymacro.c,v 1.25 2025/01/03 00:40:08 rillig Exp $");
+__RCSID("$NetBSD: keymacro.c,v 1.26 2026/08/14 09:10:44 andvar Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -233,7 +233,7 @@ keymacro_clear(EditLine *el, el_action_t *map, const wchar_t *in)
 
 
 /* keymacro_delete():
- *      Delete the key and all longer keys staring with key, if
+ *      Delete the key and all longer keys starting with key, if
  *      they exists.
  */
 libedit_private int

@@ -1,4 +1,4 @@
-/* $NetBSD: unichromehw.h,v 1.1 2006/08/02 01:44:09 jmcneill Exp $ */
+/* $NetBSD: unichromehw.h,v 1.2 2026/08/14 09:10:45 andvar Exp $ */
 
 /*
  * Copyright 1998-2006 VIA Technologies, Inc. All Rights Reserved.
@@ -130,7 +130,7 @@
 #define IGA2_FETCH_COUNT_PATCH_VALUE    0
 #define IGA2_FETCH_COUNT_FORMULA(x,y)   ((x*y)/IGA2_FETCH_COUNT_ALIGN_BYTE)+ IGA2_FETCH_COUNT_PATCH_VALUE
 
-// Staring Address
+// Starting Address
 #define IGA1_STARTING_ADDR_REG_NUM      4           // location: {CR0C,0,7},{CR0D,0,7},{CR34,0,7},{CR48,0,1}
 #define IGA2_STARTING_ADDR_REG_NUM      3           // location: {CR62,1,7},{CR63,0,7},{CR64,0,7}
 
