@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.40 2024/05/02 14:19:56 christos Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.41 2026/08/14 17:19:04 andvar Exp $");
 #endif
 
 #include <stdio.h>
@@ -822,7 +822,7 @@ Convert(
 	    result = mktime_z(NULL, &tm);
 	    if (result != -1 || errno == 0) {
 		    result += Timezone * 60;
-		    if (DSTmode == DSTon)	/* if specified sumer time */
+		    if (DSTmode == DSTon)	/* if specified summer time */
 			result -= 3600;		/* UTC is 1 hour earlier XXX */
 	    }
     }

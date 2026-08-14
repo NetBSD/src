@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 2026/06/28 11:03:14 gson Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2026/08/14 17:19:04 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -285,7 +285,7 @@ main(int argc, char **argv)
 #endif
 		setenv("FTPSSLNOVERIFY", "1", 1);
 
-	/* Prevent kernel conole messages from messing up the display */
+	/* Prevent kernel console messages from messing up the display */
 	discard_console_output();
 
 	/* initialize message window */

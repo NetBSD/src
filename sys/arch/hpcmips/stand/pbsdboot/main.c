@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.63 2017/08/01 11:56:58 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.64 2026/08/14 17:19:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -73,7 +73,7 @@ TCHAR *version_string =
 
 /*-----------------------------------------------------------------------------
 
-  type difinitions
+  type definitions
 
 -----------------------------------------------------------------------------*/
 enum {

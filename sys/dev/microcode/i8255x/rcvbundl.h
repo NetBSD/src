@@ -1,4 +1,4 @@
-/*	$NetBSD: rcvbundl.h,v 1.6 2025/05/19 06:16:25 andvar Exp $	*/
+/*	$NetBSD: rcvbundl.h,v 1.7 2026/08/14 17:19:04 andvar Exp $	*/
 
 /*
 Copyright (c) 1999-2001, Intel Corporation
@@ -827,7 +827,7 @@ rcvbundl.h file given above).
 
 /*
     This version is a fix to TCO bug. This version can be loaded instead
-    the CPUSaver version by modifing the registry key "LoadTcoUCodeInsteadOfCpuSaver"
+    the CPUSaver version by modifying the registry key "LoadTcoUCodeInsteadOfCpuSaver"
 
 */
 

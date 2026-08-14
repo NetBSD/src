@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.42 2021/08/09 20:49:09 andvar Exp $	*/
+/*	$NetBSD: db_command.h,v 1.43 2026/08/14 17:19:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ struct db_command {
 	/* function to call */
 	void		(*fcn)(db_expr_t, bool, db_expr_t, const char *);
 	/*
-	 * Flag is used for modifing command behaviour.
+	 * Flag is used for modifying command behaviour.
 	 * CS_OWN && CS_MORE are specify type of command arguments.
 	 * CS_OWN commandmanage arguments in own way.
 	 * CS_MORE db_command() prepare argument list.

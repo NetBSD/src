@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.o_init.c,v 1.15 2023/07/30 09:23:21 pho Exp $	*/
+/*	$NetBSD: hack.o_init.c,v 1.16 2026/08/14 17:19:04 andvar Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.o_init.c,v 1.15 2023/07/30 09:23:21 pho Exp $");
+__RCSID("$NetBSD: hack.o_init.c,v 1.16 2026/08/14 17:19:04 andvar Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -186,7 +186,7 @@ savenames(int fd)
 	/*
 	 * We must save not only oc_uname but also oc_name and oc_descr,
 	 * because they are string constants whose pointer values aren't
-	 * peristent when ASLR is enabled.
+	 * persistent when ASLR is enabled.
 	 */
 	for (i = 0; i < SIZE(objects); i++) {
 #define SAVE_NAME_FIELD(FIELD)					\

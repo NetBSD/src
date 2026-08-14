@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.h,v 1.7 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: ppbus_msq.h,v 1.8 2026/08/14 17:19:04 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998 Nicolas Souchu
@@ -120,7 +120,7 @@ struct ppbus_xfer {
 #define MS_NULL		0
 #define MS_UNKNOWN	MS_NULL
 
-/* predifined parameters */
+/* predefined parameters */
 #define MS_ACCUM	-1	/* use accum previously set by MS_OP_SET */
 
 /* these are register numbers according to our PC-like parallel port model */
