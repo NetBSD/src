@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.285 2026/08/14 03:03:41 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.286 2026/08/14 03:04:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.285 2026/08/14 03:03:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.286 2026/08/14 03:04:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1785,23 +1785,44 @@ proclist_foreach_call(struct proclist *list,
 	return ret;
 }
 
+/*
+ * proc_vmspace_getref(p, &vm)
+ *
+ *	If p is not currently exiting, acquire a reference to its
+ *	vmspace.  Return 0, set vm, and increment its reference count
+ *	on success.  Return nonzero error code without on failure.
+ *
+ *	Caller MUST NOT hold p->p_lock.  Caller MAY hold p->p_reflock
+ *	and/or proc_lock.
+ *
+ *	On success, caller MUST call vmspace_free(vm) when done.
+ */
 int
 proc_vmspace_getref(struct proc *p, struct vmspace **vm)
 {
-
-	/* XXXCDC: how should locking work here? */
+	int error;
 
 	/* curproc exception is for coredump. */
+	if (p != curproc) {
+		mutex_enter(p->p_lock);
+		if (p->p_sflag & PS_WEXIT) {
+			error = SET_ERROR(EFAULT);
+			goto out;
+		}
+	}
 
-	if ((p != curproc && (p->p_sflag & PS_WEXIT) != 0) ||
-	    (p->p_vmspace->vm_refcnt < 1)) {
-		return SET_ERROR(EFAULT);
+	if (p->p_vmspace->vm_refcnt < 1) {
+		error = SET_ERROR(EFAULT);
+		goto out;
 	}
 
 	uvmspace_addref(p->p_vmspace);
 	*vm = p->p_vmspace;
+	error = 0;
 
-	return 0;
+out:	if (p != curproc)
+		mutex_exit(p->p_lock);
+	return error;
 }
 
 /*
