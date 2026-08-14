@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.284 2026/08/14 03:01:23 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.285 2026/08/14 03:03:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.284 2026/08/14 03:01:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.285 2026/08/14 03:03:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -3053,13 +3053,13 @@ fill_pathname(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	int error;
 	struct proc *p;
 
-	if ((error = proc_find_locked(l, &p, pid)) != 0)
+	if ((error = proc_find_reflocked(l, &p, pid, RW_READER)) != 0)
 		return error;
+	KASSERT(pid == -1 || rw_read_held(&p->p_reflock));
 
 	if (p->p_path == NULL) {
-		if (pid != -1)
-			mutex_exit(p->p_lock);
-		return SET_ERROR(ENOENT);
+		error = SET_ERROR(ENOENT);
+		goto out;
 	}
 
 	size_t len = strlen(p->p_path) + 1;
@@ -3070,8 +3070,8 @@ fill_pathname(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 			error = SET_ERROR(ENOSPC);
 	}
 	*oldlenp = len;
-	if (pid != -1)
-		mutex_exit(p->p_lock);
+out:	if (pid != -1)
+		rw_exit(&p->p_reflock);
 	return error;
 }
 
@@ -3086,8 +3086,9 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	struct vnode *vp;
 	size_t len, lenused;
 
-	if ((error = proc_find_locked(l, &p, pid)) != 0)
+	if ((error = proc_find_reflocked(l, &p, pid, RW_READER)) != 0)
 		return error;
+	KASSERT(pid == -1 || rw_read_held(&p->p_reflock));
 
 	len = MAXPATHLEN * 4;
 
@@ -3117,7 +3118,7 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	*oldlenp = lenused;
 out:
 	if (pid != -1)
-		mutex_exit(p->p_lock);
+		rw_exit(&p->p_reflock);
 	kmem_free(path, len);
 	return error;
 }
