@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.118 2024/01/29 18:27:12 christos Exp $
+# $NetBSD: GENERIC,v 1.119 2026/08/14 12:10:07 uwe Exp $
 #
 # GENERIC machine description file
 #
@@ -78,11 +78,6 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-
-# Alternate buffer queue strategies for better responsiveness under high
-# disk I/O load.
-#options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
