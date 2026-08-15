@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.75 2026/08/15 10:06:12 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.76 2026/08/15 10:55:37 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.75 2026/08/15 10:06:12 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.76 2026/08/15 10:55:37 wiz Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -409,7 +409,7 @@ fn_filename_completion_function(const char *text, int state)
 			break;
 		}
 		/*
-		 * skip filest that start with a '.' if we are not matching
+		 * skip files that start with a '.' if we are not matching
 		 * hidden_files and the current filename does not start with a .
 		 */
 		if (entry->d_name[0] == '.' && 
