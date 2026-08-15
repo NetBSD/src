@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.253 2026/08/13 20:04:48 palle Exp $ */
+/*	$NetBSD: autoconf.c,v 1.254 2026/08/15 20:00:44 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.253 2026/08/13 20:04:48 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.254 2026/08/15 20:00:44 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -762,8 +762,10 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 		DPRINTF(ACDB_PROBE, ("Node: %x", node));
 		if ((OF_getprop(node, "device_type", sbuf, sizeof(sbuf)) > 0) &&
-		    strcmp(sbuf, "cpu") == 0)
+		    strcmp(sbuf, "cpu") == 0) {
+			DPRINTF(ACDB_PROBE, ("\n"));
 			continue;
+		}
 		OF_getprop(node, "name", sbuf, sizeof(sbuf));
 		DPRINTF(ACDB_PROBE, (" name %s\n", sbuf));
 		for (ssp = openboot_special; (sp = *ssp) != NULL; ssp++)
