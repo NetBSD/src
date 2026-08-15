@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.53 2025/12/14 18:07:40 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.54 2026/08/15 09:19:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.53 2025/12/14 18:07:40 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.54 2026/08/15 09:19:29 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -488,6 +488,9 @@ cv_search(EditLine *el, int dir)
 #ifdef ANCHOR
 		if (el->el_search.patbuf[0] != '.' &&
 		    el->el_search.patbuf[0] != '*') {
+			/* check if the pattern fits first */
+			if (el->el_search.patlen > EL_BUFSIZ - 4)
+				return CC_ERROR;
 			(void) wcsncpy(tmpbuf, el->el_search.patbuf,
 			    sizeof(tmpbuf) / sizeof(*tmpbuf) - 1);
 			el->el_search.patbuf[0] = '.';
