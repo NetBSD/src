@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.49 2026/04/06 20:34:22 andvar Exp $ */
+/*	$NetBSD: mbr.c,v 1.50 2026/08/15 14:18:00 riastradh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1105,7 +1105,7 @@ mbr_type_from_gen_desc(const struct part_type_desc *desc)
 		if (&mbr_gen_type_desc[i].gen == desc)
 			return i;
 
-	return SIZE_T_MAX;
+	return SIZE_MAX;
 }
 
 static enum part_type
