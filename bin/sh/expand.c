@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.151 2026/04/18 14:35:37 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.152 2026/08/15 19:23:51 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.151 2026/04/18 14:35:37 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.152 2026/08/15 19:23:51 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1817,9 +1817,31 @@ expmeta(char *enddir, char *name)
 		p++;
 	if (*p == '.')
 		matchdot++;
-	while (! int_pending() && (dp = readdir(dirp)) != NULL) {
-		if (dp->d_name[0] == '.' && ! matchdot)
-			continue;
+	while (!int_pending() && (dp = readdir(dirp)) != NULL) {
+#ifndef SMALL
+		if (dotglob) {
+			/*
+			 * When dotglob is enabled, potential matches
+			 * starting with '.' are treated as any others,
+			 * except for "." and ".." which require an
+			 * explicit leading '.' (matchdot) in the pattern.
+			 */
+			if (!matchdot && dp->d_name[0] == '.' &&
+			    (dp->d_name[1] == '\0' ||
+			    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
+				continue;
+		} else
+#endif
+		{
+			/*
+			 * When dotglob is not enabled (always not if SMALL)
+			 * then files starting with a '.' only match when the
+			 * pattern starts with an explicit '.' (matchdot)
+			 */
+			if (dp->d_name[0] == '.' && !matchdot)
+				continue;
+		}
+
 		if (patmatch(start, dp->d_name, 0)) {
 			if (atend) {
 				scopy(dp->d_name, enddir);
@@ -1834,7 +1856,7 @@ expmeta(char *enddir, char *name)
 		}
 	}
 	closedir(dirp);
-	if (! atend)
+	if (!atend)
 		endname[-1] = '/';
 }
 
