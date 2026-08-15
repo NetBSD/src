@@ -1,4 +1,4 @@
-/* $NetBSD: exec_multiboot2.c,v 1.9 2025/12/11 07:25:10 andvar Exp $ */
+/* $NetBSD: exec_multiboot2.c,v 1.10 2026/08/15 14:14:50 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -461,7 +461,7 @@ mbi_cmdline(struct multiboot_package *mbp, void *buf)
 	const char fmt[] = "%s %s";
 
 	/* +1 for trailing \0 */
-	cmdlen = snprintf(NULL, SIZE_T_MAX, fmt, mbp->mbp_file, mbp->mbp_args)
+	cmdlen = snprintf(NULL, SIZE_MAX, fmt, mbp->mbp_file, mbp->mbp_args)
 	       + 1;
 	len = sizeof(*mbt) + cmdlen;
 
@@ -485,7 +485,7 @@ mbi_boot_loader_name(struct multiboot_package *mbp, void *buf)
 
 
 	/* +1 for trailing \0 */
-	strlen = snprintf(NULL, SIZE_T_MAX, fmt,
+	strlen = snprintf(NULL, SIZE_MAX, fmt,
 			  bootprog_name, bootprog_rev, bootprog_kernrev)
 	       + 1;
 	len = sizeof(*mbt) + strlen;
