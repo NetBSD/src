@@ -1,4 +1,4 @@
-/* $NetBSD: option.list,v 1.13 2026/03/22 19:18:56 kre Exp $ */
+/* $NetBSD: option.list,v 1.14 2026/08/15 10:35:46 christos Exp $ */
 
 /*
  * define the shell's settable options
@@ -79,6 +79,7 @@ Xflag	xlock		X #ifndef SMALL	# sticky stderr for -x (implies -x)
 Vflag	vi		V V		# enable vi style editing
 Eflag	emacs		E V		# enable emacs style editing
 tabcomplete	tabcomplete		# make <tab> cause filename expansion
+dotglob	dotglob				# show hidden files on completion.
 
 // internal debug option (not usually included in the shell)
 debug	debug		#ifdef DEBUG	# enable internal shell debugging
