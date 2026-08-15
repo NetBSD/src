@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.76 2026/08/15 10:55:37 wiz Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.77 2026/08/15 18:57:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.76 2026/08/15 10:55:37 wiz Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.77 2026/08/15 18:57:26 kre Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: filecomplete.c,v 1.76 2026/08/15 10:55:37 wiz Exp $");
 
 static const wchar_t break_chars[] = L" \t\n\"\\'`@$><=;|&{(";
 // XXX Fixme: should not be global, but would require an API bump
-static int match_hidden_files;
+static int match_hidden_files = 1;
 
 /********************************/
 /* completion functions */
@@ -404,19 +404,43 @@ fn_filename_completion_function(const char *text, int state)
 	/* find the match */
 	while ((entry = readdir(dir)) != NULL) {
 		if (filename_len == 0) {
+			/*
+			 * If not matching hidden files, then anything
+			 * starting with '.' can't match (no filename,
+			 * hence it cannot allow them).
+			 */
 			if (entry->d_name[0] == '.' && !match_hidden_files)
 				continue;
+			/*
+			 * Even with match_hidden_files the names "." and ".."
+			 * never match, except with a filename (which does not
+			 * exist here) starting with '.'
+			 *
+			 * XXX Use of ! below for 80 column purposes (== '\0')
+			 */
+			if ( entry->d_name[0] == '.' && (!entry->d_name[1] ||
+			    (entry->d_name[1] == '.' &&  !entry->d_name[2])) )
+				continue;
+			/*
+			 * everything else matches
+			 */
 			break;
 		}
+
 		/*
 		 * skip files that start with a '.' if we are not matching
 		 * hidden_files and the current filename does not start with a .
+		 * The names "." and ".." always require a filename with a '.'.
 		 */
-		if (entry->d_name[0] == '.' && 
-		    (filename[0] != '.' && !match_hidden_files))
+		if (entry->d_name[0] == '.' && filename[0] != '.' &&
+		    (!match_hidden_files || entry->d_name[1] == '\0' ||
+		    (entry->d_name[1] == '.' && entry->d_name[2] == '\0')))
 			continue;
-		/* otherwise, get first entry where first */
-		/* filename_len characters are equal	  */
+
+		/*
+		 * otherwise, stop at the first entry where the first
+		 * filename_len characters are equal in filename & entry
+		 */
 		if (entry->d_name[0] == filename[0]
 #if HAVE_STRUCT_DIRENT_D_NAMLEN
 		    && entry->d_namlen >= filename_len
@@ -681,6 +705,7 @@ fn_complete2(EditLine *el,
 	int what_to_do = '\t';
 	int retval = CC_NORM;
 	int do_unescape = flags & FN_QUOTE_MATCH;
+	const int old_match_hidden_files = match_hidden_files;
 
 	match_hidden_files = flags & FN_MATCH_HIDDEN_FILES;
 	if (el->el_state.lastcmd == el->el_state.thiscmd)
@@ -832,6 +857,7 @@ out2:
 
 out:
 	el_free(temp);
+	match_hidden_files = old_match_hidden_files;
 	return retval;
 }
 
@@ -846,7 +872,8 @@ fn_complete(EditLine *el,
 	return fn_complete2(el, complete_func, attempted_completion_function,
 	    word_break, special_prefixes, app_func, query_items,
 	    completion_type, over, point, end,
-	    attempted_completion_function ? 0 : FN_QUOTE_MATCH);
+	    (attempted_completion_function ? 0 : FN_QUOTE_MATCH) |
+	    (match_hidden_files ? MATCH_HIDDEN_FILES : 0));
 }
 
 /*
