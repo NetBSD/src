@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.34 2011/08/29 14:44:21 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.35 2026/08/15 13:33:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.34 2011/08/29 14:44:21 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.35 2026/08/15 13:33:36 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ safe_print(const char *src)
 		flags |= VIS_CSTYLE;
 
 	len = strlen(src);
-	if (len != 0 && SIZE_T_MAX/len <= 4) {
+	if (len != 0 && SIZE_MAX/len <= 4) {
 		errx(EXIT_FAILURE, "%s: name too long", src);
 		/* NOTREACHED */
 	}
