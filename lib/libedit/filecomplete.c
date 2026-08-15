@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.73 2023/04/25 17:51:32 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.74 2026/08/15 09:47:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.73 2023/04/25 17:51:32 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.74 2026/08/15 09:47:27 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -50,6 +50,8 @@ __RCSID("$NetBSD: filecomplete.c,v 1.73 2023/04/25 17:51:32 christos Exp $");
 #include "filecomplete.h"
 
 static const wchar_t break_chars[] = L" \t\n\"\\'`@$><=;|&{(";
+// XXX Fixme: should not be global, but would require an API bump
+static int match_hidden_files;
 
 /********************************/
 /* completion functions */
@@ -401,8 +403,12 @@ fn_filename_completion_function(const char *text, int state)
 
 	/* find the match */
 	while ((entry = readdir(dir)) != NULL) {
-		/* skip . and .. */
-		if (entry->d_name[0] == '.' && (!entry->d_name[1]
+		/*
+		 * skip . and .., if we are not matching hidden_files and
+		 * the current filename does not start with a .
+		 */
+		if ((filename[0] != '.' && !match_hidden_files) &&
+		    entry->d_name[0] == '.' && (!entry->d_name[1]
 		    || (entry->d_name[1] == '.' && !entry->d_name[2])))
 			continue;
 		if (filename_len == 0)
@@ -674,6 +680,7 @@ fn_complete2(EditLine *el,
 	int retval = CC_NORM;
 	int do_unescape = flags & FN_QUOTE_MATCH;
 
+	match_hidden_files = flags & FN_MATCH_HIDDEN_FILES;
 	if (el->el_state.lastcmd == el->el_state.thiscmd)
 		what_to_do = '?';
 
