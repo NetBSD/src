@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.104 2025/12/16 02:40:48 kre Exp $	*/
+/*	$NetBSD: el.c,v 1.105 2026/08/15 10:12:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.104 2025/12/16 02:40:48 kre Exp $");
+__RCSID("$NetBSD: el.c,v 1.105 2026/08/15 10:12:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -394,6 +394,13 @@ el_wset(EditLine *el, int op, ...)
 		el->el_getenv = va_arg(ap, func_t);
 		break;
 
+	case EL_MATCH_HIDDEN_FILES:
+		if (va_arg(ap, int))
+			el->el_flags |= MATCH_HIDDEN_FILES;
+		else
+			el->el_flags &= ~MATCH_HIDDEN_FILES;
+		break;
+
 	default:
 		rv = -1;
 		break;
@@ -515,6 +522,11 @@ el_wget(EditLine *el, int op, ...)
 
 	case EL_GETENV:
 		*va_arg(ap, func_t *) = el->el_getenv;
+		rv = 0;
+		break;
+
+	case EL_MATCH_HIDDEN_FILES:
+		*va_arg(ap, int *) = el->el_flags & MATCH_HIDDEN_FILES ? 1 : 0;
 		rv = 0;
 		break;
 

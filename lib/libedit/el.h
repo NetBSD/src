@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.49 2025/12/16 02:40:48 kre Exp $	*/
+/*	$NetBSD: el.h,v 1.50 2026/08/15 10:12:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -51,14 +51,15 @@
 
 #define	EL_BUFSIZ	((size_t)1024)	/* Maximum line size		*/
 
-#define	HANDLE_SIGNALS	0x001
-#define	NO_TTY		0x002
-#define	EDIT_DISABLED	0x004
-#define	UNBUFFERED	0x008
-#define	NARROW_HISTORY	0x040
-#define	NO_RESET	0x080
-#define	FIXIO		0x100
-#define	FROM_ELLINE	0x200
+#define	HANDLE_SIGNALS		0x001
+#define	NO_TTY			0x002
+#define	EDIT_DISABLED		0x004
+#define	UNBUFFERED		0x008
+#define	NARROW_HISTORY		0x040
+#define	NO_RESET		0x080
+#define	FIXIO			0x100
+#define	FROM_ELLINE		0x200
+#define	MATCH_HIDDEN_FILES	0x400
 
 typedef unsigned char el_action_t;	/* Index to command array	*/
 

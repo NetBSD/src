@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.104 2025/12/16 02:40:48 kre Exp $
+.\"	$NetBSD: editline.3,v 1.105 2026/08/15 10:12:49 christos Exp $
 .\"
 .\" Copyright (c) 1997-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 16, 2025
+.Dd August 15, 2026
 .Dt EDITLINE 3
 .Os
 .Sh NAME
@@ -517,6 +517,13 @@ error, and trying to reset the input file descriptor to reset non-blocking I/O.
 This is disabled by default, and desirable only when
 .Nm editline
 is used in shell-like applications.
+.Ir Dv EL_MATCH_HIDDEN_FILES , Fa "int flag"
+If
+.Fa flag
+is zero,
+then file completion will not match files starting with a
+.Dq .
+.
 .It Dv EL_GETCFN , Fa "el_rfunc_t f"
 Whenever reading a character, use the function
 .Bd -ragged -offset indent -compact
@@ -660,6 +667,10 @@ to non-zero if unbuffered mode is enabled.
 Set
 .Fa c
 to non-zero if safe read is set.
+.It DV EL_MATCH_HIDDEN_FILES , Fa "int *c"
+Set
+.Fa c
+to non-zero if match hidden files is set.
 .It Dv EL_GETFP , Fa "int fd", Fa "FILE **fp"
 Set
 .Fa fp
