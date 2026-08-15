@@ -1,4 +1,4 @@
-/*	 $NetBSD: wcsftime.c,v 1.5 2013/08/19 20:41:15 joerg Exp $	*/
+/*	 $NetBSD: wcsftime.c,v 1.6 2026/08/15 13:39:06 riastradh Exp $	*/
 /*-
  * Copyright (c) 2002 Tim J. Robbins
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wcsftime.c,v 1.5 2013/08/19 20:41:15 joerg Exp $");
+__RCSID("$NetBSD: wcsftime.c,v 1.6 2026/08/15 13:39:06 riastradh Exp $");
 
 #define __SETLOCALE_SOURCE__
 #include "namespace.h"
@@ -88,7 +88,7 @@ wcsftime_l(wchar_t *wcs, size_t maxsize,
 	 * Then, copy and convert the result back into wide characters in
 	 * the caller's buffer.
 	 */
-	if (SIZE_T_MAX / MB_CUR_MAX_L(loc) <= maxsize) {
+	if (SIZE_MAX / MB_CUR_MAX_L(loc) <= maxsize) {
 		/* maxsize is preposterously large - avoid int. overflow. */
 		errno = EINVAL;
 		goto error;

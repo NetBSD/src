@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.64 2023/12/13 23:53:50 mrg Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.65 2026/08/15 13:39:06 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -111,7 +111,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */
-__RCSID("$NetBSD: jemalloc.c,v 1.64 2023/12/13 23:53:50 mrg Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.65 2026/08/15 13:39:06 riastradh Exp $");
 
 #include "namespace.h"
 #include <sys/mman.h>
@@ -2978,7 +2978,7 @@ ipalloc(size_t alignment, size_t size)
 		ceil_size = PAGE_CEILING(size);
 		/*
 		 * (ceil_size < size) protects against very large sizes within
-		 * pagesize of SIZE_T_MAX.
+		 * pagesize of SIZE_MAX.
 		 *
 		 * (ceil_size + alignment < ceil_size) protects against the
 		 * combination of maximal alignment and ceil_size large enough
@@ -3690,7 +3690,7 @@ calloc(size_t num, size_t size)
 	 * most significant half of the bits in a size_t.
 	 */
 	} else if ((unsigned long long)((num | size) &
-	   ((unsigned long long)SIZE_T_MAX << (sizeof(size_t) << 2))) &&
+	   ((unsigned long long)SIZE_MAX << (sizeof(size_t) << 2))) &&
 	   (num_size / size != num)) {
 		/* size_t overflow. */
 		ret = NULL;
