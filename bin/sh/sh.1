@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.281 2026/08/15 10:35:46 christos Exp $
+.\"	$NetBSD: sh.1,v 1.282 2026/08/15 19:27:08 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -618,6 +618,37 @@ However,
 .Em cdprint
 is an extension to POSIX, so these two options should
 rarely be set at the same time.
+.It "\ \ " Em dotglob
+When matching filenames, either for filename expansion,
+or if both input line editing
+.Pq Fl E No or Fl V
+and the
+.Ic tabcomplete
+otion are enabled, for filename completion,
+match files that begin with a
+.Sq \&.
+.Pq sometimes called hidden files
+other than
+.Dq \&.
+and
+.Dq \&.. ,
+even if the pattern does not begin with a
+.Sq \&. .
+In other than filename matching,
+.Sq \&.
+is just any other ordinary character,
+and this option is irrelevant.
+When matching filenames, the file names
+.Dq \&.
+and
+.Dq \&..
+only ever match patterns starting with a
+.Sq \&. ,
+regardless of the value of
+.Ic dotglob .
+The
+.Ic dotglob
+option does not exist in SMALL shells.
 .It "\ \ " Em nolog
 Prevent the entry of function definitions into the command history (see
 .Ic fc
@@ -692,12 +723,6 @@ One of the editing modes, either
 or
 .Fl V ,
 must be enabled for this to work.
-.It "\ \ " Em dotglob
-When filename completion is enabled, match files that begin with a
-.Dq \&. .
-The
-.Ic tabcomplete
-option needs to be enabled for this to work.
 .El
 .Ss Lexical Structure
 The shell reads input in terms of lines from a file
@@ -3777,10 +3802,12 @@ though this will be avoided wherever possible.
 Continue the
 .Ic read
 if a trapped signal
-.Pq other than SIGINT in an interactive shell
+.Pq other than Dv SIGINT in an interactive shell
 is received while waiting for input.
-In interactive shells, a SIGINT, trapped or not,
-received while waiting for input always aborts the
+In interactive shells, a
+.Dv SIGINT ,
+trapped or not,
+received while waiting for input, always aborts the
 .Ic read .
 .It Fl d Ar delim
 End the read when the first byte of
@@ -3973,7 +4000,9 @@ If the
 .Ic read
 was interrupted by a trapped signal, and the
 .Fl c
-flag was not given, or the signal was SIGINT in an interactive shell,
+flag was not given, or the signal was
+.Dv SIGINT
+in an interactive shell,
 the exit status will be 130, and variables might have been altered,
 as described, or not.
 .Pp
