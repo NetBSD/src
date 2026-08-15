@@ -1,4 +1,4 @@
-/* $NetBSD: ti_edma.c,v 1.7 2026/08/12 09:36:49 yurix Exp $ */
+/* $NetBSD: ti_edma.c,v 1.8 2026/08/15 20:13:34 yurix Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.7 2026/08/12 09:36:49 yurix Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.8 2026/08/15 20:13:34 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,7 +499,7 @@ edma_channel_alloc(struct edma_softc *sc, enum edma_type type,
 	KASSERT(cb != NULL);
 	KASSERT(cbarg != NULL);
 
-	if (drq < sc->sc_num_channels) return NULL;
+	if (drq >= sc->sc_num_channels) return NULL;
 
 	/* allocate before the mutex since the mutex doesn't allow sleep */
 	ch = kmem_alloc(sizeof(struct edma_channel), KM_SLEEP);
