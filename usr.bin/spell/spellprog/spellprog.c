@@ -1,4 +1,4 @@
-/*	$NetBSD: spellprog.c,v 1.10 2021/11/09 09:41:05 nia Exp $	*/
+/*	$NetBSD: spellprog.c,v 1.11 2026/08/15 14:17:09 riastradh Exp $	*/
 
 /* derived from OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp */
 
@@ -357,7 +357,7 @@ main(int argc, char **argv)
 		wlists[i].fd = open(argv[i], O_RDONLY, 0);
 		if (wlists[i].fd == -1 || fstat(wlists[i].fd, &sb) != 0)
 			err(1, "%s", argv[i]);
-		if (sb.st_size > SIZE_T_MAX)
+		if (sb.st_size > SIZE_MAX)
 			errx(1, "%s: %s", argv[i], strerror(EFBIG));
 		wlists[i].front = mmap(NULL, (size_t)sb.st_size, PROT_READ,
 		    MAP_PRIVATE, wlists[i].fd, (off_t)0);
