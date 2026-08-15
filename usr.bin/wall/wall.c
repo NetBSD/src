@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.30 2015/11/21 14:59:51 christos Exp $	*/
+/*	$NetBSD: wall.c,v 1.31 2026/08/15 14:17:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.30 2015/11/21 14:59:51 christos Exp $");
+__RCSID("$NetBSD: wall.c,v 1.31 2026/08/15 14:17:34 riastradh Exp $");
 #endif /* not lint */
 
 /*
@@ -262,7 +262,7 @@ makemsg(struct iovec *iov, const char *fname, int nobanner)
 
 	if (fstat(fd, &sbuf) == -1)
 		err(EXIT_FAILURE, "can't stat temporary file");
-	if ((uint64_t)sbuf.st_size > SIZE_T_MAX)
+	if ((uint64_t)sbuf.st_size > SIZE_MAX)
 		errx(EXIT_FAILURE, "file too big");
 	mbufsize = (size_t)sbuf.st_size;
 	if (!(mbuf = malloc(mbufsize)))
