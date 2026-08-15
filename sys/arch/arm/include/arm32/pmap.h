@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.180 2026/04/28 05:51:14 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.181 2026/08/15 11:14:58 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -790,7 +790,7 @@ extern void (*pmap_copy_page_func)(paddr_t, paddr_t);
 extern void (*pmap_zero_page_func)(paddr_t);
 
 /*
- * Global varaiables in cpufunc_asm_xscale.S supporting the Xscale
+ * Global variables in cpufunc_asm_xscale.S supporting the Xscale
  * cache clean/purge functions.
  */
 extern vaddr_t xscale_minidata_clean_addr;

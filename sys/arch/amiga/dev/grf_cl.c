@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.58 2023/12/20 00:40:42 thorpej Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.59 2026/08/15 11:14:58 andvar Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.58 2023/12/20 00:40:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.59 2026/08/15 11:14:58 andvar Exp $");
 
 #include "grfcl.h"
 #include "ite.h"
@@ -1000,7 +1000,7 @@ cl_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *data)
 		cl_cursprite.size.x = data->size.x;
 		cl_cursprite.size.y = data->size.y;
 
-                /* forcably load into board */
+                /* forcibly load into board */
                 gpos.x = cl_cursprite.pos.x;
                 gpos.y = cl_cursprite.pos.y;
                 cl_cursprite.pos.x = -1;

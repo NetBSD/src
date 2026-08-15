@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2026/04/08 04:06:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2026/08/15 11:14:59 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2026/04/08 04:06:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2026/08/15 11:14:59 andvar Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1439,7 +1439,7 @@ cpu_reboot(int howto, char *user_boot_string)
 
 		/* ask firmware to reset */
 		pdcproc_doreset();
-		/* forcably reset module if that fails */
+		/* forcibly reset module if that fails */
 		__asm __volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_RESET), "r" (HPPA_LBCAST + iomod_command));
 	}
