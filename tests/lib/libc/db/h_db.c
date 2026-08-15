@@ -1,4 +1,4 @@
-/*	$NetBSD: h_db.c,v 1.3 2016/09/24 21:18:22 christos Exp $	*/
+/*	$NetBSD: h_db.c,v 1.4 2026/08/15 14:15:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-__RCSID("$NetBSD: h_db.c,v 1.3 2016/09/24 21:18:22 christos Exp $");
+__RCSID("$NetBSD: h_db.c,v 1.4 2026/08/15 14:15:59 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -718,7 +718,7 @@ rfile(char *name, size_t *lenp)
 	if ((fd = open(name, O_RDONLY, 0)) == -1 || fstat(fd, &sb) == -1)
 		err(1, "Cannot open `%s'", name);
 #ifdef NOT_PORTABLE
-	if (sb.st_size > (off_t)SIZE_T_MAX) {
+	if (sb.st_size > (off_t)SIZE_MAX) {
 		errno = E2BIG;
 		err("Cannot process `%s'", name);
 	}
