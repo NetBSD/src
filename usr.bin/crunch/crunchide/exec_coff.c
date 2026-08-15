@@ -1,4 +1,4 @@
-/* $NetBSD: exec_coff.c,v 1.7 2009/08/20 17:39:51 he Exp $ */
+/* $NetBSD: exec_coff.c,v 1.8 2026/08/15 14:16:13 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_coff.c,v 1.7 2009/08/20 17:39:51 he Exp $");
+__RCSID("$NetBSD: exec_coff.c,v 1.8 2026/08/15 14:16:13 riastradh Exp $");
 #endif
  
 #include <stdio.h>
@@ -66,7 +66,7 @@ check_coff(int fd, const char *filename)
 	 */
 	if (fstat(fd, &sb) == -1)
 		return 0;
-	if (sb.st_size > SIZE_T_MAX)
+	if (sb.st_size > SIZE_MAX)
 		return 0;
 	if (read(fd, &fh, sizeof fh) != sizeof fh)
 		return 0;
