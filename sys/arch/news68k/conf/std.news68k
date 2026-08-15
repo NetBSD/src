@@ -1,4 +1,4 @@
-#	$NetBSD: std.news68k,v 1.8 2025/11/13 11:27:18 tsutsui Exp $
+#	$NetBSD: std.news68k,v 1.9 2026/08/15 18:58:16 thorpej Exp $
 
 machine news68k m68k
 include		"conf/std"			# MI standard options
@@ -7,4 +7,4 @@ include		"arch/m68k/conf/std.m68k"	# m68k standard options
 options 	EXEC_AOUT	# exec a.out binaries
 
 # Experimental new pmap module
-#options 	__HAVE_NEW_PMAP_68K
+options 	__HAVE_NEW_PMAP_68K
