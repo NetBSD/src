@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.33 2017/10/13 00:11:56 christos Exp $	*/
+/*	$NetBSD: fmt.c,v 1.34 2026/08/15 14:16:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.33 2017/10/13 00:11:56 christos Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.34 2026/08/15 14:16:25 riastradh Exp $");
 #endif /* not lint */
 
 #include <wctype.h>
@@ -192,7 +192,7 @@ getnum(const char *str, const char *what, size_t *res, int badnum)
 	errno = 0;
 	ul = strtoul(str, &ep, 0);
         if (*str != '\0' && *ep == '\0') {
-		 if ((errno == ERANGE && ul == ULONG_MAX) || ul > SIZE_T_MAX)
+		 if ((errno == ERANGE && ul == ULONG_MAX) || ul > SIZE_MAX)
 			errx(1, "%s number `%s' too big", what, str);
 		*res = (size_t)ul;
 		return 1;
