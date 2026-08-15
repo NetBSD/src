@@ -1,4 +1,4 @@
-/*	$NetBSD: sdiff.c,v 1.3 2021/08/27 17:38:57 rillig Exp $	*/
+/*	$NetBSD: sdiff.c,v 1.4 2026/08/15 14:16:37 riastradh Exp $	*/
 /*	$OpenBSD: sdiff.c,v 1.20 2006/09/19 05:52:23 otto Exp $ */
 
 /*
@@ -283,7 +283,7 @@ main(int argc, char **argv)
 	/* Subtract column divider and divide by two. */
 	width = (wflag - 3) / 2;
 	/* Make sure line_width can fit in size_t. */
-	if (width > (SIZE_T_MAX - 3) / 2)
+	if (width > (SIZE_MAX - 3) / 2)
 		errx(2, "width is too large: %zu", width);
 	line_width = width * 2 + 3;
 
@@ -383,7 +383,7 @@ printcol(const char *s, size_t *col, const size_t col_max)
 			 * If rounding to next multiple of eight causes
 			 * an integer overflow, just return.
 			 */
-			if (*col > SIZE_T_MAX - 8)
+			if (*col > SIZE_MAX - 8)
 				return;
 
 			/* Round to next multiple of eight. */
@@ -642,7 +642,7 @@ parsecmd(FILE *diffpipe, FILE *file1, FILE *file2)
 		if (file1start != file1end)
 			errx(2, "append cannot have a file1 range: %s",
 			    line);
-		if (file1start == SIZE_T_MAX)
+		if (file1start == SIZE_MAX)
 			errx(2, "file1 line range too high: %s", line);
 		file1start = ++file1end;
 	}
@@ -654,7 +654,7 @@ parsecmd(FILE *diffpipe, FILE *file1, FILE *file2)
 		if (file2start != file2end)
 			errx(2, "delete cannot have a file2 range: %s",
 			    line);
-		if (file2start == SIZE_T_MAX)
+		if (file2start == SIZE_MAX)
 			errx(2, "file2 line range too high: %s", line);
 		file2start = ++file2end;
 	}
