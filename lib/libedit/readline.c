@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.184 2026/01/09 17:49:12 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.185 2026/08/15 09:18:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.184 2026/01/09 17:49:12 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.185 2026/08/15 09:18:59 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -699,10 +699,14 @@ getfrom(const char **cmdp, char **fromp, const char *search, int delim)
 	for (; *cmd && *cmd != delim; cmd++) {
 		if (*cmd == '\\' && cmd[1] == delim)
 			cmd++;
-		if (len - 1 >= size) {
+		/* Keep room for the next byte and NUL */
+		if (len + 1 >= size) {
 			char *nwhat;
+			if (size > SIZE_T_MAX / 2)
+				goto out;
 			nwhat = el_realloc(what, (size <<= 1) * sizeof(*nwhat));
 			if (nwhat == NULL) {
+out:
 				el_free(what);
 				el_free(*fromp);
 				*cmdp = cmd;
