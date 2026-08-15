@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.235 2026/07/18 01:06:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.236 2026/08/15 14:15:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.235 2026/07/18 01:06:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.236 2026/08/15 14:15:52 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -803,7 +803,7 @@ uvm_swap_stats(char *ptr, int misc,
 	 * Nb: do not limit misc to <= uvmexp.nswapdev yet,
 	 * as the latter might get bigger (or smaller)
 	 */
-	if ((SIZE_T_MAX / sizeof sdp) <= misc)	/* unlikely */
+	if ((SIZE_MAX / sizeof sdp) <= misc)	/* unlikely */
 		return E2BIG;
 
 	/*
