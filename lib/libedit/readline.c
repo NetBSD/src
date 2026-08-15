@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.185 2026/08/15 09:18:59 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.186 2026/08/15 09:23:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.185 2026/08/15 09:18:59 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.186 2026/08/15 09:23:14 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1250,6 +1250,12 @@ stifle_history(int max)
 			history_base = history_length - max;
 		while (history_length > max) {
 			he = remove_history(0);
+			/*
+			 * remove history can return NULL on out of memory
+			 * conditions, so stop looping since it will not help.
+			 */
+			if (he == NULL)
+				break;
 			el_free(he->data);
 			el_free((void *)(unsigned long)he->line);
 			el_free(he);
