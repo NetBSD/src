@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.77 2026/08/06 13:15:54 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.78 2026/08/15 19:01:58 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -193,26 +193,18 @@
  *   small-memory configs in virt68k (qemu 68040 **with fixed MMU
  *   emulation**) and mac68k (10MB 68040, 68030).
  *
- * - Single-user mode on 68030 w/ no external cache (luna68k).
- *
- * - Single-user mode on 68040 (hp425t).
- *
- * - Multi-user mode on 68040 (NeXTstation, 20MB RAM)
- *
- * - Ports that have been adapted: hp300, luna68k, mac68k (default),
- *   mvme68k (default), news68k (see below), next68k (default),
- *   virt68k (default), x68k.
+ * - Ports that have been adapted: hp300, luna68k (default),
+ *   mac68k (default), mvme68k (default), news68k (default),
+ *   next68k (default), virt68k (default), x68k.
  *
  * XXX TODO XXX
  *
  * - Adapt amiga (hard), atari (hard), cesfic (easy).
- * - Test on 68020.
- * - Test on 68060.
+ * - Test on 68020 + 68851.
  * - Test on machines above listed as "not tested".
  * - More rigorous testing in various emulators (Nono, UAE?).
- * - Fix problems observed on news68k (external cache related?).
  * - Finish HP MMU support and test on real HP MMU.
- * - Convert '851 / '030 to 3-level.
+ * - Convert '851 / '030 to 3-level (maybe?).
  * - Optimize ATC / cache manipulation.
  * - Add some more instrumentation.
  * - Eventually disable instrumentation by default.
@@ -225,7 +217,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.77 2026/08/06 13:15:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.78 2026/08/15 19:01:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
