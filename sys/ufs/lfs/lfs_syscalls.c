@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.180 2026/01/05 05:02:47 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.181 2026/08/15 14:15:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.180 2026/01/05 05:02:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.181 2026/08/15 14:15:03 riastradh Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -571,8 +571,8 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	fs = VFSTOULFS(mntp)->um_lfs;
 
 	blkcnt = SCARG(uap, blkcnt);
-#if SIZE_T_MAX <= UINT_MAX
-	if ((u_int) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
+#if SIZE_MAX <= UINT_MAX
+	if ((u_int) blkcnt > SIZE_MAX / sizeof(BLOCK_INFO))
 		return (EINVAL);
 #endif
 	KERNEL_LOCK(1, NULL);
@@ -613,7 +613,7 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	fs = VFSTOULFS(mntp)->um_lfs;
 
 	blkcnt = SCARG(uap, blkcnt);
-	if ((size_t) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
+	if ((size_t) blkcnt > SIZE_MAX / sizeof(BLOCK_INFO))
 		return (EINVAL);
 	KERNEL_LOCK(1, NULL);
 	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
