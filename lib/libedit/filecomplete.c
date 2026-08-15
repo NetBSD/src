@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.74 2026/08/15 09:47:27 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.75 2026/08/15 10:06:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.74 2026/08/15 09:47:27 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.75 2026/08/15 10:06:12 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -403,16 +403,18 @@ fn_filename_completion_function(const char *text, int state)
 
 	/* find the match */
 	while ((entry = readdir(dir)) != NULL) {
-		/*
-		 * skip . and .., if we are not matching hidden_files and
-		 * the current filename does not start with a .
-		 */
-		if ((filename[0] != '.' && !match_hidden_files) &&
-		    entry->d_name[0] == '.' && (!entry->d_name[1]
-		    || (entry->d_name[1] == '.' && !entry->d_name[2])))
-			continue;
-		if (filename_len == 0)
+		if (filename_len == 0) {
+			if (entry->d_name[0] == '.' && !match_hidden_files)
+				continue;
 			break;
+		}
+		/*
+		 * skip filest that start with a '.' if we are not matching
+		 * hidden_files and the current filename does not start with a .
+		 */
+		if (entry->d_name[0] == '.' && 
+		    (filename[0] != '.' && !match_hidden_files))
+			continue;
 		/* otherwise, get first entry where first */
 		/* filename_len characters are equal	  */
 		if (entry->d_name[0] == filename[0]
