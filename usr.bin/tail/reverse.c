@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.24 2026/04/30 15:52:40 christos Exp $	*/
+/*	$NetBSD: reverse.c,v 1.25 2026/08/15 14:17:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.24 2026/04/30 15:52:40 christos Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.25 2026/08/15 14:17:23 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -113,7 +113,7 @@ r_reg(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	if (!(size = sbp->st_size))
 		return;
 
-	if ((uint64_t)size > SIZE_T_MAX) {
+	if ((uint64_t)size > SIZE_MAX) {
 			/* XXX: need a cleaner way to check this on amd64 */
 		errno = EFBIG;
 		xerr(0, "%s", fname);
