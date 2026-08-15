@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.19 2010/08/28 21:30:03 joerg Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.20 2026/08/15 14:17:53 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_elf32.c,v 1.19 2010/08/28 21:30:03 joerg Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.20 2026/08/15 14:17:53 riastradh Exp $");
 #endif /* not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -132,7 +132,7 @@ ELFNAMEEND(create_knlist)(name, db)
 		warn("%s", kfile);
 		punt();
 	}
-	if (st.st_size > SIZE_T_MAX)
+	if (st.st_size > SIZE_MAX)
 		BAD;
 
 
