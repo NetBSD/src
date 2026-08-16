@@ -1,4 +1,4 @@
-/*	$NetBSD: getfsspecname.c,v 1.8 2018/12/27 21:35:48 alnsn Exp $	*/
+/*	$NetBSD: getfsspecname.c,v 1.9 2026/08/16 09:34:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getfsspecname.c,v 1.8 2018/12/27 21:35:48 alnsn Exp $");
+__RCSID("$NetBSD: getfsspecname.c,v 1.9 2026/08/16 09:34:54 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -135,13 +135,16 @@ search:
 		goto out;
 	}
 
+	savee = 0;
 	for (dk = strtok(drives, " "); dk != NULL; dk = strtok(NULL, " ")) {
 		struct dkwedge_info dkw;
 		if (strncmp(dk, "dk", 2) != 0)
 			continue;
 		fd = opendisk(dk, O_RDONLY, buf, bufsiz, 0);
-		if (fd == -1)
+		if (fd == -1) {
+			savee = errno;
 			continue;
+		}
 		if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1) {
 			savee = errno;
 			snprintf(buf, bufsiz, "%s: getwedgeinfo", dk);
@@ -157,13 +160,16 @@ search:
 #ifdef COMPAT_DKWEDGE
 	/* Last ditch effort assuming NAME=label, and label is a disk name */
 	fd = opendisk(name, O_RDONLY, buf, bufsiz, 0);
-	if (fd != -1) {
+	if (fd == -1)  {
+		savee = errno;
+	} else {
 		close(fd);
 		p = strstr(buf, "/r");
 		goto good;
 	}
 #endif
-	savee = ESRCH;
+	if (savee == 0)
+		savee = ENOENT;
 	snprintf(buf, bufsiz, "no match for `%s'", vname);
 out:
 	buf = NULL;
