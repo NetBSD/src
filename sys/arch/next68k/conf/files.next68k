@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.61 2026/07/06 16:21:47 thorpej Exp $
+# $NetBSD: files.next68k,v 1.62 2026/08/16 00:45:43 thorpej Exp $
 
 # next68k-specific configuration info
 
@@ -37,7 +37,6 @@ file	arch/m68k/m68k/dumpsys.c
 file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s
 
-file	arch/next68k/next68k/pmap_bootstrap.c	!__have_new_pmap_68k
 file	arch/next68k/next68k/machdep.c
 file	arch/next68k/next68k/clock.c
 file	arch/next68k/next68k/conf.c

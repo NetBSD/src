@@ -1,4 +1,4 @@
-#	$NetBSD: files.virt68k,v 1.25 2026/07/06 16:21:48 thorpej Exp $
+#	$NetBSD: files.virt68k,v 1.26 2026/08/16 00:43:54 thorpej Exp $
 
 # config file for virt68k
 
@@ -35,7 +35,6 @@ file arch/virt68k/virt68k/autoconf.c
 file arch/virt68k/virt68k/clock.c
 file arch/virt68k/virt68k/intr.c
 file arch/virt68k/virt68k/machdep.c
-file arch/virt68k/virt68k/pmap_bootstrap.c	!__have_new_pmap_68k
 file arch/m68k/m68k/bus_dma.c
 file arch/m68k/m68k/bus_space_simple.c
 file arch/m68k/m68k/dumpsys.c
