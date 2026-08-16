@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.45 2026/08/14 17:23:36 riastradh Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.46 2026/08/16 11:41:17 ryoon Exp $	*/
 /* $OpenBSD: ssh-agent.c,v 1.324 2026/03/10 07:27:14 djm Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.45 2026/08/14 17:23:36 riastradh Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.46 2026/08/16 11:41:17 ryoon Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -2250,7 +2250,7 @@ main(int ac, char **av)
 	u_int maxfds;
 	sigset_t nsigset, osigset;
 
-#define FORMAT_SETENV (c_flag ? "setenv %s %s;\n" : "%1$s=%2$s; export %1$s\n")
+#define FORMAT_SETENV (c_flag ? "setenv %s %s;\n" : "%1$s=%2$s; export %1$s;\n")
 #define FORMAT_UNSETENV (c_flag ? "unsetenv %s;\n" : "unset %s;\n")
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
