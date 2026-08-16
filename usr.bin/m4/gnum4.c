@@ -1,4 +1,4 @@
-/* $NetBSD: gnum4.c,v 1.14 2026/06/10 22:25:02 christos Exp $ */
+/* $NetBSD: gnum4.c,v 1.15 2026/08/16 13:19:35 riastradh Exp $ */
 /* $OpenBSD: gnum4.c,v 1.55 2025/11/05 17:10:45 tb Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gnum4.c,v 1.14 2026/06/10 22:25:02 christos Exp $");
+__RCSID("$NetBSD: gnum4.c,v 1.15 2026/08/16 13:19:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,9 +48,6 @@ __RCSID("$NetBSD: gnum4.c,v 1.14 2026/06/10 22:25:02 christos Exp $");
 
 
 int mimic_gnu = 0;
-#ifndef SIZE_T_MAX 
-#define SIZE_T_MAX (size_t)~0ull
-#endif 
 
 /*
  * Support for include path search
@@ -611,7 +608,7 @@ doformat(const char *argv[], int argc)
 				format = eformat;
 			}
 		} else {
-			extra = SIZE_T_MAX;
+			extra = SIZE_MAX;
 		}
 		if (pos >= argc)
 			m4errx(1, "Format with too many format specifiers.");
