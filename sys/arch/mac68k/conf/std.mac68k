@@ -1,4 +1,4 @@
-#	$NetBSD: std.mac68k,v 1.34 2026/07/08 05:10:23 thorpej Exp $
+#	$NetBSD: std.mac68k,v 1.35 2026/08/16 00:15:00 thorpej Exp $
 #
 # "options" common to all mac68k kernel configs
 
@@ -6,7 +6,6 @@ machine	mac68k m68k
 include		"conf/std"			# MI standard options
 include		"arch/m68k/conf/std.m68k"	# m68k standard options
 
-# Experimental shiny object
 options 	__HAVE_NEW_PMAP_68K
 
 # All 68k Macs that NetBSD runs on have a Motorola MMU.  For 68030 and 68040,

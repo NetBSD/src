@@ -1,4 +1,4 @@
-#	$NetBSD: std.mvme68k,v 1.17 2026/08/06 13:14:27 thorpej Exp $
+#	$NetBSD: std.mvme68k,v 1.18 2026/08/16 00:15:00 thorpej Exp $
 #
 # Options/devices that all mvme68ks should have
 #
@@ -19,7 +19,6 @@ include		"arch/m68k/conf/std.m68k"	# m68k standard options
 #
 makeoptions	COPTS="-Os -fno-unwind-tables -fno-omit-frame-pointer"
 
-# Experimental shiny object
 options 	__HAVE_NEW_PMAP_68K
 
 timekeeper0 at mainbus0
