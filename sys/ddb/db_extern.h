@@ -1,4 +1,4 @@
-/*	$NetBSD: db_extern.h,v 1.17 2025/12/18 06:45:50 skrll Exp $	*/
+/*	$NetBSD: db_extern.h,v 1.18 2026/08/16 21:53:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -64,5 +64,10 @@ void	db_write_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* Callback for MD platform code to manage watchdogs, etc. */
 extern void (*db_trap_callback)(int);
+
+/* crash(8) */
+#ifndef _KERNEL
+extern bool db_lockdebug_enabled;
+#endif
 
 #endif /* _DDB_DB_EXTERN_H_ */

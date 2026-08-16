@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.193 2025/12/22 07:51:07 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.194 2026/08/16 21:53:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.193 2025/12/22 07:51:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.194 2026/08/16 21:53:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -1362,15 +1362,109 @@ db_lock_print_cmd(db_expr_t addr, bool have_addr,
 	    db_printf);
 }
 
+#if !defined _KERNEL || !defined LOCKDEBUG
+static bool
+db_lwp_p(const struct lwp *l)
+{
+	struct lwp *l1;
+
+	for (l1 = db_lwp_first(); l1 != NULL; l1 = db_lwp_next(l1)) {
+		if (l1 == l)
+			return true;
+	}
+	return false;
+}
+#endif
+
 static void
 db_show_all_locks(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-#ifdef _KERNEL	/* XXX CRASH(8) */
+#ifndef _KERNEL
+	if (db_lockdebug_enabled) {
+#if 1				/* XXX implement me */
+		db_printf("This command only works in-kernel.\n");
+#else
+		lockdebug_show_all_locks(db_printf, modif);
+#endif
+		return;
+	}
+#endif
+
+#if defined _KERNEL && defined LOCKDEBUG
 	lockdebug_show_all_locks(db_printf, modif);
 #else
-	db_kernelonly();
+	struct proc *p;
+	bool show_trace = false;
+
+	if (modif[0] == 't')
+		show_trace = true;
+
+	db_printf("%-5s %5s %3s %18s %18s %18s %4s\n",
+	    "PID", "LID", "CPU", "STRUCT LWP *", "LOCK", "OWNER", "BITS");
+	for (p = db_proc_first(); p != NULL; p = db_proc_next(p)) {
+		pid_t pid;
+		struct lwp *l;
+
+		db_read_bytes((db_addr_t)(uintptr_t)&p->p_pid, sizeof(pid),
+		    (char *)&pid);
+
+		for (db_read_bytes(
+			(db_addr_t)(uintptr_t) &LIST_FIRST(&p->p_lwps),
+			sizeof(l), (char *)&l);
+		    l != NULL;
+		    db_read_bytes(
+			(db_addr_t)(uintptr_t)&LIST_NEXT(l, l_sibling),
+			sizeof(l), (char *)&l)) {
+			lwpid_t lid;
+			int stat, pflag;
+			struct cpu_info *ci;
+			int cpuno = -1;
+			volatile void *ld_wanted;
+			uintptr_t ownerword;
+
+			db_read_bytes((db_addr_t)(uintptr_t)&l->l_ld_wanted,
+			    sizeof(ld_wanted), (char *)&ld_wanted);
+			if (ld_wanted == NULL)
+				continue;
+
+			db_read_bytes((db_addr_t)(uintptr_t)&l->l_lid,
+			    sizeof(lid), (char *)&lid);
+			db_read_bytes((db_addr_t)(uintptr_t)&l->l_stat,
+			    sizeof(stat), (char *)&stat);
+			db_read_bytes((db_addr_t)(uintptr_t)&l->l_pflag,
+			    sizeof(pflag), (char *)&pflag);
+			const bool run = (stat == LSONPROC ||
+			    (pflag & LP_RUNNING) != 0);
+			db_read_bytes((db_addr_t)(uintptr_t)&l->l_cpu,
+			    sizeof(ci), (char *)&ci);
+			if (ci != NULL) {
+				db_read_bytes(
+				    (db_addr_t)(uintptr_t)&ci->ci_index,
+				    sizeof(cpuno), (char *)&cpuno);
+			}
+			db_read_bytes((db_addr_t)(uintptr_t)ld_wanted,
+			    sizeof(ownerword), (char *)&ownerword);
+			db_printf("%-5d%c%5d %3d %18lx %18lx %18lx %4x\n",
+			    pid, run ? '>' : ' ', lid, cpuno,
+			    (long)l, (long)ld_wanted,
+			    (long)(ownerword & ~(uintptr_t)ALIGNBYTES),
+			    (int)(ownerword & ALIGNBYTES));
+			if (show_trace) {
+				const struct lwp *owner =
+				    (const void *)(ownerword &
+					~(uintptr_t)ALIGNBYTES);
+
+				if (owner != NULL && db_lwp_p(owner)) {
+					db_stack_trace_print(
+					    (db_expr_t)(uintptr_t)owner,
+					    /*have_addr*/true, /*count*/-1,
+					    /*modif(lwp)*/"a", db_printf);
+				}
+			}
+		}
+	}
 #endif
 }
 

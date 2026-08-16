@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.17 2024/11/21 07:20:10 skrll Exp $	*/
+/*	$NetBSD: crash.c,v 1.18 2026/08/16 21:53:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.17 2024/11/21 07:20:10 skrll Exp $");
+__RCSID("$NetBSD: crash.c,v 1.18 2026/08/16 21:53:21 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,6 +87,7 @@ static struct nlist nl[] = {
 #ifdef LOCKDEBUG
 struct lockdebug;
 TAILQ_HEAD(, lockdebug) ld_all;
+bool db_lockdebug_enabled;
 #else
 void lockdebug_lock_print(void);
 void lockdebug_lock_print(void) {
@@ -439,8 +440,12 @@ main(int argc, char **argv)
 	}
 #ifdef LOCKDEBUG
 	if ((size_t)kvm_read(kd, nl[X_LOCKDEBUG].n_value, &ld_all,
-	    sizeof(ld_all)) != sizeof(ld_all))
+	    sizeof(ld_all)) == sizeof(ld_all)) {
+		db_lockdebug_enabled = true;
+	} else {
 		printf("Kernel compiled without options LOCKDEBUG.\n");
+		db_lockdebug_enabled = false;
+	}
 #endif
 
 	/*
