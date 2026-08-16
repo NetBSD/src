@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwd.1,v 1.28 2026/08/16 21:20:02 jschauma Exp $
+.\"	$NetBSD: pwd.1,v 1.29 2026/08/16 23:28:41 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,14 +47,20 @@ writes the absolute pathname of the current working directory to
 the standard output.
 .Pp
 The following options are available:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl L
 If the
 .Ev PWD
 environment variable is an absolute pathname that contains
-neither "/./" nor "/../" and references the current directory, then
+neither
+.Ql /./
+nor
+.Ql /../
+and references the current directory, then
 .Ev PWD
-is printed as the name of the current directory.
+is printed as the
+.Dq logical
+name of the current directory.
 .It Fl P
 Print the physical path to the current working directory, with symbolic
 links in the path resolved.
@@ -66,8 +72,8 @@ command is
 .Fl P .
 .Pp
 .Nm
-is usually provided as a shell builtin (which may have a different
-default).
+is usually provided as a shell builtin
+.Pq which may have a different default .
 .Sh EXIT STATUS
 .Ex -std pwd
 .Sh SEE ALSO
@@ -95,14 +101,19 @@ In
 .Xr csh 1
 the command
 .Ic dirs
-is always faster (although it can give a different answer in the rare case
-that the current directory or a containing directory was moved after
-the shell descended into it).
+is always faster
+.Po
+although it can give a different answer in the rare case that the
+current directory or a containing directory was moved after the shell
+descended into it
+.Pc .
 .Pp
 .Nm
 .Fl L
 relies on the file system having unique inode numbers.
-If this is not true (e.g., on FAT file systems) then
+If this is not true
+.Pq e.g., on FAT file systems
+then
 .Nm
 .Fl L
 may fail to detect that
