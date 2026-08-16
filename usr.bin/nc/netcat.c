@@ -1,4 +1,4 @@
-/* $NetBSD: netcat.c,v 1.9 2026/03/03 03:14:41 kre Exp $ */
+/* $NetBSD: netcat.c,v 1.10 2026/08/16 10:08:34 christos Exp $ */
 /* $OpenBSD: netcat.c,v 1.172 2017/02/05 01:39:14 jca Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
@@ -28,7 +28,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netcat.c,v 1.9 2026/03/03 03:14:41 kre Exp $");
+__RCSID("$NetBSD: netcat.c,v 1.10 2026/08/16 10:08:34 christos Exp $");
 
 /*
  * Re-written nc(1) for OpenBSD. Original implementation by
@@ -1518,6 +1518,8 @@ build_ports(char *p)
 	}
 }
 
+#define UDP_SCAN_TIMEOUT	3	/* seconds */
+
 /*
  * udptest()
  * Do a few writes to see if the UDP port is there.
@@ -1526,15 +1528,23 @@ build_ports(char *p)
 int
 udptest(int s)
 {
-	int i, ret;
+	int i, t = timeout == -1 ? UDP_SCAN_TIMEOUT : (timeout / 1000);
 
-	for (i = 0; i <= 3; i++) {
-		if (write(s, "X", 1) == 1)
-			ret = 1;
-		else
-			ret = -1;
-	}
-	return (ret);
+ 	/* Only write to the socket in scan mode or interactive mode. */
+ 	if (!zflag && !isatty(STDIN_FILENO))
+ 		return 0;
+
+	if (write(s, "X", 1) != 1 ||
+	    (write(s, "X", 1) != 1 && errno == ECONNREFUSED))
+		return -1;
+
+	/* Give the remote host some time to reply. */
+	for (i = 0; i < t; i++) {
+		sleep(1);
+		if (write(s, "X", 1) != 1 && errno == ECONNREFUSED)
+			return -1;
+ 	}
+	return 1;
 }
 
 void
