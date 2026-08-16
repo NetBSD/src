@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.76 2023/10/15 10:28:48 riastradh Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.77 2026/08/16 21:52:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.76 2023/10/15 10:28:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.77 2026/08/16 21:52:42 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -75,12 +75,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.76 2023/10/15 10:28:48 riastradh E
 
 #define	RW_DEBUG_P(rw)		(((rw)->rw_owner & RW_NODEBUG) == 0)
 
-#define	RW_WANTLOCK(rw, op) \
+#define	RW_WANTLOCK(rw, op, owantedp) \
     LOCKDEBUG_WANTLOCK(RW_DEBUG_P(rw), (rw), \
-        (uintptr_t)__builtin_return_address(0), op == RW_READER);
-#define	RW_LOCKED(rw, op) \
+        (uintptr_t)__builtin_return_address(0), op == RW_READER, owantedp);
+#define	RW_LOCKED(rw, op, owantedp) \
     LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw), NULL, \
-        (uintptr_t)__builtin_return_address(0), op == RW_READER);
+        (uintptr_t)__builtin_return_address(0), op == RW_READER, owantedp);
 #define	RW_UNLOCKED(rw, op) \
     LOCKDEBUG_UNLOCKED(RW_DEBUG_P(rw), (rw), \
         (uintptr_t)__builtin_return_address(0), op == RW_READER);
@@ -286,6 +286,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	turnstile_t *ts;
 	int queue;
 	lwp_t *l;
+	volatile void *owanted;
 	LOCKSTAT_TIMER(slptime);
 	LOCKSTAT_TIMER(slpcnt);
 	LOCKSTAT_TIMER(spintime);
@@ -297,7 +298,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 
 	RW_ASSERT(rw, !cpu_intr_p());
 	RW_ASSERT(rw, curthread != 0);
-	RW_WANTLOCK(rw, op);
+	RW_WANTLOCK(rw, op, &owanted);
 
 	if (__predict_true(panicstr == NULL)) {
 		KDASSERT(pserialize_not_in_read_section());
@@ -425,7 +426,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 
 	RW_ASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
-	RW_LOCKED(rw, op);
+	RW_LOCKED(rw, op, &owanted);
 }
 
 /*
@@ -576,8 +577,8 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 		}
 	}
 
-	RW_WANTLOCK(rw, op);
-	RW_LOCKED(rw, op);
+	RW_WANTLOCK(rw, op, NULL);
+	RW_LOCKED(rw, op, NULL);
 	RW_ASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
 
@@ -617,7 +618,8 @@ rw_downgrade(krwlock_t *rw)
 			newown = (owner & RW_NODEBUG);
 			next = rw_cas(rw, owner, newown + RW_READ_INCR);
 			if (__predict_true(next == owner)) {
-				RW_LOCKED(rw, RW_READER);
+				RW_WANTLOCK(rw, RW_READER, NULL);
+				RW_LOCKED(rw, RW_READER, NULL);
 				RW_ASSERT(rw,
 				    (rw->rw_owner & RW_WRITE_LOCKED) == 0);
 				RW_ASSERT(rw, RW_COUNT(rw) != 0);
@@ -676,8 +678,8 @@ rw_downgrade(krwlock_t *rw)
 		}
 	}
 
-	RW_WANTLOCK(rw, RW_READER);
-	RW_LOCKED(rw, RW_READER);
+	RW_WANTLOCK(rw, RW_READER, NULL);
+	RW_LOCKED(rw, RW_READER, NULL);
 	RW_ASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
 	RW_ASSERT(rw, RW_COUNT(rw) != 0);
 }
@@ -714,8 +716,8 @@ rw_tryupgrade(krwlock_t *rw)
 	}
 
 	RW_UNLOCKED(rw, RW_READER);
-	RW_WANTLOCK(rw, RW_WRITER);
-	RW_LOCKED(rw, RW_WRITER);
+	RW_WANTLOCK(rw, RW_WRITER, NULL);
+	RW_LOCKED(rw, RW_WRITER, NULL);
 	RW_ASSERT(rw, rw->rw_owner & RW_WRITE_LOCKED);
 	RW_ASSERT(rw, RW_OWNER(rw) == curthread);
 

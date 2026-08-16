@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rwsem.c,v 1.4 2021/12/19 11:21:54 riastradh Exp $	*/
+/*	$NetBSD: linux_rwsem.c,v 1.5 2026/08/16 21:52:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rwsem.c,v 1.4 2021/12/19 11:21:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rwsem.c,v 1.5 2026/08/16 21:52:42 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -42,15 +42,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux_rwsem.c,v 1.4 2021/12/19 11:21:54 riastradh Ex
 
 #include <linux/rwsem.h>
 
-#define	RWSEM_WANTLOCK(RWSEM)						      \
+#define	RWSEM_WANTLOCK(RWSEM, OWANTEDP)					      \
 	LOCKDEBUG_WANTLOCK((RWSEM)->rws_debug, (RWSEM),			      \
-	    (uintptr_t)__builtin_return_address(0), 0)
-#define	RWSEM_LOCKED_EX(RWSEM)						      \
+	    (uintptr_t)__builtin_return_address(0), 0, OWANTEDP)
+#define	RWSEM_LOCKED_EX(RWSEM, OWANTEDP)				      \
 	LOCKDEBUG_LOCKED((RWSEM)->rws_debug, (RWSEM), NULL,		      \
-	    (uintptr_t)__builtin_return_address(0), 0)
-#define	RWSEM_LOCKED_SH(RWSEM)						      \
+	    (uintptr_t)__builtin_return_address(0), 0, OWANTEDP)
+#define	RWSEM_LOCKED_SH(RWSEM, OWANTEDP)				      \
 	LOCKDEBUG_LOCKED((RWSEM)->rws_debug, (RWSEM), NULL,		      \
-	    (uintptr_t)__builtin_return_address(0), 1)
+	    (uintptr_t)__builtin_return_address(0), 1, OWANTEDP)
 #define	RWSEM_UNLOCKED_EX(RWSEM)					      \
 	LOCKDEBUG_UNLOCKED((RWSEM)->rws_debug, (RWSEM),			      \
 	    (uintptr_t)__builtin_return_address(0), 0)
@@ -109,8 +109,9 @@ destroy_rwsem(struct rw_semaphore *rwsem)
 void
 down_read(struct rw_semaphore *rwsem)
 {
+	volatile void *owanted;
 
-	RWSEM_WANTLOCK(rwsem);
+	RWSEM_WANTLOCK(rwsem, &owanted);
 
 	mutex_enter(&rwsem->rws_lock);
 	while (rwsem->rws_writer || rwsem->rws_writewanted)
@@ -119,7 +120,7 @@ down_read(struct rw_semaphore *rwsem)
 	rwsem->rws_readers++;
 	mutex_exit(&rwsem->rws_lock);
 
-	RWSEM_LOCKED_SH(rwsem);
+	RWSEM_LOCKED_SH(rwsem, &owanted);
 }
 
 bool
@@ -144,7 +145,8 @@ down_read_trylock(struct rw_semaphore *rwsem)
 	mutex_exit(&rwsem->rws_lock);
 
 	if (ret) {
-		RWSEM_LOCKED_SH(rwsem);
+		RWSEM_WANTLOCK(rwsem, NULL);
+		RWSEM_LOCKED_SH(rwsem, NULL);
 	}
 
 	return ret;
@@ -167,8 +169,9 @@ up_read(struct rw_semaphore *rwsem)
 void
 down_write(struct rw_semaphore *rwsem)
 {
+	volatile void *owanted;
 
-	RWSEM_WANTLOCK(rwsem);
+	RWSEM_WANTLOCK(rwsem, &owanted);
 
 	mutex_enter(&rwsem->rws_lock);
 
@@ -196,7 +199,7 @@ down_write(struct rw_semaphore *rwsem)
 
 	mutex_exit(&rwsem->rws_lock);
 
-	RWSEM_LOCKED_EX(rwsem);
+	RWSEM_LOCKED_EX(rwsem, &owanted);
 }
 
 void
@@ -227,5 +230,6 @@ downgrade_write(struct rw_semaphore *rwsem)
 	cv_broadcast(&rwsem->rws_cv);
 	mutex_exit(&rwsem->rws_lock);
 
-	RWSEM_LOCKED_SH(rwsem);
+	RWSEM_WANTLOCK(rwsem, NULL);
+	RWSEM_LOCKED_SH(rwsem, NULL);
 }

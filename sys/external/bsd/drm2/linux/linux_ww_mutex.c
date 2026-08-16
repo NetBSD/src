@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.16 2023/07/29 23:50:03 riastradh Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.17 2026/08/16 21:52:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.16 2023/07/29 23:50:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.17 2026/08/16 21:52:42 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -43,12 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.16 2023/07/29 23:50:03 riastrad
 #include <linux/ww_mutex.h>
 #include <linux/errno.h>
 
-#define	WW_WANTLOCK(WW)							      \
+#define	WW_WANTLOCK(WW, OWANTEDP)					      \
 	LOCKDEBUG_WANTLOCK((WW)->wwm_debug, (WW),			      \
-	    (uintptr_t)__builtin_return_address(0), 0)
-#define	WW_LOCKED(WW)							      \
+	    (uintptr_t)__builtin_return_address(0), 0, OWANTEDP)
+#define	WW_LOCKED(WW, OWANTEDP)						      \
 	LOCKDEBUG_LOCKED((WW)->wwm_debug, (WW), NULL,			      \
-	    (uintptr_t)__builtin_return_address(0), 0)
+	    (uintptr_t)__builtin_return_address(0), 0, OWANTEDP)
 #define	WW_UNLOCKED(WW)							      \
 	LOCKDEBUG_UNLOCKED((WW)->wwm_debug, (WW),			      \
 	    (uintptr_t)__builtin_return_address(0), 0)
@@ -458,7 +458,7 @@ ww_mutex_lock_wait_sig(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 }
 
 /*
- * ww_mutex_lock_noctx(mutex)
+ * ww_mutex_lock_noctx(mutex, &owanted)
  *
  *	Acquire mutex without an acquire context.  Caller must not
  *	already hold the mutex.  Uninterruptible; never fails.
@@ -468,7 +468,7 @@ ww_mutex_lock_wait_sig(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
  *	Internal subroutine, implementing ww_mutex_lock(..., NULL).
  */
 static void
-ww_mutex_lock_noctx(struct ww_mutex *mutex)
+ww_mutex_lock_noctx(struct ww_mutex *mutex, volatile void **owantedp)
 {
 
 	mutex_enter(&mutex->wwm_lock);
@@ -497,12 +497,12 @@ retry:	switch (mutex->wwm_state) {
 	}
 	KASSERT(mutex->wwm_state == WW_OWNED);
 	KASSERT(mutex->wwm_u.owner == curlwp);
-	WW_LOCKED(mutex);
+	WW_LOCKED(mutex, owantedp);
 	mutex_exit(&mutex->wwm_lock);
 }
 
 /*
- * ww_mutex_lock_noctx_sig(mutex)
+ * ww_mutex_lock_noctx_sig(mutex, &owanted)
  *
  *	Acquire mutex without an acquire context and return 0, or fail
  *	and return -EINTR if interrupted by a signal.  Caller must not
@@ -514,7 +514,7 @@ retry:	switch (mutex->wwm_state) {
  *	ww_mutex_lock_interruptible(..., NULL).
  */
 static int
-ww_mutex_lock_noctx_sig(struct ww_mutex *mutex)
+ww_mutex_lock_noctx_sig(struct ww_mutex *mutex, volatile void **owantedp)
 {
 	int ret;
 
@@ -552,7 +552,7 @@ retry:	switch (mutex->wwm_state) {
 	}
 	KASSERT(mutex->wwm_state == WW_OWNED);
 	KASSERT(mutex->wwm_u.owner == curlwp);
-	WW_LOCKED(mutex);
+	WW_LOCKED(mutex, owantedp);
 	ret = 0;
 out:	mutex_exit(&mutex->wwm_lock);
 	KASSERTMSG((ret == 0 || ret == -EINTR), "ret=%d", ret);
@@ -577,6 +577,7 @@ out:	mutex_exit(&mutex->wwm_lock);
 int
 ww_mutex_lock(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 {
+	volatile void *owanted;
 	int ret;
 
 	/*
@@ -587,8 +588,8 @@ ww_mutex_lock(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	ASSERT_SLEEPABLE();
 
 	if (ctx == NULL) {
-		WW_WANTLOCK(mutex);
-		ww_mutex_lock_noctx(mutex);
+		WW_WANTLOCK(mutex, &owanted);
+		ww_mutex_lock_noctx(mutex, &owanted);
 		ret = 0;
 		goto out;
 	}
@@ -605,12 +606,12 @@ ww_mutex_lock(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	ww_acquire_done_check(mutex, ctx);
 retry:	switch (mutex->wwm_state) {
 	case WW_UNLOCKED:
-		WW_WANTLOCK(mutex);
+		WW_WANTLOCK(mutex, &owanted);
 		mutex->wwm_state = WW_CTX;
 		mutex->wwm_u.ctx = ctx;
 		goto locked;
 	case WW_OWNED:
-		WW_WANTLOCK(mutex);
+		WW_WANTLOCK(mutex, &owanted);
 		KASSERTMSG((mutex->wwm_u.owner != curlwp),
 		    "locking %p against myself: %p", mutex, curlwp);
 		ww_mutex_state_wait(mutex, WW_OWNED);
@@ -644,7 +645,7 @@ retry:	switch (mutex->wwm_state) {
 	 * We do not own it.  We can safely assert to LOCKDEBUG that we
 	 * want it.
 	 */
-	WW_WANTLOCK(mutex);
+	WW_WANTLOCK(mutex, &owanted);
 
 	if (mutex->wwm_u.ctx->wwx_ticket < ctx->wwx_ticket) {
 		/*
@@ -667,7 +668,7 @@ retry:	switch (mutex->wwm_state) {
 locked:	KASSERT((mutex->wwm_state == WW_CTX) ||
 	    (mutex->wwm_state == WW_WANTOWN));
 	KASSERT(mutex->wwm_u.ctx == ctx);
-	WW_LOCKED(mutex);
+	WW_LOCKED(mutex, &owanted);
 	ctx->wwx_acquired++;
 	ret = 0;
 out_unlock:
@@ -697,6 +698,7 @@ out:	KASSERTMSG((ret == 0 || ret == -EALREADY || ret == -EDEADLK),
 int
 ww_mutex_lock_interruptible(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 {
+	volatile void *owanted;
 	int ret;
 
 	/*
@@ -707,8 +709,8 @@ ww_mutex_lock_interruptible(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	ASSERT_SLEEPABLE();
 
 	if (ctx == NULL) {
-		WW_WANTLOCK(mutex);
-		ret = ww_mutex_lock_noctx_sig(mutex);
+		WW_WANTLOCK(mutex, &owanted);
+		ret = ww_mutex_lock_noctx_sig(mutex, &owanted);
 		KASSERTMSG((ret == 0 || ret == -EINTR), "ret=%d", ret);
 		goto out;
 	}
@@ -725,12 +727,12 @@ ww_mutex_lock_interruptible(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	ww_acquire_done_check(mutex, ctx);
 retry:	switch (mutex->wwm_state) {
 	case WW_UNLOCKED:
-		WW_WANTLOCK(mutex);
+		WW_WANTLOCK(mutex, &owanted);
 		mutex->wwm_state = WW_CTX;
 		mutex->wwm_u.ctx = ctx;
 		goto locked;
 	case WW_OWNED:
-		WW_WANTLOCK(mutex);
+		WW_WANTLOCK(mutex, &owanted);
 		KASSERTMSG((mutex->wwm_u.owner != curlwp),
 		    "locking %p against myself: %p", mutex, curlwp);
 		ret = ww_mutex_state_wait_sig(mutex, WW_OWNED);
@@ -772,7 +774,7 @@ retry:	switch (mutex->wwm_state) {
 	 * We do not own it.  We can safely assert to LOCKDEBUG that we
 	 * want it.
 	 */
-	WW_WANTLOCK(mutex);
+	WW_WANTLOCK(mutex, &owanted);
 
 	if (mutex->wwm_u.ctx->wwx_ticket < ctx->wwx_ticket) {
 		/*
@@ -799,7 +801,7 @@ retry:	switch (mutex->wwm_state) {
 locked:	KASSERT((mutex->wwm_state == WW_CTX) ||
 	    (mutex->wwm_state == WW_WANTOWN));
 	KASSERT(mutex->wwm_u.ctx == ctx);
-	WW_LOCKED(mutex);
+	WW_LOCKED(mutex, &owanted);
 	ctx->wwx_acquired++;
 	ret = 0;
 out_unlock:
@@ -824,13 +826,14 @@ out:	KASSERTMSG((ret == 0 || ret == -EALREADY || ret == -EDEADLK ||
 void
 ww_mutex_lock_slow(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 {
+	volatile void *owanted;
 
 	/* Caller must not try to lock against self here.  */
-	WW_WANTLOCK(mutex);
+	WW_WANTLOCK(mutex, &owanted);
 	ASSERT_SLEEPABLE();
 
 	if (ctx == NULL) {
-		ww_mutex_lock_noctx(mutex);
+		ww_mutex_lock_noctx(mutex, &owanted);
 		return;
 	}
 
@@ -881,7 +884,7 @@ retry:	switch (mutex->wwm_state) {
 locked:	KASSERT((mutex->wwm_state == WW_CTX) ||
 	    (mutex->wwm_state == WW_WANTOWN));
 	KASSERT(mutex->wwm_u.ctx == ctx);
-	WW_LOCKED(mutex);
+	WW_LOCKED(mutex, &owanted);
 	ctx->wwx_acquired++;
 	mutex_exit(&mutex->wwm_lock);
 }
@@ -901,13 +904,14 @@ int
 ww_mutex_lock_slow_interruptible(struct ww_mutex *mutex,
     struct ww_acquire_ctx *ctx)
 {
+	volatile void *owanted;
 	int ret;
 
-	WW_WANTLOCK(mutex);
+	WW_WANTLOCK(mutex, &owanted);
 	ASSERT_SLEEPABLE();
 
 	if (ctx == NULL) {
-		ret = ww_mutex_lock_noctx_sig(mutex);
+		ret = ww_mutex_lock_noctx_sig(mutex, &owanted);
 		KASSERTMSG((ret == 0 || ret == -EINTR), "ret=%d", ret);
 		goto out;
 	}
@@ -971,7 +975,7 @@ retry:	switch (mutex->wwm_state) {
 locked:	KASSERT((mutex->wwm_state == WW_CTX) ||
 	    (mutex->wwm_state == WW_WANTOWN));
 	KASSERT(mutex->wwm_u.ctx == ctx);
-	WW_LOCKED(mutex);
+	WW_LOCKED(mutex, &owanted);
 	ctx->wwx_acquired++;
 	ret = 0;
 out_unlock:
@@ -995,8 +999,8 @@ ww_mutex_trylock(struct ww_mutex *mutex)
 	if (mutex->wwm_state == WW_UNLOCKED) {
 		mutex->wwm_state = WW_OWNED;
 		mutex->wwm_u.owner = curlwp;
-		WW_WANTLOCK(mutex);
-		WW_LOCKED(mutex);
+		WW_WANTLOCK(mutex, NULL);
+		WW_LOCKED(mutex, NULL);
 		ret = 1;
 	} else {
 		/*

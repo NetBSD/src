@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.112 2023/10/15 10:28:23 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.113 2026/08/16 21:52:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019, 2023
@@ -41,7 +41,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.112 2023/10/15 10:28:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.113 2026/08/16 21:52:42 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -77,15 +77,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.112 2023/10/15 10:28:23 riastradh E
  * Debugging support.
  */
 
-#define	MUTEX_WANTLOCK(mtx)					\
+#define	MUTEX_WANTLOCK(mtx, owantedp)				\
     LOCKDEBUG_WANTLOCK(MUTEX_DEBUG_P(mtx), (mtx),		\
-        (uintptr_t)__builtin_return_address(0), 0)
+        (uintptr_t)__builtin_return_address(0), 0, owantedp)
 #define	MUTEX_TESTLOCK(mtx)					\
     LOCKDEBUG_WANTLOCK(MUTEX_DEBUG_P(mtx), (mtx),		\
-        (uintptr_t)__builtin_return_address(0), -1)
-#define	MUTEX_LOCKED(mtx)					\
+        (uintptr_t)__builtin_return_address(0), -1, NULL)
+#define	MUTEX_LOCKED(mtx, owantedp)				\
     LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx), NULL,		\
-        (uintptr_t)__builtin_return_address(0), 0)
+        (uintptr_t)__builtin_return_address(0), 0, owantedp)
 #define	MUTEX_UNLOCKED(mtx)					\
     LOCKDEBUG_UNLOCKED(MUTEX_DEBUG_P(mtx), (mtx),		\
         (uintptr_t)__builtin_return_address(0), 0)
@@ -454,6 +454,7 @@ mutex_vector_enter(kmutex_t *mtx)
 #ifdef MULTIPROCESSOR
 	u_int count;
 #endif
+	volatile void *owanted;
 	LOCKSTAT_COUNTER(spincnt);
 	LOCKSTAT_COUNTER(slpcnt);
 	LOCKSTAT_TIMER(spintime);
@@ -471,10 +472,10 @@ mutex_vector_enter(kmutex_t *mtx)
 #endif
 		KPREEMPT_ENABLE(curlwp);
 		MUTEX_SPIN_SPLRAISE(mtx);
-		MUTEX_WANTLOCK(mtx);
+		MUTEX_WANTLOCK(mtx, &owanted);
 #ifdef FULL
 		if (MUTEX_SPINBIT_LOCK_TRY(mtx)) {
-			MUTEX_LOCKED(mtx);
+			MUTEX_LOCKED(mtx, &owanted);
 			return;
 		}
 #if !defined(MULTIPROCESSOR)
@@ -508,7 +509,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		LOCKSTAT_EXIT(lsflag);
 #endif	/* !MULTIPROCESSOR */
 #endif	/* FULL */
-		MUTEX_LOCKED(mtx);
+		MUTEX_LOCKED(mtx, &owanted);
 		return;
 	}
 
@@ -517,7 +518,7 @@ mutex_vector_enter(kmutex_t *mtx)
 	MUTEX_DASSERT(mtx, MUTEX_ADAPTIVE_P(owner));
 	MUTEX_ASSERT(mtx, curthread != 0);
 	MUTEX_ASSERT(mtx, !cpu_intr_p());
-	MUTEX_WANTLOCK(mtx);
+	MUTEX_WANTLOCK(mtx, &owanted);
 
 	if (__predict_true(panicstr == NULL)) {
 		KDASSERT(pserialize_not_in_read_section());
@@ -704,7 +705,7 @@ mutex_vector_enter(kmutex_t *mtx)
 	LOCKSTAT_EXIT(lsflag);
 
 	MUTEX_DASSERT(mtx, MUTEX_OWNER(mtx->mtx_owner) == curthread);
-	MUTEX_LOCKED(mtx);
+	MUTEX_LOCKED(mtx, &owanted);
 }
 
 /*
@@ -881,22 +882,22 @@ mutex_tryenter(kmutex_t *mtx)
 		MUTEX_SPIN_SPLRAISE(mtx);
 #ifdef FULL
 		if (MUTEX_SPINBIT_LOCK_TRY(mtx)) {
-			MUTEX_WANTLOCK(mtx);
-			MUTEX_LOCKED(mtx);
+			MUTEX_WANTLOCK(mtx, NULL);
+			MUTEX_LOCKED(mtx, NULL);
 			return 1;
 		}
 		MUTEX_SPIN_SPLRESTORE(mtx);
 #else
-		MUTEX_WANTLOCK(mtx);
-		MUTEX_LOCKED(mtx);
+		MUTEX_WANTLOCK(mtx, NULL);
+		MUTEX_LOCKED(mtx, NULL);
 		return 1;
 #endif
 	} else {
 		curthread = (uintptr_t)curlwp;
 		MUTEX_ASSERT(mtx, curthread != 0);
 		if (MUTEX_ACQUIRE(mtx, curthread)) {
-			MUTEX_WANTLOCK(mtx);
-			MUTEX_LOCKED(mtx);
+			MUTEX_WANTLOCK(mtx, NULL);
+			MUTEX_LOCKED(mtx, NULL);
 			MUTEX_DASSERT(mtx,
 			    MUTEX_OWNER(mtx->mtx_owner) == curthread);
 			return 1;
@@ -923,8 +924,9 @@ mutex_spin_retry(kmutex_t *mtx)
 #ifdef LOCKDEBUG
 	u_int spins = 0;
 #endif	/* LOCKDEBUG */
+	volatile void *owanted;
 
-	MUTEX_WANTLOCK(mtx);
+	MUTEX_WANTLOCK(mtx, &owanted);
 
 	LOCKSTAT_ENTER(lsflag);
 	LOCKSTAT_START_TIMER(lsflag, spintime);
@@ -948,7 +950,7 @@ mutex_spin_retry(kmutex_t *mtx)
 	LOCKSTAT_EVENT(lsflag, mtx, LB_SPIN_MUTEX | LB_SPIN, 1, spintime);
 	LOCKSTAT_EXIT(lsflag);
 
-	MUTEX_LOCKED(mtx);
+	MUTEX_LOCKED(mtx, &owanted);
 #else	/* MULTIPROCESSOR */
 	MUTEX_ABORT(mtx, "locking against myself");
 #endif	/* MULTIPROCESSOR */

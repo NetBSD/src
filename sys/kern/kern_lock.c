@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.197 2026/07/17 07:47:17 martin Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.198 2026/08/16 21:52:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020, 2023
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.197 2026/07/17 07:47:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.198 2026/08/16 21:52:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -301,6 +301,7 @@ _kernel_lock(int nlocks)
 #endif
 	int s;
 	struct lwp *l = curlwp;
+	volatile void *owanted;
 
 	_KERNEL_LOCK_ASSERT(nlocks > 0);
 
@@ -317,7 +318,7 @@ _kernel_lock(int nlocks)
 
 	_KERNEL_LOCK_ASSERT(l->l_blcnt == 0);
 	LOCKDEBUG_WANTLOCK(kernel_lock_dodebug, kernel_lock, RETURN_ADDRESS,
-	    0);
+	    0, &owanted);
 
 	if (__predict_true(__cpu_simple_lock_try(kernel_lock))) {
 		atomic_store_relaxed(&kernel_lock_holder, curcpu());
@@ -325,7 +326,7 @@ _kernel_lock(int nlocks)
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
 		LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
-		    RETURN_ADDRESS, 0);
+		    RETURN_ADDRESS, 0, &owanted);
 		splx(s);
 		return;
 	}
@@ -355,9 +356,6 @@ _kernel_lock(int nlocks)
 	membar_producer();
 	owant = ci->ci_biglock_wanted;
 	atomic_store_relaxed(&ci->ci_biglock_wanted, l);
-#if defined(DIAGNOSTIC) && !defined(LOCKDEBUG)
-	l->l_ld_wanted = __builtin_return_address(0);
-#endif
 
 	/*
 	 * Spin until we acquire the lock.  Once we have it, record the
@@ -387,7 +385,7 @@ _kernel_lock(int nlocks)
 	l->l_blcnt = nlocks;
 	LOCKSTAT_STOP_TIMER(lsflag, spintime);
 	LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
-	    RETURN_ADDRESS, 0);
+	    RETURN_ADDRESS, 0, &owanted);
 	if (owant == NULL) {
 		LOCKSTAT_EVENT_RA(lsflag, kernel_lock,
 		    LB_KERNEL_LOCK | LB_SPIN, 1, spintime, RETURN_ADDRESS);

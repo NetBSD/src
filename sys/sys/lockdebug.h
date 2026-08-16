@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.22 2020/04/10 17:16:21 ad Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.23 2026/08/16 21:52:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,10 +82,10 @@ void	lockdebug_mem_check(const char *, size_t, void *, size_t);
     lockdebug_alloc(__func__, __LINE__, lock, ops, addr)
 #define	LOCKDEBUG_FREE(dodebug, lock) \
     if (dodebug) lockdebug_free(__func__, __LINE__, lock)
-#define	LOCKDEBUG_WANTLOCK(dodebug, lock, where, s) \
-    if (dodebug) lockdebug_wantlock(__func__, __LINE__, lock, where, s)
-#define	LOCKDEBUG_LOCKED(dodebug, lock, al, where, s) \
-    if (dodebug) lockdebug_locked(__func__, __LINE__, lock, al, where, s)
+#define	LOCKDEBUG_WANTLOCK(dodebug, lock, where, s, owantedp) \
+    if (dodebug) { lockdebug_wantlock(__func__, __LINE__, lock, where, s); __USE(owantedp); }
+#define	LOCKDEBUG_LOCKED(dodebug, lock, al, where, s, owantedp) \
+    if (dodebug) { lockdebug_locked(__func__, __LINE__, lock, al, where, s); __USE(owantedp); }
 #define	LOCKDEBUG_UNLOCKED(dodebug, lock, where, s) \
     if (dodebug) lockdebug_unlocked(__func__, __LINE__, lock, where, s)
 #define	LOCKDEBUG_BARRIER(lock, slp) \
@@ -96,12 +96,31 @@ void	lockdebug_mem_check(const char *, size_t, void *, size_t);
 #else	/* LOCKDEBUG */
 
 #define	LOCKDEBUG_ALLOC(lock, ops, addr)		false
-#define	LOCKDEBUG_FREE(dodebug, lock)			/* nothing */
-#define	LOCKDEBUG_WANTLOCK(dodebug, lock, where, s)	/* nothing */
-#define	LOCKDEBUG_LOCKED(dodebug, lock, al, where, s)	/* nothing */
-#define	LOCKDEBUG_UNLOCKED(dodebug, lock, where, s)	/* nothing */
-#define	LOCKDEBUG_BARRIER(lock, slp)			/* nothing */
-#define	LOCKDEBUG_MEM_CHECK(base, sz)			/* nothing */
+#define	LOCKDEBUG_FREE(dodebug, lock)			__nothing
+#if 0
+#define	LOCKDEBUG_WANTLOCK(dodebug, lock, where, s, owantedp)	__nothing
+#define	LOCKDEBUG_LOCKED(dodebug, lock, al, where, s, owantedp)	__nothing
+#else
+#define	LOCKDEBUG_WANTLOCK(dodebug, lock, where, s, owantedp) do	      \
+{									      \
+	if ((owantedp) == NULL)						      \
+		break;							      \
+	*((owantedp) == NULL ? (volatile void **)NULL : (owantedp)) =	      \
+	    curlwp->l_ld_wanted;					      \
+	curlwp->l_ld_wanted = (lock);					      \
+} while (0)
+#define	LOCKDEBUG_LOCKED(dodebug, lock, al, where, s, owantedp) do	      \
+{									      \
+	if ((owantedp) == NULL)						      \
+		break;							      \
+	curlwp->l_ld_wanted =						      \
+	    *((owantedp) == NULL ? (volatile void **)NULL : (owantedp));      \
+	*((owantedp) == NULL ? (volatile void **)NULL : (owantedp)) = NULL;   \
+} while (0)
+#endif
+#define	LOCKDEBUG_UNLOCKED(dodebug, lock, where, s)	__nothing
+#define	LOCKDEBUG_BARRIER(lock, slp)			__nothing
+#define	LOCKDEBUG_MEM_CHECK(base, sz)			__nothing
 
 #endif	/* LOCKDEBUG */
 
