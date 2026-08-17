@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.123 2026/08/05 08:11:22 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.124 2026/08/17 15:52:37 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1640,4 +1640,9 @@ doc/3RDPARTY					(apply patch)
 
 	Updates tzdata to 2026cgtz.
 	[kre, ticket #2044]
+
+sys/kern/vfs_subr.c				1.504
+
+	vfs: PR 60531: limit `vflushbuf: dirty'.
+	[riastradh, ticket #2045]
 
