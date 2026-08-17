@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -30,16 +30,16 @@
 #define ARP_H
 
 /* ARP timings from RFC5227 */
-#define PROBE_WAIT		 1
-#define PROBE_NUM		 3
-#define PROBE_MIN		 1
-#define PROBE_MAX		 2
-#define ANNOUNCE_WAIT		 2
-#define ANNOUNCE_NUM		 2
-#define ANNOUNCE_INTERVAL	 2
-#define MAX_CONFLICTS		10
-#define RATE_LIMIT_INTERVAL	60
-#define DEFEND_INTERVAL		10
+#define PROBE_WAIT	    1
+#define PROBE_NUM	    3
+#define PROBE_MIN	    1
+#define PROBE_MAX	    2
+#define ANNOUNCE_WAIT	    2
+#define ANNOUNCE_NUM	    2
+#define ANNOUNCE_INTERVAL   2
+#define MAX_CONFLICTS	    10
+#define RATE_LIMIT_INTERVAL 60
+#define DEFEND_INTERVAL	    10
 
 #include "bpf.h"
 #include "dhcpcd.h"
@@ -87,17 +87,16 @@ struct iarp_state {
 	struct arp_statehead arp_states;
 };
 
-#define ARP_STATE(ifp)							       \
-	((struct iarp_state *)(ifp)->if_data[IF_DATA_ARP])
-#define ARP_CSTATE(ifp)							       \
-	((const struct iarp_state *)(ifp)->if_data[IF_DATA_ARP])
+#define ARP_STATE(ifp)	((struct iarp_state *)(ifp)->if_data[IF_DATA_ARP])
+#define ARP_CSTATE(ifp) ((const struct iarp_state *)(ifp)->if_data[IF_DATA_ARP])
 
 #ifdef ARP
 void arp_packet(struct interface *, uint8_t *, size_t, unsigned int);
 struct arp_state *arp_new(struct interface *, const struct in_addr *);
 void arp_probe(struct arp_state *);
-struct arp_state *arp_ifannounceaddr(struct interface *, const struct in_addr *);
-struct arp_state * arp_find(struct interface *, const struct in_addr *);
+struct arp_state *arp_ifannounceaddr(struct interface *,
+    const struct in_addr *);
+struct arp_state *arp_find(struct interface *, const struct in_addr *);
 void arp_free(struct arp_state *);
 void arp_freeaddr(struct interface *, const struct in_addr *);
 void arp_drop(struct interface *);

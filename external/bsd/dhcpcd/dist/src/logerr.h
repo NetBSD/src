@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * logerr: errx with logging
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -33,9 +33,9 @@
 
 #ifndef __printflike
 #if __GNUC__ > 2 || defined(__INTEL_COMPILER)
-#define	__printflike(a, b) __attribute__((format(printf, a, b)))
+#define __printflike(a, b) __attribute__((format(printf, a, b)))
 #else
-#define	__printflike(a, b)
+#define __printflike(a, b)
 #endif
 #endif /* !__printflike */
 
@@ -48,7 +48,7 @@ __printflike(1, 2) void log_warn(const char *, ...);
 __printflike(1, 2) void log_warnx(const char *, ...);
 __printflike(1, 2) void log_err(const char *, ...);
 __printflike(1, 2) void log_errx(const char *, ...);
-#define	LOGERROR	logerr("%s: %d", __FILE__, __LINE__)
+#define LOGERROR logerr("%s: %d", __FILE__, __LINE__)
 
 __printflike(2, 3) void logmessage(int pri, const char *fmt, ...);
 __printflike(2, 3) void logerrmessage(int pri, const char *fmt, ...);
@@ -67,37 +67,37 @@ __printflike(2, 3) void logerrmessage(int pri, const char *fmt, ...);
  * The solution is to put fmt into __VA_ARGS__.
  * It's not pretty but it's 100% portable.
  */
-#define logdebug(...)	log_debug(__VA_ARGS__)
-#define logdebugx(...)	log_debugx(__VA_ARGS__)
-#define loginfo(...)	log_info(__VA_ARGS__)
-#define loginfox(...)	log_infox(__VA_ARGS__)
-#define logwarn(...)	log_warn(__VA_ARGS__)
-#define logwarnx(...)	log_warnx(__VA_ARGS__)
-#define logerr(...)	log_err(__VA_ARGS__)
-#define logerrx(...)	log_errx(__VA_ARGS__)
+#define logdebug(...)  log_debug(__VA_ARGS__)
+#define logdebugx(...) log_debugx(__VA_ARGS__)
+#define loginfo(...)   log_info(__VA_ARGS__)
+#define loginfox(...)  log_infox(__VA_ARGS__)
+#define logwarn(...)   log_warn(__VA_ARGS__)
+#define logwarnx(...)  log_warnx(__VA_ARGS__)
+#define logerr(...)    log_err(__VA_ARGS__)
+#define logerrx(...)   log_errx(__VA_ARGS__)
 
-/* For logging in a chroot using SOCK_SEQPACKET */
+/* For logging in a chroot using SOCK_STREAM */
 int loggetfd(void);
 void logsetfd(int);
 ssize_t logreadfd(int);
 
 unsigned int loggetopts(void);
 void logsetopts(unsigned int);
-#define	LOGERR_DEBUG	(1U << 6)
-#define	LOGERR_QUIET	(1U << 7)
-#define	LOGERR_LOG	(1U << 11)
-#define	LOGERR_LOG_DATE	(1U << 12)
-#define	LOGERR_LOG_HOST	(1U << 13)
-#define	LOGERR_LOG_TAG	(1U << 14)
-#define	LOGERR_LOG_PID	(1U << 15)
-#define	LOGERR_ERR	(1U << 21)
-#define	LOGERR_ERR_DATE	(1U << 22)
-#define	LOGERR_ERR_HOST	(1U << 23)
-#define	LOGERR_ERR_TAG	(1U << 24)
-#define	LOGERR_ERR_PID	(1U << 25)
+#define LOGERR_DEBUG	(1U << 6)
+#define LOGERR_QUIET	(1U << 7)
+#define LOGERR_LOG	(1U << 11)
+#define LOGERR_LOG_DATE (1U << 12)
+#define LOGERR_LOG_HOST (1U << 13)
+#define LOGERR_LOG_TAG	(1U << 14)
+#define LOGERR_LOG_PID	(1U << 15)
+#define LOGERR_ERR	(1U << 21)
+#define LOGERR_ERR_DATE (1U << 22)
+#define LOGERR_ERR_HOST (1U << 23)
+#define LOGERR_ERR_TAG	(1U << 24)
+#define LOGERR_ERR_PID	(1U << 25)
 
 /* To build tag support or not. */
-//#define	LOGERR_TAG
+// #define	LOGERR_TAG
 #if defined(LOGERR_TAG)
 void logsettag(const char *);
 #endif

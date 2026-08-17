@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * logerr: errx with logging
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -30,8 +30,8 @@
 #include <sys/time.h>
 
 #include <errno.h>
-#include <stdbool.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,10 +39,11 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "config.h" // IWYU pragma: keep
 #include "logerr.h"
 
-#ifndef	LOGERR_SYSLOG_FACILITY
-#define	LOGERR_SYSLOG_FACILITY	LOG_DAEMON
+#ifndef LOGERR_SYSLOG_FACILITY
+#define LOGERR_SYSLOG_FACILITY LOG_DAEMON
 #endif
 
 #ifdef SMALL
@@ -50,19 +51,19 @@
 #endif
 
 /* syslog protocol is 1k message max, RFC 3164 section 4.1 */
-#define LOGERR_SYSLOGBUF	1024 + sizeof(int) + sizeof(pid_t)
+#define LOGERR_SYSLOGBUF 1024 + sizeof(int) + sizeof(pid_t)
 
-#define UNUSED(a)		(void)(a)
+#define UNUSED(a)	 (void)(a)
 
 struct logctx {
-	char		 log_buf[BUFSIZ];
-	unsigned int	 log_opts;
-	int		 log_fd;
-	pid_t		 log_pid;
+	char log_buf[BUFSIZ];
+	unsigned int log_opts;
+	int log_fd;
+	pid_t log_pid;
 #ifndef SMALL
-	FILE		*log_file;
+	FILE *log_file;
 #ifdef LOGERR_TAG
-	const char	*log_tag;
+	const char *log_tag;
 #endif
 #endif
 };
@@ -73,35 +74,6 @@ static struct logctx _logctx = {
 	.log_fd = -1,
 	.log_pid = 0,
 };
-
-#if defined(__linux__)
-/* Poor man's getprogname(3). */
-static char *_logprog;
-static const char *
-getprogname(void)
-{
-	const char *p;
-
-	/* Use PATH_MAX + 1 to avoid truncation. */
-	if (_logprog == NULL) {
-		/* readlink(2) does not append a NULL byte,
-		 * so zero the buffer. */
-		if ((_logprog = calloc(1, PATH_MAX + 1)) == NULL)
-			return NULL;
-		if (readlink("/proc/self/exe", _logprog, PATH_MAX + 1) == -1) {
-			free(_logprog);
-			_logprog = NULL;
-			return NULL;
-		}
-	}
-	if (_logprog[0] == '[')
-		return NULL;
-	p = strrchr(_logprog, '/');
-	if (p == NULL)
-		return _logprog;
-	return p + 1;
-}
-#endif
 
 #ifndef SMALL
 /* Write the time, syslog style. month day time - */
@@ -125,8 +97,8 @@ logprintdate(FILE *stream)
 }
 #endif
 
-__printflike(3, 0) static int
-vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
+__printflike(3, 0) static int vlogprintf_r(struct logctx *ctx, FILE *stream,
+    const char *fmt, va_list args)
 {
 	int len = 0, e;
 	va_list a;
@@ -137,8 +109,7 @@ vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 #endif
 
 	if ((stream == stderr && ctx->log_opts & LOGERR_ERR_DATE) ||
-	    (stream != stderr && ctx->log_opts & LOGERR_LOG_DATE))
-	{
+	    (stream != stderr && ctx->log_opts & LOGERR_LOG_DATE)) {
 		if ((e = logprintdate(stream)) == -1)
 			return -1;
 		len += e;
@@ -210,8 +181,8 @@ vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-format-attribute"
 #endif
-__printflike(2, 0) static int
-vlogmessage(int pri, const char *fmt, va_list args)
+__printflike(2, 0) static int vlogmessage(int pri, const char *fmt,
+    va_list args)
 {
 	struct logctx *ctx = &_logctx;
 	int len = 0;
@@ -219,30 +190,33 @@ vlogmessage(int pri, const char *fmt, va_list args)
 	if (ctx->log_fd != -1) {
 		pid_t pid = getpid();
 		char buf[LOGERR_SYSLOGBUF];
+		size_t mlen = 0;
 		struct iovec iov[] = {
 			{ .iov_base = &pri, .iov_len = sizeof(pri) },
 			{ .iov_base = &pid, .iov_len = sizeof(pid) },
+			{ .iov_base = &mlen, .iov_len = sizeof(mlen) },
 			{ .iov_base = buf },
 		};
 
 		len = vsnprintf(buf, sizeof(buf), fmt, args);
 		if (len != -1) {
-			if ((size_t)len >= sizeof(buf))
-				len = (int)sizeof(buf) - 1;
-			iov[2].iov_len = (size_t)(len + 1);
+			mlen = (size_t)len + 1;
+			if (mlen > sizeof(buf))
+				mlen = sizeof(buf);
+			iov[3].iov_len = mlen;
 			struct msghdr msg = {
 				.msg_iov = iov,
 				.msg_iovlen = sizeof(iov) / sizeof(iov[0]),
 			};
-			len = (int)sendmsg(ctx->log_fd, &msg, MSG_EOR);
+			len = (int)sendmsg(ctx->log_fd, &msg, 0);
 		}
 		return len;
 	}
 
 	if (ctx->log_opts & LOGERR_ERR &&
 	    (pri <= LOG_ERR ||
-	    (!(ctx->log_opts & LOGERR_QUIET) && pri <= LOG_INFO) ||
-	    (ctx->log_opts & LOGERR_DEBUG && pri <= LOG_DEBUG)))
+		(!(ctx->log_opts & LOGERR_QUIET) && pri <= LOG_INFO) ||
+		(ctx->log_opts & LOGERR_DEBUG && pri <= LOG_DEBUG)))
 		len = vlogprintf_r(ctx, stderr, fmt, args);
 
 #ifndef SMALL
@@ -260,8 +234,7 @@ vlogmessage(int pri, const char *fmt, va_list args)
 #pragma GCC diagnostic pop
 #endif
 
-__printflike(2, 3) void
-logmessage(int pri, const char *fmt, ...)
+__printflike(2, 3) void logmessage(int pri, const char *fmt, ...)
 {
 	va_list args;
 
@@ -270,8 +243,8 @@ logmessage(int pri, const char *fmt, ...)
 	va_end(args);
 }
 
-__printflike(2, 0) static void
-vlogerrmessage(int pri, const char *fmt, va_list args)
+__printflike(2, 0) static void vlogerrmessage(int pri, const char *fmt,
+    va_list args)
 {
 	int _errno = errno;
 	char buf[1024];
@@ -281,8 +254,7 @@ vlogerrmessage(int pri, const char *fmt, va_list args)
 	errno = _errno;
 }
 
-__printflike(2, 3) void
-logerrmessage(int pri, const char *fmt, ...)
+__printflike(2, 3) void logerrmessage(int pri, const char *fmt, ...)
 {
 	va_list args;
 
@@ -389,7 +361,7 @@ logsetfd(int fd)
 		closelog();
 #ifndef SMALL
 	if (fd != -1 && ctx->log_file != NULL) {
-		fclose(ctx->log_file);
+		(void)fclose(ctx->log_file);
 		ctx->log_file = NULL;
 	}
 #endif
@@ -402,28 +374,38 @@ logreadfd(int fd)
 	int pri;
 	pid_t pid;
 	char buf[LOGERR_SYSLOGBUF] = { '\0' };
+	size_t mlen;
 	struct iovec iov[] = {
 		{ .iov_base = &pri, .iov_len = sizeof(pri) },
 		{ .iov_base = &pid, .iov_len = sizeof(pid) },
-		{ .iov_base = buf,  .iov_len = sizeof(buf) },
+		{ .iov_base = &mlen, .iov_len = sizeof(mlen) },
 	};
-	struct msghdr msg = {
-		.msg_iov = iov,
-		.msg_iovlen = sizeof(iov) / sizeof(iov[0])
-	};
+	struct msghdr msg = { .msg_iov = iov,
+		.msg_iovlen = sizeof(iov) / sizeof(iov[0]) };
 	ssize_t len;
 
 	len = recvmsg(fd, &msg, MSG_WAITALL);
 	if (len == -1 || len == 0)
 		return len;
-	/* Ensure we received the minimum and at least one character to log */
-	if ((size_t)len < sizeof(pri) + sizeof(pid) + 1 ||
-	    msg.msg_flags & MSG_TRUNC) {
+	if ((size_t)len != sizeof(pri) + sizeof(pid) + sizeof(mlen)) {
 		errno = EMSGSIZE;
 		return -1;
 	}
+	if (mlen > sizeof(buf)) {
+		errno = ENOBUFS;
+		return -1;
+	}
+
+	len = recv(fd, buf, mlen, MSG_WAITALL);
+	if (len == -1)
+		return -1;
+	if ((size_t)len != mlen) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	/* Ensure what we receive is NUL terminated */
-	buf[(size_t)len - (sizeof(pri) + sizeof(pid)) - 1] = '\0';
+	buf[mlen == sizeof(buf) ? mlen - 1 : mlen] = '\0';
 
 	ctx->log_pid = pid;
 	logmessage(pri, "%s", buf);
@@ -508,10 +490,6 @@ logclose(void)
 #endif
 
 	closelog();
-#if defined(__linux__)
-	free(_logprog);
-	_logprog = NULL;
-#endif
 #ifndef SMALL
 	if (ctx->log_file == NULL)
 		return;

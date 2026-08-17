@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright (c) 2017-2024 Roy Marples <roy@marples.name>
+
 # Start, reconfigure and stop wpa_supplicant per wireless interface.
 #
 # This is only needed when using wpa_supplicant-2.5 or older, OR

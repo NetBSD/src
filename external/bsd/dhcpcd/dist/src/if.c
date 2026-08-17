@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -26,37 +26,39 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#define __APPLE_USE_RFC_3542
+
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-
-#include <fcntl.h> /* Needs to be here for old Linux */
-
-#include "config.h"
 
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <netinet/in.h>
+
+#include <fcntl.h> /* Needs to be here for old Linux */
+
+#include "config.h"
 #ifdef AF_LINK
-#  include <net/if_dl.h>
-#  include <net/if_types.h>
-#  include <netinet/in_var.h>
-#  undef AF_PACKET	/* Newer Illumos defines this */
+#include <net/if_dl.h>
+#include <net/if_types.h>
+#include <netinet/in_var.h>
+#undef AF_PACKET /* Newer Illumos defines this */
 #endif
 #ifdef AF_PACKET
-#  include <netpacket/packet.h>
+#include <netpacket/packet.h>
 #endif
 #ifdef SIOCGIFMEDIA
-#  include <net/if_media.h>
+#include <net/if_media.h>
 #endif
 #include <net/route.h>
 
 #include <ctype.h>
 #include <errno.h>
+#include <fnmatch.h>
 #include <ifaddrs.h>
 #include <inttypes.h>
-#include <fnmatch.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,14 +66,14 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#define ELOOP_QUEUE	ELOOP_IF
+#define ELOOP_QUEUE ELOOP_IF
 #include "common.h"
-#include "eloop.h"
 #include "dev.h"
 #include "dhcp.h"
 #include "dhcp6.h"
-#include "if.h"
+#include "eloop.h"
 #include "if-options.h"
+#include "if.h"
 #include "ipv4.h"
 #include "ipv4ll.h"
 #include "ipv6nd.h"
@@ -81,7 +83,6 @@
 void
 if_free(struct interface *ifp)
 {
-
 	if (ifp == NULL)
 		return;
 #ifdef IPV4LL
@@ -107,7 +108,6 @@ if_free(struct interface *ifp)
 int
 if_opensockets(struct dhcpcd_ctx *ctx)
 {
-
 	if (if_opensockets_os(ctx) == -1)
 		return -1;
 
@@ -132,7 +132,6 @@ if_opensockets(struct dhcpcd_ctx *ctx)
 void
 if_closesockets(struct dhcpcd_ctx *ctx)
 {
-
 	if (ctx->link_fd != -1) {
 		eloop_event_delete(ctx->eloop, ctx->link_fd);
 		close(ctx->link_fd);
@@ -150,7 +149,6 @@ if_closesockets(struct dhcpcd_ctx *ctx)
 int
 if_ioctl(struct dhcpcd_ctx *ctx, ioctl_request_t req, void *data, size_t len)
 {
-
 #ifdef PRIVSEP
 	if (ctx->options & DHCPCD_PRIVSEP)
 		return (int)ps_root_ioctl(ctx, req, data, len);
@@ -186,10 +184,10 @@ if_setflag(struct interface *ifp, short setflag, short unsetflag)
 bool
 if_is_link_up(const struct interface *ifp)
 {
-
 	return ifp->flags & IFF_UP &&
 	    (ifp->carrier != LINK_DOWN ||
-	     (ifp->options != NULL && !(ifp->options->options & DHCPCD_LINK)));
+		(ifp->options != NULL &&
+		    !(ifp->options->options & DHCPCD_LINK)));
 }
 
 int
@@ -224,8 +222,7 @@ if_randomisemac(struct interface *ifp)
 	buf[0] &= 0xFC;
 	buf[0] |= 0x02;
 
-	logdebugx("%s: hardware address randomised to %s",
-	    ifp->name,
+	logdebugx("%s: hardware address randomised to %s", ifp->name,
 	    hwaddr_ntoa(buf, ifp->hwlen, sbuf, sizeof(sbuf)));
 	retval = if_setmac(ifp, buf, ifp->hwlen);
 	if (retval == 0)
@@ -282,7 +279,7 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 #ifdef HAVE_IFADDRS_ADDRFLAGS
 		addrflags = (int)ifa->ifa_addrflags;
 #endif
-		switch(ifa->ifa_addr->sa_family) {
+		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
 			addr = (void *)ifa->ifa_addr;
@@ -299,8 +296,9 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 					char dbuf[INET_ADDRSTRLEN];
 					const char *dbp;
 
-					dbp = inet_ntop(AF_INET, &addr->sin_addr,
-					    dbuf, sizeof(dbuf));
+					dbp = inet_ntop(AF_INET,
+					    &addr->sin_addr, dbuf,
+					    sizeof(dbuf));
 					logerr("%s: if_addrflags: %s%%%s",
 					    __func__, dbp, ifp->name);
 				}
@@ -308,8 +306,8 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 			}
 #endif
 			ipv4_handleifa(ctx, RTM_NEWADDR, ifs, ifa->ifa_name,
-				&addr->sin_addr, &net->sin_addr,
-				brd ? &brd->sin_addr : NULL, addrflags, 0);
+			    &addr->sin_addr, &net->sin_addr,
+			    brd ? &brd->sin_addr : NULL, addrflags, 0);
 			break;
 #endif
 #ifdef INET6
@@ -332,26 +330,27 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 					char dbuf[INET6_ADDRSTRLEN];
 					const char *dbp;
 
-					dbp = inet_ntop(AF_INET6, &addr6->sin6_addr,
-					    dbuf, sizeof(dbuf));
+					dbp = inet_ntop(AF_INET6,
+					    &addr6->sin6_addr, dbuf,
+					    sizeof(dbuf));
 					logerr("%s: if_addrflags6: %s%%%s",
 					    __func__, dbp, ifp->name);
 				}
 				continue;
 			}
 #endif
-			ipv6_handleifa(ctx, RTM_NEWADDR, ifs,
-			    ifa->ifa_name, &addr6->sin6_addr,
-			    ipv6_prefixlen(&net6->sin6_addr),
-			    dstaddr6 ? &dstaddr6->sin6_addr : NULL,
-			    addrflags, 0);
+			ipv6_handleifa(ctx, RTM_NEWADDR, ifs, ifa->ifa_name,
+			    &addr6->sin6_addr, ipv6_prefixlen(&net6->sin6_addr),
+			    dstaddr6 ? &dstaddr6->sin6_addr : NULL, addrflags,
+			    0);
 			break;
 #endif
 		}
 	}
 }
 
-void if_freeifaddrs(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs)
+void
+if_freeifaddrs(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs)
 {
 #ifndef PRIVSEP_GETIFADDRS
 	UNUSED(ctx);
@@ -401,22 +400,23 @@ if_valid_hwaddr(const uint8_t *hwaddr, size_t hwlen)
 	return false;
 }
 
-#if defined(AF_PACKET) && !defined(AF_LINK)
+#ifndef AF_LINK
 static unsigned int
 if_check_arphrd(struct interface *ifp, unsigned int active, bool if_noconf)
 {
-
-	switch(ifp->hwtype) {
+	switch (ifp->hwtype) {
+#ifdef ARPHRD_NONE
+	case ARPHRD_NONE: /* FALLTHROUGH */
+#endif
 	case ARPHRD_ETHER:	/* FALLTHROUGH */
 	case ARPHRD_IEEE1394:	/* FALLTHROUGH */
-	case ARPHRD_INFINIBAND:	/* FALLTHROUGH */
-	case ARPHRD_NONE:	/* FALLTHROUGH */
+	case ARPHRD_INFINIBAND: /* FALLTHROUGH */
 		break;
 	case ARPHRD_LOOPBACK:
 	case ARPHRD_PPP:
 		if (if_noconf && active) {
 			logdebugx("%s: ignoring due to interface type and"
-			    " no config",
+				  " no config",
 			    ifp->name);
 			active = IF_INACTIVE;
 		}
@@ -428,7 +428,8 @@ if_check_arphrd(struct interface *ifp, unsigned int active, bool if_noconf)
 			if (if_noconf)
 				active = IF_INACTIVE;
 			i = active ? LOG_WARNING : LOG_DEBUG;
-			logmessage(i, "%s: unsupported"
+			logmessage(i,
+			    "%s: unsupported"
 			    " interface type 0x%.2x",
 			    ifp->name, ifp->hwtype);
 		}
@@ -440,8 +441,8 @@ if_check_arphrd(struct interface *ifp, unsigned int active, bool if_noconf)
 #endif
 
 struct if_head *
-if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
-    int argc, char * const *argv)
+if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs, int argc,
+    char *const *argv)
 {
 	struct ifaddrs *ifa;
 	int i;
@@ -477,7 +478,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 		}
 	} else
 #endif
-	if (getifaddrs(ifaddrs) == -1) {
+	    if (getifaddrs(ifaddrs) == -1) {
 		logerr("getifaddrs");
 		free(ifs);
 		return NULL;
@@ -518,7 +519,8 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			if (argc == -1 && strcmp(argv[0], spec.devname) != 0)
 				continue;
 			active = ctx->options & DHCPCD_INACTIVE ?
-			    IF_INACTIVE: IF_ACTIVE_USER;
+			    IF_INACTIVE :
+			    IF_ACTIVE_USER;
 		}
 
 		for (i = 0; i < ctx->ifdc; i++)
@@ -560,7 +562,8 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 		/* Don't allow some reserved interface names unless explicit. */
 		if (if_noconf && if_ignore(ctx, spec.devname)) {
 			logdebugx("%s: ignoring due to interface type and"
-			    " no config", spec.devname);
+				  " no config",
+			    spec.devname);
 			active = IF_INACTIVE;
 		}
 
@@ -586,15 +589,14 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			iflr.flags = IFLR_PREFIX;
 			iflr.prefixlen = (unsigned int)sdl->sdl_alen * NBBY;
 			if (ioctl(ctx->pf_link_fd, SIOCGLIFADDR, &iflr) == -1 ||
-			    !(iflr.flags & IFLR_ACTIVE))
-			{
+			    !(iflr.flags & IFLR_ACTIVE)) {
 				if_free(ifp);
 				continue;
 			}
 #endif
 
 			ifp->index = sdl->sdl_index;
-			switch(sdl->sdl_type) {
+			switch (sdl->sdl_type) {
 #ifdef IFT_BRIDGE
 			case IFT_BRIDGE: /* FALLTHROUGH */
 #endif
@@ -609,13 +611,13 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 				/* Don't allow unless explicit */
 				if (if_noconf && active) {
 					logdebugx("%s: ignoring due to"
-					    " interface type and"
-					    " no config",
+						  " interface type and"
+						  " no config",
 					    ifp->name);
 					active = IF_INACTIVE;
 				}
 				__fallthrough; /* appease gcc */
-				/* FALLTHROUGH */
+					       /* FALLTHROUGH */
 #ifdef IFT_L2VLAN
 			case IFT_L2VLAN: /* FALLTHROUGH */
 #endif
@@ -641,7 +643,8 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 					if (if_noconf)
 						active = IF_INACTIVE;
 					i = active ? LOG_WARNING : LOG_DEBUG;
-					logmessage(i, "%s: unsupported"
+					logmessage(i,
+					    "%s: unsupported"
 					    " interface type 0x%.2x",
 					    ifp->name, sdl->sdl_type);
 				}
@@ -658,32 +661,22 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			ifp->hwlen = sll->sll_halen;
 			if (ifp->hwlen != 0)
 				memcpy(ifp->hwaddr, sll->sll_addr, ifp->hwlen);
-			active = if_check_arphrd(ifp, active, if_noconf);
 #endif
 		}
-#ifdef __linux__
-		else {
-			struct ifreq ifr = { .ifr_flags = 0 };
 
-			/* This is a huge bug in getifaddrs(3) as there
-			 * is no reason why this can't be returned in
-			 * ifa_addr. */
-			strlcpy(ifr.ifr_name, ifa->ifa_name,
-			    sizeof(ifr.ifr_name));
-			if (ioctl(ctx->pf_inet_fd, SIOCGIFHWADDR, &ifr) == -1)
-				logerr("%s: SIOCGIFHWADDR", ifa->ifa_name);
-			ifp->hwtype = ifr.ifr_hwaddr.sa_family;
-			if (ioctl(ctx->pf_inet_fd, SIOCGIFINDEX, &ifr) == -1)
-				logerr("%s: SIOCGIFINDEX", ifa->ifa_name);
-			ifp->index = (unsigned int)ifr.ifr_ifindex;
-			if_check_arphrd(ifp, active, if_noconf);
+		if (if_init(ifp) == -1) {
+			logerr("%s: if_init", ifp->name);
+			if_free(ifp);
+			continue;
 		}
+#ifndef AF_LINK
+		active = if_check_arphrd(ifp, active, if_noconf);
 #endif
 
 		if (!(ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST))) {
 			/* Handle any platform init for the interface */
-			if (active != IF_INACTIVE && if_init(ifp) == -1) {
-				logerr("%s: if_init", ifp->name);
+			if (active != IF_INACTIVE && if_init_os(ifp) == -1) {
+				logerr("%s: if_init_os", ifp->name);
 				if_free(ifp);
 				continue;
 			}
@@ -732,10 +725,9 @@ if_nametospec(const char *ifname, struct if_spec *spec)
 
 	if (ifname == NULL || *ifname == '\0' ||
 	    strlcpy(spec->ifname, ifname, sizeof(spec->ifname)) >=
-	    sizeof(spec->ifname) ||
+		sizeof(spec->ifname) ||
 	    strlcpy(spec->drvname, ifname, sizeof(spec->drvname)) >=
-	    sizeof(spec->drvname))
-	{
+		sizeof(spec->drvname)) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -799,7 +791,6 @@ if_nametospec(const char *ifname, struct if_spec *spec)
 static struct interface *
 if_findindexname(struct if_head *ifaces, unsigned int idx, const char *name)
 {
-
 	if (ifaces != NULL) {
 		struct if_spec spec;
 		struct interface *ifp;
@@ -821,14 +812,12 @@ if_findindexname(struct if_head *ifaces, unsigned int idx, const char *name)
 struct interface *
 if_find(struct if_head *ifaces, const char *name)
 {
-
 	return if_findindexname(ifaces, 0, name);
 }
 
 struct interface *
 if_findindex(struct if_head *ifaces, unsigned int idx)
 {
-
 	return if_findindexname(ifaces, idx, NULL);
 }
 
@@ -863,7 +852,6 @@ if_getmtu(const struct interface *ifp)
 int
 if_makealias(char *alias, size_t alias_len, const char *ifname, int lun)
 {
-
 	if (lun == 0)
 		return strlcpy(alias, ifname, alias_len);
 	return snprintf(alias, alias_len, "%s:%u", ifname, lun);
@@ -889,18 +877,16 @@ if_findifpfromcmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg, int *hoplimit)
 	UNUSED(hoplimit);
 #endif
 
-	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(msg);
-	     cm;
-	     cm = (struct cmsghdr *)CMSG_NXTHDR(msg, cm))
-	{
+	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(msg); cm;
+	    cm = (struct cmsghdr *)CMSG_NXTHDR(msg, cm)) {
 #ifdef INET
 		if (cm->cmsg_level == IPPROTO_IP) {
-			switch(cm->cmsg_type) {
+			switch (cm->cmsg_type) {
 #ifdef IP_RECVIF
 			case IP_RECVIF:
 				if (cm->cmsg_len <
 				    offsetof(struct sockaddr_dl, sdl_index) +
-				    sizeof(sdl.sdl_index))
+					sizeof(sdl.sdl_index))
 					continue;
 				memcpy(&sdl, CMSG_DATA(cm),
 				    MIN(sizeof(sdl), cm->cmsg_len));
@@ -919,7 +905,7 @@ if_findifpfromcmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg, int *hoplimit)
 #endif
 #ifdef INET6
 		if (cm->cmsg_level == IPPROTO_IPV6) {
-			switch(cm->cmsg_type) {
+			switch (cm->cmsg_type) {
 			case IPV6_PKTINFO:
 				if (cm->cmsg_len != CMSG_LEN(sizeof(ipi6)))
 					continue;
@@ -968,18 +954,20 @@ xsocket(int domain, int type, int protocol)
 	if ((s = socket(domain, type, protocol)) == -1)
 		return -1;
 #ifdef DEBUG_FD
-	logerrx("pid %d fd=%d domain=%d type=%d protocol=%d",
-	    getpid(), s, domain, type, protocol);
+	logerrx("pid %d fd=%d domain=%d type=%d protocol=%d", getpid(), s,
+	    domain, type, protocol);
 #endif
 
 #ifndef HAVE_SOCK_CLOEXEC
-	if ((xtype & SOCK_CLOEXEC) && ((xflags = fcntl(s, F_GETFD)) == -1 ||
-	    fcntl(s, F_SETFD, xflags | FD_CLOEXEC) == -1))
+	if ((xtype & SOCK_CLOEXEC) &&
+	    ((xflags = fcntl(s, F_GETFD)) == -1 ||
+		fcntl(s, F_SETFD, xflags | FD_CLOEXEC) == -1))
 		goto out;
 #endif
 #ifndef HAVE_SOCK_NONBLOCK
-	if ((xtype & SOCK_NONBLOCK) && ((xflags = fcntl(s, F_GETFL)) == -1 ||
-	    fcntl(s, F_SETFL, xflags | O_NONBLOCK) == -1))
+	if ((xtype & SOCK_NONBLOCK) &&
+	    ((xflags = fcntl(s, F_GETFL)) == -1 ||
+		fcntl(s, F_SETFL, xflags | O_NONBLOCK) == -1))
 		goto out;
 #endif
 
@@ -1017,19 +1005,23 @@ xsocketpair(int domain, int type, int protocol, int fd[2])
 #endif
 
 #ifndef HAVE_SOCK_CLOEXEC
-	if ((xtype & SOCK_CLOEXEC) && ((xflags = fcntl(fd[0], F_GETFD)) == -1 ||
-	    fcntl(fd[0], F_SETFD, xflags | FD_CLOEXEC) == -1))
+	if ((xtype & SOCK_CLOEXEC) &&
+	    ((xflags = fcntl(fd[0], F_GETFD)) == -1 ||
+		fcntl(fd[0], F_SETFD, xflags | FD_CLOEXEC) == -1))
 		goto out;
-	if ((xtype & SOCK_CLOEXEC) && ((xflags = fcntl(fd[1], F_GETFD)) == -1 ||
-	    fcntl(fd[1], F_SETFD, xflags | FD_CLOEXEC) == -1))
+	if ((xtype & SOCK_CLOEXEC) &&
+	    ((xflags = fcntl(fd[1], F_GETFD)) == -1 ||
+		fcntl(fd[1], F_SETFD, xflags | FD_CLOEXEC) == -1))
 		goto out;
 #endif
 #ifndef HAVE_SOCK_NONBLOCK
-	if ((xtype & SOCK_NONBLOCK) && ((xflags = fcntl(fd[0], F_GETFL)) == -1 ||
-	    fcntl(fd[0], F_SETFL, xflags | O_NONBLOCK) == -1))
+	if ((xtype & SOCK_NONBLOCK) &&
+	    ((xflags = fcntl(fd[0], F_GETFL)) == -1 ||
+		fcntl(fd[0], F_SETFL, xflags | O_NONBLOCK) == -1))
 		goto out;
-	if ((xtype & SOCK_NONBLOCK) && ((xflags = fcntl(fd[1], F_GETFL)) == -1 ||
-	    fcntl(fd[1], F_SETFL, xflags | O_NONBLOCK) == -1))
+	if ((xtype & SOCK_NONBLOCK) &&
+	    ((xflags = fcntl(fd[1], F_GETFL)) == -1 ||
+		fcntl(fd[1], F_SETFL, xflags | O_NONBLOCK) == -1))
 		goto out;
 #endif
 

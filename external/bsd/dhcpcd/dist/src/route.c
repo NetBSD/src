@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - route management
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -36,11 +36,11 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#include "config.h"
+#include "config.h" // IWYU pragma: keep
 #include "common.h"
 #include "dhcpcd.h"
-#include "if.h"
 #include "if-options.h"
+#include "if.h"
 #include "ipv4.h"
 #include "ipv4ll.h"
 #include "ipv6.h"
@@ -54,14 +54,12 @@
 #define RB_TREE_NEXT(T, N) rb_tree_iterate((T), (N), RB_DIR_RIGHT)
 #define RB_TREE_PREV(T, N) rb_tree_iterate((T), (N), RB_DIR_LEFT)
 #endif
-#define RB_TREE_FOREACH_SAFE(N, T, S) \
-    for ((N) = RB_TREE_MIN(T); \
-        (N) && ((S) = RB_TREE_NEXT((T), (N)), 1); \
-        (N) = (S))
-#define RB_TREE_FOREACH_REVERSE_SAFE(N, T, S) \
-    for ((N) = RB_TREE_MAX(T); \
-        (N) && ((S) = RB_TREE_PREV((T), (N)), 1); \
-        (N) = (S))
+#define RB_TREE_FOREACH_SAFE(N, T, S)                                        \
+	for ((N) = RB_TREE_MIN(T); (N) && ((S) = RB_TREE_NEXT((T), (N)), 1); \
+	    (N) = (S))
+#define RB_TREE_FOREACH_REVERSE_SAFE(N, T, S)                                \
+	for ((N) = RB_TREE_MAX(T); (N) && ((S) = RB_TREE_PREV((T), (N)), 1); \
+	    (N) = (S))
 #endif
 
 /*
@@ -69,7 +67,7 @@
  * If we change the route, we want to flush anything dynamically created.
  */
 #if defined(BSD) && !defined(RTF_CLONING) && defined(RTF_CONNECTED)
-#define	RTF_CLONING	RTF_CONNECTED
+#define RTF_CLONING RTF_CONNECTED
 #endif
 
 #ifdef RT_FREE_ROUTE_TABLE_STATS
@@ -80,8 +78,8 @@ static size_t mroutes;
 #endif
 
 static void
-rt_maskedaddr(struct sockaddr *dst,
-	const struct sockaddr *addr, const struct sockaddr *netmask)
+rt_maskedaddr(struct sockaddr *dst, const struct sockaddr *addr,
+    const struct sockaddr *netmask)
 {
 	const char *addrp = addr->sa_data, *netmaskp = netmask->sa_data;
 	char *dstp = dst->sa_data;
@@ -114,22 +112,23 @@ rt_maskedaddr(struct sockaddr *dst,
 static int
 rt_cmp_netmask(const struct rt *rt1, const struct rt *rt2)
 {
-
 	if (rt1->rt_flags & RTF_HOST && rt2->rt_flags & RTF_HOST)
 		return 0;
-	return sa_cmp(&rt1->rt_netmask, &rt2->rt_netmask);
+	return sa_cmp(rt1->rt_netmask, rt2->rt_netmask);
 }
 
 int
 rt_cmp_dest(const struct rt *rt1, const struct rt *rt2)
 {
-	union sa_ss ma1 = { .sa.sa_family = AF_UNSPEC };
-	union sa_ss ma2 = { .sa.sa_family = AF_UNSPEC };
+	struct sockaddr_storage ss1 = { .ss_family = AF_UNSPEC };
+	struct sockaddr_storage ss2 = { .ss_family = AF_UNSPEC };
+	struct sockaddr *ma1 = (struct sockaddr *)&ss1;
+	struct sockaddr *ma2 = (struct sockaddr *)&ss2;
 	int c;
 
-	rt_maskedaddr(&ma1.sa, &rt1->rt_dest, &rt1->rt_netmask);
-	rt_maskedaddr(&ma2.sa, &rt2->rt_dest, &rt2->rt_netmask);
-	c = sa_cmp(&ma1.sa, &ma2.sa);
+	rt_maskedaddr(ma1, rt1->rt_dest, rt1->rt_netmask);
+	rt_maskedaddr(ma2, rt2->rt_dest, rt2->rt_netmask);
+	c = sa_cmp(ma1, ma2);
 	if (c != 0)
 		return c;
 
@@ -195,7 +194,8 @@ rt_compare_proto(void *context, const void *node1, const void *node2)
 	/* IPv4LL routes always come last */
 	if (rt1->rt_dflags & RTDF_IPV4LL && !(rt2->rt_dflags & RTDF_IPV4LL))
 		return -1;
-	else if (!(rt1->rt_dflags & RTDF_IPV4LL) && rt2->rt_dflags & RTDF_IPV4LL)
+	else if (!(rt1->rt_dflags & RTDF_IPV4LL) &&
+	    rt2->rt_dflags & RTDF_IPV4LL)
 		return 1;
 #endif
 
@@ -233,7 +233,6 @@ const rb_tree_ops_t rt_compare_proto_ops = {
 static int
 rt_compare_free(__unused void *context, const void *node1, const void *node2)
 {
-
 	return node1 == node2 ? 0 : node1 < node2 ? -1 : 1;
 }
 
@@ -246,9 +245,8 @@ static const rb_tree_ops_t rt_compare_free_ops = {
 #endif
 
 void
-rt_init(struct dhcpcd_ctx *ctx)
+rt_init_routes(struct dhcpcd_ctx *ctx)
 {
-
 	rb_tree_init(&ctx->routes, &rt_compare_os_ops);
 #ifdef RT_FREE_ROUTE_TABLE
 	rb_tree_init(&ctx->froutes, &rt_compare_free_ops);
@@ -258,9 +256,8 @@ rt_init(struct dhcpcd_ctx *ctx)
 bool
 rt_is_default(const struct rt *rt)
 {
-
-	return sa_is_unspecified(&rt->rt_dest) &&
-	    sa_is_unspecified(&rt->rt_netmask);
+	return sa_is_unspecified(rt->rt_dest) &&
+	    sa_is_unspecified(rt->rt_netmask);
 }
 
 static void
@@ -274,36 +271,33 @@ rt_desc(int loglevel, const char *cmd, const struct rt *rt)
 	assert(cmd != NULL);
 	assert(rt != NULL);
 
-	sa_addrtop(&rt->rt_dest, dest, sizeof(dest));
-	prefix = sa_toprefix(&rt->rt_netmask);
-	sa_addrtop(&rt->rt_gateway, gateway, sizeof(gateway));
-	gateway_unspec = sa_is_unspecified(&rt->rt_gateway);
+	sa_addrtop(rt->rt_dest, dest, sizeof(dest));
+	prefix = sa_toprefix(rt->rt_netmask);
+	sa_addrtop(rt->rt_gateway, gateway, sizeof(gateway));
+	gateway_unspec = sa_is_unspecified(rt->rt_gateway);
 	ifname = rt->rt_ifp == NULL ? "(null)" : rt->rt_ifp->name;
 
 	if (rt->rt_flags & RTF_HOST) {
 		if (gateway_unspec)
-			logmessage(loglevel, "%s: %s host route to %s",
-			    ifname, cmd, dest);
+			logmessage(loglevel, "%s: %s host route to %s", ifname,
+			    cmd, dest);
 		else
 			logmessage(loglevel, "%s: %s host route to %s via %s",
 			    ifname, cmd, dest, gateway);
 	} else if (rt_is_default(rt)) {
 		if (gateway_unspec)
-			logmessage(loglevel, "%s: %s default route",
-			    ifname, cmd);
+			logmessage(loglevel, "%s: %s default route", ifname,
+			    cmd);
 		else
 			logmessage(loglevel, "%s: %s default route via %s",
 			    ifname, cmd, gateway);
 	} else if (gateway_unspec)
-		logmessage(loglevel, "%s: %s%s route to %s/%d",
-		    ifname, cmd,
-		    rt->rt_flags & RTF_REJECT ? " reject" : "",
-		    dest, prefix);
+		logmessage(loglevel, "%s: %s%s route to %s/%d", ifname, cmd,
+		    rt->rt_flags & RTF_REJECT ? " reject" : "", dest, prefix);
 	else
-		logmessage(loglevel, "%s: %s%s route to %s/%d via %s",
-		    ifname, cmd,
-		    rt->rt_flags & RTF_REJECT ? " reject" : "",
-		    dest, prefix, gateway);
+		logmessage(loglevel, "%s: %s%s route to %s/%d via %s", ifname,
+		    cmd, rt->rt_flags & RTF_REJECT ? " reject" : "", dest,
+		    prefix, gateway);
 }
 
 void
@@ -318,10 +312,10 @@ rt_headclear0(struct dhcpcd_ctx *ctx, rb_tree_t *rts, int af)
 		assert(&ctx->froutes != rts);
 #endif
 
-	RB_TREE_FOREACH_SAFE(rt, rts, rtn) {
-		if (af != AF_UNSPEC &&
-		    rt->rt_dest.sa_family != af &&
-		    rt->rt_gateway.sa_family != af)
+	RB_TREE_FOREACH_SAFE(rt, rts, rtn)
+	{
+		if (af != AF_UNSPEC && rt->rt_dest->sa_family != af &&
+		    rt->rt_gateway->sa_family != af)
 			continue;
 		rb_tree_remove_node(rts, rt);
 		rt_free(rt);
@@ -352,7 +346,6 @@ rt_headfree(rb_tree_t *rts)
 void
 rt_dispose(struct dhcpcd_ctx *ctx)
 {
-
 	assert(ctx != NULL);
 	rt_headfree(&ctx->routes);
 #ifdef RT_FREE_ROUTE_TABLE
@@ -363,6 +356,29 @@ rt_dispose(struct dhcpcd_ctx *ctx)
 	logdebugx("maximum route free list size %zu", mroutes);
 #endif
 #endif
+}
+
+static void
+rt_setup_sa(struct rt *rt)
+{
+	rt->rt_dest = (struct sockaddr *)&rt->rt_ss_dest;
+	rt->rt_netmask = (struct sockaddr *)&rt->rt_ss_netmask;
+	rt->rt_gateway = (struct sockaddr *)&rt->rt_ss_gateway;
+	rt->rt_ifa = (struct sockaddr *)&rt->rt_ss_ifa;
+}
+
+void
+rt_init(struct rt *rt)
+{
+	memset(rt, 0, sizeof(*rt));
+	rt_setup_sa(rt);
+}
+
+void
+rt_copy(struct rt *dst, const struct rt *src)
+{
+	memcpy(dst, src, sizeof(*dst));
+	rt_setup_sa(dst);
 }
 
 struct rt *
@@ -380,18 +396,17 @@ rt_new0(struct dhcpcd_ctx *ctx)
 #endif
 	} else
 #endif
-	if ((rt = malloc(sizeof(*rt))) == NULL) {
+	    if ((rt = malloc(sizeof(*rt))) == NULL) {
 		logerr(__func__);
 		return NULL;
 	}
-	memset(rt, 0, sizeof(*rt));
+	rt_init(rt);
 	return rt;
 }
 
 void
 rt_setif(struct rt *rt, struct interface *ifp)
 {
-
 	assert(rt != NULL);
 	assert(ifp != NULL);
 	rt->rt_ifp = ifp;
@@ -417,7 +432,6 @@ rt_new(struct interface *ifp)
 struct rt *
 rt_proto_add_ctx(rb_tree_t *tree, struct rt *rt, struct dhcpcd_ctx *ctx)
 {
-
 	rt->rt_order = ctx->rt_order++;
 	if (rb_tree_insert_node(tree, rt) == rt)
 		return rt;
@@ -430,8 +444,7 @@ rt_proto_add_ctx(rb_tree_t *tree, struct rt *rt, struct dhcpcd_ctx *ctx)
 struct rt *
 rt_proto_add(rb_tree_t *tree, struct rt *rt)
 {
-
-	assert (rt->rt_ifp != NULL);
+	assert(rt->rt_ifp != NULL);
 	return rt_proto_add_ctx(tree, rt, rt->rt_ifp->ctx);
 }
 
@@ -469,7 +482,8 @@ rt_freeif(struct interface *ifp)
 	if (ifp == NULL)
 		return;
 	ctx = ifp->ctx;
-	RB_TREE_FOREACH_SAFE(rt, &ctx->routes, rtn) {
+	RB_TREE_FOREACH_SAFE(rt, &ctx->routes, rtn)
+	{
 		if (rt->rt_ifp == ifp) {
 			rb_tree_remove_node(&ctx->routes, rt);
 			rt_free(rt);
@@ -491,7 +505,7 @@ rt_recvrt(int cmd, const struct rt *rt, pid_t pid)
 
 	ctx = rt->rt_ifp->ctx;
 
-	switch(cmd) {
+	switch (cmd) {
 	case RTM_DELETE:
 		f = rb_tree_find_node(&ctx->routes, rt);
 		if (f != NULL) {
@@ -506,7 +520,7 @@ rt_recvrt(int cmd, const struct rt *rt, pid_t pid)
 	}
 
 #if defined(IPV4LL) && defined(HAVE_ROUTE_METRIC)
-	if (rt->rt_dest.sa_family == AF_INET)
+	if (rt->rt_dest->sa_family == AF_INET)
 		ipv4ll_recvrt(cmd, rt);
 #endif
 }
@@ -544,7 +558,7 @@ rt_cmp_lifetime(struct rt *nrt, struct rt *ort)
 	struct timespec ts;
 	uint32_t deviation;
 
-	timespecsub(&nrt->rt_aquired, &ort->rt_aquired, &ts);
+	timespecsub(&nrt->rt_acquired, &ort->rt_acquired, &ts);
 	if (ts.tv_sec < 0)
 		ts.tv_sec = -ts.tv_sec;
 	if (ts.tv_sec > RTLIFETIME_DEV_MAX)
@@ -580,25 +594,23 @@ rt_add(rb_tree_t *kroutes, struct rt *nrt, struct rt *ort)
 	 * and get the VPN to inject the default route into dhcpcd somehow.
 	 */
 	if (((nrt->rt_ifp->active &&
-	    !(nrt->rt_ifp->options->options & DHCPCD_GATEWAY)) ||
-	    (!nrt->rt_ifp->active && !(ctx->options & DHCPCD_GATEWAY))) &&
-	    sa_is_unspecified(&nrt->rt_dest) &&
-	    sa_is_unspecified(&nrt->rt_netmask))
+		 !(nrt->rt_ifp->options->options & DHCPCD_GATEWAY)) ||
+		(!nrt->rt_ifp->active && !(ctx->options & DHCPCD_GATEWAY))) &&
+	    sa_is_unspecified(nrt->rt_dest) &&
+	    sa_is_unspecified(nrt->rt_netmask))
 		return false;
 
 	krt = rb_tree_find_node(kroutes, nrt);
-	if (krt != NULL &&
-	    krt->rt_ifp == nrt->rt_ifp &&
+	if (krt != NULL && krt->rt_ifp == nrt->rt_ifp &&
 	    /* Only test flags dhcpcd controls */
 	    (krt->rt_flags & (RTF_HOST | RTF_REJECT)) == nrt->rt_flags &&
 #ifdef HAVE_ROUTE_METRIC
 	    krt->rt_metric == nrt->rt_metric &&
 #endif
-	    sa_cmp(&krt->rt_dest, &nrt->rt_dest) == 0 &&
+	    sa_cmp(krt->rt_dest, nrt->rt_dest) == 0 &&
 	    rt_cmp_netmask(krt, nrt) == 0 &&
-	    sa_cmp(&krt->rt_gateway, &nrt->rt_gateway) == 0 &&
-	    (nrt->rt_ifp->flags & IFF_LOOPBACK || rt_cmp_mtu(krt, nrt) == 0))
-	{
+	    sa_cmp(krt->rt_gateway, nrt->rt_gateway) == 0 &&
+	    (nrt->rt_ifp->flags & IFF_LOOPBACK || rt_cmp_mtu(krt, nrt) == 0)) {
 #ifdef HAVE_ROUTE_LIFETIME
 		if (rt_cmp_lifetime(krt, nrt) == 0) {
 			rt_desc(LOG_DEBUG, "keeping", krt);
@@ -624,7 +636,8 @@ rt_add(rb_tree_t *kroutes, struct rt *nrt, struct rt *ort)
 #endif
 	/* Reject routes have a gateway, non reject routes don't.
 	 * BSD kernels at least preserve RTF_GATEWAY so we need to punt it. */
-	if (change && krt->rt_flags & RTF_REJECT && !(nrt->rt_flags & RTF_REJECT))
+	if (change && krt->rt_flags & RTF_REJECT &&
+	    !(nrt->rt_flags & RTF_REJECT))
 		change = false;
 
 	if (change) {
@@ -710,12 +723,11 @@ rt_delete(struct rt *rt)
 static int
 rt_cmp(const struct rt *r1, const struct rt *r2)
 {
-
 	if (r1->rt_ifp == r2->rt_ifp &&
 #ifdef HAVE_ROUTE_METRIC
 	    r1->rt_metric == r2->rt_metric &&
 #endif
-	    sa_cmp(&r1->rt_gateway, &r2->rt_gateway) == 0)
+	    sa_cmp(r1->rt_gateway, r2->rt_gateway) == 0)
 		return 0;
 	return 1;
 }
@@ -724,7 +736,7 @@ static bool
 rt_doroute(rb_tree_t *kroutes, struct rt *rt)
 {
 	struct dhcpcd_ctx *ctx;
-	struct rt *or;
+	struct rt * or ;
 
 	ctx = rt->rt_ifp->ctx;
 	/* Do we already manage it? */
@@ -732,18 +744,26 @@ rt_doroute(rb_tree_t *kroutes, struct rt *rt)
 	if (or != NULL) {
 		if (rt->rt_dflags & RTDF_FAKE)
 			return true;
-		if (or->rt_dflags & RTDF_FAKE ||
-		    rt_cmp(rt, or) != 0 ||
-		    (rt->rt_ifa.sa_family != AF_UNSPEC &&
-		    sa_cmp(&or->rt_ifa, &rt->rt_ifa) != 0) ||
+		if (or->rt_dflags & RTDF_FAKE || rt_cmp(rt, or) != 0 ||
+		    (rt->rt_ifa->sa_family != AF_UNSPEC &&
+			sa_cmp(or->rt_ifa, rt->rt_ifa) != 0) ||
 #ifdef HAVE_ROUTE_LIFETIME
 		    rt_cmp_lifetime(rt, or) != 0 ||
 #endif
-		    rt_cmp_mtu(rt, or) != 0)
-		{
+		    rt_cmp_mtu(rt, or) != 0) {
 			if (!rt_add(kroutes, rt, or))
 				return false;
+		} else {
+#ifdef HAVE_ROUTE_LIFETIME
+			/* The existing kernel route matches what we want
+			 * and the lifetime is inside the allowed deviation.
+			 * Persist the original acquisition time so the
+			 * deviaton can drop outside what is allowed and the
+			 * kernel route is re-added with a new lifetime. */
+			rt->rt_acquired = or->rt_acquired;
+#endif
 		}
+
 		rb_tree_remove_node(&ctx->routes, or);
 		rt_free(or);
 	} else {
@@ -792,26 +812,27 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 		goto getfail;
 #endif
 
-#ifdef BSD
+#ifdef HAVE_RT_MISSFILTER
 	/* Rewind the miss filter */
 	ctx->rt_missfilterlen = 0;
 #endif
 
-	RB_TREE_FOREACH_SAFE(rt, &routes, rtn) {
+	RB_TREE_FOREACH_SAFE(rt, &routes, rtn)
+	{
 		if (rt->rt_ifp->active) {
 			if (!(rt->rt_ifp->options->options & DHCPCD_CONFIGURE))
 				continue;
 		} else if (!(ctx->options & DHCPCD_CONFIGURE))
 			continue;
-#ifdef BSD
+#ifdef HAVE_RT_MISSFILTER
 		if (rt_is_default(rt) &&
-		    if_missfilter(rt->rt_ifp, &rt->rt_gateway) == -1)
+		    if_missfilter(rt->rt_ifp, rt->rt_gateway) == -1)
 			logerr("if_missfilter");
 #endif
-		if ((rt->rt_dest.sa_family != af &&
-		    rt->rt_dest.sa_family != AF_UNSPEC) ||
-		    (rt->rt_gateway.sa_family != af &&
-		    rt->rt_gateway.sa_family != AF_UNSPEC))
+		if ((rt->rt_dest->sa_family != af &&
+			rt->rt_dest->sa_family != AF_UNSPEC) ||
+		    (rt->rt_gateway->sa_family != af &&
+			rt->rt_gateway->sa_family != AF_UNSPEC))
 			continue;
 		/* Is this route already in our table? */
 		if (rb_tree_find_node(&added, rt) != NULL)
@@ -826,27 +847,26 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 		}
 	}
 
-#ifdef BSD
+#ifdef HAVE_RT_MISSFILTER
 	if (!(ctx->options & DHCPCD_EXITING) &&
 	    if_missfilter_apply(ctx) == -1 && errno != ENOTSUP)
 		logerr("if_missfilter_apply");
 #endif
 
 	/* Remove old routes we used to manage. */
-	RB_TREE_FOREACH_REVERSE_SAFE(rt, &ctx->routes, rtn) {
-		if ((rt->rt_dest.sa_family != af &&
-		    rt->rt_dest.sa_family != AF_UNSPEC) ||
-		    (rt->rt_gateway.sa_family != af &&
-		    rt->rt_gateway.sa_family != AF_UNSPEC))
+	RB_TREE_FOREACH_REVERSE_SAFE(rt, &ctx->routes, rtn)
+	{
+		if ((rt->rt_dest->sa_family != af &&
+			rt->rt_dest->sa_family != AF_UNSPEC) ||
+		    (rt->rt_gateway->sa_family != af &&
+			rt->rt_gateway->sa_family != AF_UNSPEC))
 			continue;
 		rb_tree_remove_node(&ctx->routes, rt);
 		if (rb_tree_find_node(&added, rt) == NULL) {
-			o = rt->rt_ifp->options ?
-			    rt->rt_ifp->options->options :
-			    ctx->options;
-			if ((o &
-				(DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
-				(DHCPCD_EXITING | DHCPCD_PERSISTENT))
+			o = rt->rt_ifp->options ? rt->rt_ifp->options->options :
+						  ctx->options;
+			if ((o & (DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
+			    (DHCPCD_EXITING | DHCPCD_PERSISTENT))
 				rt_delete(rt);
 		}
 		rt_free(rt);
