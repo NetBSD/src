@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.5 2022/09/09 22:14:29 wiz Exp $	*/
+/*	$NetBSD: grep.c,v 1.5.2.1 2026/08/17 15:56:21 martin Exp $	*/
 
 /* grep.c - main driver file for grep.
    Copyright 1992, 1997-1999, 2000 Free Software Foundation, Inc.
@@ -582,7 +582,7 @@ prline (char const *beg, char const *lim, int sep)
 	  char *ilim = ibeg + (lim - beg);
 	  int i;
 	  for (i = 0; i < lim - beg; i++)
-	    ibeg[i] = tolower (beg[i]);
+	    ibeg[i] = tolower ((unsigned char) beg[i]);
 	  while ((match_offset = (*execute) (ibeg, ilim-ibeg, &match_size, 1))
 		 != (size_t) -1)
 	    {
