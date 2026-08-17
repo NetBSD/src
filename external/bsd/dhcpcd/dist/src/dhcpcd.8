@@ -1,5 +1,4 @@
 .\" SPDX-License-Identifier: BSD-2-Clause
-.\"
 .\" Copyright (c) 2006-2025 Roy Marples
 .\" All rights reserved
 .\"
@@ -24,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 8, 2025
+.Dd July 5, 2026
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -862,12 +861,8 @@ running on the
 .Ar interface .
 .It Pa /var/run/dhcpcd/sock
 Control socket to the manager daemon.
-.It Pa /var/run/dhcpcd/unpriv.sock
-Unprivileged socket to the manager daemon, only allows state retrieval.
 .It Pa /var/run/dhcpcd/ Ns Ar interface Ns .sock
 Control socket to per interface daemon.
-.It Pa /var/run/dhcpcd/ Ns Ar interface Ns .unpriv.sock
-Unprivileged socket to per interface daemon, only allows state retrieval.
 .El
 .Sh SEE ALSO
 .Xr fnmatch 3 ,

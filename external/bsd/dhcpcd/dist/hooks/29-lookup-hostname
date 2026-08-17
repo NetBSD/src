@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright (c) 2017-2022 Roy Marples <roy@marples.name>
+
 # Lookup the hostname in DNS if not set
 
 lookup_hostname()
@@ -7,20 +10,20 @@ lookup_hostname()
 	if command -v dig >/dev/null 2>&1; then
 		h=$(dig +short -x $new_ip_address)
 		if [ $? = 0 ]; then
-			echo "$h" | sed 's/\.$//'
+			printf '%s\n' "$h" | sed 's/\.$//'
 			return 0
 		fi
 	elif command -v host >/dev/null 2>&1; then
 		h=$(host $new_ip_address)
 		if [ $? = 0 ]; then 
-			echo "$h" \
+			printf '%s\n' "$h" \
 			| sed 's/.* domain name pointer \(.*\)./\1/'
 			return 0
 		fi
 	elif command -v getent >/dev/null 2>&1; then
 		h=$(getent hosts $new_ip_address)
 		if [ $? = 0 ]; then
-			echo "$h" | sed 's/[^ ]* *\([^ ]*\).*/\1/'
+			printf '%s\n' "$h" | sed 's/[^ ]* *\([^ ]*\).*/\1/'
 			return 0
 		 fi
 	fi

@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -27,7 +27,6 @@
  */
 
 #include <arpa/inet.h>
-
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -36,14 +35,14 @@
 #include <string.h>
 #include <unistd.h>
 
-#define ELOOP_QUEUE	IPV4LL
-#include "config.h"
+#define ELOOP_QUEUE IPV4LL
+#include "config.h" // IWYU pragma: keep
 #include "arp.h"
 #include "common.h"
 #include "dhcp.h"
 #include "eloop.h"
-#include "if.h"
 #include "if-options.h"
+#include "if.h"
 #include "ipv4.h"
 #include "ipv4ll.h"
 #include "logerr.h"
@@ -52,12 +51,9 @@
 
 static void ipv4ll_start_arp(void *arg);
 
-static const struct in_addr inaddr_llmask = {
-	.s_addr = HTONL(LINKLOCAL_MASK)
-};
-static const struct in_addr inaddr_llbcast = {
-	.s_addr = HTONL(LINKLOCAL_BCAST)
-};
+static const struct in_addr inaddr_llmask = { .s_addr = HTONL(LINKLOCAL_MASK) };
+static const struct in_addr inaddr_llbcast = { .s_addr = HTONL(
+						   LINKLOCAL_BCAST) };
 
 static void
 ipv4ll_pickaddr(struct interface *ifp)
@@ -71,14 +67,14 @@ ipv4ll_pickaddr(struct interface *ifp)
 	do {
 		long r;
 
-again:
+	again:
 		/* RFC 3927 Section 2.1 states that the first 256 and
 		 * last 256 addresses are reserved for future use.
 		 * See ipv4ll_start for why we don't use arc4random. */
 		/* coverity[dont_call] */
 		r = random();
-		addr.s_addr = ntohl(LINKLOCAL_ADDR |
-		    ((uint32_t)(r % 0xFD00) + 0x0100));
+		addr.s_addr = ntohl(
+		    LINKLOCAL_ADDR | ((uint32_t)(r % 0xFD00) + 0x0100));
 
 		/* No point using a failed address */
 		if (IN_ARE_ADDR_EQUAL(&addr, &state->pickedaddr))
@@ -99,20 +95,19 @@ ipv4ll_subnetroute(rb_tree_t *routes, struct interface *ifp)
 	struct in_addr in;
 
 	assert(ifp != NULL);
-	if ((state = IPV4LL_STATE(ifp)) == NULL ||
-	    state->addr == NULL)
+	if ((state = IPV4LL_STATE(ifp)) == NULL || state->addr == NULL)
 		return 0;
 
 	if ((rt = rt_new(ifp)) == NULL)
 		return -1;
 
 	in.s_addr = state->addr->addr.s_addr & state->addr->mask.s_addr;
-	sa_in_init(&rt->rt_dest, &in);
+	sa_in_init(rt->rt_dest, &in);
 	in.s_addr = state->addr->mask.s_addr;
-	sa_in_init(&rt->rt_netmask, &in);
+	sa_in_init(rt->rt_netmask, &in);
 	in.s_addr = INADDR_ANY;
-	sa_in_init(&rt->rt_gateway, &in);
-	sa_in_init(&rt->rt_ifa, &state->addr->addr);
+	sa_in_init(rt->rt_gateway, &in);
+	sa_in_init(rt->rt_ifa, &state->addr->addr);
 	rt->rt_dflags |= RTDF_IPV4LL;
 	return rt_proto_add(routes, rt) ? 1 : 0;
 }
@@ -122,21 +117,19 @@ ipv4ll_defaultroute(rb_tree_t *routes, struct interface *ifp)
 {
 	struct ipv4ll_state *state;
 	struct rt *rt;
-	struct in_addr in;
+	struct in_addr in = { .s_addr = INADDR_ANY };
 
 	assert(ifp != NULL);
-	if ((state = IPV4LL_STATE(ifp)) == NULL ||
-	    state->addr == NULL)
+	if ((state = IPV4LL_STATE(ifp)) == NULL || state->addr == NULL)
 		return 0;
 
 	if ((rt = rt_new(ifp)) == NULL)
 		return -1;
 
-	in.s_addr = INADDR_ANY;
-	sa_in_init(&rt->rt_dest, &in);
-	sa_in_init(&rt->rt_netmask, &in);
-	sa_in_init(&rt->rt_gateway, &in);
-	sa_in_init(&rt->rt_ifa, &state->addr->addr);
+	sa_in_init(rt->rt_dest, &in);
+	sa_in_init(rt->rt_netmask, &in);
+	sa_in_init(rt->rt_gateway, &in);
+	sa_in_init(rt->rt_ifa, &state->addr->addr);
 	rt->rt_dflags |= RTDF_IPV4LL;
 #ifdef HAVE_ROUTE_METRIC
 	rt->rt_metric += RTMETRIC_IPV4LL;
@@ -156,21 +149,21 @@ ipv4ll_env(FILE *fp, const char *prefix, const struct interface *ifp)
 		return 0;
 
 	/* Emulate a DHCP environment */
-	if (efprintf(fp, "%s%sip_address=%s",
-	    prefix, pf, inet_ntoa(state->addr->addr)) == -1)
+	if (efprintf(fp, "%s%sip_address=%s", prefix, pf,
+		inet_ntoa(state->addr->addr)) == -1)
 		return -1;
-	if (efprintf(fp, "%s%ssubnet_mask=%s",
-	    prefix, pf, inet_ntoa(state->addr->mask)) == -1)
+	if (efprintf(fp, "%s%ssubnet_mask=%s", prefix, pf,
+		inet_ntoa(state->addr->mask)) == -1)
 		return -1;
-	if (efprintf(fp, "%s%ssubnet_cidr=%d",
-	    prefix, pf, inet_ntocidr(state->addr->mask)) == -1)
+	if (efprintf(fp, "%s%ssubnet_cidr=%d", prefix, pf,
+		inet_ntocidr(state->addr->mask)) == -1)
 		return -1;
-	if (efprintf(fp, "%s%sbroadcast_address=%s",
-	    prefix, pf, inet_ntoa(state->addr->brd)) == -1)
+	if (efprintf(fp, "%s%sbroadcast_address=%s", prefix, pf,
+		inet_ntoa(state->addr->brd)) == -1)
 		return -1;
 	netnum.s_addr = state->addr->addr.s_addr & state->addr->mask.s_addr;
-	if (efprintf(fp, "%s%snetwork_number=%s",
-	    prefix, pf, inet_ntoa(netnum)) == -1)
+	if (efprintf(fp, "%s%snetwork_number=%s", prefix, pf,
+		inet_ntoa(netnum)) == -1)
 		return -1;
 	return 5;
 }
@@ -210,7 +203,7 @@ ipv4ll_freearp(struct interface *ifp)
 	state->arp = NULL;
 }
 #else
-#define	ipv4ll_freearp(ifp)
+#define ipv4ll_freearp(ifp)
 #endif
 
 static void
@@ -224,8 +217,8 @@ ipv4ll_not_found(struct interface *ifp)
 #ifdef IN_IFF_NOTREADY
 	if (ia == NULL || ia->addr_flags & IN_IFF_NOTREADY)
 #endif
-		loginfox("%s: using IPv4LL address %s",
-		  ifp->name, inet_ntoa(state->pickedaddr));
+		loginfox("%s: using IPv4LL address %s", ifp->name,
+		    inet_ntoa(state->pickedaddr));
 	if (ia == NULL) {
 		if (ifp->ctx->options & DHCPCD_TEST) {
 			ia = malloc(sizeof(*ia));
@@ -240,9 +233,9 @@ ipv4ll_not_found(struct interface *ifp)
 			    ifp->name, inet_ntoa(state->pickedaddr));
 			return;
 		}
-		ia = ipv4_addaddr(ifp, &state->pickedaddr,
-		    &inaddr_llmask, &inaddr_llbcast,
-		    DHCP_INFINITE_LIFETIME, DHCP_INFINITE_LIFETIME);
+		ia = ipv4_addaddr(ifp, &state->pickedaddr, &inaddr_llmask,
+		    &inaddr_llbcast, DHCP_INFINITE_LIFETIME,
+		    DHCP_INFINITE_LIFETIME);
 	}
 	if (ia == NULL)
 		return;
@@ -272,12 +265,11 @@ ipv4ll_found(struct interface *ifp)
 
 	ipv4ll_freearp(ifp);
 	if (++state->conflicts == MAX_CONFLICTS)
-		logerrx("%s: failed to acquire an IPv4LL address",
-		    ifp->name);
+		logerrx("%s: failed to acquire an IPv4LL address", ifp->name);
 	ipv4ll_pickaddr(ifp);
 	eloop_timeout_add_sec(ifp->ctx->eloop,
-	    state->conflicts >= MAX_CONFLICTS ?
-	    RATE_LIMIT_INTERVAL : PROBE_WAIT,
+	    state->conflicts >= MAX_CONFLICTS ? RATE_LIMIT_INTERVAL :
+						PROBE_WAIT,
 	    ipv4ll_start_arp, ifp);
 }
 
@@ -300,21 +292,18 @@ ipv4ll_defend_failed(struct interface *ifp)
 static void
 ipv4ll_not_found_arp(struct arp_state *astate)
 {
-
 	ipv4ll_not_found(astate->iface);
 }
 
 static void
 ipv4ll_found_arp(struct arp_state *astate, __unused const struct arp_msg *amsg)
 {
-
 	ipv4ll_found(astate->iface);
 }
 
 static void
 ipv4ll_defend_failed_arp(struct arp_state *astate)
 {
-
 	ipv4ll_defend_failed(astate->iface);
 }
 #endif
@@ -354,8 +343,8 @@ ipv4ll_start(void *arg)
 			memcpy(&seed, ifp->hwaddr + ifp->hwlen - sizeof(seed),
 			    sizeof(seed));
 		/* coverity[dont_call] */
-		orig = initstate(seed,
-		    state->randomstate, sizeof(state->randomstate));
+		orig = initstate(seed, state->randomstate,
+		    sizeof(state->randomstate));
 
 		/* Save the original state. */
 		if (ifp->ctx->randomstate == NULL)
@@ -503,7 +492,6 @@ ipv4ll_reset(struct interface *ifp)
 void
 ipv4ll_free(struct interface *ifp)
 {
-
 	assert(ifp != NULL);
 
 	ipv4ll_freearp(ifp);
@@ -521,7 +509,7 @@ ipv4ll_recvrt(__unused int cmd, const struct rt *rt)
 	struct interface *ifp;
 
 	/* Only interested in default route changes. */
-	if (sa_is_unspecified(&rt->rt_dest))
+	if (!sa_is_unspecified(rt->rt_dest))
 		return 0;
 
 	/* If any interface is running IPv4LL, rebuild our routing table. */
@@ -548,12 +536,10 @@ ipv4ll_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 	if (state == NULL)
 		return ia;
 
-	if (cmd == RTM_DELADDR &&
-	    state->addr != NULL &&
-	    IN_ARE_ADDR_EQUAL(&state->addr->addr, &ia->addr))
-	{
-		loginfox("%s: pid %d deleted IP address %s",
-		    ifp->name, (int)pid, ia->saddr);
+	if (cmd == RTM_DELADDR && state->addr != NULL &&
+	    IN_ARE_ADDR_EQUAL(&state->addr->addr, &ia->addr)) {
+		loginfox("%s: pid %d deleted IP address %s", ifp->name,
+		    (int)pid, ia->saddr);
 		ipv4ll_defend_failed(ifp);
 		return ia;
 	}

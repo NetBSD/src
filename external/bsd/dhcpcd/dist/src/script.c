@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -31,9 +31,8 @@
 #include <sys/wait.h>
 
 #include <netinet/in.h>
-#include <arpa/inet.h>
 
-#include <assert.h>
+#include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
 #include <pwd.h>
@@ -49,38 +48,27 @@
 #include "dhcp.h"
 #include "dhcp6.h"
 #include "eloop.h"
-#include "if.h"
 #include "if-options.h"
+#include "if.h"
 #include "ipv4ll.h"
 #include "ipv6nd.h"
 #include "logerr.h"
 #include "privsep.h"
 #include "script.h"
 
-#define DEFAULT_PATH	"/usr/bin:/usr/sbin:/bin:/sbin"
+#define DEFAULT_PATH "/usr/bin:/usr/sbin:/bin:/sbin"
 
-static const char * const if_params[] = {
-	"interface",
-	"protocol",
-	"reason",
-	"pid",
-	"ifcarrier",
-	"ifmetric",
-	"ifwireless",
-	"ifflags",
-	"ssid",
-	"profile",
-	"interface_order",
-	NULL
-};
+static const char *const if_params[] = { "interface", "ifxname", "protocol",
+	"reason", "pid", "ifcarrier", "ifmetric", "ifwireless", "ifflags",
+	"ssid", "profile", "interface_order", NULL };
 
-static const char * true_str = "true";
-static const char * false_str = "false";
+static const char *true_str = "true";
+static const char *false_str = "false";
 
 void
 if_printoptions(void)
 {
-	const char * const *p;
+	const char *const *p;
 
 	for (p = if_params; *p; p++)
 		printf(" -  %s\n", *p);
@@ -144,20 +132,14 @@ append_config(FILE *fp, const char *prefix, const char *const *config)
 
 #endif
 
-#define	PROTO_LINK	0
-#define	PROTO_DHCP	1
-#define	PROTO_IPV4LL	2
-#define	PROTO_RA	3
-#define	PROTO_DHCP6	4
-#define	PROTO_STATIC6	5
-static const char *protocols[] = {
-	"link",
-	"dhcp",
-	"ipv4ll",
-	"ra",
-	"dhcp6",
-	"static6"
-};
+#define PROTO_LINK    0
+#define PROTO_DHCP    1
+#define PROTO_IPV4LL  2
+#define PROTO_RA      3
+#define PROTO_DHCP6   4
+#define PROTO_STATIC6 5
+static const char *protocols[] = { "link", "dhcp", "ipv4ll", "ra", "dhcp6",
+	"static6" };
 
 int
 efprintf(FILE *fp, const char *fmt, ...)
@@ -182,20 +164,30 @@ script_buftoenv(struct dhcpcd_ctx *ctx, char *buf, size_t len)
 	char **env, **envp, *bufp, *endp;
 	size_t nenv;
 
-	/* Count the terminated env strings.
-	 * Assert that the terminations are correct. */
+	/* We should have something to process */
+	if (buf == NULL || len == 0) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	/* Ensure the buffer ends with NUL */
+	if (buf[len - 1] != '\0') {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	/* Count the NUL-terminated env strings */
 	nenv = 0;
 	endp = buf + len;
 	for (bufp = buf; bufp < endp; bufp++) {
 		if (*bufp == '\0') {
-#ifndef NDEBUG
-			if (bufp + 1 < endp)
-				assert(*(bufp + 1) != '\0');
-#endif
+			/* Skip consecutive NULs safely without crashing */
+			while (bufp + 1 < endp && *(bufp + 1) == '\0') {
+				bufp++;
+			}
 			nenv++;
 		}
 	}
-	assert(*(bufp - 1) == '\0');
 	if (nenv == 0)
 		return NULL;
 
@@ -209,11 +201,23 @@ script_buftoenv(struct dhcpcd_ctx *ctx, char *buf, size_t len)
 
 	bufp = buf;
 	envp = ctx->script_env;
-	*envp++ = bufp++;
-	endp--; /* Avoid setting the last \0 to an invalid pointer */
-	for (; bufp < endp; bufp++) {
-		if (*bufp == '\0')
-			*envp++ = bufp + 1;
+
+	/* If first char is NUL, skip leading empty strings if any,
+	 * or handle them gracefully */
+	while (bufp < endp && *bufp == '\0')
+		bufp++;
+	if (bufp < endp)
+		*envp++ = bufp;
+
+	/* Walk and capture pointers to each environment variable */
+	for (; bufp < endp - 1; bufp++) {
+		if (*bufp == '\0') {
+			/* Skip consecutive NULs */
+			while (bufp < endp - 1 && *(bufp + 1) == '\0')
+				bufp++;
+			if (bufp + 1 < endp)
+				*envp++ = bufp + 1;
+		}
 	}
 	*envp = NULL;
 
@@ -232,6 +236,7 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	const struct interface *ifp2;
 	int af;
 	bool is_stdin = ifp->name[0] == '\0';
+	char if_name[sizeof(ifp->name) * 4];
 	const char *if_up, *if_down;
 	rb_tree_t ifaces;
 	struct rt *rt;
@@ -277,7 +282,7 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 		/* Needed for scripts */
 		path = getenv("PATH");
 		if (efprintf(fp, "PATH=%s",
-		    path == NULL ? DEFAULT_PATH : path) == -1)
+			path == NULL ? DEFAULT_PATH : path) == -1)
 			goto eexit;
 		if (efprintf(fp, "pid=%d", (int)getpid()) == -1)
 			goto eexit;
@@ -334,8 +339,7 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	    strcmp(reason, "CARRIER") == 0 ||
 	    strcmp(reason, "NOCARRIER") == 0 ||
 	    strcmp(reason, "NOCARRIER_ROAMING") == 0 ||
-	    strcmp(reason, "UNKNOWN") == 0 ||
-	    strcmp(reason, "DEPARTED") == 0 ||
+	    strcmp(reason, "UNKNOWN") == 0 || strcmp(reason, "DEPARTED") == 0 ||
 	    strcmp(reason, "STOPPED") == 0)
 		protocol = PROTO_LINK;
 #ifdef INET
@@ -348,22 +352,37 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 #endif
 
 	if (!is_stdin) {
-		if (efprintf(fp, "interface=%s", ifp->name) == -1)
+		/*
+		 * $interface is used to create files.
+		 * $ifxname is used to reference the actual interface.
+		 * The distinction is important as the actual interface name
+		 * could contain a path separator or an invalid path character.
+		 */
+		if (print_string(if_name, sizeof(if_name), OT_ESCFILE,
+			ifp->name, strlen(ifp->name)) == -1)
+			goto eexit;
+		if (efprintf(fp, "interface=%s", if_name) == -1)
+			goto eexit;
+		if (print_string(if_name, sizeof(if_name), OT_ESCSTRING,
+			ifp->name, strlen(ifp->name)) == -1)
+			goto eexit;
+		if (efprintf(fp, "ifxname=%s", if_name) == -1)
 			goto eexit;
 		if (protocols[protocol] != NULL) {
-			if (efprintf(fp, "protocol=%s",
-			    protocols[protocol]) == -1)
+			if (efprintf(fp, "protocol=%s", protocols[protocol]) ==
+			    -1)
 				goto eexit;
 		}
 	}
 	if (ifp->ctx->options & DHCPCD_DUMPLEASE && protocol != PROTO_LINK)
 		goto dumplease;
 	if (efprintf(fp, "if_configured=%s",
-	    ifo->options & DHCPCD_CONFIGURE ? "true" : "false") == -1)
+		ifo->options & DHCPCD_CONFIGURE ? "true" : "false") == -1)
 		goto eexit;
 	if (efprintf(fp, "ifcarrier=%s",
-	    ifp->carrier == LINK_UNKNOWN ? "unknown" :
-	    ifp->carrier == LINK_UP ? "up" : "down") == -1)
+		ifp->carrier == LINK_UNKNOWN ? "unknown" :
+		    ifp->carrier == LINK_UP  ? "up" :
+					       "down") == -1)
 		goto eexit;
 	if (efprintf(fp, "ifmetric=%d", ifp->metric) == -1)
 		goto eexit;
@@ -376,9 +395,8 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	if (ifp->wireless) {
 		char pssid[IF_SSIDLEN * 4];
 
-		if (print_string(pssid, sizeof(pssid), OT_ESCSTRING,
-		    ifp->ssid, ifp->ssid_len) != -1)
-		{
+		if (print_string(pssid, sizeof(pssid), OT_ESCSTRING, ifp->ssid,
+			ifp->ssid_len) != -1) {
 			if (efprintf(fp, "ifssid=%s", pssid) == -1)
 				goto eexit;
 		}
@@ -403,11 +421,14 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	}
 	if (fprintf(fp, "interface_order=") == -1)
 		goto eexit;
-	RB_TREE_FOREACH(rt, &ifaces) {
-		if (rt != RB_TREE_MIN(&ifaces) &&
-		    fprintf(fp, "%s", " ") == -1)
+	RB_TREE_FOREACH(rt, &ifaces)
+	{
+		if (print_string(if_name, sizeof(if_name), OT_ESCFILE,
+			rt->rt_ifp->name, strlen(rt->rt_ifp->name)) == -1)
 			goto eexit;
-		if (fprintf(fp, "%s", rt->rt_ifp->name) == -1)
+		if (rt != RB_TREE_MIN(&ifaces) && fprintf(fp, "%s", " ") == -1)
+			goto eexit;
+		if (fprintf(fp, "%s", if_name) == -1)
 			goto eexit;
 	}
 	rt_headclear(&ifaces, AF_UNSPEC);
@@ -418,11 +439,8 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 		if_up = false_str;
 		if_down = ifo->options & DHCPCD_RELEASE ? true_str : false_str;
 	} else if (strcmp(reason, "TEST") == 0 ||
-	    strcmp(reason, "PREINIT") == 0 ||
-	    strcmp(reason, "CARRIER") == 0 ||
-	    strcmp(reason, "STOP") == 0 ||
-	    strcmp(reason, "UNKNOWN") == 0)
-	{
+	    strcmp(reason, "PREINIT") == 0 || strcmp(reason, "CARRIER") == 0 ||
+	    strcmp(reason, "STOP") == 0 || strcmp(reason, "UNKNOWN") == 0) {
 		if_up = false_str;
 		if_down = false_str;
 	} else if (strcmp(reason, "NOCARRIER") == 0) {
@@ -445,8 +463,7 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 #endif
 	    || (protocol == PROTO_RA && ipv6nd_hasra(ifp))
 #endif
-	    )
-	{
+	) {
 		if_up = true_str;
 		if_down = false_str;
 	} else {
@@ -478,18 +495,17 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	}
 #ifdef INET
 	if (protocol == PROTO_DHCP && state && state->old) {
-		if (dhcp_env(fp, "old", ifp,
-		    state->old, state->old_len) == -1)
+		if (dhcp_env(fp, "old", ifp, state->old, state->old_len) == -1)
 			goto eexit;
 		if (append_config(fp, "old",
-		    (const char *const *)ifo->config) == -1)
+			(const char *const *)ifo->config) == -1)
 			goto eexit;
 	}
 #endif
 #ifdef DHCP6
 	if (protocol == PROTO_DHCP6 && d6_state && d6_state->old) {
-		if (dhcp6_env(fp, "old", ifp,
-		    d6_state->old, d6_state->old_len) == -1)
+		if (dhcp6_env(fp, "old", ifp, d6_state->old,
+			d6_state->old_len) == -1)
 			goto eexit;
 	}
 #endif
@@ -503,11 +519,10 @@ dumplease:
 	}
 #endif
 	if (protocol == PROTO_DHCP && state && state->new) {
-		if (dhcp_env(fp, "new", ifp,
-		    state->new, state->new_len) == -1)
+		if (dhcp_env(fp, "new", ifp, state->new, state->new_len) == -1)
 			goto eexit;
 		if (append_config(fp, "new",
-		    (const char *const *)ifo->config) == -1)
+			(const char *const *)ifo->config) == -1)
 			goto eexit;
 	}
 #endif
@@ -518,8 +533,8 @@ dumplease:
 	}
 #ifdef DHCP6
 	if (protocol == PROTO_DHCP6 && D6_STATE_RUNNING(ifp)) {
-		if (dhcp6_env(fp, "new", ifp,
-		    d6_state->new, d6_state->new_len) == -1)
+		if (dhcp6_env(fp, "new", ifp, d6_state->new,
+			d6_state->new_len) == -1)
 			goto eexit;
 	}
 #endif
@@ -578,7 +593,7 @@ eexit:
 	return -1;
 }
 
-static int
+static ssize_t
 send_interface1(struct fd_list *fd, const struct interface *ifp,
     const char *reason)
 {
@@ -602,11 +617,13 @@ send_interface(struct fd_list *fd, const struct interface *ifp, int af)
 	const struct dhcp6_state *d6;
 #endif
 
-#ifndef AF_LINK
-#define	AF_LINK	AF_PACKET
+	if (af == AF_UNSPEC
+#if defined(AF_LINK)
+	    || af == AF_LINK
+#elif defined(AF_PACKET)
+	    || af == AF_PACKET
 #endif
-
-	if (af == AF_UNSPEC || af == AF_LINK) {
+	) {
 		const char *reason;
 
 		switch (ifp->carrier) {
@@ -660,8 +677,8 @@ send_interface(struct fd_list *fd, const struct interface *ifp, int af)
 		}
 		if (RS_STATE_RUNNING(ifp)) {
 			if (fd != NULL) {
-				if (send_interface1(fd, ifp,
-				    "ROUTERADVERT") == -1)
+				if (send_interface1(fd, ifp, "ROUTERADVERT") ==
+				    -1)
 					retval = -1;
 			} else
 				retval++;
@@ -685,14 +702,13 @@ send_interface(struct fd_list *fd, const struct interface *ifp, int af)
 static int
 script_status(const char *script, int status)
 {
-
 	if (WIFEXITED(status)) {
 		if (WEXITSTATUS(status))
-			logerrx("%s: %s: WEXITSTATUS %d",
-			    __func__, script, WEXITSTATUS(status));
+			logerrx("%s: %s: WEXITSTATUS %d", __func__, script,
+			    WEXITSTATUS(status));
 	} else if (WIFSIGNALED(status))
-		logerrx("%s: %s: %s",
-		    __func__, script, strsignal(WTERMSIG(status)));
+		logerrx("%s: %s: %s", __func__, script,
+		    strsignal(WTERMSIG(status)));
 
 	return WEXITSTATUS(status);
 }
@@ -752,8 +768,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 	struct fd_list *fd;
 	long buflen;
 
-	if (ctx->script == NULL &&
-	    TAILQ_FIRST(&ifp->ctx->control_fds) == NULL)
+	if (ctx->script == NULL && TAILQ_FIRST(&ifp->ctx->control_fds) == NULL)
 		return 0;
 
 	/* Make our env */
@@ -793,7 +808,7 @@ send_listeners:
 	TAILQ_FOREACH(fd, &ctx->control_fds, next) {
 		if (!(fd->flags & FD_LISTEN))
 			continue;
-		if (control_queue(fd, ctx->script_buf, ctx->script_buflen)== -1)
+		if (control_queue(fd, ctx->script_buf, (size_t)buflen) == -1)
 			logerr("%s: control_queue", __func__);
 		else
 			status = 1;

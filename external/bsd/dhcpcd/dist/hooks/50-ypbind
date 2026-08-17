@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright (c) 2017-2021 Roy Marples <roy@marples.name>
+
 # Sample dhcpcd hook for ypbind
 # This script is only suitable for the BSD versions.
 
@@ -21,7 +24,7 @@ best_domain()
 make_yp_binding()
 {
 	[ -d "$ypbind_dir" ] || mkdir -p "$ypbind_dir"
-	echo "$new_nis_domain" >"$ypbind_dir/$ifname"
+	printf '%s\n' "$new_nis_domain" >"$ypbind_dir/$ifname"
 
 	if [ -z "$ypdomain_dir" ]; then
 		false
@@ -31,7 +34,7 @@ make_yp_binding()
 			ncf="$cf.$ifname"
 			rm -f "$ncf"
 			for x in $new_nis_servers; do
-				echo "$x" >>"$ncf"
+				printf '%s\n' "$x" >>"$ncf"
 			done
 			change_file "$cf" "$ncf"
 		else

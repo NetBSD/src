@@ -1,9 +1,8 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
-/*
- * dhcpcd - DHCP client daemon
+/* dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
-
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -29,11 +28,11 @@
 #ifndef DUID_H
 #define DUID_H
 
-#define DUID_LEN	128 + 2
-#define	DUID_DEFAULT	0
-#define	DUID_LLT	1
-#define	DUID_LL		3
-#define	DUID_UUID	4
+#define DUID_LEN     128 + 2
+#define DUID_DEFAULT 0
+#define DUID_LLT     1
+#define DUID_LL	     3
+#define DUID_UUID    4
 
 size_t duid_make(void *, const struct interface *, uint16_t);
 size_t duid_init(struct dhcpcd_ctx *, const struct interface *);

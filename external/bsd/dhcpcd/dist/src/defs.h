@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,51 +28,51 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-#define PACKAGE			"dhcpcd"
-#define VERSION			"10.3.1"
+#define PACKAGE "dhcpcd"
+#define VERSION "10.5.1"
 
 #ifndef PRIVSEP_USER
-# define PRIVSEP_USER		"_" PACKAGE
+#define PRIVSEP_USER "_" PACKAGE
 #endif
 
 #ifndef CONFIG
-# define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
+#define CONFIG SYSCONFDIR "/" PACKAGE ".conf"
 #endif
 #ifndef SCRIPT
-# define SCRIPT			LIBEXECDIR "/" PACKAGE "-run-hooks"
+#define SCRIPT LIBEXECDIR "/" PACKAGE "-run-hooks"
 #endif
 #ifndef DEVDIR
-# define DEVDIR			LIBDIR "/" PACKAGE "/dev"
+#define DEVDIR LIBDIR "/" PACKAGE "/dev"
 #endif
 #ifndef DUID
-# define DUID			DBDIR "/duid"
+#define DUID DBDIR "/duid"
 #endif
 #ifndef SECRET
-# define SECRET			DBDIR "/secret"
+#define SECRET DBDIR "/secret"
 #endif
 #ifndef LEASEFILE
-# define LEASEFILE		DBDIR "/%s%s.lease"
+#define LEASEFILE DBDIR "/%s%s.lease"
 #endif
 #ifndef LEASEFILE6
-# define LEASEFILE6		LEASEFILE "6"
+#define LEASEFILE6 LEASEFILE "6"
 #endif
 #ifndef PIDFILE
-# define PIDFILE		RUNDIR "/%s%s%spid"
+#define PIDFILE RUNDIR "/%s%s%spid"
 #endif
 #ifndef CONTROLSOCKET
-# define CONTROLSOCKET		RUNDIR "/%s%s%s%ssock"
+#define CONTROLSOCKET RUNDIR "/%s%s%s%ssock"
 #endif
 #ifndef RDM_MONOFILE
-# define RDM_MONOFILE		DBDIR "/rdm_monotonic"
+#define RDM_MONOFILE DBDIR "/rdm_monotonic"
 #endif
 
 #ifndef NO_SIGNALS
-#  define USE_SIGNALS
+#define USE_SIGNALS
 #endif
 #ifndef USE_SIGNALS
-#  ifndef THERE_IS_NO_FORK
-#    define THERE_IS_NO_FORK
-#  endif
+#ifndef THERE_IS_NO_FORK
+#define THERE_IS_NO_FORK
+#endif
 #endif
 
 #endif

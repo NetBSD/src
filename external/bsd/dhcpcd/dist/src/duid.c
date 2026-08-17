@@ -1,9 +1,9 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
-
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -26,21 +26,20 @@
  * SUCH DAMAGE.
  */
 
-#define	UUID_LEN	36
-#define	DUID_TIME_EPOCH 946684800
+#define UUID_LEN	36
+#define DUID_TIME_EPOCH 946684800
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #ifdef BSD
-#  include <sys/sysctl.h>
+#include <sys/sysctl.h>
 #endif
-
-#include <arpa/inet.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
 
+#include <arpa/inet.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -68,11 +67,11 @@ duid_machineuuid(char *uuid, size_t uuid_len)
 #if defined(HW_UUID) /* OpenBSD */
 	int mib[] = { CTL_HW, HW_UUID };
 
-	r = sysctl(mib, sizeof(mib)/sizeof(mib[0]), uuid, &len, NULL, 0);
+	r = sysctl(mib, sizeof(mib) / sizeof(mib[0]), uuid, &len, NULL, 0);
 #elif defined(KERN_HOSTUUID) /* FreeBSD */
 	int mib[] = { CTL_KERN, KERN_HOSTUUID };
 
-	r = sysctl(mib, sizeof(mib)/sizeof(mib[0]), uuid, &len, NULL, 0);
+	r = sysctl(mib, sizeof(mib) / sizeof(mib[0]), uuid, &len, NULL, 0);
 #elif defined(__NetBSD__)
 	r = sysctlbyname("machdep.dmi.system-uuid", uuid, &len, NULL, 0);
 #elif defined(__linux__)
@@ -216,7 +215,7 @@ duid_get(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 		} else {
 			if (ctx->duid_type != DUID_LL)
 				logwarnx("no interfaces have a fixed hardware "
-				    "address");
+					 "address");
 			return duid_make(data, ifp, DUID_LL);
 		}
 	}
@@ -240,7 +239,6 @@ duid_get(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 size_t
 duid_init(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 {
-
 	if (ctx->duid == NULL)
 		ctx->duid_len = duid_get(ctx, ifp);
 	return ctx->duid_len;

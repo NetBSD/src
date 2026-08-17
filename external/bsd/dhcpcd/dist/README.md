@@ -1,3 +1,6 @@
+<!-- SPDX-License-Identifier: BSD-2-Clause -->
+<!-- Copyright (c) 2017-2023 Roy Marples <roy@marples.name> -->
+
 # dhcpcd
 
 dhcpcd is a

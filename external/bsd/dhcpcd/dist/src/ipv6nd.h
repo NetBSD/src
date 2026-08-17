@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - IPv6 ND handling
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -50,7 +50,6 @@ struct routeinfo {
 
 TAILQ_HEAD(routeinfohead, routeinfo);
 
-
 struct ra {
 	TAILQ_ENTRY(ra) next;
 	struct interface *iface;
@@ -86,55 +85,54 @@ struct rs_state {
 #endif
 };
 
-#define	RS_STATE(a) ((struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
-#define	RS_CSTATE(a) ((const struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
-#define	RS_STATE_RUNNING(a) (ipv6nd_hasra((a)) && ipv6nd_dadcompleted((a)))
+#define RS_STATE(a)	    ((struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
+#define RS_CSTATE(a)	    ((const struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
+#define RS_STATE_RUNNING(a) (ipv6nd_hasra((a)) && ipv6nd_dadcompleted((a)))
 
 #ifndef MAX_RTR_SOLICITATION_DELAY
-#define	MAX_RTR_SOLICITATION_DELAY	1	/* seconds */
-#define	MAX_UNICAST_SOLICIT		3	/* 3 transmissions */
-#define	RTR_SOLICITATION_INTERVAL	4	/* seconds */
-#define	MAX_RTR_SOLICITATIONS		3	/* times */
-#define	MAX_NEIGHBOR_ADVERTISEMENT	3	/* 3 transmissions */
+#define MAX_RTR_SOLICITATION_DELAY 1 /* seconds */
+#define MAX_UNICAST_SOLICIT	   3 /* 3 transmissions */
+#define RTR_SOLICITATION_INTERVAL  4 /* seconds */
+#define MAX_RTR_SOLICITATIONS	   3 /* times */
+#define MAX_NEIGHBOR_ADVERTISEMENT 3 /* 3 transmissions */
 
 #ifndef IPV6_DEFHLIM
-#define	IPV6_DEFHLIM			64
+#define IPV6_DEFHLIM 64
 #endif
 #endif
 
 /* On carrier up, expire known routers after RTR_CARRIER_EXPIRE seconds. */
-#define RTR_CARRIER_EXPIRE		\
-    (MAX_RTR_SOLICITATION_DELAY +	\
-    (MAX_RTR_SOLICITATIONS + 1) *	\
-    RTR_SOLICITATION_INTERVAL)
+#define RTR_CARRIER_EXPIRE            \
+	(MAX_RTR_SOLICITATION_DELAY + \
+	    (MAX_RTR_SOLICITATIONS + 1) * RTR_SOLICITATION_INTERVAL)
 
-#define	MAX_REACHABLE_TIME		3600000	/* milliseconds */
-#define	REACHABLE_TIME			30000	/* milliseconds */
-#define	RETRANS_TIMER			1000	/* milliseconds */
-#define	DELAY_FIRST_PROBE_TIME		5	/* seconds */
+#define MAX_REACHABLE_TIME     3600000 /* milliseconds */
+#define REACHABLE_TIME	       30000   /* milliseconds */
+#define RETRANS_TIMER	       1000    /* milliseconds */
+#define DELAY_FIRST_PROBE_TIME 5       /* seconds */
 
-#define	MIN_EXTENDED_VLTIME		7200	/* seconds */
+#define MIN_EXTENDED_VLTIME    7200 /* seconds */
 
 int ipv6nd_open(bool);
 #ifdef __sun
-int ipv6nd_openif(struct interface *);
+int ipv6nd_openif(unsigned int);
 #endif
 void ipv6nd_recvmsg(struct dhcpcd_ctx *, struct msghdr *);
 int ipv6nd_rtpref(uint8_t);
-void ipv6nd_printoptions(const struct dhcpcd_ctx *,
-    const struct dhcp_opt *, size_t);
+void ipv6nd_printoptions(const struct dhcpcd_ctx *, const struct dhcp_opt *,
+    size_t);
 void ipv6nd_startrs(struct interface *);
 ssize_t ipv6nd_env(FILE *, const struct interface *);
 const struct ipv6_addr *ipv6nd_iffindaddr(const struct interface *ifp,
     const struct in6_addr *addr, unsigned int flags);
-struct ipv6_addr *ipv6nd_findaddr(struct dhcpcd_ctx *,
-    const struct in6_addr *, unsigned int);
+struct ipv6_addr *ipv6nd_findaddr(struct dhcpcd_ctx *, const struct in6_addr *,
+    unsigned int);
 struct ipv6_addr *ipv6nd_iffindprefix(struct interface *,
     const struct in6_addr *, uint8_t);
 ssize_t ipv6nd_free(struct interface *);
 void ipv6nd_expirera(void *arg);
 bool ipv6nd_hasralifetime(const struct interface *, bool);
-#define	ipv6nd_hasra(i)		ipv6nd_hasralifetime((i), false)
+#define ipv6nd_hasra(i) ipv6nd_hasralifetime((i), false)
 bool ipv6nd_hasradhcp(const struct interface *, bool);
 void ipv6nd_handleifa(int, struct ipv6_addr *, pid_t);
 int ipv6nd_dadcompleted(const struct interface *);

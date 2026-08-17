@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -36,8 +36,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "config.h"
-
+#include "config.h" // IWYU pragma: keep
 #include "common.h"
 #include "dhcp-common.h"
 #include "dhcp.h"
@@ -47,19 +46,27 @@
 #include "script.h"
 
 const char *
-dhcp_get_hostname(char *buf, size_t buf_len, const struct if_options *ifo)
+dhcp_get_hostname(struct dhcpcd_ctx *ctx, char *buf, size_t buf_len,
+    const struct if_options *ifo)
 {
-
+#ifndef PRIVSEP_GETHOSTNAME
+	UNUSED(ctx);
+#endif
 	if (ifo->hostname[0] == '\0') {
-		if (gethostname(buf, buf_len) != 0)
+#ifdef PRIVSEP_GETHOSTNAME
+		if (IN_PRIVSEP(ctx)) {
+			if (ps_root_gethostname(ctx, buf, buf_len) == -1)
+				return NULL;
+		} else
+#endif
+		    if (gethostname(buf, buf_len) != 0)
 			return NULL;
 		buf[buf_len - 1] = '\0';
 	} else
 		strlcpy(buf, ifo->hostname, buf_len);
 
 	/* Deny sending of these local hostnames */
-	if (buf[0] == '\0' || buf[0] == '.' ||
-	    strcmp(buf, "(none)") == 0 ||
+	if (buf[0] == '\0' || buf[0] == '.' || strcmp(buf, "(none)") == 0 ||
 	    strcmp(buf, "localhost") == 0 ||
 	    strncmp(buf, "localhost.", strlen("localhost.")) == 0)
 		return NULL;
@@ -79,7 +86,6 @@ dhcp_get_hostname(char *buf, size_t buf_len, const struct if_options *ifo)
 void
 dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
 {
-
 	while (cols < 40) {
 		putchar(' ');
 		cols++;
@@ -141,6 +147,23 @@ dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
 	fflush(stdout);
 }
 
+static char dhcp_option_string_buf[16];
+const char *
+dhcp_option_string(const struct dhcp_opt *opts, size_t nopts, uint32_t option)
+{
+	size_t n;
+
+	for (n = 0; n < nopts; n++, opts++) {
+		if (opts->option == option)
+			return opts->var;
+	}
+
+	if (snprintf(dhcp_option_string_buf, sizeof(dhcp_option_string_buf),
+		"%u", option) == -1)
+		return NULL;
+	return dhcp_option_string_buf;
+}
+
 struct dhcp_opt *
 vivso_find(uint32_t iana_en, const void *arg)
 {
@@ -150,13 +173,10 @@ vivso_find(uint32_t iana_en, const void *arg)
 
 	ifp = arg;
 	for (i = 0, opt = ifp->options->vivso_override;
-	    i < ifp->options->vivso_override_len;
-	    i++, opt++)
+	    i < ifp->options->vivso_override_len; i++, opt++)
 		if (opt->option == iana_en)
 			return opt;
-	for (i = 0, opt = ifp->ctx->vivso;
-	    i < ifp->ctx->vivso_len;
-	    i++, opt++)
+	for (i = 0, opt = ifp->ctx->vivso; i < ifp->ctx->vivso_len; i++, opt++)
 		if (opt->option == iana_en)
 			return opt;
 	return NULL;
@@ -170,12 +190,10 @@ dhcp_vendor(char *str, size_t len)
 	int l;
 
 	if (uname(&utn) == -1)
-		return (ssize_t)snprintf(str, len, "%s-%s",
-		    PACKAGE, VERSION);
+		return (ssize_t)snprintf(str, len, "%s-%s", PACKAGE, VERSION);
 	p = str;
-	l = snprintf(p, len,
-	    "%s-%s:%s-%s:%s", PACKAGE, VERSION,
-	    utn.sysname, utn.release, utn.machine);
+	l = snprintf(p, len, "%s-%s:%s-%s:%s", PACKAGE, VERSION, utn.sysname,
+	    utn.release, utn.machine);
 	if (l == -1 || (size_t)(l + 1) > len)
 		return -1;
 	p += l;
@@ -183,20 +201,130 @@ dhcp_vendor(char *str, size_t len)
 	l = if_machinearch(p + 1, len - 1);
 	if (l == -1 || (size_t)(l + 1) > len)
 		return -1;
-	*p = ':';
-	p += l;
+	if (l != 0) {
+		*p = ':';
+		p += l;
+	}
 	return p - str;
 }
 
 int
-make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
-    const struct dhcp_opt *odopts, size_t odopts_len,
-    uint8_t *mask, const char *opts, int add)
+dho_policy_has(const struct dho_policy *policy, uint32_t option)
+{
+	size_t i;
+
+	for (i = 0; i < policy->dhop_policy_len; i++) {
+		if (policy->dhop_policy[i] == option)
+			return 1;
+	}
+
+	return 0;
+}
+
+int
+dho_policy_allowed(const struct dho_policy_group *pg, uint32_t option)
+{
+	if (pg->dhop_allow.dhop_policy_len == 0) {
+		/* No allowed policy has been set, so be permissive. */
+		return dho_policy_has(&pg->dhop_remove, option) ? 0 : 1;
+	}
+
+	if (dho_policy_has(&pg->dhop_allow, option) ||
+	    dho_policy_has(&pg->dhop_request, option))
+		return 1;
+	return 0;
+}
+
+int
+dho_policy_requested(const struct dho_policy_group *pg, uint32_t option)
+{
+	if (!dho_policy_has(&pg->dhop_request, option))
+		return 0;
+	if (dho_policy_has(&pg->dhop_allow, option))
+		return 1;
+	if (dho_policy_has(&pg->dhop_remove, option))
+		return 0;
+	return 1;
+}
+
+int
+dho_policy_opt_requested(const struct dho_policy_group *pg,
+    const struct dhcp_opt *dho)
+{
+	if (dho->type & OT_NOREQ)
+		return 0;
+	if (!(dho->type & OT_REQUEST) &&
+	    !dho_policy_has(&pg->dhop_request, dho->option))
+		return 0;
+	if (dho_policy_has(&pg->dhop_allow, dho->option))
+		return 1;
+	if (dho_policy_has(&pg->dhop_remove, dho->option))
+		return 0;
+	return 1;
+}
+
+static uint32_t *
+dho_policy_find(struct dho_policy *policy, uint32_t option,
+    uint32_t **free_option)
+{
+	size_t i;
+
+	for (i = 0; i < policy->dhop_policy_len; i++) {
+		if (policy->dhop_policy[i] == option)
+			return &policy->dhop_policy[i];
+		if (policy->dhop_policy[i] == 0 && free_option != NULL &&
+		    *free_option == NULL)
+			*free_option = &policy->dhop_policy[i];
+	}
+
+	return 0;
+}
+
+int
+dho_policy_add(struct dho_policy *policy, uint32_t option)
+{
+	uint32_t *np, *free_option = NULL;
+
+	if (dho_policy_find(policy, option, &free_option) != NULL)
+		return 0;
+
+	if (free_option != NULL) {
+		*free_option = option;
+		return 1;
+	}
+
+	np = reallocarray(policy->dhop_policy, policy->dhop_policy_len + 1,
+	    sizeof(*policy->dhop_policy));
+	if (np == NULL)
+		return -1;
+
+	np[policy->dhop_policy_len] = option;
+	policy->dhop_policy = np;
+	policy->dhop_policy_len++;
+	return 1;
+}
+
+int
+dho_policy_del(struct dho_policy *policy, uint32_t option)
+{
+	uint32_t *o;
+
+	o = dho_policy_find(policy, option, NULL);
+	if (o == NULL)
+		return 0;
+
+	*o = 0;
+	return 1;
+}
+
+int
+dho_policy_set(const struct dho_policy_ctx *pctx, struct dho_policy *policy,
+    const char *opts, int add)
 {
 	char *token, *o, *p;
 	const struct dhcp_opt *opt;
-	int match, e;
-	unsigned int n;
+	int match, e, err = -1;
+	unsigned int n, max = UINT16_MAX;
 	size_t i;
 
 	if (opts == NULL)
@@ -207,53 +335,89 @@ make_option_mask(const struct dhcp_opt *dopts, size_t dopts_len,
 			continue;
 		if (strncmp(token, "dhcp6_", 6) == 0)
 			token += 6;
-		if (strncmp(token, "nd_", 3) == 0)
+		else if (strncmp(token, "nd_", 3) == 0)
 			token += 3;
+		else
+			max = UINT8_MAX;
+		n = (unsigned int)strtou(token, NULL, 0, 1, max, &e);
 		match = 0;
-		for (i = 0, opt = odopts; i < odopts_len; i++, opt++) {
+		for (i = 0, opt = pctx->odopts; i < pctx->odopts_len;
+		    i++, opt++) {
 			if (opt->var == NULL || opt->option == 0)
 				continue; /* buggy dhcpcd-definitions.conf */
 			if (strcmp(opt->var, token) == 0)
 				match = 1;
-			else {
-				n = (unsigned int)strtou(token, NULL, 0,
-				    0, UINT_MAX, &e);
-				if (e == 0 && opt->option == n)
-					match = 1;
-			}
+			else if (e == 0 && opt->option == n)
+				match = 1;
 			if (match)
 				break;
 		}
 		if (match == 0) {
-			for (i = 0, opt = dopts; i < dopts_len; i++, opt++) {
+			for (i = 0, opt = pctx->dopts; i < pctx->dopts_len;
+			    i++, opt++) {
 				if (strcmp(opt->var, token) == 0)
-				        match = 1;
-				else {
-					n = (unsigned int)strtou(token, NULL, 0,
-					    0, UINT_MAX, &e);
-					if (e == 0 && opt->option == n)
-						match = 1;
-				}
+					match = 1;
+				else if (e == 0 && opt->option == n)
+					match = 1;
 				if (match)
 					break;
 			}
 		}
-		if (!match || !opt->option) {
-			free(o);
+		if ((!match || !opt->option) && e != 0) {
 			errno = ENOENT;
-			return -1;
+			goto out;
 		}
-		if (add == 2 && !(opt->type & OT_ADDRIPV4)) {
-			free(o);
+		if (match && add == 2 && !(opt->type & OT_ADDRIPV4)) {
 			errno = EINVAL;
-			return -1;
+			goto out;
 		}
+		if (match)
+			n = opt->option;
 		if (add == 1 || add == 2)
-			add_option_mask(mask, opt->option);
+			dho_policy_add(policy, n);
 		else
-			del_option_mask(mask, opt->option);
+			dho_policy_del(policy, n);
 	}
+
+	err = 0;
+
+out:
 	free(o);
+	return err;
+}
+
+/* Pass by value because we don't free the holder */
+void
+dho_policy_free(struct dho_policy policy)
+{
+	free(policy.dhop_policy);
+}
+
+void
+dho_policy_group_free(struct dho_policy_group pg)
+{
+	dho_policy_free(pg.dhop_request);
+	dho_policy_free(pg.dhop_require);
+	dho_policy_free(pg.dhop_allow);
+	dho_policy_free(pg.dhop_remove);
+	dho_policy_free(pg.dhop_reject);
+}
+
+int
+dho_policy_check(const struct dho_policy *policy,
+    int (*check)(uint32_t, void *), void *check_ctx)
+{
+	size_t i;
+	int result;
+
+	for (i = 0; i < policy->dhop_policy_len; i++) {
+		if (policy->dhop_policy[i] == 0)
+			continue;
+		result = check(policy->dhop_policy[i], check_ctx);
+		if (result != 0)
+			return result;
+	}
+
 	return 0;
 }
 
@@ -341,8 +505,7 @@ decode_rfc1035(char *out, size_t len, const uint8_t *p, size_t pl)
 				 * combinations. */
 				errno = ENOTSUP;
 				return -1;
-			}
-			else if (ltype == 0xc0) { /* pointer */
+			} else if (ltype == 0xc0) { /* pointer */
 				if (q == e) {
 					errno = ERANGE;
 					return -1;
@@ -455,10 +618,9 @@ valid_domainname(char *lbl, int type)
 			len = 0;
 			continue;
 		}
-		if (((c == '-' || c == '_') &&
-		    !start && *lbl != ' ' && *lbl != '\0') ||
-		    isalnum(c))
-		{
+		if (((c == '-' || c == '_') && !start && *lbl != ' ' &&
+			*lbl != '\0') ||
+		    isalnum(c)) {
 			if (++len > NS_MAXLABEL) {
 				errno = ERANGE;
 				errset = true;
@@ -487,8 +649,9 @@ valid_domainname(char *lbl, int type)
  */
 static const char hexchrs[] = "0123456789abcdef";
 ssize_t
-print_string(char *dst, size_t len, int type, const uint8_t *data, size_t dl)
+print_string(char *dst, size_t len, int type, const void *data, size_t dl)
 {
+	const uint8_t *d = (const uint8_t *)data;
 	char *odst;
 	uint8_t c;
 	const uint8_t *e;
@@ -496,13 +659,13 @@ print_string(char *dst, size_t len, int type, const uint8_t *data, size_t dl)
 
 	odst = dst;
 	bytes = 0;
-	e = data + dl;
+	e = d + dl;
 
-	while (data < e) {
-		c = *data++;
+	while (d < e) {
+		c = *d++;
 		if (type & OT_BINHEX) {
 			if (dst) {
-				if (len  == 0 || len == 1) {
+				if (len == 0 || len == 1) {
 					errno = ENOBUFS;
 					return -1;
 				}
@@ -518,8 +681,7 @@ print_string(char *dst, size_t len, int type, const uint8_t *data, size_t dl)
 			break;
 		}
 		if (!(type & (OT_ASCII | OT_RAW | OT_ESCSTRING | OT_ESCFILE)) &&
-		    (!isascii(c) && !isprint(c)))
-		{
+		    (!isascii(c) && !isprint(c))) {
 			errno = EINVAL;
 			break;
 		}
@@ -528,17 +690,17 @@ print_string(char *dst, size_t len, int type, const uint8_t *data, size_t dl)
 			break;
 		}
 		if ((type & (OT_ESCSTRING | OT_ESCFILE) &&
-		    (c == '\\' || !isascii(c) || !isprint(c))) ||
-		    (type & OT_ESCFILE && (c == '/' || c == ' ')))
-		{
+			(c == '\\' || !isascii(c) || !isprint(c))) ||
+		    (type & OT_ESCFILE && (c == '/' || c == ' '))) {
 			errno = EINVAL;
 			if (c == '\\') {
 				if (dst) {
-					if (len  == 0 || len == 1) {
+					if (len == 0 || len == 1) {
 						errno = ENOBUFS;
 						return -1;
 					}
-					*dst++ = '\\'; *dst++ = '\\';
+					*dst++ = '\\';
+					*dst++ = '\\';
 					len -= 2;
 				}
 				bytes += 2;
@@ -550,9 +712,9 @@ print_string(char *dst, size_t len, int type, const uint8_t *data, size_t dl)
 					return -1;
 				}
 				*dst++ = '\\';
-		                *dst++ = (char)(((c >> 6) & 03) + '0');
-		                *dst++ = (char)(((c >> 3) & 07) + '0');
-		                *dst++ = (char)(( c       & 07) + '0');
+				*dst++ = (char)(((c >> 6) & 03) + '0');
+				*dst++ = (char)(((c >> 3) & 07) + '0');
+				*dst++ = (char)((c & 07) + '0');
 				len -= 4;
 			}
 			bytes += 4;
@@ -582,13 +744,12 @@ print_string(char *dst, size_t len, int type, const uint8_t *data, size_t dl)
 			*odst = '\0';
 			return 1;
 		}
-
 	}
 
 	return (ssize_t)bytes;
 }
 
-#define ADDR6SZ		16
+#define ADDR6SZ 16
 static ssize_t
 dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 {
@@ -631,8 +792,7 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 
 static ssize_t
 print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
-    int vname,
-    const uint8_t *data, size_t dl, const char *ifname)
+    int vname, const uint8_t *data, size_t dl, const char *ifname)
 {
 	fpos_t fp_pos;
 	const uint8_t *e, *t;
@@ -715,8 +875,8 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 				goto err;
 			}
 
-			if (print_string(buf, sizeof(buf),
-			    opt->type, data, sz) == -1)
+			if (print_string(buf, sizeof(buf), opt->type, data,
+				sz) == -1)
 				goto err;
 
 			if (first)
@@ -752,9 +912,7 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 		/* bitflags are a string, MSB first, such as ABCDEFGH
 		 * where A is 10000000, B is 01000000, etc. */
 		for (l = 0, sl = sizeof(opt->bitflags) - 1;
-		    l < sizeof(opt->bitflags);
-		    l++, sl--)
-		{
+		    l < sizeof(opt->bitflags); l++, sl--) {
 			if (opt->bitflags[l] == '1') {
 				if (fprintf(fp, "%d", *data & (1 << sl)) == -1)
 					goto err;
@@ -762,9 +920,7 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 			}
 			/* Don't print NULL or 0 flags */
 			if (opt->bitflags[l] != '\0' &&
-			    opt->bitflags[l] != '0' &&
-			    *data & (1 << sl))
-			{
+			    opt->bitflags[l] != '0' && *data & (1 << sl)) {
 				if (fputc(opt->bitflags[l], fp) == EOF)
 					goto err;
 			}
@@ -818,18 +974,21 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 			data += sizeof(addr.s_addr);
 		} else if (opt->type & OT_ADDRIPV6) {
 			uint8_t databuf[sizeof(struct in6_addr)] = { 0 };
-			size_t datalen = e - data >= 16 ? 16 : (size_t)(e - data);
+			size_t datalen = e - data >= 16 ? 16 :
+							  (size_t)(e - data);
 			char buf[INET6_ADDRSTRLEN];
 
 			/* avoid inet_ntop going beyond our option space by
 			 * copying out into a temporary buffer. */
 			memcpy(databuf, data, datalen);
-			if (inet_ntop(AF_INET6, databuf, buf, sizeof(buf)) == NULL)
+			if (inet_ntop(AF_INET6, databuf, buf, sizeof(buf)) ==
+			    NULL)
 				goto err;
 			if (fprintf(fp, "%s", buf) == -1)
 				goto err;
-			if (data[0] == 0xfe && (data[1] & 0xc0) == 0x80) {
-				if (fprintf(fp,"%%%s", ifname) == -1)
+			if (datalen >= 2 && data[0] == 0xfe &&
+			    (data[1] & 0xc0) == 0x80) {
+				if (fprintf(fp, "%%%s", ifname) == -1)
 					goto err;
 			}
 			data += 16;
@@ -853,6 +1012,7 @@ int
 dhcp_set_leasefile(char *leasefile, size_t len, int family,
     const struct interface *ifp)
 {
+	char ifname[(sizeof(ifp->name) * 4) + 1];
 	char ssid[1 + (IF_SSIDLEN * 4) + 1]; /* - prefix and NUL terminated. */
 
 	if (ifp->name[0] == '\0') {
@@ -869,24 +1029,26 @@ dhcp_set_leasefile(char *leasefile, size_t len, int family,
 		return -1;
 	}
 
+	if (print_string(ifname, sizeof(ifname), OT_ESCFILE, ifp->name,
+		strlen(ifp->name)) == -1)
+		return -1;
+
 	if (ifp->wireless) {
 		ssid[0] = '-';
-		print_string(ssid + 1, sizeof(ssid) - 1,
-		    OT_ESCFILE,
-		    (const uint8_t *)ifp->ssid, ifp->ssid_len);
+		if (print_string(ssid + 1, sizeof(ssid) - 1, OT_ESCFILE,
+			ifp->ssid, ifp->ssid_len) == -1)
+			return -1;
 	} else
 		ssid[0] = '\0';
 	return snprintf(leasefile, len,
-	    family == AF_INET ? LEASEFILE : LEASEFILE6,
-	    ifp->name, ssid);
+	    family == AF_INET ? LEASEFILE : LEASEFILE6, ifname, ssid);
 }
 
 void
 dhcp_envoption(struct dhcpcd_ctx *ctx, FILE *fp, const char *prefix,
     const char *ifname, struct dhcp_opt *opt,
-    const uint8_t *(*dgetopt)(struct dhcpcd_ctx *,
-    size_t *, unsigned int *, size_t *,
-    const uint8_t *, size_t, struct dhcp_opt **),
+    const uint8_t *(*dgetopt)(struct dhcpcd_ctx *, size_t *, unsigned int *,
+	size_t *, const uint8_t *, size_t, struct dhcp_opt **),
     const uint8_t *od, size_t ol)
 {
 	size_t i, eos, eol;
@@ -908,8 +1070,8 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, FILE *fp, const char *prefix,
 
 	/* Create a new prefix based on the option */
 	if (opt->type & OT_INDEX) {
-		if (asprintf(&pfx, "%s_%s%d",
-		    prefix, opt->var, ++opt->index) == -1)
+		if (asprintf(&pfx, "%s_%s%d", prefix, opt->var, ++opt->index) ==
+		    -1)
 			pfx = NULL;
 	} else {
 		if (asprintf(&pfx, "%s_%s", prefix, opt->var) == -1)
@@ -926,9 +1088,8 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, FILE *fp, const char *prefix,
 		eo = dhcp_optlen(eopt, ol);
 		if (eo == -1) {
 			logerrx("%s: %s %d.%d/%zu: "
-			    "malformed embedded option",
-			    ifname, __func__, opt->option,
-			    eopt->option, i);
+				"malformed embedded option",
+			    ifname, __func__, opt->option, eopt->option, i);
 			goto out;
 		}
 		if (eo == 0) {
@@ -939,9 +1100,9 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, FILE *fp, const char *prefix,
 			 * option which is optional. */
 			if (ol != 0 || !(eopt->type & OT_OPTIONAL))
 				logerrx("%s: %s %d.%d/%zu: "
-				    "missing embedded option",
-				    ifname, __func__, opt->option,
-				    eopt->option, i);
+					"missing embedded option",
+				    ifname, __func__, opt->option, eopt->option,
+				    i);
 			goto out;
 		}
 		/* Use the option prefix if the embedded option
@@ -950,9 +1111,8 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, FILE *fp, const char *prefix,
 		if (!(eopt->type & OT_RESERVED)) {
 			ov = strcmp(opt->var, eopt->var);
 			if (print_option(fp, pfx, eopt, ov, od, (size_t)eo,
-			    ifname) == -1)
-				logerr("%s: %s %d.%d/%zu",
-				    ifname, __func__,
+				ifname) == -1)
+				logerr("%s: %s %d.%d/%zu", ifname, __func__,
 				    opt->option, eopt->option, i);
 		}
 		od += (size_t)eo;
@@ -964,10 +1124,8 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, FILE *fp, const char *prefix,
 		/* Zero any option indexes
 		 * We assume that referenced encapsulated options are NEVER
 		 * recursive as the index order could break. */
-		for (i = 0, eopt = opt->encopts;
-		    i < opt->encopts_len;
-		    i++, eopt++)
-		{
+		for (i = 0, eopt = opt->encopts; i < opt->encopts_len;
+		    i++, eopt++) {
 			eoc = opt->option;
 			if (eopt->type & OT_OPTION) {
 				dgetopt(ctx, NULL, &eoc, NULL, NULL, 0, &oopt);
@@ -977,10 +1135,8 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, FILE *fp, const char *prefix,
 		}
 
 		while ((eod = dgetopt(ctx, &eos, &eoc, &eol, od, ol, &oopt))) {
-			for (i = 0, eopt = opt->encopts;
-			    i < opt->encopts_len;
-			    i++, eopt++)
-			{
+			for (i = 0, eopt = opt->encopts; i < opt->encopts_len;
+			    i++, eopt++) {
 				if (eopt->option != eoc)
 					continue;
 				if (eopt->type & OT_OPTION) {
@@ -989,7 +1145,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, FILE *fp, const char *prefix,
 						continue;
 				}
 				dhcp_envoption(ctx, fp, pfx, ifname,
-				    eopt->type & OT_OPTION ? oopt:eopt,
+				    eopt->type & OT_OPTION ? oopt : eopt,
 				    dgetopt, eod, eol);
 			}
 			od += eos + eol;
@@ -1015,11 +1171,44 @@ dhcp_zero_index(struct dhcp_opt *opt)
 }
 
 ssize_t
-dhcp_readfile(struct dhcpcd_ctx *ctx, const char *file, void *data, size_t len)
+dhcp_readfile(struct dhcpcd_ctx *ctx, const char *file, void **data,
+    size_t *len)
 {
+	size_t rlen = 0;
+
+	if (len == NULL)
+		len = &rlen;
+
+	if (file == NULL || *file == '\0') {
+		uint8_t *p = *data;
+		size_t needed = BUFSIZ, bytes = 0, left;
+		ssize_t nread;
+
+		for (;;) {
+			if (*len < needed) {
+				void *nbuf = realloc(*data, needed);
+				if (nbuf == NULL)
+					return -1;
+				p = *data = nbuf;
+				p += bytes;
+				*len = needed;
+			}
+
+			left = *len - bytes;
+			nread = read(fileno(stdin), p, left);
+			if (nread == -1)
+				return -1;
+			bytes += (size_t)nread;
+			if ((size_t)nread < left || nread == 0)
+				return (ssize_t)bytes;
+
+			/* We need a bigger buffer */
+			needed += BUFSIZ;
+		}
+	}
 
 #ifdef PRIVSEP
-	if (ctx->options & DHCPCD_PRIVSEP &&
+	if (file != NULL && ctx->options & DHCPCD_PRIVSEP &&
 	    !(ctx->options & DHCPCD_PRIVSEPROOT))
 		return ps_root_readfile(ctx, file, data, len);
 #else
@@ -1033,7 +1222,6 @@ ssize_t
 dhcp_writefile(struct dhcpcd_ctx *ctx, const char *file, mode_t mode,
     const void *data, size_t len)
 {
-
 #ifdef PRIVSEP
 	if (ctx->options & DHCPCD_PRIVSEP &&
 	    !(ctx->options & DHCPCD_PRIVSEPROOT))
@@ -1048,7 +1236,6 @@ dhcp_writefile(struct dhcpcd_ctx *ctx, const char *file, mode_t mode,
 int
 dhcp_filemtime(struct dhcpcd_ctx *ctx, const char *file, time_t *time)
 {
-
 #ifdef PRIVSEP
 	if (ctx->options & DHCPCD_PRIVSEP &&
 	    !(ctx->options & DHCPCD_PRIVSEPROOT))
@@ -1063,7 +1250,6 @@ dhcp_filemtime(struct dhcpcd_ctx *ctx, const char *file, time_t *time)
 int
 dhcp_unlink(struct dhcpcd_ctx *ctx, const char *file)
 {
-
 #ifdef PRIVSEP
 	if (ctx->options & DHCPCD_PRIVSEP &&
 	    !(ctx->options & DHCPCD_PRIVSEPROOT))
@@ -1078,21 +1264,18 @@ dhcp_unlink(struct dhcpcd_ctx *ctx, const char *file)
 size_t
 dhcp_read_hwaddr_aton(struct dhcpcd_ctx *ctx, uint8_t **data, const char *file)
 {
-	char buf[BUFSIZ];
 	ssize_t bytes;
 	size_t len;
 
-	bytes = dhcp_readfile(ctx, file, buf, sizeof(buf));
-	if (bytes == -1 || bytes == sizeof(buf))
+	bytes = dhcp_readfile(ctx, file, &ctx->io_buf, &ctx->io_buflen);
+	if (bytes == -1)
 		return 0;
-
-	bytes[buf] = '\0';
-	len = hwaddr_aton(NULL, buf);
+	len = hwaddr_aton(NULL, ctx->io_buf);
 	if (len == 0)
 		return 0;
 	*data = malloc(len);
 	if (*data == NULL)
 		return 0;
-	hwaddr_aton(*data, buf);
+	hwaddr_aton(*data, ctx->io_buf);
 	return len;
 }
