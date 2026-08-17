@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.29.6.1 2023/10/26 15:11:02 martin Exp $ */
+/* $NetBSD: mpii.c,v 1.29.6.2 2026/08/17 15:30:06 martin Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.29.6.1 2023/10/26 15:11:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.29.6.2 2026/08/17 15:30:06 martin Exp $");
 
 #include "bio.h"
 
@@ -91,7 +91,7 @@ u_int32_t  mpii_debug = 0
 #endif
 
 #define MPII_REQUEST_SIZE		(512)
-#define MPII_REQUEST_CREDIT		(128)
+#define MPII_REQUEST_CREDIT		(64) /* was 128 but see PR#58684 */
 
 struct mpii_dmamem {
 	bus_dmamap_t		mdm_map;
