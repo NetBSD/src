@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
+
 #include <net/if.h>
 #include <netinet/in.h>
 
@@ -43,44 +44,54 @@
 
 /* Don't set any optional arguments here so we retain POSIX
  * compatibility with getopt */
-#define IF_OPTS "146bc:de:f:gh:i:j:kl:m:no:pqr:s:t:u:v:wxy:z:" \
-		"ABC:DEF:GHI:JKLMNO:PQ:S:TUVW:X:Z:"
-#define NOERR_IF_OPTS		":" IF_OPTS
+#define IF_OPTS                                        \
+	"146bc:de:f:gh:i:j:kl:m:no:pqr:s:t:u:v:wxy:z:" \
+	"ABC:DEF:GHI:JKLMNO:PQ:S:TUVW:X:Z:"
+#define NOERR_IF_OPTS	 ":" IF_OPTS
 
-#define DEFAULT_TIMEOUT		30
-#define DEFAULT_REBOOT		5
-#define DEFAULT_REQUEST		180	/* secs to request, mirror DHCP6 */
-#define DEFAULT_FALLBACK	5	/* secs until fallback */
-#define DEFAULT_IPV4LL		5	/* secs until ipv4ll */
+#define DEFAULT_TIMEOUT	 30
+#define DEFAULT_REBOOT	 5
+#define DEFAULT_REQUEST	 180 /* secs to request, mirror DHCP6 */
+#define DEFAULT_FALLBACK 5   /* secs until fallback */
+#define DEFAULT_IPV4LL	 5   /* secs until ipv4ll */
+/* DHCPv4 retransmission backoff defaults (RFC 2131); DHCPv4-only. */
+#define DEFAULT_INITIAL_INTERVAL 4    /* DHCP_BASE per RFC 2131 */
+#define DEFAULT_BACKOFF_CUTOFF	 64   /* DHCP_MAX per RFC 2131 */
+#define DEFAULT_BACKOFF_JITTER	 1000 /* +/- milliseconds */
+
+/* Upper bounds to keep the retransmit timeout arithmetic well within range. */
+#define MAX_INITIAL_INTERVAL 4	  /* DHCP_BASE per RFC 2131 */
+#define MAX_BACKOFF_CUTOFF   64	  /* DHCP_MAX per RFC 2131 */
+#define MAX_BACKOFF_JITTER   1000 /* +/- milliseconds, per RFC 2131 */
 
 #ifndef HOSTNAME_MAX_LEN
-#define HOSTNAME_MAX_LEN	250	/* 255 - 3 (FQDN) - 2 (DNS enc) */
+#define HOSTNAME_MAX_LEN 250 /* 255 - 3 (FQDN) - 2 (DNS enc) */
 #endif
-#define	DHCP_OPTION_MAX_LEN	255
+#define DHCP_OPTION_MAX_LEN 255
 
-#define DHCPCD_ARP			(1ULL << 0)
-#define DHCPCD_RELEASE			(1ULL << 1)
-#define DHCPCD_RTBUILD			(1ULL << 2)
-#define DHCPCD_GATEWAY			(1ULL << 3)
-#define DHCPCD_STATIC			(1ULL << 4)
+#define DHCPCD_ARP	    (1ULL << 0)
+#define DHCPCD_RELEASE	    (1ULL << 1)
+#define DHCPCD_RTBUILD	    (1ULL << 2)
+#define DHCPCD_GATEWAY	    (1ULL << 3)
+#define DHCPCD_STATIC	    (1ULL << 4)
 // unused				(1ULL << 5)
-#define DHCPCD_ARP_PERSISTDEFENCE	(1ULL << 6)
-#define DHCPCD_LASTLEASE		(1ULL << 7)
-#define DHCPCD_INFORM			(1ULL << 8)
-#define DHCPCD_REQUEST			(1ULL << 9)
-#define DHCPCD_IPV4LL			(1ULL << 10)
-#define DHCPCD_DUID			(1ULL << 11)
-#define DHCPCD_PERSISTENT		(1ULL << 12)
-#define DHCPCD_DAEMONISE		(1ULL << 14)
-#define DHCPCD_DAEMONISED		(1ULL << 15)
-#define DHCPCD_TEST			(1ULL << 16)
-#define DHCPCD_MANAGER			(1ULL << 17)
-#define DHCPCD_HOSTNAME			(1ULL << 18)
-#define DHCPCD_CLIENTID			(1ULL << 19)
-#define DHCPCD_LINK			(1ULL << 20)
-#define DHCPCD_ANONYMOUS		(1ULL << 21)
-#define DHCPCD_BACKGROUND		(1ULL << 22)
-#define DHCPCD_VENDORRAW		(1ULL << 23)
+#define DHCPCD_ARP_PERSISTDEFENCE (1ULL << 6)
+#define DHCPCD_LASTLEASE	  (1ULL << 7)
+#define DHCPCD_INFORM		  (1ULL << 8)
+#define DHCPCD_REQUEST		  (1ULL << 9)
+#define DHCPCD_IPV4LL		  (1ULL << 10)
+#define DHCPCD_DUID		  (1ULL << 11)
+#define DHCPCD_PERSISTENT	  (1ULL << 12)
+#define DHCPCD_DAEMONISE	  (1ULL << 14)
+#define DHCPCD_DAEMONISED	  (1ULL << 15)
+#define DHCPCD_TEST		  (1ULL << 16)
+#define DHCPCD_MANAGER		  (1ULL << 17)
+#define DHCPCD_HOSTNAME		  (1ULL << 18)
+#define DHCPCD_CLIENTID		  (1ULL << 19)
+#define DHCPCD_LINK		  (1ULL << 20)
+#define DHCPCD_ANONYMOUS	  (1ULL << 21)
+#define DHCPCD_BACKGROUND	  (1ULL << 22)
+#define DHCPCD_VENDORRAW	  (1ULL << 23)
 // unused				(1ULL << 24)
 #define DHCPCD_WAITIP			(1ULL << 25)
 #define DHCPCD_SLAACPRIVATE		(1ULL << 26)
@@ -112,84 +123,88 @@
 #define DHCPCD_INFORM6			(1ULL << 52)
 #define DHCPCD_WANTDHCP			(1ULL << 53)
 #define DHCPCD_IPV6RA_AUTOCONF		(1ULL << 54)
-#define DHCPCD_ROUTER_HOST_ROUTE_WARNED	(1ULL << 55)
+#define DHCPCD_ROUTER_HOST_ROUTE_WARNED (1ULL << 55)
 #define DHCPCD_LASTLEASE_EXTEND		(1ULL << 56)
 #define DHCPCD_BOOTP			(1ULL << 57)
 #define DHCPCD_INITIAL_DELAY		(1ULL << 58)
 #define DHCPCD_PRINT_PIDFILE		(1ULL << 59)
 #define DHCPCD_ONESHOT			(1ULL << 60)
 #define DHCPCD_INACTIVE			(1ULL << 61)
-#define	DHCPCD_SLAACTEMP		(1ULL << 62)
+#define DHCPCD_SLAACTEMP		(1ULL << 62)
 #define DHCPCD_PRIVSEPROOT		(1ULL << 63)
 
-#define DHCPCD_NODROP	(DHCPCD_EXITING | DHCPCD_PERSISTENT)
+#define DHCPCD_NODROP			(DHCPCD_EXITING | DHCPCD_PERSISTENT)
 
-#define DHCPCD_WAITOPTS	(DHCPCD_WAITIP | DHCPCD_WAITIP4 | DHCPCD_WAITIP6)
+#define DHCPCD_WAITOPTS			(DHCPCD_WAITIP | DHCPCD_WAITIP4 | DHCPCD_WAITIP6)
 
-#define DHCPCD_WARNINGS	(DHCPCD_CSR_WARNED | \
-		DHCPCD_ROUTER_HOST_ROUTE_WARNED)
+#define DHCPCD_WARNINGS			(DHCPCD_CSR_WARNED | DHCPCD_ROUTER_HOST_ROUTE_WARNED)
 
 /* These options only make sense in the config file, so don't use any
    valid short options for them */
-#define O_BASE			MAX('z', 'Z') + 1
-#define O_ARPING		O_BASE + 1
-#define O_FALLBACK		O_BASE + 2
-#define O_DESTINATION		O_BASE + 3
-#define O_IPV6RS		O_BASE + 4
-#define O_NOIPV6RS		O_BASE + 5
-#define O_IPV6RA_FORK		O_BASE + 6
-#define O_LINK_RCVBUF		O_BASE + 7
-#define O_ANONYMOUS		O_BASE + 8
-#define O_NOALIAS		O_BASE + 9
-#define O_IA_NA			O_BASE + 10
-#define O_IA_TA			O_BASE + 11
-#define O_IA_PD			O_BASE + 12
-#define O_HOSTNAME_SHORT	O_BASE + 13
-#define O_DEV			O_BASE + 14
-#define O_NODEV			O_BASE + 15
-#define O_NOIPV4		O_BASE + 16
-#define O_NOIPV6		O_BASE + 17
-#define O_IAID			O_BASE + 18
-#define O_DEFINE		O_BASE + 19
-#define O_DEFINE6		O_BASE + 20
-#define O_EMBED			O_BASE + 21
-#define O_ENCAP			O_BASE + 22
-#define O_VENDOPT		O_BASE + 23
-#define O_VENDCLASS		O_BASE + 24
-#define O_AUTHPROTOCOL		O_BASE + 25
-#define O_AUTHTOKEN		O_BASE + 26
-#define O_AUTHNOTREQUIRED	O_BASE + 27
-#define O_NODHCP		O_BASE + 28
-#define O_NODHCP6		O_BASE + 29
-#define O_DHCP			O_BASE + 30
-#define O_DHCP6			O_BASE + 31
-#define O_IPV4			O_BASE + 32
-#define O_IPV6			O_BASE + 33
-#define O_CONTROLGRP		O_BASE + 34
-#define O_SLAAC			O_BASE + 35
-#define O_GATEWAY		O_BASE + 36
-#define O_NOUP			O_BASE + 37
-#define O_IPV6RA_AUTOCONF	O_BASE + 38
-#define O_IPV6RA_NOAUTOCONF	O_BASE + 39
-#define O_REJECT		O_BASE + 40
-#define O_BOOTP			O_BASE + 42
-#define O_DEFINEND		O_BASE + 43
-#define O_NODELAY		O_BASE + 44
-#define O_INFORM6		O_BASE + 45
-#define O_LASTLEASE_EXTEND	O_BASE + 46
-#define O_INACTIVE		O_BASE + 47
-#define O_MUDURL		O_BASE + 48
-#define O_MSUSERCLASS		O_BASE + 49
-#define O_CONFIGURE		O_BASE + 50
-#define O_NOCONFIGURE		O_BASE + 51
-#define O_RANDOMISE_HWADDR	O_BASE + 52
-#define O_ARP_PERSISTDEFENCE	O_BASE + 53
-#define O_REQUEST_TIME		O_BASE + 54
-#define O_FALLBACK_TIME		O_BASE + 55
-#define O_IPV4LL_TIME		O_BASE + 56
-#define O_VSIO			O_BASE + 57
-#define O_VSIO6			O_BASE + 58
-#define O_NOSYSLOG		O_BASE + 59
+#define O_BASE		     MAX('z', 'Z') + 1
+#define O_ARPING	     O_BASE + 1
+#define O_FALLBACK	     O_BASE + 2
+#define O_DESTINATION	     O_BASE + 3
+#define O_IPV6RS	     O_BASE + 4
+#define O_NOIPV6RS	     O_BASE + 5
+#define O_IPV6RA_FORK	     O_BASE + 6
+#define O_LINK_RCVBUF	     O_BASE + 7
+#define O_ANONYMOUS	     O_BASE + 8
+#define O_NOALIAS	     O_BASE + 9
+#define O_IA_NA		     O_BASE + 10
+#define O_IA_TA		     O_BASE + 11
+#define O_IA_PD		     O_BASE + 12
+#define O_HOSTNAME_SHORT     O_BASE + 13
+#define O_DEV		     O_BASE + 14
+#define O_NODEV		     O_BASE + 15
+#define O_NOIPV4	     O_BASE + 16
+#define O_NOIPV6	     O_BASE + 17
+#define O_IAID		     O_BASE + 18
+#define O_DEFINE	     O_BASE + 19
+#define O_DEFINE6	     O_BASE + 20
+#define O_EMBED		     O_BASE + 21
+#define O_ENCAP		     O_BASE + 22
+#define O_VENDOPT	     O_BASE + 23
+#define O_VENDCLASS	     O_BASE + 24
+#define O_AUTHPROTOCOL	     O_BASE + 25
+#define O_AUTHTOKEN	     O_BASE + 26
+#define O_AUTHNOTREQUIRED    O_BASE + 27
+#define O_NODHCP	     O_BASE + 28
+#define O_NODHCP6	     O_BASE + 29
+#define O_DHCP		     O_BASE + 30
+#define O_DHCP6		     O_BASE + 31
+#define O_IPV4		     O_BASE + 32
+#define O_IPV6		     O_BASE + 33
+#define O_CONTROLGRP	     O_BASE + 34
+#define O_SLAAC		     O_BASE + 35
+#define O_GATEWAY	     O_BASE + 36
+#define O_NOUP		     O_BASE + 37
+#define O_IPV6RA_AUTOCONF    O_BASE + 38
+#define O_IPV6RA_NOAUTOCONF  O_BASE + 39
+#define O_REJECT	     O_BASE + 40
+#define O_BOOTP		     O_BASE + 42
+#define O_DEFINEND	     O_BASE + 43
+#define O_NODELAY	     O_BASE + 44
+#define O_INFORM6	     O_BASE + 45
+#define O_LASTLEASE_EXTEND   O_BASE + 46
+#define O_INACTIVE	     O_BASE + 47
+#define O_MUDURL	     O_BASE + 48
+#define O_MSUSERCLASS	     O_BASE + 49
+#define O_CONFIGURE	     O_BASE + 50
+#define O_NOCONFIGURE	     O_BASE + 51
+#define O_RANDOMISE_HWADDR   O_BASE + 52
+#define O_ARP_PERSISTDEFENCE O_BASE + 53
+#define O_REQUEST_TIME	     O_BASE + 54
+#define O_FALLBACK_TIME	     O_BASE + 55
+#define O_IPV4LL_TIME	     O_BASE + 56
+#define O_VSIO		     O_BASE + 57
+#define O_VSIO6		     O_BASE + 58
+#define O_NOSYSLOG	     O_BASE + 59
+#define O_INITIAL_INTERVAL   O_BASE + 60
+#define O_BACKOFF_CUTOFF     O_BASE + 61
+#define O_BACKOFF_JITTER     O_BASE + 62
+#define O_ALLOW		     O_BASE + 63
+#define O_READGRP	     O_BASE + 64
 
 extern const struct option cf_options[];
 
@@ -234,31 +249,47 @@ struct vsio {
 };
 #endif
 
+#define OPTION_POLICY_MAX 5
+struct dho_policy {
+	uint32_t *dhop_policy;
+	size_t dhop_policy_len;
+};
+
+struct dho_policy_group {
+	struct dho_policy dhop_request;
+	struct dho_policy dhop_require;
+	struct dho_policy dhop_allow;
+	struct dho_policy dhop_remove;
+	struct dho_policy dhop_reject;
+};
+
 struct if_options {
 	time_t mtime;
 	uint8_t iaid[4];
 	int metric;
-	uint8_t requestmask[256 / NBBY];
-	uint8_t requiremask[256 / NBBY];
-	uint8_t nomask[256 / NBBY];
-	uint8_t rejectmask[256 / NBBY];
-	uint8_t dstmask[256 / NBBY];
-	uint8_t requestmasknd[(UINT16_MAX + 1) / NBBY];
-	uint8_t requiremasknd[(UINT16_MAX + 1) / NBBY];
-	uint8_t nomasknd[(UINT16_MAX + 1) / NBBY];
-	uint8_t rejectmasknd[(UINT16_MAX + 1) / NBBY];
-	uint8_t requestmask6[(UINT16_MAX + 1) / NBBY];
-	uint8_t requiremask6[(UINT16_MAX + 1) / NBBY];
-	uint8_t nomask6[(UINT16_MAX + 1) / NBBY];
-	uint8_t rejectmask6[(UINT16_MAX + 1) / NBBY];
 	uint32_t leasetime;
 	uint32_t timeout;
 	uint32_t reboot;
 	uint32_t request_time;
 	uint32_t fallback_time;
 	uint32_t ipv4ll_time;
+	uint32_t initial_interval;
+	uint32_t backoff_cutoff;
+	uint32_t backoff_jitter;
 	unsigned long long options;
 	bool randomise_hwaddr;
+
+#ifdef INET
+	struct dho_policy_group dhopg_dhcp;
+	struct dho_policy dhop_destination;
+#endif
+
+#ifdef INET6
+	struct dho_policy_group dhopg_nd;
+#endif
+#ifdef DHCP6
+	struct dho_policy_group dhopg_dhcp6;
+#endif
 
 	struct in_addr req_addr;
 	struct in_addr req_mask;
@@ -315,10 +346,10 @@ struct if_options {
 	struct auth auth;
 };
 
-struct if_options *read_config(struct dhcpcd_ctx *,
-    const char *, const char *, const char *);
-int add_options(struct dhcpcd_ctx *, const char *,
-    struct if_options *, int, char **);
+struct if_options *read_config(struct dhcpcd_ctx *, const char *, const char *,
+    const char *);
+int add_options(struct dhcpcd_ctx *, const char *, struct if_options *, int,
+    char **);
 void free_dhcp_opt_embenc(struct dhcp_opt *);
 void free_options(struct dhcpcd_ctx *, struct if_options *);
 

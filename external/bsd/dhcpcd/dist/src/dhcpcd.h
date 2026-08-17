@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -30,37 +30,38 @@
 #define DHCPCD_H
 
 #include <sys/socket.h>
+
 #include <net/if.h>
 
 #include <stdio.h>
 
 #include "config.h"
-#include "defs.h"
 #include "control.h"
+#include "defs.h"
 #include "if-options.h"
 #include "queue.h"
 
-#define HWADDR_LEN	20
-#define IF_SSIDLEN	32
-#define PROFILE_LEN	64
-#define SECRET_LEN	64
+#define HWADDR_LEN     20
+#define IF_SSIDLEN     32
+#define PROFILE_LEN    64
+#define SECRET_LEN     64
 
-#define IF_INACTIVE	0
-#define IF_ACTIVE	1
-#define IF_ACTIVE_USER	2
+#define IF_INACTIVE    0
+#define IF_ACTIVE      1
+#define IF_ACTIVE_USER 2
 
-#define	LINK_UP		1
-#define	LINK_UNKNOWN	0
-#define	LINK_DOWN	-1
+#define LINK_UP	       1
+#define LINK_UNKNOWN   0
+#define LINK_DOWN      -1
 
-#define IF_DATA_IPV4	0
-#define IF_DATA_ARP	1
-#define IF_DATA_IPV4LL	2
-#define IF_DATA_DHCP	3
-#define IF_DATA_IPV6	4
-#define IF_DATA_IPV6ND	5
-#define IF_DATA_DHCP6	6
-#define IF_DATA_MAX	7
+#define IF_DATA_IPV4   0
+#define IF_DATA_ARP    1
+#define IF_DATA_IPV4LL 2
+#define IF_DATA_DHCP   3
+#define IF_DATA_IPV6   4
+#define IF_DATA_IPV6ND 5
+#define IF_DATA_DHCP6  6
+#define IF_DATA_MAX    7
 
 #ifdef __QNX__
 /* QNX carries defines for, but does not actually support PF_LINK */
@@ -98,7 +99,7 @@ TAILQ_HEAD(if_head, interface);
 
 /* dhcpcd requires CMSG_SPACE to evaluate to a compile time constant. */
 #if defined(__QNX) || \
-	(defined(__NetBSD_Version__) && __NetBSD_Version__ < 600000000)
+    (defined(__NetBSD_Version__) && __NetBSD_Version__ < 600000000)
 #undef CMSG_SPACE
 #endif
 
@@ -106,31 +107,31 @@ TAILQ_HEAD(if_head, interface);
 #define ALIGNBYTES (sizeof(int) - 1)
 #endif
 #ifndef ALIGN
-#define	ALIGN(p) (((unsigned int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define ALIGN(p) (((unsigned int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #endif
 #ifndef CMSG_SPACE
-#define	CMSG_SPACE(len)	(ALIGN(sizeof(struct cmsghdr)) + ALIGN(len))
+#define CMSG_SPACE(len) (ALIGN(sizeof(struct cmsghdr)) + ALIGN(len))
 #endif
 
 struct passwd;
 
 struct dhcpcd_ctx {
-	char pidfile[sizeof(PIDFILE) + IF_NAMESIZE + 1];
+	char *pidfile;
 	char vendor[256];
-	int fork_fd;	/* FD for the fork init signal pipe */
+	int fork_fd; /* FD for the fork init signal pipe */
 	const char *cffile;
 	unsigned long long options;
 	char *logfile;
 	int argc;
 	char **argv;
-	int ifac;	/* allowed interfaces */
-	char **ifav;	/* allowed interfaces */
-	int ifdc;	/* denied interfaces */
-	char **ifdv;	/* denied interfaces */
-	int ifc;	/* listed interfaces */
-	char **ifv;	/* listed interfaces */
-	int ifcc;	/* configured interfaces */
-	char **ifcv;	/* configured interfaces */
+	int ifac;    /* allowed interfaces */
+	char **ifav; /* allowed interfaces */
+	int ifdc;    /* denied interfaces */
+	char **ifdv; /* denied interfaces */
+	int ifc;     /* listed interfaces */
+	char **ifv;  /* listed interfaces */
+	int ifcc;    /* configured interfaces */
+	char **ifcv; /* configured interfaces */
 	uint8_t duid_type;
 	unsigned char *duid;
 	size_t duid_len;
@@ -141,11 +142,11 @@ struct dhcpcd_ctx {
 	size_t ctl_bufpos;
 	size_t ctl_extra;
 
-	rb_tree_t routes;	/* our routes */
+	rb_tree_t routes; /* our routes */
 #ifdef RT_FREE_ROUTE_TABLE
-	rb_tree_t froutes;	/* free routes for re-use */
+	rb_tree_t froutes; /* free routes for re-use */
 #endif
-	size_t rt_order;	/* route order storage */
+	size_t rt_order; /* route order storage */
 
 	int pf_inet_fd;
 #ifdef PF_LINK
@@ -156,8 +157,8 @@ struct dhcpcd_ctx {
 #ifndef SMALL
 	int link_rcvbuf;
 #endif
-	int seq;	/* route message sequence no */
-	int sseq;	/* successful seq no sent */
+	int seq;  /* route message sequence no */
+	int sseq; /* successful seq no sent */
 
 	struct eloop *eloop;
 
@@ -169,12 +170,13 @@ struct dhcpcd_ctx {
 	size_t script_buflen;
 	char **script_env;
 	size_t script_envlen;
+	void *io_buf;
+	size_t io_buflen;
 
 	int control_fd;
-	int control_unpriv_fd;
 	struct fd_list_head control_fds;
 	char control_sock[sizeof(CONTROLSOCKET) + IF_NAMESIZE];
-	char control_sock_unpriv[sizeof(CONTROLSOCKET) + IF_NAMESIZE + 7];
+	gid_t read_group;
 	gid_t control_group;
 
 	/* DHCP Enterprise options, RFC3925 */
@@ -191,16 +193,18 @@ struct dhcpcd_ctx {
 #endif
 
 #ifdef PRIVSEP
-	struct passwd *ps_user;	/* struct passwd for privsep user */
-	struct ps_process_head ps_processes;	/* List of spawned processes */
+	struct passwd *ps_user; /* struct passwd for privsep user */
+	struct ps_process_head ps_processes; /* List of spawned processes */
 	struct ps_process *ps_root;
 	struct ps_process *ps_inet;
 	struct ps_process *ps_ctl;
-	int ps_data_fd;		/* data returned from processes */
-	int ps_log_fd;		/* chroot logging */
-	int ps_log_root_fd;	/* outside chroot log reader */
-	struct fd_list *ps_control;		/* Queue for the above */
-	struct fd_list *ps_control_client;	/* Queue for the above */
+	int ps_data_fd;		    /* data returned from processes */
+	int ps_log_fd;		    /* chroot logging */
+	int ps_log_root_fd;	    /* outside chroot log reader */
+	struct fd_list *ps_control; /* Queue for the above */
+	void *ps_buf;		    /* IPC buffer */
+	size_t ps_buflen;	    /* IPC buffer length */
+	unsigned int ps_control_id; /* Unique monotonic control ID */
 #endif
 
 #ifdef INET
@@ -262,7 +266,7 @@ void dhcpcd_daemonised(struct dhcpcd_ctx *);
 void dhcpcd_daemonise(struct dhcpcd_ctx *);
 
 void dhcpcd_linkoverflow(struct dhcpcd_ctx *);
-int dhcpcd_handleargs(struct dhcpcd_ctx *, struct fd_list *, int, char **);
+ssize_t dhcpcd_handleargs(struct dhcpcd_ctx *, struct fd_list *, int, char **);
 void dhcpcd_handlecarrier(struct interface *, int, unsigned int);
 int dhcpcd_handleinterface(void *, int, const char *);
 void dhcpcd_handlehwaddr(struct interface *, uint16_t, const void *, uint8_t);

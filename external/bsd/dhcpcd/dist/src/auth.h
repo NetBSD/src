@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -35,13 +35,13 @@
 
 #define DHCPCD_AUTH_SEND	(1 << 0)
 #define DHCPCD_AUTH_REQUIRE	(1 << 1)
-#define DHCPCD_AUTH_RDM_COUNTER	(1 << 2)
+#define DHCPCD_AUTH_RDM_COUNTER (1 << 2)
 
-#define DHCPCD_AUTH_SENDREQUIRE	(DHCPCD_AUTH_SEND | DHCPCD_AUTH_REQUIRE)
+#define DHCPCD_AUTH_SENDREQUIRE (DHCPCD_AUTH_SEND | DHCPCD_AUTH_REQUIRE)
 
 #define AUTH_PROTO_TOKEN	0
 #define AUTH_PROTO_DELAYED	1
-#define AUTH_PROTO_DELAYEDREALM	2
+#define AUTH_PROTO_DELAYEDREALM 2
 #define AUTH_PROTO_RECONFKEY	3
 
 #define AUTH_ALG_NONE		0
@@ -83,16 +83,12 @@ struct authstate {
 
 void dhcp_auth_reset(struct authstate *);
 
-const struct token * dhcp_auth_validate(struct authstate *,
-    const struct auth *,
-    const void *, size_t, int, int,
-    const void *, size_t);
+const struct token *dhcp_auth_validate(struct authstate *, const struct auth *,
+    const void *, size_t, int, int, const void *, size_t);
 
 struct dhcpcd_ctx;
 ssize_t dhcp_auth_encode(struct dhcpcd_ctx *, struct auth *,
-    const struct token *,
-    void *, size_t, int, int,
-    void *, size_t);
+    const struct token *, void *, size_t, int, int, void *, size_t);
 
 int auth_get_rdm_monotonic(uint64_t *rdm);
 #endif

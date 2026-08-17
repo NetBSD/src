@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation BPF Initiator
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 
 /* Need these headers just for if_ether on some OS. */
 #ifndef __NetBSD__
@@ -38,8 +38,8 @@
 #include <netinet/if_ether.h>
 
 #include <assert.h>
-#include <pwd.h>
 #include <errno.h>
+#include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -53,7 +53,7 @@
 #include "logerr.h"
 #include "privsep.h"
 
-/* We expect to have open 3 SEQPACKET and one RAW fd */
+/* We expect to have open 3 SOCK_STREAM and one RAW fd */
 
 static void
 ps_bpf_recvbpf(void *arg, unsigned short events)
@@ -112,9 +112,9 @@ ps_bpf_recvmsgcb(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 	logerrx("%s: IN cmd %x, psp %p", __func__, psm->ps_cmd, psp);
 #endif
 
-	switch(psm->ps_cmd) {
+	switch (psm->ps_cmd) {
 #ifdef ARP
-	case PS_BPF_ARP:	/* FALLTHROUGH */
+	case PS_BPF_ARP: /* FALLTHROUGH */
 #endif
 	case PS_BPF_BOOTP:
 		break;
@@ -131,8 +131,8 @@ ps_bpf_recvmsgcb(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 		return -1;
 	}
 
-	return bpf_send(psp->psp_bpf, psp->psp_proto,
-	    iov->iov_base, iov->iov_len);
+	return bpf_send(psp->psp_bpf, psp->psp_proto, iov->iov_base,
+	    iov->iov_len);
 }
 
 static void
@@ -140,8 +140,8 @@ ps_bpf_recvmsg(void *arg, unsigned short events)
 {
 	struct ps_process *psp = arg;
 
-	if (ps_recvpsmsg(psp->psp_ctx, psp->psp_fd, events,
-	    ps_bpf_recvmsgcb, arg) == -1)
+	if (ps_recvpsmsg(psp->psp_ctx, psp->psp_fd, events, ps_bpf_recvmsgcb,
+		arg) == -1)
 		logerr(__func__);
 }
 
@@ -149,30 +149,34 @@ static int
 ps_bpf_start_bpf(struct ps_process *psp)
 {
 	struct dhcpcd_ctx *ctx = psp->psp_ctx;
-	char *addr;
 	struct in_addr *ia = &psp->psp_id.psi_addr.psa_in_addr;
+#ifdef HAVE_SETPROCTITLE
+	char *addr;
+#endif
 
-	if (ia->s_addr == INADDR_ANY) {
+	if (ia->s_addr == INADDR_ANY)
 		ia = NULL;
-		addr = NULL;
-	} else
-		addr = inet_ntoa(*ia);
+
+#ifdef HAVE_SETPROCTITLE
+	addr = ia != NULL ? inet_ntoa(*ia) : NULL;
 	setproctitle("[BPF %s] %s%s%s", psp->psp_protostr, psp->psp_ifname,
 	    addr != NULL ? " " : "", addr != NULL ? addr : "");
+#endif
+
 	ps_freeprocesses(ctx, psp);
 
 	psp->psp_bpf = bpf_open(&psp->psp_ifp, psp->psp_filter, ia);
 #ifdef DEBUG_FD
-	logdebugx("pid %d bpf_fd=%d", getpid(), psp->psp_bpf->bpf_fd);
+	logdebugx("pid %ld bpf_fd=%d", (long)getpid(), psp->psp_bpf->bpf_fd);
 #endif
 	if (psp->psp_bpf == NULL)
-		logerr("%s: bpf_open",__func__);
+		logerr("%s: bpf_open", __func__);
 #ifdef PRIVSEP_RIGHTS
 	else if (ps_rights_limit_fd(psp->psp_bpf->bpf_fd) == -1)
 		logerr("%s: ps_rights_limit_fd", __func__);
 #endif
 	else if (eloop_event_add(ctx->eloop, psp->psp_bpf->bpf_fd, ELE_READ,
-	    ps_bpf_recvbpf, psp) == -1)
+		     ps_bpf_recvbpf, psp) == -1)
 		logerr("%s: eloop_event_add", __func__);
 	else {
 		psp->psp_work_fd = psp->psp_bpf->bpf_fd;
@@ -203,7 +207,7 @@ ps_bpf_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 
 	switch (cmd) {
 #ifdef ARP
-	case PS_BPF_ARP:	/* FALLTHROUGH */
+	case PS_BPF_ARP: /* FALLTHROUGH */
 #endif
 	case PS_BPF_BOOTP:
 		break;
@@ -240,13 +244,13 @@ ps_bpf_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 	case PS_BPF_ARP:
 		psp->psp_proto = ETHERTYPE_ARP;
 		psp->psp_protostr = "ARP";
-		psp->psp_filter = bpf_arp;
+		psp->psp_filter = bpf_filter_arp;
 		break;
 #endif
 	case PS_BPF_BOOTP:
 		psp->psp_proto = ETHERTYPE_IP;
 		psp->psp_protostr = "BOOTP";
-		psp->psp_filter = bpf_bootp;
+		psp->psp_filter = bpf_filter_bootp;
 		break;
 	}
 
@@ -255,11 +259,11 @@ ps_bpf_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 	else
 		addr = inet_ntoa(*ia);
 	snprintf(psp->psp_name, sizeof(psp->psp_name), "BPF %s%s%s",
-	    psp->psp_protostr,
-	    addr != NULL ? " " : "", addr != NULL ? addr : "");
+	    psp->psp_protostr, addr != NULL ? " " : "",
+	    addr != NULL ? addr : "");
 
-	start = ps_startprocess(psp, ps_bpf_recvmsg, NULL,
-	    ps_bpf_start_bpf, PSF_DROPPRIVS);
+	start = ps_startprocess(psp, ps_bpf_recvmsg, NULL, ps_bpf_start_bpf,
+	    PSF_DROPPRIVS);
 
 	switch (start) {
 	case -1:
@@ -269,16 +273,16 @@ ps_bpf_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 		ps_entersandbox("stdio", NULL);
 		break;
 	default:
-		logdebugx("%s: spawned %s on PID %d",
-		    psp->psp_ifname, psp->psp_name, psp->psp_pid);
+		logdebugx("%s: spawned %s on PID %ld", psp->psp_ifname,
+		    psp->psp_name, (long)psp->psp_pid);
 		break;
 	}
 	return start;
 }
 
 ssize_t
-ps_bpf_dispatch(struct dhcpcd_ctx *ctx,
-    struct ps_msghdr *psm, struct msghdr *msg)
+ps_bpf_dispatch(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm,
+    struct msghdr *msg)
 {
 	struct iovec *iov = msg->msg_iov;
 	struct interface *ifp;
@@ -319,8 +323,8 @@ ps_bpf_dispatch(struct dhcpcd_ctx *ctx,
 }
 
 static ssize_t
-ps_bpf_send(const struct interface *ifp, const struct in_addr *ia,
-    uint16_t cmd, const void *data, size_t len)
+ps_bpf_send(const struct interface *ifp, const struct in_addr *ia, uint16_t cmd,
+    const void *data, size_t len)
 {
 	struct dhcpcd_ctx *ctx = ifp->ctx;
 	struct ps_msghdr psm = {
@@ -341,16 +345,13 @@ ps_bpf_send(const struct interface *ifp, const struct in_addr *ia,
 ssize_t
 ps_bpf_openarp(const struct interface *ifp, const struct in_addr *ia)
 {
-
 	assert(ia != NULL);
-	return ps_bpf_send(ifp, ia, PS_BPF_ARP | PS_START,
-	    ifp, sizeof(*ifp));
+	return ps_bpf_send(ifp, ia, PS_BPF_ARP | PS_START, ifp, sizeof(*ifp));
 }
 
 ssize_t
 ps_bpf_closearp(const struct interface *ifp, const struct in_addr *ia)
 {
-
 	return ps_bpf_send(ifp, ia, PS_BPF_ARP | PS_STOP, NULL, 0);
 }
 
@@ -358,7 +359,6 @@ ssize_t
 ps_bpf_sendarp(const struct interface *ifp, const struct in_addr *ia,
     const void *data, size_t len)
 {
-
 	assert(ia != NULL);
 	return ps_bpf_send(ifp, ia, PS_BPF_ARP, data, len);
 }
@@ -367,21 +367,18 @@ ps_bpf_sendarp(const struct interface *ifp, const struct in_addr *ia,
 ssize_t
 ps_bpf_openbootp(const struct interface *ifp)
 {
-
-	return ps_bpf_send(ifp, NULL, PS_BPF_BOOTP | PS_START,
-	    ifp, sizeof(*ifp));
+	return ps_bpf_send(ifp, NULL, PS_BPF_BOOTP | PS_START, ifp,
+	    sizeof(*ifp));
 }
 
 ssize_t
 ps_bpf_closebootp(const struct interface *ifp)
 {
-
 	return ps_bpf_send(ifp, NULL, PS_BPF_BOOTP | PS_STOP, NULL, 0);
 }
 
 ssize_t
 ps_bpf_sendbootp(const struct interface *ifp, const void *data, size_t len)
 {
-
 	return ps_bpf_send(ifp, NULL, PS_BPF_BOOTP, data, len);
 }

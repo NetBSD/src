@@ -1,4 +1,7 @@
 #!/bin/sh
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright (c) 2017-2022 Roy Marples <roy@marples.name>
+
 # dhcpcd client configuration script 
 
 # Handy variables and functions for our hooks to use
@@ -25,7 +28,7 @@ uniqify()
 			*) result="$result${result:+ }$i";;
 		esac
 	done
-	echo "$result"
+	printf '%s\n' "$result"
 }
 
 # List interface config files in a directory.
@@ -55,7 +58,7 @@ trim()
 	if [ -z "$var" ]; then
 		# So it seems our shell doesn't support wctype(3) patterns
 		# Fall back to sed
-		var=$(echo "$*" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')
+		var=$(printf '%s\n' "$*" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')
 	fi
 	printf %s "$var"
 }
@@ -73,7 +76,7 @@ key_get_value()
 		for x do
 			while read line; do
 				case "$line" in
-				"$key"*) echo "${line##$key}";;
+				"$key"*) printf '%s\n' "${line##$key}";;
 				esac
 			done < "$x"
 		done
@@ -97,7 +100,7 @@ remove_markers()
 				case "$line" in
 				"$m1"*) in_marker=1;;
 				"$m2"*) in_marker=0;;
-				*) [ $in_marker = 0 ] && echo "$line";;
+				*) [ $in_marker = 0 ] && printf '%s\n' "$line";;
 				esac
 			done < "$x"
 		done
@@ -175,8 +178,8 @@ syslog()
 	[ -n "$lvl" ] && shift
 	[ -n "$*" ] || return 0
 	case "$lvl" in
-	err|error)	echo "$interface: $*" >&2;;
-	*)		echo "$interface: $*";;
+	err|error)	printf '%s\n' "$interface: $*" >&2;;
+	*)		printf '%s\n' "$interface: $*";;
 	esac
 	if command -v logger >/dev/null 2>&1; then
 		logger -i -p daemon."$lvl" -t dhcpcd-run-hooks "$interface: $*"

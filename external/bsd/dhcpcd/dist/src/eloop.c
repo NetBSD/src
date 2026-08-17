@@ -1,7 +1,7 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * eloop - portable event based main loop.
- * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
+ * SPDX-License-Identifier: BSD-2-Clause
+ * Copyright (c) 2006-2026 Roy Marples <roy@marples.name>
  * All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
  * On Linux use epoll(7)
  * Everywhere else use ppoll(2)
  */
-#ifdef BSD
+#if defined(BSD) || defined(__APPLE__)
 #include <sys/event.h>
 #define USE_KQUEUE
 #if defined(__NetBSD__)
@@ -131,6 +131,7 @@ struct eloop {
 
 #if defined(USE_KQUEUE) || defined(USE_EPOLL)
 	int fd;
+	int waitfd;
 #endif
 #if defined(USE_KQUEUE)
 	struct kevent *fds;
@@ -235,7 +236,7 @@ eloop_event_count(const struct eloop *eloop)
 static int
 eloop_signal_kqueue(struct eloop *eloop, const int *signals, size_t nsignals)
 {
-	unsigned int cmd = nsignals == 0 ? EV_DELETE : EV_ADD;
+	unsigned short cmd = nsignals == 0 ? EV_DELETE : EV_ADD;
 	struct kevent *ke, *kep;
 	size_t i;
 	int err;
@@ -261,8 +262,7 @@ eloop_signal_kqueue(struct eloop *eloop, const int *signals, size_t nsignals)
 }
 
 static int
-eloop_event_kqueue(struct eloop *eloop, struct eloop_event *e,
-    unsigned short events)
+eloop_event_kqueue(int fd, struct eloop_event *e, unsigned short events)
 {
 #ifdef EVFILT_PROCDESC
 #define NKE 3
@@ -270,27 +270,25 @@ eloop_event_kqueue(struct eloop *eloop, struct eloop_event *e,
 #define NKE 2
 #endif
 	struct kevent ke[NKE], *kep = ke;
-	int fd = e->fd;
+	uintptr_t efd = (uintptr_t)e->fd;
 
 	if (events & ELE_READ && !(e->events & ELE_READ))
-		EV_SET(kep++, (uintptr_t)fd, EVFILT_READ, EV_ADD, 0, 0, e);
+		EV_SET(kep++, efd, EVFILT_READ, EV_ADD, 0, 0, e);
 	else if (!(events & ELE_READ) && e->events & ELE_READ)
-		EV_SET(kep++, (uintptr_t)fd, EVFILT_READ, EV_DELETE, 0, 0, e);
+		EV_SET(kep++, efd, EVFILT_READ, EV_DELETE, 0, 0, e);
 	if (events & ELE_WRITE && !(e->events & ELE_WRITE))
-		EV_SET(kep++, (uintptr_t)fd, EVFILT_WRITE, EV_ADD, 0, 0, e);
+		EV_SET(kep++, efd, EVFILT_WRITE, EV_ADD, 0, 0, e);
 	else if (!(events & ELE_WRITE) && e->events & ELE_WRITE)
-		EV_SET(kep++, (uintptr_t)fd, EVFILT_WRITE, EV_DELETE, 0, 0, e);
+		EV_SET(kep++, efd, EVFILT_WRITE, EV_DELETE, 0, 0, e);
 #ifdef EVFILT_PROCDESC
 	if (events & ELE_HANGUP && !(e->events & ELE_HANGUP))
-		EV_SET(kep++, (uintptr_t)fd, EVFILT_PROCDESC, EV_ADD, NOTE_EXIT,
-		    0, e);
+		EV_SET(kep++, efd, EVFILT_PROCDESC, EV_ADD, NOTE_EXIT, 0, e);
 	else if (!(events & ELE_HANGUP) && e->events & ELE_HANGUP)
-		EV_SET(kep++, (uintptr_t)fd, EVFILT_PROCDESC, EV_DELETE,
-		    NOTE_EXIT, 0, e);
+		EV_SET(kep++, efd, EVFILT_PROCDESC, EV_DELETE, NOTE_EXIT, 0, e);
 #endif
 	if (kep == ke)
 		return 0;
-	if (kevent(eloop->fd, ke, (KEVENT_N)(kep - ke), NULL, 0, NULL) == -1)
+	if (kevent(fd, ke, (KEVENT_N)(kep - ke), NULL, 0, NULL) == -1)
 		return -1;
 	return 1;
 }
@@ -298,8 +296,7 @@ eloop_event_kqueue(struct eloop *eloop, struct eloop_event *e,
 #elif defined(USE_EPOLL)
 
 static int
-eloop_event_epoll(struct eloop *eloop, struct eloop_event *e,
-    unsigned short events)
+eloop_event_epoll(int fd, struct eloop_event *e, unsigned short events)
 {
 	struct epoll_event epe;
 	int op;
@@ -310,10 +307,13 @@ eloop_event_epoll(struct eloop *eloop, struct eloop_event *e,
 		epe.events |= EPOLLIN;
 	if (events & ELE_WRITE)
 		epe.events |= EPOLLOUT;
-	op = e->events == 0 ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
+	if (events & ELE_HANGUP)
+		epe.events |= EPOLLHUP;
 	if (epe.events == 0)
-		return 0;
-	if (epoll_ctl(eloop->fd, op, e->fd, &epe) == -1)
+		op = EPOLL_CTL_DEL;
+	else
+		op = e->events == 0 ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
+	if (epoll_ctl(fd, op, e->fd, &epe) == -1)
 		return -1;
 	return 1;
 }
@@ -359,9 +359,9 @@ eloop_event_add(struct eloop *eloop, int fd, unsigned short events,
 	e->cb_arg = cb_arg;
 
 #if defined(USE_KQUEUE)
-	kadded = eloop_event_kqueue(eloop, e, events);
+	kadded = eloop_event_kqueue(eloop->fd, e, events);
 #elif defined(USE_EPOLL)
-	kadded = eloop_event_epoll(eloop, e, events);
+	kadded = eloop_event_epoll(eloop->fd, e, events);
 #elif defined(USE_PPOLL)
 	e->pollfd = NULL;
 	kadded = 1;
@@ -385,6 +385,7 @@ eloop_event_delete(struct eloop *eloop, int fd)
 	struct kevent ke[2], *kep = &ke[0];
 	size_t n;
 #endif
+	int error;
 
 	if (fd == -1) {
 		errno = EINVAL;
@@ -400,6 +401,7 @@ eloop_event_delete(struct eloop *eloop, int fd)
 		return -1;
 	}
 
+	error = 1;
 #if defined(USE_KQUEUE)
 	n = 0;
 	if (e->events & ELE_READ) {
@@ -411,16 +413,18 @@ eloop_event_delete(struct eloop *eloop, int fd)
 		n++;
 	}
 	if (n != 0 && kevent(eloop->fd, ke, (KEVENT_N)n, NULL, 0, NULL) == -1)
-		return -1;
+		error = -1;
 #elif defined(USE_EPOLL)
 	if (epoll_ctl(eloop->fd, EPOLL_CTL_DEL, fd, NULL) == -1)
-		return -1;
+		error = -1;
 #endif
 
+	/* We should remove the event from the eloop even if kevent or epoll
+	 * report an error, it's possible it could be EBADF for example. */
 	e->fd = -1;
 	eloop->nevents--;
 	eloop->events_need_setup = true;
-	return 1;
+	return error;
 }
 
 unsigned long long
@@ -430,19 +434,12 @@ eloop_timespec_diff(const struct timespec *tsp, const struct timespec *usp,
 	unsigned long long tsecs, usecs, secs;
 	long nsecs;
 
-	if (tsp->tv_sec < 0) /* time wrapped */
-		tsecs = UTIME_MAX - (unsigned long long)(-tsp->tv_sec);
-	else
-		tsecs = (unsigned long long)tsp->tv_sec;
-	if (usp->tv_sec < 0) /* time wrapped */
-		usecs = UTIME_MAX - (unsigned long long)(-usp->tv_sec);
-	else
-		usecs = (unsigned long long)usp->tv_sec;
+	tsecs = (unsigned long long)tsp->tv_sec & (UTIME_MAX);
+	usecs = (unsigned long long)usp->tv_sec & (UTIME_MAX);
+	secs = (tsecs - usecs) & (UTIME_MAX);
 
-	if (usecs > tsecs) /* time wrapped */
-		secs = (UTIME_MAX - usecs) + tsecs;
-	else
-		secs = tsecs - usecs;
+	if (secs > TIME_MAX) /* Monotonic clock went backward */
+		secs = 0;
 
 	nsecs = tsp->tv_nsec - usp->tv_nsec;
 	if (nsecs < 0) {
@@ -453,6 +450,7 @@ eloop_timespec_diff(const struct timespec *tsp, const struct timespec *usp,
 			nsecs += NSEC_PER_SEC;
 		}
 	}
+
 	if (nsp != NULL)
 		*nsp = (unsigned int)nsecs;
 	return secs;
@@ -562,7 +560,7 @@ eloop_q_timeout_add_tv(struct eloop *eloop, int queue,
 	}
 
 	return eloop_q_timeout_add(eloop, queue, (unsigned int)when->tv_sec,
-	    (unsigned int)when->tv_sec, callback, arg);
+	    (unsigned int)when->tv_nsec, callback, arg);
 }
 
 int
@@ -617,7 +615,7 @@ eloop_exit(struct eloop *eloop, int code)
 
 #if defined(USE_KQUEUE) || defined(USE_EPOLL)
 static int
-eloop_open(struct eloop *eloop)
+eloop_open(void)
 {
 	int fd;
 
@@ -625,6 +623,12 @@ eloop_open(struct eloop *eloop)
 	fd = kqueue1(O_CLOEXEC);
 #elif defined(KQUEUE_CLOEXEC)
 	fd = kqueuex(KQUEUE_CLOEXEC);
+#elif defined(USE_KQUEUE) && defined(__APPLE__)
+	/* macOS does not allow setting CLOEXEC on kqueue.
+	 * This should not be a problem because eloop consumers
+	 * fork and exec rather than just exec and kqueue is
+	 * automatically closed on fork. */
+	fd = kqueue();
 #elif defined(USE_KQUEUE)
 	int flags;
 
@@ -639,7 +643,6 @@ eloop_open(struct eloop *eloop)
 	fd = epoll_create1(EPOLL_CLOEXEC);
 #endif
 
-	eloop->fd = fd;
 	return fd;
 }
 #endif
@@ -694,10 +697,29 @@ eloop_forked(struct eloop *eloop, unsigned short flags)
 	unsigned short events;
 	int err;
 
-	/* The fd is invalid after a fork, no need to close it. */
+/* kqueue invalidates the fd on fork.
+ * epoll shares state across fork, so we close the old and create a new one. */
+#ifdef USE_EPOLL
+	close(eloop->fd);
+#endif
 	eloop->fd = -1;
-	if (flags && eloop_open(eloop) == -1)
-		return -1;
+	if (flags) {
+		if ((eloop->fd = eloop_open()) == -1)
+			return -1;
+
+		if (eloop->waitfd != -1) {
+#ifdef USE_EPOLL
+			close(eloop->waitfd);
+#endif
+			if ((eloop->waitfd = eloop_open()) == -1)
+				return -1;
+		}
+	} else {
+#ifdef USE_EPOLL
+		close(eloop->waitfd);
+#endif
+		eloop->waitfd = -1;
+	}
 
 	eloop_clear(eloop, flags);
 	if (!flags)
@@ -714,9 +736,9 @@ eloop_forked(struct eloop *eloop, unsigned short flags)
 		events = e->events;
 		e->events = 0;
 #if defined(USE_KQUEUE)
-		err = eloop_event_kqueue(eloop, e, events);
+		err = eloop_event_kqueue(eloop->fd, e, events);
 #elif defined(USE_EPOLL)
-		err = eloop_event_epoll(eloop, e, events);
+		err = eloop_event_epoll(eloop->fd, e, events);
 #endif
 		if (err == -1)
 			return -1;
@@ -823,7 +845,9 @@ eloop_new(void)
 	eloop->exitcode = EXIT_FAILURE;
 
 #if defined(USE_KQUEUE) || defined(USE_EPOLL)
-	if (eloop_open(eloop) == -1 || eloop_grow_events(eloop) == -1) {
+	eloop->waitfd = -1;
+	if ((eloop->fd = eloop_open()) == -1 ||
+	    eloop_grow_events(eloop) == -1) {
 		eloop_free(eloop);
 		return NULL;
 	}
@@ -840,6 +864,8 @@ eloop_free(struct eloop *eloop)
 
 	eloop_clear(eloop, 0);
 #if defined(USE_KQUEUE) || defined(USE_EPOLL)
+	if (eloop->waitfd != -1)
+		close(eloop->waitfd);
 	if (eloop->fd != -1)
 		close(eloop->fd);
 #endif
@@ -847,6 +873,48 @@ eloop_free(struct eloop *eloop)
 	free(eloop);
 }
 
+#if defined(USE_KQUEUE)
+static unsigned short
+eloop_kqueueevents(struct kevent *ke)
+{
+	unsigned short events;
+
+	if (ke->filter == EVFILT_READ)
+		events = ELE_READ;
+	else if (ke->filter == EVFILT_WRITE)
+		events = ELE_WRITE;
+#ifdef EVFILT_PROCDESC
+	else if (ke->filter == EVFILT_PROCDESC && ke->fflags & NOTE_EXIT)
+		/* exit status is in ke->data
+		 * should we do anything with it? */
+		events = ELE_HANGUP;
+#endif
+	else
+		events = 0;
+	if (ke->flags & EV_EOF)
+		events |= ELE_HANGUP;
+	if (ke->flags & EV_ERROR)
+		events |= ELE_ERROR;
+	return events;
+}
+#elif defined(USE_EPOLL)
+static unsigned short
+eloop_epollevents(struct epoll_event *epe)
+{
+	unsigned short events = 0;
+
+	if (epe->events & EPOLLIN)
+		events |= ELE_READ;
+	if (epe->events & EPOLLOUT)
+		events |= ELE_WRITE;
+	if (epe->events & EPOLLHUP)
+		events |= ELE_HANGUP;
+	if (epe->events & EPOLLERR)
+		events |= ELE_ERROR;
+
+	return events;
+}
+#elif defined(USE_PPOLL)
 static unsigned short
 eloop_pollevents(struct pollfd *pfd)
 {
@@ -864,18 +932,81 @@ eloop_pollevents(struct pollfd *pfd)
 		events |= ELE_NVAL;
 	return events;
 }
+#endif
 
 int
-eloop_waitfd(int fd)
+eloop_openfdwaiter(struct eloop *eloop)
 {
+#if defined(USE_KQUEUE) || defined(USE_EPOLL)
+	int fd;
+
+	fd = eloop_open();
+	if (fd == -1)
+		return -1;
+	eloop->waitfd = fd;
+	return fd;
+#else
+	UNUSED(eloop);
+	/* Not an error, but no fd */
+	errno = 0;
+	return -1;
+#endif
+}
+
+int
+eloop_waitfd(struct eloop *eloop, int fd)
+{
+	int n;
+#if defined(USE_KQUEUE)
+	struct kevent ke;
+
+	EV_SET(&ke, (uintptr_t)fd, EVFILT_READ, EV_ADD | EV_ONESHOT, 0, 0,
+	    NULL);
+	n = kevent(eloop->waitfd, &ke, 1, &ke, 1, NULL);
+	if (n == -1 || n == 0)
+		return n;
+	return (int)eloop_kqueueevents(&ke);
+#elif defined(USE_EPOLL)
+	struct eloop_event e = { .fd = fd };
+	struct epoll_event epe;
+
+	if (eloop_event_epoll(eloop->waitfd, &e, ELE_READ) == -1)
+		return -1;
+	n = epoll_pwait(eloop->waitfd, &epe, 1, -1, NULL);
+	if (eloop_event_epoll(eloop->waitfd, &e, 0) == -1)
+		return -1;
+	if (n == -1 || n == 0)
+		return n;
+	return (int)eloop_epollevents(&epe);
+#else
 	struct pollfd pfd = { .fd = fd, .events = POLLIN };
+
+	UNUSED(eloop);
+	n = poll(&pfd, 1, -1);
+	if (n == -1 || n == 0)
+		return n;
+	return (int)eloop_pollevents(&pfd);
+#endif
+}
+
+int
+eloop_closefdwaiter(struct eloop *eloop)
+{
+#if defined(USE_KQUEUE) || defined(USE_EPOLL)
 	int err;
 
-	err = ppoll(&pfd, 1, NULL, NULL);
-	if (err == -1 || err == 0)
-		return err;
+	if (eloop->waitfd == -1) {
+		errno = EBADF;
+		return -1;
+	}
 
-	return (int)eloop_pollevents(&pfd);
+	err = close(eloop->waitfd);
+	eloop->waitfd = -1;
+	return err;
+#else
+	UNUSED(eloop);
+	return 0;
+#endif
 }
 
 #if defined(USE_KQUEUE)
@@ -901,23 +1032,7 @@ eloop_run_kqueue(struct eloop *eloop, const struct timespec *ts)
 				    eloop->signal_cb_ctx);
 			continue;
 		}
-		if (ke->filter == EVFILT_READ)
-			events = ELE_READ;
-		else if (ke->filter == EVFILT_WRITE)
-			events = ELE_WRITE;
-#ifdef EVFILT_PROCDESC
-		else if (ke->filter == EVFILT_PROCDESC &&
-		    ke->fflags & NOTE_EXIT)
-			/* exit status is in ke->data
-			 * should we do anything with it? */
-			events = ELE_HANGUP;
-#endif
-		else
-			continue; /* assert? */
-		if (ke->flags & EV_EOF)
-			events |= ELE_HANGUP;
-		if (ke->flags & EV_ERROR)
-			events |= ELE_ERROR;
+		events = eloop_kqueueevents(ke);
 		e = (struct eloop_event *)ke->udata;
 		e->cb(e->cb_arg, events);
 	}
@@ -969,15 +1084,7 @@ eloop_run_epoll(struct eloop *eloop, const struct timespec *ts)
 		e = (struct eloop_event *)epe->data.ptr;
 		if (e->fd == -1)
 			continue;
-		events = 0;
-		if (epe->events & EPOLLIN)
-			events |= ELE_READ;
-		if (epe->events & EPOLLOUT)
-			events |= ELE_WRITE;
-		if (epe->events & EPOLLHUP)
-			events |= ELE_HANGUP;
-		if (epe->events & EPOLLERR)
-			events |= ELE_ERROR;
+		events = eloop_epollevents(epe);
 		e->cb(e->cb_arg, events);
 	}
 
