@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.23 2026/08/16 21:52:42 riastradh Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.24 2026/08/17 01:52:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,17 +105,17 @@ void	lockdebug_mem_check(const char *, size_t, void *, size_t);
 {									      \
 	if ((owantedp) == NULL)						      \
 		break;							      \
-	*((owantedp) == NULL ? (volatile void **)NULL : (owantedp)) =	      \
-	    curlwp->l_ld_wanted;					      \
+	/* Funny conditional checks type of owantedp. */		      \
+	*(0 ? (volatile void **)NULL : (owantedp)) = curlwp->l_ld_wanted;     \
 	curlwp->l_ld_wanted = (lock);					      \
 } while (0)
 #define	LOCKDEBUG_LOCKED(dodebug, lock, al, where, s, owantedp) do	      \
 {									      \
 	if ((owantedp) == NULL)						      \
 		break;							      \
-	curlwp->l_ld_wanted =						      \
-	    *((owantedp) == NULL ? (volatile void **)NULL : (owantedp));      \
-	*((owantedp) == NULL ? (volatile void **)NULL : (owantedp)) = NULL;   \
+	/* Funny conditional checks type of owantedp. */		      \
+	curlwp->l_ld_wanted = *(0 ? (volatile void **)NULL : (owantedp));     \
+	*(0 ? (volatile void **)NULL : (owantedp)) = NULL;		      \
 } while (0)
 #endif
 #define	LOCKDEBUG_UNLOCKED(dodebug, lock, where, s)	__nothing
