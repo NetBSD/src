@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.81.4.1 2026/08/17 16:00:38 martin Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.81.4.2 2026/08/17 16:03:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.81.4.1 2026/08/17 16:00:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.81.4.2 2026/08/17 16:03:25 martin Exp $");
 
 #include "opt_usb.h"
 
@@ -1290,26 +1290,11 @@ dwc2_init(struct dwc2_softc *sc)
 	}
 	hsotg->dr_mode = USB_DR_MODE_HOST;
 
-	/*
-	 * Reset before dwc2_get_hwparams() then it could get power-on real
-	 * reset value form registers.
-	 */
-	retval = dwc2_core_reset(hsotg);
-	if (retval)
-		goto fail2;
-
 	/* Detect config values from hardware */
 	retval = dwc2_get_hwparams(hsotg);
 	if (retval) {
 		goto fail2;
 	}
-
-	/*
-	 * For OTG cores, set the force mode bits to reflect the value
-	 * of dr_mode. Force mode bits should not be touched at any
-	 * other time after this.
-	 */
-	dwc2_force_dr_mode(hsotg);
 
 	hsotg->core_params = kmem_zalloc(sizeof(*hsotg->core_params), KM_SLEEP);
 	dwc2_set_all_params(hsotg->core_params, -1);
