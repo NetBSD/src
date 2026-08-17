@@ -50,7 +50,7 @@
 #include <arpa/inet.h>
 
 #include "config.h" // IWYU pragma: keep
-#include "src/dhcpcd.h"
+#include "dhcpcd.h"
 #ifdef __NetBSD__
 #include <net/if_vlanvar.h> /* Needs netinet/if_ether.h */
 #elif defined(__DragonFly__)

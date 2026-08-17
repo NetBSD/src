@@ -1748,11 +1748,13 @@ ipv6_startstatic(struct interface *ifp)
 	if (ia == NULL) {
 		struct ipv6_state *state;
 
+		state = ipv6_getstate(ifp);
+		if (state == NULL)
+			return -1;
 		ia = ipv6_newaddr(ifp, &ifp->options->req_addr6,
 		    ifp->options->req_prefix_len, 0);
 		if (ia == NULL)
 			return -1;
-		state = IPV6_STATE(ifp);
 		TAILQ_INSERT_TAIL(&state->addrs, ia, next);
 		run_script = 0;
 	} else
