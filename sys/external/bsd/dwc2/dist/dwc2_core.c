@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.c,v 1.14 2025/04/12 08:22:31 mlelstv Exp $	*/
+/*	$NetBSD: dwc2_core.c,v 1.15 2026/08/17 16:11:28 skrll Exp $	*/
 
 /*
  * core.c - DesignWare HS OTG Controller common routines
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.14 2025/04/12 08:22:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.15 2026/08/17 16:11:28 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -487,6 +487,39 @@ static void dwc2_init_fs_ls_pclk_sel(struct dwc2_hsotg *hsotg)
 	DWC2_WRITE_4(hsotg, HCFG, hcfg);
 }
 
+/**
+ * dwc2_wait_for_mode() - Waits for the controller mode.
+ * @hsotg:	Programming view of the DWC_otg controller.
+ * @host_mode:	If true, waits for host mode, otherwise device mode.
+ */
+static void dwc2_wait_for_mode(struct dwc2_hsotg *hsotg,
+			       bool host_mode)
+{
+	unsigned int timeout = 110;
+	unsigned int elapsed = 0;
+
+	dev_vdbg(hsotg->dev, "Waiting for %s mode\n",
+		 host_mode ? "host" : "device");
+
+	while (1) {
+		if (dwc2_is_host_mode(hsotg) == host_mode) {
+			dev_vdbg(hsotg->dev, "%s mode set\n",
+				 host_mode ? "Host" : "Device");
+			break;
+		}
+
+		if (elapsed >= timeout) {
+			dev_warn(hsotg->dev, "%s: Couldn't set %s mode\n",
+				 __func__, host_mode ? "host" : "device");
+			break;
+		}
+
+		msleep(1);
+		elapsed++;
+	}
+}
+
+
 /*
  * Do core a soft reset of the core.  Be careful with this because it
  * resets all the internal state machines of the core.
@@ -590,7 +623,8 @@ static bool dwc2_force_mode(struct dwc2_hsotg *hsotg, bool host)
 	gusbcfg |= set;
 	DWC2_WRITE_4(hsotg, GUSBCFG, gusbcfg);
 
-	msleep(25);
+	dwc2_wait_for_mode(hsotg, host);
+
 	return true;
 }
 
