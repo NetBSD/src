@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.194 2026/08/16 21:53:21 riastradh Exp $	*/
+/*	$NetBSD: db_command.c,v 1.195 2026/08/17 19:31:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.194 2026/08/16 21:53:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.195 2026/08/17 19:31:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -1401,8 +1401,8 @@ db_show_all_locks(db_expr_t addr, bool have_addr,
 	if (modif[0] == 't')
 		show_trace = true;
 
-	db_printf("%-5s %5s %3s %18s %18s %18s %4s\n",
-	    "PID", "LID", "CPU", "STRUCT LWP *", "LOCK", "OWNER", "BITS");
+	db_printf("%-5s %5s %3s %18s %18s %4s %s\n",
+	    "PID", "LID", "CPU", "STRUCT LWP *", "OWNER", "BITS", "LOCK");
 	for (p = db_proc_first(); p != NULL; p = db_proc_next(p)) {
 		pid_t pid;
 		struct lwp *l;
@@ -1423,11 +1423,15 @@ db_show_all_locks(db_expr_t addr, bool have_addr,
 			int cpuno = -1;
 			volatile void *ld_wanted;
 			uintptr_t ownerword;
+			char locksym[128];
 
 			db_read_bytes((db_addr_t)(uintptr_t)&l->l_ld_wanted,
 			    sizeof(ld_wanted), (char *)&ld_wanted);
 			if (ld_wanted == NULL)
 				continue;
+			db_symstr(locksym, sizeof(locksym),
+			    (db_expr_t)(intptr_t)ld_wanted,
+			    DB_STGY_ANY);
 
 			db_read_bytes((db_addr_t)(uintptr_t)&l->l_lid,
 			    sizeof(lid), (char *)&lid);
@@ -1446,11 +1450,12 @@ db_show_all_locks(db_expr_t addr, bool have_addr,
 			}
 			db_read_bytes((db_addr_t)(uintptr_t)ld_wanted,
 			    sizeof(ownerword), (char *)&ownerword);
-			db_printf("%-5d%c%5d %3d %18lx %18lx %18lx %4x\n",
+			db_printf("%-5d%c%5d %3d %18lx %18lx %4x %s\n",
 			    pid, run ? '>' : ' ', lid, cpuno,
-			    (long)l, (long)ld_wanted,
+			    (long)l,
 			    (long)(ownerword & ~(uintptr_t)ALIGNBYTES),
-			    (int)(ownerword & ALIGNBYTES));
+			    (int)(ownerword & ALIGNBYTES),
+			    locksym);
 			if (show_trace) {
 				const struct lwp *owner =
 				    (const void *)(ownerword &
