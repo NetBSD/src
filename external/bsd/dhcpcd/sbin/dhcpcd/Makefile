@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.57 2022/10/31 09:27:23 wiz Exp $
+# $NetBSD: Makefile,v 1.58 2026/08/17 11:56:16 roy Exp $
 #
 
 WARNS?=		6
@@ -34,7 +34,7 @@ SRCS+=		auth.c
 
 .if (${USE_INET} != "no")
 CPPFLAGS+=	-DINET
-SRCS+=		bpf.c dhcp.c ipv4.c
+SRCS+=		bpf.c bpf-bsd.c dhcp.c ipv4.c
 .if !defined(SMALLPROG)
 SRCS+=		privsep-bpf.c
 .endif

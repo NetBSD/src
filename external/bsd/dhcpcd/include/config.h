@@ -1,4 +1,8 @@
 /* netbsd */
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
 #ifndef	SYSCONFDIR
 #define	SYSCONFDIR		"/etc"
 #define	SBINDIR			"/sbin"
@@ -15,10 +19,11 @@
 #define	HAVE_IFADDRS_ADDRFLAGS
 #define	HAVE_OPEN_MEMSTREAM
 #define	HAVE_UTIL_H
-#define	HAVE_SYS_QUEUE_H
+#define HAVE_SETPROCTITLE
 #define	HAVE_SYS_RBTREE_H
 #define	HAVE_REALLOCARRAY
-#define	HAVE_PPOLL
 #define	HAVE_SYS_BITOPS_H
 #define	HAVE_MD5_H
 #define	SHA2_H			<sha2.h>
+
+#endif /*CONFIG_H*/
