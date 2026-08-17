@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.471 2019/01/01 10:06:54 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.471.4.1 2026/08/17 15:51:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.471 2019/01/01 10:06:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.471.4.1 2026/08/17 15:51:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -286,6 +286,9 @@ vflushbuf(struct vnode *vp, int flags)
 	struct buf *bp, *nbp;
 	int error, pflags;
 	bool dirty, sync;
+#ifdef DEBUG
+	bool warned = false;
+#endif
 
 	sync = (flags & FSYNC_WAIT) != 0;
 	pflags = PGO_CLEANIT | PGO_ALLPAGES |
@@ -330,7 +333,18 @@ loop:
 	mutex_exit(vp->v_interlock);
 
 	if (dirty) {
-		vprint("vflushbuf: dirty", vp);
+#ifdef DEBUG
+		if (!warned) {
+			static struct timeval vflushbuf_warntime;
+			const struct timeval interval = {60,0};
+
+			mutex_enter(&bufcache_lock);
+			if (ratecheck(&vflushbuf_warntime, &interval))
+				vprint("vflushbuf: dirty", vp);
+			mutex_exit(&bufcache_lock);
+			warned = true;
+		}
+#endif
 		goto loop;
 	}
 
