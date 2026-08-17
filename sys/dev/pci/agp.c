@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.90 2026/06/21 18:38:35 andvar Exp $	*/
+/*	$NetBSD: agp.c,v 1.91 2026/08/17 19:40:52 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.90 2026/06/21 18:38:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.91 2026/08/17 19:40:52 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/agpio.h>
@@ -453,8 +453,7 @@ agp_generic_detach(struct agp_softc *sc)
 static int
 agpdev_match(const struct pci_attach_args *pa)
 {
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY)
 		if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
 		    NULL, NULL))
 		return 1;
