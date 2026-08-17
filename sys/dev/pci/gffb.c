@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.36 2026/05/26 12:28:39 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.37 2026/08/17 14:02:29 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.36 2026/05/26 12:28:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.37 2026/08/17 14:02:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,12 @@ struct gffb_softc {
 	void (*sc_putchar)(void *, int, int, u_int, long);
 	kmutex_t sc_lock;
 	glyphcache sc_gc;
+	/* cursor stuff */
+	uint8_t sc_image[128], sc_mask[128];
+	uint8_t sc_cstate;
+	uint16_t *sc_cimg;
+	int sc_cursor_x, sc_cursor_y, sc_hot_x, sc_hot_y;
+	uint16_t sc_cmap[3];
 };
 
 static int	gffb_match(device_t, cfdata_t, void *);
@@ -135,6 +141,9 @@ static void	gffb_rectfill(struct gffb_softc *, int, int, int, int,
 static void	gffb_rectfill_a(void *, int, int, int, int, long);
 static void	gffb_bitblt(void *, int, int, int, int, int, int, int);
 static void	gffb_rop(struct gffb_softc *, int);
+
+static int 	gffb_set_cursor(struct gffb_softc *, struct wsdisplay_cursor *);
+static int 	gffb_set_curpos(struct gffb_softc *, struct wsdisplay_curpos *);
 
 static void	gffb_cursor(void *, int, int, int);
 static void	gffb_putchar(void *, int, int, u_int, long);
@@ -591,6 +600,26 @@ gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_SVIDEO:
 		gffb_setvideo(sc, *(int *)data == WSDISPLAYIO_VIDEO_ON);
 		return 0;
+
+	case WSDISPLAYIO_GCURMAX:
+		((struct wsdisplay_curpos *)data)->x = 32;
+		((struct wsdisplay_curpos *)data)->y = 32;
+		return 0;
+
+	case WSDISPLAYIO_SCURSOR:
+		return gffb_set_cursor(sc, (struct wsdisplay_cursor *)data);
+
+	case WSDISPLAYIO_GCURSOR:
+		return EPASSTHROUGH;
+
+	case WSDISPLAYIO_GCURPOS:
+		((struct wsdisplay_curpos *)data)->x = sc->sc_cursor_x;
+		((struct wsdisplay_curpos *)data)->y = sc->sc_cursor_y;
+		return 0;
+
+	case WSDISPLAYIO_SCURPOS:
+		return gffb_set_curpos(sc, (struct wsdisplay_curpos *)data);
+
 	}
 	return EPASSTHROUGH;
 }
@@ -800,6 +829,7 @@ gffb_setvideo(struct gffb_softc *sc, int on)
 		reg0 |= 0xc0;
 		reg1 |= 0xc0;
 	}
+
 
 	gffb_write_crtc(sc, 0, 0x1a, reg0);
 	gffb_write_crtc(sc, 1, 0x1a, reg1);
@@ -1134,7 +1164,7 @@ gffb_init(struct gffb_softc *sc)
   			GFFB_WRITE_4(GFFB_PGRAPH + 0x6900 + i,
 			    GFFB_READ_4(GFFB_PFB + 0x0240 + i));
 		}
-		
+
 		GFFB_WRITE_4(GFFB_PGRAPH + 0x09A4,
 			GFFB_READ_4(GFFB_PFB + 0x0200));
 		GFFB_WRITE_4(GFFB_PGRAPH + 0x09A8,
@@ -1154,6 +1184,35 @@ gffb_init(struct gffb_softc *sc)
 		GFFB_WRITE_4(GFFB_PGRAPH + 0x0B20, 0x00000000);
 		GFFB_WRITE_4(GFFB_PGRAPH + 0x0B04, 0xFFFFFFFF);
 	}
+
+	/*
+	 * cursor sprite setup for 32x32, RGB555
+	 * we should be able to use ARGB8888 / 64x64 but for some reason
+	 * I couldn't get that to work right ( thanks to xf86-video-nv being all
+	 * magic number voodoo ), and it's not like we need it anyway
+	 */
+	GFFB_WRITE_4(GFFB_CRTC0 + 0x810, 0x02000100);
+	GFFB_WRITE_4(GFFB_CRTC1 + 0x810, 0x02000100);
+	GFFB_WRITE_4(GFFB_RAMDAC0 + GFFB_CURPOS, 0x00800080);
+	GFFB_WRITE_4(GFFB_RAMDAC1 + GFFB_CURPOS, 0x00000080);
+	/* we put the cursor image at 16MB - 32KB */
+	int coffset = 0x00ff8000, c0, c1, c2;
+	c0 = ((coffset >> 17) & 0x7f) | 0x80;
+	c1 = ((coffset >> 11) << 2) & 0xfe;
+	sc->sc_cstate = c1;
+	c2 = coffset >> 24;
+	gffb_write_crtc(sc, 0, 0x30, c0);
+	gffb_write_crtc(sc, 0, 0x31, c1);
+	gffb_write_crtc(sc, 0, 0x2f, c2);
+	gffb_write_crtc(sc, 1, 0x30, c0);
+	gffb_write_crtc(sc, 1, 0x31, c1);
+	gffb_write_crtc(sc, 1, 0x2f, c2);
+	sc->sc_cimg = (uint16_t *)(sc->sc_fbaddr + coffset);
+	for (i = 0; i < 1024; i++) {
+		sc->sc_cimg[i] = 0x8000 | (0x1f << 10);
+	}
+	sc->sc_hot_x = 0;
+	sc->sc_hot_y = 0;
 
 	/* PFIFO setup */
 	GFFB_WRITE_4(GFFB_PGRAPH + 0x053C, 0);
@@ -1191,7 +1250,7 @@ gffb_init(struct gffb_softc *sc)
 	GFFB_WRITE_4(GFFB_PFIFO + 0x1250, 0x00000001);
 	GFFB_WRITE_4(GFFB_PFIFO + 0x1254, 0x00000001);
 	GFFB_WRITE_4(GFFB_PFIFO + 0x0500, 0x00000001);
-	
+
 	GFFB_WRITE_4(GFFB_PMC + 0x8704, 1);
 	GFFB_WRITE_4(GFFB_PMC + 0x8140, 0);
 	GFFB_WRITE_4(GFFB_PMC + 0x8920, 0);
@@ -1618,3 +1677,107 @@ gffb_eraserows(void *cookie, int row, int nrows, long fillattr)
 		gffb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
 	}
 }
+
+static int
+gffb_set_cursor(struct gffb_softc *sc, struct wsdisplay_cursor *wc)
+{
+	unsigned	flags;
+
+	uint8_t		r[2], g[2], b[2];
+	unsigned	index, count;
+	int		i, j, err;
+	int		redo_shape = 0;
+
+	flags = wc->which;
+
+	if (flags & WSDISPLAY_CURSOR_DOCMAP) {
+		index = wc->cmap.index;
+		count = wc->cmap.count;
+
+		if (index >= 2 || count > 2 - index)
+			return EINVAL;
+
+		err = copyin(wc->cmap.red, &r[index], count);
+		if (err)
+			return err;
+		err = copyin(wc->cmap.green, &g[index], count);
+		if (err)
+			return err;
+		err = copyin(wc->cmap.blue, &b[index], count);
+		if (err)
+			return err;
+
+		for (i = index; i < index + count; i++) {
+			sc->sc_cmap[i] = ((r[i] & 0xf8) << 7) |
+				  ((g[i] & 0xf8) << 2) |
+				  ((b[i] & 0xf8) >> 3) |
+				  0x8000;
+		}
+		redo_shape = 1;
+	}
+
+	if (flags & WSDISPLAY_CURSOR_DOSHAPE) {
+		if ((wc->size.x > 32) ||
+		    (wc->size.y > 32))
+			return EINVAL;
+
+		if ((err = copyin(wc->image, sc->sc_image, 128)) != 0)
+			return err;
+
+		if ((err = copyin(wc->mask, sc->sc_mask, 128)) != 0)
+			return err;
+		redo_shape = 1;
+	}
+
+	if (redo_shape) {
+		uint16_t *ptr = sc->sc_cimg;
+		int img, msk, bit;
+		for (i = 0; i < 128; i++) {
+			img = sc->sc_image[i];
+			msk = sc->sc_mask[i];
+			bit = 0x01;
+			for (j = 0; j < 8; j++) {
+				if (msk & bit) {
+					/* colour pixel */
+					*ptr = (img & bit) ? 
+					    sc->sc_cmap[1] : sc->sc_cmap[0];
+				} else {
+					/* transparent pixel */
+					*ptr = 0;
+				}
+				ptr++;
+				bit = bit << 1;
+			}
+		}
+	}
+
+	if (flags & WSDISPLAY_CURSOR_DOHOT) {
+		sc->sc_hot_x = wc->hot.x;
+		sc->sc_hot_y = wc->hot.y;
+		flags |= WSDISPLAY_CURSOR_DOPOS;
+	}
+
+	if (flags & WSDISPLAY_CURSOR_DOPOS) {
+		gffb_set_curpos(sc, &wc->pos);
+	}
+	if (flags & WSDISPLAY_CURSOR_DOCUR) {
+		int state = wc->enable == 0 ? 0 : 1;
+		gffb_write_crtc(sc, 0, 0x31, sc->sc_cstate | state);
+		gffb_write_crtc(sc, 1, 0x31, sc->sc_cstate | state);
+	}
+	return 0;
+}
+
+static int
+gffb_set_curpos(struct gffb_softc *sc, struct wsdisplay_curpos *p)
+{
+	uint32_t reg;
+
+	sc->sc_cursor_x = p->x - sc->sc_hot_x;
+	sc->sc_cursor_y = p->y - sc->sc_hot_y;
+	reg = (sc->sc_cursor_x & 0xffff) | (sc->sc_cursor_y << 16);
+	GFFB_WRITE_4(GFFB_RAMDAC0 + GFFB_CURPOS, reg);
+	GFFB_WRITE_4(GFFB_RAMDAC1 + GFFB_CURPOS, reg);
+	return 0;
+}
+
