@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2025/10/20 14:31:40 nat Exp $
+#	$NetBSD: Makefile,v 1.55 2026/08/17 18:58:56 riastradh Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -51,7 +51,12 @@ S=		${.CURDIR}/../../sys
 
 CPPFLAGS+=	-I${.CURDIR} -I${.OBJDIR} -I${S} -fno-strict-aliasing
 CPPFLAGS+=	-DDDB_VERBOSE_HELP -DDB_MAX_LINE=10000000 -D_KMEMUSER
+
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
+CPPFLAGS+=	-DDB_MACHINE_COMMANDS
+.else
 CPPFLAGS+=	-UDB_MACHINE_COMMANDS
+.endif
 
 # XXX
 .if ${MACHINE} == "evbppc"

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.42 2023/07/31 02:38:16 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.43 2026/08/17 18:58:56 riastradh Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42 2023/07/31 02:38:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.43 2026/08/17 18:58:56 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -311,6 +311,10 @@ ddb_suspend(struct trapframe *frame)
 
 extern void cpu_debug_dump(void); /* XXX */
 
+/*
+ * XXX sync with sys/arch/i386/i386/db_interface.c
+ * XXX sync with usr.sbin/crash/arch/x86.c
+ */
 void
 db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
