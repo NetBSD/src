@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.2 2026/08/02 14:10:41 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.3 2026/08/17 16:09:24 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -78,4 +78,48 @@ sys/dev/usb/motg.c				1.44
 
 	motg: support control transfers (endpoint zero) aborts.
 	[skrll, ticket #410]
+
+external/cddl/osnet/lib/libdtrace/Makefile	1.35
+
+	libdtrace: PR 60530: fix CLEANFILES so clean rule actually cleans
+	some generated files.
+	[riastradh, ticket #411]
+
+sys/dev/pci/mpii.c				1.32
+
+	mpii(4): PR 58684: reduce MPII_REQUEST_CREDIT to improve stability.
+	[he, ticket #412]
+
+xsrc/external/mit/libXfont2/dist/test/test-fserve-read-glyphs.c up to 1.1.1.1
+xsrc/external/mit/libXfont2/dist/ChangeLog           up to 1.1.1.8
+xsrc/external/mit/libXfont2/dist/Makefile.am         up to 1.1.1.5
+xsrc/external/mit/libXfont2/dist/Makefile.in         up to 1.1.1.8
+xsrc/external/mit/libXfont2/dist/README.md           up to 1.1.1.4
+xsrc/external/mit/libXfont2/dist/configure           up to 1.1.1.8
+xsrc/external/mit/libXfont2/dist/configure.ac        up to 1.1.1.8
+xsrc/external/mit/libXfont2/dist/src/fc/fserve.c     up to 1.1.1.7
+xsrc/external/mit/libXfont2/dist/src/fc/fservestr.h  up to 1.1.1.2
+
+	Import libXfont2 2.0.9, fixing CVE-2026-44950 and CVE-2026-59679.
+	[mrg, ticket #413]
+
+usr.sbin/syslogd/syslogd.c			1.156,1.157
+
+	syslogd: fix buffering of partial klog lines.
+	[msaitoh, ticket #414]
+
+sys/kern/vfs_subr.c				1.504
+
+	vfs: PR 60531: limit `vflushbuf: dirty'.
+	[riastradh, ticket #415]
+
+external/gpl2/grep/dist/src/grep.c		1.6,1.7
+
+	grep(1): PR 60552: fix ctype(3) issue leading to segfault.
+	[gutteridge, ticket #416]
+
+sys/dev/pci/pciconf.c				1.57-1.59
+
+	pciconf: fix resource allocation for PCI_NETBSD_CONFIGURE.
+	[rin, ticket #418]
 
