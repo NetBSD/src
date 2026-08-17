@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.24 2026/04/18 06:27:35 skrll Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.25 2026/08/17 15:58:43 joe Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.24 2026/04/18 06:27:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.25 2026/08/17 15:58:43 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -977,11 +977,13 @@ genet_get_eaddr(struct genet_softc *sc, uint8_t *eaddr)
 		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
 		machi = cprng_strong32() & 0xffff;
 	}
+	else
+		maclo = htonl(maclo);
 
-	eaddr[0] = (maclo >> 24) & 0xff;
-	eaddr[1] = (maclo >> 16) & 0xff;
-	eaddr[2] = (maclo >>  8) & 0xff;
-	eaddr[3] = (maclo >>  0) & 0xff;
+	eaddr[0] = (maclo >> 0) & 0xff;
+	eaddr[1] = (maclo >> 8) & 0xff;
+	eaddr[2] = (maclo >>  16) & 0xff;
+	eaddr[3] = (maclo >>  24) & 0xff;
 	eaddr[4] = (machi >>  8) & 0xff;
 	eaddr[5] = (machi >>  0) & 0xff;
 }
