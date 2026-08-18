@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2026/07/22 08:39:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2026/08/18 08:01:08 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,8 @@ CPPFLAGS+=-D_CONST_X_STRING
 # Uses uselocale(3) we NetBSD does not have.
 CPPFLAGS+=-DNO_I18N
 CPPFLAGS+=-I${DESTDIR}${X11INCDIR}/freetype2/freetype
+
+COPTS.Clock.c+=-Wno-error=stack-protector
 
 APPDEFS=XClock XClock-color
 APPDEFS+=XClock-ampm XClock-grandfather
