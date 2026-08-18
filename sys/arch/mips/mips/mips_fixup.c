@@ -216,7 +216,7 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 		struct tlbmask tlbmask = {
 			.tlb_hi = -PAGE_SIZE | KERNEL_PID,
 #if PGSHIFT & 1
-			.tlb_lo1 = tlb_lo,
+			.tlb_lo0 = tlb_lo,
 			.tlb_lo1 = tlb_lo + MIPS3_PG_NEXT,
 #else
 			.tlb_lo0 = 0,
