@@ -73,6 +73,7 @@
 #include <cstdint>
 #include <deque>
 #include <iterator>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -4707,27 +4708,95 @@ MipsTargetLowering::emitPseudoD_SELECT(MachineInstr &MI,
   return BB;
 }
 
-// FIXME? Maybe this could be a TableGen attribute on some registers and
-// this table could be generated automatically from RegInfo.
+// Copies the function MipsAsmParser::matchCPURegisterName.
+int MipsTargetLowering::getCPURegisterIndex(StringRef Name) const {
+  int CC = StringSwitch<unsigned>(Name)
+               .Case("zero", 0)
+               .Case("at", 1)
+               .Case("a0", 4)
+               .Case("a1", 5)
+               .Case("a2", 6)
+               .Case("a3", 7)
+               .Case("v0", 2)
+               .Case("v1", 3)
+               .Case("s0", 16)
+               .Case("s1", 17)
+               .Case("s2", 18)
+               .Case("s3", 19)
+               .Case("s4", 20)
+               .Case("s5", 21)
+               .Case("s6", 22)
+               .Case("s7", 23)
+               .Case("k0", 26)
+               .Case("k1", 27)
+               .Case("gp", 28)
+               .Case("sp", 29)
+               .Case("fp", 30)
+               .Case("s8", 30)
+               .Case("ra", 31)
+               .Case("t0", 8)
+               .Case("t1", 9)
+               .Case("t2", 10)
+               .Case("t3", 11)
+               .Case("t4", 12)
+               .Case("t5", 13)
+               .Case("t6", 14)
+               .Case("t7", 15)
+               .Case("t8", 24)
+               .Case("t9", 25)
+               .Default(-1);
+
+  if (!(ABI.IsN32() || ABI.IsN64()))
+    return CC;
+
+  if (8 <= CC && CC <= 11)
+    CC += 4;
+
+  if (CC == -1)
+    CC = StringSwitch<unsigned>(Name)
+             .Case("a4", 8)
+             .Case("a5", 9)
+             .Case("a6", 10)
+             .Case("a7", 11)
+             .Case("kt0", 26)
+             .Case("kt1", 27)
+             .Default(-1);
+
+  return CC;
+}
+
 Register
 MipsTargetLowering::getRegisterByName(const char *RegName, LLT VT,
                                       const MachineFunction &MF) const {
-  // Named registers is expected to be fairly rare. For now, just support $28
-  // since the linux kernel uses it.
-  if (Subtarget.isGP64bit()) {
-    Register Reg = StringSwitch<Register>(RegName)
-                         .Case("$28", Mips::GP_64)
-                         .Default(Register());
-    if (Reg)
-      return Reg;
-  } else {
-    Register Reg = StringSwitch<Register>(RegName)
-                         .Case("$28", Mips::GP)
-                         .Default(Register());
-    if (Reg)
-      return Reg;
+  StringRef Name(RegName);
+  Name.consume_front("$");
+
+  unsigned RegIdx;
+  if (Name.getAsInteger(10, RegIdx)) {
+    std::string LowerName = Name.lower();
+    int NamedRegIdx = getCPURegisterIndex(LowerName);
+    if (NamedRegIdx < 0)
+      report_fatal_error(
+          Twine("Invalid register name \"" + StringRef(RegName) + "\"."));
+    RegIdx = NamedRegIdx;
   }
-  report_fatal_error("Invalid register name global variable");
+
+  if (RegIdx < 32) {
+    const MCRegisterInfo *MRI = MF.getContext().getRegisterInfo();
+    const MCRegisterClass &RC = Subtarget.isGP64bit()
+                                    ? MRI->getRegClass(Mips::GPR64RegClassID)
+                                    : MRI->getRegClass(Mips::GPR32RegClassID);
+    Register Reg = RC.getRegister(RegIdx);
+    BitVector ReservedRegs =
+        Subtarget.getRegisterInfo()->getReservedRegs(MF);
+    if (!ReservedRegs.test(Reg))
+      report_fatal_error(Twine("Trying to obtain non-reserved register \"" +
+                               StringRef(RegName) + "\"."));
+    return Reg;
+  }
+
+  report_fatal_error(
+      Twine("Invalid register name \"" + StringRef(RegName) + "\"."));
 }
 
 MachineBasicBlock *MipsTargetLowering::emitLDR_W(MachineInstr &MI,
