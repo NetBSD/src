@@ -254,7 +254,7 @@ be16dec(const void *_buf)
 {
 	const uint8_t *p = __CAST(const uint8_t *, _buf);
 
-	return ((__CAST(uint16_t, p[0]) << 8) | p[1]);
+	return __CAST(uint16_t, ((__CAST(uint16_t, p[0]) << 8) | p[1]));
 }
 
 static __inline uint16_t __unused
@@ -262,7 +262,7 @@ le16dec(const void *_buf)
 {
 	const uint8_t *p = __CAST(const uint8_t *, _buf);
 
-	return (p[0] | (__CAST(uint16_t, p[1]) << 8));
+	return __CAST(uint16_t, (p[0] | (__CAST(uint16_t, p[1]) << 8)));
 }
 
 static __inline void __unused
