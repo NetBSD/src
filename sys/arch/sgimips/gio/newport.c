@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.25 2025/12/07 02:20:59 macallan Exp $	*/
+/*	$NetBSD: newport.c,v 1.26 2026/08/18 21:27:29 adrian Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.25 2025/12/07 02:20:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.26 2026/08/18 21:27:29 adrian Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1069,7 +1069,13 @@ newport_cnattach(struct gio_attach_args *ga)
 	ri->ri_depth = newport_console_dc.dc_depth;
 	ri->ri_width = newport_console_dc.dc_xres;
 	ri->ri_height = newport_console_dc.dc_yres;
-	ri->ri_stride = newport_console_dc.dc_xres; /* XXX */
+	/*
+	 * rasops_init() requires ri_stride to be a multiple of 4.
+	 * This isn't guaranteed from the VC2 timing tables.
+	 * Newport however has a hard-coded stride and we are
+	 * interacting with it via blits so this doesn't really matter.
+	 */
+	ri->ri_stride = roundup(newport_console_dc.dc_xres, 4);
 	ri->ri_flg = RI_CENTER | RI_NO_AUTO | RI_FULLCLEAR | RI_8BIT_IS_RGB;
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
@@ -1102,7 +1108,8 @@ newport_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_depth = 8;
 	ri->ri_width = dc->dc_xres;
 	ri->ri_height = dc->dc_yres;
-	ri->ri_stride = dc->dc_xres; /* XXX */
+	/* see previous comment around rasops_init() in the console init */
+	ri->ri_stride = roundup(dc->dc_xres, 4);
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_8BIT_IS_RGB;
 
 	rasops_init(ri, 0, 0);
