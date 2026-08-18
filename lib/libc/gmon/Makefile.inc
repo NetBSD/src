@@ -16,6 +16,7 @@ MLINKS+=moncontrol.3 monstartup.3
 # mcount.c should be fixed and this test removed.
 #
 COPTS.mcount.c+=${${ACTIVE_CXX} == "gcc":? -Wa,--no-warn :}
+COPTS.mcount.c+=${${ACTIVE_CC} == "clang":? -Wno-error=inline-asm :}
 .endif
 
 .if ${MACHINE_CPU} == "i386"
