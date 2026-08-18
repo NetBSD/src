@@ -1,4 +1,4 @@
-/*	$NetBSD: gffbreg.h,v 1.6 2025/10/06 07:51:44 macallan Exp $	*/
+/*	$NetBSD: gffbreg.h,v 1.7 2026/08/18 10:11:04 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -32,13 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffbreg.h,v 1.6 2025/10/06 07:51:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffbreg.h,v 1.7 2026/08/18 10:11:04 macallan Exp $");
 
 #ifndef GFFBREG_H
 #define GFFBREG_H
 
 #define GFFB_RAMDAC0	0x00680000
 #define GFFB_RAMDAC1	0x00682000
+#define GFFB_CURPOS	0x00000300
 
 #define GFFB_PCIO0	0x00601000
 #define GFFB_PCIO1	0x00603000
@@ -49,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: gffbreg.h,v 1.6 2025/10/06 07:51:44 macallan Exp $")
 
 #define GFFB_CRTC0	0x00600000
 #define GFFB_CRTC1	0x00602000
+
+#define GFFB_PVIO	0x000C0000
 
 #define GFFB_FIFO	0x00800000
 #define GFFB_FIFO_PUT	0x00800040	/* command list stop */
@@ -76,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: gffbreg.h,v 1.6 2025/10/06 07:51:44 macallan Exp $")
 
 /* CRTC registers */
 #define GFFB_DISPLAYSTART	0x800
+#define GFFB_CURSOR_CONFIG	0x810
 #define GFFB_PCRTC_GPIO		0x818
 #define GFFB_PCRTC_GPIO_EXT	0x81c
 
