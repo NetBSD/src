@@ -8,6 +8,10 @@ setupvars()
 	IMG=fsimage
 	TDBASE64=$(atf_get_srcdir)/testdata.tar.gz.base64
 	GOODMD5=$(atf_get_srcdir)/testdata.md5
+	export RUMP_SERVER=unix://csock
+	# need PLAINMNT for the umount op
+	RUMPMNT=/rump/mnt
+	PLAINMNT=/mnt
 	# set BYTESWAP to opposite-endian.
 	if [ $(sysctl -n hw.byteorder) = "1234" ]; then
 		BYTESWAP=be
@@ -25,8 +29,8 @@ test_case()
 
 	atf_test_case "${name}" cleanup
 	eval "${name}_head() { \
-		atf_set "require.user" "root" ; \
-		atf_set "require.progs" "rump_ffs" ; \
+		atf_set "require.user" "unprivileged" ; \
+		atf_set "require.progs" "rump_server" ; \
 	}"
 	eval "${name}_body() { \
 		${check_function} " "${@}" "; \
@@ -46,22 +50,45 @@ test_case_xfail()
 
 	atf_test_case "${name}" cleanup
 	eval "${name}_head() { \
-		atf_set "require.user" "root" ; \
+		atf_set "descr" "xfail test case"; \
 	}"
 	eval "${name}_body() { \
 		atf_expect_fail "${reason}" ; \
 		${check_function} " "${@}" "; \
 	}"
 	eval "${name}_cleanup() { \
-		umount -f mnt  ; \
+		unset LD_PRELOAD ; \
+		rump.halt >/dev/null 2>&1  ; \
 		: reset error ; \
 	}"
+}
+
+rump_mount()
+{
+	atf_check -s exit:0 rump_server -lrumpvfs -lrumpfs_ffs -lrumpdev_disk \
+		-d key=/img,hostpath=${IMG},size=host ${RUMP_SERVER}
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	mkdir -p ${RUMPMNT}
+	atf_check -s exit:0 -e ignore env RUMPHIJACK='path=/rump,blanket=/img' \
+		mount_ffs /img ${RUMPMNT}
+}
+
+rump_umount()
+{
+	# specify the path without "/rump" for the lookup to succeed
+	atf_check -s exit:0 env RUMPHIJACK='path=/rump,blanket=/img:/mnt,vfs=all' \
+		umount ${PLAINMNT}
+	unset LD_PRELOAD
+	atf_check -s exit:0 rump.halt
 }
 
 # copy_data requires the mount already done;  makes one copy of the test data
 copy_data ()
 {
-	uudecode -p ${TDBASE64} | (cd mnt; tar xzf - -s/testdata/TD$1/)
+	# exec a shell here because LD_PRELOAD only takes effect across
+	# an exec, and "cd" is a builtin.
+	uudecode -p ${TDBASE64} | \
+		/bin/sh -c "cd ${RUMPMNT}; tar xzf - -s/testdata/TD$1/"
 }
 
 copy_multiple ()
@@ -76,7 +103,7 @@ copy_multiple ()
 # is to ensure data exists near the end of the fs under test.
 remove_data ()
 {
-	rm -rf mnt/TD$1
+	rm -rf ${RUMPMNT}/TD$1
 }
 
 remove_multiple ()
@@ -91,7 +118,8 @@ remove_multiple ()
 # generated md5 file doesn't need explicit cleanup thanks to ATF
 check_data ()
 {
-	(cd mnt/TD$1 && md5 *) > TD$1.md5
+	# need to exec for "cd" to be correct
+	/bin/sh -c "cd ${RUMPMNT}/TD$1 && md5 *" > TD$1.md5
 	atf_check diff -u ${GOODMD5} TD$1.md5
 }
 
@@ -121,7 +149,6 @@ resize_ffs()
 	if [ $avail -lt $osize ] || [ $avail -lt $nsize ]; then
 		atf_skip "not enough free space in working directory"
 	fi
-	mkdir -p mnt
 	echo "bs is ${bs} numdata is ${numdata}"
 	echo "****resizing fs with blocksize ${bs}"
 
@@ -139,17 +166,7 @@ resize_ffs()
 			-F ${IMG}
 	fi
 
-	# we're specifying relative paths, so rump_ffs warns - ignore.
-	if ! rump_ffs ${IMG} mnt >/dev/null 2>S.Err
-	then
-		if grep 'puffs_daemon: Operation not supported by device' S.Err >/dev/null
-		then
-			atf_skip 'No PUFFS available in kernel'
-		else
-			atf_fail "rump_ffs mount failed: $(tail -r S.Err |
-				sed -e '/^$/d' -e p -e q )"
-		fi
-	fi
+	rump_mount
 
 	copy_multiple ${numdata}
 
@@ -161,19 +178,19 @@ resize_ffs()
 	    remove_multiple ${remove}
 	fi
 
-	umount mnt
+	rump_umount
 	# Check that resize needed
 	atf_check -s exit:0 -o ignore resize_ffs -c -y -s ${nsize} ${IMG}
 	atf_check -s exit:0 -o ignore resize_ffs -y -s ${nsize} ${IMG}
 	atf_check -s exit:0 -o ignore fsck_ffs -f -n -F ${IMG}
-	atf_check -s exit:0 -e ignore rump_ffs ${IMG} mnt
+	rump_mount
 	if [ ${nsize} -lt ${osize} ]; then
 	    check_data_range $((remove + 1)) ${numdata}
 	else
 	    # checking everything because we don't delete on grow
 	    check_data_range 1 ${numdata}
 	fi
+	rump_umount
 	# Check that no resize needed
 	atf_check -s exit:1 -o ignore resize_ffs -c -y -s ${nsize} ${IMG}
-	umount mnt
 }

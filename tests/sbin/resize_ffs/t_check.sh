@@ -1,4 +1,4 @@
-# $NetBSD: t_check.sh,v 1.1 2015/03/29 19:37:02 chopps Exp $
+# $NetBSD: t_check.sh,v 1.2 2026/08/18 18:03:11 riz Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,7 +32,6 @@ atf_test_case check_grow
 
 check_grow_head() {
 	atf_set "descr" "Tests check for room to grow in image"
-	atf_set "require.user" "root"
 }
 
 check_grow_body() {
