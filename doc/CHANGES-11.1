@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.3 2026/08/17 16:09:24 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.4 2026/08/19 11:51:58 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -122,4 +122,10 @@ sys/dev/pci/pciconf.c				1.57-1.59
 
 	pciconf: fix resource allocation for PCI_NETBSD_CONFIGURE.
 	[rin, ticket #418]
+
+sys/external/bsd/dwc2/dist/dwc2_core.c		1.15
+sys/external/bsd/dwc2/dwc2.c			1.84
+
+	dwc2: PR 60021: fix reset sequence.
+	[skrll, ticket #417]
 
