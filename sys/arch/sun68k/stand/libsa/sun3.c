@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.11 2020/06/20 18:46:14 riastradh Exp $	*/
+/*	$NetBSD: sun3.c,v 1.12 2026/08/19 17:54:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ found:
 
 	if (physaddr & ~(sun3_mapinfo[i].mask))
 		panic("dev3_mapin: bad address");
-	pa = sun3_mapinfo[i].base += physaddr;
+	pa = sun3_mapinfo[i].base + physaddr;
 
 	pte = PA_PGNUM(pa) | PG_PERM | sun3_mapinfo[i].pgtype;
 
