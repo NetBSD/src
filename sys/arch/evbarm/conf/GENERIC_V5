@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_V5,v 1.11 2026/08/12 09:22:58 yurix Exp $
+# $NetBSD: GENERIC_V5,v 1.12 2026/08/19 09:28:39 yurix Exp $
 #
 # GENERIC ARMv5 kernel
 #
@@ -93,6 +93,7 @@ gpioleds* 	at fdt?
 
 # SDMMC
 imx23mmc* 	at fdt? pass 2			# i.MX23 SD/MMC
+am18xxsdmmc*	at fdt? pass 6		# TI AM18XX SD/MMC
 sdmmc* 		at sdmmcbus?
 ld0 		at sdmmc0
 ld1 		at sdmmc1
