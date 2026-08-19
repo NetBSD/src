@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.6 2009/03/20 11:42:25 tsutsui Exp $
+$NetBSD: version,v 1.7 2026/08/19 18:14:08 tsutsui Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -20,3 +20,4 @@ is taken as the current.
 1.11:	loadfile() update to avoid backwards seeks for ELF Program Headers.
 1.12:	tapeboot: file seek bug fixed, sun2 support added
 1.13:	switched to using MI libsa and libkern
+1.14:	Leave the lower 256 KB of sun3 DVMA space for PROM mappings.
