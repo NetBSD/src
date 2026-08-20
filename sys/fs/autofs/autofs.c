@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs.c,v 1.6 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: autofs.c,v 1.7 2026/08/20 20:24:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -68,13 +68,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.6 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.7 2026/08/20 20:24:23 riastradh Exp $");
 
 #include "autofs.h"
 
 #include "ioconf.h"
 
 #include <sys/atomic.h>
+#include <sys/filedesc.h>
 #include <sys/queue.h>
 #include <sys/signalvar.h>
 
@@ -451,15 +452,69 @@ autofs_trigger(struct autofs_node *anp, const char *component,
 static int
 autofs_ioctl_request(struct autofs_daemon_request *adr)
 {
+	struct lwp *l = curlwp;
+	struct proc *p = curproc;
+	struct cwdinfo *cwdi = p->p_cwdi;
 	struct autofs_request *ar;
+	char *chrootpathbuf = NULL, *chrootpath = NULL;
+	size_t chrootpathlen = 0;
+	const char *path;
+	int error;
 
+	/*
+	 * If we're chrooted, find the prefix to match in requests and
+	 * strip off.
+	 *
+	 * If we're not chrooted, don't bother with any of it: no need
+	 * to allocate a pathbuf and compute getcwd().  If another
+	 * thread chroots while we're working, tough.
+	 */
+	if (atomic_load_relaxed(&cwdi->cwdi_rdir) != NULL) {
+		/*
+		 * getcwd_common builds a path backwards from the end
+		 * in a given buffer.  So allocate a buffer,
+		 * NUL-terminate it at the end, and start with a
+		 * pointer to the NUL byte.  Even though PNBUF_GET
+		 * allocates a buffer of MAXPATHLEN bytes (including
+		 * NUL), we clamp the length of the chroot prefix
+		 * somewhat arbitrarily to MAXPATHLEN/2 just like
+		 * statvfs(2) and getvfsstat(2).
+		 */
+		chrootpathbuf = PNBUF_GET();
+		chrootpath = chrootpathbuf + MAXPATHLEN;
+		*--chrootpath = '\0';
+
+		rw_enter(&cwdi->cwdi_lock, RW_READER);
+		error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &chrootpath,
+		    chrootpathbuf, MAXPATHLEN/2, 0, l);
+		rw_exit(&cwdi->cwdi_lock);
+		if (error)
+			goto out;
+		chrootpathlen = strlen(chrootpath);
+	}
+
+	/*
+	 * Wait until there is a request that is:
+	 *
+	 * (a) not done,
+	 * (b) not in progress by another thread,
+	 * (c) if we're chrooted, within our chroot.
+	 *
+	 * Once we have one, mark it in progress so other threads don't
+	 * take it.
+	 */
 	mutex_enter(&autofs_softc->sc_lock);
 	for (;;) {
-		int error;
 		TAILQ_FOREACH(ar, &autofs_softc->sc_requests, ar_next) {
 			if (ar->ar_done)
 				continue;
 			if (ar->ar_in_progress)
+				continue;
+			if (chrootpathlen > 1 &&
+			    (strncmp(ar->ar_path, chrootpath, chrootpathlen)
+				!= 0 ||
+				(ar->ar_path[chrootpathlen] != '/' &&
+				    ar->ar_path[chrootpathlen] != '\0')))
 				continue;
 			break;
 		}
@@ -471,16 +526,34 @@ autofs_ioctl_request(struct autofs_daemon_request *adr)
 		    &autofs_softc->sc_lock);
 		if (error) {
 			mutex_exit(&autofs_softc->sc_lock);
-			return error;
+			goto out;
 		}
 	}
 
 	ar->ar_in_progress = true;
 	mutex_exit(&autofs_softc->sc_lock);
 
+	/*
+	 * If we're chrooted, strip the chroot prefix off ar->ar_path.
+	 * Otherwise, just use ar->ar_path as is for the adr->adr_path
+	 * we return to userland.
+	 */
+	if (chrootpathlen > 1) {
+		KASSERT(strncmp(ar->ar_path, chrootpath, chrootpathlen) == 0);
+		KASSERT(ar->ar_path[chrootpathlen] == '/' ||
+		    ar->ar_path[chrootpathlen] == '\0');
+		if (ar->ar_path[chrootpathlen] == '\0')
+			path = "/";
+		else
+			path = ar->ar_path + chrootpathlen;
+		KASSERT(path[0] == '/');
+	} else {
+		path = ar->ar_path;
+	}
+
 	adr->adr_id = ar->ar_id;
 	strlcpy(adr->adr_from, ar->ar_from, sizeof(adr->adr_from));
-	strlcpy(adr->adr_path, ar->ar_path, sizeof(adr->adr_path));
+	strlcpy(adr->adr_path, path, sizeof(adr->adr_path));
 	strlcpy(adr->adr_prefix, ar->ar_prefix, sizeof(adr->adr_prefix));
 	strlcpy(adr->adr_key, ar->ar_key, sizeof(adr->adr_key));
 	strlcpy(adr->adr_options, ar->ar_options, sizeof(adr->adr_options));
@@ -489,7 +562,11 @@ autofs_ioctl_request(struct autofs_daemon_request *adr)
 	autofs_softc->sc_dev_sid = curproc->p_pgrp->pg_id;
 	mutex_exit(&proc_lock);
 
-	return 0;
+	error = 0;
+
+out:	if (chrootpathbuf)
+		PNBUF_PUT(chrootpathbuf);
+	return error;
 }
 
 static int
