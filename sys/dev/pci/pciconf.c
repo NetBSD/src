@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.62 2026/08/20 06:47:00 msaitoh Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.63 2026/08/20 06:47:42 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.62 2026/08/20 06:47:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.63 2026/08/20 06:47:42 msaitoh Exp $");
 
 #include "opt_pci.h"
 
@@ -594,7 +594,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	pcireg_t	classreg, cmd, icr, bhlc, bar, mask, bar64, mask64,
 	    busreg;
 	uint64_t	size;
-	u_int		hdrtype, br, width, reg_start, reg_end;
+	u_int		hdrtype, br, width, reg_start, reg_end, reg_rom;
 
 	pd = &pb->device[pb->ndevs];
 	pd->pc = pb->pc;
@@ -633,6 +633,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	if ((cmd & PCI_STATUS_66MHZ_SUPPORT) == 0)
 		pb->freq_66 = 0;
 
+	reg_rom = PCI_MAPREG_ROM; /* Default */
 	switch (hdrtype) {
 	case PCI_HDRTYPE_DEVICE:
 		reg_start = PCI_MAPREG_START;
@@ -807,10 +808,10 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	}
 
 	if (mode & PCI_CONF_MAP_ROM) {
-		bar = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
-		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM, 0xfffffffe);
-		mask = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
-		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM, bar);
+		bar = pci_conf_read(pb->pc, tag, reg_rom);
+		pci_conf_write(pb->pc, tag, reg_rom, 0xfffffffe);
+		mask = pci_conf_read(pb->pc, tag, reg_rom);
+		pci_conf_write(pb->pc, tag, reg_rom, bar);
 
 		if (mask != 0 && mask != 0xffffffff) {
 			if (pb->nmemwin >= MAX_CONF_MEM) {
@@ -821,7 +822,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 
 			pm = get_mem_desc(pb, size /*align*/);
 			pm->dev = pd;
-			pm->reg = PCI_MAPREG_ROM;
+			pm->reg = reg_rom;
 			pm->size = pm->align = size;
 			pm->prefetch = 0;
 			if (pci_conf_debug) {
@@ -848,8 +849,8 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 
 	if (!(mode & PCI_CONF_ENABLE_ROM)) {
 		/* Ensure ROM is disabled */
-		bar = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
-		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM,
+		bar = pci_conf_read(pb->pc, tag, reg_rom);
+		pci_conf_write(pb->pc, tag, reg_rom,
 		    bar & ~PCI_MAPREG_ROM_ENABLE);
 	}
 
