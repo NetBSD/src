@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.61 2026/08/20 06:46:19 msaitoh Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.62 2026/08/20 06:47:00 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.61 2026/08/20 06:46:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.62 2026/08/20 06:47:00 msaitoh Exp $");
 
 #include "opt_pci.h"
 
@@ -594,7 +594,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	pcireg_t	classreg, cmd, icr, bhlc, bar, mask, bar64, mask64,
 	    busreg;
 	uint64_t	size;
-	u_int		br, width, reg_start, reg_end;
+	u_int		hdrtype, br, width, reg_start, reg_end;
 
 	pd = &pb->device[pb->ndevs];
 	pd->pc = pb->pc;
@@ -616,8 +616,9 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 		return 0;
 	}
 
+	hdrtype = PCI_HDRTYPE_TYPE(bhlc);
 	if (PCI_CLASS(classreg) != PCI_CLASS_BRIDGE
-	    && PCI_HDRTYPE_TYPE(bhlc) != PCI_HDRTYPE_PPB) {
+	    && hdrtype != PCI_HDRTYPE_PPB) {
 		cmd &= ~(PCI_COMMAND_MASTER_ENABLE |
 		    PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
 		pci_conf_write(pb->pc, tag, PCI_COMMAND_STATUS_REG, cmd);
@@ -632,7 +633,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	if ((cmd & PCI_STATUS_66MHZ_SUPPORT) == 0)
 		pb->freq_66 = 0;
 
-	switch (PCI_HDRTYPE_TYPE(bhlc)) {
+	switch (hdrtype) {
 	case PCI_HDRTYPE_DEVICE:
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_END;
