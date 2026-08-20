@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1544 2026/08/17 20:02:31 andvar Exp $
+$NetBSD: pcidevs,v 1.1545 2026/08/20 00:26:54 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -612,6 +612,7 @@ vendor SAFENET		0x16ae	SafeNet
 vendor MICREL		0x16c6	Micrel
 vendor USR2		0x16ec	US Robotics
 vendor NETOCTAVE	0x170b	Netoctave
+vendor FUJITSUTECH	0x1734	Fujitsu Technology Solutions
 vendor LINKSYS		0x1737	Linksys
 vendor ALTIMA		0x173b	Altima
 vendor ANTARES		0x1754	Antares Microsystems
@@ -619,6 +620,7 @@ vendor CAVIUM		0x177d	Cavium
 vendor NSYS		0x1794	nSYS Technologies
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor BELKIN		0x1799	Belkin
+vendor GENESYS		0x17a0	Genesys Logic
 vendor HAWKING		0x17b3	Hawking Technology
 vendor SANDBURST	0x17ba	Sandburst
 vendor NETCHIP		0x17cc	PLX Technology (NetChip)
@@ -3384,6 +3386,9 @@ product	FUJITSU4	PW008GE5	0x11a1	PW008GE5
 product	FUJITSU4	PW008GE4	0x11a2	PW008GE4
 product	FUJITSU4	PP250_450_LAN	0x11cc	PRIMEPOWER250/450 LAN
 
+/* Fujitsu Technology Solutions products */
+product	FUJITSUTECH IRMC_S5	0x1228	iRMC S5
+
 /* FZ Juelich / ZEL products */
 product FZJZEL	GIGALINK	0x0001	Gigabit Link / STR1100
 product FZJZEL	PLXHOTLINK	0x0002	HOTlink Interface
@@ -3584,6 +3589,9 @@ product GLOBALSUN GL24110P02	0x1102	GL24110P PCI IEEE 802.11b
 
 /* Guillemot products */
 product GUILLEMOT MAXIRADIO	0x1001	MAXIRADIO
+
+/* Genesys Logic products */
+product GENESYS GL9755		0x9755	GL9755
 
 /* Hawking products */
 product HAWKING PN672TX		0xab08	PN672TX 10/100 Ethernet
