@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.175 2020/09/08 16:10:53 martin Exp $
+# $NetBSD: rc,v 1.176 2026/08/20 14:43:31 thorpej Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder, and log output
@@ -140,20 +140,28 @@ rc_real_work()
 	) &
 
 	#
-	# Get a list of all rc.d scripts, and use rcorder to choose
-	# what order to execute them.
+	# Get a list of all rc.d scripts and the order in which to
+	# execute them.
+	#
+	if ! _rc_order_cache_is_valid; then
+		_rc_update_rcorder_cache=YES
+		_rc_order_build_list
+	else
+		_rc_update_rcorder_cache=NO
+	fi
+
+	#
+	# $_rc_ordered_script_list now contains the rc.d scripts
+	# to process.
+	#
+	files="$_rc_ordered_script_list"
+
 	#
 	# For testing, allow RC_FILES_OVERRIDE from the environment to
 	# override this.
 	#
-	print_rc_metadata "cmd-name:rcorder"
-	scripts=$(for rcd in ${rc_directories:-/etc/rc.d}; do
-		test -d ${rcd} && echo ${rcd}/*;
-	done)
-	files=$(rcorder -s nostart ${rc_rcorder_flags} ${scripts})
-	print_rc_metadata "cmd-status:rcorder:$?"
-
 	if [ -n "${RC_FILES_OVERRIDE}" ]; then
+		_rc_update_rcorder_cache=NO
 		files="${RC_FILES_OVERRIDE}"
 	fi
 
@@ -162,9 +170,13 @@ rc_real_work()
 	#
 	for _rc_elem in $files; do
 		print_rc_metadata "cmd-name:$_rc_elem"
-		run_rc_script $_rc_elem start
+		run_rc_script "$_rc_elem" start
 		print_rc_metadata "cmd-status:$_rc_elem:$?"
 	done
+
+	if [ "$_rc_update_rcorder_cache" = YES ]; then
+		_rc_order_save_cache
+	fi
 
 	print_rc_metadata "end:$(date)"
 	exit 0

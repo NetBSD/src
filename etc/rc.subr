@@ -1,6 +1,6 @@
-# $NetBSD: rc.subr,v 1.111 2022/05/22 11:27:33 andvar Exp $
+# $NetBSD: rc.subr,v 1.112 2026/08/20 14:43:31 thorpej Exp $
 #
-# Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
+# Copyright (c) 1997-2011, 2026 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -567,6 +567,9 @@ wait_for_pids()
 #
 #	rcvar		Display what rc.conf variable is used (if any).
 #
+#	skipstart	Prints YES iff the script uses an rcvar and it
+#			evaluates to NO.
+#
 #	Variables available to methods, and after run_rc_command() has
 #	completed:
 #
@@ -617,7 +620,7 @@ run_rc_command()
 		;;
 	esac
 
-	_keywords="start stop restart rcvar"
+	_keywords="start stop restart rcvar skipstart"
 	if [ -n "$extra_commands" ]; then
 		_keywords="${_keywords} ${extra_commands}"
 	fi
@@ -664,8 +667,9 @@ run_rc_command()
 					# and return if that failed or warn
 					# user and exit when interactive
 					#
-	if [ -n "${rcvar}" ] && [ "$rc_arg" != "rcvar" ]; then
-		if ! checkyesno ${rcvar}; then
+	if [ -n "${rcvar}" ] && [ "$rc_arg" != "rcvar" ] && \
+	   [ "$rc_arg" != "skipstart" ]; then
+		if ! checkyesno "${rcvar}"; then
 					# check whether interactive or not
 			if [ -n "$_run_rc_script" ]; then
 				return 0
@@ -741,7 +745,7 @@ EOF
 					# directories, and files
 					#
 			for _f in $required_vars; do
-				if ! checkyesno $_f; then
+				if ! checkyesno "$_f"; then
 					warn "\$${_f} is not enabled."
 					if [ -z "$rc_force" ]; then
 						return 1
@@ -894,11 +898,19 @@ $command $rc_flags $command_args"
 		rcvar)
 			echo "# $name"
 			if [ -n "$rcvar" ]; then
-				if checkyesno ${rcvar}; then
+				if checkyesno "${rcvar}"; then
 					echo "${rcvar}=YES"
 				else
 					echo "${rcvar}=NO"
 				fi
+			fi
+			;;
+
+		skipstart)
+			if [ -n "$rcvar" ] && ! checkyesno "${rcvar}"; then
+				command echo YES
+			else
+				command echo NO
 			fi
 			;;
 
@@ -963,9 +975,12 @@ run_rc_script()
 		rcvar required_dirs required_files required_vars
 	eval unset ${_arg}_cmd ${_arg}_precmd ${_arg}_postcmd
 
+	# "skipstart" is not an interactive directive; the output is
+	# consumed by rc.subr itself, so never redirect it.
+	#
 	_must_redirect=false
-	if _have_rc_postprocessor \
-	    && _has_rcorder_keyword interactive $_file
+	if [ "$_arg" != "skipstart" ] && _have_rc_postprocessor \
+	    && _has_rcorder_keyword interactive "$_file"
 	then
 		_must_redirect=true
 	fi
@@ -1483,6 +1498,136 @@ kat() {
 			echo "$v"
 		done < "$i"
 	done
+}
+
+#
+# Check to see if we should use the rcorder.cache.  We cache the
+# result in the global var _rc_order_cache_setting to avoid repeated
+# sub-shells and I/O.  Returns 0 if the cache should be used, non-
+# zero otherwise.
+#
+_rc_order_use_cache()
+{
+	if [ -z "$_rc_order_cache_setting" ]; then
+		_rc_order_cache_setting=$(load_rc_config rcorder_cache;
+			if checkyesno rcorder_cache; then
+				command printf YES
+			else
+				command printf NO
+			fi)
+	fi
+
+	if [ "$_rc_order_cache_setting" = YES ]; then
+		return 0
+	fi
+	return 1
+}
+
+#
+# Check to see if the rcorder.cache is valid.  Returns 0 (success)
+# if so, non-zero otherwise.  The global var $_rc_ordered_script_list
+# is populated with the cache's contents when the cache is valid.
+#
+_rc_order_cache_is_valid()
+{
+	local d
+	local f
+	local allf
+
+	if _rc_order_use_cache && [ -f /etc/rcorder.cache ]; then
+		# Listed here in order of most-likely-to-change.
+		allf="/etc/rc.conf /etc/rc.conf.d /etc/rc.conf.d/*"
+		for d in ${rc_directories:-/etc/rc.d}; do
+			if [ -d "${d}" ]; then
+				allf="${allf} ${d}/*"
+			fi
+		done
+		allf="${allf} /etc/defaults/rc.conf"
+
+		for f in ${allf}; do
+			if [ "$f" -nt /etc/rcorder.cache ]; then
+				return 1
+			fi
+		done
+		allf=$(cat /etc/rcorder.cache)
+		
+		# Verify there is at least one valid file in the
+		# cache.
+		for f in ${allf}; do
+			if [ -f "$f" ]; then
+				_rc_ordered_script_list="$allf"
+				return 0
+			fi
+		done
+	fi
+	return 1
+}
+
+#
+# Build the ordered script list.  If we're going to rebuild the cache,
+# then prints status information on the console.  Sets the global var
+# $_rc_ordered_script_list to the updated ordered list.
+#
+_rc_order_build_list()
+{
+	local d
+	local f
+	local allf
+	local orderedf
+	local canskip
+
+	print_rc_metadata "cmd-name:rcorder"
+	allf=$(for d in ${rc_directories:-/etc/rc.d}; do
+		test -d "${d}" && command printf '%s ' "${d}/*"
+	done)
+	orderedf=$(rcorder -s nostart ${rc_rcorder_flags} ${allf})
+	print_rc_metadata "cmd-status:rcorder:$?"
+
+	if ! _rc_order_use_cache; then
+		_rc_ordered_script_list="$orderedf"
+		return
+	fi
+
+	# N.B. we only consider the script skip-able if it affirmatively
+	# answers "YES" on stdout to the skipstart directive.
+	#
+	printf 'Updating /etc/rcorder.cache...'
+	_rc_ordered_script_list=""
+	for f in ${orderedf}; do
+		twiddle
+		canskip=$(run_rc_script "$f" skipstart) 2>/dev/null
+		if [ "$canskip" != YES ]; then
+			_rc_ordered_script_list="$_rc_ordered_script_list $f"
+		fi
+	done
+	printf 'done.\n'
+}
+
+#
+# Save the rcorder.cache, in the global var $_rc_ordered_script_list,
+# to /etc/rcorder.cache.
+#
+_rc_order_save_cache()
+{
+	local f
+
+	if ! _rc_order_use_cache; then
+		return
+	fi
+
+	#
+	# Attempt to create an empty temporary /etc/rcorder.cache
+	# file, suppressing all error messages, and check for success.
+	# If not successful, we probably have a read-only root file
+	# system and thus should not proceed.
+	#
+	if (umask 022; > /etc/rcorder.cache.tmp) 2>/dev/null; then
+		printf 'Saving updated /etc/rcorder.cache.\n'
+		for f in $_rc_ordered_script_list; do
+			command printf '%s\n' "${f}" >> /etc/rcorder.cache.tmp
+		done
+		mv /etc/rcorder.cache.tmp /etc/rcorder.cache
+	fi
 }
 
 _rc_subr_loaded=:

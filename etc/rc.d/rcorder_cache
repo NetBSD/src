@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# $NetBSD: rcorder_cache,v 1.1 2026/08/20 14:43:32 thorpej Exp $
+#
+
+# KEYWORD: nostart
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name=rcorder_cache
+rcvar=$name
+start_cmd=:
+stop_cmd=:
+reload_cmd=rcorder_cache_reload
+restart_cmd=:
+status_cmd=rcorder_cache_status
+poll_cmd=:
+
+extra_commands="reload status"
+
+rcorder_cache_reload()
+{
+	_rc_order_build_list
+	_rc_order_save_cache
+}
+
+rcorder_cache_status()
+{
+	if checkyesno "${rcvar}"; then
+		if [ -f /etc/rcorder.cache ]; then
+			printf '/etc/rcorder.cache is in use.\n'
+		else
+			printf '/etc/rcorder.cache will be built on next boot.\n'
+		fi
+		return 0
+	else
+		printf '/etc/rcorder.cache is not in use.\n'
+		return 1
+	fi
+}
+
+load_rc_config "$name"
+run_rc_command "$1"
