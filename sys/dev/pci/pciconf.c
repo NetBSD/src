@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.60 2026/08/20 06:45:37 msaitoh Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.61 2026/08/20 06:46:19 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.60 2026/08/20 06:45:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.61 2026/08/20 06:46:19 msaitoh Exp $");
 
 #include "opt_pci.h"
 
@@ -594,7 +594,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	pcireg_t	classreg, cmd, icr, bhlc, bar, mask, bar64, mask64,
 	    busreg;
 	uint64_t	size;
-	int		br, width, reg_start, reg_end;
+	u_int		br, width, reg_start, reg_end;
 
 	pd = &pb->device[pb->ndevs];
 	pd->pc = pb->pc;
