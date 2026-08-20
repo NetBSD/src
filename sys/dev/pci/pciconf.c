@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.63 2026/08/20 06:47:42 msaitoh Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.64 2026/08/20 06:51:57 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.63 2026/08/20 06:47:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.64 2026/08/20 06:51:57 msaitoh Exp $");
 
 #include "opt_pci.h"
 
@@ -91,6 +91,9 @@ int pci_conf_debug = 0;
 #define MAX_CONF_DEV	32			/* Arbitrary */
 #define MAX_CONF_MEM	(3 * MAX_CONF_DEV)	/* Avg. 3 per device -- Arb. */
 #define MAX_CONF_IO	(3 * MAX_CONF_DEV)	/* Avg. 1 per device -- Arb. */
+
+#define	PCICONF_MAPREG_IS_ROM(reg)					\
+	(((reg) == PCI_MAPREG_ROM) || ((reg) == PCI_BRIDGE_EXPROMADDR_REG))
 
 struct _s_pciconf_bus_t;			/* Forward declaration */
 
@@ -643,7 +646,16 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 		pd->ppb = query_bus(pb, pd, dev);
 		if (pd->ppb == NULL)
 			return -1;
-		return 0;
+		/*
+		 * PCI-to-PCI Bridge Spec rev. 1.2.
+		 * "3.2.5.1 Base Address registers" says that if the optional
+		 * BARs are implemented, the configuration software must map
+		 * address ranges.
+		 */
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_PPB_END; /* Only BAR0 and BAR1 */
+		reg_rom = PCI_BRIDGE_EXPROMADDR_REG;
+		break;
 	case PCI_HDRTYPE_PCB:
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_PCB_END;
@@ -664,8 +676,6 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	icr = pci_conf_read(pb->pc, tag, PCI_INTERRUPT_REG);
 	pd->ipin = PCI_INTERRUPT_PIN(icr);
 	pd->iline = PCI_INTERRUPT_LINE(icr);
-	pd->min_gnt = PCI_MIN_GNT(icr);
-	pd->max_lat = PCI_MAX_LAT(icr);
 	if (pd->iline || pd->ipin) {
 		pci_conf_interrupt(pb->pc, pb->busno, dev, pd->ipin, pb->swiz,
 		    &pd->iline);
@@ -674,15 +684,20 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 		pci_conf_write(pb->pc, tag, PCI_INTERRUPT_REG, icr);
 	}
 
-	if (pd->min_gnt != 0 || pd->max_lat != 0) {
-		if (pd->min_gnt != 0 && pd->min_gnt > pb->max_mingnt)
-			pb->max_mingnt = pd->min_gnt;
+	/* For non-PPB devices */
+	if (hdrtype != PCI_HDRTYPE_PPB) {
+		pd->min_gnt = PCI_MIN_GNT(icr);
+		pd->max_lat = PCI_MAX_LAT(icr);
+		if (pd->min_gnt != 0 || pd->max_lat != 0) {
+			if (pd->min_gnt != 0 && pd->min_gnt > pb->max_mingnt)
+				pb->max_mingnt = pd->min_gnt;
 
-		if (pd->max_lat != 0 && pd->max_lat < pb->min_maxlat)
-			pb->min_maxlat = pd->max_lat;
+			if (pd->max_lat != 0 && pd->max_lat < pb->min_maxlat)
+				pb->min_maxlat = pd->max_lat;
 
-		pb->bandwidth_used += pd->min_gnt * 4000000 /
-				(pd->min_gnt + pd->max_lat);
+			pb->bandwidth_used += pd->min_gnt * 4000000 /
+			    (pd->min_gnt + pd->max_lat);
+		}
 	}
 
 	width = 4;
@@ -1001,7 +1016,7 @@ setup_memwins(pciconf_bus_t *pb)
 		 * capable or not.  If it's not, then we need to constrain
 		 * the address allocation.
 		 */
-		if (pm->reg == PCI_MAPREG_ROM) {
+		if (PCICONF_MAPREG_IS_ROM(pm->reg)) {
 			ok64 = false;
 		} else if (ok64) {
 			base = pci_conf_read(pd->pc, pd->tag, pm->reg);
@@ -1045,7 +1060,7 @@ setup_memwins(pciconf_bus_t *pb)
 		} else
 			pd->enable |= PCI_CONF_ENABLE_MEM;
 
-		if (pm->reg != PCI_MAPREG_ROM) {
+		if (!PCICONF_MAPREG_IS_ROM(pm->reg)) {
 			if (pci_conf_debug) {
 				print_tag(pd->pc, pd->tag);
 				printf(
@@ -1080,7 +1095,7 @@ setup_memwins(pciconf_bus_t *pb)
 		}
 	}
 	for (pm = pb->pcimemwin; pm < &pb->pcimemwin[pb->nmemwin]; pm++) {
-		if (pm->reg == PCI_MAPREG_ROM && pm->address != -1) {
+		if (PCICONF_MAPREG_IS_ROM(pm->reg) && pm->address != -1) {
 			pd = pm->dev;
 			if (!(pd->enable & PCI_CONF_MAP_ROM))
 				continue;
