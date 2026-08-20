@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.59 2026/08/14 00:40:56 rin Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.60 2026/08/20 06:45:37 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.59 2026/08/14 00:40:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.60 2026/08/20 06:45:37 msaitoh Exp $");
 
 #include "opt_pci.h"
 
@@ -478,7 +478,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	if (pb->mem_total > 0) {
 		if (parent->nmemwin >= MAX_CONF_MEM) {
 			printf("pciconf: too many (%d) MEM windows\n",
-			     parent->nmemwin);
+			    parent->nmemwin);
 			goto err;
 		}
 		pb->mem_total = roundup2(pb->mem_total, pb->mem_align);
@@ -526,7 +526,8 @@ pci_resource_is_reserved(int type, uint64_t addr, uint64_t size)
 	LIST_FOREACH(rsvd, &pciconf_resource_reservations, next) {
 		if (rsvd->type != type)
 			continue;
-		if (rsvd->start <= addr + size && rsvd->start + rsvd->size >= addr)
+		if (rsvd->start <= addr + size &&
+		    rsvd->start + rsvd->size >= addr)
 			return rsvd;
 	}
 
@@ -1393,7 +1394,7 @@ pciconf_resource_init(void)
 
 	rs = kmem_zalloc(sizeof(*rs), KM_SLEEP);
 
-	return (rs);
+	return rs;
 }
 
 /*
