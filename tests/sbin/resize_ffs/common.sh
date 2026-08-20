@@ -36,7 +36,8 @@ test_case()
 		${check_function} " "${@}" "; \
 	}"
 	eval "${name}_cleanup() { \
-		umount -f mnt  ; \
+		unset LD_PRELOAD ; \
+		rump.halt >/dev/null 2>&1  ; \
 		: reset error ; \
 	}"
 }
