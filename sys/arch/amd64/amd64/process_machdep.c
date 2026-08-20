@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.50 2023/11/20 03:05:48 simonb Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.51 2026/08/20 16:20:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
  *	registers or privileged bits in the PSL.
  *	The process is stopped at the time write_fpregs is called.
  *
+ * process_alloc_dbregs(proc)
+ *	Ensure a dbregs buffer is allocated.
+ *
  * process_read_dbregs(proc, regs, sz)
  *	Get the current user-visible register set from the process
  *	and copy it into the regs structure (<machine/reg.h>).
@@ -74,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.50 2023/11/20 03:05:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.51 2026/08/20 16:20:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
@@ -171,6 +174,14 @@ process_read_dbregs(struct lwp *l, struct dbreg *regs, size_t *sz)
 	x86_dbregs_read(l, regs);
 
 	return 0;
+}
+
+void
+process_alloc_dbregs(struct lwp *l)
+{
+
+	KASSERT(rw_lock_held(&l->l_proc->p_reflock));
+	x86_dbregs_alloc(l);
 }
 
 int

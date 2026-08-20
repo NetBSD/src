@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process_lwpstatus.c,v 1.7 2026/08/08 12:38:32 riastradh Exp $	*/
+/*	$NetBSD: sys_process_lwpstatus.c,v 1.8 2026/08/20 16:20:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.7 2026/08/08 12:38:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.8 2026/08/20 16:20:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -301,6 +301,9 @@ process_dodbregs(struct lwp *curl /*tracer*/,
 	size_t s;
 	ptrace_regrfunc_t r;
 	ptrace_regwfunc_t w;
+
+	KASSERT(rw_lock_held(&l->l_proc->p_reflock));
+	process_alloc_dbregs(l);
 
 #ifdef COMPAT_NETBSD32
 	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;

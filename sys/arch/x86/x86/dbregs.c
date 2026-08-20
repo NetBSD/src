@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.15 2020/01/31 08:55:38 maxv Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.16 2026/08/20 16:20:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,8 +28,12 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+
 #include <sys/lwp.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/rwlock.h>
+
 #include <x86/cpufunc.h>
 #include <x86/dbregs.h>
 
@@ -96,6 +100,38 @@ x86_dbregs_reset(void)
 	ldr6(rdr6() & ~X86_BREAKPOINT_CONDITION_DETECTED);
 }
 
+/*
+ * x86_dbregs_alloc(l)
+ *
+ *	Ensure l has a dbregs buffer, allocating one if necessary.
+ *
+ *	Caller must hold l->l_proc->p_reflock, and, on return, must not
+ *	drop it before calling before calling x86_dbregs_read or
+ *	x86_dbregs_write.  Caller must not hold the lwp lock.
+ */
+void
+x86_dbregs_alloc(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+	struct dbreg *dbregs;
+
+	KASSERT(rw_lock_held(&l->l_proc->p_reflock));
+
+	dbregs = pool_get(&x86_dbregspl, PR_WAITOK);
+	memcpy(dbregs, &initdbstate, sizeof(initdbstate));
+
+	lwp_lock(l);
+	if (pcb->pcb_dbregs == NULL) {
+		pcb->pcb_dbregs = dbregs;
+		dbregs = NULL;
+		pcb->pcb_flags |= PCB_DBREGS;
+	}
+	lwp_unlock(l);
+
+	if (dbregs)
+		pool_put(&x86_dbregspl, dbregs);
+}
+
 void
 x86_dbregs_clear(struct lwp *l)
 {
@@ -131,16 +167,25 @@ x86_dbregs_abandon(struct lwp *l)
 	kpreempt_enable();
 }
 
+/*
+ * x86_dbregs_read(l, regs)
+ *
+ *	Read l's dbregs into the buffer regs.
+ *
+ *	Caller must hold l->l_proc->p_reflock, and must have previously
+ *	called x86_dbregs_alloc without dropping l->l_proc->p_reflock
+ *	in the interim.  Caller must also hold the lwp lock.
+ */
 void
 x86_dbregs_read(struct lwp *l, struct dbreg *regs)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
-	if (pcb->pcb_dbregs == NULL) {
-		pcb->pcb_dbregs = pool_get(&x86_dbregspl, PR_WAITOK);
-		memcpy(pcb->pcb_dbregs, &initdbstate, sizeof(initdbstate));
-		pcb->pcb_flags |= PCB_DBREGS;
-	}
+	KASSERT(rw_lock_held(&l->l_proc->p_reflock));
+	KASSERT(lwp_locked(l, NULL));
+	KASSERT(pcb->pcb_dbregs != NULL);
+	KASSERT(pcb->pcb_flags & PCB_DBREGS);
+
 	memcpy(regs, pcb->pcb_dbregs, sizeof(*regs));
 }
 
@@ -280,9 +325,10 @@ x86_dbregs_write(struct lwp *l, const struct dbreg *regs)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
-	if (pcb->pcb_dbregs == NULL) {
-		pcb->pcb_dbregs = pool_get(&x86_dbregspl, PR_WAITOK);
-	}
+	KASSERT(rw_lock_held(&l->l_proc->p_reflock));
+	KASSERT(lwp_locked(l, NULL));
+	KASSERT(pcb->pcb_dbregs != NULL);
+	KASSERT(pcb->pcb_flags & PCB_DBREGS);
 
 	memcpy(pcb->pcb_dbregs, regs, sizeof(*regs));
 	pcb->pcb_flags |= PCB_DBREGS;
