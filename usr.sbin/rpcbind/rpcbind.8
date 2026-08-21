@@ -1,4 +1,4 @@
-.\" $NetBSD: rpcbind.8,v 1.15 2017/08/17 07:45:24 christos Exp $
+.\" $NetBSD: rpcbind.8,v 1.16 2026/08/21 00:06:26 uwe Exp $
 .\" @(#)rpcbind.1m 1.19 92/09/14 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright 1991 Sun Microsystems, Inc.
@@ -8,7 +8,7 @@
 .Os
 .Sh NAME
 .Nm rpcbind
-.Nd universal addresses to RPC program number mapper
+.Nd universal addresses to RPC program number mapper (n\['e] portmapper)
 .Sh SYNOPSIS
 .Nm
 .Op Fl 6adiLlsWw
@@ -63,7 +63,9 @@ with daemon name
 .Sh OPTIONS
 .Bl -tag -width indent
 .It Fl 6
-Bind to AF_INET6 (IPv6) addresses only.
+Bind to
+.Dv AF_INET6 Pq IPv6
+addresses only.
 .It Fl a
 When debugging
 .Pq Fl d ,
@@ -104,13 +106,18 @@ to the list.
 .It Fl i
 .Dq Insecure
 mode.
-Allows calls to SET and UNSET from any host.
+Allows calls to
+.Sy SET
+and
+.Sy UNSET
+RPC procedures from any host.
 Normally
 .Nm
 accepts these requests only from the loopback interface for security reasons.
 This change is necessary for programs that were compiled with earlier
-versions of the rpc library and do not make those requests using the
-loopback interface.
+versions of the
+.Xr rpc 3
+library and do not make those requests using the loopback interface.
 .It Fl L
 Allows old-style local connections over the loopback interface.
 Without this flag, local connections are only allowed over a local socket,
@@ -130,7 +137,9 @@ to connect to services from a privileged port.
 .It Fl W
 Enable libwrap (TCP wrappers) support.
 .It Fl w
-Enable the warmstart feature.
+Enable the
+.Em warmstart
+feature.
 .Pp
 The warmstart feature saves RPC registrations on termination.
 Any saved RPC registrations are restored on restart if
@@ -140,10 +149,10 @@ This feature helps avoid RPC service interruption when restarting
 .Nm .
 warmstart support must be compiled in to
 .Nm .
-Portmap registrations are stored in
+Portmap (version 2) registrations are stored in
 .Pa /tmp/portmap.file .
 .Nm
-registrations are stored in
+(version 3) registrations are stored in
 .Pa /tmp/rpcbind.file .
 .El
 .Sh NOTES
@@ -151,7 +160,7 @@ All RPC servers must be restarted if
 .Nm
 is restarted.
 .Sh FILES
-.Bl -tag -width "/var/run/rpcbind.sock" -compact
+.Bl -tag -width Pa -compact
 .It Pa /var/run/portmap.file
 saved portmap registrations file.
 .It Pa /var/run/rpcbind.file
@@ -170,3 +179,19 @@ explicit remote host denial of service list.
 .Xr hosts_options 5 ,
 .Xr netconfig 5 ,
 .Xr rpcinfo 8
+.Sh HISTORY
+.Nm
+is named after version 3 of the protocol, which provides
+.Dq transport-independent RPC
+.Pq TI-RPC .
+Version 2 of the protocol and the program that implemented it,
+a predecessor of
+.Nm ,
+were called
+.Dq portmap ,
+and the program was colloquially known as
+.Dq portmapper .
+The notion of
+.Dq port
+is specific to TCP/IP, so newer, transport-independent versions of the
+protocol got rid of it, but the old name is still used informally.
