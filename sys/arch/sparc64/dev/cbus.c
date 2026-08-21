@@ -1,4 +1,4 @@
-/*	$NetBSD: cbus.c,v 1.8 2022/01/22 11:49:17 thorpej Exp $	*/
+/*	$NetBSD: cbus.c,v 1.9 2026/08/21 18:02:31 palle Exp $	*/
 /*	$OpenBSD: cbus.c,v 1.15 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -192,32 +192,30 @@ cbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	ih->ih_number = ino;
 	ih->ih_bus = t;
 
-	err = hv_vintr_setenabled(devhandle, devino, INTR_DISABLED);
-	if (err != H_EOK) {
-		printf("hv_vintr_setenabled: %d\n", err);
-		return (NULL);
-	}
+	err = sun4v_intr_setenabled(devhandle, devino, INTR_DISABLED);
+	if (err != H_EOK)
+	  panic("sun4v_intr_setenabled(%lx, %lu) failed - err = %d\n", 
+			(long unsigned int)devhandle, (long unsigned int)devino, err);
 
-	err = hv_vintr_setcookie(devhandle, devino, (vaddr_t)ih);
-	if (err != H_EOK) {
-		printf("hv_vintr_setcookie: %d\n", err);
-		return (NULL);
-	}
+	err = sun4v_intr_setcookie(devhandle, devino, (vaddr_t)ih);
+	if (err != H_EOK)
+		panic("sun4v_intr_setcookie(%#lx, %#lx, %#lx) failed - err = %d\n", 
+			  (long unsigned int)devhandle,(long unsigned int)devino,
+			  (long unsigned int)ih, err);
 
 	ih->ih_ack = cbus_intr_ack;
 
-	err = hv_vintr_settarget(devhandle, devino, cpus->ci_cpuid);
-	if (err != H_EOK) {
-		printf("hv_vintr_settarget: %d\n", err);
-		return (NULL);
-	}
+	err = sun4v_intr_settarget(devhandle, devino, cpus->ci_cpuid);
+	if (err != H_EOK)
+		panic("sun4v_intr_settarget(%#lx, %#lx, %d) failed - err = %d\n", 
+			  (long unsigned int)devhandle, (long unsigned int)devino,
+			  cpus->ci_cpuid, err);
 
 	/* Clear pending interrupts. */
-	err = hv_vintr_setstate(devhandle, devino, INTR_IDLE);
-	if (err != H_EOK) {
-		printf("hv_vintr_setstate: %d\n", err);
-		return (NULL);
-	}
+	err = sun4v_intr_setstate(devhandle, devino, INTR_IDLE);
+	if (err != H_EOK)
+	  panic("sun4v_intr_setenabled(%lx, %lu) failed - err = %d\n", 
+			(long unsigned int)devhandle, (long unsigned int)devino, err);
 
 	return (ih);
 }
@@ -231,7 +229,11 @@ cbus_intr_ack(struct intrhand *ih)
 	uint64_t devhandle = sc->sc_devhandle;
 	uint64_t devino = ih->ih_number;
 
-	hv_vintr_setstate(devhandle, devino, INTR_IDLE);
+	int err;
+	err = sun4v_intr_setstate(devhandle, devino, INTR_IDLE);
+	if (err != H_EOK)
+	  panic("%s(%#lx, %lu, INTR_IDLE) failed - err = %d\n", 
+			__func__, (long unsigned int)devhandle, (long unsigned int)devino, err);
 }
 
 bus_space_tag_t
