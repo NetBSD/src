@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18 2014/01/04 00:10:02 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.19 2026/08/21 14:01:16 tls Exp $	*/
 
 /*	$OpenBSD: process_machdep.c,v 1.3 1999/06/18 05:19:52 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18 2014/01/04 00:10:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.19 2026/08/21 14:01:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,8 +181,11 @@ process_write_fpregs(struct lwp *l, const struct fpreg *fpregs, size_t sz)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
+	kpreempt_disable();
 	hppa_fpu_flush(l);
 	memcpy(pcb->pcb_fpregs, fpregs, sizeof(*fpregs));
+	hppa_fpu_commit(l);
+	kpreempt_enable();
 	return 0;
 }
 

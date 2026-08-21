@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.27 2020/04/16 05:44:43 skrll Exp $	*/
+/*	$NetBSD: fpu.c,v 1.28 2026/08/21 14:01:16 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.27 2020/04/16 05:44:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28 2026/08/21 14:01:16 tls Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_hppa_fpu.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +82,18 @@ u_int fpu_version;
 /* The number of times we have had to switch the FPU context. */
 u_int fpu_csw;
 
+#ifdef HPPA_FPU_EAGER
+#define fpu_eager 1
+#else
+/* Don't use the default lazy FPU switching */
+int fpu_eager;
+#endif
+
 /* In locore.S, this swaps states in and out of the FPU. */
 void hppa_fpu_swapout(struct pcb *);
 void hppa_fpu_swap(struct fpreg *, struct fpreg *);
+
+void hppa_fpu_switch(struct lwp *);
 
 static int hppa_fpu_ls(struct trapframe *, struct lwp *);
 
@@ -139,14 +152,15 @@ const int _frame_reg_positions[32] = {
 void
 hppa_fpu_bootstrap(u_int ccr_enable)
 {
-	uint32_t junk[2];
-	uint32_t vers[2];
+	uint32_t junk[2] __aligned(8);
+	uint32_t vers[2] __aligned(8);
 
 	/* See if we have a present and functioning hardware FPU. */
 	fpu_present = (ccr_enable & HPPA_FPUS) == HPPA_FPUS;
 	if (!fpu_present) {
 		fpu_csw = 0;
 		curcpu()->ci_fpu_state = 0;
+		curcpu()->ci_fpu_lwp = NULL;
 
 		return;
 	}
@@ -182,9 +196,40 @@ hppa_fpu_bootstrap(u_int ccr_enable)
 	 */
 	fpu_csw = 0;
 	curcpu()->ci_fpu_state = 0;
+	curcpu()->ci_fpu_lwp = NULL;
 	mtctl(ccr_enable & (CCR_MASK ^ HPPA_FPUS), CR_CCR);
 
 	fpu_version = vers[0];
+
+#ifdef HPPA_FPU_EAGER
+	aprint_normal("fpu: eager switching\n");
+#else
+	/*
+	 * Handle QEMU, which does not check whether the FPU
+	 * is disabled before trying to run instructions on it,
+	 * thus never traps, thus never triggers our lazy FPU
+	 * switching scheme.
+	 */
+	mtctl(0, CR_CCR);
+	__asm volatile("fstds %%fr0, 0(%0)" :: "r" (junk) : "memory");
+	u_int ccr;
+	mfctl(CR_CCR, ccr);
+	if (!(ccr & HPPA_FPUS)) {
+		fpu_eager = 1;
+		/* No trap, so no trap handler, so re-enable FPU ourselves. */
+		mtctl(HPPA_FPUS, CR_CCR);
+		aprint_normal("fpu: emulation trap failure; "
+		    "using eager switching\n");
+	} else {
+		/*
+		 * This probe is the only thing that ever traps from lwp0,
+		 * and we're not really set up for that to work right.
+		 * Fortunately, we know what state we should put back.
+		 */
+		curcpu()->ci_fpu_state = 0;
+		mtctl(ccr_enable & (CCR_MASK ^ HPPA_FPUS), CR_CCR);
+	}
+#endif
 }
 
 /*
@@ -212,6 +257,14 @@ hppa_fpu_flush(struct lwp *l)
 
 	hppa_fpu_swapout(pcb);
 	ci->ci_fpu_state = 0;
+	/*
+	 * If we are doing eager FPU switching, hang onto the
+	 * LWP - if it uses the FPU again, the regs will need to be
+	 * saved again.
+	 */
+	if (!fpu_eager) {
+		ci->ci_fpu_lwp = NULL;
+	}
 }
 
 /*
@@ -422,5 +475,53 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 		ksi.ksi_trap = T_EMULATION;
 		ksi.ksi_addr = (void *)frame->tf_iioq_head;
 		trapsignal(l, &ksi);
+	}
+}
+
+/*
+ * Immediately switch current LWP's FP regs for those of the new LWP's;
+ * called from cpu_switchto if hppa_fpu_switch is set (if we are avoiding
+ * lazy FPU switching).
+ */
+void
+hppa_fpu_switch(struct lwp *newl)
+{
+	struct cpu_info *ci = curcpu();
+	struct pcb *oldpcb, *newpcb;
+	struct fpreg *oldregs = NULL, *newregs;
+
+	if (!fpu_present)
+		return;
+	if (ci->ci_fpu_lwp == newl)
+		return;
+
+	if (ci->ci_fpu_lwp != NULL) {
+		oldpcb = lwp_getpcb(ci->ci_fpu_lwp);
+		oldregs = oldpcb->pcb_fpregs;
+	}
+
+	newpcb = lwp_getpcb(newl);
+	newregs = newpcb->pcb_fpregs;
+
+	ci->ci_fpu_lwp = newl;
+	hppa_fpu_swap(oldregs, newregs);
+}
+
+/*
+ * With eager FPU switching, we can't rely on trap side effects to catch
+ * use of the FPU and sync regs like the status register.  Push a change
+ * out to the hardware, to avoid use of some other process's FPU status etc.
+ */
+void
+hppa_fpu_commit(struct lwp *l)
+{
+	struct cpu_info *ci = curcpu();
+	
+	KASSERT(kpreempt_disabled());
+	
+	if (fpu_eager && ci->ci_fpu_lwp == l) {
+		struct pcb *pcb = lwp_getpcb(l);
+
+		hppa_fpu_swap(NULL, pcb->pcb_fpregs);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.33 2022/05/13 18:40:02 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.34 2026/08/21 14:01:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.33 2022/05/13 18:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.34 2026/08/21 14:01:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,8 +252,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if ((flags & _UC_FPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
 
+		kpreempt_disable();
 		hppa_fpu_flush(l);
 		memcpy(pcb->pcb_fpregs, &mcp->__fpregs, sizeof(mcp->__fpregs));
+		hppa_fpu_commit(l);
+		kpreempt_enable();
 	}
 
 	mutex_enter(p->p_lock);

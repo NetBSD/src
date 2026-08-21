@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2026/08/15 11:14:59 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2026/08/21 14:01:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2026/08/15 11:14:59 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2026/08/21 14:01:16 tls Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1923,12 +1923,15 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	hppa_setvmspace(l);
 
 	/* reset any of the pending FPU exceptions */
+	kpreempt_disable();
 	hppa_fpu_flush(l);
 	memset(pcb->pcb_fpregs, 0, sizeof(*pcb->pcb_fpregs));
 	pcb->pcb_fpregs->fpr_regs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
 	pcb->pcb_fpregs->fpr_regs[1] = 0;
 	pcb->pcb_fpregs->fpr_regs[2] = 0;
 	pcb->pcb_fpregs->fpr_regs[3] = 0;
+	hppa_fpu_commit(l);
+	kpreempt_enable();
 
 	l->l_md.md_bpva = 0;
 

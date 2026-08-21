@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2025/04/03 17:49:49 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2026/08/21 14:01:16 tls Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -57,10 +57,11 @@
  *  suitability of this software for any purpose.
  */
 
-#include "opt_multiprocessor.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
+#include "opt_hppa_fpu.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/errno.h>
 #include <machine/param.h>
@@ -945,13 +946,38 @@ kstack_ok:
 noras:
 
 	/*
-	 * We do have a hardware FPU.  If the LWP
-	 * that we just switched to has its state in the
-	 * FPU, enable the FPU, else disable it, so if
-	 * the LWP does try to use the coprocessor
-	 * we'll get an assist emulation trap to swap
-	 * states.
+	 * We do have a hardware FPU.  Two paths: eager
+	 * (if selected by kernel config, or if emulation trap broken),
+	 * or lazy.
 	 */
+#ifndef HPPA_FPU_EAGER
+	.import fpu_eager, data
+	ldil	L%fpu_eager, %t1
+	ldw	R%fpu_eager(%t1), %t1
+	comib,=,n 0, %t1, L$fpu_lazy
+#endif
+	/*
+	 * Eager path - via C helper
+	 */
+	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)
+	stw	%arg1, HPPA_FRAME_ARG(1)(%r3)
+	copy	%arg1, %arg0
+	CALL(hppa_fpu_switch, %r1)
+	ldw	HPPA_FRAME_ARG(1)(%r3), %arg1
+	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
+
+#ifndef HPPA_FPU_EAGER
+	b,n	switch_return
+
+	/*
+	 * Lazy path.  If the LWP
+ 	 * that we just switched to has its state in the
+ 	 * FPU, enable the FPU, else disable it, so if
+ 	 * the LWP does try to use the coprocessor
+ 	 * we'll get an assist emulation trap to swap
+ 	 * states.
+ 	 */
+L$fpu_lazy:
 	GET_CURCPU(%t1)
 	mfctl	CR_CCR, %r1
 	mfctl	CR_FPPADDR, %t2
@@ -960,6 +986,7 @@ noras:
 	comb,<>,n %t1, %t2, 0		; nullify if LWPs different
 	depi	3, 25, 2, %r1		; enables the FPU
 	mtctl	%r1, CR_CCR
+#endif
 
 switch_return:
 	copy	%arg0, %ret0

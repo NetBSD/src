@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2023/02/23 14:55:36 riastradh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 2026/08/21 14:01:17 tls Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -290,6 +290,8 @@ struct cpu_info {
 	hppa_hpa_t	ci_hpa;
 	register_t	ci_psw;		/* Processor Status Word. */
 	paddr_t		ci_fpu_state;	/* LWP FPU state address, or zero. */
+	struct lwp	*ci_fpu_lwp;	/* If eager mode, LWP vaddr or NULL */
+
 	u_long		ci_itmr;
 
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
