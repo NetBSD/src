@@ -1,4 +1,4 @@
-/*	$NetBSD: vbus.c,v 1.9 2022/01/22 11:49:17 thorpej Exp $	*/
+/*	$NetBSD: vbus.c,v 1.10 2026/08/21 18:15:05 palle Exp $	*/
 /*	$OpenBSD: vbus.c,v 1.8 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -45,6 +45,7 @@ struct vbus_softc {
 	device_t		sc_dv;
 	bus_space_tag_t		sc_bustag;
 	bus_dma_tag_t		sc_dmatag;
+	uint64_t		sc_devhandle;
 };
 int	vbus_cmp_cells(int *, int *, int *, int);
 int	vbus_match(device_t, cfdata_t, void *);
@@ -79,6 +80,7 @@ vbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_bustag = vbus_alloc_bus_tag(sc, ma->ma_bustag);
 	sc->sc_dmatag = ma->ma_dmatag;
+	sc->sc_devhandle = (ma->ma_reg[0].ur_paddr >> 32) & 0x0fffffff;
 	printf("\n");
 
 	devhandle_t selfh = device_handle(self);
@@ -186,7 +188,7 @@ vbus_intr_map(int node, int ino, uint64_t *sysino)
 
 			devhandle = reg[0] & 0x0fffffff;
 
-			err = hv_intr_devino_to_sysino(devhandle, devino, sysino);
+			err = sun4v_intr_devino_to_sysino(devhandle, devino, sysino);
 			if (err != H_EOK)
 				goto out;
 
@@ -207,6 +209,8 @@ void *
 vbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
 {
+	struct vbus_softc *sc = t->cookie;
+	uint64_t devhandle = sc->sc_devhandle;
 	uint64_t sysino = INTVEC(ihandle);
 	struct intrhand *ih;
 	int ino;
@@ -228,26 +232,29 @@ vbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 	ih->ih_ack = vbus_intr_ack;
 
-	err = hv_intr_settarget(sysino, cpus->ci_cpuid);
-	if (err != H_EOK) {
-		printf("hv_intr_settarget(%lu, %u) failed - err = %d\n", 
-		       (long unsigned int)sysino, cpus->ci_cpuid, err);
-		return (NULL);
-	}
+	err = sun4v_intr_setcookie(devhandle, sysino, (vaddr_t)ih);
+	if (err != H_EOK)
+		panic("sun4v_intr_setcookie(%#lx, %#lx, %#lx) failed - err = %d\n", 
+			  (long unsigned int)devhandle, (long unsigned int)sysino,
+			  (long unsigned int)ih, err);
+
+	err = sun4v_intr_settarget(devhandle, sysino, cpus->ci_cpuid);
+	if (err != H_EOK)
+		panic("sun4v_intr_settarget(%#lx, %#lx, %d) failed - err = %d\n", 
+			  (long unsigned int)devhandle, (long unsigned int)sysino,
+			  cpus->ci_cpuid, err);
 
 	/* Clear pending interrupts. */
-	err = hv_intr_setstate(sysino, INTR_IDLE);
+	err = sun4v_intr_setstate(devhandle, sysino, INTR_IDLE);
 	if (err != H_EOK) {
-	  printf("hv_intr_setstate(%lu, INTR_IDLE) failed - err = %d\n", 
-		 (long unsigned int)sysino, err);
-	  return (NULL);
+	  panic("sun4v_intr_setstate(%lx, %lu, INTR_IDLE) failed - err = %d\n", 
+			(long unsigned int)devhandle, (long unsigned int)sysino, err);
 	}
 
-	err = hv_intr_setenabled(sysino, INTR_ENABLED);
+	err = sun4v_intr_setenabled(devhandle, sysino, INTR_ENABLED);
 	if (err != H_EOK) {
-	  printf("hv_intr_setenabled(%lu) failed - err = %d\n", 
-		 (long unsigned int)sysino, err);
-	  return (NULL);
+	  panic("sun4v_intr_setenabled(%lx, %lu) failed - err = %d\n", 
+			(long unsigned int)devhandle, (long unsigned int)sysino, err);
 	}
 
 	return (ih);
@@ -256,8 +263,7 @@ vbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 void
 vbus_intr_ack(struct intrhand *ih)
 {
-	DPRINTF(VBUS_INTR, ("vbus_intr_ack()\n"));
-	hv_intr_setstate(ih->ih_number, INTR_IDLE);
+	/* Drivers explicitly ack interrupts. */
 }
 
 bus_space_tag_t
