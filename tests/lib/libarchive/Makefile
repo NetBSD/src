@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2026/08/21 22:12:42 riastradh Exp $
+# $NetBSD: Makefile,v 1.22 2026/08/21 22:13:35 riastradh Exp $
 
 NOMAN=
 
@@ -469,9 +469,11 @@ test_read_format_7zip_lzma2_riscv.7z.uu \
 test_read_format_7zip_lzma2_sparc.7z.uu \
 test_read_format_7zip_malformed.7z.uu \
 test_read_format_7zip_malformed2.7z.uu \
+test_read_format_7zip_malformed3.7z.uu \
 test_read_format_7zip_packinfo_digests.7z.uu \
 test_read_format_7zip_ppmd.7z.uu \
 test_read_format_7zip_sfx_elf.elf.uu \
+test_read_format_7zip_sfx_elf64trunc.elf.uu \
 test_read_format_7zip_sfx_modified_pe.exe.uu \
 test_read_format_7zip_sfx_pe.exe.uu \
 test_read_format_7zip_solid_zstd.7z.uu \
@@ -487,6 +489,7 @@ test_read_format_cab_1.cab.uu \
 test_read_format_cab_2.cab.uu \
 test_read_format_cab_3.cab.uu \
 test_read_format_cab_filename_cp932.cab.uu \
+test_read_format_cab_lzx_oob.cab.uu \
 test_read_format_cpio_bin_be.cpio.uu \
 test_read_format_cpio_bin_le.cpio.uu \
 test_read_format_cpio_filename_cp866.cpio.uu \
@@ -523,6 +526,7 @@ test_read_format_iso_rockridge_new.iso.Z.uu \
 test_read_format_iso_rockridge_rr_moved.iso.Z.uu \
 test_read_format_iso_xorriso.iso.Z.uu \
 test_read_format_iso_zisofs.iso.Z.uu \
+test_read_format_iso_zisofs_overflow.iso.uu \
 test_read_format_lha_bugfix_0.lzh.uu \
 test_read_format_lha_filename_cp932.lzh.uu \
 test_read_format_lha_filename_utf16.lzh.uu \
@@ -533,6 +537,7 @@ test_read_format_lha_header3.lzh.uu \
 test_read_format_lha_lh0.lzh.uu \
 test_read_format_lha_lh6.lzh.uu \
 test_read_format_lha_lh7.lzh.uu \
+test_read_format_lha_oversize_header.lzh.uu \
 test_read_format_lha_withjunk.lzh.uu \
 test_read_format_mtree.mtree.uu \
 test_read_format_mtree_crash747.mtree.bz2.uu \
@@ -567,6 +572,7 @@ test_read_format_rar5_invalid_dict_reference.rar.uu \
 test_read_format_rar5_invalid_hash_valid_htime_exfld.rar.uu \
 test_read_format_rar5_leftshift1.rar.uu \
 test_read_format_rar5_leftshift2.rar.uu \
+test_read_format_rar5_loop_bug.rar.uu \
 test_read_format_rar5_multiarchive.part01.rar.uu \
 test_read_format_rar5_multiarchive.part02.rar.uu \
 test_read_format_rar5_multiarchive.part03.rar.uu \
@@ -716,7 +722,8 @@ test_write_disk_appledouble.cpio.gz.uu \
 test_write_disk_appledouble_zip.zip.uu \
 test_write_disk_hfs_compression.tgz.uu \
 test_write_disk_mac_metadata.tar.gz.uu \
-test_write_disk_no_hfs_compression.tgz.uu
+test_write_disk_no_hfs_compression.tgz.uu \
+# end of FILES
 
 .include <bsd.test.mk>
 
