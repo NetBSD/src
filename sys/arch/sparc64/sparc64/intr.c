@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.72 2024/01/15 08:13:45 andvar Exp $ */
+/*	$NetBSD: intr.c,v 1.73 2026/08/21 18:21:51 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.72 2024/01/15 08:13:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.73 2026/08/21 18:21:51 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.72 2024/01/15 08:13:45 andvar Exp $");
 #ifdef DEBUG
 #define INTRDB_ESTABLISH   0x01
 #define INTRDB_REUSE       0x02
+#define INTRDB_SUN4V       0x04
 static int sparc_intr_debug = 0x0;
 #define DPRINTF(l, s)   do { if (sparc_intr_debug & l) printf s; } while (0)
 #else
@@ -371,18 +372,31 @@ uint64_t sun4v_group_interrupt_major;
 int64_t
 sun4v_intr_devino_to_sysino(uint64_t devhandle, uint64_t devino, uint64_t *ino)
 {
-	if (sun4v_group_interrupt_major < 3)
-		return hv_intr_devino_to_sysino(devhandle, devino, ino);
+	DPRINTF(INTRDB_SUN4V, 
+			("%s: devhandle %#lx devino %#lx\n", __func__, devhandle, devino));
 
+	if (sun4v_group_interrupt_major < 2) {
+		DPRINTF(INTRDB_SUN4V, ("%s: using deprecated api\n", __func__));
+		return hv_intr_devino_to_sysino(devhandle, devino, ino);
+	}
 	*ino = devino;
+	DPRINTF(INTRDB_SUN4V, 
+			("%s: returning devino as ino %#lx\n", __func__, *ino));
+	
 	return H_EOK;
 }
 
 int64_t
 sun4v_intr_setcookie(uint64_t devhandle, uint64_t ino, uint64_t cookie_value)
 {
-	if (sun4v_group_interrupt_major < 3)
+	DPRINTF(INTRDB_SUN4V, 
+			("%s: devhandle %#lx ino %#lx cookie_value %#lx\n",
+			 __func__, devhandle, ino, cookie_value));
+
+	if (sun4v_group_interrupt_major < 2) {
+		DPRINTF(INTRDB_SUN4V, ("%s: using deprecated api\n", __func__));
 		return H_EOK;
+	}
 	
 	return hv_vintr_setcookie(devhandle, ino, cookie_value);
 }
@@ -390,17 +404,28 @@ sun4v_intr_setcookie(uint64_t devhandle, uint64_t ino, uint64_t cookie_value)
 int64_t
 sun4v_intr_setenabled(uint64_t devhandle, uint64_t ino, uint64_t intr_enabled)
 {
-	if (sun4v_group_interrupt_major < 3)
-		return hv_intr_setenabled(ino, intr_enabled);
+	DPRINTF(INTRDB_SUN4V, 
+			("%s: devhandle %#lx ino %#lx intr_enabled %#lx\n",
+			 __func__, devhandle, ino, intr_enabled));
 
+	if (sun4v_group_interrupt_major < 2) {
+		DPRINTF(INTRDB_SUN4V, ("%s: using deprecated api\n", __func__));
+		return hv_intr_setenabled(ino, intr_enabled);
+	}
 	return hv_vintr_setenabled(devhandle, ino, intr_enabled);
 }
 
 int64_t
 sun4v_intr_setstate(uint64_t devhandle, uint64_t ino, uint64_t intr_state)
 {
-	if (sun4v_group_interrupt_major < 3)
+	DPRINTF(INTRDB_SUN4V, 
+			("%s: devhandle %#lx ino %#lx intr_state %#lx\n",
+			 __func__, devhandle, ino, intr_state));
+
+	if (sun4v_group_interrupt_major < 2) {
+		DPRINTF(INTRDB_SUN4V, ("%s: using deprecated api\n", __func__));
 		return hv_intr_setstate(ino, intr_state);
+	}
 
 	return hv_vintr_setstate(devhandle, ino, intr_state);
 }
@@ -408,8 +433,14 @@ sun4v_intr_setstate(uint64_t devhandle, uint64_t ino, uint64_t intr_state)
 int64_t
 sun4v_intr_settarget(uint64_t devhandle, uint64_t ino, uint64_t cpuid)
 {
-	if (sun4v_group_interrupt_major < 3)
+	DPRINTF(INTRDB_SUN4V, 
+			("%s: devhandle %#lx ino %#lx cpuid %#lx\n",
+			 __func__, devhandle, ino, cpuid));
+
+	if (sun4v_group_interrupt_major < 2) {
+		DPRINTF(INTRDB_SUN4V, ("%s: using deprecated api\n", __func__));
 		return hv_intr_settarget(ino, cpuid);
+	}
 
 	return hv_vintr_settarget(devhandle, ino, cpuid);
 }
