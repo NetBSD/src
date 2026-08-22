@@ -1,4 +1,4 @@
-: undefined 
+: undefined .
 make: Unclosed variable "UNCLOSED"
 	in command ": $@ ${UNCLOSED"
 	in target "unclosed-expression" from cmd-errors-lint.mk:19

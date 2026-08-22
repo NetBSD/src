@@ -1,7 +1,7 @@
-# $NetBSD: cmd-errors-lint.mk,v 1.8 2025/06/28 22:39:28 rillig Exp $
+# $NetBSD: cmd-errors-lint.mk,v 1.9 2026/08/22 19:18:44 rillig Exp $
 #
 # Demonstrate how errors in expressions affect whether the commands
-# are actually executed.
+# are actually executed, in strict mode (-dL).
 
 .MAKEFLAGS: -dL
 
@@ -10,8 +10,8 @@ all: undefined unclosed-expression unclosed-modifier unknown-modifier end
 # Undefined variables in expressions are not an error.  They expand to empty
 # strings.
 undefined:
-# expect: : undefined
-	: $@ ${UNDEFINED}
+# expect: : undefined .
+	: $@ ${UNDEFINED}.
 
 unclosed-expression:
 # expect: make: Unclosed variable "UNCLOSED"

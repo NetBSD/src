@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.20 2025/11/16 16:43:57 sjg Exp $
+# $NetBSD: directive-include-guard.mk,v 1.21 2026/08/22 19:18:44 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -24,7 +24,8 @@
 
 # Each of the following test cases creates a temporary file named after the
 # test case and writes some lines of text to that file.  That file is then
-# included twice, to see whether the second '.include' is skipped.
+# included twice, to see whether the second '.include' is skipped.  Earlier
+# tests may affect later tests.
 
 
 # This is the canonical form of a variable-based multiple-inclusion guard.
@@ -130,6 +131,16 @@ LINES.variable-if-parenthesized= \
 	'.endif'
 # expect: Parse_PushInput: variable-if-parenthesized.tmp:1
 # expect: Parse_PushInput: variable-if-parenthesized.tmp:1
+
+# If there is no space after the ".if", the multiple-inclusion guard still
+# applies, even though this form is not common in practice.
+CASES+=	variable-if-without-space
+LINES.variable-if-without-space= \
+	'.if!defined(VARIABLE_IF_WITHOUT_SPACE)' \
+	'VARIABLE_IF_WITHOUT_SPACE=' \
+	'.endif'
+# expect: Parse_PushInput: variable-if-without-space.tmp:1
+# expect: Skipping 'variable-if-without-space.tmp' because 'VARIABLE_IF_WITHOUT_SPACE' is defined
 
 # A conditional other than '.if' or '.ifndef' does not guard the file, even if
 # it is otherwise equivalent to the above accepted forms.
@@ -292,7 +303,7 @@ VARIABLE_ALREADY_DEFINED=
 
 # If the guard variable is defined before the file is included the first time,
 # the file is processed but its content is skipped.  If that same guard
-# variable is undefined when the file is included the second time, the file is
+# variable gets undefined when the file is included the second time, the file is
 # processed as usual.
 CASES+=	variable-defined-then-undefined
 LINES.variable-defined-then-undefined= \
@@ -342,7 +353,7 @@ LINES.variable-swapped= \
 # expect: Parse_PushInput: variable-swapped.tmp:1
 # expect: Parse_PushInput: variable-swapped.tmp:1
 
-# If the guard variable is undefined between the first and the second time the
+# If the guard variable gets undefined between the first and the second time the
 # file is included, the guarded file is included again.
 CASES+=	variable-undef-between
 LINES.variable-undef-between= \
@@ -354,7 +365,7 @@ UNDEF_BETWEEN.variable-undef-between= \
 # expect: Parse_PushInput: variable-undef-between.tmp:1
 # expect: Parse_PushInput: variable-undef-between.tmp:1
 
-# If the guard variable is undefined while the file is included the first
+# If the guard variable gets undefined while the file is included the first
 # time, the guard does not have an effect, and the file is included again.
 CASES+=	variable-undef-inside
 LINES.variable-undef-inside= \
@@ -442,8 +453,8 @@ LINES.inner-if-elif-else= \
 # guard has the benefit that a target cannot be undefined once it is defined.
 # The target should be declared '.NOTMAIN'.  Since the target names are
 # usually chosen according to a pattern that doesn't interfere with real
-# target names, they don't need to be declared '.PHONY' as they don't generate
-# filesystem operations.
+# target names, they don't need to be declared '.PHONY' for optimization, as
+# they don't generate filesystem operations.
 CASES+=	target
 LINES.target= \
 	'.if !target(__target.tmp__)' \
