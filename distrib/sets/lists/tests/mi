@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238.2.24 2026/07/03 18:06:57 martin Exp $
+# $NetBSD: mi,v 1.1238.2.25 2026/08/22 10:50:04 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4929,6 +4929,7 @@
 ./usr/tests/usr.bin/grep/d_input			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_invert.in			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_invert.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/grep/d_pr60552			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_recurse.out			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_recurse_noarg.out		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_recurse_symlink.err		tests-usr.bin-tests	compattestfile,atf

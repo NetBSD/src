@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2022/09/09 22:14:29 wiz Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2026/08/22 10:50:04 martin Exp $
 
 NOMAN=		# defined
 
@@ -29,6 +29,7 @@ FILES+=		d_ignore_case.out
 FILES+=		d_input
 FILES+=		d_invert.in
 FILES+=		d_invert.out
+FILES+=		d_pr60552
 FILES+=		d_recurse.out
 FILES+=		d_recurse_noarg.out
 FILES+=		d_recurse_symlink.err
