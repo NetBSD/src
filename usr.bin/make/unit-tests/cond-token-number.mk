@@ -1,14 +1,15 @@
-# $NetBSD: cond-token-number.mk,v 1.12 2025/06/28 22:39:28 rillig Exp $
+# $NetBSD: cond-token-number.mk,v 1.13 2026/08/22 07:54:46 rillig Exp $
 #
 # Tests for number tokens in .if conditions.
 #
 # TODO: Add introduction.
 
+# 0 evaluates to false and can thus be used to comment out a section of code.
 .if 0
 .  error
 .endif
 
-# Even though -0 is a number and would be accepted by strtod, it is not
+# Even though -0 is a number that is accepted by strtod, it is not
 # accepted by the condition parser.
 #
 # See the ch_isdigit call in CondParser_String.
@@ -19,7 +20,7 @@
 .  error
 .endif
 
-# Even though +0 is a number and would be accepted by strtod, it is not
+# Even though +0 is a number that is accepted by strtod, it is not
 # accepted by the condition parser.
 #
 # See the ch_isdigit call in CondParser_String.
@@ -30,7 +31,7 @@
 .  error
 .endif
 
-# Even though -1 is a number and would be accepted by strtod, it is not
+# Even though -1 is a number that is accepted by strtod, it is not
 # accepted by the condition parser.
 #
 # See the ch_isdigit call in CondParser_String.
@@ -41,7 +42,7 @@
 .  error
 .endif
 
-# Even though +1 is a number and would be accepted by strtod, it is not
+# Even though +1 is a number that is accepted by strtod, it is not
 # accepted by the condition parser.
 #
 # See the ch_isdigit call in CondParser_String.
@@ -72,19 +73,23 @@
 .else
 .  error
 .endif
-
-# This is not a hexadecimal number, even though it has an x.  It is
-# interpreted as a string instead.  In a plain '.if', such a token evaluates
-# to true if it is non-empty.  In other '.if' directives, such a token is
-# evaluated by either FuncDefined or FuncMake.
-.if 3x4
+HEX=	dead
+.if 0x${HEX} == 57005 && 0xdead == 57005
 .else
 .  error
 .endif
 
-# Make can do radix conversion from hex.
-HEX=	dead
-.if 0x${HEX} == 57005
+# Numbers with leading zeros are interpreted as decimal numbers, not octal.
+.if 0777 == 777
+.else
+.  error
+.endif
+
+# This is not a hexadecimal number, even though it has an x.  It is
+# interpreted as a string instead.  In a plain '.if', such a token evaluates
+# to true if it is non-empty.  In other '.if' directives, such a token is
+# evaluated as either of the functions defined(...) or make(...).
+.if 3x4
 .else
 .  error
 .endif
