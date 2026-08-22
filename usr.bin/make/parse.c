@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.757 2026/06/09 08:27:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.758 2026/08/22 21:19:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.757 2026/06/09 08:27:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.758 2026/08/22 21:19:47 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -2308,17 +2308,24 @@ ParseGmakeExport(char *line)
 static bool
 ParseEOF(void)
 {
+	unsigned prevLineno;
 	IncludedFile *curFile = CurFile();
 
 	doing_depend = curFile->depending;
-	if (curFile->forLoop != NULL &&
-	    For_NextIteration(curFile->forLoop, &curFile->buf)) {
+	if (curFile->forLoop == NULL)
+		goto end_file;
+
+	prevLineno = curFile->lineno;
+	curFile->lineno = curFile->forHeadLineno;
+	if (For_NextIteration(curFile->forLoop, &curFile->buf)) {
 		curFile->buf_ptr = curFile->buf.data;
 		curFile->buf_end = curFile->buf.data + curFile->buf.len;
 		curFile->readLines = curFile->forBodyReadLines;
 		return true;
 	}
+	curFile->lineno = prevLineno;
 
+end_file:
 	Cond_EndFile();
 
 	if (curFile->guardState == GS_DONE) {

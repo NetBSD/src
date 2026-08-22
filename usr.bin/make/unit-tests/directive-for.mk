@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.33 2026/08/22 21:15:31 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.34 2026/08/22 21:19:47 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -316,12 +316,11 @@ INDIRECT=	${DIRECT}
 # Ensure the correct line number in messages from expanding the body of a .for
 # loop.
 #
-# expect+7: newline in .for value
-# expect+7: "1 1"
-# FIXME: wrong line number
 # expect+6: newline in .for value
-# expect+4: "2 2"
+# expect+6: "1 1"
 # expect+4: newline in .for value
+# expect+4: "2 2"
+# expect+2: newline in .for value
 # expect+2: "3 3"
 .for var in "1${.newline}1" "2${.newline}2" "3${.newline}3"
 .  info ${var}
