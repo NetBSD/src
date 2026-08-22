@@ -35,6 +35,18 @@ For: loop body with outer = o:
 For: end for 1
 For: loop body with inner = i:
 make: directive-for.mk:312: newline-item=(a)
+make: directive-for.mk:326: newline in .for value
+	in .for loop from directive-for.mk:326 with var = "1
+1"
+make: directive-for.mk:327: "1 1"
+make: directive-for.mk:328: newline in .for value
+	in .for loop from directive-for.mk:326 with var = "2
+2"
+make: directive-for.mk:327: "2 2"
+make: directive-for.mk:328: newline in .for value
+	in .for loop from directive-for.mk:326 with var = "3
+3"
+make: directive-for.mk:327: "3 3"
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
