@@ -1,4 +1,4 @@
-# $NetBSD: t_grep.sh,v 1.8 2024/11/23 09:38:02 rillig Exp $
+# $NetBSD: t_grep.sh,v 1.8.2.1 2026/08/22 10:44:06 martin Exp $
 #
 # Copyright (c) 2008, 2009, 2021, 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -359,6 +359,25 @@ pr_58849_body()
 	    grep -Fvx -e __bss_end__ -e _end input
 }
 
+atf_test_case pr_60552 cleanup
+pr_60552_head()
+{
+	atf_set "descr" "Checks case-insensitive UTF-16 matches with color"
+}
+pr_60552_body()
+{
+	local d
+
+	d=$(atf_get_srcdir)
+	atf_check -o ignore grep -i est --color=always "$d/d_pr60552"
+}
+pr_60552_cleanup()
+{
+
+	test -f grep.core || return 0
+	gdb -batch -ex bt grep grep.core
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basic
@@ -382,4 +401,5 @@ atf_init_test_cases()
 	atf_add_test_case nonexistent
 	atf_add_test_case context2
 	atf_add_test_case pr_58849
+	atf_add_test_case pr_60552
 }

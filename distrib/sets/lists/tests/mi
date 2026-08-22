@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1387.2.12 2026/07/19 15:57:27 martin Exp $
+# $NetBSD: mi,v 1.1387.2.13 2026/08/22 10:44:06 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -5096,6 +5096,7 @@
 ./usr/tests/usr.bin/grep/d_input			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_invert.in			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_invert.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/grep/d_pr60552			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_recurse.out			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_recurse_noarg.out		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/grep/d_recurse_symlink.err		tests-usr.bin-tests	compattestfile,atf
