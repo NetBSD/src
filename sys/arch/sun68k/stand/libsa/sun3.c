@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.11 2020/06/20 18:46:14 riastradh Exp $	*/
+/*	$NetBSD: sun3.c,v 1.11.28.1 2026/08/22 15:00:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ found:
 
 	if (physaddr & ~(sun3_mapinfo[i].mask))
 		panic("dev3_mapin: bad address");
-	pa = sun3_mapinfo[i].base += physaddr;
+	pa = sun3_mapinfo[i].base + physaddr;
 
 	pte = PA_PGNUM(pa) | PG_PERM | sun3_mapinfo[i].pgtype;
 
@@ -147,14 +147,19 @@ found:
  * the boot program.  That way, dvma_mapin can just compute the
  * DVMA alias address, and dvma_mapout does nothing.
  *
+ * Leave the lower 256 KB of the PROM DVMA space untouched,
+ * since 3/60 PROM SCSI drivers may use that range
+ * (at least around 0xFFF00000 to 0xFF009FFF) on booting kernels
+ * for their own mappings.
+ *
  * Note that this assumes that standalone programs will do I/O
  * operations only within range (SA_MIN_VA .. SA_MAX_VA) checked.
  */
 
-#define	DVMA_BASE 0xFFf00000
-#define DVMA_MAPLEN  0xE0000	/* 1 MB - 128K (save MONSHORTSEG) */
+#define DVMA_BASE	0xFFf40000
+#define DVMA_MAPLEN 	0xA0000	/* 640 KB (save MONSHORTSEG and PROM work) */
 
-#define SA_MIN_VA	0x200000
+#define SA_MIN_VA	0x240000
 #define SA_MAX_VA	(SA_MIN_VA + DVMA_MAPLEN)
 
 /* This points to the end of the free DVMA space. */
