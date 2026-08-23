@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.297 2026/01/04 03:20:29 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.298 2026/08/23 17:49:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.297 2026/01/04 03:20:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.298 2026/08/23 17:49:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1409,25 +1409,12 @@ pool_grow(struct pool *pp, int flags)
 			} while (pp->pr_flags & PR_GROWING);
 			return SET_ERROR(ERESTART);
 		} else {
-			if (pp->pr_flags & PR_GROWINGNOWAIT) {
-				/*
-				 * This needs an unlock/relock dance so
-				 * that the other caller has a chance to
-				 * run and actually do the thing.  Note
-				 * that this is effectively a busy-wait.
-				 */
-				mutex_exit(&pp->pr_lock);
-				mutex_enter(&pp->pr_lock);
-				return SET_ERROR(ERESTART);
-			}
 			return SET_ERROR(EWOULDBLOCK);
 		}
 	}
 	pp->pr_flags |= PR_GROWING;
 	if (flags & PR_WAITOK)
 		mutex_exit(&pp->pr_lock);
-	else
-		pp->pr_flags |= PR_GROWINGNOWAIT;
 
 	storage = pool_allocator_alloc(pp, flags);
 	if (__predict_false(storage == NULL))
@@ -1444,7 +1431,7 @@ pool_grow(struct pool *pp, int flags)
 	pool_prime_page(pp, storage, ph);
 	pp->pr_npagealloc++;
 	KASSERT(pp->pr_flags & PR_GROWING);
-	pp->pr_flags &= ~(PR_GROWING|PR_GROWINGNOWAIT);
+	pp->pr_flags &= ~PR_GROWING;
 	/*
 	 * If anyone was waiting for pool_grow, notify them that we
 	 * may have just done it.
@@ -1455,7 +1442,7 @@ out:
 	if (flags & PR_WAITOK)
 		mutex_enter(&pp->pr_lock);
 	KASSERT(pp->pr_flags & PR_GROWING);
-	pp->pr_flags &= ~(PR_GROWING|PR_GROWINGNOWAIT);
+	pp->pr_flags &= ~PR_GROWING;
 	return SET_ERROR(ENOMEM);
 }
 

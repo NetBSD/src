@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.96 2021/12/22 16:57:28 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.97 2026/08/23 17:49:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007, 2020
@@ -159,7 +159,6 @@ struct pool {
 #define PR_NOALIGN	0x800	/* don't assume backend alignment */
 #define PR_LARGECACHE	0x1000	/* use large cache groups */
 #define PR_GROWING	0x2000	/* pool_grow in progress */
-#define PR_GROWINGNOWAIT 0x4000	/* pool_grow in progress by PR_NOWAIT alloc */
 #define PR_ZERO		0x8000	/* zero data before returning */
 #define PR_USEBMAP	0x10000	/* use a bitmap to manage freed items */
 #define PR_PSERIALIZE	0x20000	/* needs pserialize sync point before free */
