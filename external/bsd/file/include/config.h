@@ -198,6 +198,9 @@
 /* HAVE_STRUCT_OPTION */
 #define HAVE_STRUCT_OPTION 1
 
+/* Define to 1 if 'st_flags' is a member of 'struct stat'. */
+#define HAVE_STRUCT_STAT_ST_FLAGS 1
+
 /* Define to 1 if 'st_rdev' is a member of 'struct stat'. */
 #define HAVE_STRUCT_STAT_ST_RDEV 1
 

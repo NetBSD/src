@@ -147,6 +147,7 @@ AC_CHECK_TYPE([sig_t],[AC_DEFINE([HAVE_SIG_T],1,[Have sig_t type])],,[#include <
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
+AC_CHECK_MEMBERS([struct stat.st_flags])
 AC_CHECK_MEMBERS([struct stat.st_rdev])
 
 AC_CHECK_MEMBERS([struct tm.tm_gmtoff],,,[#include <time.h>])
