@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.383 2026/03/10 15:38:26 sjg Exp $
+# $NetBSD: Makefile,v 1.384 2026/08/23 08:23:56 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -60,6 +60,7 @@ rm-tmpdir:	.NOMETA
 TESTS+=		archive
 TESTS+=		archive-suffix
 TESTS+=		char-005c-reverse-solidus
+TESTS+=		char-000a-new-line
 TESTS+=		cmd-errors
 TESTS+=		cmd-errors-jobs
 TESTS+=		cmd-errors-lint

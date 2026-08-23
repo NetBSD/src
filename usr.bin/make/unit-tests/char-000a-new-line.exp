@@ -1,0 +1,25 @@
+make: char-000a-new-line.mk:16: used
+make: char-000a-new-line.mk:16: +
+make: char-000a-new-line.mk:30: used +
+make: char-000a-new-line.mk:32: used +
+make: char-000a-new-line.mk:34: used +
+make: char-000a-new-line.mk:36: used +
+make: char-000a-new-line.mk:38: used +
+make: char-000a-new-line.mk:40: used +
+make: char-000a-new-line.mk:42: used +
+make: char-000a-new-line.mk:44: + used
+make: char-000a-new-line.mk:46: used +
+make: char-000a-new-line.mk:48: used +
+make: char-000a-new-line.mk:50: used +
+make: char-000a-new-line.mk:52: 2
+make: char-000a-new-line.mk:54: used +
+make: char-000a-new-line.mk:56: 1234567 1234567
+make: char-000a-new-line.mk:58: 1 2
+make: char-000a-new-line.mk:60: used +
+make: char-000a-new-line.mk:62: used +
+make: char-000a-new-line.mk:64: used +
+make: don't know how to make + (continuing)
+
+Stop.
+make: stopped making "+" in unit-tests
+exit status 1
