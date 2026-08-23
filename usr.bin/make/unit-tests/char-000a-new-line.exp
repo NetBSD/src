@@ -1,23 +1,24 @@
-make: char-000a-new-line.mk:16: used
-make: char-000a-new-line.mk:16: +
-make: char-000a-new-line.mk:30: used +
-make: char-000a-new-line.mk:32: used +
-make: char-000a-new-line.mk:34: used +
-make: char-000a-new-line.mk:36: used +
-make: char-000a-new-line.mk:38: used +
-make: char-000a-new-line.mk:40: used +
-make: char-000a-new-line.mk:42: used +
-make: char-000a-new-line.mk:44: + used
-make: char-000a-new-line.mk:46: used +
-make: char-000a-new-line.mk:48: used +
-make: char-000a-new-line.mk:50: used +
-make: char-000a-new-line.mk:52: 2
-make: char-000a-new-line.mk:54: used +
-make: char-000a-new-line.mk:56: 1234567 1234567
-make: char-000a-new-line.mk:58: 1 2
-make: char-000a-new-line.mk:60: used +
-make: char-000a-new-line.mk:62: used +
-make: char-000a-new-line.mk:64: used +
+make: char-000a-new-line.mk:14: used
+make: char-000a-new-line.mk:14: +
+make: char-000a-new-line.mk:14: word
+make: char-000a-new-line.mk:28: used + word
+make: char-000a-new-line.mk:30: used + word
+make: char-000a-new-line.mk:32: used + word
+make: char-000a-new-line.mk:34: used + word
+make: char-000a-new-line.mk:36: used + word
+make: char-000a-new-line.mk:38: used + word
+make: char-000a-new-line.mk:40: used + word
+make: char-000a-new-line.mk:42: + used word
+make: char-000a-new-line.mk:44: used + word
+make: char-000a-new-line.mk:46: used + word
+make: char-000a-new-line.mk:48: used + word
+make: char-000a-new-line.mk:50: 3
+make: char-000a-new-line.mk:52: used + word
+make: char-000a-new-line.mk:54: 1234567 1234567 1234567
+make: char-000a-new-line.mk:56: 1 2 3
+make: char-000a-new-line.mk:58: used + word
+make: char-000a-new-line.mk:60: used + word
+make: char-000a-new-line.mk:62: used + word
 make: don't know how to make + (continuing)
 
 Stop.

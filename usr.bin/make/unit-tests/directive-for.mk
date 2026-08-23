@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.34 2026/08/22 21:19:47 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.35 2026/08/23 08:48:56 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -304,11 +304,12 @@ INDIRECT=	${DIRECT}
 .endfor
 
 
-# Since at least 1993, iteration stops at the first newline.
-# Back then, the .newline variable didn't exist, therefore it was unlikely
-# that a newline ever occurred.
+# Before 2026-08-23, iteration stopped at the first newline directly after a
+# word.
 .for var in a${.newline}b${.newline}c
-# expect+1: newline-item=(a)
+# expect+3: newline-item=(a)
+# expect+2: newline-item=(b)
+# expect+1: newline-item=(c)
 .  info newline-item=(${var})
 .endfor
 
