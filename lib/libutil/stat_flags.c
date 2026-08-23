@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.3 2022/04/19 20:32:17 rillig Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.4 2026/08/23 23:22:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.3 2022/04/19 20:32:17 rillig Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.4 2026/08/23 23:22:15 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,6 +168,7 @@ string_to_flags(char **stringp, u_long *setp, u_long *clrp)
 			TEST(p, "schg", SF_IMMUTABLE);
 			TEST(p, "schange", SF_IMMUTABLE);
 			TEST(p, "simmutable", SF_IMMUTABLE);
+			TEST(p, "snap", SF_SNAPSHOT);
 			return (1);
 		case 'u':
 			TEST(p, "uappnd", UF_APPEND);
