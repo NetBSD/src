@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.200 2026/08/23 22:08:41 riastradh Exp $	*/
+/*	$NetBSD: vm.c,v 1.201 2026/08/23 23:56:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.200 2026/08/23 22:08:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.201 2026/08/23 23:56:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -106,6 +106,7 @@ struct pmap *const kernel_pmap_ptr = &pmap_kernel;
 vmem_t *kmem_arena;
 vmem_t *kmem_va_arena;
 
+static bool pdaemon_initialized;
 static uint64_t uvm_pdaemon_ticket;
 static unsigned int pdaemon_waiters;
 static kmutex_t pdaemonmtx;
@@ -385,6 +386,8 @@ uvm_init(void)
 	mutex_init(&vmpage_lruqueue_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&pdaemonmtx, MUTEX_DEFAULT, IPL_NONE);
+	uvm_pdaemon_ticket = 1;
+	pdaemon_initialized = true;
 
 	cv_init(&pdaemoncv, "pdaemon");
 	cv_init(&oomwait, "oomwait");
@@ -1106,6 +1109,9 @@ uint64_t
 uvm_wait_prepare(void)
 {
 	uint64_t ticket;
+
+	if (!pdaemon_initialized)
+		return 0;
 
 	mutex_enter(&pdaemonmtx);
 	ticket = uvm_pdaemon_ticket;
