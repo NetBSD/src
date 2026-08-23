@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.128 2023/04/09 09:00:56 riastradh Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.129 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.128 2023/04/09 09:00:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.129 2026/08/23 22:08:41 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -423,6 +423,7 @@ again:
 	 */
 	rw_enter(uobj->vmobjlock, RW_WRITER);
 	for (i = 0; va < eva; i++, va += PAGE_SIZE) {
+		uint64_t ticket;
 		struct vm_page *pg;
 
 		UVMHIST_LOG(ubchist, "pgs[%jd] = %#jx", i, (uintptr_t)pgs[i],
@@ -432,6 +433,7 @@ again:
 		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
+		ticket = uvm_wait_prepare();
 		KASSERT(uobj->vmobjlock == pg->uobject->vmobjlock);
 		error = ubc_fault_page(ufi, umap, pg, prot, access_type, va);
 		if (error) {
@@ -441,7 +443,7 @@ again:
 			 */
 			pmap_update(ufi->orig_map->pmap);
 			rw_exit(uobj->vmobjlock);
-			uvm_wait("ubc_fault");
+			uvm_wait("ubc_fault", ticket);
 			rw_enter(uobj->vmobjlock, RW_WRITER);
 		}
 	}
@@ -601,11 +603,13 @@ again_faultbusy:
 		}
 		for (i = 0; i < npages; i++) {
 			struct vm_page *pg = pgs[i];
+			uint64_t ticket = 0;	/* XXX spurious init */
 
 			KASSERT(pg->uobject == uobj);
 			if (pg->loan_count != 0) {
 				rw_enter(uobj->vmobjlock, RW_WRITER);
 				if (pg->loan_count != 0) {
+					ticket = uvm_wait_prepare();
 					pg = uvm_loanbreak(pg);
 				}
 				if (pg == NULL) {
@@ -613,7 +617,7 @@ again_faultbusy:
 					pmap_update(pmap_kernel());
 					uvm_page_unbusy(pgs, npages);
 					rw_exit(uobj->vmobjlock);
-					uvm_wait("ubc_alloc");
+					uvm_wait("ubc_alloc", ticket);
 					goto again_faultbusy;
 				}
 				rw_exit(uobj->vmobjlock);
@@ -901,11 +905,13 @@ again:
 
 		/* Avoid breaking loan if possible, only do it on write */
 		if ((flags & UBC_WRITE) && pg->loan_count != 0) {
+			uint64_t ticket = uvm_wait_prepare();
+
 			pg = uvm_loanbreak(pg);
 			if (pg == NULL) {
 				uvm_page_unbusy(pgs, *npages);
 				rw_exit(uobj->vmobjlock);
-				uvm_wait("ubc_alloc_directl");
+				uvm_wait("ubc_alloc_directl", ticket);
 				goto again;
 			}
 			pgs[i] = pg;

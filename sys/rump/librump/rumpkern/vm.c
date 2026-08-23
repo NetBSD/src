@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.199 2026/05/04 04:11:34 thorpej Exp $	*/
+/*	$NetBSD: vm.c,v 1.200 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.199 2026/05/04 04:11:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.200 2026/08/23 22:08:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -106,6 +106,7 @@ struct pmap *const kernel_pmap_ptr = &pmap_kernel;
 vmem_t *kmem_arena;
 vmem_t *kmem_va_arena;
 
+static uint64_t uvm_pdaemon_ticket;
 static unsigned int pdaemon_waiters;
 static kmutex_t pdaemonmtx;
 static kcondvar_t pdaemoncv, oomwait;
@@ -1101,8 +1102,20 @@ uvm_uarea_free(vaddr_t uarea)
  * Routines related to the Page Baroness.
  */
 
+uint64_t
+uvm_wait_prepare(void)
+{
+	uint64_t ticket;
+
+	mutex_enter(&pdaemonmtx);
+	ticket = uvm_pdaemon_ticket;
+	mutex_exit(&pdaemonmtx);
+
+	return ticket;
+}
+
 void
-uvm_wait(const char *msg)
+uvm_wait(const char *msg, uint64_t ticket)
 {
 
 	if (__predict_false(rump_threads == 0))
@@ -1115,10 +1128,12 @@ uvm_wait(const char *msg)
 	}
 
 	mutex_enter(&pdaemonmtx);
+	if (ticket != uvm_pdaemon_ticket)
+		goto out;
 	pdaemon_waiters++;
 	cv_signal(&pdaemoncv);
 	cv_wait(&oomwait, &pdaemonmtx);
-	mutex_exit(&pdaemonmtx);
+out:	mutex_exit(&pdaemonmtx);
 }
 
 void
@@ -1141,6 +1156,7 @@ uvm_pageout_done(int npages)
 	KASSERT(uvmexp.paging >= npages);
 	uvmexp.paging -= npages;
 
+	uvm_pdaemon_ticket++;
 	if (pdaemon_waiters) {
 		pdaemon_waiters = 0;
 		cv_broadcast(&oomwait);
@@ -1185,6 +1201,7 @@ uvm_pageout(void *arg)
 
 	mutex_enter(&pdaemonmtx);
 	for (;;) {
+		uvm_pdaemon_ticket++;
 		if (pdaemon_waiters) {
 			pdaemon_waiters = 0;
 			cv_broadcast(&oomwait);
@@ -1309,6 +1326,7 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 {
 	const unsigned long thelimit =
 	    uvm_lwp_is_pagedaemon(curlwp) ? pdlimit : rump_physmemlimit;
+	uint64_t ticket;
 	unsigned long newmem;
 	void *rv;
 	int error;
@@ -1318,22 +1336,24 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 	/* first we must be within the limit */
  limitagain:
 	if (thelimit != RUMPMEM_UNLIMITED) {
+		ticket = uvm_wait_prepare();
 		newmem = atomic_add_long_nv(&curphysmem, howmuch);
 		if (newmem > thelimit) {
 			newmem = atomic_add_long_nv(&curphysmem, -howmuch);
 			if (!waitok) {
 				return NULL;
 			}
-			uvm_wait(wmsg);
+			uvm_wait(wmsg, ticket);
 			goto limitagain;
 		}
 	}
 
 	/* second, we must get something from the backend */
  again:
+	ticket = uvm_wait_prepare();
 	error = rumpuser_malloc(howmuch, alignment, &rv);
 	if (__predict_false(error && waitok)) {
-		uvm_wait(wmsg);
+		uvm_wait(wmsg, ticket);
 		goto again;
 	}
 

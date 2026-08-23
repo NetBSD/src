@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.129 2023/09/10 14:54:34 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.130 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.129 2023/09/10 14:54:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.130 2026/08/23 22:08:41 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1026,6 +1026,7 @@ void
 amap_cow_now(struct vm_map *map, struct vm_map_entry *entry)
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
+	uint64_t ticket;
 	struct vm_anon *anon, *nanon;
 	struct vm_page *pg, *npg;
 	u_int lcv, slot;
@@ -1089,6 +1090,7 @@ ReStart:
 		 * First - get a new anon and a page.
 		 */
 
+		ticket = uvm_wait_prepare();
 		nanon = uvm_analloc();
 		if (nanon) {
 			nanon->an_lock = amap->am_lock;
@@ -1104,7 +1106,7 @@ ReStart:
 				KASSERT(nanon->an_ref == 0);
 				uvm_anfree(nanon);
 			}
-			uvm_wait("cownowpage");
+			uvm_wait("cownowpage", ticket);
 			goto ReStart;
 		}
 

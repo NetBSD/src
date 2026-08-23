@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.19 2023/04/16 14:01:51 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.20 2026/08/23 22:08:40 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -79,11 +79,13 @@ __md_palloc(void)
 		va = uvm_pageboot_alloc(PAGE_SIZE);
 		pa = AARCH64_KVA_TO_PA(va);
 	} else {
+		uint64_t ticket;
 		struct vm_page *pg;
 retry:
+		ticket = uvm_wait_prepare();
 		pg = uvm_pagealloc(NULL, 0, NULL, 0);
 		if (pg == NULL) {
-			uvm_wait(__func__);
+			uvm_wait(__func__, ticket);
 			goto retry;
 		}
 

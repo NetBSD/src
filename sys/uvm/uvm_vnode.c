@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.122 2026/07/21 14:37:53 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.123 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.122 2026/07/21 14:37:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.123 2026/08/23 22:08:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -287,6 +287,7 @@ static int
 uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
     unsigned int flags, struct uvm_page_array *a, unsigned int nleft)
 {
+	uint64_t ticket;
 	struct vm_page *pg;
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(ubchist, "vp %#jx off %#jx", (uintptr_t)uobj, offset,
@@ -332,6 +333,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				UVMHIST_LOG(ubchist, "noalloc", 0,0,0,0);
 				return 0;
 			}
+			ticket = uvm_wait_prepare();
 			pg = uvm_pagealloc(uobj, offset, NULL,
 			    UVM_FLAG_COLORMATCH);
 			if (pg == NULL) {
@@ -340,7 +342,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 					return 0;
 				}
 				rw_exit(uobj->vmobjlock);
-				uvm_wait("uvnfp1");
+				uvm_wait("uvnfp1", ticket);
 				uvm_page_array_clear(a);
 				rw_enter(uobj->vmobjlock, RW_WRITER);
 				continue;

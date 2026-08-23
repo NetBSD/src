@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.168 2026/06/28 03:31:31 kbowling Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.169 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.168 2026/06/28 03:31:31 kbowling Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.169 2026/08/23 22:08:41 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -614,6 +614,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	vaddr_t kva, loopva;
 	vaddr_t offset;
 	vsize_t loopsize;
+	uint64_t ticket;
 	struct vm_page *pg;
 	struct uvm_object *obj;
 	int pgaflags;
@@ -687,6 +688,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		KASSERTMSG(!pmap_extract(pmap_kernel(), loopva, NULL),
 		    "loopva=%#"PRIxVADDR, loopva);
 
+		ticket = uvm_wait_prepare();
 		pg = uvm_pagealloc_strat(NULL, offset, NULL, pgaflags,
 #ifdef UVM_KM_VMFREELIST
 		   UVM_PGA_STRAT_ONLY, UVM_KM_VMFREELIST
@@ -707,7 +709,8 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 				    flags & UVM_KMF_TYPEMASK);
 				return (0);
 			} else {
-				uvm_wait("km_getwait2");	/* sleep here */
+				/* sleep here */
+				uvm_wait("km_getwait2", ticket);
 				continue;
 			}
 		}
@@ -798,6 +801,7 @@ int
 uvm_km_kmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags,
     vmem_addr_t *addr)
 {
+	uint64_t ticket;
 	struct vm_page *pg;
 	vmem_addr_t va;
 	int rc;
@@ -809,6 +813,7 @@ uvm_km_kmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags,
 #if defined(PMAP_MAP_POOLPAGE)
 	if (size == PAGE_SIZE) {
 again:
+		ticket = uvm_wait_prepare();
 #ifdef PMAP_ALLOC_POOLPAGE
 		pg = PMAP_ALLOC_POOLPAGE((flags & VM_SLEEP) ?
 		   0 : UVM_PGA_USERESERVE);
@@ -818,7 +823,7 @@ again:
 #endif /* PMAP_ALLOC_POOLPAGE */
 		if (__predict_false(pg == NULL)) {
 			if (flags & VM_SLEEP) {
-				uvm_wait("plpg");
+				uvm_wait("plpg", ticket);
 				goto again;
 			}
 			return ENOMEM;
@@ -854,12 +859,13 @@ again:
 		    " pa=%#"PRIxPADDR" vmem=%p",
 		    loopva, loopsize, pa, vm);
 
+		ticket = uvm_wait_prepare();
 		pg = uvm_pagealloc(NULL, loopva, NULL,
 		    UVM_FLAG_COLORMATCH
 		    | ((flags & VM_SLEEP) ? 0 : UVM_PGA_USERESERVE));
 		if (__predict_false(pg == NULL)) {
 			if (flags & VM_SLEEP) {
-				uvm_wait("plpg");
+				uvm_wait("plpg", ticket);
 				continue;
 			} else {
 				uvm_km_pgremove_intrsafe(kernel_map, va,

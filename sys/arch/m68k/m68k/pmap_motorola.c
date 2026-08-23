@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.110 2026/07/06 14:33:55 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.111 2026/08/23 22:08:40 riastradh Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.110 2026/07/06 14:33:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.111 2026/08/23 22:08:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2551,6 +2551,7 @@ int
 pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 {
 	paddr_t ptpa;
+	uint64_t ticket;
 	struct vm_page *pg;
 	struct pv_header *pvh;
 	struct pv_entry *pv;
@@ -2683,7 +2684,6 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 #endif
 		splx(s);
 	} else {
-
 		/*
 		 * For user processes we just allocate a page from the
 		 * VM system.  Note that we set the page "wired" count to 1,
@@ -2698,15 +2698,16 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE,
 		    ("enter: about to alloc UPT pg at %lx\n", va));
 		rw_enter(uvm_kernel_object->vmobjlock, RW_WRITER);
-		while ((pg = uvm_pagealloc(uvm_kernel_object,
-					   va - vm_map_min(kernel_map),
-					   NULL, UVM_PGA_ZERO)) == NULL) {
+		while (ticket = uvm_wait_prepare(),
+		    (pg = uvm_pagealloc(uvm_kernel_object,
+			va - vm_map_min(kernel_map),
+			NULL, UVM_PGA_ZERO)) == NULL) {
 			rw_exit(uvm_kernel_object->vmobjlock);
 			if (can_fail) {
 				pmap->pm_sref--;
 				return ENOMEM;
 			}
-			uvm_wait("ptpage");
+			uvm_wait("ptpage", ticket);
 			rw_enter(uvm_kernel_object->vmobjlock, RW_WRITER);
 		}
 		rw_exit(uvm_kernel_object->vmobjlock);

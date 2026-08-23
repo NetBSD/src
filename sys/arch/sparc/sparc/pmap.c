@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.379 2025/12/24 20:37:04 andvar Exp $ */
+/*	$NetBSD: pmap.c,v 1.380 2026/08/23 22:08:40 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.379 2025/12/24 20:37:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.380 2026/08/23 22:08:40 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -907,14 +907,16 @@ void *
 pgt_page_alloc(struct pool *pp, int flags)
 {
 	int cacheit = (CACHEINFO.c_flags & CACHE_PAGETABLES) != 0;
+	uint64_t ticket;
 	struct vm_page *pg;
 	vaddr_t va;
 	paddr_t pa;
 
 	/* Allocate a page of physical memory */
-	while ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL &&
-	       (flags & PR_WAITOK) != 0) {
-		uvm_wait("pgtpg");
+	while (ticket = uvm_wait_prepare(),
+	    (pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL &&
+	    (flags & PR_WAITOK) != 0) {
+		uvm_wait("pgtpg", ticket);
 	}
 	if (pg == NULL) {
 		KASSERT((flags & PR_WAITOK) == 0);

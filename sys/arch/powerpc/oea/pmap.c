@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.124 2026/06/30 22:30:30 rkujawa Exp $	*/
+/*	$NetBSD: pmap.c,v 1.125 2026/08/23 22:08:40 riastradh Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2026/06/30 22:30:30 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2026/08/23 22:08:40 riastradh Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -2885,6 +2885,7 @@ pmap_free_unmanaged(struct pup *pup)
 void *
 pmap_pool_alloc(struct pool *pp, int flags)
 {
+	uint64_t ticket;
 	struct vm_page *pg;
 	paddr_t pa;
 
@@ -2892,6 +2893,7 @@ pmap_pool_alloc(struct pool *pp, int flags)
 		return (void *)uvm_pageboot_alloc(PAGE_SIZE);
 
  retry:
+	ticket = uvm_wait_prepare();
 	pg = uvm_pagealloc_strat(NULL /*obj*/, 0 /*off*/, NULL /*anon*/,
 	    UVM_PGA_USERESERVE /*flags*/, UVM_PGA_STRAT_ONLY /*strat*/,
 	    VM_FREELIST_DIRECT_MAPPED /*free_list*/);
@@ -2902,7 +2904,7 @@ pmap_pool_alloc(struct pool *pp, int flags)
 
 		if ((flags & PR_WAITOK) == 0)
 			return NULL;
-		uvm_wait("plpg");
+		uvm_wait("plpg", ticket);
 		goto retry;
 	}
 	KDASSERT(VM_PAGE_TO_PHYS(pg) == (uintptr_t)VM_PAGE_TO_PHYS(pg));

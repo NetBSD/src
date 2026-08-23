@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.320 2025/12/10 21:33:03 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.321 2026/08/23 22:08:40 riastradh Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.320 2025/12/10 21:33:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.321 2026/08/23 22:08:40 riastradh Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1475,8 +1475,11 @@ pmap_create(void)
 	pm->pm_refs = 1;
 	TAILQ_INIT(&pm->pm_ptps);
 	if (pm != pmap_kernel()) {
-		while (!pmap_get_page(&pm->pm_physaddr)) {
-			uvm_wait("pmap_create");
+		uint64_t ticket;
+
+		while (ticket = uvm_wait_prepare(),
+		    !pmap_get_page(&pm->pm_physaddr)) {
+			uvm_wait("pmap_create", ticket);
 		}
 		pm->pm_segs = (paddr_t *)(u_long)pm->pm_physaddr;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.158 2026/05/21 10:07:02 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.159 2026/08/23 22:08:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158 2026/05/21 10:07:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2026/08/23 22:08:39 riastradh Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -552,6 +552,7 @@ static paddr_t
 pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 {
 	paddr_t pa;
+	uint64_t ticket;
 	struct vm_page *pg;
 
 	UVMHIST_FUNC(__func__);
@@ -562,10 +563,11 @@ pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 		int aflags = ((flags & PMAP_CANFAIL) ? 0 : UVM_PGA_USERESERVE) |
 		    UVM_PGA_ZERO;
  retry:
+		ticket = uvm_wait_prepare();
 		pg = uvm_pagealloc(NULL, 0, NULL, aflags);
 		if (pg == NULL) {
 			if (waitok) {
-				uvm_wait("pmap_alloc_pdp");
+				uvm_wait("pmap_alloc_pdp", ticket);
 				goto retry;
 			}
 			return POOL_PADDR_INVALID;

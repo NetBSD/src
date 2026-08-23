@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.78 2026/08/15 19:01:58 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.79 2026/08/23 22:08:40 riastradh Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.78 2026/08/15 19:01:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.79 2026/08/23 22:08:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -635,14 +635,16 @@ pmap_ptpage_init(void)
 static struct vm_page *
 pmap_page_alloc(bool nowait)
 {
+	uint64_t ticket;
 	struct vm_page *pg;
 	const int flags = nowait ? UVM_PGA_USERESERVE : 0;
 
-	while ((pg = uvm_pagealloc(NULL, 0, NULL, flags)) == NULL) {
+	while (ticket = uvm_wait_prepare(),
+	    (pg = uvm_pagealloc(NULL, 0, NULL, flags)) == NULL) {
 		if (nowait) {
 			return NULL;
 		}
-		uvm_wait("pmappg");
+		uvm_wait("pmappg", ticket);
 	}
 	pg->flags &= ~PG_BUSY;	/* never busy */
 

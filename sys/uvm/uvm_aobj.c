@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.157 2023/02/24 11:03:13 riastradh Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.158 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.157 2023/02/24 11:03:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.158 2026/08/23 22:08:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -806,6 +806,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
     int *npagesp, int centeridx, vm_prot_t access_type, int advice, int flags)
 {
 	voff_t current_offset;
+	uint64_t ticket;
 	struct vm_page *ptmp;
 	int lcv, gotpages, maxpages, swslot, pageidx;
 	bool overwrite = ((flags & PGO_OVERWRITE) != 0);
@@ -958,6 +959,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 		pageidx = current_offset >> PAGE_SHIFT;
 		swslot = uao_find_swslot(uobj, pageidx);
+		ticket = uvm_wait_prepare();
 		ptmp = uao_pagealloc(uobj, current_offset,
 		    swslot != 0 || overwrite ? 0 : UVM_PGA_ZERO);
 
@@ -965,7 +967,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		if (ptmp == NULL) {
 			rw_exit(uobj->vmobjlock);
 			UVMHIST_LOG(pdhist, "sleeping, ptmp == NULL",0,0,0,0);
-			uvm_wait("uao_getpage");
+			uvm_wait("uao_getpage", ticket);
 			rw_enter(uobj->vmobjlock, RW_WRITER);
 			uvm_page_array_clear(&a);
 			continue;

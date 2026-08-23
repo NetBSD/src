@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.140 2026/08/17 13:30:04 riastradh Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.141 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.140 2026/08/17 13:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.141 2026/08/23 22:08:41 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -114,39 +114,267 @@ static void	uvmpd_tune(void);
 static void	uvmpd_pool_drain_thread(void *);
 static void	uvmpd_pool_drain_wakeup(void);
 
-static unsigned int uvm_pagedaemon_waiters;
+/*
+ * State coordinating sleeping in uvm_wait with wakeups in uvm_pageout
+ * (page daemon) and uvm_pageout_done (paging completion handler)
+ */
+static kmutex_t uvmpd_waiter_lock __cacheline_aligned; /* IPL_SOFTBIO */
+static volatile unsigned uvm_pagedaemon_waiters __cacheline_aligned;
+static volatile unsigned uvm_waiter_wakeup __cacheline_aligned;
 
 /* State for the pool drainer thread */
-static kmutex_t uvmpd_lock __cacheline_aligned;
+static kmutex_t uvmpd_pool_drain_lock; /* IPL_NONE */
 static kcondvar_t uvmpd_pool_drain_cv;
 static bool uvmpd_pool_drain_run = false;
+
+/*
+ * State for requesting page daemon wakeups, which may be triggered
+ * from:
+ *
+ * - hard interrupt context when NOSLEEP allocations fail
+ * - soft interrupt context when uvm_pageout_done hasn't done enough
+ * - thread context in uvm_wait when SLEEP allocations fail
+ */
+static kmutex_t uvmpd_kick_lock __cacheline_aligned; /* IPL_VM */
+static volatile unsigned uvmpd_sleeping __cacheline_aligned;
+static volatile unsigned uvmpd_wakeup __cacheline_aligned;
 
 /*
  * XXX hack to avoid hangs when large processes fork.
  */
 u_int uvm_extrapages;
 
+#if __HAVE_ATOMIC64_LOADSTORE
+
+static volatile uint64_t uvmpd_gen;
+
+static uint64_t
+uvmpd_read_gen(void)
+{
+
+	return atomic_load_acquire(&uvmpd_gen);
+}
+
+static void
+uvmpd_advance_gen(void)
+{
+
+	KASSERT(mutex_owned(&uvmpd_waiter_lock));
+	atomic_store_release(&uvmpd_gen, atomic_load_relaxed(&uvmpd_gen) + 1);
+}
+
+#else  /* !__HAVE_ATOMIC64_LOADSTORE */
+
+static volatile struct {
+#if _BYTE_ORDER == _BIG_ENDIAN
+	uint32_t	hi, lo;
+#else
+	uint32_t	lo, hi;
+#endif
+} uvmpd_gen;
+
+static uint64_t
+uvmpd_read_gen(void)
+{
+	uint32_t hi, lo;
+
+top:	while (__predict_false((hi = atomic_load_relaxed(&uvmpd_gen.hi)) ==
+		0xffffffff))
+		SPINLOCK_BACKOFF_HOOK;
+	membar_consumer();	/* membar_producer in uvmpd_advance_gen */
+	/* load-acquire matches store-release in uvmpd_advance_gen */
+	lo = atomic_load_acquire(&uvmpd_gen.lo);
+	if (__predict_false(hi != atomic_load_relaxed(&uvmpd_gen.hi)))
+		goto top;
+
+	return (uint64_t)hi << 32 | lo;
+}
+
+static void
+uvmpd_advance_gen(void)
+{
+	uint32_t hi, lo;
+
+	KASSERT(mutex_owned(&uvmpd_waiter_lock));
+
+	lo = atomic_load_relaxed(&uvmpd_gen.lo);
+	if (__predict_false(++lo == 0)) {
+		hi = atomic_load_relaxed(&uvmpd_gen.hi) + 1; /* carry */
+		atomic_store_relaxed(&uvmpd_gen.hi, 0xffffffff);
+		/* store-release matches load-acquire in uvmpd_read_gen */
+		atomic_store_release(&uvmpd_gen.lo, lo);
+		membar_producer(); /* membar_consumer in uvmpd_read_gen */
+		atomic_store_relaxed(&uvmpd_gen.hi, hi);
+	} else {
+		/* store-release matches load-acquire in uvmpd_read_gen */
+		atomic_store_release(&uvmpd_gen.lo, lo);
+	}
+}
+
+#endif
+
+static void
+uvmpd_wake_pagedaemon(void)
+{
+
+	/*
+	 * Record that a wakeup is pending.  If there was already a
+	 * wakeup pending, some other thread will take care of the
+	 * rest, so stop here.
+	 *
+	 * membar_release matches membar_acquire in uvm_pageout.
+	 */
+	membar_release();
+	if (atomic_swap_uint(&uvmpd_wakeup, 1))
+		return;
+
+	/*
+	 * Ensure store-before-load ordering so we announce intent to
+	 * wake up before we check whether the page daemon has
+	 * announced intent to sleep.
+	 *
+	 * Matches membar_sync in uvm_pageout between storing
+	 * uvmpd_sleeping := 1 and loading uvmpd_wakeup.
+	 */
+	membar_sync();
+
+	/*
+	 * If _after_ we have told the page daemon to wake up, it has
+	 * still not announced intent to sleep, nothing more to do --
+	 * it's busy working, and it will read uvmpd_wakeup on the next
+	 * iteration and avoid going to sleep.
+	 */
+	if (!atomic_load_relaxed(&uvmpd_sleeping))
+		return;
+
+	/*
+	 * The page daemon has already decided to go to sleep, and it
+	 * may be too late for us to stop it.  Wake it up.
+	 */
+	mutex_spin_enter(&uvmpd_kick_lock);
+	wakeup(&uvm.pagedaemon);
+	mutex_spin_exit(&uvmpd_kick_lock);
+}
+
+static void
+uvmpd_wake_waiters(void)
+{
+
+	/*
+	 * Record that a wakeup is pending.  If there was already a
+	 * wakeup pending, some other thread will take care of the
+	 * rest, so stop here.
+	 *
+	 * membar_release matches membar_acquire in uvm_wait.
+	 */
+	membar_release();
+	if (atomic_swap_uint(&uvm_waiter_wakeup, 1))
+		return;
+
+	/*
+	 * Ensure store-before-load ordering so we announce intent to
+	 * wake up before we check whether there are any waiters
+	 * waiting.
+	 *
+	 * Matches membar_sync in uvm_wait.
+	 */
+	membar_sync();
+
+	/*
+	 * If _after_ we have told the waiters to wake up, there still
+	 * are none, nothing more to do -- whoever calls uvm_wait next
+	 * will read uvm_waiter_wakeup and avoid going to sleep.
+	 */
+	if (atomic_load_relaxed(&uvm_pagedaemon_waiters) == 0)
+		return;
+
+	/*
+	 * uvm_wait waiters are either asleep or about to go to sleep,
+	 * and it may be too late to stop them, so we have to take the
+	 * lock to wake them up.
+	 *
+	 * Make sure to advance the generation so that logic still in
+	 * the ellipsis of
+	 *
+	 * top:	ticket = uvm_wait_prepare();
+	 *	...
+	 *	if (allocfailed) {
+	 *		uvm_wait("wmesg", ticket);
+	 *		goto top;
+	 *	}
+	 *
+	 * will wake up and not sleep forever when it hits uvm_wait.
+	 */
+	mutex_enter(&uvmpd_waiter_lock);
+	uvmpd_advance_gen();
+	if (atomic_load_relaxed(&uvm_pagedaemon_waiters) != 0) {
+		atomic_store_relaxed(&uvm_pagedaemon_waiters, 0);
+		wakeup(&uvmexp.free);
+	}
+	mutex_exit(&uvmpd_waiter_lock);
+}
+
+/*
+ * uvm_wait_prepare: return a ticket for uvm_wait
+ *
+ * => caller must:
+ *    1. get a ticket _first_,
+ *    2. _then_ try allocation, and
+ *    3. uvm_wait with the ticket if it fails
+ */
+
+uint64_t
+uvm_wait_prepare(void)
+{
+	uint64_t ticket;
+
+	ticket = uvmpd_read_gen();
+
+	return ticket;
+}
+
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
  *
  * => should be called with all locks released
  * => should _not_ be called by the page daemon (to avoid deadlock)
+ * => caller must have acquired a ticket with uvm_wait_prepare,
+ *    before trying an allocation that we now wait for
  */
 
 void
-uvm_wait(const char *wmsg)
+uvm_wait(const char *wmsg, uint64_t ticket)
 {
+	uint64_t gen = ticket;
 	int timo = 0;
 
 	if (uvm.pagedaemon_lwp == NULL)
 		panic("out of memory before the pagedaemon thread exists");
 
-	mutex_spin_enter(&uvmpd_lock);
+	/*
+	 * Fast path: if the page daemon wakeup generation has already
+	 * advanced since the caller began uvm_wait_prepare, don't add
+	 * to contention on uvmpd_waiter_lock; we already know the
+	 * caller can retry its allocation.
+	 */
+	if (gen != uvmpd_read_gen())
+		return;
+
+	mutex_enter(&uvmpd_waiter_lock);
+
+	/*
+	 * If the page daemon wakeup generation has advanced since the
+	 * caller began uvm_wait_prepare, don't sleep; the caller can
+	 * already retry its allocation.
+	 */
+	if (gen != uvmpd_read_gen()) {
+		mutex_exit(&uvmpd_waiter_lock);
+		return;
+	}
 
 	/*
 	 * check for page daemon going to sleep (waiting for itself)
 	 */
-
 	if (uvm_lwp_is_pagedaemon(curlwp) && uvmexp.paging == 0) {
 		/*
 		 * now we have a problem: the pagedaemon wants to go to
@@ -173,9 +401,46 @@ uvm_wait(const char *wmsg)
 #endif
 	}
 
-	uvm_pagedaemon_waiters++;
-	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
-	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvmpd_lock, false, wmsg, timo);
+	/*
+	 * Notify uvmpd_wake_waiters that there are waiters before we
+	 * check whether there's a pending unlocked wakeup.
+	 *
+	 * membar_sync here matches membar_sync in uvmpd_wake_waiters.
+	 *
+	 * If there's pending unlocked wakeup, consume it by advancing
+	 * the wakeup generation and waking any other waiters -- that
+	 * can be done only with the lock.  Generally there should be
+	 * no other waiters at this point -- if there is a pending
+	 * wakeup, any other call to uvm_wait would have consumed it
+	 * and so can't be waiting; if another call to uvm_wait didn't
+	 * find a pending wakeup, then any subsequent uvm_pageout or
+	 * uvm_pageout_done wakeup should have noticed that call and
+	 * issued wakeup(&uvmexp.free) -- but it takes a more effort to
+	 * prove that it is safe to elide wakeup(&uvmexp.free) than it
+	 * takes to just call it anyway here.
+	 *
+	 * The wakeup might be spurious by now, but the caller has to
+	 * cope with spurious wakeups anyway.
+	 */
+	atomic_store_relaxed(&uvm_pagedaemon_waiters,
+	    atomic_load_relaxed(&uvm_pagedaemon_waiters) + 1);
+	membar_sync();
+	if (atomic_swap_uint(&uvm_waiter_wakeup, 0)) {
+		/*
+		 * membar_acquire matches membar_release in
+		 * uvmpd_wake_waiters.
+		 */
+		membar_acquire();
+		uvmpd_advance_gen();
+		atomic_store_relaxed(&uvm_pagedaemon_waiters, 0);
+		wakeup(&uvmexp.free);
+		mutex_exit(&uvmpd_waiter_lock);
+		return;
+	}
+
+	uvmpd_wake_pagedaemon();	/* wake the daemon! */
+	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvmpd_waiter_lock, false, wmsg,
+	    timo);
 }
 
 /*
@@ -192,9 +457,7 @@ uvm_kick_pdaemon(void)
 	    (fpages + uvmexp.paging < uvmexp.freetarg &&
 	     uvmpdpol_needsscan_p()) ||
 	     uvm_km_va_starved_p()) {
-	     	mutex_spin_enter(&uvmpd_lock);
-		wakeup(&uvm.pagedaemon);
-	     	mutex_spin_exit(&uvmpd_lock);
+		uvmpd_wake_pagedaemon();
 	}
 }
 
@@ -262,7 +525,9 @@ uvm_pageout(void *arg)
 
 	UVMHIST_LOG(pdhist,"<starting uvm pagedaemon>", 0, 0, 0, 0);
 
-	mutex_init(&uvmpd_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&uvmpd_kick_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&uvmpd_waiter_lock, MUTEX_DEFAULT, IPL_SOFTBIO);
+	mutex_init(&uvmpd_pool_drain_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&uvmpd_pool_drain_cv, "pooldrain");
 
 	/* Create the pool drainer kernel thread. */
@@ -287,16 +552,52 @@ uvm_pageout(void *arg)
 
 		kmem_va_starved = uvm_km_va_starved_p();
 
-		mutex_spin_enter(&uvmpd_lock);
-		if ((uvm_pagedaemon_waiters == 0 || uvmexp.paging > 0) &&
+		mutex_spin_enter(&uvmpd_kick_lock);
+		if ((atomic_load_relaxed(&uvm_pagedaemon_waiters) == 0 ||
+			uvmexp.paging > 0) &&
 		    !kmem_va_starved) {
 			UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
-			UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
-			    &uvmpd_lock, false, "pgdaemon", 0);
+
+			/*
+			 * Notify uvm_kick_pdaemon that we're about to
+			 * go to sleep.  Then check whether it has
+			 * already asked us to wake up again before it
+			 * puts contention on uvmpd_kick_lock.  If,
+			 * after we have announced our intent to sleep,
+			 * there's still no pending wakeup, go to sleep
+			 * and release uvm_pdlock.
+			 *
+			 * membar_sync here matches membar_sync in
+			 * uvmpd_wake_pagedaemon.
+			 *
+			 * Once we're not asleep -- either because
+			 * uvmpd_wakeup = 1 or because of a concurrent
+			 * wakeup(&uvm.pagedaemon) -- set
+			 * uvmpd_sleeping back to 0 again so that while
+			 * we work, uvmpd_wake_pagedaemon need not take
+			 * uvmpd_kick_lock in order to make sure we
+			 * wake up next time.
+			 */
+			atomic_store_relaxed(&uvmpd_sleeping, 1);
+			membar_sync();
+			if (atomic_swap_uint(&uvmpd_wakeup, 0)) {
+				/*
+				 * membar_release matches
+				 * membar_acquire in
+				 * uvmpd_wake_pagedaemon.
+				 */
+				membar_acquire();
+				mutex_spin_exit(&uvmpd_kick_lock);
+			} else {
+				UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
+				    &uvmpd_kick_lock, false, "pgdaemon", 0);
+			}
+			atomic_store_relaxed(&uvmpd_sleeping, 0);
 			uvmexp.pdwoke++;
+
 			UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 		} else {
-			mutex_spin_exit(&uvmpd_lock);
+			mutex_spin_exit(&uvmpd_kick_lock);
 		}
 
 		/*
@@ -335,10 +636,7 @@ uvm_pageout(void *arg)
 		 */
 		if (uvm_availmem(false) > uvmexp.reserve_kernel ||
 		    uvmexp.paging == 0) {
-			mutex_spin_enter(&uvmpd_lock);
-			wakeup(&uvmexp.free);
-			uvm_pagedaemon_waiters = 0;
-			mutex_spin_exit(&uvmpd_lock);
+			uvmpd_wake_waiters();
 		}
 
 		/*
@@ -379,15 +677,11 @@ uvm_pageout_done(int npages)
 	/*
 	 * wake up either of pagedaemon or LWPs waiting for it.
 	 */
-
-	mutex_spin_enter(&uvmpd_lock);
 	if (uvm_availmem(false) <= uvmexp.reserve_kernel) {
-		wakeup(&uvm.pagedaemon);
-	} else if (uvm_pagedaemon_waiters != 0) {
-		wakeup(&uvmexp.free);
-		uvm_pagedaemon_waiters = 0;
+		uvmpd_wake_pagedaemon();
+	} else {
+		uvmpd_wake_waiters();
 	}
-	mutex_spin_exit(&uvmpd_lock);
 }
 
 static krwlock_t *
@@ -1024,17 +1318,17 @@ uvmpd_pool_drain_thread(void *arg)
 		/*
 		 * sleep until awoken by the pagedaemon.
 		 */
-		mutex_enter(&uvmpd_lock);
+		mutex_enter(&uvmpd_pool_drain_lock);
 		if (!uvmpd_pool_drain_run) {
 			lastslept = getticks();
-			cv_wait(&uvmpd_pool_drain_cv, &uvmpd_lock);
+			cv_wait(&uvmpd_pool_drain_cv, &uvmpd_pool_drain_lock);
 			if (getticks() != lastslept) {
 				cycled = false;
 				firstpool = NULL;
 			}
 		}
 		uvmpd_pool_drain_run = false;
-		mutex_exit(&uvmpd_lock);
+		mutex_exit(&uvmpd_pool_drain_lock);
 
 		/*
 		 * rate limit draining, otherwise in desperate circumstances
@@ -1081,8 +1375,8 @@ static void
 uvmpd_pool_drain_wakeup(void)
 {
 
-	mutex_enter(&uvmpd_lock);
+	mutex_enter(&uvmpd_pool_drain_lock);
 	uvmpd_pool_drain_run = true;
 	cv_signal(&uvmpd_pool_drain_cv);
-	mutex_exit(&uvmpd_lock);
+	mutex_exit(&uvmpd_pool_drain_lock);
 }

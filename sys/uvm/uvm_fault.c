@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.239 2026/06/23 19:29:12 skrll Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.240 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.239 2026/06/23 19:29:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.240 2026/08/23 22:08:41 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -216,6 +216,7 @@ static void
 uvmfault_amapcopy(struct uvm_faultinfo *ufi)
 {
 	for (;;) {
+		uint64_t ticket;
 
 		/*
 		 * no mapping?  give up.
@@ -228,9 +229,11 @@ uvmfault_amapcopy(struct uvm_faultinfo *ufi)
 		 * copy if needed.
 		 */
 
-		if (UVM_ET_ISNEEDSCOPY(ufi->entry))
+		if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
+			ticket = uvm_wait_prepare();
 			amap_copy(ufi->map, ufi->entry, AMAP_COPY_NOWAIT,
 				ufi->orig_rvaddr, ufi->orig_rvaddr + 1);
+		}
 
 		/*
 		 * didn't work?  must be out of RAM.   unlock and sleep.
@@ -238,7 +241,7 @@ uvmfault_amapcopy(struct uvm_faultinfo *ufi)
 
 		if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
 			uvmfault_unlockmaps(ufi, true);
-			uvm_wait("fltamapcopy");
+			uvm_wait("fltamapcopy", ticket);
 			continue;
 		}
 
@@ -354,10 +357,12 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 * required for this.  If the caller didn't supply
 			 * one, fail now and have them retry.
 			 */
+			uint64_t ticket;
 
 			if (lock_type == RW_READER) {
 				return ENOLCK;
 			}
+			ticket = uvm_wait_prepare();
 			pg = uvm_pagealloc(NULL,
 			    ufi != NULL ? ufi->orig_rvaddr : 0,
 			    anon, ufi != NULL ? UVM_FLAG_COLORMATCH : 0);
@@ -370,7 +375,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				if (!uvm_reclaimable()) {
 					return ENOMEM;
 				}
-				uvm_wait("flt_noram1");
+				uvm_wait("flt_noram1", ticket);
 			} else {
 				/* PG_BUSY bit is set. */
 				we_own = true;
@@ -551,6 +556,7 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj;
+	uint64_t ticket;
 	struct vm_anon *anon;
 	struct vm_page *pg;
 	struct vm_page *opg;
@@ -582,6 +588,7 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 	KASSERT(oanon == NULL || amap->am_lock == oanon->an_lock);
 	KASSERT(uobj == NULL || rw_lock_held(uobj->vmobjlock));
 
+	ticket = uvm_wait_prepare();
 	if (*spare != NULL) {
 		anon = *spare;
 		*spare = NULL;
@@ -629,7 +636,7 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 
 		UVMHIST_LOG(maphist, "out of RAM, waiting for more", 0,0,0,0);
 		cpu_count(CPU_COUNT_FLTNORAM, 1);
-		uvm_wait("flt_noram5");
+		uvm_wait("flt_noram5", ticket);
 		error = ERESTART;
 		goto done;
 	}
@@ -913,10 +920,13 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 			    ufi.entry->object.uvm_obj;
 
 			if (uobj && uobj->pgops->pgo_fault != NULL) {
+				uint64_t ticket;
+
 				/*
 				 * invoke "special" fault routine.
 				 */
 				rw_enter(uobj->vmobjlock, RW_WRITER);
+				ticket = uvm_wait_prepare();
 				/* locked: maps(read), amap(if there), uobj */
 				error = uobj->pgops->pgo_fault(&ufi,
 				    flt.startva, pages, flt.npages,
@@ -939,7 +949,7 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 				 * reclaimed.
 				 */
 				if (error == ENOMEM && uvm_reclaimable()) {
-					uvm_wait("pgo_fault");
+					uvm_wait("pgo_fault", ticket);
 					error = ERESTART;
 				}
 			} else {
@@ -1563,6 +1573,8 @@ uvm_fault_upper_loan(
 
 		/* >1 case is already ok */
 		if (anon->an_ref == 1) {
+			uint64_t ticket;
+
 			/* breaking loan requires a write lock. */
 			error = uvm_fault_upper_upgrade(ufi, flt, amap, NULL);
 			if (error != 0) {
@@ -1570,10 +1582,11 @@ uvm_fault_upper_loan(
 			}
 			KASSERT(rw_write_held(amap->am_lock));
 
+			ticket = uvm_wait_prepare();
 			error = uvm_loanbreak_anon(anon, *ruobj);
 			if (error != 0) {
 				uvmfault_unlockall(ufi, amap, *ruobj);
-				uvm_wait("flt_noram2");
+				uvm_wait("flt_noram2", ticket);
 				return ERESTART;
 			}
 			/* if we were a loan receiver uobj is gone */
@@ -1677,6 +1690,7 @@ uvm_fault_upper_enter(
 	struct pmap *pmap = ufi->orig_map->pmap;
 	vaddr_t va = ufi->orig_rvaddr;
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
+	uint64_t ticket;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap, oanon, anon(if different from oanon) */
@@ -1694,6 +1708,7 @@ uvm_fault_upper_enter(
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: anon: pm=%#jx, va=%#jx, pg=%#jx, promote=%jd",
 	    (uintptr_t)pmap, va, (uintptr_t)pg, flt->promote);
+	ticket = uvm_wait_prepare();
 	if (pmap_enter(pmap, va, VM_PAGE_TO_PHYS(pg),
 	    flt->enter_prot, flt->access_type | PMAP_CANFAIL |
 	    (flt->wire_mapping ? PMAP_WIRED : 0)) != 0) {
@@ -1741,7 +1756,7 @@ uvm_fault_upper_enter(
 			return ENOMEM;
 		}
 		/* XXX instrumentation */
-		uvm_wait("flt_pmfail1");
+		uvm_wait("flt_pmfail1", ticket);
 		return ERESTART;
 	}
 
@@ -2330,6 +2345,7 @@ uvm_fault_lower_direct_loan(
 		 * write fault: must break the loan here.  to do this
 		 * we need a write lock on the object.
 		 */
+		uint64_t ticket;
 
 		error = uvm_fault_lower_upgrade(ufi, flt, amap, uobj, uobjpage);
 		if (error != 0) {
@@ -2337,6 +2353,7 @@ uvm_fault_lower_direct_loan(
 		}
 		KASSERT(rw_write_held(uobj->vmobjlock));
 
+		ticket = uvm_wait_prepare();
 		pg = uvm_loanbreak(uobjpage);
 		if (pg == NULL) {
 
@@ -2345,7 +2362,7 @@ uvm_fault_lower_direct_loan(
 			  "  out of RAM breaking loan, waiting",
 			  0,0,0,0);
 			cpu_count(CPU_COUNT_FLTNORAM, 1);
-			uvm_wait("flt_noram4");
+			uvm_wait("flt_noram4", ticket);
 			return ERESTART;
 		}
 		*rpg = pg;
@@ -2462,6 +2479,7 @@ uvm_fault_lower_enter(
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	const bool readonly = uvm_pagereadonly_p(pg);
+	uint64_t ticket;
 	int error;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
@@ -2506,6 +2524,7 @@ uvm_fault_lower_enter(
 	    UVM_ET_ISCOPYONWRITE(ufi->entry), ufi->entry, ufi->orig_map,
 	    (void *)ufi->orig_rvaddr, pg);
 	KASSERT((flt->access_type & VM_PROT_WRITE) == 0 || !readonly);
+	ticket = uvm_wait_prepare();
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr,
 	    VM_PAGE_TO_PHYS(pg),
 	    readonly ? flt->enter_prot & ~VM_PROT_WRITE : flt->enter_prot,
@@ -2541,7 +2560,7 @@ uvm_fault_lower_enter(
 			return error;
 		}
 		/* XXX instrumentation */
-		uvm_wait("flt_pmfail2");
+		uvm_wait("flt_pmfail2", ticket);
 		return ERESTART;
 	}
 

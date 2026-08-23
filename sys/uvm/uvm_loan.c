@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.104 2020/06/11 22:21:05 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.105 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.104 2020/06/11 22:21:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.105 2026/08/23 22:08:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -834,11 +834,14 @@ again:
 
 	pg = uvm_pagelookup(&uvm_loanzero_object, 0);
 	if (__predict_false(pg == NULL)) {
-		while ((pg = uvm_pagealloc(&uvm_loanzero_object, 0, NULL,
-					   UVM_PGA_ZERO)) == NULL) {
+		uint64_t ticket;
+
+		while (ticket = uvm_wait_prepare(),
+		    (pg = uvm_pagealloc(&uvm_loanzero_object, 0, NULL,
+			UVM_PGA_ZERO)) == NULL) {
 			rw_exit(uvm_loanzero_object.vmobjlock);
 			uvmfault_unlockall(ufi, amap, NULL);
-			uvm_wait("loanzero");
+			uvm_wait("loanzero", ticket);
 			if (!uvmfault_relock(ufi)) {
 				return (0);
 			}

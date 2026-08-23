@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.92 2024/01/14 10:38:47 tnn Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.93 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.92 2024/01/14 10:38:47 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.93 2026/08/23 22:08:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,6 +300,7 @@ static int
 uvm_pglistalloc_contig_aggressive(int num, paddr_t low, paddr_t high,
     paddr_t alignment, paddr_t boundary, struct pglist *rlist)
 {
+	uint64_t ticket;
 	struct vm_page *pg;
 	struct pglist tmp;
 	paddr_t pa, off, spa, amask, bmask, rlo, rhi;
@@ -321,9 +322,10 @@ uvm_pglistalloc_contig_aggressive(int num, paddr_t low, paddr_t high,
 	KASSERT(bmask <= amask);
 	mutex_enter(&uvm_pglistalloc_contig_lock);
 	while (uvm_reclaimable()) {
+		ticket = uvm_wait_prepare();
 		pg = uvm_pagealloc(NULL, 0, NULL, 0);
 		if (pg == NULL) {
-			uvm_wait("pglac2");
+			uvm_wait("pglac2", ticket);
 			continue;
 		}
 		pg->flags |= PG_PGLCA;
@@ -615,6 +617,7 @@ uvm_pglistalloc_simple(int num, paddr_t low, paddr_t high,
     struct pglist *rlist, int waitok)
 {
 	int fl, error;
+	uint64_t ticket;
 	uvm_physseg_t psi;
 	int count = 0;
 
@@ -623,6 +626,8 @@ uvm_pglistalloc_simple(int num, paddr_t low, paddr_t high,
 	bool valid = false;
 
 again:
+	ticket = uvm_wait_prepare();
+
 	/*
 	 * Block all memory allocation and lock the free list.
 	 */
@@ -673,7 +678,7 @@ out:
 
 	if (error) {
 		if (waitok) {
-			uvm_wait("pglalloc");
+			uvm_wait("pglalloc", ticket);
 			goto again;
 		} else
 			uvm_pglistfree(rlist);

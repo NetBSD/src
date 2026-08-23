@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.h,v 1.20 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: uvm_pdaemon.h,v 1.21 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -83,7 +83,8 @@ struct krwlock;
  * prototypes
  */
 
-void uvm_wait(const char *);
+uint64_t uvm_wait_prepare(void);
+void uvm_wait(const char *, uint64_t);
 bool uvm_reclaimable(void);
 
 struct krwlock *uvmpd_trylockowner(struct vm_page *);

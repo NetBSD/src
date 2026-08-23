@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.37 2026/05/21 06:13:32 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.38 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.37 2026/05/21 06:13:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.38 2026/08/23 22:08:41 riastradh Exp $");
 
 /*
  *	Manages physical address maps.
@@ -584,6 +584,8 @@ pmap_pdetab_alloc(struct pmap *pmap)
 
 	struct vm_page *ptb_pg = NULL;
 	if (__predict_false(ptb == NULL)) {
+		uint64_t ticket = uvm_wait_prepare();
+
 		ptb_pg = pmap_pte_pagealloc();
 
 		UVMHIST_LOG(pmapxtabhist, "ptb_pg=%#jx",
@@ -592,7 +594,7 @@ pmap_pdetab_alloc(struct pmap *pmap)
 			/*
 			 * XXX What else can we do?  Could we deadlock here?
 			 */
-			uvm_wait("pdetab");
+			uvm_wait("pdetab", ticket);
 			goto again;
 		}
 
@@ -658,13 +660,15 @@ pmap_segtab_alloc(struct pmap *pmap)
 
 	struct vm_page *stb_pg = NULL;
 	if (__predict_false(stb == NULL)) {
+		uint64_t ticket = uvm_wait_prepare();
+
 		stb_pg = pmap_pte_pagealloc();
 
 		if (__predict_false(stb_pg == NULL)) {
 			/*
 			 * XXX What else can we do?  Could we deadlock here?
 			 */
-			uvm_wait("segtab");
+			uvm_wait("segtab", ticket);
 			goto again;
 		}
 		SEGTAB_ADD(npage, 1);

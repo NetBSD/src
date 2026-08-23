@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.183 2026/05/04 04:11:34 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.184 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.183 2026/05/04 04:11:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.184 2026/08/23 22:08:41 riastradh Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -257,15 +257,18 @@ uarea_poolpage_alloc(struct pool *pp, int flags)
 #if defined(PMAP_MAP_POOLPAGE)
 	while (USPACE == PAGE_SIZE &&
 	    (USPACE_ALIGN == 0 || USPACE_ALIGN == PAGE_SIZE)) {
+		uint64_t ticket;
 		struct vm_page *pg;
 		vaddr_t va;
+
+		ticket = uvm_wait_prepare();
 #if defined(PMAP_ALLOC_POOLPAGE)
 		pg = PMAP_ALLOC_POOLPAGE(0);
 #else
 		pg = uvm_pagealloc(NULL, 0, NULL, 0);
 #endif
 		if (pg == NULL) {
-			uvm_wait("uarea");
+			uvm_wait("uarea", ticket);
 			continue;
 		}
 		va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.74 2023/07/16 19:55:43 riastradh Exp $	*/
+/*	$NetBSD: gdt.c,v 1.75 2026/08/23 22:08:40 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.74 2023/07/16 19:55:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.75 2026/08/23 22:08:40 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -184,6 +184,7 @@ gdt_init(void)
 void
 gdt_alloc_cpu(struct cpu_info *ci)
 {
+	uint64_t ticket;
 	struct vm_page *pg;
 	vaddr_t va;
 
@@ -191,9 +192,10 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	    0, UVM_KMF_VAONLY);
 	for (va = (vaddr_t)ci->ci_gdt; va < (vaddr_t)ci->ci_gdt + gdt_size;
 	    va += PAGE_SIZE) {
-		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO))
+		while (ticket = uvm_wait_prepare(),
+		    (pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO))
 		    == NULL) {
-			uvm_wait("gdt_alloc_cpu");
+			uvm_wait("gdt_alloc_cpu", ticket);
 		}
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
 		    VM_PROT_READ | VM_PROT_WRITE, 0);

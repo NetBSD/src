@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.25 2020/08/15 07:24:09 chs Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.26 2026/08/23 22:08:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.25 2020/08/15 07:24:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.26 2026/08/23 22:08:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -162,11 +162,15 @@ uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end,
 			 */
 			if (pgs[i]->loan_count) {
 				while (pgs[i]->loan_count) {
+					uint64_t ticket =
+					    uvm_wait_prepare();
+
 					pg = uvm_loanbreak(pgs[i]);
 					if (!pg) {
 						rw_exit(uobj->vmobjlock);
-						uvm_wait("uobjwirepg");
-						rw_enter(uobj->vmobjlock, RW_WRITER);
+						uvm_wait("uobjwirepg", ticket);
+						rw_enter(uobj->vmobjlock,
+						    RW_WRITER);
 						continue;
 					}
 				}
