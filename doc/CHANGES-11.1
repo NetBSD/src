@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.5 2026/08/22 10:56:52 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.6 2026/08/24 18:52:04 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -142,4 +142,11 @@ sys/arch/sun68k/stand/libsa/version		1.7
 
 	sun3: fix booting from SCSI disk with some PROM versions.
 	[tsutsui, ticket #420]
+
+sys/arch/riscv/conf/GENERIC                             (apply patch)
+sys/arch/riscv/conf/GENERIC64                           (apply patch)
+
+	riscv: remove options DIAGNOSTIC (should have already happened
+	when processing ticket #182).
+	[martin]
 
