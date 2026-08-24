@@ -1,4 +1,4 @@
-# $NetBSD: t_fss.sh,v 1.7 2025/04/19 02:07:43 rin Exp $
+# $NetBSD: t_fss.sh,v 1.8 2026/08/24 00:17:35 riastradh Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -87,7 +87,67 @@ basic_cleanup() {
 	vndconfig -u ${vnddev}	|| true
 }
 
+atf_test_case internal cleanup
+internal_head() {
+	atf_set "descr" "Verify internal operation of fss(4) file system " \
+		"snapshot device"
+}
+
+internal_body() {
+	if [ $(uname -p) = vax ]; then
+		atf_skip "port-vax/59287 vnd(4) can cause kernel crash"
+	fi
+
+# verify fss is available (or loadable as a module)
+
+	fssconfig -l /dev/fss0 > /dev/null || atf_skip "FSS not available"
+
+# create of mount-points for the file system and snapshot
+
+	mkdir ./m1
+	mkdir ./m2
+
+# create a small 4MB file, treat it as a disk, init a file-system on it,
+# and mount it
+
+	dd if=/dev/zero of=./image bs=32k count=64
+	vndconfig -c ${vnddev} ./image
+	newfs -I ${vnd}
+	mount ${vnd} ./m1
+
+	echo "${orig_data}" > ./m1/text
+
+# configure and mount a snapshot of the file system
+
+	fssconfig -c fss0 ./m1 ./m1/backup
+	mount -o rdonly /dev/fss0 ./m2
+
+# Modify the data on the underlying file system
+
+	echo "${repl_data}" > ./m1/text || abort
+
+# Verify that original data is still visible in the snapshot
+
+	read test_data < ./m2/text
+	atf_check_equal "${orig_data}" "${test_data}"
+
+# Verify that ls(1), find(1), and file(1) identify it as a snapshot
+
+	atf_check -o match:'[[:<:]]snap[[:>:]]' ls -lo ./m1/backup
+	atf_check -o inline:'m1/backup\n' find m1 -flags snap
+	atf_check -o match:'internal file system snapshot' file ./m1/backup
+}
+
+internal_cleanup() {
+# Unmount our temporary stuff
+	umount /dev/fss0	|| true
+	fssconfig -u fss0	|| true
+	umount ${vnd}		|| true
+	vndconfig -u ${vnddev}	|| true
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basic
+	atf_add_test_case internal
 }
