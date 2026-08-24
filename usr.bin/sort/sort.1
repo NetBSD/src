@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.51 2026/01/23 14:06:09 jkoshy Exp $
+.\"	$NetBSD: sort.1,v 1.52 2026/08/24 11:28:03 uwe Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -374,7 +374,12 @@ position specified by
 .Ar m Ns Cm \&. Ns Ar n
 is interpreted as the
 .Ar n Ap th
-character in the
+character
+.Po
+.Sy NB :
+including leading field separators
+.Pc
+in the
 .Ar m Ap th
 field.
 A missing
@@ -405,7 +410,7 @@ is interpreted as
 the
 .Ar n Ap th
 character
-.Pq including separators
+.Pq including leading separators
 of the
 .Ar m Ap th
 field.
