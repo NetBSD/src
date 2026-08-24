@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.21.2.3 2026/04/02 18:17:26 martin Exp $
+# $NetBSD: GENERIC64,v 1.21.2.4 2026/08/24 18:49:46 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -26,7 +26,7 @@ include	"arch/riscv/conf/GENERIC.common"
 options 	VERBOSE_INIT_RISCV
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# inexpensive kernel consistency checks
+#options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
