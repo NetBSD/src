@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.201 2026/08/23 23:56:54 riastradh Exp $	*/
+/*	$NetBSD: vm.c,v 1.202 2026/08/24 20:31:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.201 2026/08/23 23:56:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.202 2026/08/24 20:31:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1342,7 +1342,8 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 	/* first we must be within the limit */
  limitagain:
 	if (thelimit != RUMPMEM_UNLIMITED) {
-		ticket = uvm_wait_prepare();
+		if (waitok)
+			ticket = uvm_wait_prepare();
 		newmem = atomic_add_long_nv(&curphysmem, howmuch);
 		if (newmem > thelimit) {
 			newmem = atomic_add_long_nv(&curphysmem, -howmuch);
@@ -1356,7 +1357,8 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 
 	/* second, we must get something from the backend */
  again:
-	ticket = uvm_wait_prepare();
+	if (waitok)
+		ticket = uvm_wait_prepare();
 	error = rumpuser_malloc(howmuch, alignment, &rv);
 	if (__predict_false(error && waitok)) {
 		uvm_wait(wmsg, ticket);
