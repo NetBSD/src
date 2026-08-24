@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.202 2026/08/24 20:31:32 riastradh Exp $	*/
+/*	$NetBSD: vm.c,v 1.203 2026/08/24 20:47:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.202 2026/08/24 20:31:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.203 2026/08/24 20:47:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -106,8 +106,6 @@ struct pmap *const kernel_pmap_ptr = &pmap_kernel;
 vmem_t *kmem_arena;
 vmem_t *kmem_va_arena;
 
-static bool pdaemon_initialized;
-static uint64_t uvm_pdaemon_ticket;
 static unsigned int pdaemon_waiters;
 static kmutex_t pdaemonmtx;
 static kcondvar_t pdaemoncv, oomwait;
@@ -386,8 +384,6 @@ uvm_init(void)
 	mutex_init(&vmpage_lruqueue_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&pdaemonmtx, MUTEX_DEFAULT, IPL_NONE);
-	uvm_pdaemon_ticket = 1;
-	pdaemon_initialized = true;
 
 	cv_init(&pdaemoncv, "pdaemon");
 	cv_init(&oomwait, "oomwait");
@@ -1105,17 +1101,81 @@ uvm_uarea_free(vaddr_t uarea)
  * Routines related to the Page Baroness.
  */
 
+#if __HAVE_ATOMIC64_LOADSTORE
+
+static volatile uint64_t uvmpd_gen;
+
+static uint64_t
+uvmpd_read_gen(void)
+{
+
+	return atomic_load_acquire(&uvmpd_gen);
+}
+
+static void
+uvmpd_advance_gen(void)
+{
+
+	KASSERT(mutex_owned(&pdaemonmtx));
+	atomic_store_release(&uvmpd_gen, atomic_load_relaxed(&uvmpd_gen) + 1);
+}
+
+#else  /* !__HAVE_ATOMIC64_LOADSTORE */
+
+static volatile struct {
+#if _BYTE_ORDER == _BIG_ENDIAN
+	uint32_t	hi, lo;
+#else
+	uint32_t	lo, hi;
+#endif
+} uvmpd_gen;
+
+static uint64_t
+uvmpd_read_gen(void)
+{
+	uint32_t hi, lo;
+
+top:	while (__predict_false((hi = atomic_load_relaxed(&uvmpd_gen.hi)) ==
+		0xffffffff))
+		SPINLOCK_BACKOFF_HOOK;
+	membar_consumer();	/* membar_producer in uvmpd_advance_gen */
+	/* load-acquire matches store-release in uvmpd_advance_gen */
+	lo = atomic_load_acquire(&uvmpd_gen.lo);
+	if (__predict_false(hi != atomic_load_relaxed(&uvmpd_gen.hi)))
+		goto top;
+
+	return (uint64_t)hi << 32 | lo;
+}
+
+static void
+uvmpd_advance_gen(void)
+{
+	uint32_t hi, lo;
+
+	KASSERT(mutex_owned(&pdaemonmtx));
+
+	lo = atomic_load_relaxed(&uvmpd_gen.lo);
+	if (__predict_false(++lo == 0)) {
+		hi = atomic_load_relaxed(&uvmpd_gen.hi) + 1; /* carry */
+		atomic_store_relaxed(&uvmpd_gen.hi, 0xffffffff);
+		/* store-release matches load-acquire in uvmpd_read_gen */
+		atomic_store_release(&uvmpd_gen.lo, lo);
+		membar_producer(); /* membar_consumer in uvmpd_read_gen */
+		atomic_store_relaxed(&uvmpd_gen.hi, hi);
+	} else {
+		/* store-release matches load-acquire in uvmpd_read_gen */
+		atomic_store_release(&uvmpd_gen.lo, lo);
+	}
+}
+
+#endif
+
 uint64_t
 uvm_wait_prepare(void)
 {
 	uint64_t ticket;
 
-	if (!pdaemon_initialized)
-		return 0;
-
-	mutex_enter(&pdaemonmtx);
-	ticket = uvm_pdaemon_ticket;
-	mutex_exit(&pdaemonmtx);
+	ticket = uvmpd_read_gen();
 
 	return ticket;
 }
@@ -1134,7 +1194,7 @@ uvm_wait(const char *msg, uint64_t ticket)
 	}
 
 	mutex_enter(&pdaemonmtx);
-	if (ticket != uvm_pdaemon_ticket)
+	if (ticket != uvmpd_read_gen())
 		goto out;
 	pdaemon_waiters++;
 	cv_signal(&pdaemoncv);
@@ -1162,7 +1222,7 @@ uvm_pageout_done(int npages)
 	KASSERT(uvmexp.paging >= npages);
 	uvmexp.paging -= npages;
 
-	uvm_pdaemon_ticket++;
+	uvmpd_advance_gen();
 	if (pdaemon_waiters) {
 		pdaemon_waiters = 0;
 		cv_broadcast(&oomwait);
@@ -1207,7 +1267,7 @@ uvm_pageout(void *arg)
 
 	mutex_enter(&pdaemonmtx);
 	for (;;) {
-		uvm_pdaemon_ticket++;
+		uvmpd_advance_gen();
 		if (pdaemon_waiters) {
 			pdaemon_waiters = 0;
 			cv_broadcast(&oomwait);
@@ -1342,8 +1402,7 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 	/* first we must be within the limit */
  limitagain:
 	if (thelimit != RUMPMEM_UNLIMITED) {
-		if (waitok)
-			ticket = uvm_wait_prepare();
+		ticket = uvm_wait_prepare();
 		newmem = atomic_add_long_nv(&curphysmem, howmuch);
 		if (newmem > thelimit) {
 			newmem = atomic_add_long_nv(&curphysmem, -howmuch);
@@ -1357,8 +1416,7 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 
 	/* second, we must get something from the backend */
  again:
-	if (waitok)
-		ticket = uvm_wait_prepare();
+	ticket = uvm_wait_prepare();
 	error = rumpuser_malloc(howmuch, alignment, &rv);
 	if (__predict_false(error && waitok)) {
 		uvm_wait(wmsg, ticket);
