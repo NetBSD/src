@@ -2182,7 +2182,7 @@ INIT_FILES = \
 init.c: stamp-init; @true
 stamp-init: $(INIT_FILES) config.status $(srcdir)/make-init-c
 	$(ECHO_INIT_C)
-	$(SILENCE) $(srcdir)/make-init-c \
+	$(SILENCE) $(SHELL) $(srcdir)/make-init-c \
 		$(filter-out config.status $(srcdir)/make-init-c,$^) \
 		> init.c-tmp
 	$(SILENCE) $(SHELL) $(srcdir)/../move-if-change init.c-tmp init.c
