@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.28 2024/11/19 15:15:43 riastradh Exp $
+#	$NetBSD: files.hppa,v 1.28.2.1 2026/08/25 20:10:47 martin Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -111,6 +111,7 @@ file	arch/hppa/dev/cpu.c		cpu
 device	fpu
 attach	fpu at gedoens
 file	arch/hppa/dev/fpu.c		fpu
+defflag opt_hppa_fpu.h HPPA_FPU_EAGER
 
 # Phantom PseudoBC GSC+ Port
 device	phantomas: gedoens
