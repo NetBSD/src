@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.250 2026/07/26 12:55:51 jdc Exp $
+# $NetBSD: GENERIC,v 1.251 2026/08/25 19:28:08 palle Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.250 $"
+#ident		"GENERIC-$Revision: 1.251 $"
 
 maxusers	64
 
@@ -514,6 +514,7 @@ gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 gem*	at sbus? slot ? offset ?
 gsip*	at pci? dev ? function ?	# National Semiconductor DP83820 GigE
 ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
+ixl*	at pci?						# Intel 700 Series Ethernet UT
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
