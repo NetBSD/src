@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_generic.S,v 1.6 2026/03/29 12:10:50 tls Exp $	*/
+/*	$NetBSD: bus_space_generic.S,v 1.7 2026/08/25 15:48:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <riscv/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: bus_space_generic.S,v 1.6 2026/03/29 12:10:50 tls Exp $")
+RCSID("$NetBSD: bus_space_generic.S,v 1.7 2026/08/25 15:48:04 skrll Exp $")
 
 
 /* void bs_c_1(a0: tag, a1: src, srcoffset, dst, dstoffset, count); */
@@ -109,7 +109,6 @@ ENTRY_NP(generic_bs_rm_1)
 	tail	_C_LABEL(panic)
 3:
 	.asciz	"_bs_rm_1: count == 0"
-	.balign 4, 0
 END(generic_bs_rm_1)
 
 
@@ -133,7 +132,6 @@ ENTRY_NP(generic_bs_rm_2)
 	tail	_C_LABEL(panic)
 3:
 	.asciz	"_bs_rm_2: count == 0"
-	.balign 4, 0
 END(generic_bs_rm_2)
 
 
@@ -157,7 +155,6 @@ ENTRY_NP(generic_bs_rm_4)
 	tail	_C_LABEL(panic)
 3:
 	.asciz	"_bs_rm_4: count == 0"
-	.balign 4, 0
 END(generic_bs_rm_4)
 
 
@@ -182,7 +179,6 @@ ENTRY_NP(generic_bs_rm_8)
 	tail	_C_LABEL(panic)
 3:
 	.asciz	"_bs_rm_8: count == 0"
-	.balign 4, 0
 END(generic_bs_rm_8)
 #endif
 
@@ -210,7 +206,6 @@ ENTRY_NP(generic_bs_rr_1)
 	tail	_C_LABEL(panic)
 3:
 	.asciz	"_bs_rr_1: count == 0"
-	.balign 4, 0
 END(generic_bs_rr_1)
 
 
@@ -241,7 +236,6 @@ ENTRY_NP(generic_bs_rr_2)
 	tail	_C_LABEL(panic)
 3:
 	.asciz	"_bs_rr_2: count == 0"
-	.balign 4, 0
 END(generic_bs_rr_2)
 
 
@@ -312,7 +306,6 @@ ENTRY_NP(generic_bs_wm_1)
 	tail	_C_LABEL(panic)
 3:
 	.asciz	"_bs_wm_1: count == 0"
-	.balign 4, 0
 END(generic_bs_wm_1)
 
 
@@ -336,7 +329,6 @@ ENTRY_NP(generic_bs_wm_2)
 	tail	_C_LABEL(panic)
 3:
 	.asciz	"_bs_wm_2: count == 0"
-	.balign 4, 0
 END(generic_bs_wm_2)
 
 
@@ -360,7 +352,6 @@ ENTRY_NP(generic_bs_wm_4)
 	tail	_C_LABEL(panic)
 3:
 	.asciz	"_bs_wm_4: count == 0"
-	.balign 4, 0
 END(generic_bs_wm_4)
 
 
@@ -385,7 +376,6 @@ ENTRY_NP(generic_bs_wm_8)
 	tail	_C_LABEL(panic)
 3:
 	.asciz	"_bs_wm_8: count == 0"
-	.balign 4, 0
 END(generic_bs_wm_8)
 #endif
 
