@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1389 2026/08/25 11:56:39 wiz Exp $
+# $NetBSD: mi,v 1.1390 2026/08/25 13:39:55 wiz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1213,7 +1213,7 @@
 ./usr/lib/clang/9.0.0/share			base-obsolete	obsolete
 ./usr/lib/dtrace				base-sys-usr		dtrace
 ./usr/lib/dtrace/errno.d			base-sys-usr		dtrace
-./usr/lib/dtrace/psinfo.d			base-obsolete		obsolete
+./usr/lib/dtrace/psinfo.d			base-sys-usr		dtrace
 ./usr/lib/dtrace/signal.d			base-sys-usr		dtrace
 ./usr/lib/dtrace/unistd.d			base-sys-usr		dtrace
 ./usr/lib/i18n					base-i18n-root		compatfile
