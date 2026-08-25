@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.8 2026/08/25 19:55:29 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.9 2026/08/25 20:15:20 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -225,4 +225,72 @@ sys/conf/Makefile.kern.inc			1.306
 
 	build: fix MKDEBUGKERNEL vs MKDEBUG confusion.
 	[tls, ticket #434]
+
+sys/arch/evbmips/conf/MALTA			1.107
+sys/arch/evbmips/malta/dev/gt.c			1.20
+sys/arch/evbmips/malta/dev/mainbus.c		1.21
+sys/arch/evbmips/malta/machdep.c		1.51
+sys/arch/evbmips/malta/malta_bus_io.c		1.9
+sys/arch/evbmips/malta/malta_bus_mem.c		1.10
+sys/arch/evbmips/malta/malta_intr.c		1.30
+sys/arch/evbmips/malta/pci/pcib.c		1.29
+
+	evbmips: address problems with MIPS Malta platform code found
+	running under QEMU.
+	[tls, ticket #436]
+
+sys/arch/alpha/alpha/syscall.c			1.46
+sys/arch/mips/mips/syscall.c			1.52
+sys/arch/riscv/riscv/syscall.c			1.7
+sys/kern/init_sysent.c				1.347
+sys/kern/makesyscalls.sh			1.189
+sys/kern/syscalls.c				1.335
+sys/kern/syscalls_autoload.c			1.51
+sys/kern/systrace_args.c			1.57
+sys/sys/syscall.h				1.330
+sys/sys/syscallargs.h				1.313
+sys/sys/systm.h					1.307
+
+	Fix a longstanding bug on 64 bit ports with ABIs requiring
+	sign-extension when returning 32-bit values in registers.
+	Alpha, MIPS N64, RISCV.
+	[tls, ticket #437]
+
+sys/dev/goldfish/gftty.c			1.6
+
+	virt68k: make console input 8-bit clean.
+	[tls, ticket #438]
+
+sys/dev/pci/files.virtio			1.5
+sys/dev/pci/vioscsi.c				1.37
+
+	Add VIOSCSI_MAX_TARGET and VIOSCSI_MAX_LUN options to reduce
+	excessive probe time on QEMU.
+	[tls, ticket #439]
+
+sys/arch/hppa/conf/GENERIC			1.50
+sys/arch/hppa/conf/files.hppa			1.30
+sys/arch/hppa/hppa/fpu.c			1.28
+sys/arch/hppa/hppa/hppa_machdep.c		1.34
+sys/arch/hppa/hppa/locore.S			1.8
+sys/arch/hppa/hppa/machdep.c			1.28
+sys/arch/hppa/hppa/machdep.h			1.20
+sys/arch/hppa/hppa/process_machdep.c		1.19
+sys/arch/hppa/include/cpu.h			1.14
+
+	Add eager FPU switching for hppa - works around QEMU bug,
+	and safer - may eventually become the default.
+	[tls, ticket #440]
+
+external/gpl3/gdb/dist/gdb/Makefile.in		1.11
+
+	Fix MKCROSSGDB build from release source tars that have had
+	execute permissions stripped from source files.
+	[tls, ticket #441]
+
+sys/arch/riscv/include/asm.h			1.13
+
+	riscv: ensure 4-byte (32bit alignment) in ENTRY_NP so that
+	non-compressable instructions get the correct alignment.
+	[skrll, ticket #442]
 
