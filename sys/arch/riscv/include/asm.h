@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12 2026/03/09 20:26:36 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.13 2026/08/25 15:44:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 	.type	_C_LABEL(x), @function;	\
 	_C_LABEL(x):
 
-#define	ENTRY_NP(x)	.text; .align 2; _ENTRY(x)
+#define	ENTRY_NP(x)	.text; .align 4; _ENTRY(x)
 #define	ENTRY(x)	ENTRY_NP(x); _PROF_PROLOGUE
 #define	ALTENTRY(x)	_ENTRY(x)
 #define	END(x)		.size _C_LABEL(x), . - _C_LABEL(x)
