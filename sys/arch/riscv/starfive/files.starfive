@@ -1,4 +1,4 @@
-#	$NetBSD: files.starfive,v 1.12 2025/09/06 15:44:04 thorpej Exp $
+#	$NetBSD: files.starfive,v 1.13 2026/08/25 20:46:17 riz Exp $
 #
 # Configuration info for StarFive SoCs
 #
@@ -64,3 +64,8 @@ file	arch/riscv/starfive/jh71x0_temp.c		jh71x0_temp
 device	jh7110trng: fdt_reset
 attach	jh7110trng at fdt with jh7110_trng
 file	arch/riscv/starfive/jh7110_trng.c		jh7110_trng
+
+# JH7110 WDT
+device	jh7110wdt: sysmon_wdog
+attach	jh7110wdt at fdt with jh7110_wdt
+file	arch/riscv/starfive/jh7110_wdt.c		jh7110_wdt

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.27 2026/05/26 06:28:23 skrll Exp $
+# $NetBSD: GENERIC64,v 1.28 2026/08/25 20:46:17 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -80,6 +80,7 @@ gpio* 		at gpiobus?
 jh7110syscon* 	at fdt? pass 1
 
 # Watchdog
+jh7110wdt*	at fdt?			# StarFive JH7110 wdt driver
 sunxiwdt* 	at fdt?			# Allwinner watchdog
 
 # SDMMC
