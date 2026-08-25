@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.141 2026/07/11 03:26:26 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.142 2026/08/25 21:06:50 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.141 2026/07/11 03:26:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.142 2026/08/25 21:06:50 andvar Exp $");
 
 #include "opt_xen.h"
 
@@ -487,6 +487,7 @@ cpu_probe_winchip(struct cpu_info *ci)
 static void
 cpu_probe_c3(struct cpu_info *ci)
 {
+	const struct x86_cache_info *cp;
 	u_int family, model, stepping, descs[4], lfunc, msr;
 	struct x86_cache_info *cai;
 
@@ -677,15 +678,32 @@ cpu_probe_c3(struct cpu_info *ci)
 	x86_cpuid(0x80000006, descs);
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
-	if (family > 6 || model >= 9) {
-		cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
-		cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
-		cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
-	} else {
+	if (family == 6 && model < 9) {
+		// Pre-Nehemiah L2 cache mapping.
 		cai->cai_totalsize = VIA_L2_ECX_C_SIZE(descs[2]);
 		cai->cai_associativity = VIA_L2_ECX_C_ASSOC(descs[2]);
 		cai->cai_linesize = VIA_L2_ECX_C_LS(descs[2]);
+		return;
 	}
+
+	// Nehemiah, Esther, and Isaiah before CNQ use AMD-style cache encoding.
+	// It will be overridden by `cpuid leaf 4` (including L1) if available.
+	cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
+	cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
+	cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
+		cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	// Late VIA models (CNQ and later) and Zhaoxin CPUs prefer `cpuid leaf 4'.
+	if (cpuid_level < 4)
+		return;
+
+	/* Parse the cache info from `cpuid leaf 4', if we have it. */
+	cpu_dcp_cacheinfo(ci, 4);
 }
 
 static void
