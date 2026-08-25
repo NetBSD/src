@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.6 2026/08/24 18:52:04 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.7 2026/08/25 18:34:20 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -149,4 +149,24 @@ sys/arch/riscv/conf/GENERIC64                           (apply patch)
 	riscv: remove options DIAGNOSTIC (should have already happened
 	when processing ticket #182).
 	[martin]
+
+external/mpl/mozilla-certdata/Makefile		1.2
+
+	build: fix MKSHARE=no builds
+	[tls, ticket #421]
+
+distrib/sets/lists/debug/mi			1.509
+
+	build: fix set lists for MKCXX=no builds.
+	[tls, ticket #422]
+
+etc/etc.hppa/MAKEDEV.conf			1.5
+
+	hppa: add ld(4) to hppa MAKEDEV; without it, virtio disks are unusable
+	[tls, ticket #423]
+
+sys/conf/std					1.25
+
+	enable secmodel_extensions(9) by default.
+	[tls, ticket #424]
 
