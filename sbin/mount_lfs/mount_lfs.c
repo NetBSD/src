@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.40 2026/02/11 14:28:14 christos Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.41 2026/08/25 16:36:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,11 +39,12 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.40 2026/02/11 14:28:14 christos Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.41 2026/08/25 16:36:04 perseant Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/fcntl.h>
 #include <sys/mount.h>
 
 #include <ufs/lfs/lfs.h>
@@ -80,7 +81,11 @@ static void	kill_daemon(char *);
 static void	kill_cleaner(char *);
 #endif /* WANT_CLEANER */
 
-static int short_rds, cleaner_debug, cleaner_bytes, fs_idle, noclean;
+#define HOWCLEAN_NONE   0
+#define HOWCLEAN_USER   1
+#define HOWCLEAN_KERNEL 2
+
+static int short_rds, cleaner_debug, cleaner_bytes, fs_idle, howclean;
 static const char *nsegs;
 
 #ifndef MOUNT_NOMAIN
@@ -103,9 +108,10 @@ mount_lfs_parseargs(int argc, char *argv[],
 
 	memset(args, 0, sizeof(*args));
 	nsegs = "4";
-	*mntflags = noclean = 0;
+	*mntflags = 0;
+	howclean = HOWCLEAN_KERNEL;
 	cleaner_bytes = 1;
-	while ((ch = getopt(argc, argv, "bdiN:no:s")) != -1)
+	while ((ch = getopt(argc, argv, "bdikN:no:su")) != -1)
 		switch (ch) {
 		case 'b':
 			cleaner_bytes = !cleaner_bytes;
@@ -116,8 +122,11 @@ mount_lfs_parseargs(int argc, char *argv[],
 		case 'i':
 			fs_idle = 1;
 			break;
+		case 'k':
+			howclean = HOWCLEAN_KERNEL;
+			break;
 		case 'n':
-			noclean = 1;
+			howclean = HOWCLEAN_NONE;
 			break;
 		case 'N':
 			nsegs = optarg;
@@ -130,6 +139,9 @@ mount_lfs_parseargs(int argc, char *argv[],
 			break;
 		case 's':
 			short_rds = 1;
+			break;
+		case 'u':
+			howclean = HOWCLEAN_USER;
 			break;
 		case '?':
 		default:
@@ -199,8 +211,8 @@ mount_lfs(int argc, char *argv[])
 	/* Not mounting fresh or upgrading to r/w; don't start the cleaner */
 	if (!(oldflags & MNT_RDONLY) || (mntflags & MNT_RDONLY)
 	    || (mntflags & MNT_GETARGS))
-		noclean = 1;
-	if (!noclean)
+		howclean = HOWCLEAN_NONE;
+	if (howclean != HOWCLEAN_NONE)
 		invoke_cleaner(fs_name);
 		/* NOTREACHED */
 
@@ -264,26 +276,46 @@ static void
 invoke_cleaner(char *name)
 {
 	const char *args[7], **ap = args;
+	int fd;
+	struct lfs_autoclean_params autoclean;
 
-	/* Build the argument list. */
-	*ap++ = _PATH_LFS_CLEANERD;
-	if (cleaner_bytes)
-		*ap++ = "-b";
-	if (nsegs) {
-		*ap++ = "-n";
-		*ap++ = nsegs;
+	if (howclean == HOWCLEAN_KERNEL) {
+		fd = open(name, O_RDONLY);
+		if (fd < 0)
+			err(EXIT_FAILURE, "opening mounted root");
+
+		autoclean.size = sizeof(autoclean);
+		autoclean.mode = LFS_CLEANMODE_GREEDY;
+		autoclean.thresh = -1;
+		autoclean.target = -1;
+		if (fcntl(fd, LFCNAUTOCLEAN, &autoclean) < 0)
+			err(EXIT_FAILURE, "LFCNAUTOCLEAN failed");
+
+		close(fd);
+		exit(0);
 	}
-	if (short_rds)
-		*ap++ = "-s";
-	if (cleaner_debug)
-		*ap++ = "-d";
-	if (fs_idle)
-		*ap++ = "-f";
-	*ap++ = name;
-	*ap = NULL;
 
-	execv(args[0], __UNCONST(args));
-	err(EXIT_FAILURE, "exec %s", _PATH_LFS_CLEANERD);
+	if (howclean == HOWCLEAN_USER) {
+		/* Build the argument list. */
+		*ap++ = _PATH_LFS_CLEANERD;
+		if (cleaner_bytes)
+			*ap++ = "-b";
+		if (nsegs) {
+			*ap++ = "-n";
+			*ap++ = nsegs;
+		}
+		if (short_rds)
+			*ap++ = "-s";
+		if (cleaner_debug)
+			*ap++ = "-d";
+		if (fs_idle)
+			*ap++ = "-f";
+		*ap++ = name;
+		*ap = NULL;
+
+		execv(args[0], __UNCONST(args));
+		err(EXIT_FAILURE, "exec %s", _PATH_LFS_CLEANERD);
+	}
 }
 #endif /* WANT_CLEANER */
 
