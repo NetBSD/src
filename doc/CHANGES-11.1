@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.7 2026/08/25 18:34:20 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.8 2026/08/25 19:55:29 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -169,4 +169,60 @@ sys/conf/std					1.25
 
 	enable secmodel_extensions(9) by default.
 	[tls, ticket #424]
+
+sys/arch/riscv/riscv/riscv_machdep.c		1.49
+
+	riscv: support poweroff.
+	[tls, ticket #427]
+
+sys/arch/alpha/alpha/mcclock.c			1.24
+
+	alpha: avoid boot time hang on QEMU by working aroud its broken
+	mcclock emulation.
+	[tls, ticket #428]
+
+sys/dev/pci/if_pcn.c				1.82,1.83
+
+	pcn(4): fix MAC address read on QEMU and possibly some other
+	emulated hardware.
+	[tls, ticket #429]
+
+sys/dev/ic/wdc.c				1.313
+sys/dev/ic/wdcvar.h				1.101
+sys/dev/pci/artsata.c				1.31
+sys/dev/pci/pciide_common.c			1.74
+sys/dev/pci/svwsata.c				1.25
+
+	Avoid a useless 3-second delay on PCI IDE controllers.
+	[tls, ticket #430]
+
+sys/dev/ic/wdc.c				1.314
+
+	wdc(4): avoid crash when manually resetting the bus with no
+	drives attached.
+	[tls, ticket #432]
+
+distrib/sets/sets.subr				1.214
+
+	build: fix MKBINUTILS=no builds.
+	[tls, ticket #433]
+
+distrib/sets/lists/debug/ad.mips		1.88
+distrib/sets/lists/debug/ad.mipseb		1.8
+distrib/sets/lists/debug/ad.mipsel		1.8
+distrib/sets/lists/debug/md.emips		1.4
+distrib/sets/lists/debug/md.evbarm.earmv4	1.2
+distrib/sets/lists/debug/md.evbarm.earmv5	1.2
+distrib/sets/lists/debug/md.evbarm.earmv5eb	1.2
+distrib/sets/lists/debug/md.evbarm.earmv5eb	1.3
+distrib/sets/lists/debug/md.evbppc		1.6
+distrib/sets/lists/debug/md.pmax		1.5
+distrib/sets/lists/debug/mi			1.513
+distrib/sets/sets.subr				1.215
+etc/Makefile					1.476
+share/mk/bsd.own.mk				1.1482
+sys/conf/Makefile.kern.inc			1.306
+
+	build: fix MKDEBUGKERNEL vs MKDEBUG confusion.
+	[tls, ticket #434]
 
