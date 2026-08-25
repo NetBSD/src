@@ -1,4 +1,4 @@
-/*	$NetBSD: psinfo.d,v 1.6 2018/05/28 21:05:09 chs Exp $	*/
+/*	$NetBSD: psinfo.d,v 1.7 2026/08/25 13:38:13 wiz Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -29,6 +29,8 @@
  * Copyright 2004 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
+
+#pragma D depends_on module netbsd
 
 typedef struct psinfo {
 	int	pr_nlwp;	/* number of threads */
