@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.302 2025/01/13 15:40:18 riastradh Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.302.2.1 2026/08/25 19:51:33 martin Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -283,7 +283,8 @@ TARGETSFX=	.gdb
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
 
-.if ${MKDEBUG:Uno} == "yes"
+
+.if ${MKDEBUGKERNEL:Uno} == "yes"
 # XXX: KERNEL_DIR?
 debuginstall: install-kernel-debug
 .for k in ${KERNELS}
