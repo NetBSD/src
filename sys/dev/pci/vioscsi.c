@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.36 2023/03/25 11:04:34 mlelstv Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.36.8.1 2026/08/25 20:08:58 martin Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.36 2023/03/25 11:04:34 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.36.8.1 2026/08/25 20:08:58 martin Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_vioscsi.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -32,6 +36,13 @@ __KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.36 2023/03/25 11:04:34 mlelstv Exp $")
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsiconf.h>
+
+#ifndef VIOSCSI_MAX_TARGET
+#define VIOSCSI_MAX_TARGET	256
+#endif
+#ifndef VIOSCSI_MAX_LUN
+#define VIOSCSI_MAX_LUN		16384
+#endif
 
 #ifdef VIOSCSI_DEBUG
 static int vioscsi_debug = 1;
@@ -191,13 +202,23 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * Fill in the scsipi_channel.
+	 *
+	 * This looks odd in a couple of ways but is correct.
+	 * Unfortunately, QEMU, which might be the most common host
+	 * side implementation, always reports 255 targets and 16383
+	 * LUNs.  This can take multiple seconds to probe!  At least we
+	 * let the user override these silly values in the kernel config.
+	 *
+	 * Also, note there isn't really an initiator ID, so letting it
+	 * end up at 16384 here is acceptable - good, even, since it
+	 * will properly bound the loop that does probe the targets.
 	 */
 	memset(chan, 0, sizeof(*chan));
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_ntargets = MIN(1 + max_target, 256);	/* cap reasonably */
-	chan->chan_nluns = MIN(1 + max_lun, 16384);	/* cap reasonably */
+	chan->chan_ntargets = MIN(1 + max_target, VIOSCSI_MAX_TARGET);
+	chan->chan_nluns = MIN(1 + max_lun, VIOSCSI_MAX_LUN);
 	chan->chan_id = max_target + 1;
 	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
 
