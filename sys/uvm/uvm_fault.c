@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.240 2026/08/23 22:08:41 riastradh Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.241 2026/08/26 08:31:42 hannken Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.240 2026/08/23 22:08:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.241 2026/08/26 08:31:42 hannken Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -233,16 +233,17 @@ uvmfault_amapcopy(struct uvm_faultinfo *ufi)
 			ticket = uvm_wait_prepare();
 			amap_copy(ufi->map, ufi->entry, AMAP_COPY_NOWAIT,
 				ufi->orig_rvaddr, ufi->orig_rvaddr + 1);
-		}
 
-		/*
-		 * didn't work?  must be out of RAM.   unlock and sleep.
-		 */
+			/*
+			 * didn't work?  must be out of RAM.
+			 * unlock and sleep.
+			 */
 
-		if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
-			uvmfault_unlockmaps(ufi, true);
-			uvm_wait("fltamapcopy", ticket);
-			continue;
+			if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
+				uvmfault_unlockmaps(ufi, true);
+				uvm_wait("fltamapcopy", ticket);
+				continue;
+			}
 		}
 
 		/*
