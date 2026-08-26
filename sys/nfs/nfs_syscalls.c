@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.168 2026/08/26 03:28:56 riastradh Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.169 2026/08/26 12:48:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.168 2026/08/26 03:28:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.169 2026/08/26 12:48:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -107,10 +107,7 @@ struct nfssvc_sock *nfs_udp6sock;
 static struct sysctllog *nfsd_sysctllog;
 
 #define	NFSD_MAXEXPORTSPERMOUNT						      \
-	(MIN(INT_MAX,							      \
-	    (__builtin_constant_p(VM_MAX_KERNEL_ADDRESS) ?		      \
-		VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS : INT_MAX)) /   \
-	    sizeof(struct export_args))
+	(INT_MAX/sizeof(struct export_args))
 unsigned nfsd_maxexportspermount = 256;
 
 static struct nfssvc_sock *nfsrv_sockalloc(void);
