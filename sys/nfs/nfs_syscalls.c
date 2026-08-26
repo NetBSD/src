@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.165 2026/06/18 19:56:09 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.166 2026/08/26 02:59:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,47 +35,50 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.165 2026/06/18 19:56:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.166 2026/08/26 02:59:47 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
-#include <sys/kmem.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
+#include <sys/cprng.h>
+#include <sys/domain.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/protosw.h>
+#include <sys/rbtree.h>
+#include <sys/signalvar.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/signalvar.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/namei.h>
-#include <sys/syslog.h>
-#include <sys/filedesc.h>
-#include <sys/kthread.h>
-#include <sys/kauth.h>
+#include <sys/stat.h>
 #include <sys/syscallargs.h>
-#include <sys/cprng.h>
-#include <sys/rbtree.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
+#include <sys/vnode.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <nfs/xdr_subs.h>
-#include <nfs/rpcv2.h>
-#include <nfs/nfsproto.h>
+
 #include <nfs/nfs.h>
+#include <nfs/nfs_var.h>
 #include <nfs/nfsm_subs.h>
-#include <nfs/nfsrvcache.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfsnode.h>
+#include <nfs/nfsproto.h>
 #include <nfs/nfsrtt.h>
-#include <nfs/nfs_var.h>
+#include <nfs/nfsrvcache.h>
+#include <nfs/rpcv2.h>
+#include <nfs/xdr_subs.h>
 
 extern int32_t (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
 						struct nfssvc_sock *,
