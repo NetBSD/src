@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.63 2021/06/04 10:44:58 hannken Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.64 2026/08/26 03:01:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008, 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.63 2021/06/04 10:44:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.64 2026/08/26 03:01:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,7 @@ struct netcred {
  */
 struct netexport {
 	TAILQ_ENTRY(netexport) ne_list;
+	unsigned ne_nexports;
 	struct mount *ne_mount;
 	struct netcred ne_defexported;		      /* Default export */
 	struct radix_node_head *ne_rtable[AF_MAX+1]; /* Individual exports */
@@ -693,6 +694,8 @@ netexport_clear(struct netexport *ne)
 	}
 
 	mp->mnt_flag &= ~(MNT_EXPORTED | MNT_DEFEXPORTED);
+
+	ne->ne_nexports = 0;
 }
 
 /*
@@ -705,6 +708,9 @@ export(struct netexport *nep, const struct export_args *argp)
 	struct mount *mp = nep->ne_mount;
 	int error;
 
+	if (nep->ne_nexports >=
+	    (unsigned)atomic_load_relaxed(&nfsd_maxexportspermount))
+		return EBUSY;
 	if (argp->ex_flags & MNT_EXPORTED) {
 		if (argp->ex_flags & MNT_EXPUBLIC) {
 			if ((error = setpublicfs(mp, nep, argp)) != 0)
@@ -715,6 +721,7 @@ export(struct netexport *nep, const struct export_args *argp)
 			return error;
 		mp->mnt_flag |= MNT_EXPORTED;
 	}
+	nep->ne_nexports++;
 	return 0;
 }
 

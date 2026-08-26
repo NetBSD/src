@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.166 2026/08/26 02:59:47 riastradh Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.167 2026/08/26 03:01:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.166 2026/08/26 02:59:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.167 2026/08/26 03:01:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.166 2026/08/26 02:59:47 riastradh
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
@@ -102,6 +103,13 @@ int nfsd_head_flag;
 
 struct nfssvc_sock *nfs_udpsock;
 struct nfssvc_sock *nfs_udp6sock;
+
+static struct sysctllog *nfsd_sysctllog;
+
+#define	NFSD_MAXEXPORTSPERMOUNT						      \
+	(MIN(INT_MAX, VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) /	      \
+	    sizeof(struct export_args))
+unsigned nfsd_maxexportspermount = 256;
 
 static struct nfssvc_sock *nfsrv_sockalloc(void);
 static void nfsrv_sockfree(struct nfssvc_sock *);
@@ -351,6 +359,9 @@ do_nfssvc(struct nfssvc_copy_ops *ops, struct lwp *l, int flag, void *argp, regi
 		if (error != 0)
 			return error;
 
+		if (mel.mel_nexports >
+		    atomic_load_relaxed(&nfsd_maxexportspermount))
+			return E2BIG;
 		args = (struct export_args *)malloc(mel.mel_nexports *
 		    sizeof(struct export_args), M_TEMP, M_WAITOK);
 		error = ops->exp_in(args, mel.mel_exports, mel.mel_nexports);
@@ -998,6 +1009,45 @@ nfsrv_slpderef(struct nfssvc_sock *slp)
 		mutex_exit(&nfsd_lock);
 }
 
+static int
+sysctl_nfsd_maxexportspermount(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	unsigned n = atomic_load_relaxed(&nfsd_maxexportspermount);
+	int error;
+
+	node.sysctl_data = &n;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	if (n > NFSD_MAXEXPORTSPERMOUNT)
+		return ERANGE;
+	atomic_store_relaxed(&nfsd_maxexportspermount, n);
+	return 0;
+}
+
+static void
+nfsd_sysctl_setup(void)
+{
+	const struct sysctlnode *rnode;
+	int error;
+
+	error = sysctl_createv(&nfsd_sysctllog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE,
+	    "nfsd", SYSCTL_DESCR("NFS server knobs"),
+	    NULL, 0, NULL, 0,
+	    CTL_VFS, CTL_CREATE, CTL_EOL);
+	if (error)
+		panic("failed to create vfs.nfsd sysctl tree: %d", error);
+
+	(void)sysctl_createv(&nfsd_sysctllog, 0, &rnode, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "maxexportspermount",
+	    SYSCTL_DESCR("Maximum number of distinct exports per mount point"),
+	    &sysctl_nfsd_maxexportspermount, 0, &nfsd_maxexportspermount, 0,
+	    CTL_CREATE, CTL_EOL);
+}
+
 /*
  * Initialize the data structures for the server.
  * Handshake with any new nfsds starting up to avoid any chance of
@@ -1011,6 +1061,7 @@ nfsrv_init(int terminating)
 	if (!terminating) {
 		mutex_init(&nfsd_lock, MUTEX_DRIVER, IPL_SOFTNET);
 		cv_init(&nfsd_initcv, "nfsdinit");
+		nfsd_sysctl_setup();
 	}
 
 	mutex_enter(&nfsd_lock);
