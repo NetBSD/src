@@ -127,7 +127,15 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.16 2023/05/02 23:08:58 jmcneill 
 #define	SHUT_INT_ALL		(SHUT_INT0_STS|SHUT_INT1_STS|SHUT_INT2_STS)
 #define	ALARM_INT_ALL		(ALARM_INT0_STS)
 
-#define	MAX_SENSORS	3
+/* h616 thermal sensor registers (new layout) */
+#define	H616_THS_CTRL		0x00
+#define	H616_THS_EN		0x04
+#define	H616_THS_PER		0x08
+#define	H616_THS_FILT		0x30
+#define	H616_THS_DATA(n)	(0xc0 + (n) * 4)
+
+
+#define	MAX_SENSORS	4
 
 #if notyet
 #define	THROTTLE_ENABLE_DEFAULT	1
@@ -143,6 +151,8 @@ struct sunxi_thermal_sensor {
 	int			init_shut;
 };
 
+struct sunxi_thermal_softc;
+
 struct sunxi_thermal_config {
 	struct sunxi_thermal_sensor	sensors[MAX_SENSORS];
 	int				nsensors;
@@ -155,6 +165,8 @@ struct sunxi_thermal_config {
 	uint32_t			(*to_reg)(u_int, int);
 	int				calib0, calib1;
 	uint32_t			calib0_mask, calib1_mask;
+	int				(*hw_init)(struct sunxi_thermal_softc *);
+	int				(*read_temp)(struct sunxi_thermal_softc *, int);
 };
 
 static int
@@ -305,11 +317,56 @@ static const struct sunxi_thermal_config h5_config = {
 	.to_reg = h5_to_reg,
 };
 
+
+/*
+ * h616 thermal sensor.
+ * formula from linux sun8i_thermal.c:
+ *   temp_mC = offset - (reg * scale / 10)
+ *   offset=263655, scale=810, ft_deviation=8000
+ *   combined celsius = (271655 - reg * 81) / 1000
+ */
+static int
+h616_to_temp(u_int sensor, uint32_t val)
+{
+	if (val == 0)
+		return -40;
+	return ((int)(271655 - val * 81)) / 1000;
+}
+
+static int h616_thermal_init(struct sunxi_thermal_softc *);
+static int h616_thermal_read_temp(struct sunxi_thermal_softc *, int);
+
+static const struct sunxi_thermal_config h616_config = {
+	.nsensors = 4,
+	.sensors = {
+		[0] = {
+			.name = "gpu",
+			.desc = "GPU temperature",
+		},
+		[1] = {
+			.name = "ve",
+			.desc = "Video engine temperature",
+		},
+		[2] = {
+			.name = "cpu",
+			.desc = "CPU temperature",
+		},
+		[3] = {
+			.name = "ddr",
+			.desc = "DDR temperature",
+		},
+	},
+	.to_temp = h616_to_temp,
+	.hw_init = h616_thermal_init,
+	.read_temp = h616_thermal_read_temp,
+};
+
 static struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun8i-a83t-ths",	.data = &a83t_config },
 	{ .compat = "allwinner,sun8i-h3-ths",	.data = &h3_config },
 	{ .compat = "allwinner,sun50i-a64-ths",	.data = &a64_config },
 	{ .compat = "allwinner,sun50i-h5-ths",	.data = &h5_config },
+	{ .compat = "allwinner,sun50i-h616-ths", .data = &h616_config },
 
 	/*
 	 * DTCOMPAT: Old compat strings. Do not add to this list.
@@ -339,6 +396,51 @@ struct sunxi_thermal_softc {
 	bus_space_read_4((sc)->bst, (sc)->bsh, (reg))
 #define	WR4(sc, reg, val)	\
 	bus_space_write_4((sc)->bst, (sc)->bsh, (reg), (val))
+
+static int
+h616_thermal_init(struct sunxi_thermal_softc *sc)
+{
+	bus_space_handle_t sram_bsh;
+	uint32_t val;
+
+	/*
+	 * h616 requires sram controller bit 16 to be cleared
+	 * before thermal sensor data becomes valid.
+	 * see linux sun8i_thermal.c needs_sram / sun8i_ths_sram_reg_field
+	 */
+	if (bus_space_map(sc->bst, 0x03000000, 0x1000, 0, &sram_bsh) == 0) {
+		val = bus_space_read_4(sc->bst, sram_bsh, 0);
+		val &= ~__BIT(16);
+		bus_space_write_4(sc->bst, sram_bsh, 0, val);
+		bus_space_unmap(sc->bst, sram_bsh, 0x1000);
+	}
+
+	/* acquire time: 47 cycles (register takes n-1) */
+	WR4(sc, H616_THS_CTRL, 46 << 16);
+
+	/* enable filter, type 1 */
+	WR4(sc, H616_THS_FILT, __BIT(2) | 1);
+
+	/* measurement period */
+	WR4(sc, H616_THS_PER, 1 << 12);
+
+	/* enable all 4 sensors */
+	WR4(sc, H616_THS_EN, 0xf);
+
+	return 0;
+}
+
+static int
+h616_thermal_read_temp(struct sunxi_thermal_softc *sc, int sensor)
+{
+	uint32_t val;
+
+	val = RD4(sc, H616_THS_DATA(sensor));
+	if (val == 0)
+		return -40;
+	return h616_to_temp(sensor, val);
+}
+
 
 static int
 sunxi_thermal_init(struct sunxi_thermal_softc *sc)
@@ -384,6 +486,9 @@ static int
 sunxi_thermal_gettemp(struct sunxi_thermal_softc *sc, int sensor)
 {
 	uint32_t val;
+
+	if (sc->conf->read_temp != NULL)
+		return sc->conf->read_temp(sc, sensor);
 
 	val = RD4(sc, THS_DATA0 + (sensor * 4));
 
@@ -614,18 +719,26 @@ sunxi_thermal_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	for (i = 0; i < sc->conf->nsensors; i++) {
-		if (sc->conf->sensors[i].init_alarm > 0)
-			sunxi_thermal_setalarm(sc, i,
-			    sc->conf->sensors[i].init_alarm);
-		if (sc->conf->sensors[i].init_shut > 0)
-			sunxi_thermal_setshut(sc, i,
-			    sc->conf->sensors[i].init_shut);
-	}
-
-	if (sunxi_thermal_init(sc) != 0) {
-		aprint_error_dev(self, "failed to initialize sensors\n");
-		return;
+	if (sc->conf->hw_init != NULL) {
+		if (sc->conf->hw_init(sc) != 0) {
+			aprint_error_dev(self,
+			    "failed to initialize sensors\n");
+			return;
+		}
+	} else {
+		for (i = 0; i < sc->conf->nsensors; i++) {
+			if (sc->conf->sensors[i].init_alarm > 0)
+				sunxi_thermal_setalarm(sc, i,
+				    sc->conf->sensors[i].init_alarm);
+			if (sc->conf->sensors[i].init_shut > 0)
+				sunxi_thermal_setshut(sc, i,
+				    sc->conf->sensors[i].init_shut);
+		}
+	
+		if (sunxi_thermal_init(sc) != 0) {
+			aprint_error_dev(self, "failed to initialize sensors\n");
+			return;
+		}
 	}
 
 	sc->sme = sysmon_envsys_create();

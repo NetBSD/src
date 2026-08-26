@@ -22,10 +22,21 @@
 	allwinner,tx-delay-ps = <700>;
 	phy-mode = "rgmii";
 	phy-supply = <&reg_dcdce>;
+	phy-handle = <&ext_rgmii_phy>;
+	status = "okay";
+};
+
+&mdio0 {
+	ext_rgmii_phy: ethernet-phy@1 {
+		compatible = "ethernet-phy-ieee802.3-c22";
+		reg = <1>;
+	};
 };
 
 &mmc0 {
 	vmmc-supply = <&reg_dcdce>;
+	broken-cd;
+	status = "okay";
 };
 
 &r_rsb {

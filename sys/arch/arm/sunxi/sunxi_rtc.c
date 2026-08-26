@@ -258,8 +258,10 @@ static const struct device_compatible_entry compat_data[] = {
 	  .data = &sun8i_h3_rtc_config },
 	{ .compat = "allwinner,sun50i-h5-rtc",
 	  .data = &sun8i_h3_rtc_config },
-	{ .compat = "allwinner,sun50i-h6-rtc",
-	  .data = &sun50i_h6_rtc_config },
+        { .compat = "allwinner,sun50i-h6-rtc",
+          .data = &sun50i_h6_rtc_config },
+        { .compat = "allwinner,sun50i-h616-rtc",
+          .data = &sun50i_h6_rtc_config },
 
 	DEVICE_COMPAT_EOL
 };
@@ -398,6 +400,18 @@ sunxi_rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.todr_settime_ymdhms = sunxi_rtc_settime;
 
 	todr_attach(&sc->sc_todr);
+	
+	/* enable 32khz fanout clock output for wifi chips (h616) */
+        if (of_compatible_match(phandle,
+            (const struct device_compatible_entry[]){
+                { .compat = "allwinner,sun50i-h616-rtc" },
+                DEVICE_COMPAT_EOL
+            })) {
+                /* select pll-32k as fanout source (bits 2:1 = 0b10) and enable gate (bit 0) */
+                RTC_WRITE(sc, SUN6I_RTC_LOSC_OUT_GATING_REG, __BIT(2) | __BIT(0));
+                uint32_t verify = RTC_READ(sc, SUN6I_RTC_LOSC_OUT_GATING_REG);
+                aprint_normal_dev(self, "32kHz fanout enabled (reg=0x%x)\n", verify);
+        }
 
 	sc->sc_parent_clk = fdtbus_clock_get_index(phandle, 0);
 

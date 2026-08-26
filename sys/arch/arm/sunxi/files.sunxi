@@ -78,6 +78,12 @@ device	sun50ih6ccu: sunxi_ccu
 attach	sun50ih6ccu at fdt with sunxi_h6_ccu
 file	arch/arm/sunxi/sun50i_h6_ccu.c		sunxi_h6_ccu
 
+# CCU (H616)
+device  sun50ih616ccu: sunxi_ccu
+attach  sun50ih616ccu at fdt with sunxi_h616_ccu
+file    arch/arm/sunxi/sun50i_h616_ccu.c        sunxi_h616_ccu
+file    arch/arm/sunxi/sun50i_h616_gpio.c        sunxi_gpio needs-flag
+
 # CCU (H6 PRCM)
 device	sun50ih6rccu: sunxi_ccu
 attach	sun50ih6rccu at fdt with sunxi_h6_r_ccu
@@ -400,6 +406,7 @@ defflag	opt_soc.h			SOC_SUN50I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN50I_A64: SOC_SUN50I
 defflag	opt_soc.h			SOC_SUN50I_H5: SOC_SUN50I, SOC_SUN8I_H3
 defflag	opt_soc.h			SOC_SUN50I_H6: SOC_SUN50I
+defflag opt_soc.h                       SOC_SUN50I_H616: SOC_SUN50I
 
 makeoptions	sunxi_ccu	"CWARNFLAGS.sunxi_ccu_nm.c"+="${CC_WNO_MAYBE_UNINITIALIZED}"
 

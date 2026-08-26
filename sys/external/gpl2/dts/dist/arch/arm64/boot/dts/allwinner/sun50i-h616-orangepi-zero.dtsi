@@ -57,6 +57,23 @@
 		enable-active-high;
 		gpio = <&pio 2 16 GPIO_ACTIVE_HIGH>; /* PC16 */
 	};
+
+	wifi_pwrseq: wifi-pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		pinctrl-names = "default";
+		pinctrl-0 = <&x32clk_fanout_pin>;
+		reset-gpios = <&pio 6 13 GPIO_ACTIVE_LOW>; /* PG13 */
+		post-power-on-delay-ms = <500>;
+	};
+	reg_wifi_en: wifi-en {
+		compatible = "regulator-fixed";
+		regulator-name = "wifi-en";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		enable-active-high;
+		gpio = <&pio 6 18 GPIO_ACTIVE_HIGH>; /* PG18 wlan_regon */
+		regulator-always-on;
+	};
 };
 
 &ehci1 {
@@ -127,5 +144,14 @@
 
 &usbphy {
 	usb1_vbus-supply = <&reg_usb1_vbus>;
+	status = "okay";
+};
+
+&mmc1 {
+	vmmc-supply = <&reg_aldo2>;
+	vqmmc-supply = <&reg_bldo1>;
+	mmc-pwrseq = <&wifi_pwrseq>;
+	bus-width = <4>;
+	non-removable;
 	status = "okay";
 };
