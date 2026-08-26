@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.98 2026/08/26 03:01:25 riastradh Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.99 2026/08/26 13:28:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -321,7 +321,6 @@ extern const int nfsv3_procid[NFS_NPROCS];
 extern int nfs_ticks;
 
 /* nfs_syscalls.c */
-extern unsigned nfsd_maxexportspermount;
 struct sys_getfh_args;
 struct sys_nfssvc_args;
 int sys_getfh(struct lwp *, const struct sys_getfh_args *, register_t *);
