@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.126 2020/10/30 20:05:00 rillig Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.126.6.1 2026/08/26 15:14:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.126 2020/10/30 20:05:00 rillig Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.126.6.1 2026/08/26 15:14:38 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ static char   *copy(int, char *, int, char *, off_t);
 static int	do_link(char *, char *);
 static void	do_symlink(char *, char *);
 static void	install(char *, char *, u_int);
-static void	install_dir(char *, u_int);
+static int	install_dir(char *, u_int);
 static void	makelink(char *, char *);
 static void	metadata_log(const char *, const char *, struct timeval *,
 	    const char *, const char *, off_t);
@@ -186,7 +186,7 @@ main(int argc, char *argv[])
 
 	iflags = 0;
 	while ((ch = getopt(argc, argv, "a:cbB:dD:f:g:h:l:m:M:N:o:prsS:T:U"))
-	    != -1)
+	    != -1) {
 		switch((char)ch) {
 		case 'a':
 			afterinstallcmd = strdup(optarg);
@@ -238,7 +238,7 @@ main(int argc, char *argv[])
 			digest = optarg;
 			break;
 		case 'l':
-			for (p = optarg; *p; p++)
+			for (p = optarg; *p; p++) {
 				switch (*p) {
 				case 's':
 					dolink &= ~(LN_HARD|LN_MIXED);
@@ -264,6 +264,7 @@ main(int argc, char *argv[])
 					errx(EXIT_FAILURE, "%c: invalid link type", *p);
 					/* NOTREACHED */
 				}
+			}
 			break;
 		case 'm':
 			haveopt_m = 1;
@@ -310,6 +311,7 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
@@ -322,7 +324,7 @@ main(int argc, char *argv[])
 		usage();
 
 	/* must have at least two arguments, except when creating directories */
-	if (argc < 2 && !dodir)
+	if (argc == 0 || (argc < 2 && !dodir))
 		usage();
 
 	if (digest) {
@@ -384,9 +386,15 @@ main(int argc, char *argv[])
 		digesttype = DIGEST_NONE;
 
 	if (dodir) {
-		for (; *argv != NULL; ++argv)
-			install_dir(*argv, iflags);
-		exit (0);
+		int rc = EXIT_SUCCESS;
+		int st;
+
+		for (; *argv != NULL; ++argv) {
+			st = install_dir(*argv, iflags);
+			if (rc == EXIT_SUCCESS)
+				rc = st;
+		}
+		exit (rc);
 	}
 
 	no_target = stat(to_name = argv[argc - 1], &to_sb);
@@ -1141,14 +1149,15 @@ backup(const char *to_name)
  * install_dir --
  *	build directory hierarchy
  */
-static void
+static int
 install_dir(char *path, u_int flags)
 {
 	char		*p;
 	struct stat	sb;
 	int		ch;
+	int		rc = EXIT_SUCCESS;
 
-	for (p = path;; ++p)
+	for (p = path;; ++p) {
 		if (!*p || (p != path && *p  == '/')) {
 			ch = *p;
 			*p = '\0';
@@ -1173,6 +1182,7 @@ install_dir(char *path, u_int flags)
 			if (!(*p = ch))
 				break;
 		}
+	}
 
 	if (afterinstallcmd != NULL)
 		afterinstall(afterinstallcmd, path, 0);
@@ -1181,8 +1191,11 @@ install_dir(char *path, u_int flags)
 	    ((flags & (HASUID | HASGID)) && chown(path, uid, gid) == -1)
 	    || chmod(path, mode) == -1 )) {
 		warn("%s: chown/chmod", path);
+		rc = EXIT_FAILURE;
 	}
-	metadata_log(path, "dir", NULL, NULL, NULL, 0);
+	if (rc == EXIT_SUCCESS)
+		metadata_log(path, "dir", NULL, NULL, NULL, 0);
+	return rc;
 }
 
 /*
