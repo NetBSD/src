@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.95 2026/08/26 13:08:57 kre Exp $
+.\"	$NetBSD: mount.8,v 1.96 2026/08/26 13:13:44 kre Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -292,6 +292,12 @@ flag.
 The same as
 .Fl r ;
 mount the file system read-only (even the super-user may not write it).
+.It Cm rw
+The inverse of
+.Cm rdonly ,
+and the same as
+.Fl w ;
+mount the file system read-write.
 .It Cm reload
 Reload all incore data for a file system.
 This is used mainly after running
