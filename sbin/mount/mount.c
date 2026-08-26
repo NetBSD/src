@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.108 2025/07/01 17:55:05 kre Exp $	*/
+/*	$NetBSD: mount.c,v 1.109 2026/08/26 13:08:57 kre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.108 2025/07/01 17:55:05 kre Exp $");
+__RCSID("$NetBSD: mount.c,v 1.109 2026/08/26 13:08:57 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ static int	hasopt(const char *, const char *);
 static void	mangle(char *, int *, const char ** volatile *, int *);
 static int	mountfs(const char *, const char *, const char *,
 		    int, const char *, const char *, int, char *, size_t);
-static void	prmount(struct statvfs *);
+static void	prmount(struct statvfs *, int);
 __dead static void	usage(void);
 
 
@@ -110,18 +110,18 @@ main(int argc, char *argv[])
 #if 0
 	FILE *mountdfp;
 #endif
-	int all, ch, forceall, i, init_flags, mntsize, rval;
+	int all, ch, forceall, i, init_flags, mntsize, rval, Wedges;
 	char *options;
 	const char *mountopts, *fstypename;
 	char canonical_path_buf[MAXPATHLEN], buf[MAXPATHLEN];
 	char *canonical_path;
 
 	/* started as "mount" */
-	all = forceall = init_flags = 0;
+	all = forceall = init_flags = Wedges = 0;
 	options = NULL;
 	vfslist = NULL;
 	vfstype = ffs_fstype;
-	while ((ch = getopt(argc, argv, "Aadfo:rwt:uv")) != -1)
+	while ((ch = getopt(argc, argv, "Aadfo:rwt:uvW")) != -1)
 		switch (ch) {
 		case 'A':
 			all = forceall = 1;
@@ -154,6 +154,9 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			verbose++;
+			break;
+		case 'W':
+			Wedges++;
 			break;
 		case 'w':
 			init_flags |= FLG_RDWRITE;
@@ -212,7 +215,7 @@ main(int argc, char *argv[])
 				if (checkvfsname(mntbuf[i].f_fstypename,
 				    vfslist))
 					continue;
-				prmount(&mntbuf[i]);
+				prmount(&mntbuf[i], Wedges);
 			}
 		}
 		return rval;
@@ -575,7 +578,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 					warn("statvfs %s", name);
 					return 1;
 				}
-				prmount(&sf);
+				prmount(&sf, 0);
 			}
 		}
 		break;
@@ -585,16 +588,38 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 }
 
 static void
-prmount(struct statvfs *sfp)
+prmount(struct statvfs *sfp, int W)
 {
-	int flags;
 	const struct opt *o;
 	struct passwd *pw;
+	int flags;
 	int f;
 
-	(void)printf("%s on %s type %.*s", sfp->f_mntfromname,
-	    sfp->f_mntonname, (int)sizeof(sfp->f_fstypename),
-	    sfp->f_fstypename);
+	if (strncmp(sfp->f_mntfromname, "/dev/dk", 7) == 0 &&
+	    sfp->f_mntfromlabel[0] != '\0') {
+		/* a wedge with a label - how would you like it served? */
+		switch (W) {
+		default:
+		case 0:
+			(void)printf("%s", sfp->f_mntfromname);
+			break;
+		case 1:
+			(void)printf("NAME=%s", sfp->f_mntfromlabel);
+			break;
+		case 2:
+			(void)printf("NAME=%s (%s)", sfp->f_mntfromlabel,
+			    sfp->f_mntfromname);
+			break;
+		case 3:
+			(void)printf("%s (NAME=%s)", sfp->f_mntfromname,
+			    sfp->f_mntfromlabel);
+			break;
+		}
+	} else
+		(void)printf("%s", sfp->f_mntfromname);
+
+	(void)printf(" on %s type %.*s", sfp->f_mntonname,
+	    (int)sizeof(sfp->f_fstypename), sfp->f_fstypename);
 
 	flags = sfp->f_flag & MNT_VISFLAGMASK;
 	for (f = 0, o = optnames; flags && o <
