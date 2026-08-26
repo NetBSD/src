@@ -1,4 +1,4 @@
-#	$NetBSD: driver.mk,v 1.4 2019/09/24 19:29:41 maya Exp $
+#	$NetBSD: driver.mk,v 1.4.8.1 2026/08/26 15:00:10 martin Exp $
 
 # stuff both dri and gallium drivers need.
 
@@ -52,4 +52,5 @@ SRCS+=	utils.c dri_util.c xmlconfig.c
 SRCS+=	megadriver_stub.c
 
 CPPFLAGS.dri_util.c+=		-I${X11SRCDIR.Mesa}/../src/util
+CPPFLAGS.strtod.c+=		-D_GNU_SOURCE -DHAVE_STRTOD_L
 
