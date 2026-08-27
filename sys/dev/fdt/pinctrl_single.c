@@ -1,4 +1,4 @@
-/* $NetBSD: pinctrl_single.c,v 1.6 2021/11/07 17:12:25 jmcneill Exp $ */
+/* $NetBSD: pinctrl_single.c,v 1.7 2026/08/27 20:06:29 yurix Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pinctrl_single.c,v 1.6 2021/11/07 17:12:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pinctrl_single.c,v 1.7 2026/08/27 20:06:29 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,7 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: pinctrl_single.c,v 1.6 2021/11/07 17:12:25 jmcneill 
 
 #include <dev/fdt/fdtvar.h>
 
-#define	PINCTRL_FLAG_PINCONF	__BIT(0)	/* supports generic pinconf */
+#define	PINCTRL_FLAG_PINCONF	 __BIT(0)	/* supports generic pinconf */
+#define PINCTRL_FLAG_BIT_PER_MUX __BIT(1)	/* bit-per-mux flag from DT */
 
 struct pinctrl_single_config {
 	uint32_t	flags;
@@ -67,7 +68,8 @@ struct pinctrl_single_softc {
 };
 
 static void
-pinctrl_single_pins_write(struct pinctrl_single_softc *sc, u_int off, u_int val)
+pinctrl_single_pins_write(struct pinctrl_single_softc *sc, u_int off, u_int val,
+	u_int mask)
 {
 	union {
 		uint32_t reg32;
@@ -75,24 +77,25 @@ pinctrl_single_pins_write(struct pinctrl_single_softc *sc, u_int off, u_int val)
 		uint8_t reg8;
 	} u;
 
-	aprint_debug_dev(sc->sc_dev, "writing %#x with %#x\n", off, val);
+	aprint_debug_dev(sc->sc_dev,
+	    "writing %#x mask %#x to %#x\n", val, mask, off);
 
 	switch (sc->sc_regwidth) {
 	case 8:
 		u.reg8 = bus_space_read_1(sc->sc_bst, sc->sc_bsh, off);
-		u.reg8 &= ~sc->sc_funcmask;
+		u.reg8 &= ~mask;
 		u.reg8 |= val;
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, off, u.reg8);
 		break;
 	case 16:
 		u.reg16 = bus_space_read_2(sc->sc_bst, sc->sc_bsh, off);
-		u.reg16 &= ~sc->sc_funcmask;
+		u.reg16 &= ~mask;
 		u.reg16 |= val;
 		bus_space_write_2(sc->sc_bst, sc->sc_bsh, off, u.reg16);
 		break;
 	case 32:
 		u.reg32 = bus_space_read_4(sc->sc_bst, sc->sc_bsh, off);
-		u.reg32 &= ~sc->sc_funcmask;
+		u.reg32 &= ~mask;
 		u.reg32 |= val;
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, off, u.reg32);
 		break;
@@ -110,21 +113,45 @@ pinctrl_single_pins_set_config(device_t dev, const void *data, size_t len)
 	const u_int *pins;
 	int pinslen;
 
-	if (len != 4 && len != 8)
+	switch (len) {
+	case 4:
+		if (ISSET(sc->sc_flags, PINCTRL_FLAG_BIT_PER_MUX))
+			return -1;
+		break;
+	case 8:
+		break;
+	default:
 		return -1;
+	}
 
 	const int phandle = fdtbus_get_phandle_from_native(be32dec(data));
 
-	pins = fdtbus_get_prop(phandle, "pinctrl-single,pins", &pinslen);
+	if (ISSET(sc->sc_flags, PINCTRL_FLAG_BIT_PER_MUX)) {
+		pins = fdtbus_get_prop(phandle, "pinctrl-single,bits",
+		    &pinslen);
+	} else {
+		pins = fdtbus_get_prop(phandle, "pinctrl-single,pins",
+		    &pinslen);
+	}
 	if (pins == NULL)
 		return -1;
 
 	while (pinslen >= 4 + len) {
-		const int off = be32toh(pins[0]);
-		const int val = be32toh(pins[1]);
-		const int mux = len == 4 ? 0 : be32toh(pins[2]);
+		if (ISSET(sc->sc_flags, PINCTRL_FLAG_BIT_PER_MUX)) {
+			const int off = be32toh(pins[0]);
+			const int val = be32toh(pins[1]);
+			const int mask = be32toh(pins[2]);
 
-		pinctrl_single_pins_write(sc, off, val | mux);
+			pinctrl_single_pins_write(sc, off, val, mask);
+		} else {
+			const int off = be32toh(pins[0]);
+			const int val = be32toh(pins[1]);
+			const int mux = len == 4 ? 0 : be32toh(pins[2]);
+
+			pinctrl_single_pins_write(sc, off, val | mux,
+			    sc->sc_funcmask);
+		}
+
 		pins += 1 + (len / 4);
 		pinslen -= (4 + len);
 	}
@@ -190,12 +217,19 @@ pinctrl_single_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	if (of_hasprop(phandle, "pinctrl-single,bit-per-mux")) {
+		sc->sc_flags |= PINCTRL_FLAG_BIT_PER_MUX;
+	}
+
 	aprint_naive("\n");
 	aprint_normal("\n");
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		if (of_hasprop(child, "pinctrl-single,pins"))
-			fdtbus_register_pinctrl_config(self, child, &pinctrl_single_pins_funcs);
+		if (of_hasprop(child, "pinctrl-single,pins")
+		    || of_hasprop(child, "pinctrl-single,bits")) {
+			fdtbus_register_pinctrl_config(self, child,
+			    &pinctrl_single_pins_funcs);
+		}
 	}
 
 	fdtbus_pinctrl_set_config(phandle, "default");
