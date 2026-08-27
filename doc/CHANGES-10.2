@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.126 2026/08/26 15:16:01 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.127 2026/08/27 17:12:38 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5748,4 +5748,11 @@ external/mit/xorg/lib/driver.old.mk			1.3
 
 	mesa: PR 59858: use '.' as decimal point when parsing stuff.
 	[kre, ticket #1332]
+
+sys/arch/x86/x86/identcpu.c			1.142
+usr.sbin/cpuctl/arch/i386.c			1.149
+
+	x86: PR 60619: fix cpu identification (L2 cache associativity) for
+	some VIA CPUs.
+	[andvar, ticket #1334]
 
