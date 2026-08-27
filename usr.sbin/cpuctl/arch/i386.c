@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.148 2025/05/28 20:02:53 andvar Exp $	*/
+/*	$NetBSD: i386.c,v 1.148.2.1 2026/08/27 17:10:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.148 2025/05/28 20:02:53 andvar Exp $");
+__RCSID("$NetBSD: i386.c,v 1.148.2.1 2026/08/27 17:10:05 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -597,17 +597,17 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			via_cpu_probe,
 			via_cpu_cacheinfo,
 		},
-		/* Family > 6, not yet available from VIA */
+		/* Family > 6, Zhaoxin CPUs */
 		{
 			CPUCLASS_686,
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
 			},
-			"Pentium Pro compatible",	/* Default */
+			"KaiXian/KaiSheng",	/* Default */
 			NULL,
-			NULL,
-			NULL,
+			via_cpu_probe,
+			via_cpu_cacheinfo,
 		} }
 	},
 	{
@@ -1382,6 +1382,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 static void
 via_cpu_cacheinfo(struct cpu_info *ci)
 {
+	const struct x86_cache_info *cp;
 	struct x86_cache_info *cai;
 	int stepping;
 	u_int descs[4];
@@ -1444,15 +1445,28 @@ via_cpu_cacheinfo(struct cpu_info *ci)
 	x86_cpuid(0x80000006, descs);
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
-	if (ci->ci_model >= 9) {
-		cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
-		cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
-		cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
-	} else {
+	if (ci->ci_model < 9) {
 		cai->cai_totalsize = VIA_L2_ECX_C_SIZE(descs[2]);
 		cai->cai_associativity = VIA_L2_ECX_C_ASSOC(descs[2]);
 		cai->cai_linesize = VIA_L2_ECX_C_LS(descs[2]);
+		return;
 	}
+
+	cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
+	cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
+	cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
+		cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	if (ci->ci_max_cpuid < 4)
+		return;
+
+	/* Parse the cache info from `cpuid leaf 4', if we have it. */
+	cpu_dcp_cacheinfo(ci, 4);
 }
 
 static void
@@ -2079,8 +2093,11 @@ identifycpu(int fd, const char *cpuname)
 				}
 			}
 
-			if (cpu_vendor == CPUVENDOR_IDT && ci->ci_family >= 6)
+			if (cpu_vendor == CPUVENDOR_IDT && ci->ci_family == 6)
 				vendorname = "VIA";
+
+			if (cpu_vendor == CPUVENDOR_IDT && ci->ci_family >= 7)
+				vendorname = "Zhaoxin";
 		}
 	}
 
@@ -2142,14 +2159,16 @@ identifycpu(int fd, const char *cpuname)
 
 	print_bits(cpuname, "padlock features", CPUID_FLAGS_PADLOCK,
 	    ci->ci_feat_val[4]);
-	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
+	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD) ||
+	    (cpu_vendor == CPUVENDOR_IDT))
 		print_bits(cpuname, "features5", CPUID_SEF_FLAGS,
 		    ci->ci_feat_val[5]);
-	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
+	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD) ||
+	    (cpu_vendor == CPUVENDOR_IDT))
 		print_bits(cpuname, "features6", CPUID_SEF_FLAGS1,
 		    ci->ci_feat_val[6]);
 
-	if (cpu_vendor == CPUVENDOR_INTEL)
+	if (cpu_vendor == CPUVENDOR_INTEL || (cpu_vendor == CPUVENDOR_IDT))
 		print_bits(cpuname, "features7", CPUID_SEF_FLAGS2,
 		    ci->ci_feat_val[7]);
 
