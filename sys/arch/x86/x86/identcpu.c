@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.138.2.2 2026/08/27 17:10:05 martin Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.138.2.3 2026/08/27 17:13:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.138.2.2 2026/08/27 17:10:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.138.2.3 2026/08/27 17:13:50 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -704,6 +704,13 @@ cpu_probe_c3(struct cpu_info *ci)
 
 	/* Parse the cache info from `cpuid leaf 4', if we have it. */
 	cpu_dcp_cacheinfo(ci, 4);
+
+	if (cpuid_level < 7)
+		return;
+
+	/* XXX: Disable SMAP for now, as it causes a page fault during boot. */
+	cpu_feature[5]  &= ~CPUID_SEF_SMAP;
+	ci->ci_feat_val[5] &= ~CPUID_SEF_SMAP;
 }
 
 static void
