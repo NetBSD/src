@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_pinctrl.c,v 1.10 2019/10/01 23:32:52 jmcneill Exp $ */
+/* $NetBSD: fdt_pinctrl.c,v 1.11 2026/08/27 20:09:23 yurix Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.10 2019/10/01 23:32:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.11 2026/08/27 20:09:23 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -108,8 +108,8 @@ fdtbus_pinctrl_set_config_index(int phandle, u_int index)
 		if (error != 0)
 			return error;
 
-		pinctrl_data += pinctrl_cells;
-		len -= (pinctrl_cells * 4);
+		pinctrl_data += 1;
+		len -= 4;
 	}
 
 	return 0;
