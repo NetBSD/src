@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xx.c,v 1.5 2025/12/13 05:40:16 andvar Exp $	*/
+/*	$NetBSD: sc16is7xx.c,v 1.6 2026/08/27 01:01:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -19,7 +19,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc16is7xx.c,v 1.5 2025/12/13 05:40:16 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc16is7xx.c,v 1.6 2026/08/27 01:01:24 brad Exp $");
 
 /* Common driver for the frontend to the NXP SC16IS7xx UART bridge */
 
@@ -148,7 +148,7 @@ sc16is7xx_softintr(void *arg)
 	 * It may be possible to get clever and send a couple of work items, one
 	 * for each possible channel. */
 
-	workqueue_enqueue(sc->sc_wq, (struct work *)&sc->sc_frequency, NULL);
+	workqueue_enqueue(sc->sc_wq, (struct work *)&sc->sc_wqkk, NULL);
 }
 
 static int
@@ -429,6 +429,7 @@ sc16is7xx_attach(struct sc16is7xx_sc *sc)
 	sc->sc_ih = NULL;
 	sc->sc_sih = NULL;
 	sc->sc_de_count = 0;
+	sc->sc_wqkk = 0xdeadbeefdeadbeef;
 
 	mutex_init(&sc->sc_thread_mutex, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 	cv_init(&sc->sc_threadvar, "sc16is_cv");

@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xxvar.h,v 1.2 2025/12/01 14:56:03 brad Exp $	*/
+/*	$NetBSD: sc16is7xxvar.h,v 1.3 2026/08/27 01:01:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -90,6 +90,7 @@ struct sc16is7xx_sc {
 	struct workqueue *sc_wq;
 	void *sc_ih;
 	void *sc_sih;
+	uint64_t sc_wqkk;
 };
 
 extern const struct device_compatible_entry sc16is7xx_compat_data[];
