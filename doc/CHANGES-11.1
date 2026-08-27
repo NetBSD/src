@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.9 2026/08/25 20:15:20 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.10 2026/08/27 17:14:53 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -293,4 +293,22 @@ sys/arch/riscv/include/asm.h			1.13
 	riscv: ensure 4-byte (32bit alignment) in ENTRY_NP so that
 	non-compressable instructions get the correct alignment.
 	[skrll, ticket #442]
+
+sys/dev/ic/bcmgenet.c				1.25
+
+	genet(4): PR 60592: fix random MAC address generation.
+	[joe, ticket #443]
+
+sys/arch/x86/x86/identcpu.c			1.142
+usr.sbin/cpuctl/arch/i386.c			1.149
+
+	x86: PR 60619: fix cpu identification (L2 cache associativity) for
+	some VIA CPUs.
+	[andvar, ticket #444]
+
+sys/arch/x86/x86/identcpu.c			1.143
+
+	amd64: PR 60641: temporarily disable SMAP for CPUVENDOR_IDT
+	vendor CPUs (if available).
+	[andvar, ticket #445]
 
