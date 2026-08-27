@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.131 2026/01/05 05:02:47 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.132 2026/08/27 14:33:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -137,10 +137,9 @@ extern int lfs_rfw_max_psegs;
 int lfs_valloc(struct vnode *, int, kauth_cred_t, ino_t *, int *);
 int lfs_valloc_fixed(struct lfs *, ino_t, int);
 int lfs_vfree(struct vnode *, ino_t, int);
-void lfs_order_freelist(struct lfs *, ino_t **, size_t *);
 int lfs_extend_ifile(struct lfs *, kauth_cred_t);
 void lfs_orphan(struct lfs *, struct vnode *);
-void lfs_free_orphans(struct lfs *, ino_t *, size_t);
+void lfs_free_orphans(struct lfs *);
 #ifdef DEBUG
 void lfs_check_freelist(struct lfs *, const char *, int);
 # define DEBUG_CHECK_FREELIST(fs)					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.399 2026/01/05 05:02:47 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.400 2026/08/27 14:33:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.399 2026/01/05 05:02:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.400 2026/08/27 14:33:13 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -918,8 +918,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	daddr_t sb_addr;
-	ino_t *orphan;
-	size_t norphan;
 
 	cred = l ? l->l_cred : NOCRED;
 
@@ -1221,9 +1219,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_ivnode = vp;
 	vref(vp);
 
-	/* Set up inode bitmap, order free list, and gather orphans.  */
-	lfs_order_freelist(fs, &orphan, &norphan);
-
 	/* Set up segment usage flags for the autocleaner. */
 	fs->lfs_nactive = 0;
 	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
@@ -1256,15 +1251,15 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* Set lastcleaned to an invalid value */
 	fs->lfs_lastcleaned = (uint32_t)-1;
 
-	/* Free the orphans we discovered while ordering the freelist.  */
-	lfs_free_orphans(fs, orphan, norphan);
-
 	if (!ronly) {
 		/* Roll forward */
 		lfs_roll_forward(fs, mp, l);
 		lfs_reset_avail(fs);
 	}
 	fs->lfs_rfpid = 0;
+
+	/* Free any file orphaned during a crash */
+	lfs_free_orphans(fs);
 
 	/*
 	 * XXX: if the fs has quotas, quotas should be on even if
@@ -1482,7 +1477,6 @@ lfs_unmount(struct mount *mp, int mntflags)
 	mutex_exit(&lfs_lock);
 
 	/* Free per-mount data structures */
-	free(fs->lfs_ino_bitmap, M_SEGMENT);
 	lfs_free_resblks(fs);
 	cv_destroy(&fs->lfs_sleeperscv);
 	cv_destroy(&fs->lfs_diropscv);
