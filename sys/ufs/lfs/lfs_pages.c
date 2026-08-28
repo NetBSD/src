@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.29 2026/05/03 16:02:36 thorpej Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.30 2026/08/28 23:02:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.29 2026/05/03 16:02:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.30 2026/08/28 23:02:30 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -466,7 +466,7 @@ retry:
 		if (trans_mp)
 			fstrans_done(trans_mp);
 		rw_exit(vp->v_uobj.vmobjlock);
-		
+
 		/* Remove us from paging queue, if we were on it */
 		mutex_enter(&lfs_lock);
 		if (ip->i_state & IN_PAGING) {
@@ -606,8 +606,10 @@ retry:
 			error = EDEADLK;
 			goto out;
 		}
-		if (r > 0) /* Some pages are dirty */
+		if (r > 0) { /* Some pages are dirty */
+			LFS_SET_UINO(ip, IN_MODIFIED);
 			break;
+		}
 
 		/*
 		 * Sometimes pages are dirtied between the time that
