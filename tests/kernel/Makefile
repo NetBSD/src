@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.99 2026/08/28 06:35:26 riastradh Exp $
+# $NetBSD: Makefile,v 1.100 2026/08/28 11:59:16 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -130,6 +130,7 @@ CPPFLAGS.t_signal_and_sp.c+=	-I${ARCHDIR} -DHAVE_STACK_POINTER_H
 
 SRCS.t_signal_and_sp+=		getstack.c
 SRCS.t_signal_and_sp+=		t_signal_and_sp.c
+LDADD.t_signal_and_sp+=		-pthread
 .if exists(${ARCHDIR}/contextspfunc.S)
 CPPFLAGS.t_signal_and_sp.c+=	-DHAVE_CONTEXTSPFUNC
 SRCS.t_signal_and_sp+=		contextspfunc.S
@@ -141,7 +142,6 @@ SRCS.t_signal_and_sp+=		signalsphandler.S
 .if exists(${ARCHDIR}/threadspfunc.S)
 CPPFLAGS.t_signal_and_sp.c+=	-DHAVE_THREADSPFUNC
 SRCS.t_signal_and_sp+=		threadspfunc.S
-LDADD.t_signal_and_sp+=		-pthread
 .endif
 
 SRCS.h_execsp_dynamic+=		h_execsp.c
