@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.23 2026/08/28 12:02:16 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.24 2026/08/28 12:04:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	__EXPOSE_STACK	/* <sys/param.h>: expose STACK_ALIGNBYTES */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.23 2026/08/28 12:02:16 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.24 2026/08/28 12:04:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resource.h>
@@ -653,13 +653,9 @@ ATF_TC_BODY(getstack_fork, tc)
 	} else if (!WIFEXITED(status)) {
 		atf_tc_fail_nonfatal("child exited status=0x%x", status);
 	} else {
-		/* fork screws up child's stack base */
-		atf_tc_expect_fail("PR kern/60653:"
-		    " posix_spawn(3) causes incorrect stack base information");
 		ATF_CHECK_MSG(WEXITSTATUS(status) == 0,
 		    "child exited with code %d",
 		    WEXITSTATUS(status));
-		atf_tc_expect_pass();
 	}
 
 	printf("parent\n");
@@ -690,13 +686,9 @@ ATF_TC_BODY(getstack_vfork, tc)
 	} else if (!WIFEXITED(status)) {
 		atf_tc_fail_nonfatal("child exited status=0x%x", status);
 	} else {
-		/* vfork screws up child's stack base */
-		atf_tc_expect_fail("PR kern/60653:"
-		    " posix_spawn(3) causes incorrect stack base information");
 		ATF_CHECK_MSG(WEXITSTATUS(status) == 0,
 		    "child exited with code %d",
 		    WEXITSTATUS(status));
-		atf_tc_expect_pass();
 	}
 
 	printf("parent\n");
