@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.85 2024/12/06 16:19:41 riastradh Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.86 2026/08/28 06:33:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.85 2024/12/06 16:19:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.86 2026/08/28 06:33:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_script.h"
@@ -331,6 +331,15 @@ check_shell:
 #ifdef FDSCRIPTS
 fail:
 #endif
+
+	/*
+	 * We should only reach this point if we have failed to load an
+	 * interpreter to exec, so error is nonzero and there can be no
+	 * emul arg initialized.
+	 */
+	KASSERT(error);
+	KASSERT(epp->ep_emul_arg == NULL);
+	KASSERT(epp->ep_emul_arg_free == NULL);
 
 	/* kill the opened file descriptor, else close the file */
 	if (epp->ep_flags & EXEC_HASFD) {
