@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.374 2026/08/14 03:01:23 riastradh Exp $	*/
+/*	$NetBSD: proc.h,v 1.375 2026/08/28 13:58:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
@@ -330,6 +330,7 @@ struct proc {
 	struct pgrp 	*p_pgrp;	/* l: Pointer to process group */
 
 	vaddr_t		p_psstrp;	/* :: address of process's ps_strings */
+	vaddr_t		p_stackbase;	/* :: ASLR randomized stack base */
 	u_int		p_pax;		/* :: PAX flags */
 	int		p_xexit;	/* p: exit code */
 /*
@@ -339,7 +340,6 @@ struct proc {
 	u_short		p_xsig;		/* p: stop signal */
 	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
 	struct mdproc	p_md;		/* p: Any machine-dependent fields */
-	vaddr_t		p_stackbase;	/* :: ASLR randomized stack base */
 	struct kdtrace_proc *p_dtrace;	/* :: DTrace-specific data. */
 /*
  * Locks in their own cache line towards the end.
