@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1428 2026/08/23 08:23:55 rillig Exp $
+# $NetBSD: mi,v 1.1429 2026/08/28 06:35:26 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -2366,6 +2366,7 @@
 ./usr/tests/kernel/h_fexecve				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_fpufork				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_getprocpath			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/h_getstack				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_interpreter			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_ps_strings1			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_ps_strings2			tests-kernel-tests	compattestfile,atf

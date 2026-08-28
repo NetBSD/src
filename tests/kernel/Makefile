@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.98 2026/07/09 02:05:45 riastradh Exp $
+# $NetBSD: Makefile,v 1.99 2026/08/28 06:35:26 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -64,6 +64,7 @@ PROGS+=		h_execsp_static
 PROGS+=		h_fexecve
 PROGS+=		h_fpufork
 PROGS+=		h_getprocpath
+PROGS+=		h_getstack
 PROGS+=		h_ps_strings1
 PROGS+=		h_ps_strings2
 PROGS+=		h_segv
@@ -127,6 +128,7 @@ SRCS.t_signal_and_fpu+=		sig_fpu.c
 CPPFLAGS.t_signal_and_sp.c+=	-I${ARCHDIR} -DHAVE_STACK_POINTER_H
 .endif
 
+SRCS.t_signal_and_sp+=		getstack.c
 SRCS.t_signal_and_sp+=		t_signal_and_sp.c
 .if exists(${ARCHDIR}/contextspfunc.S)
 CPPFLAGS.t_signal_and_sp.c+=	-DHAVE_CONTEXTSPFUNC
@@ -160,6 +162,10 @@ CPPFLAGS.contextspfunc.S+=	-I${NETBSDSRCDIR}/lib/libc/arch/mips
 CPPFLAGS.execsp.S+=		-I${NETBSDSRCDIR}/lib/libc/arch/mips
 CPPFLAGS.signalsphandler.S+=	-I${NETBSDSRCDIR}/lib/libc/arch/mips
 .endif
+
+SRCS.h_getstack+=	h_getstack.c
+SRCS.h_getstack+=	getstack.c
+LDADD.h_getstack+=	-pthread
 
 .PATH:			${NETBSDSRCDIR}/sys/kern
 TESTS_C+=		t_extent

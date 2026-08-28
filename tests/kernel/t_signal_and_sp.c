@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.21 2025/04/26 23:49:55 uwe Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.22 2026/08/28 06:35:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,16 +29,22 @@
 #define	__EXPOSE_STACK	/* <sys/param.h>: expose STACK_ALIGNBYTES */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.21 2025/04/26 23:49:55 uwe Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.22 2026/08/28 06:35:26 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 
+#include <machine/vmparam.h>
+
 #include <atf-c.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <poll.h>
 #include <pthread.h>
 #include <signal.h>
+#include <spawn.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +53,7 @@ __RCSID("$NetBSD: t_signal_and_sp.c,v 1.21 2025/04/26 23:49:55 uwe Exp $");
 #include <ucontext.h>
 #include <unistd.h>
 
+#include "getstack.h"
 #include "h_execsp.h"
 #include "h_macros.h"
 
@@ -613,6 +620,559 @@ ATF_TC_BODY(misaligned_sp_and_signal, tc)
 #endif
 }
 
+ATF_TC(getstack_self);
+ATF_TC_HEAD(getstack_self, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length");
+}
+ATF_TC_BODY(getstack_self, tc)
+{
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_fork);
+ATF_TC_HEAD(getstack_fork, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " in forked child");
+}
+ATF_TC_BODY(getstack_fork, tc)
+{
+	pid_t pid;
+	int status;
+
+	printf("child\n");
+	REQUIRE_LIBC(fflush(stdout), EOF);
+	RL(pid = fork());
+	if (pid == 0)
+		_exit(checkgetstack());
+	RL(waitpid(pid, &status, 0));
+	if (WIFSIGNALED(status)) {
+		atf_tc_fail_nonfatal("child exited on signal %d (%s)",
+		    WTERMSIG(status), strsignal(WTERMSIG(status)));
+	} else if (!WIFEXITED(status)) {
+		atf_tc_fail_nonfatal("child exited status=0x%x", status);
+	} else {
+		/* fork screws up child's stack base */
+		atf_tc_expect_fail("PR kern/60653:"
+		    " posix_spawn(3) causes incorrect stack base information");
+		ATF_CHECK_MSG(WEXITSTATUS(status) == 0,
+		    "child exited with code %d",
+		    WEXITSTATUS(status));
+		atf_tc_expect_pass();
+	}
+
+	printf("parent\n");
+	REQUIRE_LIBC(fflush(stdout), EOF);
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_vfork);
+ATF_TC_HEAD(getstack_vfork, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " in vforked child");
+}
+ATF_TC_BODY(getstack_vfork, tc)
+{
+	pid_t pid;
+	int status;
+
+	printf("child\n");
+	REQUIRE_LIBC(fflush(stdout), EOF);
+	RL(pid = vfork());
+	if (pid == 0)
+		_exit(checkgetstack_singlethreaded());
+	RL(waitpid(pid, &status, 0));
+	if (WIFSIGNALED(status)) {
+		atf_tc_fail_nonfatal("child exited on signal %d (%s)",
+		    WTERMSIG(status), strsignal(WTERMSIG(status)));
+	} else if (!WIFEXITED(status)) {
+		atf_tc_fail_nonfatal("child exited status=0x%x", status);
+	} else {
+		/* vfork screws up child's stack base */
+		atf_tc_expect_fail("PR kern/60653:"
+		    " posix_spawn(3) causes incorrect stack base information");
+		ATF_CHECK_MSG(WEXITSTATUS(status) == 0,
+		    "child exited with code %d",
+		    WEXITSTATUS(status));
+		atf_tc_expect_pass();
+	}
+
+	printf("parent\n");
+	REQUIRE_LIBC(fflush(stdout), EOF);
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_forkexec);
+ATF_TC_HEAD(getstack_forkexec, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " in forked and execed child");
+}
+ATF_TC_BODY(getstack_forkexec, tc)
+{
+	char h_getstack[PATH_MAX];
+	pid_t pid;
+	int status;
+
+	RL(snprintf(h_getstack, sizeof(h_getstack), "%s/%s",
+		atf_tc_get_config_var(tc, "srcdir"), "h_getstack"));
+
+	printf("child\n");
+	REQUIRE_LIBC(fflush(stdout), EOF);
+	RL(pid = fork());
+	if (pid == 0) {
+		char *const argv[] = {h_getstack, NULL};
+
+		if (closefrom(STDERR_FILENO + 1) == -1)
+			_exit(1);
+		if (execve(argv[0], argv, NULL) == -1)
+			_exit(2);
+		_exit(3);
+	}
+
+	RL(waitpid(pid, &status, 0));
+	if (WIFSIGNALED(status)) {
+		atf_tc_fail_nonfatal("child exited on signal %d (%s)",
+		    WTERMSIG(status), strsignal(WTERMSIG(status)));
+	} else if (!WIFEXITED(status)) {
+		atf_tc_fail_nonfatal("child exited status=0x%x", status);
+	} else {
+		ATF_CHECK_MSG(WEXITSTATUS(status) == 0,
+		    "child exited with code %d",
+		    WEXITSTATUS(status));
+	}
+
+	printf("parent\n");
+	REQUIRE_LIBC(fflush(stdout), EOF);
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_vforkexec);
+ATF_TC_HEAD(getstack_vforkexec, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " in vforked and execed child");
+}
+ATF_TC_BODY(getstack_vforkexec, tc)
+{
+	char h_getstack[PATH_MAX];
+	pid_t pid;
+	int status;
+
+	RL(snprintf(h_getstack, sizeof(h_getstack), "%s/%s",
+		atf_tc_get_config_var(tc, "srcdir"), "h_getstack"));
+
+	printf("child\n");
+	REQUIRE_LIBC(fflush(stdout), EOF);
+	RL(pid = vfork());
+	if (pid == 0) {
+		char *const argv[] = {h_getstack, NULL};
+
+		if (closefrom(STDERR_FILENO + 1) == -1)
+			_exit(1);
+		if (execve(argv[0], argv, NULL) == -1)
+			_exit(2);
+		_exit(3);
+	}
+
+	RL(waitpid(pid, &status, 0));
+	if (WIFSIGNALED(status)) {
+		atf_tc_fail_nonfatal("child exited on signal %d (%s)",
+		    WTERMSIG(status), strsignal(WTERMSIG(status)));
+	} else if (!WIFEXITED(status)) {
+		atf_tc_fail_nonfatal("child exited status=0x%x", status);
+	} else {
+		ATF_CHECK_MSG(WEXITSTATUS(status) == 0,
+		    "child exited with code %d",
+		    WEXITSTATUS(status));
+	}
+
+	printf("parent\n");
+	REQUIRE_LIBC(fflush(stdout), EOF);
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_spawn);
+ATF_TC_HEAD(getstack_spawn, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " in posix_spawned child");
+}
+ATF_TC_BODY(getstack_spawn, tc)
+{
+	char h_getstack[PATH_MAX];
+	char *const argv[] = {h_getstack, NULL};
+	pid_t pid;
+	int status;
+
+	RL(snprintf(h_getstack, sizeof(h_getstack), "%s/%s",
+		atf_tc_get_config_var(tc, "srcdir"), "h_getstack"));
+
+	printf("child\n");
+	REQUIRE_LIBC(fflush(stdout), EOF);
+	RZ(posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL));
+
+	RL(waitpid(pid, &status, 0));
+	if (WIFSIGNALED(status)) {
+		atf_tc_fail_nonfatal("child exited on signal %d (%s)",
+		    WTERMSIG(status), strsignal(WTERMSIG(status)));
+	} else if (!WIFEXITED(status)) {
+		atf_tc_fail_nonfatal("child exited status=0x%x", status);
+	} else {
+		/* posix_spawn screws up child's stack base */
+		atf_tc_expect_fail("PR kern/60653:"
+		    " posix_spawn(3) causes incorrect stack base information");
+		ATF_CHECK_MSG(WEXITSTATUS(status) == 0,
+		    "child exited with code %d",
+		    WEXITSTATUS(status));
+		atf_tc_expect_pass();
+	}
+
+	printf("parent\n");
+	REQUIRE_LIBC(fflush(stdout), EOF);
+
+	/* and posix_spawn screws up parent's stack base */
+	atf_tc_expect_fail("PR kern/60653:"
+	    " posix_spawn(3) causes incorrect stack base information");
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedspawn_nonexistent);
+ATF_TC_HEAD(getstack_failedspawn_nonexistent, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed posix_spawn due to nonexistent executable");
+}
+ATF_TC_BODY(getstack_failedspawn_nonexistent, tc)
+{
+	char *const argv[] = {__UNCONST("/nonexistent"), NULL};
+	pid_t pid;
+
+	ATF_CHECK_ERRNO(ENOENT,
+	    (errno = posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL)) != 0);
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedspawn_rlimit_nproc);
+ATF_TC_HEAD(getstack_failedspawn_rlimit_nproc, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed posix_spawn due to RLIMIT_NPROC");
+	/* root can bypass RLIMIT_NPROC */
+	atf_tc_set_md_var(tc, "require.user", "unprivileged");
+}
+ATF_TC_BODY(getstack_failedspawn_rlimit_nproc, tc)
+{
+	char *const argv[] = {__UNCONST("/usr/bin/true"), NULL};
+	struct rlimit rlim0, rlim;
+	pid_t pid;
+
+	ATF_CHECK(getuid() != 0);
+	ATF_CHECK(geteuid() != 0);
+	RL(getrlimit(RLIMIT_NPROC, &rlim0));
+	rlim = rlim0;
+	rlim.rlim_cur = 0;
+	RL(setrlimit(RLIMIT_NPROC, &rlim));
+	ATF_CHECK_ERRNO(EAGAIN,
+	    (errno = posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL)) != 0);
+	RL(setrlimit(RLIMIT_NPROC, &rlim0));
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedspawn_rlimit_data);
+ATF_TC_HEAD(getstack_failedspawn_rlimit_data, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed posix_spawn due to RLIMIT_DATA");
+}
+ATF_TC_BODY(getstack_failedspawn_rlimit_data, tc)
+{
+	char *const argv[] = {__UNCONST("/usr/bin/true"), NULL};
+	struct rlimit rlim0, rlim;
+	pid_t pid;
+
+	RL(getrlimit(RLIMIT_DATA, &rlim0));
+	rlim = rlim0;
+	rlim.rlim_cur = 0;
+	RL(setrlimit(RLIMIT_DATA, &rlim));
+	ATF_CHECK_ERRNO(ENOMEM,
+	    (errno = posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL)) != 0);
+	RL(setrlimit(RLIMIT_DATA, &rlim0));
+
+	/* posix_spawn screws up parent's stack base */
+	atf_tc_expect_fail("PR kern/60653:"
+	    " posix_spawn(3) causes incorrect stack base information");
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedspawn_rlimit_stack);
+ATF_TC_HEAD(getstack_failedspawn_rlimit_stack, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed posix_spawn due to RLIMIT_STACK");
+}
+ATF_TC_BODY(getstack_failedspawn_rlimit_stack, tc)
+{
+	char *argv[] = {__UNCONST("/usr/bin/true"), NULL, NULL};
+	size_t bigsize;
+	struct rlimit rlim0, rlim;
+	pid_t pid;
+
+	/*
+	 * Get a size small enough to fit on the stack, but big enough
+	 * for setrlimit(RLIMIT_STACK) to allow it temporarily (with a
+	 * little extra stack depth for another subroutine call).
+	 */
+	(void)getstack_getcontext(&bigsize);
+	bigsize = roundup(bigsize, getpagesize());
+	bigsize += getpagesize();
+	fprintf(stderr, "bigsize = %zx\n", bigsize);
+	REQUIRE_LIBC(argv[1] = malloc(bigsize), NULL);
+	memset(argv[1], 'c', bigsize - 1);
+	argv[1][bigsize - 1] = '\0';
+
+	RL(getrlimit(RLIMIT_STACK, &rlim0));
+	rlim = rlim0;
+	rlim.rlim_cur = bigsize;
+	RL(setrlimit(RLIMIT_STACK, &rlim));
+	ATF_CHECK_ERRNO(ENOMEM,
+	    (errno = posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL)) != 0);
+	RL(setrlimit(RLIMIT_STACK, &rlim0));
+
+	/* posix_spawn screws up parent's stack base */
+	atf_tc_expect_fail("PR kern/60653:"
+	    " posix_spawn(3) causes incorrect stack base information");
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedspawn_badfileaction);
+ATF_TC_HEAD(getstack_failedspawn_badfileaction, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed posix_spawn due to bad file actions");
+}
+ATF_TC_BODY(getstack_failedspawn_badfileaction, tc)
+{
+	char *const argv[] = {__UNCONST("/usr/bin/true"), NULL};
+	posix_spawn_file_actions_t fa;
+	posix_spawnattr_t at;
+	int fd;
+	pid_t pid;
+
+	/*
+	 * Open a file descriptor number that we close in the child so
+	 * that dup2ing it will fail.
+	 */
+	RL(fd = open("/dev/null", O_RDONLY));
+
+	RZ(posix_spawn_file_actions_init(&fa));
+	RZ(posix_spawn_file_actions_addclose(&fa, fd));
+	RZ(posix_spawn_file_actions_adddup2(&fa, fd, STDERR_FILENO + 1));
+	RZ(posix_spawnattr_init(&at));
+	RZ(posix_spawnattr_setflags(&at, POSIX_SPAWN_RETURNERROR));
+	ATF_CHECK_ERRNO(EBADF,
+	    (errno = posix_spawn(&pid, argv[0], &fa, &at, argv, NULL)) != 0);
+	RZ(posix_spawnattr_destroy(&at));
+	RZ(posix_spawn_file_actions_destroy(&fa));
+
+	RL(close(fd));
+
+	/* some exec failure paths leave stack base screwy */
+	atf_tc_expect_fail("PR kern/60653:"
+	    " posix_spawn(3) causes incorrect stack base information");
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedexec_nonexistent);
+ATF_TC_HEAD(getstack_failedexec_nonexistent, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed exec with nonexistent executable");
+}
+ATF_TC_BODY(getstack_failedexec_nonexistent, tc)
+{
+	char *const argv[] = {__UNCONST("/nonexistent"), NULL};
+
+	ATF_CHECK_ERRNO(ENOENT, execve(argv[0], argv, NULL) == -1);
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedexec_argvnull);
+ATF_TC_HEAD(getstack_failedexec_argvnull, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed exec with argv=NULL");
+}
+ATF_TC_BODY(getstack_failedexec_argvnull, tc)
+{
+	char *const argv[] = {__UNCONST("/usr/bin/true"), NULL};
+
+	ATF_CHECK_ERRNO(EINVAL, execve(argv[0], NULL, NULL) == -1);
+
+	/* some exec failure paths leave stack base screwy */
+	atf_tc_expect_fail("PR kern/60653:"
+	    " posix_spawn(3) causes incorrect stack base information");
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedexec_device);
+ATF_TC_HEAD(getstack_failedexec_device, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed exec with device");
+}
+ATF_TC_BODY(getstack_failedexec_device, tc)
+{
+	char *const argv[] = {__UNCONST("/dev/null"), NULL};
+
+	ATF_CHECK_ERRNO(EACCES, execve(argv[0], argv, NULL) == -1);
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedexec_badinterp);
+ATF_TC_HEAD(getstack_failedexec_badinterp, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed exec with a bad #! interpreter");
+}
+ATF_TC_BODY(getstack_failedexec_badinterp, tc)
+{
+	char *const argv[] = {__UNCONST("./file"), NULL};
+	FILE *fp;
+
+	REQUIRE_LIBC(fp = fopen(argv[0], "w"), NULL);
+	RL(fprintf(fp, "#!/nonexistent\n"));
+	REQUIRE_LIBC(fclose(fp), EOF);
+
+	RL(chmod(argv[0], 0755));
+	ATF_CHECK_ERRNO(ENOENT, execve(argv[0], argv, NULL) == -1);
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedexec_nonexecutable);
+ATF_TC_HEAD(getstack_failedexec_nonexecutable, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed exec with a nonexecutable file");
+}
+ATF_TC_BODY(getstack_failedexec_nonexecutable, tc)
+{
+	char *const argv[] = {__UNCONST("./file"), NULL};
+	FILE *fp;
+
+	REQUIRE_LIBC(fp = fopen(argv[0], "w"), NULL);
+	RL(fprintf(fp, "#!/bin/sh\n"));
+	REQUIRE_LIBC(fclose(fp), EOF);
+
+	RL(chmod(argv[0], 0644));
+	ATF_CHECK_ERRNO(EACCES, execve(argv[0], argv, NULL) == -1);
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedexec_nonreadable);
+ATF_TC_HEAD(getstack_failedexec_nonreadable, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed exec with a nonreadable file");
+}
+ATF_TC_BODY(getstack_failedexec_nonreadable, tc)
+{
+	char *const argv[] = {__UNCONST("./file"), NULL};
+	FILE *fp;
+
+	REQUIRE_LIBC(fp = fopen(argv[0], "w"), NULL);
+	RL(fprintf(fp, "#!bin/sh\n"));
+	REQUIRE_LIBC(fclose(fp), EOF);
+
+	RL(chmod(argv[0], 0000));
+	ATF_CHECK_ERRNO(EACCES, execve(argv[0], argv, NULL) == -1);
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedexec_badformat);
+ATF_TC_HEAD(getstack_failedexec_badformat, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed exec with a file in a bad format");
+}
+ATF_TC_BODY(getstack_failedexec_badformat, tc)
+{
+	char *const argv[] = {__UNCONST("./file"), NULL};
+	FILE *fp;
+
+	REQUIRE_LIBC(fp = fopen(argv[0], "w"), NULL);
+	RL(fprintf(fp, "not an executable\n"));
+	REQUIRE_LIBC(fclose(fp), EOF);
+
+	RL(chmod(argv[0], 0755));
+	ATF_CHECK_ERRNO(ENOEXEC, execve(argv[0], argv, NULL) == -1);
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedexec_rlimit_data);
+ATF_TC_HEAD(getstack_failedexec_rlimit_data, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed exec with RLIMIT_DATA too small");
+}
+ATF_TC_BODY(getstack_failedexec_rlimit_data, tc)
+{
+	char *const argv[] = {__UNCONST("/usr/bin/true"), NULL};
+	struct rlimit rlim0, rlim;
+
+	RL(getrlimit(RLIMIT_DATA, &rlim0));
+	rlim = rlim0;
+	rlim.rlim_cur = 0;
+	RL(setrlimit(RLIMIT_DATA, &rlim));
+	ATF_CHECK_ERRNO(ENOMEM, execve(argv[0], argv, NULL) == -1);
+	RL(setrlimit(RLIMIT_DATA, &rlim0));
+
+	/* some exec failure paths leave stack base screwy */
+	atf_tc_expect_fail("PR kern/60653:"
+	    " posix_spawn(3) causes incorrect stack base information");
+	ATF_CHECK(checkgetstack() == 0);
+}
+
+ATF_TC(getstack_failedexec_rlimit_stack);
+ATF_TC_HEAD(getstack_failedexec_rlimit_stack, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Verify stack base and length"
+	    " after failed exec with RLIMIT_STACK too small");
+}
+ATF_TC_BODY(getstack_failedexec_rlimit_stack, tc)
+{
+	char *argv[] = {__UNCONST("/usr/bin/true"), NULL, NULL};
+	size_t bigsize;
+	struct rlimit rlim0, rlim;
+
+	/*
+	 * Get a size small enough to fit on the stack, but big enough
+	 * for setrlimit(RLIMIT_STACK) to allow it temporarily (with a
+	 * little extra stack depth for another subroutine call).
+	 */
+	(void)getstack_getcontext(&bigsize);
+	bigsize = roundup(bigsize, getpagesize());
+	bigsize += getpagesize();
+	fprintf(stderr, "bigsize = %zx\n", bigsize);
+	REQUIRE_LIBC(argv[1] = malloc(bigsize), NULL);
+	memset(argv[1], 'c', bigsize - 1);
+	argv[1][bigsize - 1] = '\0';
+
+	RL(getrlimit(RLIMIT_STACK, &rlim0));
+	rlim = rlim0;
+	rlim.rlim_cur = bigsize;
+	RL(setrlimit(RLIMIT_STACK, &rlim));
+	ATF_CHECK_ERRNO(ENOMEM, execve(argv[0], argv, NULL) == -1);
+	RL(setrlimit(RLIMIT_STACK, &rlim0));
+
+	/* some exec failure paths leave stack base screwy */
+	atf_tc_expect_fail("PR kern/60653:"
+	    " posix_spawn(3) causes incorrect stack base information");
+	ATF_CHECK(checkgetstack() == 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -620,6 +1180,26 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, contextsplink);
 	ATF_TP_ADD_TC(tp, execsp_dynamic);
 	ATF_TP_ADD_TC(tp, execsp_static);
+	ATF_TP_ADD_TC(tp, getstack_failedexec_argvnull);
+	ATF_TP_ADD_TC(tp, getstack_failedexec_badformat);
+	ATF_TP_ADD_TC(tp, getstack_failedexec_badinterp);
+	ATF_TP_ADD_TC(tp, getstack_failedexec_device);
+	ATF_TP_ADD_TC(tp, getstack_failedexec_nonexecutable);
+	ATF_TP_ADD_TC(tp, getstack_failedexec_nonexistent);
+	ATF_TP_ADD_TC(tp, getstack_failedexec_nonreadable);
+	ATF_TP_ADD_TC(tp, getstack_failedexec_rlimit_data);
+	ATF_TP_ADD_TC(tp, getstack_failedexec_rlimit_stack);
+	ATF_TP_ADD_TC(tp, getstack_failedspawn_badfileaction);
+	ATF_TP_ADD_TC(tp, getstack_failedspawn_nonexistent);
+	ATF_TP_ADD_TC(tp, getstack_failedspawn_rlimit_data);
+	ATF_TP_ADD_TC(tp, getstack_failedspawn_rlimit_nproc);
+	ATF_TP_ADD_TC(tp, getstack_failedspawn_rlimit_stack);
+	ATF_TP_ADD_TC(tp, getstack_fork);
+	ATF_TP_ADD_TC(tp, getstack_forkexec);
+	ATF_TP_ADD_TC(tp, getstack_self);
+	ATF_TP_ADD_TC(tp, getstack_spawn);
+	ATF_TP_ADD_TC(tp, getstack_vfork);
+	ATF_TP_ADD_TC(tp, getstack_vforkexec);
 	ATF_TP_ADD_TC(tp, misaligned_sp_and_signal);
 	ATF_TP_ADD_TC(tp, signalsp);
 	ATF_TP_ADD_TC(tp, signalsp_sigaltstack);
