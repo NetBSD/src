@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.400 2026/08/27 14:33:13 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.401 2026/08/28 06:06:53 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.400 2026/08/27 14:33:13 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.401 2026/08/28 06:06:53 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1258,9 +1258,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	}
 	fs->lfs_rfpid = 0;
 
-	/* Free any file orphaned during a crash */
-	lfs_free_orphans(fs);
-
 	/*
 	 * XXX: if the fs has quotas, quotas should be on even if
 	 * readonly. Otherwise you can't query the quota info!
@@ -1342,6 +1339,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	/* Now that roll-forward is done, unlock the Ifile */
 	vput(vp);
+
+	/* Free any file orphaned during a crash */
+	lfs_free_orphans(fs);
 
 	/* Start the pagedaemon-anticipating daemon */
 	mutex_enter(&lfs_lock);
