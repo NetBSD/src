@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.72 2026/04/23 16:13:14 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.73 2026/08/28 19:14:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.72 2026/04/23 16:13:14 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.73 2026/08/28 19:14:24 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,12 +78,8 @@ static void	usage(void);
 
 extern uint32_t	cksum(void *, size_t);
 
-typedef struct seglist SEGLIST;
-struct seglist {
-        SEGLIST *next;
-	int num;
-};
-SEGLIST	*seglist;
+int seglist_count = 0;
+int *seglist = NULL;
 
 char *special;
 
@@ -181,6 +177,12 @@ identify(struct lfs *fs)
 	}
 }
 
+static int
+compare_int(const void *a, const void *b)
+{
+	return *(const int *)a - *(const int *)b;
+}
+
 #define fsbtobyte(fs, b)	lfs_fsbtob((fs), (off_t)((b)))
 
 int datasum_check = 0;
@@ -190,7 +192,7 @@ main(int argc, char **argv)
 {
 	struct lfs lfs_sb1, lfs_sb2, *lfs_master;
 	daddr_t seg_addr, idaddr, sbdaddr, inoaddr;
-	int ch, do_allsb, do_ientries, do_segentries, fd, segnum;
+	int i, ch, do_allsb, do_ientries, do_segentries, fd, segnum;
 	void *sbuf;
 	char *narg, *s;
 	ino_t dumpino;
@@ -325,20 +327,26 @@ main(int argc, char **argv)
 	    lfs_master->lfs_is64 ? 64 : 32, (long long)sbdaddr);
 	dump_super(lfs_master);
 
+	/* Sort segment list before using */
+	if (seglist != NULL) {
+		qsort(seglist, seglist_count, sizeof(*seglist), compare_int);
+	}
+
 	dump_ifile(fd, lfs_master, do_ientries, do_segentries, idaddr);
 
-	if (seglist != NULL)
-		for (; seglist != NULL; seglist = seglist->next) {
-			seg_addr = lfs_sntod(lfs_master, seglist->num);
-			dump_segment(fd, seglist->num, seg_addr, lfs_master,
-				     do_allsb);
+	if (seglist != NULL) {
+		for (i = 0; i < seglist_count; i++) {
+			seg_addr = lfs_sntod(lfs_master, seglist[i]);
+			dump_segment(fd, seglist[i], seg_addr, lfs_master,
+			     	do_allsb);
 		}
-	else
+	} else {
 		for (segnum = 0, seg_addr = lfs_sntod(lfs_master, 0);
 		     segnum < lfs_sb_getnseg(lfs_master);
 		     segnum++, seg_addr = lfs_sntod(lfs_master, segnum))
 			dump_segment(fd, segnum, seg_addr, lfs_master,
 				     do_allsb);
+	}
 
 	(void)close(fd);
 	exit(0);
@@ -524,8 +532,7 @@ static int
 dump_ipage_segusage(struct lfs *lfsp, int i, char *pp, int tot)
 {
 	SEGUSE *sp;
-	int cnt, max;
-	struct seglist *slp;
+	int j, cnt, max;
 
 	max = i + tot;
 	for (sp = (SEGUSE *)pp, cnt = i;
@@ -533,8 +540,8 @@ dump_ipage_segusage(struct lfs *lfsp, int i, char *pp, int tot)
 		if (seglist == NULL)
 			print_suentry(cnt, sp, lfsp);
 		else {
-			for (slp = seglist; slp != NULL; slp = slp->next)
-				if (cnt == slp->num) {
+			for (j = 0; j < seglist_count; j++)
+				if (cnt == seglist[j]) {
 					print_suentry(cnt, sp, lfsp);
 					break;
 				}
@@ -939,12 +946,10 @@ dump_super(struct lfs *lfsp)
 static void
 addseg(char *arg)
 {
-	SEGLIST *p;
+	int seg = atoi(arg);
 
-	p = emalloc(sizeof(*p));
-	p->next = seglist;
-	p->num = atoi(arg);
-	seglist = p;
+	seglist = realloc(seglist, (seglist_count + 1) * sizeof(*seglist));
+	seglist[seglist_count++] = seg;
 }
 
 static void
