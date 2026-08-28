@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.22 2026/08/28 06:35:26 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.23 2026/08/28 12:02:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	__EXPOSE_STACK	/* <sys/param.h>: expose STACK_ALIGNBYTES */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.22 2026/08/28 06:35:26 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.23 2026/08/28 12:02:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resource.h>
@@ -821,21 +821,13 @@ ATF_TC_BODY(getstack_spawn, tc)
 	} else if (!WIFEXITED(status)) {
 		atf_tc_fail_nonfatal("child exited status=0x%x", status);
 	} else {
-		/* posix_spawn screws up child's stack base */
-		atf_tc_expect_fail("PR kern/60653:"
-		    " posix_spawn(3) causes incorrect stack base information");
 		ATF_CHECK_MSG(WEXITSTATUS(status) == 0,
 		    "child exited with code %d",
 		    WEXITSTATUS(status));
-		atf_tc_expect_pass();
 	}
 
 	printf("parent\n");
 	REQUIRE_LIBC(fflush(stdout), EOF);
-
-	/* and posix_spawn screws up parent's stack base */
-	atf_tc_expect_fail("PR kern/60653:"
-	    " posix_spawn(3) causes incorrect stack base information");
 	ATF_CHECK(checkgetstack() == 0);
 }
 
@@ -900,10 +892,6 @@ ATF_TC_BODY(getstack_failedspawn_rlimit_data, tc)
 	ATF_CHECK_ERRNO(ENOMEM,
 	    (errno = posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL)) != 0);
 	RL(setrlimit(RLIMIT_DATA, &rlim0));
-
-	/* posix_spawn screws up parent's stack base */
-	atf_tc_expect_fail("PR kern/60653:"
-	    " posix_spawn(3) causes incorrect stack base information");
 	ATF_CHECK(checkgetstack() == 0);
 }
 
@@ -941,9 +929,6 @@ ATF_TC_BODY(getstack_failedspawn_rlimit_stack, tc)
 	    (errno = posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL)) != 0);
 	RL(setrlimit(RLIMIT_STACK, &rlim0));
 
-	/* posix_spawn screws up parent's stack base */
-	atf_tc_expect_fail("PR kern/60653:"
-	    " posix_spawn(3) causes incorrect stack base information");
 	ATF_CHECK(checkgetstack() == 0);
 }
 
@@ -979,9 +964,6 @@ ATF_TC_BODY(getstack_failedspawn_badfileaction, tc)
 
 	RL(close(fd));
 
-	/* some exec failure paths leave stack base screwy */
-	atf_tc_expect_fail("PR kern/60653:"
-	    " posix_spawn(3) causes incorrect stack base information");
 	ATF_CHECK(checkgetstack() == 0);
 }
 
@@ -1010,10 +992,6 @@ ATF_TC_BODY(getstack_failedexec_argvnull, tc)
 	char *const argv[] = {__UNCONST("/usr/bin/true"), NULL};
 
 	ATF_CHECK_ERRNO(EINVAL, execve(argv[0], NULL, NULL) == -1);
-
-	/* some exec failure paths leave stack base screwy */
-	atf_tc_expect_fail("PR kern/60653:"
-	    " posix_spawn(3) causes incorrect stack base information");
 	ATF_CHECK(checkgetstack() == 0);
 }
 
@@ -1128,10 +1106,6 @@ ATF_TC_BODY(getstack_failedexec_rlimit_data, tc)
 	RL(setrlimit(RLIMIT_DATA, &rlim));
 	ATF_CHECK_ERRNO(ENOMEM, execve(argv[0], argv, NULL) == -1);
 	RL(setrlimit(RLIMIT_DATA, &rlim0));
-
-	/* some exec failure paths leave stack base screwy */
-	atf_tc_expect_fail("PR kern/60653:"
-	    " posix_spawn(3) causes incorrect stack base information");
 	ATF_CHECK(checkgetstack() == 0);
 }
 
@@ -1167,9 +1141,6 @@ ATF_TC_BODY(getstack_failedexec_rlimit_stack, tc)
 	ATF_CHECK_ERRNO(ENOMEM, execve(argv[0], argv, NULL) == -1);
 	RL(setrlimit(RLIMIT_STACK, &rlim0));
 
-	/* some exec failure paths leave stack base screwy */
-	atf_tc_expect_fail("PR kern/60653:"
-	    " posix_spawn(3) causes incorrect stack base information");
 	ATF_CHECK(checkgetstack() == 0);
 }
 

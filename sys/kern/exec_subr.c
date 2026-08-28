@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.92 2026/05/11 02:05:31 thorpej Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.93 2026/08/28 12:02:15 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.92 2026/05/11 02:05:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.93 2026/08/28 12:02:15 riastradh Exp $");
 
 #include "opt_pax.h"
 
@@ -420,8 +420,6 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	    (uintmax_t)max_stack_size));
 	epp->ep_ssize = MIN(l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur,
 	    max_stack_size);
-
-	l->l_proc->p_stackbase = epp->ep_minsaddr;
 
 	epp->ep_maxsaddr = (vaddr_t)STACK_GROW(epp->ep_minsaddr,
 	    max_stack_size);

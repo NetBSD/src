@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.534 2026/08/28 06:33:50 riastradh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.535 2026/08/28 12:02:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.534 2026/08/28 06:33:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.535 2026/08/28 12:02:15 riastradh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1297,6 +1297,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	l->l_ctxlink = NULL;	/* reset ucontext link */
 	p->p_acflag &= ~AFORK;
 	p->p_flag |= PK_EXEC;
+	p->p_stackbase = epp->ep_minsaddr;
 	mutex_exit(p->p_lock);
 
 	error = credexec(l, data);
