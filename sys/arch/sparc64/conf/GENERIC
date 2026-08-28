@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.252 2026/08/25 20:01:50 palle Exp $
+# $NetBSD: GENERIC,v 1.253 2026/08/28 21:16:34 palle Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.252 $"
+#ident		"GENERIC-$Revision: 1.253 $"
 
 maxusers	64
 
@@ -563,6 +563,7 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI USB controllers
+xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
 ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
