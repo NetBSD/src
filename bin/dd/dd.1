@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.41 2026/01/29 01:52:15 uwe Exp $
+.\"	$NetBSD: dd.1,v 1.42 2026/08/29 00:05:18 kre Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd January 26, 2026
+.Dd August 28, 2026
 .Dt DD 1
 .Os
 .Sh NAME
@@ -116,6 +116,16 @@ Default value is
 See the
 .Sx INPUT AND OUTPUT FLAGS
 section for details.
+.
+.It Cm iflags= Ns Cm fullblock
+All reads from the input file will be forced,
+by doing multiple reads if necessary,
+to be the full block size as specified by
+.Cm bs
+or
+.Cm ibs
+or the default block size if neither was given.
+This should not be used with input from tapes.
 .
 .It Cm iseek= Ns Ar n
 Seek on the input file
@@ -625,22 +635,46 @@ utility is expected to be a superset of the
 .St -p1003.2
 standard.
 The
-.Cm files
+.Cm files ,
+.Cm iflag ,
+.Cm msgfmt ,
 and
-.Cm msgfmt
+.Cm oflag
 operands and the
-.Cm ascii ,
-.Cm ebcdic ,
-.Cm ibm ,
 .Cm oldascii ,
-.Cm oldebcdic
+.Cm oldebcdic ,
+.Cm oldibm ,
+.Cm osync
 and
-.Cm oldibm
+.Cm sparse
 values are extensions to the
 .Tn POSIX
 standard.
+Similarly the
+.Cm iseek
+and
+.Cm oseek
+aliases for the
+.Cm skip
+and
+.Cm seek
+operands, respectively, are non-standard extensions,
+as are suffixes other than
+.Cm \&b
+or
+.Cm \&k
+in block size specifications.
 .Sh HISTORY
 A
 .Nm
 utility appeared in
 .At v5 .
+.Sh BUGS
+Having both
+.Cm iflag=
+and
+.Cm iflags=
+is dubious at best,
+however the former has been a non-standard addition for a long time,
+then the latter was specified by
+.St -p1003.1-2024 .

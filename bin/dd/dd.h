@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.h,v 1.16 2015/03/18 13:23:49 manu Exp $	*/
+/*	$NetBSD: dd.h,v 1.17 2026/08/29 00:05:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -78,6 +78,7 @@ typedef struct {
 #define	ISPIPE		0x02		/* pipe (not truncatable) */
 #define	ISTAPE		0x04		/* tape (not seekable) */
 #define	NOREAD		0x08		/* not readable */
+#define	FULLBLOCK	0x10		/* fill input buffer each read */
 	u_int		flags;
 
 	const char  	*name;		/* name */

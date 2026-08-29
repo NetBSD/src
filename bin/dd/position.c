@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.18 2010/11/22 21:04:28 pooka Exp $	*/
+/*	$NetBSD: position.c,v 1.19 2026/08/29 00:05:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: position.c,v 1.18 2010/11/22 21:04:28 pooka Exp $");
+__RCSID("$NetBSD: position.c,v 1.19 2026/08/29 00:05:18 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,11 +82,11 @@ pos_in(void)
 	/*
 	 * Read the data.  If a pipe, read until satisfy the number of bytes
 	 * being skipped.  No differentiation for reading complete and partial
-	 * blocks for other devices.
+	 * blocks for other devices, unless iflags=fullblock was specified.
 	 */
 	for (bcnt = in.dbsz, cnt = in.offset, warned = 0; cnt;) {
 		if ((nr = ddop_read(in, in.fd, in.db, bcnt)) > 0) {
-			if (in.flags & ISPIPE) {
+			if (in.flags & (ISPIPE|FULLBLOCK)) {
 				if (!(bcnt -= nr)) {
 					bcnt = in.dbsz;
 					--cnt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.54 2026/01/26 08:37:29 kre Exp $	*/
+/*	$NetBSD: dd.c,v 1.55 2026/08/29 00:05:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.54 2026/01/26 08:37:29 kre Exp $");
+__RCSID("$NetBSD: dd.c,v 1.55 2026/08/29 00:05:18 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -367,6 +367,8 @@ dd_in(void)
 {
 	int flags;
 	int64_t n;
+	int64_t r;
+	u_char *b;
 
 	for (flags = ddflags;;) {
 		if ((flags & C_COUNT) && (st.in_full + st.in_part) >= cpy_cnt)
@@ -386,11 +388,25 @@ dd_in(void)
 				(void)memset(in.dbp, 0, in.dbsz);
 		}
 
-		n = ddop_read(in, in.fd, in.dbp, in.dbsz);
-		if (n == 0) {
-			in.dbrcnt = 0;
-			return;
-		}
+		n = 0; b = in.dbp;
+		do {
+			r = ddop_read(in, in.fd, b, in.dbsz - n);
+			if (r == 0) {
+				if (n != 0)
+					break;
+				in.dbrcnt = 0;
+				return;
+			}
+			if (r < 0) {
+				int64_t t = n;
+
+				n = r;
+				r = t;	/* save the amount that was read */
+				break;
+			}
+			n += r;
+			b += r;
+		} while ((uint64_t)n < in.dbsz && in.flags & FULLBLOCK);
 
 		/* Read error. */
 		if (n < 0) {
@@ -411,9 +427,11 @@ dd_in(void)
 			 * error.  If your OS doesn't do the right thing for
 			 * raw disks this section should be modified to re-read
 			 * in sector size chunks.
+			 *
+			 * ('r' specifies how much was successfully read).
 			 */
 			if (!(in.flags & (ISPIPE|ISTAPE)) &&
-			    ddop_lseek(in, in.fd, (off_t)in.dbsz, SEEK_CUR))
+			    ddop_lseek(in, in.fd, (off_t)(in.dbsz-r), SEEK_CUR))
 				warn("%s", in.name);
 
 			/* If sync not specified, omit block and continue. */
