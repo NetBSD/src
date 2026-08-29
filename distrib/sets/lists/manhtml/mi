@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.59 2026/08/04 13:33:05 andvar Exp $
+# $NetBSD: mi,v 1.60 2026/08/29 19:30:13 andvar Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1995,6 +1995,7 @@
 ./usr/share/man/html4/vioscsi.html		man-sys-htmlman		html
 ./usr/share/man/html4/virt.html			man-sys-htmlman		html
 ./usr/share/man/html4/virtio.html		man-sys-htmlman		html
+./usr/share/man/html4/virtio_mmio.html		man-sys-htmlman		html
 ./usr/share/man/html4/vlan.html			man-sys-htmlman		html
 ./usr/share/man/html4/vmmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/vmnet.html		man-sys-htmlman		html

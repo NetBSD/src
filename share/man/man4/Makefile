@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.756 2026/08/04 13:33:05 andvar Exp $
+#	$NetBSD: Makefile,v 1.757 2026/08/29 19:30:13 andvar Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -253,6 +253,7 @@ MLINKS+=tty.4 dty.4
 MLINKS+=url.4 urlphy.4
 MLINKS+=usb.4 uhub.4
 MLINKS+=usb.4 usbtask.4
+MLINKS+=virtio.4 virtio_mmio.4
 MLINKS+=wwanc.4 wwan.4
 MLINKS+=wsmux.4 wsmuxctl.4
 MLINKS+=zstty.4 zs.4 zstty.4 zsc.4

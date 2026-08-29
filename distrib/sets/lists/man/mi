@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1842 2026/08/04 21:46:47 andvar Exp $
+# $NetBSD: mi,v 1.1843 2026/08/29 19:30:13 andvar Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -2194,6 +2194,7 @@
 ./usr/share/man/cat4/vioscsi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/virt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/virtio.0			man-sys-catman		.cat
+./usr/share/man/cat4/virtio_mmio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/vlan.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmnet.0			man-sys-catman		.cat
@@ -5802,6 +5803,7 @@
 ./usr/share/man/man4/vioscsi.4			man-sys-man		.man
 ./usr/share/man/man4/virt.4			man-sys-man		.man
 ./usr/share/man/man4/virtio.4			man-sys-man		.man
+./usr/share/man/man4/virtio_mmio.4		man-sys-man		.man
 ./usr/share/man/man4/vlan.4			man-sys-man		.man
 ./usr/share/man/man4/vmmon.4			man-sys-man		.man
 ./usr/share/man/man4/vmnet.4			man-sys-man		.man
