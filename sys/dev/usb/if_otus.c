@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.45 2020/06/11 09:51:37 martin Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.46 2026/08/29 01:59:50 maya Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.45 2020/06/11 09:51:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.46 2026/08/29 01:59:50 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -862,7 +862,7 @@ otus_attachhook(device_t arg)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
-	if_attach(ifp);
+	if_initialize(ifp);
 
 	ieee80211_ifattach(ic);
 
@@ -897,6 +897,9 @@ otus_attachhook(device_t arg)
 	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(OTUS_TX_RADIOTAP_PRESENT);
+
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	ieee80211_announce(ic);
 }

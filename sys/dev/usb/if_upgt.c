@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.33 2022/07/01 01:07:32 riastradh Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.34 2026/08/29 01:59:51 maya Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.33 2022/07/01 01:07:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.34 2026/08/29 01:59:51 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -455,7 +455,7 @@ upgt_attach_hook(device_t arg)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	ic->ic_newassoc = upgt_newassoc;
 
@@ -481,6 +481,9 @@ upgt_attach_hook(device_t arg)
 
 	aprint_normal_dev(sc->sc_dev, "address %s\n",
 	    ether_sprintf(ic->ic_myaddr));
+
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	ieee80211_announce(ic);
 

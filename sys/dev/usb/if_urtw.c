@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.27 2024/07/05 04:31:52 rin Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.28 2026/08/29 01:59:51 maya Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.27 2024/07/05 04:31:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.28 2026/08/29 01:59:51 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -734,7 +734,7 @@ urtw_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 
 	/* override state transition machine */
@@ -759,6 +759,9 @@ urtw_attach(device_t parent, device_t self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(URTW_TX_RADIOTAP_PRESENT);
 
 	aprint_normal(", address %s\n", ether_sprintf(ic->ic_myaddr));
+
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	ieee80211_announce(ic);
 

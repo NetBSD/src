@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.67 2024/07/05 04:31:52 rin Exp $ */
+/*	$NetBSD: if_ural.c,v 1.68 2026/08/29 01:59:51 maya Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.67 2024/07/05 04:31:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.68 2026/08/29 01:59:51 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -492,7 +492,7 @@ ural_attach(device_t parent, device_t self, void *aux)
 		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	ic->ic_reset = ural_reset;
 
@@ -515,6 +515,9 @@ ural_attach(device_t parent, device_t self, void *aux)
 	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RAL_TX_RADIOTAP_PRESENT);
+
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	ieee80211_announce(ic);
 
