@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.19 2026/05/20 16:53:45 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.20 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -260,6 +260,7 @@ dst_lib_destroy(void) {
 			dst_t_func[i]->cleanup();
 		}
 	}
+	dst__opensslrsa_shutdown();
 	dst__openssl_destroy();
 }
 

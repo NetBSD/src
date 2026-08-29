@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.27 2026/06/19 20:10:00 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.28 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -76,7 +76,9 @@
 #include <dns/rootns.h>
 #include <dns/stats.h>
 #include <dns/tsig.h>
+#include <dns/types.h>
 #include <dns/validator.h>
+#include <dns/view.h>
 #include <dns/zone.h>
 
 #ifdef WANT_QUERYTRACE
@@ -687,10 +689,10 @@ fctx_minimize_qname(fetchctx_t *fctx);
 static void
 fctx_destroy(fetchctx_t *fctx);
 static isc_result_t
-ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
-		  dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t minttl,
-		  dns_ttl_t maxttl, bool optout, bool secure,
-		  dns_rdataset_t *ardataset, isc_result_t *eresultp);
+ncache_adderesult(fetchctx_t *fctx, dns_message_t *message, dns_dbnode_t *node,
+		  dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t maxttl,
+		  bool optout, bool secure, dns_rdataset_t *ardataset,
+		  isc_result_t *eresultp);
 static void
 validated(void *arg);
 static void
@@ -860,7 +862,6 @@ typedef struct respctx {
 	dns_rdataset_t *ns_rdataset; /* NS rdataset */
 
 	dns_name_t *soa_name; /* SOA name in a negative answer */
-	dns_name_t *ds_name;  /* DS name in a negative answer */
 
 	dns_name_t *found_name;	    /* invalid name in negative
 				     * response */
@@ -957,7 +958,7 @@ rctx_dispfail(respctx_t *rctx);
 static isc_result_t
 rctx_timedout(respctx_t *rctx);
 
-static void
+static isc_result_t
 rctx_ncache(respctx_t *rctx);
 
 /*%
@@ -2329,9 +2330,12 @@ compute_cc(const resquery_t *query, uint8_t *cookie, const size_t len) {
 
 static isc_result_t
 issecuredomain(dns_view_t *view, const dns_name_t *name, dns_rdatatype_t type,
-	       isc_stdtime_t now, bool checknta, bool *ntap, bool *issecure) {
+	       dns_edectx_t *edectx, isc_stdtime_t now, bool checknta,
+	       bool *ntap, bool *issecure) {
 	dns_name_t suffix;
 	unsigned int labels;
+	bool nta = false;
+	isc_result_t result;
 
 	/*
 	 * For DS variants we need to check fom the parent domain,
@@ -2346,8 +2350,24 @@ issecuredomain(dns_view_t *view, const dns_name_t *name, dns_rdatatype_t type,
 		name = &suffix;
 	}
 
-	return dns_view_issecuredomain(view, name, now, checknta, ntap,
-				       issecure);
+	result = dns_view_issecuredomain(view, name, now, checknta, &nta,
+					 issecure);
+
+	/*
+	 * A covering negative trust anchor suppressed DNSSEC validation for
+	 * an otherwise secure name (RFC 7646). Disclose that to the client
+	 * via an Extended DNS Error (draft-farrokhi-dnsop-ede-nta). Duplicate
+	 * codes are coalesced by dns_ede_add(), so this is emitted at most
+	 * once per fetch.
+	 */
+	if (nta && edectx != NULL) {
+		dns_ede_add(edectx, DNS_EDE_NTA,
+			    "Negative Trust Anchor applied (RFC 7646)");
+	}
+
+	SET_IF_NOT_NULL(ntap, nta);
+
+	return result;
 }
 
 static isc_result_t
@@ -2423,6 +2443,7 @@ resquery_send(resquery_t *query) {
 		bool checknta = ((query->options & DNS_FETCHOPT_NONTA) == 0);
 		bool ntacovered = false;
 		result = issecuredomain(res->view, fctx->name, fctx->type,
+					&fctx->edectx,
 					isc_time_seconds(&query->start),
 					checknta, &ntacovered, &secure_domain);
 		if (result != ISC_R_SUCCESS) {
@@ -5337,6 +5358,76 @@ evict_cname_other(fetchctx_t *fctx, dns_dbnode_t *node) {
 }
 
 /*
+ * After a (non-error) negative-cache add, 'rdataset' is bound to whatever
+ * rdataset the cache authoritatively holds for the queried name and type.
+ * Map that to the result code the fetch should report:
+ *
+ *   - A negative cache entry (the one we just added, or a pre-existing one):
+ *     DNS_R_NCACHENXDOMAIN or DNS_R_NCACHENXRRSET, depending on NXDOMAIN vs
+ *     NODATA.
+ *
+ *   - A positive rdataset that was already cached at higher trust, which
+ *     caused our negative entry to be discarded (e.g. a CNAME or DNAME cached
+ *     by a concurrent query): ISC_R_SUCCESS, because that cached positive
+ *     answer is what gets returned.  Note the specific case for CNAME and
+ *     DNAME *if* the query type is not the same as the rdataset type. There
+ *     is a chain to follow *only* if the query type doesn't ask for the CNAME
+ *     or the DNAME.
+ */
+static isc_result_t
+fctx_setresult(fetchctx_t *fctx, dns_rdataset_t *rdataset) {
+	isc_result_t result = ISC_R_SUCCESS;
+
+	if (NEGATIVE(rdataset)) {
+		result = NXDOMAIN(rdataset) ? DNS_R_NCACHENXDOMAIN
+					    : DNS_R_NCACHENXRRSET;
+	} else if (result == ISC_R_SUCCESS && rdataset->type != fctx->type) {
+		switch (rdataset->type) {
+		case dns_rdatatype_cname:
+			result = DNS_R_CNAME;
+			break;
+		case dns_rdatatype_dname:
+			result = DNS_R_DNAME;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return result;
+}
+
+static bool
+get_and_check_signer_name(dns_name_t *signer, dns_rdataset_t *sigrdataset) {
+	dns_rdata_rrsig_t rrsig;
+	isc_result_t result;
+	dns_rdata_t rdata;
+
+	if (dns_rdataset_first(sigrdataset) != ISC_R_SUCCESS) {
+		return false;
+	}
+
+	rdata = (dns_rdata_t)DNS_RDATA_INIT;
+	dns_rdataset_current(sigrdataset, &rdata);
+	result = dns_rdata_tostruct(&rdata, &rrsig, NULL);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_name_copy(&rrsig.signer, signer);
+
+	while (dns_rdataset_next(sigrdataset) == ISC_R_SUCCESS) {
+		rdata = (dns_rdata_t)DNS_RDATA_INIT;
+		dns_rdataset_current(sigrdataset, &rdata);
+		result = dns_rdata_tostruct(&rdata, &rrsig, NULL);
+		INSIST(result == ISC_R_SUCCESS);
+
+		if (!dns_name_equal(signer, &rrsig.signer)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/*
  * The validator has finished.
  */
 static void
@@ -5365,6 +5456,8 @@ validated(void *arg) {
 	dns_fixedname_t fwild;
 	dns_name_t *wild = NULL;
 	dns_message_t *message = NULL;
+	dns_fixedname_t fsigner;
+	dns_name_t *signer = NULL;
 	bool done = false;
 
 	valarg = val->arg;
@@ -5581,8 +5674,7 @@ validated(void *arg) {
 			ttl = 0;
 		}
 
-		result = ncache_adderesult(message, fctx->cache, node, covers,
-					   now, fctx->res->view->minncachettl,
+		result = ncache_adderesult(fctx, message, node, covers, now,
 					   ttl, val->optout, val->secure,
 					   ardataset, &eresult);
 		if (result != ISC_R_SUCCESS) {
@@ -5598,7 +5690,9 @@ validated(void *arg) {
 	if (val->proofs[DNS_VALIDATOR_NOQNAMEPROOF] != NULL) {
 		result = dns_rdataset_addnoqname(
 			val->rdataset, val->proofs[DNS_VALIDATOR_NOQNAMEPROOF]);
-		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		if (result != ISC_R_SUCCESS) {
+			goto noanswer_response;
+		}
 		INSIST(val->sigrdataset != NULL);
 		val->sigrdataset->ttl = val->rdataset->ttl;
 		if (val->proofs[DNS_VALIDATOR_CLOSESTENCLOSER] != NULL) {
@@ -5728,10 +5822,20 @@ answer_response:
 			}
 
 			/*
-			 * Don't cache NSEC if missing NSEC or RRSIG types.
+			 * Don't cache if all the RRSIGs don't have the same
+			 * signer.
+			 */
+			signer = dns_fixedname_initname(&fsigner);
+			if (!get_and_check_signer_name(signer, sigrdataset)) {
+				continue;
+			}
+
+			/*
+			 * Don't cache NSEC if missing NSEC or RRSIG
+			 * types.
 			 */
 			if (rdataset->type == dns_rdatatype_nsec &&
-			    !dns_nsec_requiredtypespresent(rdataset))
+			    !dns_nsec_is_legal(rdataset, signer))
 			{
 				continue;
 			}
@@ -5828,23 +5932,7 @@ answer_response:
 		 */
 		INSIST(hresp->rdataset != NULL);
 		if (dns_rdataset_isassociated(hresp->rdataset)) {
-			if (NEGATIVE(hresp->rdataset)) {
-				INSIST(eresult == DNS_R_NCACHENXDOMAIN ||
-				       eresult == DNS_R_NCACHENXRRSET);
-			} else if (eresult == ISC_R_SUCCESS &&
-				   hresp->rdataset->type != fctx->type)
-			{
-				switch (hresp->rdataset->type) {
-				case dns_rdatatype_cname:
-					eresult = DNS_R_CNAME;
-					break;
-				case dns_rdatatype_dname:
-					eresult = DNS_R_DNAME;
-					break;
-				default:
-					break;
-				}
-			}
+			eresult = fctx_setresult(fctx, hresp->rdataset);
 		}
 
 		hresp->result = eresult;
@@ -6063,8 +6151,9 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_message_t *message,
 	}
 
 	if (res->view->enablevalidation) {
-		result = issecuredomain(res->view, name, fctx->type, now,
-					checknta, NULL, &secure_domain);
+		result = issecuredomain(res->view, name, fctx->type,
+					&fctx->edectx, now, checknta, NULL,
+					&secure_domain);
 		if (result != ISC_R_SUCCESS) {
 			return result;
 		}
@@ -6522,24 +6611,7 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_message_t *message,
 			 * resp->result.
 			 */
 			if (dns_rdataset_isassociated(resp->rdataset)) {
-				if (NEGATIVE(resp->rdataset)) {
-					INSIST(eresult ==
-						       DNS_R_NCACHENXDOMAIN ||
-					       eresult == DNS_R_NCACHENXRRSET);
-				} else if (eresult == ISC_R_SUCCESS &&
-					   resp->rdataset->type != fctx->type)
-				{
-					switch (resp->rdataset->type) {
-					case dns_rdatatype_cname:
-						eresult = DNS_R_CNAME;
-						break;
-					case dns_rdatatype_dname:
-						eresult = DNS_R_DNAME;
-						break;
-					default:
-						break;
-					}
-				}
+				eresult = fctx_setresult(fctx, resp->rdataset);
 			}
 			resp->result = eresult;
 			if (adbp != NULL && *adbp != NULL) {
@@ -6608,12 +6680,14 @@ cache_message(fetchctx_t *fctx, dns_message_t *message,
  * eresult.
  */
 static isc_result_t
-ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
-		  dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t minttl,
-		  dns_ttl_t maxttl, bool optout, bool secure,
-		  dns_rdataset_t *ardataset, isc_result_t *eresultp) {
+ncache_adderesult(fetchctx_t *fctx, dns_message_t *message, dns_dbnode_t *node,
+		  dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t maxttl,
+		  bool optout, bool secure, dns_rdataset_t *ardataset,
+		  isc_result_t *eresultp) {
 	isc_result_t result;
 	dns_rdataset_t rdataset;
+	dns_db_t *cache = fctx->cache;
+	dns_ttl_t minttl = fctx->res->view->minncachettl;
 
 	if (ardataset == NULL) {
 		dns_rdataset_init(&rdataset);
@@ -6627,39 +6701,35 @@ ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 		result = dns_ncache_add(message, cache, node, covers, now,
 					minttl, maxttl, ardataset);
 	}
+
+	/*
+	 * DNS_R_UNCHANGED means the negative entry was rejected because
+	 * more-trusted data (e.g. DNSSEC-validated) already exists at the
+	 * name, and dns_ncache_add()/dns_ncache_addoptout() bound that
+	 * existing data into 'ardataset'.  If it is the same negative
+	 * type we were caching, continue normally below.  Otherwise it
+	 * is an unrelated RRset (possible when caching an NXDOMAIN, i.e.
+	 * covers == dns_rdatatype_any) that must not be returned to the
+	 * client, so fail with SERVFAIL instead.
+	 */
+	if (result == DNS_R_UNCHANGED) {
+		if (NEGATIVE(ardataset) && ardataset->covers == covers) {
+			result = ISC_R_SUCCESS;
+		} else {
+			dns_rdataset_disassociate(ardataset);
+			result = DNS_R_SERVFAIL;
+		}
+	}
+
 	if (result == DNS_R_UNCHANGED || result == ISC_R_SUCCESS) {
 		/*
-		 * If the cache now contains a negative entry and we
-		 * care about whether it is DNS_R_NCACHENXDOMAIN or
-		 * DNS_R_NCACHENXRRSET then extract it.
+		 * The cache settled successfully (DNS_R_UNCHANGED means our
+		 * negative entry was discarded in favour of existing
+		 * higher-trust data).  Either way 'ardataset' is now bound to
+		 * the rdataset the cache holds for this name and type; derive
+		 * the result code from it.
 		 */
-		if (NEGATIVE(ardataset)) {
-			/*
-			 * The cache data is a negative cache entry.
-			 */
-			if (NXDOMAIN(ardataset)) {
-				*eresultp = DNS_R_NCACHENXDOMAIN;
-			} else {
-				*eresultp = DNS_R_NCACHENXRRSET;
-			}
-		} else {
-			/*
-			 * The attempt to add a negative cache entry
-			 * was rejected.  Set *eresultp to reflect
-			 * the type of the dataset being returned.
-			 */
-			switch (ardataset->type) {
-			case dns_rdatatype_cname:
-				*eresultp = DNS_R_CNAME;
-				break;
-			case dns_rdatatype_dname:
-				*eresultp = DNS_R_DNAME;
-				break;
-			default:
-				*eresultp = ISC_R_SUCCESS;
-				break;
-			}
-		}
+		*eresultp = fctx_setresult(fctx, ardataset);
 		result = ISC_R_SUCCESS;
 	}
 	if (ardataset == &rdataset && dns_rdataset_isassociated(ardataset)) {
@@ -6706,8 +6776,9 @@ ncache_message(fetchctx_t *fctx, dns_message_t *message,
 	}
 
 	if (fctx->res->view->enablevalidation) {
-		result = issecuredomain(res->view, name, fctx->type, now,
-					checknta, NULL, &secure_domain);
+		result = issecuredomain(res->view, name, fctx->type,
+					&fctx->edectx, now, checknta, NULL,
+					&secure_domain);
 		if (result != ISC_R_SUCCESS) {
 			return result;
 		}
@@ -6803,8 +6874,7 @@ ncache_message(fetchctx_t *fctx, dns_message_t *message,
 		ttl = 0;
 	}
 
-	result = ncache_adderesult(message, fctx->cache, node, covers, now,
-				   fctx->res->view->minncachettl, ttl, false,
+	result = ncache_adderesult(fctx, message, node, covers, now, ttl, false,
 				   false, ardataset, &eresult);
 	if (result != ISC_R_SUCCESS) {
 		goto unlock;
@@ -7894,11 +7964,6 @@ resquery_response_continue(void *arg, isc_result_t result) {
 
 	if (result != ISC_R_SUCCESS) {
 		FCTXTRACE3("signature check failed", result);
-		if (result == DNS_R_UNEXPECTEDTSIG ||
-		    result == DNS_R_EXPECTEDTSIG)
-		{
-			rctx->nextitem = true;
-		}
 		rctx_done(rctx, result);
 		goto cleanup;
 	}
@@ -8113,7 +8178,10 @@ resquery_response_continue(void *arg, isc_result_t result) {
 	/*
 	 * Negative caching
 	 */
-	rctx_ncache(rctx);
+	isc_result_t nresult = rctx_ncache(rctx);
+	if (nresult != ISC_R_SUCCESS) {
+		result = nresult;
+	}
 
 	FCTXTRACE("resquery_response done");
 	rctx_done(rctx, result);
@@ -8200,7 +8268,6 @@ rctx_answer_init(respctx_t *rctx) {
 	rctx->ns_rdataset = NULL;
 
 	rctx->soa_name = NULL;
-	rctx->ds_name = NULL;
 	rctx->found_name = NULL;
 }
 
@@ -9350,6 +9417,10 @@ rctx_authority_negative(respctx_t *rctx) {
 
 			switch (type) {
 			case dns_rdatatype_ns:
+				if (name_external(name, dns_rdatatype_ns, rctx))
+				{
+					continue;
+				}
 				/*
 				 * NS or RRSIG NS.
 				 *
@@ -9417,14 +9488,14 @@ rctx_authority_negative(respctx_t *rctx) {
  * Cache the negatively cacheable parts of the message.  This may
  * also cause work to be queued to the DNSSEC validator.
  */
-static void
+static isc_result_t
 rctx_ncache(respctx_t *rctx) {
 	isc_result_t result;
 	dns_rdatatype_t covers;
 	fetchctx_t *fctx = rctx->fctx;
 
 	if (!WANTNCACHE(fctx)) {
-		return;
+		return ISC_R_SUCCESS;
 	}
 
 	/*
@@ -9446,6 +9517,8 @@ rctx_ncache(respctx_t *rctx) {
 	if (result != ISC_R_SUCCESS) {
 		FCTXTRACE3("ncache_message complete", result);
 	}
+
+	return result;
 }
 
 /*
@@ -9527,34 +9600,34 @@ rctx_authority_dnssec(respctx_t *rctx) {
 				 * marked.
 				 */
 				break;
-			case dns_rdatatype_ds:
+			case dns_rdatatype_ds:;
 				/*
-				 * DS or SIG DS.
+				 * DS or RRSIG(DS).
 				 *
 				 * These should only be here if this is
 				 * a referral, and there should only be
 				 * one DS RRset.
 				 */
+				const char *typestr = (rdataset->type ==
+						       dns_rdatatype_ds)
+							      ? "DS"
+							      : "RRSIG(DS)";
+
 				if (rctx->ns_name == NULL) {
-					log_formerr(fctx,
-						    "DS with no referral");
+					log_formerr(fctx, "%s with no referral",
+						    typestr);
 					rctx->result = DNS_R_FORMERR;
 					return ISC_R_COMPLETE;
 				}
 
-				if (rdataset->type == dns_rdatatype_ds) {
-					if (rctx->ds_name != NULL &&
-					    name != rctx->ds_name)
-					{
-						log_formerr(fctx,
-							    "DS doesn't match "
-							    "referral (NS)");
-						rctx->result = DNS_R_FORMERR;
-						return ISC_R_COMPLETE;
-					}
-					rctx->ds_name = name;
+				if (name != rctx->ns_name) {
+					log_formerr(fctx,
+						    "%s doesn't match the "
+						    "delegation owner name",
+						    typestr);
+					rctx->result = DNS_R_FORMERR;
+					return ISC_R_COMPLETE;
 				}
-
 				name->attributes.cache = true;
 				rdataset->attributes |= DNS_RDATASETATTR_CACHE;
 
@@ -9564,8 +9637,9 @@ rctx_authority_dnssec(respctx_t *rctx) {
 				if (fctx->res->view->enablevalidation) {
 					result = issecuredomain(
 						fctx->res->view, name,
-						dns_rdatatype_ds, fctx->now,
-						checknta, NULL, &secure_domain);
+						dns_rdatatype_ds, &fctx->edectx,
+						fctx->now, checknta, NULL,
+						&secure_domain);
 					if (result != ISC_R_SUCCESS) {
 						return result;
 					}
@@ -9603,6 +9677,25 @@ rctx_referral(respctx_t *rctx) {
 
 	if (rctx->negative || rctx->ns_name == NULL) {
 		return ISC_R_SUCCESS;
+	}
+
+	if (name_external(rctx->ns_name, dns_rdatatype_ns, rctx)) {
+		log_formerr(fctx, "external referral");
+		rctx->result = DNS_R_FORMERR;
+		return ISC_R_COMPLETE;
+	}
+
+	/*
+	 * If a global forwarder is in use, we don't want to cache its
+	 * referrals. Dual-stack alternates are not treated as forwarders for
+	 * namespace checks, even if their address info uses the forwarder flag.
+	 */
+	if (ISFORWARDER(fctx->addrinfo) && !ISDUALSTACK(fctx->addrinfo) &&
+	    dns_name_equal(fctx->fwdname, dns_rootname))
+	{
+		log_formerr(fctx, "referral from global forwarder");
+		rctx->result = DNS_R_FORMERR;
+		return ISC_R_COMPLETE;
 	}
 
 	/*

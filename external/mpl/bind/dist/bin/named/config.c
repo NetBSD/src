@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.20 2026/01/29 18:36:27 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.21 2026/08/29 14:55:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -124,6 +124,7 @@ options {\n\
 	tcp-keepalive-timeout 300;\n\
 	tcp-listen-queue 10;\n\
 	tcp-receive-buffer 0;\n\
+	tcp-reuse-timeout 50;\n\
 	tcp-send-buffer 0;\n\
 #	tkey-gssapi-credential <none>\n\
 	transfer-message-size 20480;\n\

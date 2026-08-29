@@ -1,5 +1,0 @@
-# QTYPE-only type as answer
-# header, answers=1
-00 00 00 00 00 00 00 01 00 00 00 00
-# ./MAILB/IN
-00 00 fd 00 01 00 00 00 01 00 00

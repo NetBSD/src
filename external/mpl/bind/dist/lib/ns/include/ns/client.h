@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.21 2026/04/08 00:16:17 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.22 2026/08/29 14:55:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -188,16 +188,18 @@ struct ns_client {
 	int16_t		ednsversion; /* -1 noedns */
 	uint16_t	additionaldepth;
 	void (*cleanup)(ns_client_t *);
-	ns_query_t    query;
-	isc_time_t    requesttime;
-	isc_stdtime_t now;
-	isc_time_t    tnow;
-	dns_name_t    signername; /*%< [T]SIG key name */
-	dns_name_t   *signer;	  /*%< NULL if not valid sig */
-	isc_result_t  sigresult;
-	isc_result_t  viewmatchresult;
-	isc_buffer_t *buffer;
-	isc_buffer_t  tbuffer;
+	ns_query_t     query;
+	isc_time_t     requesttime;
+	isc_stdtime_t  now;
+	isc_time_t     tnow;
+	dns_name_t     signername; /*%< [T]SIG key name */
+	dns_name_t    *signer;	   /*%< NULL if not valid sig */
+	isc_result_t   sigresult;
+	isc_result_t   viewmatchresult;
+	isc_buffer_t  *buffer;
+	isc_buffer_t   tbuffer;
+	unsigned char *reqbuf; /*%< request copy for async path */
+	size_t	       reqbuf_size;
 
 	isc_sockaddr_t peeraddr;
 	bool	       peeraddr_valid;

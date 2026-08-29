@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.11 2026/01/29 18:37:48 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.12 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -213,6 +213,8 @@ isc_result_t
 dst__hmacsha512_init(struct dst_func **funcp);
 isc_result_t
 dst__opensslrsa_init(struct dst_func **funcp, unsigned char algorithm);
+void
+dst__opensslrsa_shutdown(void);
 isc_result_t
 dst__opensslecdsa_init(struct dst_func **funcp);
 #if HAVE_OPENSSL_ED25519 || HAVE_OPENSSL_ED448

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.4 2025/01/26 16:25:43 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.5 2026/08/29 14:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,6 +33,14 @@ ISC_CONSTEXPR unsigned int NS_PER_US = 1000;
 ISC_CONSTEXPR unsigned int US_PER_SEC = 1000 * 1000;
 ISC_CONSTEXPR unsigned int NS_PER_MS = 1000 * 1000;
 ISC_CONSTEXPR unsigned int NS_PER_SEC = 1000 * 1000 * 1000;
+
+#define ISC_FORMATTIMESTAMP_SIZE      sizeof("99-Bad-9999 99:99:99.999")
+#define ISC_FORMATISO8601LMS_SIZE     sizeof("9999-99-99T99:99:99.999")
+#define ISC_FORMATISO8601_SIZE	      sizeof("9999-99-99T99:99:99Z")
+#define ISC_FORMATISO8601MS_SIZE      sizeof("9999-99-99T99:99:99.999Z")
+#define ISC_FORMATISO8601US_SIZE      sizeof("9999-99-99T99:99:99.999999Z")
+#define ISC_FORMATISO8601TZMS_SIZE    sizeof("9999-99-99T99:99:99.999+99:99")
+#define ISC_FORMATSHORTTIMESTAMP_SIZE sizeof("99999999999999999")
 
 /*
  * ISC_FORMATHTTPTIMESTAMP_SIZE needs to be 30 in C locale and potentially

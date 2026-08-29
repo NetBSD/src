@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.24 2026/06/19 20:10:00 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.25 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,7 +27,6 @@
 #include <isc/buffer.h>
 #include <isc/hash.h>
 #include <isc/hashmap.h>
-#include <isc/helper.h>
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/result.h>
@@ -203,7 +202,6 @@ typedef struct checksig_ctx {
 	dns_view_t *view;
 	dns_message_cb_t cb;
 	void *cbarg;
-	isc_result_t result;
 } checksig_ctx_t;
 
 /*
@@ -3183,23 +3181,21 @@ dns_message_dumpsig(dns_message_t *msg, char *txt1) {
 #endif /* ifdef SKAN_MSG_DEBUG */
 
 static void
-checksig_done(void *arg);
+checksig_done(void *arg, isc_result_t result);
 
-static void
+static isc_result_t
 checksig_run(void *arg) {
 	checksig_ctx_t *chsigctx = arg;
 
-	chsigctx->result = dns_message_checksig(chsigctx->msg, chsigctx->view);
-
-	isc_async_run(chsigctx->loop, checksig_done, chsigctx);
+	return dns_message_checksig(chsigctx->msg, chsigctx->view);
 }
 
 static void
-checksig_done(void *arg) {
+checksig_done(void *arg, isc_result_t result) {
 	checksig_ctx_t *chsigctx = arg;
 	dns_message_t *msg = chsigctx->msg;
 
-	chsigctx->cb(chsigctx->cbarg, chsigctx->result);
+	chsigctx->cb(chsigctx->cbarg, result);
 
 	dns_view_detach(&chsigctx->view);
 	isc_loop_detach(&chsigctx->loop);
@@ -3219,14 +3215,14 @@ dns_message_checksig_async(dns_message_t *msg, dns_view_t *view,
 	*chsigctx = (checksig_ctx_t){
 		.cb = cb,
 		.cbarg = cbarg,
-		.result = ISC_R_UNSET,
 		.loop = isc_loop_ref(loop),
 	};
 	dns_message_attach(msg, &chsigctx->msg);
 	dns_view_attach(view, &chsigctx->view);
 
 	dns_message_clonebuffer(msg);
-	isc_helper_run(loop, checksig_run, chsigctx);
+	isc_work_enqueue(loop, ISC_WORKLANE_FAST, checksig_run, checksig_done,
+			 chsigctx);
 
 	return DNS_R_WAIT;
 }

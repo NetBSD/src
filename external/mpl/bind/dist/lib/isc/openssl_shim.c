@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_shim.c,v 1.8 2025/01/26 16:25:38 christos Exp $	*/
+/*	$NetBSD: openssl_shim.c,v 1.9 2026/08/29 14:55:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/opensslv.h>
 #include <openssl/ssl.h>

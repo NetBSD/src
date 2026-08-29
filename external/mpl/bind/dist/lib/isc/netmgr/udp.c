@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.15 2025/01/26 16:25:44 christos Exp $	*/
+/*	$NetBSD: udp.c,v 1.16 2026/08/29 14:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -410,7 +410,6 @@ isc_nm_routeconnect(isc_nm_t *mgr, isc_nm_cb_t cb, void *cbarg) {
 	UNUSED(mgr);
 	UNUSED(cb);
 	UNUSED(cbarg);
-	UNUSED(extrahandlesize);
 	return ISC_R_NOTIMPLEMENTED;
 #endif /* USE_ROUTE_SOCKET */
 }

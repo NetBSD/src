@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.h,v 1.10 2026/06/19 20:10:01 christos Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.11 2026/08/29 14:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -155,6 +155,15 @@ dns_dispatchmgr_setavailports(dns_dispatchmgr_t *mgr, isc_portset_t *v4portset,
  *\li	mgr is a valid dispatchmgr
  *\li	v4portset is NULL or a valid port set
  *\li	v6portset is NULL or a valid port set
+ */
+
+void
+dns_dispatchmgr_setreusetimeout(dns_dispatchmgr_t *mgr, unsigned int timeout);
+/*%<
+ * Sets the idle timeout (in milliseconds) for a reused outgoing TCP connection.
+ * While a dispatch has no outstanding responses we keep a read pending so a
+ * peer-initiated close is noticed promptly; this bounds how long such an idle
+ * connection is kept open for reuse.
  */
 
 void

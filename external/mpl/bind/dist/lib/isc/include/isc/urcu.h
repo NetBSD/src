@@ -1,4 +1,4 @@
-/*	$NetBSD: urcu.h,v 1.3 2026/01/29 18:37:55 christos Exp $	*/
+/*	$NetBSD: urcu.h,v 1.4 2026/08/29 14:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,9 +29,20 @@
 #include <urcu-bp.h>
 #endif
 
-#include <urcu-pointer.h>
-
+#if HAVE_URCU_ASSERT_H
+#include <urcu/assert.h>
+#endif
+#if HAVE_URCU_UATOMIC_H
+#include <urcu/uatomic.h>
+#endif
 #include <urcu/compiler.h>
+#include <urcu/futex.h>
+#include <urcu/list.h>
+#if HAVE_URCU_POINTER_H
+#include <urcu/pointer.h>
+#else
+#include <urcu-pointer.h>
+#endif
 #include <urcu/rculfhash.h>
 #include <urcu/rculist.h>
 #include <urcu/wfstack.h>
@@ -168,5 +179,18 @@
 
 #undef _CMM_STORE_SHARED
 #define _CMM_STORE_SHARED(x, v) CMM_STORE_SHARED(x, v)
+
+#endif /* __SANITIZE_THREAD */
+
+#if !defined(uatomic_load) || !defined(uatomic_store)
+#define uatomic_load(ptr, mo)	  uatomic_read(ptr)
+#define uatomic_store(ptr, v, mo) uatomic_set(ptr, v)
+
+#define CMM_RELAXED __ATOMIC_RELAXED
+#define CMM_CONSUME __ATOMIC_CONSUME
+#define CMM_ACQUIRE __ATOMIC_ACQUIRE
+#define CMM_RELEASE __ATOMIC_RELEASE
+#define CMM_ACQ_REL __ATOMIC_ACQ_REL
+#define CMM_SEQ_CST __ATOMIC_SEQ_CST
 
 #endif

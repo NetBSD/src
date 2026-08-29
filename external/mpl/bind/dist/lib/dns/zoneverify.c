@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneverify.c,v 1.14 2026/05/20 16:53:46 christos Exp $	*/
+/*	$NetBSD: zoneverify.c,v 1.15 2026/08/29 14:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,6 +63,7 @@ typedef struct vctx {
 	dns_keytable_t *secroots;
 	bool goodksk;
 	bool goodzsk;
+	bool nseconly;
 	dns_rdataset_t keyset;
 	dns_rdataset_t keysigs;
 	dns_rdataset_t soaset;
@@ -188,7 +189,7 @@ goodsig(const vctx_t *vctx, dns_rdata_t *sigrdata, const dns_name_t *name,
 			continue;
 		}
 		result = dns_dnssec_verify(name, rdataset, dstkeys[key], false,
-					   0, vctx->mctx, sigrdata, NULL);
+					   0, vctx->mctx, sigrdata, NULL, NULL);
 		if (result == ISC_R_SUCCESS || result == DNS_R_FROMWILDCARD) {
 			return true;
 		}
@@ -622,17 +623,16 @@ cleanup:
 static isc_result_t
 isoptout(const vctx_t *vctx, const dns_rdata_nsec3param_t *nsec3param,
 	 bool *optout) {
-	dns_rdataset_t rdataset;
+	dns_rdataset_t rdataset = DNS_RDATASET_INIT;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_nsec3_t nsec3;
 	dns_fixedname_t fixed;
-	dns_name_t *hashname;
+	dns_name_t *hashname = dns_fixedname_initname(&fixed);
 	isc_result_t result;
 	dns_dbnode_t *node = NULL;
 	unsigned char rawhash[NSEC3_MAX_HASH_LENGTH];
 	size_t rhsize = sizeof(rawhash);
 
-	dns_fixedname_init(&fixed);
 	result = dns_nsec3_hashname(&fixed, rawhash, &rhsize, vctx->origin,
 				    vctx->origin, nsec3param->hash,
 				    nsec3param->iterations, nsec3param->salt,
@@ -643,24 +643,18 @@ isoptout(const vctx_t *vctx, const dns_rdata_nsec3param_t *nsec3param,
 		return result;
 	}
 
-	dns_rdataset_init(&rdataset);
-	hashname = dns_fixedname_name(&fixed);
 	result = dns_db_findnsec3node(vctx->db, hashname, false, &node);
 	if (result == ISC_R_SUCCESS) {
 		result = dns_db_findrdataset(vctx->db, node, vctx->ver,
 					     dns_rdatatype_nsec3, 0, 0,
 					     &rdataset, NULL);
 	}
+	if (result == ISC_R_SUCCESS) {
+		result = dns_rdataset_first(&rdataset);
+	}
 	if (result != ISC_R_SUCCESS) {
 		*optout = false;
 		result = ISC_R_SUCCESS;
-		goto done;
-	}
-
-	result = dns_rdataset_first(&rdataset);
-	if (result != ISC_R_SUCCESS) {
-		zoneverify_log_error(vctx, "dns_rdataset_first(): %s",
-				     isc_result_totext(result));
 		goto done;
 	}
 
@@ -683,51 +677,36 @@ done:
 
 static isc_result_t
 verifynsec3(const vctx_t *vctx, const dns_name_t *name,
-	    const dns_rdata_t *rdata, bool delegation, bool empty,
-	    const unsigned char types[8192], unsigned int maxtype,
+	    const dns_rdata_nsec3param_t *nsec3param, bool delegation,
+	    bool empty, const unsigned char types[8192], unsigned int maxtype,
 	    isc_result_t *vresult) {
 	char namebuf[DNS_NAME_FORMATSIZE];
 	char hashbuf[DNS_NAME_FORMATSIZE];
-	dns_rdataset_t rdataset;
-	dns_rdata_nsec3param_t nsec3param;
+	dns_rdataset_t rdataset = DNS_RDATASET_INIT;
 	dns_fixedname_t fixed;
-	dns_name_t *hashname;
-	isc_result_t result, tvresult = ISC_R_UNSET;
+	dns_name_t *hashname = dns_fixedname_initname(&fixed);
+	isc_result_t result;
 	dns_dbnode_t *node = NULL;
 	unsigned char rawhash[NSEC3_MAX_HASH_LENGTH];
 	size_t rhsize = sizeof(rawhash);
 	bool optout = false;
 
-	result = dns_rdata_tostruct(rdata, &nsec3param, NULL);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+	INSIST(nsec3param->flags == 0);
 
-	if (nsec3param.flags != 0) {
-		return ISC_R_SUCCESS;
-	}
-
-	if (!dns_nsec3_supportedhash(nsec3param.hash)) {
-		return ISC_R_SUCCESS;
-	}
-
-	if (nsec3param.iterations > DNS_NSEC3_MAXITERATIONS) {
-		result = DNS_R_NSEC3ITERRANGE;
-		zoneverify_log_error(vctx, "verifynsec3: %s",
-				     isc_result_totext(result));
-		return result;
-	}
-
-	result = isoptout(vctx, &nsec3param, &optout);
+	result = isoptout(vctx, nsec3param, &optout);
 	if (result != ISC_R_SUCCESS) {
+		*vresult = result;
 		return result;
 	}
 
-	dns_fixedname_init(&fixed);
-	result = dns_nsec3_hashname(
-		&fixed, rawhash, &rhsize, name, vctx->origin, nsec3param.hash,
-		nsec3param.iterations, nsec3param.salt, nsec3param.salt_length);
+	result = dns_nsec3_hashname(&fixed, rawhash, &rhsize, name,
+				    vctx->origin, nsec3param->hash,
+				    nsec3param->iterations, nsec3param->salt,
+				    nsec3param->salt_length);
 	if (result != ISC_R_SUCCESS) {
 		zoneverify_log_error(vctx, "dns_nsec3_hashname(): %s",
 				     isc_result_totext(result));
+		*vresult = result;
 		return result;
 	}
 
@@ -737,8 +716,6 @@ verifynsec3(const vctx_t *vctx, const dns_name_t *name,
 	 * from dnssec-signzone so the secure status of the zone may not
 	 * be up to date.
 	 */
-	dns_rdataset_init(&rdataset);
-	hashname = dns_fixedname_name(&fixed);
 	result = dns_db_findnsec3node(vctx->db, hashname, false, &node);
 	if (result == ISC_R_SUCCESS) {
 		result = dns_db_findrdataset(vctx->db, node, vctx->ver,
@@ -757,9 +734,11 @@ verifynsec3(const vctx_t *vctx, const dns_name_t *name,
 	{
 		result = ISC_R_SUCCESS;
 	} else if (result == ISC_R_SUCCESS) {
-		result = match_nsec3(vctx, name, &nsec3param, &rdataset, types,
+		isc_result_t tvresult = ISC_R_UNSET;
+		result = match_nsec3(vctx, name, nsec3param, &rdataset, types,
 				     maxtype, rawhash, rhsize, &tvresult);
 		if (result != ISC_R_SUCCESS) {
+			*vresult = tvresult;
 			goto done;
 		}
 		result = tvresult;
@@ -790,13 +769,35 @@ verifynsec3s(const vctx_t *vctx, const dns_name_t *name,
 	     result == ISC_R_SUCCESS; result = dns_rdataset_next(nsec3paramset))
 	{
 		dns_rdata_t rdata = DNS_RDATA_INIT;
+		dns_rdata_nsec3param_t nsec3param;
 
 		dns_rdataset_current(nsec3paramset, &rdata);
-		result = verifynsec3(vctx, name, &rdata, delegation, empty,
-				     types, maxtype, vresult);
-		if (result != ISC_R_SUCCESS) {
-			return result;
+		result = dns_rdata_tostruct(&rdata, &nsec3param, NULL);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+
+		/* Skip unusable NSEC3PARAM records. */
+		if (nsec3param.flags != 0) {
+			continue;
 		}
+
+		/*
+		 * If an NSEC-only algorithm is in the DNSKEY set,
+		 * any NSEC3PARAM with flags == 0 is an error.
+		 */
+		if (vctx->nseconly) {
+			*vresult = DNS_R_NSEC3BADALG;
+			break;
+		}
+
+		if (nsec3param.iterations > DNS_NSEC3_MAXITERATIONS ||
+		    !dns_nsec3_supportedhash(nsec3param.hash))
+		{
+			continue;
+		}
+
+		RETERR(verifynsec3(vctx, name, &nsec3param, delegation, empty,
+				   types, maxtype, vresult));
+
 		if (*vresult != ISC_R_SUCCESS) {
 			break;
 		}
@@ -1343,21 +1344,17 @@ static isc_result_t
 check_apex_rrsets(vctx_t *vctx) {
 	dns_dbnode_t *node = NULL;
 	isc_result_t result;
+	bool nsec3param_ok = false;
 
-	result = dns_db_findnode(vctx->db, vctx->origin, false, &node);
-	if (result != ISC_R_SUCCESS) {
-		zoneverify_log_error(vctx,
-				     "failed to find the zone's origin: %s",
-				     isc_result_totext(result));
-		return result;
+	result = dns_db_getoriginnode(vctx->db, &node);
+	if (result == ISC_R_SUCCESS) {
+		result = dns_db_findrdataset(vctx->db, node, vctx->ver,
+					     dns_rdatatype_dnskey, 0, 0,
+					     &vctx->keyset, &vctx->keysigs);
 	}
-
-	result = dns_db_findrdataset(vctx->db, node, vctx->ver,
-				     dns_rdatatype_dnskey, 0, 0, &vctx->keyset,
-				     &vctx->keysigs);
 	if (result != ISC_R_SUCCESS) {
 		zoneverify_log_error(vctx, "Zone contains no DNSSEC keys");
-		goto done;
+		goto cleanup;
 	}
 
 	result = dns_db_findrdataset(vctx->db, node, vctx->ver,
@@ -1365,7 +1362,7 @@ check_apex_rrsets(vctx_t *vctx) {
 				     &vctx->soasigs);
 	if (result != ISC_R_SUCCESS) {
 		zoneverify_log_error(vctx, "Zone contains no SOA record");
-		goto done;
+		goto cleanup;
 	}
 
 	result = dns_db_findrdataset(vctx->db, node, vctx->ver,
@@ -1373,7 +1370,7 @@ check_apex_rrsets(vctx_t *vctx) {
 				     &vctx->nsecsigs);
 	if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
 		zoneverify_log_error(vctx, "NSEC lookup failed");
-		goto done;
+		goto cleanup;
 	}
 
 	result = dns_db_findrdataset(
@@ -1381,21 +1378,21 @@ check_apex_rrsets(vctx_t *vctx) {
 		&vctx->nsec3paramset, &vctx->nsec3paramsigs);
 	if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
 		zoneverify_log_error(vctx, "NSEC3PARAM lookup failed");
-		goto done;
+		goto cleanup;
 	}
 
 	if (!dns_rdataset_isassociated(&vctx->keysigs)) {
 		zoneverify_log_error(vctx, "DNSKEY is not signed "
 					   "(keys offline or inactive?)");
 		result = ISC_R_FAILURE;
-		goto done;
+		goto cleanup;
 	}
 
 	if (!dns_rdataset_isassociated(&vctx->soasigs)) {
 		zoneverify_log_error(vctx, "SOA is not signed "
 					   "(keys offline or inactive?)");
 		result = ISC_R_FAILURE;
-		goto done;
+		goto cleanup;
 	}
 
 	if (dns_rdataset_isassociated(&vctx->nsecset) &&
@@ -1404,7 +1401,7 @@ check_apex_rrsets(vctx_t *vctx) {
 		zoneverify_log_error(vctx, "NSEC is not signed "
 					   "(keys offline or inactive?)");
 		result = ISC_R_FAILURE;
-		goto done;
+		goto cleanup;
 	}
 
 	if (dns_rdataset_isassociated(&vctx->nsec3paramset) &&
@@ -1413,21 +1410,45 @@ check_apex_rrsets(vctx_t *vctx) {
 		zoneverify_log_error(vctx, "NSEC3PARAM is not signed "
 					   "(keys offline or inactive?)");
 		result = ISC_R_FAILURE;
-		goto done;
+		goto cleanup;
 	}
 
-	if (!dns_rdataset_isassociated(&vctx->nsecset) &&
-	    !dns_rdataset_isassociated(&vctx->nsec3paramset))
-	{
-		zoneverify_log_error(vctx, "No valid NSEC/NSEC3 chain for "
+	/*
+	 * Do we have a NSEC3PARAM record that indicates a complete
+	 * chain?  A forged NSEC3PARAM set will be detected later.
+	 */
+	if (dns_rdataset_isassociated(&vctx->nsec3paramset)) {
+		for (result = dns_rdataset_first(&vctx->nsec3paramset);
+		     result == ISC_R_SUCCESS;
+		     result = dns_rdataset_next(&vctx->nsec3paramset))
+		{
+			dns_rdata_t rdata = DNS_RDATA_INIT;
+			dns_rdata_nsec3param_t nsec3param;
+
+			dns_rdataset_current(&vctx->nsec3paramset, &rdata);
+			result = dns_rdata_tostruct(&rdata, &nsec3param, NULL);
+			RUNTIME_CHECK(result == ISC_R_SUCCESS);
+			if (nsec3param.flags != 0 ||
+			    nsec3param.iterations > DNS_NSEC3_MAXITERATIONS ||
+			    !dns_nsec3_supportedhash(nsec3param.hash))
+			{
+				continue;
+			}
+			nsec3param_ok = true;
+			break;
+		}
+	}
+
+	if (!dns_rdataset_isassociated(&vctx->nsecset) && !nsec3param_ok) {
+		zoneverify_log_error(vctx, "No usable NSEC/NSEC3 chain for "
 					   "testing");
 		result = ISC_R_FAILURE;
-		goto done;
+		goto cleanup;
 	}
 
 	result = ISC_R_SUCCESS;
 
-done:
+cleanup:
 	dns_db_detachnode(vctx->db, &node);
 
 	return result;
@@ -1841,10 +1862,7 @@ verify_nodes(vctx_t *vctx, isc_result_t *vresult) {
 			dns_db_detachnode(vctx->db, &node);
 			goto done;
 		}
-		if (*vresult == ISC_R_UNSET) {
-			*vresult = ISC_R_SUCCESS;
-		}
-		if (*vresult == ISC_R_SUCCESS) {
+		if (*vresult == ISC_R_UNSET || *vresult == ISC_R_SUCCESS) {
 			*vresult = tvresult;
 		}
 		if (prevname != NULL) {
@@ -2001,6 +2019,10 @@ dns_zoneverify_dnssec(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
 		goto done;
 	}
 
+	/* Record whether NSEC3 is supported by the DNSKEY RRset */
+	result = dns_nsec_nseconly(vctx.db, vctx.ver, NULL, &vctx.nseconly);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+
 	determine_active_algorithms(&vctx, ignore_kskflag, keyset_kskonly,
 				    report);
 
@@ -2010,10 +2032,9 @@ dns_zoneverify_dnssec(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
 	}
 
 	result = verify_nsec3_chains(&vctx, mctx);
-	if (vresult == ISC_R_UNSET) {
-		vresult = ISC_R_SUCCESS;
-	}
-	if (result != ISC_R_SUCCESS && vresult == ISC_R_SUCCESS) {
+	if (result != ISC_R_SUCCESS &&
+	    (vresult == ISC_R_SUCCESS || vresult == ISC_R_UNSET))
+	{
 		vresult = result;
 	}
 

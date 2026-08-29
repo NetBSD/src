@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.19 2026/04/08 00:16:16 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.20 2026/08/29 14:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -408,6 +408,15 @@ mock_assert(const int result, const char *const expression,
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup;        \
 	} while (0)
+
+/*
+ * Unconditionally jump to the cleanup tag with 'result' set to 'r'.
+ */
+#define CLEANUP(r)            \
+	{                     \
+		result = (r); \
+		goto cleanup; \
+	}
 
 /*
  * Check for ISC_R_SUCCESS and continue if found. For any other

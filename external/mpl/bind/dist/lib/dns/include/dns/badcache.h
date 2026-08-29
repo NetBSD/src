@@ -1,4 +1,4 @@
-/*	$NetBSD: badcache.h,v 1.8 2025/01/26 16:25:26 christos Exp $	*/
+/*	$NetBSD: badcache.h,v 1.9 2026/08/29 14:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,7 +60,7 @@ ISC_LANG_BEGINDECLS
  ***/
 
 dns_badcache_t *
-dns_badcache_new(isc_mem_t *mctx, isc_loopmgr_t *loopmgr);
+dns_badcache_new(isc_mem_t *mctx);
 /*%
  * Allocate and initialize a badcache and store it in '*bcp'.
  *

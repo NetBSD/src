@@ -1,4 +1,4 @@
-/*	$NetBSD: ede_test.c,v 1.3 2026/01/29 18:37:56 christos Exp $	*/
+/*	$NetBSD: ede_test.c,v 1.4 2026/08/29 14:55:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -148,7 +148,7 @@ ISC_RUN_TEST_IMPL(dns_ede_test_infocode_range) {
 	dns_ede_init(mctx, &edectx);
 
 	dns_ede_add(&edectx, 1, NULL);
-	expect_assert_failure(dns_ede_add(&edectx, 32, NULL));
+	expect_assert_failure(dns_ede_add(&edectx, DNS_EDE_MAX_CODE + 1, NULL));
 
 	const ede_test_expected_t expected[] = {
 		{ .code = 1, .txt = NULL },

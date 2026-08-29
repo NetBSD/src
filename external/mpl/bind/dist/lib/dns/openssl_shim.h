@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_shim.h,v 1.3 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: openssl_shim.h,v 1.4 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,13 +22,6 @@
 #include <openssl/evp.h>
 #include <openssl/opensslv.h>
 #include <openssl/rsa.h>
-
-/*
- * Limit the size of public exponents.
- */
-#ifndef RSA_MAX_PUBEXP_BITS
-#define RSA_MAX_PUBEXP_BITS 35
-#endif /* ifndef RSA_MAX_PUBEXP_BITS */
 
 #if !HAVE_BN_GENCB_NEW
 /* These are new in OpenSSL 1.1.0. */

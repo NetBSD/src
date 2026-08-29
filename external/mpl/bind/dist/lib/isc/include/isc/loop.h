@@ -1,4 +1,4 @@
-/*	$NetBSD: loop.h,v 1.2 2025/01/26 16:25:41 christos Exp $	*/
+/*	$NetBSD: loop.h,v 1.3 2026/08/29 14:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,8 @@
 #include <isc/mem.h>
 #include <isc/refcount.h>
 #include <isc/types.h>
+#include <isc/urcu.h>
+#include <isc/work.h>
 
 typedef void (*isc_job_cb)(void *);
 
@@ -227,4 +229,5 @@ isc_loop_shuttingdown(isc_loop_t *loop);
  *
  * \li 'loop' is a valid loop and the loop tid matches the current tid.
  */
+
 ISC_LANG_ENDDECLS

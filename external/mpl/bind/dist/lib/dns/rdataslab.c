@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.14 2026/05/20 16:53:45 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.15 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1103,6 +1103,7 @@ dns_slabheader_reset(dns_slabheader_t *h, dns_db_t *db, dns_dbnode_t *node) {
 
 	atomic_init(&h->attributes, 0);
 	atomic_init(&h->last_refresh_fail_ts, 0);
+	isc_refcount_init(&h->references, 1);
 
 	STATIC_ASSERT(sizeof(h->attributes) == 2,
 		      "The .attributes field of dns_slabheader_t needs to be "
@@ -1175,6 +1176,22 @@ dns_rdatasetmethods_t dns_rdataslab_rdatasetmethods = {
 	.getownercase = rdataset_getownercase,
 };
 
+dns_rdatasetmethods_t dns_rdataproof_rdatasetmethods = {
+	.disassociate = rdataset_disassociate,
+	.first = rdataset_first,
+	.next = rdataset_next,
+	.current = rdataset_current,
+	.clone = rdataset_clone,
+	.count = rdataset_count,
+	.getnoqname = rdataset_getnoqname,
+	.getclosest = rdataset_getclosest,
+	.settrust = rdataset_settrust,
+	.expire = rdataset_expire,
+	.clearprefetch = rdataset_clearprefetch,
+	.setownercase = rdataset_setownercase,
+	.getownercase = rdataset_getownercase,
+};
+
 /* Fixed RRSet helper macros */
 
 #define DNS_RDATASET_LENGTH 2;
@@ -1192,6 +1209,11 @@ rdataset_disassociate(dns_rdataset_t *rdataset DNS__DB_FLARG) {
 	dns_db_t *db = rdataset->slab.db;
 	dns_dbnode_t *node = rdataset->slab.node;
 
+	if (rdataset->methods == &dns_rdataslab_rdatasetmethods) {
+		dns_slabheader_t *header =
+			dns_slabheader_fromrdataset(rdataset);
+		isc_refcount_decrement(&header->references);
+	}
 	dns__db_detachnode(db, &node DNS__DB_FLARG_PASS);
 }
 
@@ -1297,6 +1319,11 @@ rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target DNS__DB_FLARG) {
 	dns_dbnode_t *node = source->slab.node;
 	dns_dbnode_t *cloned_node = NULL;
 
+	if (source->methods == &dns_rdataslab_rdatasetmethods) {
+		dns_slabheader_t *header = dns_slabheader_fromrdataset(source);
+		isc_refcount_increment(&header->references);
+	}
+
 	dns__db_attachnode(db, node, &cloned_node DNS__DB_FLARG_PASS);
 	INSIST(!ISC_LINK_LINKED(target, link));
 	*target = *source;
@@ -1336,7 +1363,7 @@ rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
 	dns__db_attachnode(db, node,
 			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
 	*nsec = (dns_rdataset_t){
-		.methods = &dns_rdataslab_rdatasetmethods,
+		.methods = &dns_rdataproof_rdatasetmethods,
 		.rdclass = db->rdclass,
 		.type = noqname->type,
 		.ttl = rdataset->ttl,
@@ -1353,7 +1380,7 @@ rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
 	dns__db_attachnode(db, node,
 			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
 	*nsecsig = (dns_rdataset_t){
-		.methods = &dns_rdataslab_rdatasetmethods,
+		.methods = &dns_rdataproof_rdatasetmethods,
 		.rdclass = db->rdclass,
 		.type = dns_rdatatype_rrsig,
 		.covers = noqname->type,
@@ -1389,7 +1416,7 @@ rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
 	dns__db_attachnode(db, node,
 			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
 	*nsec = (dns_rdataset_t){
-		.methods = &dns_rdataslab_rdatasetmethods,
+		.methods = &dns_rdataproof_rdatasetmethods,
 		.rdclass = db->rdclass,
 		.type = closest->type,
 		.ttl = rdataset->ttl,
@@ -1406,7 +1433,7 @@ rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
 	dns__db_attachnode(db, node,
 			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
 	*nsecsig = (dns_rdataset_t){
-		.methods = &dns_rdataslab_rdatasetmethods,
+		.methods = &dns_rdataproof_rdatasetmethods,
 		.rdclass = db->rdclass,
 		.type = dns_rdatatype_rrsig,
 		.covers = closest->type,

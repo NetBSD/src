@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.29 2026/06/19 20:09:59 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.30 2026/08/29 14:55:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -180,6 +180,7 @@
 #define MAX_KEEPALIVE_TIMEOUT  UINT32_C(UINT16_MAX * 100)
 #define MIN_ADVERTISED_TIMEOUT UINT32_C(0) /* No minimum */
 #define MAX_ADVERTISED_TIMEOUT UINT32_C(UINT16_MAX * 100)
+#define MAX_REUSE_TIMEOUT      UINT32_C(120000) /* 2 minutes */
 
 /*%
  * Check an operation for failure.  Assumes that the function
@@ -8428,7 +8429,7 @@ load_configuration(const char *filename, named_server_t *server,
 	ns_altsecretlist_t altsecrets, tmpaltsecrets;
 	uint32_t softquota = 0;
 	uint32_t max;
-	uint64_t initial, idle, keepalive, advertised;
+	uint64_t initial, idle, keepalive, advertised, reuse;
 	bool loadbalancesockets;
 	bool exclusive = true;
 	dns_aclenv_t *env =
@@ -8769,6 +8770,20 @@ load_configuration(const char *filename, named_server_t *server,
 
 	isc_nm_settimeouts(named_g_netmgr, initial, idle, keepalive,
 			   advertised);
+
+	obj = NULL;
+	result = named_config_get(maps, "tcp-reuse-timeout", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	reuse = cfg_obj_asuint32(obj) * 100;
+	if (reuse > MAX_REUSE_TIMEOUT) {
+		cfg_obj_log(obj, named_g_lctx, ISC_LOG_WARNING,
+			    "tcp-reuse-timeout value is out of range: "
+			    "lowering to %" PRIu32,
+			    MAX_REUSE_TIMEOUT / 100);
+		reuse = MAX_REUSE_TIMEOUT;
+	}
+
+	dns_dispatchmgr_setreusetimeout(named_g_dispatchmgr, reuse);
 
 #define CAP_IF_NOT_ZERO(v, min, max) \
 	if (v > 0 && v < min) {      \
@@ -13080,9 +13095,16 @@ named_server_freeze(named_server_t *server, bool freeze, isc_lex_t *lex,
  */
 isc_result_t
 named_smf_add_message(isc_buffer_t **text) {
+	isc_result_t result;
+
 	REQUIRE(text != NULL);
 
-	return putstr(text, "use svcadm(1M) to manage named");
+	CHECK(putstr(text, "use svcadm(1M) to manage named"));
+	CHECK(putnull(text));
+
+	return ISC_R_SUCCESS;
+cleanup:
+	return result;
 }
 #endif /* HAVE_LIBSCF */
 

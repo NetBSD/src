@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.24 2026/04/08 00:16:14 christos Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.25 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -858,20 +858,29 @@ dns__rbtdb_mark(dns_slabheader_t *header, uint_least16_t flag) {
 
 void
 dns__rbtdb_mark_ancient(dns_slabheader_t *header) {
-	dns__rbtdb_setttl(header, 0);
-	dns__rbtdb_mark(header, DNS_SLABHEADERATTR_ANCIENT);
-	RBTDB_HEADERNODE(header)->dirty = 1;
+	if (!ANCIENT(header)) {
+		dns__rbtdb_setttl(header, 0);
+		dns__rbtdb_mark(header, DNS_SLABHEADERATTR_ANCIENT);
+		RBTDB_HEADERNODE(header)->dirty = 1;
+		isc_refcount_decrement(&header->references);
+	}
 }
 
-static void
-clean_stale_headers(dns_slabheader_t *top) {
-	dns_slabheader_t *d = NULL, *down_next = NULL;
+void
+dns__rbtdb_clean_stale_headers(dns_slabheader_t *top) {
+	dns_slabheader_t *d = NULL, *down_next = NULL, *down_parent = top;
 
 	for (d = top->down; d != NULL; d = down_next) {
 		down_next = d->down;
-		dns_slabheader_destroy(&d);
+		d->next = down_parent;
+
+		if (isc_refcount_current(&d->references) == 0) {
+			dns_slabheader_destroy(&d);
+			down_parent->down = down_next;
+		} else {
+			down_parent = d;
+		}
 	}
-	top->down = NULL;
 }
 
 static void
@@ -884,7 +893,8 @@ clean_cache_node(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node) {
 
 	for (current = node->data; current != NULL; current = top_next) {
 		top_next = current->next;
-		clean_stale_headers(current);
+		dns__rbtdb_clean_stale_headers(current);
+		INSIST(current->down == NULL);
 		/*
 		 * If current is nonexistent, ancient, or stale and
 		 * we are not keeping stale, we can clean it up.
@@ -2133,6 +2143,8 @@ dns__rbtdb_bindrdataset(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
 		return;
 	}
 
+	isc_refcount_increment(&header->references);
+
 	dns__rbtnode_acquire(rbtdb, node, locktype DNS__DB_FLARG_PASS);
 
 	INSIST(rdataset->methods == NULL); /* We must be disassociated. */
@@ -2541,7 +2553,8 @@ isc_result_t
 dns__rbtdb_add(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode,
 	       const dns_name_t *nodename, dns_rbtdb_version_t *rbtversion,
 	       dns_slabheader_t *newheader, unsigned int options, bool loading,
-	       dns_rdataset_t *addedrdataset, isc_stdtime_t now DNS__DB_FLARG) {
+	       dns_rdataset_t *addedrdataset, isc_stdtime_t now,
+	       isc_rwlocktype_t nlocktype DNS__DB_FLARG) {
 	rbtdb_changed_t *changed = NULL;
 	dns_slabheader_t *topheader = NULL, *topheader_prev = NULL;
 	dns_slabheader_t *header = NULL, *sigheader = NULL;
@@ -2551,6 +2564,7 @@ dns__rbtdb_add(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode,
 	bool header_nx;
 	bool newheader_nx;
 	bool merge;
+	bool do_expireheader = false;
 	dns_rdatatype_t rdtype, covers;
 	dns_typepair_t negtype = 0, sigtype;
 	dns_trust_t trust;
@@ -2588,6 +2602,39 @@ dns__rbtdb_add(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode,
 		rdtype = DNS_TYPEPAIR_TYPE(newheader->type);
 		covers = DNS_TYPEPAIR_COVERS(newheader->type);
 		sigtype = DNS_SIGTYPE(covers);
+
+		/*
+		 * An unvalidated negative entry covering all types (NXDOMAIN or
+		 * NODATA(QTYPE=ANY)) must not purge secure data. Check for it
+		 * in a separate pass first: evicting as we go and bailing out
+		 * later would destroy lower-trust siblings before we found the
+		 * secure header.
+		 */
+		if (EXISTS(newheader) && NEGATIVE(newheader) &&
+		    covers == dns_rdatatype_any && trust < dns_trust_secure)
+		{
+			for (topheader = rbtnode->data; topheader != NULL;
+			     topheader = topheader->next)
+			{
+				header = topheader;
+				while (header != NULL && IGNORE(header)) {
+					header = header->down;
+				}
+
+				if (header != NULL && ACTIVE(header, now) &&
+				    header->trust >= dns_trust_secure)
+				{
+					dns_slabheader_destroy(&newheader);
+					dns__rbtdb_bindrdataset(
+						rbtdb, rbtnode, header, now,
+						nlocktype,
+						addedrdataset
+							DNS__DB_FLARG_PASS);
+					return DNS_R_UNCHANGED;
+				}
+			}
+		}
+
 		if (NEGATIVE(newheader)) {
 			/*
 			 * We're adding a negative cache entry.
@@ -3110,6 +3157,7 @@ find_header:
 			}
 
 			if (IS_CACHE(rbtdb) && overmaxtype(rbtdb, ntypes)) {
+				do_expireheader = true;
 				if (expireheader == NULL) {
 					expireheader = newheader;
 				}
@@ -3123,14 +3171,6 @@ find_header:
 					 */
 					expireheader = newheader;
 				}
-
-				dns__rbtdb_mark_ancient(expireheader);
-				/*
-				 * FIXME: In theory, we should mark the RRSIG
-				 * and the header at the same time, but there is
-				 * no direct link between those two header, so
-				 * we would have to check the whole list again.
-				 */
 			}
 		}
 	}
@@ -3153,6 +3193,14 @@ find_header:
 		dns__rbtdb_bindrdataset(rbtdb, rbtnode, newheader, now,
 					isc_rwlocktype_write,
 					addedrdataset DNS__DB_FLARG_PASS);
+	}
+
+	/*
+	 * We need to delay the expiration of the header until we are bound to
+	 * it to prevent decrement-then-increment on the header references.
+	 */
+	if (do_expireheader) {
+		dns__rbtdb_mark_ancient(expireheader);
 	}
 
 	return ISC_R_SUCCESS;
@@ -3185,7 +3233,9 @@ addnoqname(isc_mem_t *mctx, dns_slabheader_t *newheader, uint32_t maxrrperset,
 	isc_region_t r1 = { .base = NULL }, r2 = { .base = NULL };
 
 	result = dns_rdataset_getnoqname(rdataset, &name, &neg, &negsig);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
 
 	result = dns_rdataslab_fromrdataset(&neg, mctx, &r1, 0, maxrrperset);
 	if (result != ISC_R_SUCCESS) {
@@ -3494,7 +3544,8 @@ dns__rbtdb_addrdataset(dns_db_t *db, dns_dbnode_t *node,
 	if (result == ISC_R_SUCCESS) {
 		result = dns__rbtdb_add(rbtdb, rbtnode, name, rbtversion,
 					newheader, options, false,
-					addedrdataset, now DNS__DB_FLARG_PASS);
+					addedrdataset, now,
+					nlocktype DNS__DB_FLARG_PASS);
 	}
 	if (result == ISC_R_SUCCESS && delegating) {
 		rbtnode->find_callback = 1;
@@ -3765,8 +3816,8 @@ dns__rbtdb_deleterdataset(dns_db_t *db, dns_dbnode_t *node,
 
 	NODE_WRLOCK(&rbtdb->node_locks[rbtnode->locknum].lock, &nlocktype);
 	result = dns__rbtdb_add(rbtdb, rbtnode, nodename, rbtversion, newheader,
-				DNS_DBADD_FORCE, false, NULL,
-				0 DNS__DB_FLARG_PASS);
+				DNS_DBADD_FORCE, false, NULL, 0,
+				nlocktype DNS__DB_FLARG_PASS);
 	NODE_UNLOCK(&rbtdb->node_locks[rbtnode->locknum].lock, &nlocktype);
 
 	/*
@@ -4131,6 +4182,11 @@ rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp DNS__DB_FLARG) {
 
 	rbtiterator = (rbtdb_rdatasetiter_t *)(*iteratorp);
 
+	if (rbtiterator->current != NULL) {
+		isc_refcount_decrement(&rbtiterator->current->references);
+		rbtiterator->current = NULL;
+	}
+
 	if (rbtiterator->common.version != NULL) {
 		dns__rbtdb_closeversion(rbtiterator->common.db,
 					&rbtiterator->common.version,
@@ -4210,7 +4266,16 @@ rdatasetiter_first(dns_rdatasetiter_t *iterator DNS__DB_FLARG) {
 		}
 	}
 
+	if (header != NULL) {
+		isc_refcount_increment0(&header->references);
+	}
+
 	NODE_UNLOCK(&rbtdb->node_locks[rbtnode->locknum].lock, &nlocktype);
+
+	if (rbtiterator->current != NULL) {
+		isc_refcount_decrement(&rbtiterator->current->references);
+		rbtiterator->current = NULL;
+	}
 
 	rbtiterator->current = header;
 
@@ -4303,7 +4368,16 @@ rdatasetiter_next(dns_rdatasetiter_t *iterator DNS__DB_FLARG) {
 		}
 	}
 
+	if (header != NULL) {
+		isc_refcount_increment0(&header->references);
+	}
+
 	NODE_UNLOCK(&rbtdb->node_locks[rbtnode->locknum].lock, &nlocktype);
+
+	if (rbtiterator->current != NULL) {
+		isc_refcount_decrement(&rbtiterator->current->references);
+		rbtiterator->current = NULL;
+	}
 
 	rbtiterator->current = header;
 

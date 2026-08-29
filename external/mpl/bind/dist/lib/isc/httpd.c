@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.c,v 1.12 2026/04/08 00:16:15 christos Exp $	*/
+/*	$NetBSD: httpd.c,v 1.13 2026/08/29 14:55:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -750,7 +750,7 @@ httpd_compress(isc_httpd_sendreq_t *req) {
 }
 #endif /* ifdef HAVE_ZLIB */
 
-static void
+static isc_result_t
 prepare_response(void *arg) {
 	isc_httpd_sendreq_t *req = arg;
 	isc_httpd_t *httpd = req->httpd;
@@ -874,10 +874,12 @@ prepare_response(void *arg) {
 	}
 	httpd->recvlen -= httpd->consume;
 	httpd->consume = 0;
+
+	return ISC_R_SUCCESS;
 }
 
 static void
-prepare_response_done(void *arg) {
+prepare_response_done(void *arg, isc_result_t result) {
 	isc_region_t r;
 	isc_httpd_sendreq_t *req = arg;
 	isc_httpd_t *httpd = req->httpd;
@@ -886,6 +888,11 @@ prepare_response_done(void *arg) {
 	 * Determine total response size.
 	 */
 	isc_buffer_usedregion(req->sendbuffer, &r);
+
+	if (result != ISC_R_SUCCESS) {
+		httpd_senddone(httpd->handle, result, req);
+		return;
+	}
 
 	isc_nm_send(httpd->handle, &r, httpd_senddone, req);
 }
@@ -947,8 +954,8 @@ httpd_request(isc_nmhandle_t *handle, isc_result_t eresult,
 
 	isc_httpd_sendreq_t *req = isc__httpd_sendreq_new(httpd);
 	isc_nmhandle_ref(handle);
-	isc_work_enqueue(isc_loop(), prepare_response, prepare_response_done,
-			 req);
+	isc_work_enqueue(isc_loop(), ISC_WORKLANE_SLOW, prepare_response,
+			 prepare_response_done, req);
 	return;
 
 close_readhandle:

@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.14 2026/05/20 16:53:45 christos Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.15 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -49,6 +49,33 @@ typedef struct rsa_components {
 	bool bnfree;
 	const BIGNUM *e, *n, *d, *p, *q, *dmp1, *dmq1, *iqmp;
 } rsa_components_t;
+
+#define OPENSSLRSA_MAX_MODULUS_BITS 4096
+#define OPENSSLRSA_MIN_MODULUS_BITS 512
+
+static BIGNUM *rsa_exponent_min = NULL;
+static BIGNUM *rsa_exponent_max = NULL;
+
+/*
+ * Accept odd public exponents in [3, 2^32 + 1].  That covers every Fermat
+ * prime up to F5 and the odd intermediate values seen on the wire.
+ */
+static bool
+rsa_exponent_in_range(const BIGNUM *e) {
+	if (!BN_is_odd(e)) {
+		return false;
+	}
+
+	if (BN_cmp(e, rsa_exponent_min) < 0) {
+		return false;
+	}
+
+	if (BN_cmp(e, rsa_exponent_max) > 0) {
+		return false;
+	}
+
+	return true;
+}
 
 static isc_result_t
 opensslrsa_components_get(const dst_key_t *key, rsa_components_t *c,
@@ -293,28 +320,63 @@ opensslrsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 }
 
 static bool
-opensslrsa_check_exponent_bits(EVP_PKEY *pkey, int maxbits) {
-	/* Always use the new API first with OpenSSL 3.x. */
+opensslrsa_check_modulus_bits(EVP_PKEY *pkey, int min, int max) {
+	int bits;
+
+	REQUIRE(pkey != NULL);
+
+	bits = EVP_PKEY_bits(pkey);
+	return bits > 0 && bits >= min && bits <= max;
+}
+
+static bool
+opensslrsa_rsa_exponent_is_allowed(EVP_PKEY *pkey) {
+	const BIGNUM *ce = NULL;
+	BIGNUM *emin = NULL;
+	BIGNUM *emax = NULL;
+	bool ok = false;
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
 	BIGNUM *e = NULL;
+#endif
+
+	REQUIRE(pkey != NULL);
+
+	/* Always use the new API first with OpenSSL 3.x. */
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
 	if (EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &e) == 1) {
-		int bits = BN_num_bits(e);
-		BN_free(e);
-		return bits < maxbits;
+		ce = e;
 	}
 #endif
 	/* Use old API for the OpenSSL ENGINE support, even with OpenSSL 3.x */
 #if OPENSSL_VERSION_NUMBER < 0x30000000L || OPENSSL_API_LEVEL < 30000
-	const RSA *rsa = EVP_PKEY_get0_RSA(pkey);
-	if (rsa != NULL) {
-		const BIGNUM *ce = NULL;
-		RSA_get0_key(rsa, NULL, &ce, NULL);
-		if (ce != NULL) {
-			return BN_num_bits(ce) < maxbits;
+	if (ce == NULL) {
+		const RSA *rsa = EVP_PKEY_get0_RSA(pkey);
+		if (rsa != NULL) {
+			RSA_get0_key(rsa, NULL, &ce, NULL);
 		}
 	}
 #endif
-	return false;
+	if (ce == NULL) {
+		goto cleanup;
+	}
+
+	emin = BN_new();
+	if (emin == NULL || !BN_set_word(emin, 3)) {
+		goto cleanup;
+	}
+	if (BN_hex2bn(&emax, "100000001") == 0) {
+		goto cleanup;
+	}
+
+	ok = BN_is_odd(ce) && BN_cmp(ce, emin) >= 0 && BN_cmp(ce, emax) <= 0;
+
+cleanup:
+	BN_free(emin);
+	BN_free(emax);
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	BN_free(e);
+#endif
+	return ok;
 }
 
 static isc_result_t
@@ -327,11 +389,16 @@ opensslrsa_verify2(dst_context_t *dctx, int maxbits, const isc_region_t *sig) {
 	REQUIRE(dctx != NULL && dctx->key != NULL);
 	REQUIRE(opensslrsa_valid_key_alg(dctx->key->key_alg));
 
+	UNUSED(maxbits);
+
 	key = dctx->key;
 	evp_md_ctx = dctx->ctxdata.evp_md_ctx;
 	pkey = key->keydata.pkeypair.pub;
 
-	if (maxbits != 0 && !opensslrsa_check_exponent_bits(pkey, maxbits)) {
+	if (!opensslrsa_check_modulus_bits(pkey, OPENSSLRSA_MIN_MODULUS_BITS,
+					   OPENSSLRSA_MAX_MODULUS_BITS) ||
+	    !opensslrsa_rsa_exponent_is_allowed(pkey))
+	{
 		return DST_R_VERIFYFAILURE;
 	}
 
@@ -829,7 +896,12 @@ opensslrsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (c.e == NULL || c.n == NULL) {
 		DST_RET(ISC_R_NOMEMORY);
 	}
-	if (BN_num_bits(c.e) > RSA_MAX_PUBEXP_BITS) {
+	if (BN_num_bits(c.n) < OPENSSLRSA_MIN_MODULUS_BITS ||
+	    BN_num_bits(c.n) > OPENSSLRSA_MAX_MODULUS_BITS)
+	{
+		DST_RET(ISC_R_RANGE);
+	}
+	if (!rsa_exponent_in_range(c.e)) {
 		DST_RET(ISC_R_RANGE);
 	}
 	isc_buffer_forward(data, length);
@@ -1001,6 +1073,9 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			engine = (char *)priv.elements[i].data;
 			break;
 		case TAG_RSA_LABEL:
+			/* NUL terminated data? */
+			CHECK(dst__privelement_is_nul_terminated(
+				&priv.elements[i]));
 			label = (char *)priv.elements[i].data;
 			break;
 		default:
@@ -1074,7 +1149,12 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	if (c.n == NULL || c.e == NULL) {
 		DST_RET(DST_R_INVALIDPRIVATEKEY);
 	}
-	if (BN_num_bits(c.e) > RSA_MAX_PUBEXP_BITS) {
+	if (BN_num_bits(c.n) < OPENSSLRSA_MIN_MODULUS_BITS ||
+	    BN_num_bits(c.n) > OPENSSLRSA_MAX_MODULUS_BITS)
+	{
+		DST_RET(ISC_R_RANGE);
+	}
+	if (!rsa_exponent_in_range(c.e)) {
 		DST_RET(ISC_R_RANGE);
 	}
 
@@ -1112,7 +1192,12 @@ opensslrsa_fromlabel(dst_key_t *key, const char *engine, const char *label,
 	CHECK(dst__openssl_fromlabel(EVP_PKEY_RSA, engine, label, pin, &pubpkey,
 				     &privpkey));
 
-	if (!opensslrsa_check_exponent_bits(pubpkey, RSA_MAX_PUBEXP_BITS)) {
+	if (!opensslrsa_check_modulus_bits(pubpkey, OPENSSLRSA_MIN_MODULUS_BITS,
+					   OPENSSLRSA_MAX_MODULUS_BITS))
+	{
+		DST_RET(ISC_R_RANGE);
+	}
+	if (!opensslrsa_rsa_exponent_is_allowed(pubpkey)) {
 		DST_RET(ISC_R_RANGE);
 	}
 
@@ -1316,5 +1401,32 @@ dst__opensslrsa_init(dst_func_t **funcp, unsigned char algorithm) {
 		result = ISC_R_SUCCESS;
 	}
 
+	if (rsa_exponent_min == NULL) {
+		rsa_exponent_min = BN_new();
+		INSIST(rsa_exponent_min != NULL);
+
+		RUNTIME_CHECK(BN_set_word(rsa_exponent_min, 3) == 1);
+	}
+
+	if (rsa_exponent_max == NULL) {
+		rsa_exponent_max = BN_new();
+		INSIST(rsa_exponent_max != NULL);
+
+		RUNTIME_CHECK(BN_set_bit(rsa_exponent_max, 0) == 1);
+		RUNTIME_CHECK(BN_set_bit(rsa_exponent_max, 32) == 1);
+	}
+
 	return result;
+}
+
+void
+dst__opensslrsa_shutdown(void) {
+	if (rsa_exponent_min != NULL) {
+		BN_free(rsa_exponent_min);
+		rsa_exponent_min = NULL;
+	}
+	if (rsa_exponent_max != NULL) {
+		BN_free(rsa_exponent_max);
+		rsa_exponent_max = NULL;
+	}
 }

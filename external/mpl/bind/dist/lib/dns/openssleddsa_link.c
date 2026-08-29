@@ -1,4 +1,4 @@
-/*	$NetBSD: openssleddsa_link.c,v 1.12 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: openssleddsa_link.c,v 1.13 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -459,6 +459,9 @@ openssleddsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			engine = (char *)priv.elements[i].data;
 			break;
 		case TAG_EDDSA_LABEL:
+			/* NUL terminated data? */
+			CHECK(dst__privelement_is_nul_terminated(
+				&priv.elements[i]));
 			label = (char *)priv.elements[i].data;
 			break;
 		case TAG_EDDSA_PRIVATEKEY:

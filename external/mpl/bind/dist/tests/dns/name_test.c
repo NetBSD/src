@@ -1,4 +1,4 @@
-/*	$NetBSD: name_test.c,v 1.6 2025/07/17 19:01:47 christos Exp $	*/
+/*	$NetBSD: name_test.c,v 1.7 2026/08/29 14:55:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -520,6 +520,32 @@ ISC_RUN_TEST_IMPL(fromregion) {
 	assert_false(dns_name_isabsolute(&name));
 }
 
+ISC_RUN_TEST_IMPL(fromwire) {
+	dns_fixedname_t fixed;
+	dns_name_t *name = dns_fixedname_initname(&fixed);
+	isc_buffer_t b;
+	unsigned char source[] = { 0x03, 'o', 'n', 'e',	 0x00, 0x03,
+				   't',	 'w', 'o', 0x00, 0x05, 't',
+				   'h',	 'r', 'e', 'e',	 0x00 };
+	isc_result_t result;
+
+	isc_buffer_init(&b, source, sizeof(source));
+	isc_buffer_add(&b, sizeof(source));
+	isc_buffer_setactive(&b, 10); /* names 'one.' and 'two.' */
+
+	/*
+	 * We should only be able to read two names from the buffer
+	 * as the active region has been set to cover only the first
+	 * two.
+	 */
+	result = dns_name_fromwire(name, &b, DNS_DECOMPRESS_NEVER, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	result = dns_name_fromwire(name, &b, DNS_DECOMPRESS_NEVER, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	result = dns_name_fromwire(name, &b, DNS_DECOMPRESS_NEVER, NULL);
+	assert_int_not_equal(result, ISC_R_SUCCESS);
+}
+
 /* is trust-anchor-telemetry test */
 ISC_RUN_TEST_IMPL(istat) {
 	dns_fixedname_t fixed;
@@ -925,6 +951,148 @@ ISC_RUN_TEST_IMPL(maxlabels) {
 	assert_int_equal(dns_name_countlabels(name), DNS_NAME_MAXLABELS);
 }
 
+#define VARGC(...) (sizeof((unsigned char[]){ __VA_ARGS__ }))
+#define TOTEXT_TEST(flags, text, ...) \
+	{ { __VA_ARGS__ }, VARGC(__VA_ARGS__), flags, text }
+
+ISC_RUN_TEST_IMPL(totext) {
+	isc_result_t result;
+	struct {
+		unsigned char data[255];
+		size_t length;
+		int flags;
+		const char *text;
+	} totext[] = {
+		/* Root name tests. */
+		TOTEXT_TEST(0, ".", 0x00),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, ".", 0x00),
+	/* Plain label tests. */
+#define WIRE_DATA 0x07, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 0x00
+		TOTEXT_TEST(0, "example.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "example", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "example.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "example",
+			    WIRE_DATA),
+	/* Embbeded NUL in label tests. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', '\0', 'b', 0x00
+		TOTEXT_TEST(0, "a\\000b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a\\000b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a\\000b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a\\000b",
+			    WIRE_DATA),
+	/* Embbeded period in label tests. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', '.', 'b', 0x00
+		TOTEXT_TEST(0, "a\\.b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a\\.b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a\\.b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a\\.b",
+			    WIRE_DATA),
+	/* Embbeded space in label tests. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', ' ', 'b', 0x00
+		TOTEXT_TEST(0, "a\\032b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a\\032b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a b",
+			    WIRE_DATA),
+	/* Embbeded semi-colon in label tests. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', ';', 'b', 0x00
+		TOTEXT_TEST(0, "a\\;b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a\\;b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a;b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a;b",
+			    WIRE_DATA),
+	/* Embeded backslash in label test. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', '\\', 'b', 0x00
+		TOTEXT_TEST(0, "a\\\\b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a\\\\b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a\\\\b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a\\\\b",
+			    WIRE_DATA),
+	/* Embeded double quote in label test. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', '"', 'b', 0x00
+		TOTEXT_TEST(0, "a\\\"b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a\\\"b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a\\\"b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a\\\"b",
+			    WIRE_DATA),
+	/* Embeded commercial at in label test. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', '@', 'b', 0x00
+		TOTEXT_TEST(0, "a\\@b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a\\@b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_PRINCIPAL, "a@b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_PRINCIPAL | DNS_NAME_OMITFINALDOT, "a@b",
+			    WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a@b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a@b",
+			    WIRE_DATA),
+	/* Embeded dollar symbol in label test. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', '$', 'b', 0x00
+		TOTEXT_TEST(0, "a\\$b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a\\$b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_PRINCIPAL, "a$b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_PRINCIPAL | DNS_NAME_OMITFINALDOT, "a$b",
+			    WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a$b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a$b",
+			    WIRE_DATA),
+	/* Embeded left parenthesis label test. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', '(', 'b', 0x00
+		TOTEXT_TEST(0, "a\\(b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a\\(b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a(b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a(b",
+			    WIRE_DATA),
+	/* Embeded right parenthesis label test. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', ')', 'b', 0x00
+		TOTEXT_TEST(0, "a\\)b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a\\)b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a)b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a)b",
+			    WIRE_DATA),
+	/* Embeded left curly bracket label test. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', '{', 'b', 0x00
+		TOTEXT_TEST(0, "a{b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a{b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a{b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a{b",
+			    WIRE_DATA),
+	/* Embeded right curly bracket label test. */
+#undef WIRE_DATA
+#define WIRE_DATA 0x03, 'a', '}', 'b', 0x00
+		TOTEXT_TEST(0, "a}b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_OMITFINALDOT, "a}b", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED, "a}b.", WIRE_DATA),
+		TOTEXT_TEST(DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT, "a}b",
+			    WIRE_DATA),
+	};
+	char namebuf[DNS_NAME_FORMATSIZE];
+
+	for (size_t i = 0; i < ARRAY_SIZE(totext); i++) {
+		isc_region_t r = { .base = totext[i].data,
+				   .length = totext[i].length };
+		isc_buffer_t b;
+		dns_name_t name = DNS_NAME_INITEMPTY;
+
+		dns_name_fromregion(&name, &r);
+		isc_buffer_init(&b, namebuf, sizeof(namebuf));
+
+		result = dns_name_totext(&name, totext[i].flags, &b);
+		assert_int_equal(result, ISC_R_SUCCESS);
+		assert_string_equal(namebuf, totext[i].text);
+	}
+}
+
 #ifdef DNS_BENCHMARK_TESTS
 
 /*
@@ -1007,21 +1175,23 @@ ISC_RUN_TEST_IMPL(benchmark) {
 #endif /* DNS_BENCHMARK_TESTS */
 
 ISC_TEST_LIST_START
-ISC_TEST_ENTRY(fullcompare)
-ISC_TEST_ENTRY(compression)
-ISC_TEST_ENTRY(collision)
-ISC_TEST_ENTRY(fromregion)
-ISC_TEST_ENTRY(istat)
-ISC_TEST_ENTRY(init)
-ISC_TEST_ENTRY(invalidate)
 ISC_TEST_ENTRY(buffer)
-ISC_TEST_ENTRY(isabsolute)
-ISC_TEST_ENTRY(hash)
-ISC_TEST_ENTRY(issubdomain)
+ISC_TEST_ENTRY(collision)
+ISC_TEST_ENTRY(compression)
 ISC_TEST_ENTRY(countlabels)
+ISC_TEST_ENTRY(fromregion)
+ISC_TEST_ENTRY(fromwire)
+ISC_TEST_ENTRY(fullcompare)
 ISC_TEST_ENTRY(getlabel)
 ISC_TEST_ENTRY(getlabelsequence)
+ISC_TEST_ENTRY(hash)
+ISC_TEST_ENTRY(init)
+ISC_TEST_ENTRY(invalidate)
+ISC_TEST_ENTRY(isabsolute)
+ISC_TEST_ENTRY(issubdomain)
+ISC_TEST_ENTRY(istat)
 ISC_TEST_ENTRY(maxlabels)
+ISC_TEST_ENTRY(totext)
 #ifdef DNS_BENCHMARK_TESTS
 ISC_TEST_ENTRY(benchmark)
 #endif /* DNS_BENCHMARK_TESTS */

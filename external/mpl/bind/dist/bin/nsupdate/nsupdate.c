@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.17 2026/04/08 00:15:44 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.18 2026/08/29 14:55:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2434,7 +2434,7 @@ do_next_command(char *cmdline) {
 static uint16_t
 get_next_command(void) {
 	uint16_t result = STATUS_QUIT;
-	char cmdlinebuf[MAXCMD];
+	char cmdlinebuf[MAXCMD] = { 0 };
 	char *cmdline = NULL, *ptr = NULL;
 
 	if (interactive) {

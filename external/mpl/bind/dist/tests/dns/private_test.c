@@ -1,4 +1,4 @@
-/*	$NetBSD: private_test.c,v 1.4 2025/07/17 19:01:47 christos Exp $	*/
+/*	$NetBSD: private_test.c,v 1.5 2026/08/29 14:55:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -98,7 +98,8 @@ make_signing(signing_testcase_t *testcase, dns_rdata_t *private,
 
 static void
 make_nsec3(nsec3_testcase_t *testcase, dns_rdata_t *private,
-	   unsigned char *pbuf) {
+	   unsigned char *pbuf, size_t pbufsize) {
+	isc_result_t result;
 	dns_rdata_nsec3param_t params;
 	dns_rdata_t nsec3param = DNS_RDATA_INIT;
 	unsigned char bufdata[BUFSIZ];
@@ -136,13 +137,14 @@ make_nsec3(nsec3_testcase_t *testcase, dns_rdata_t *private,
 	}
 
 	isc_buffer_init(&buf, bufdata, sizeof(bufdata));
-	dns_rdata_fromstruct(&nsec3param, dns_rdataclass_in,
-			     dns_rdatatype_nsec3param, &params, &buf);
+	result = dns_rdata_fromstruct(&nsec3param, dns_rdataclass_in,
+				      dns_rdatatype_nsec3param, &params, &buf);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	dns_rdata_init(private);
 
 	dns_nsec3param_toprivate(&nsec3param, private, privatetype, pbuf,
-				 DNS_NSEC3PARAM_BUFFERSIZE + 1);
+				 pbufsize);
 }
 
 /* convert private signing records to text */
@@ -202,13 +204,13 @@ ISC_RUN_TEST_IMPL(private_nsec3_totext) {
 	UNUSED(state);
 
 	for (i = 0; i < ncases; i++) {
-		unsigned char data[DNS_NSEC3PARAM_BUFFERSIZE + 1];
+		unsigned char data[DNS_PRIVATE_BUFFERSIZE];
 		char output[BUFSIZ];
 		isc_buffer_t buf;
 
 		isc_buffer_init(&buf, output, sizeof(output));
 
-		make_nsec3(&testcases[i], &private, data);
+		make_nsec3(&testcases[i], &private, data, sizeof(data));
 		dns_private_totext(&private, &buf);
 		assert_string_equal(output, results[i]);
 	}

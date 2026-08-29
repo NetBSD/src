@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa_test.c,v 1.4 2026/05/20 16:53:47 christos Exp $	*/
+/*	$NetBSD: rsa_test.c,v 1.5 2026/08/29 14:55:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -251,7 +251,7 @@ ISC_RUN_TEST_IMPL(isc_rsa_fromdns_oversized_exponent) {
 	rdata[i++] = 0x03; /* protocol */
 	rdata[i++] = DST_ALG_RSASHA256;
 	/* RSA wire key: e_bytes + e + n.  Use a 6-byte (48-bit) e
-	 * with a non-zero leading byte so it exceeds the 35-bit cap. */
+	 * with a non-zero leading byte; outside the allowlist. */
 	rdata[i++] = 6;
 	rdata[i++] = 0x01;
 	rdata[i++] = 0x02;
@@ -272,10 +272,135 @@ ISC_RUN_TEST_IMPL(isc_rsa_fromdns_oversized_exponent) {
 	assert_null(key);
 }
 
+/*
+ * dst_key_fromdns rejects RSA DNSKEYs whose public exponent is in the
+ * accepted numeric range but even (and therefore not a valid RSA exponent).
+ */
+ISC_RUN_TEST_IMPL(isc_rsa_fromdns_even_exponent) {
+	isc_result_t result;
+	dns_fixedname_t fname;
+	dns_name_t *name;
+	dst_key_t *key = NULL;
+	isc_buffer_t buf;
+	unsigned char rdata[300] = { 0 };
+	size_t i = 0;
+
+	UNUSED(state);
+
+	name = dns_fixedname_initname(&fname);
+	isc_buffer_constinit(&buf, "rsa.", 4);
+	isc_buffer_add(&buf, 4);
+	result = dns_name_fromtext(name, &buf, NULL, 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	/* DNSKEY rdata: flags(2) + proto(1) + alg(1) + RSA wire pubkey. */
+	rdata[i++] = 0x01; /* flags hi (KSK) */
+	rdata[i++] = 0x00; /* flags lo */
+	rdata[i++] = 0x03; /* protocol */
+	rdata[i++] = DST_ALG_RSASHA256;
+	/* e_bytes=1, exponent=0x04 (even, mathematically invalid). */
+	rdata[i++] = 1;
+	rdata[i++] = 0x04;
+	/* 256 bytes of arbitrary modulus (2048-bit). */
+	for (size_t j = 0; j < 256; j++) {
+		rdata[i++] = 0xAB;
+	}
+
+	isc_buffer_init(&buf, rdata, i);
+	isc_buffer_add(&buf, i);
+
+	result = dst_key_fromdns(name, dns_rdataclass_in, &buf, mctx, &key);
+	assert_int_equal(result, ISC_R_RANGE);
+	assert_null(key);
+}
+
+/* dst_key_fromdns rejects RSA DNSKEYs whose modulus exceeds the cap */
+ISC_RUN_TEST_IMPL(isc_rsa_fromdns_oversized_modulus) {
+	isc_result_t result;
+	dns_fixedname_t fname;
+	dns_name_t *name;
+	dst_key_t *key = NULL;
+	isc_buffer_t buf;
+	unsigned char rdata[1100] = { 0 };
+	size_t i = 0;
+
+	UNUSED(state);
+
+	name = dns_fixedname_initname(&fname);
+	isc_buffer_constinit(&buf, "rsa.", 4);
+	isc_buffer_add(&buf, 4);
+	result = dns_name_fromtext(name, &buf, NULL, 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	/* DNSKEY rdata: flags(2) + proto(1) + alg(1) + RSA wire pubkey. */
+	rdata[i++] = 0x01; /* flags hi (KSK) */
+	rdata[i++] = 0x00; /* flags lo */
+	rdata[i++] = 0x03; /* protocol */
+	rdata[i++] = DST_ALG_RSASHA256;
+	/*
+	 * RSA wire key: e_bytes + e + n.  1-byte exponent (0x03) and a
+	 * 1024-byte modulus (8192 bits, leading byte 0xAB so the high bit
+	 * is set) — twice the 4096-bit maximum.
+	 */
+	rdata[i++] = 1;
+	rdata[i++] = 0x03;
+	for (size_t j = 0; j < 1024; j++) {
+		rdata[i++] = 0xAB;
+	}
+
+	isc_buffer_init(&buf, rdata, i);
+	isc_buffer_add(&buf, i);
+
+	result = dst_key_fromdns(name, dns_rdataclass_in, &buf, mctx, &key);
+	assert_int_equal(result, ISC_R_RANGE);
+	assert_null(key);
+}
+
+/* dst_key_fromdns rejects RSA DNSKEYs with a degenerate modulus */
+ISC_RUN_TEST_IMPL(isc_rsa_fromdns_short_modulus) {
+	isc_result_t result;
+	dns_fixedname_t fname;
+	dns_name_t *name;
+	dst_key_t *key = NULL;
+	isc_buffer_t buf;
+	unsigned char rdata[8];
+	size_t i = 0;
+
+	UNUSED(state);
+
+	name = dns_fixedname_initname(&fname);
+	isc_buffer_constinit(&buf, "rsa.", 4);
+	isc_buffer_add(&buf, 4);
+	result = dns_name_fromtext(name, &buf, NULL, 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	/*
+	 * DNSKEY rdata: flags(2) + proto(1) + alg(1) + RSA wire pubkey
+	 * 'AQM=' (0x01 0x03): e_bytes=1, exponent=0x03, modulus tail empty.
+	 */
+	rdata[i++] = 0x01;
+	rdata[i++] = 0x00;
+	rdata[i++] = 0x03;
+	rdata[i++] = DST_ALG_RSASHA256;
+	rdata[i++] = 0x01;
+	rdata[i++] = 0x03;
+
+	isc_buffer_init(&buf, rdata, i);
+	isc_buffer_add(&buf, i);
+
+	result = dst_key_fromdns(name, dns_rdataclass_in, &buf, mctx, &key);
+	assert_int_equal(result, ISC_R_RANGE);
+	assert_null(key);
+}
+
 ISC_TEST_LIST_START
 ISC_TEST_ENTRY_CUSTOM(isc_rsa_verify, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(isc_rsa_fromdns_oversized_exponent, setup_test,
 		      teardown_test)
+ISC_TEST_ENTRY_CUSTOM(isc_rsa_fromdns_even_exponent, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(isc_rsa_fromdns_oversized_modulus, setup_test,
+		      teardown_test)
+ISC_TEST_ENTRY_CUSTOM(isc_rsa_fromdns_short_modulus, setup_test, teardown_test)
 ISC_TEST_LIST_END
 
 ISC_TEST_MAIN

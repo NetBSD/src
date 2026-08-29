@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-ksr.c,v 1.6 2026/05/20 16:53:43 christos Exp $	*/
+/*	$NetBSD: dnssec-ksr.c,v 1.7 2026/08/29 14:55:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 
 #include <isc/buffer.h>
 #include <isc/commandline.h>
+#include <isc/dir.h> /* Required on GNU/Hurd */
 #include <isc/fips.h>
 #include <isc/lex.h>
 #include <isc/mem.h>

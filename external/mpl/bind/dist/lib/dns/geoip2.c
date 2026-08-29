@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip2.c,v 1.8 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: geoip2.c,v 1.9 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -196,7 +196,7 @@ match_string(MMDB_entry_data_s *value, const char *str) {
 
 	if (value == NULL || !value->has_data ||
 	    value->type != MMDB_DATA_TYPE_UTF8_STRING ||
-	    value->utf8_string == NULL)
+	    value->utf8_string == NULL || value->data_size != strlen(str))
 	{
 		return false;
 	}

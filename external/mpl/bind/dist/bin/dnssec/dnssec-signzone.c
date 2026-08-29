@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.18 2026/06/19 20:09:58 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.19 2026/08/29 14:55:02 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -310,7 +310,7 @@ signwithkey(dns_name_t *name, dns_rdataset_t *rdataset, dst_key_t *key,
 
 	if (tryverify) {
 		result = dns_dnssec_verify(name, rdataset, key, true, 0, mctx,
-					   &trdata, NULL);
+					   &trdata, NULL, NULL);
 		if (result == ISC_R_SUCCESS || result == DNS_R_FROMWILDCARD) {
 			vbprintf(3, "\tsignature verified\n");
 			INCSTAT(nverified);
@@ -471,7 +471,8 @@ static bool
 setverifies(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	    dns_rdata_t *rrsig) {
 	isc_result_t result;
-	result = dns_dnssec_verify(name, set, key, false, 0, mctx, rrsig, NULL);
+	result = dns_dnssec_verify(name, set, key, false, 0, mctx, rrsig, NULL,
+				   NULL);
 	if (result == ISC_R_SUCCESS || result == DNS_R_FROMWILDCARD) {
 		INCSTAT(nverified);
 		return true;
@@ -479,6 +480,30 @@ setverifies(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		INCSTAT(nverifyfailed);
 		return false;
 	}
+}
+
+static void
+grow_arrays(unsigned int newarraysize, unsigned int *arraysize,
+	    bool **wassignedby, bool **nowsignedby) {
+	bool *nwsb = isc_mem_cget(mctx, newarraysize, sizeof(bool));
+	bool *nnsb = isc_mem_cget(mctx, newarraysize, sizeof(bool));
+	unsigned int i;
+
+	INSIST(newarraysize > *arraysize);
+
+	for (i = 0; i < *arraysize; i++) {
+		nwsb[i] = (*wassignedby)[i];
+		nnsb[i] = (*nowsignedby)[i];
+	}
+	for (; i < newarraysize; i++) {
+		nwsb[i] = nnsb[i] = false;
+	}
+
+	isc_mem_cput(mctx, *wassignedby, *arraysize, sizeof(bool));
+	isc_mem_cput(mctx, *nowsignedby, *arraysize, sizeof(bool));
+	*wassignedby = nwsb;
+	*nowsignedby = nnsb;
+	*arraysize = newarraysize;
 }
 
 /*%
@@ -496,10 +521,10 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 	isc_result_t result;
 	bool nosigs = false;
 	bool *wassignedby, *nowsignedby;
-	int arraysize;
+	unsigned int arraysize;
 	dns_difftuple_t *tuple;
 	dns_ttl_t ttl;
-	int i;
+	unsigned int i;
 	char namestr[DNS_NAME_FORMATSIZE];
 	char typestr[DNS_RDATATYPE_FORMATSIZE];
 	char sigstr[SIG_FORMATSIZE];
@@ -525,7 +550,9 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 
 	vbprintf(1, "%s/%s:\n", namestr, typestr);
 
+	RWLOCK(&keylist_lock, isc_rwlocktype_read);
 	arraysize = keycount;
+	RWUNLOCK(&keylist_lock, isc_rwlocktype_read);
 	if (!nosigs) {
 		arraysize += dns_rdataset_count(&sigset);
 	}
@@ -554,6 +581,15 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 		future = isc_serial_lt(now, rrsig.timesigned);
 
 		key = keythatsigned(&rrsig);
+
+		/*
+		 * Grow arrays if needed.
+		 */
+		if (key != NULL && key->index >= arraysize) {
+			grow_arrays(key->index + 1, &arraysize, &wassignedby,
+				    &nowsignedby);
+		}
+
 		offline = (key != NULL) ? key->pubkey : false;
 		sig_format(&rrsig, sigstr, sizeof(sigstr));
 		expired = isc_serial_gt(now, rrsig.timeexpire);
@@ -692,18 +728,31 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 		dns_rdataset_disassociate(&sigset);
 	}
 
+	RWLOCK(&keylist_lock, isc_rwlocktype_read);
 	for (key = ISC_LIST_HEAD(keylist); key != NULL;
 	     key = ISC_LIST_NEXT(key, link))
 	{
+		RWUNLOCK(&keylist_lock, isc_rwlocktype_read);
 		if (REVOKE(key->key) && set->type != dns_rdatatype_dnskey) {
+			RWLOCK(&keylist_lock, isc_rwlocktype_read);
 			continue;
 		}
 
+		/*
+		 * Grow arrays if needed.
+		 */
+		if (key->index >= arraysize) {
+			grow_arrays(key->index + 1, &arraysize, &wassignedby,
+				    &nowsignedby);
+		}
+
 		if (nowsignedby[key->index]) {
+			RWLOCK(&keylist_lock, isc_rwlocktype_read);
 			continue;
 		}
 
 		if (!issigningkey(key)) {
+			RWLOCK(&keylist_lock, isc_rwlocktype_read);
 			continue;
 		}
 
@@ -716,21 +765,29 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 			dns_dnsseckey_t *curr;
 
 			have_ksk = isksk(key);
+			RWLOCK(&keylist_lock, isc_rwlocktype_read);
 			for (curr = ISC_LIST_HEAD(keylist); curr != NULL;
 			     curr = ISC_LIST_NEXT(curr, link))
 			{
+				RWUNLOCK(&keylist_lock, isc_rwlocktype_read);
 				if (dst_key_alg(key->key) !=
 				    dst_key_alg(curr->key))
 				{
+					RWLOCK(&keylist_lock,
+					       isc_rwlocktype_read);
 					continue;
 				}
 				if (REVOKE(curr->key)) {
+					RWLOCK(&keylist_lock,
+					       isc_rwlocktype_read);
 					continue;
 				}
 				if (isksk(curr)) {
 					have_ksk = true;
 				}
+				RWLOCK(&keylist_lock, isc_rwlocktype_read);
 			}
+			RWUNLOCK(&keylist_lock, isc_rwlocktype_read);
 			if (isksk(key) || !have_ksk ||
 			    (iszsk(key) && !keyset_kskonly))
 			{
@@ -757,17 +814,22 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 				 * - Have key ID equal to the predecessor id.
 				 * - Have a successor that matches 'key' id.
 				 */
+				RWLOCK(&keylist_lock, isc_rwlocktype_read);
 				for (curr = ISC_LIST_HEAD(keylist);
 				     curr != NULL;
 				     curr = ISC_LIST_NEXT(curr, link))
 				{
 					uint32_t suc;
+					RWUNLOCK(&keylist_lock,
+						 isc_rwlocktype_read);
 
 					if (dst_key_alg(key->key) !=
 						    dst_key_alg(curr->key) ||
 					    !iszsk(curr) ||
 					    dst_key_id(curr->key) != pre)
 					{
+						RWLOCK(&keylist_lock,
+						       isc_rwlocktype_read);
 						continue;
 					}
 					ret = dst_key_getnum(curr->key,
@@ -776,7 +838,15 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 					if (ret != ISC_R_SUCCESS ||
 					    dst_key_id(key->key) != suc)
 					{
+						RWLOCK(&keylist_lock,
+						       isc_rwlocktype_read);
 						continue;
+					}
+					if (curr->index >= arraysize) {
+						grow_arrays(curr->index + 1,
+							    &arraysize,
+							    &wassignedby,
+							    &nowsignedby);
 					}
 
 					/*
@@ -787,7 +857,10 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 					if (nowsignedby[curr->index]) {
 						have_pre_sig = true;
 					}
+					RWLOCK(&keylist_lock,
+					       isc_rwlocktype_read);
 				}
+				RWUNLOCK(&keylist_lock, isc_rwlocktype_read);
 			}
 
 			/*
@@ -799,7 +872,9 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 					    "signing with dnskey");
 			}
 		}
+		RWLOCK(&keylist_lock, isc_rwlocktype_read);
 	}
+	RWUNLOCK(&keylist_lock, isc_rwlocktype_read);
 
 	isc_mem_cput(mctx, wassignedby, arraysize, sizeof(bool));
 	isc_mem_cput(mctx, nowsignedby, arraysize, sizeof(bool));
@@ -1621,6 +1696,11 @@ assignwork(void *arg) {
 		 * The origin was handled by signapex().
 		 */
 		if (dns_name_equal(name, gorigin)) {
+			dns_db_detachnode(gdb, &node);
+			goto next;
+		}
+		if (!dns_name_issubdomain(name, gorigin)) {
+			dumpnode(name, node);
 			dns_db_detachnode(gdb, &node);
 			goto next;
 		}

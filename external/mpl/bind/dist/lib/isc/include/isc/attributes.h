@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.h,v 1.5 2026/01/29 18:37:55 christos Exp $	*/
+/*	$NetBSD: attributes.h,v 1.6 2026/08/29 14:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,6 +35,12 @@
 #define ISC_ATTR_RETURNS_NONNULL __attribute__((returns_nonnull))
 #else
 #define ISC_ATTR_RETURNS_NONNULL
+#endif
+
+#if HAVE_FUNC_ATTRIBUTE_WARN_UNUSED_RESULT
+#define ISC_ATTR_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+#else
+#define ISC_ATTR_WARN_UNUSED_RESULT
 #endif
 
 #ifdef HAVE_FUNC_ATTRIBUTE_MALLOC

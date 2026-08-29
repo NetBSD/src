@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.29 2026/05/20 16:53:47 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.30 2026/08/29 14:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1020,6 +1020,9 @@ ns_client_error(ns_client_t *client, isc_result_t result) {
 		isc_time_t expire;
 		isc_interval_t i;
 		uint32_t flags = 0;
+		dns_name_t *qname = client->query.origqname != NULL
+					    ? client->query.origqname
+					    : client->query.qname;
 
 		if ((message->flags & DNS_MESSAGEFLAG_CD) != 0) {
 			flags = NS_FAILCACHE_CD;
@@ -1028,8 +1031,7 @@ ns_client_error(ns_client_t *client, isc_result_t result) {
 		isc_interval_set(&i, client->view->fail_ttl, 0);
 		result = isc_time_nowplusinterval(&expire, &i);
 		if (result == ISC_R_SUCCESS) {
-			dns_badcache_add(client->view->failcache,
-					 client->query.qname,
+			dns_badcache_add(client->view->failcache, qname,
 					 client->query.qtype, flags,
 					 isc_time_seconds(&expire));
 		}
@@ -1682,6 +1684,16 @@ ns__client_reset_cb(void *client0) {
 		client_put_tcp_buffer(client);
 	}
 
+	if (client->reqbuf != NULL) {
+		isc_mem_put(client->manager->mctx, client->reqbuf,
+			    client->reqbuf_size);
+		client->reqbuf_size = 0;
+	}
+
+	if (client->buffer != NULL) {
+		isc_buffer_initnull(client->buffer);
+	}
+
 	if (client->keytag != NULL) {
 		isc_mem_put(client->manager->mctx, client->keytag,
 			    client->keytag_len);
@@ -2127,6 +2139,29 @@ ns_client_request(isc_nmhandle_t *handle, isc_result_t eresult,
 
 	result = ns_client_setup_view(client, &netaddr);
 	if (result == DNS_R_WAIT) {
+#ifdef HAVE_DNSTAP
+		/*
+		 * The request is finished asynchronously, but the receive
+		 * buffer is only valid during this callback; copy it so it
+		 * survives the asynchronous hop for dnstap logging.
+		 */
+		isc_region_t r;
+		INSIST(client->reqbuf == NULL);
+		isc_buffer_usedregion(client->buffer, &r);
+		if (r.length != 0) {
+			client->reqbuf = isc_mem_get(client->manager->mctx,
+						     r.length);
+			client->reqbuf_size = r.length;
+			memmove(client->reqbuf, r.base, r.length);
+			isc_buffer_init(&client->tbuffer, client->reqbuf,
+					r.length);
+			isc_buffer_add(&client->tbuffer, r.length);
+			client->buffer = &client->tbuffer;
+		}
+#else
+		isc_buffer_initnull(client->buffer);
+#endif /* #ifdef HAVE_DNSTAP */
+
 		return;
 	}
 

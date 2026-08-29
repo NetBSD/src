@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.16 2026/06/19 20:10:00 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.17 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2668,37 +2668,40 @@ cleanup:
 }
 
 /*
- * The combination of isc_work_enqueue() on the current loop and callback on
- * lctx->loop ensures the correct ordering:
+ * The load runs on the SLOW work lane of lctx->loop:
  *
- * 1. dns_master_loadfileasync() calls isc_work_enqueue() on the current loop.
- * 2. master_load() runs asynchronously and can finish before the entry point
- *    returns; master_load_done() is queued on the current loop and cannot run
- *    until the entry point returns.
- * 3. The entry point publishes *lctxp.
- * 4. master_load_done() runs on the current loop and hands off to lctx->loop.
- * 5. lctx->done() runs on lctx->loop asynchronously.
+ * 1. dns_master_loadfileasync() publishes *lctxp, then starts
+ *    master_load_start() on lctx->loop with isc_async_run().  Publishing
+ *    first ensures lctx->done() cannot observe *lctxp unset even when the
+ *    caller runs on a different loop.
+ * 2. master_load_start() enqueues the work; isc_work_enqueue() must be
+ *    called on the loop the work is bound to, hence the extra hop.
+ * 3. master_load() runs on the worker thread and its result is handed to
+ *    master_load_done() on lctx->loop.
+ * 4. master_load_done() calls lctx->done() and drops the loop and lctx
+ *    references.
  */
-static void
+static isc_result_t
 master_load(void *arg) {
 	dns_loadctx_t *lctx = arg;
-	lctx->result = (lctx->load)(lctx);
+	return (lctx->load)(lctx);
 }
 
 static void
-master_load_callback(void *arg) {
+master_load_done(void *arg, isc_result_t result) {
 	dns_loadctx_t *lctx = arg;
 
-	(lctx->done)(lctx->done_arg, lctx->result);
+	(lctx->done)(lctx->done_arg, result);
 	isc_loop_detach(&lctx->loop);
 	dns_loadctx_detach(&lctx);
 }
 
 static void
-master_load_done(void *arg) {
+master_load_start(void *arg) {
 	dns_loadctx_t *lctx = arg;
 
-	isc_async_run(lctx->loop, master_load_callback, lctx);
+	isc_work_enqueue(lctx->loop, ISC_WORKLANE_SLOW, master_load,
+			 master_load_done, lctx);
 }
 
 isc_result_t
@@ -2731,9 +2734,11 @@ dns_master_loadfileasync(const char *master_file, dns_name_t *top,
 
 	dns_loadctx_ref(lctx);
 	isc_loop_attach(loop, &lctx->loop);
-	isc_work_enqueue(isc_loop(), master_load, master_load_done, lctx);
 
+	/* Publish *lctxp before the load can start (see master_load). */
 	*lctxp = lctx;
+
+	isc_async_run(loop, master_load_start, lctx);
 
 	return ISC_R_SUCCESS;
 }

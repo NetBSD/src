@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.c,v 1.18 2025/01/26 16:25:45 christos Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.19 2026/08/29 14:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -92,6 +92,7 @@ purge_old_interfaces(ns_interfacemgr_t *mgr);
 static void
 clearlistenon(ns_interfacemgr_t *mgr);
 
+#if defined(RTM_NEWADDR) && defined(RTM_DELADDR)
 static bool
 need_rescan(ns_interfacemgr_t *mgr, struct MSGHDR *rtm, size_t len) {
 	if (rtm->MSGTYPE != RTM_NEWADDR && rtm->MSGTYPE != RTM_DELADDR) {
@@ -197,6 +198,7 @@ need_rescan(ns_interfacemgr_t *mgr, struct MSGHDR *rtm, size_t len) {
 
 	return false;
 }
+#endif /* if defined(RTM_NEWADDR) && defined(RTM_DELADDR) */
 
 static void
 route_recv(isc_nmhandle_t *handle, isc_result_t eresult, isc_region_t *region,
@@ -245,9 +247,11 @@ route_recv(isc_nmhandle_t *handle, isc_result_t eresult, isc_region_t *region,
 
 	REQUIRE(mgr->route != NULL);
 
+#if defined(RTM_NEWADDR) && defined(RTM_DELADDR)
 	if (need_rescan(mgr, rtm, rtmlen) && mgr->sctx->interface_auto) {
 		ns_interfacemgr_scan(mgr, false, false);
 	}
+#endif /* if defined(RTM_NEWADDR) && defined(RTM_DELADDR) */
 
 	isc_nm_read(handle, route_recv, mgr);
 	return;

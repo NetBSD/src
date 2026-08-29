@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.17 2026/06/19 20:10:00 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.18 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1035,6 +1035,8 @@ dns_name_totext(const dns_name_t *name, unsigned int options,
 	bool saw_root = false;
 	unsigned int oused;
 	bool omit_final_dot = ((options & DNS_NAME_OMITFINALDOT) != 0);
+	bool minimal = ((options & DNS_NAME_QUOTED) != 0);
+	bool principal = ((options & DNS_NAME_PRINCIPAL) != 0);
 
 	/*
 	 * This function assumes the name is in proper uncompressed
@@ -1112,16 +1114,19 @@ dns_name_totext(const dns_name_t *name, unsigned int options,
 				/* Special modifiers in zone files. */
 				case 0x40: /* '@' */
 				case 0x24: /* '$' */
-					if ((options & DNS_NAME_PRINCIPAL) != 0)
-					{
+					if (principal) {
+						goto no_escape;
+					}
+					FALLTHROUGH;
+				case 0x28: /* '(' */
+				case 0x29: /* ')' */
+				case 0x3B: /* ';' */
+					if (minimal) {
 						goto no_escape;
 					}
 					FALLTHROUGH;
 				case 0x22: /* '"' */
-				case 0x28: /* '(' */
-				case 0x29: /* ')' */
 				case 0x2E: /* '.' */
-				case 0x3B: /* ';' */
 				case 0x5C: /* '\\' */
 					if (trem < 2) {
 						return ISC_R_NOSPACE;
@@ -1134,7 +1139,9 @@ dns_name_totext(const dns_name_t *name, unsigned int options,
 					break;
 				no_escape:
 				default:
-					if (c > 0x20 && c < 0x7f) {
+					if ((c > 0x20 && c < 0x7f) ||
+					    (c == 0x20 && minimal))
+					{
 						if (trem == 0) {
 							return ISC_R_NOSPACE;
 						}
@@ -1494,7 +1501,7 @@ dns_name_fromwire(dns_name_t *const name, isc_buffer_t *const source,
 	 * The amount of the source we consumed is set once.
 	 */
 	const uint8_t *const source_buf = isc_buffer_base(source);
-	const uint8_t *const source_max = isc_buffer_used(source);
+	const uint8_t *const source_max = isc_buffer_active(source);
 	const uint8_t *const start = isc_buffer_current(source);
 	const uint8_t *marker = start;
 	const uint8_t *cursor = start;

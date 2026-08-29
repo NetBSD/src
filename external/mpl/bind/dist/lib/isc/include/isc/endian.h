@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.7 2025/01/26 16:25:40 christos Exp $	*/
+/*	$NetBSD: endian.h,v 1.8 2026/08/29 14:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,6 +42,7 @@
 
 #include <libkern/OSByteOrder.h>
 
+#ifndef htobe16
 #define htobe16(x) OSSwapHostToBigInt16(x)
 #define htole16(x) OSSwapHostToLittleInt16(x)
 #define be16toh(x) OSSwapBigToHostInt16(x)
@@ -56,6 +57,7 @@
 #define htole64(x) OSSwapHostToLittleInt64(x)
 #define be64toh(x) OSSwapBigToHostInt64(x)
 #define le64toh(x) OSSwapLittleToHostInt64(x)
+#endif /* !htobe16 */
 
 #elif defined(sun) || defined(__sun) || defined(__SVR4)
 

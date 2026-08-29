@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.7 2026/06/19 20:10:02 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.8 2026/08/29 14:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1299,6 +1299,14 @@ check_options(const cfg_obj_t *options, const cfg_obj_t *config,
 	static const char *server_contact[] = { "empty-server", "empty-contact",
 						"dns64-server", "dns64-contact",
 						NULL };
+
+#ifndef IOV_MAX
+/*
+ * FSTRM_IOTHR_INPUT_QUEUE_SIZE_MAX is defined as IOV_MAX, but IOV_MAX can be
+ * undefined.
+ */
+#define IOV_MAX 1024
+#endif /* ifndef IOV_MAX */
 
 #ifdef HAVE_DNSTAP
 	static fstrmtable fstrm[] = {

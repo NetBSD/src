@@ -1,4 +1,4 @@
-/*	$NetBSD: name.h,v 1.14 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.15 2026/08/29 14:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -859,6 +859,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 
 #define DNS_NAME_OMITFINALDOT 0x01U
 #define DNS_NAME_PRINCIPAL    0x02U /* do not escape $ and @ */
+#define DNS_NAME_QUOTED	      0x04U /* minimal escaping within double quotes */
 
 isc_result_t
 dns_name_totext(const dns_name_t *name, unsigned int options,
@@ -1289,7 +1290,7 @@ dns_name_copy(const dns_name_t *source, dns_name_t *dest);
 bool
 dns_name_ishostname(const dns_name_t *name, bool wildcard);
 /*%<
- * Return if 'name' is a valid hostname.  RFC 952 / RFC 1123.
+ * Return true if 'name' is a valid hostname.  RFC 952 / RFC 1123.
  * If 'wildcard' is true then allow the first label of name to
  * be a wildcard.
  * The root is also accepted.
@@ -1301,7 +1302,7 @@ dns_name_ishostname(const dns_name_t *name, bool wildcard);
 bool
 dns_name_ismailbox(const dns_name_t *name);
 /*%<
- * Return if 'name' is a valid mailbox.  RFC 821.
+ * Return true if 'name' is a valid mailbox.  RFC 821.
  *
  * Requires:
  * \li	'name' to be valid.
@@ -1310,7 +1311,7 @@ dns_name_ismailbox(const dns_name_t *name);
 bool
 dns_name_internalwildcard(const dns_name_t *name);
 /*%<
- * Return if 'name' contains a internal wildcard name.
+ * Return true if 'name' contains a internal wildcard name.
  *
  * Requires:
  * \li	'name' to be valid.

@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.h,v 1.14 2026/04/08 00:16:14 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.15 2026/08/29 14:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,6 +53,7 @@
 #include <isc/job.h>
 #include <isc/lang.h>
 #include <isc/refcount.h>
+#include <isc/work.h>
 
 #include <dns/fixedname.h>
 #include <dns/rdata.h>
@@ -127,6 +128,8 @@ struct dns_validator {
 	/* Internal validator state */
 	atomic_bool	   canceling;
 	unsigned int	   attributes;
+	isc_work_t	  *offloaded_work;
+	isc_work_cb	   offloaded_cb;
 	dns_fetch_t	  *fetch;
 	dns_validator_t	  *subvalidator;
 	dns_validator_t	  *parent;
@@ -142,6 +145,7 @@ struct dns_validator {
 	dns_rdataset_t	   fsigrdataset;
 	dns_fixedname_t	   fname;
 	dns_fixedname_t	   wild;
+	dns_fixedname_t	   wildsigner;
 	dns_fixedname_t	   closest;
 	ISC_LINK(dns_validator_t) link;
 	bool	      mustbesecure;

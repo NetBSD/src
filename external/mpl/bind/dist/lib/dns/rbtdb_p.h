@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb_p.h,v 1.3 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: rbtdb_p.h,v 1.4 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -403,7 +403,8 @@ isc_result_t
 dns__rbtdb_add(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode,
 	       const dns_name_t *nodename, dns_rbtdb_version_t *rbtversion,
 	       dns_slabheader_t *newheader, unsigned int options, bool loading,
-	       dns_rdataset_t *addedrdataset, isc_stdtime_t now DNS__DB_FLARG);
+	       dns_rdataset_t *addedrdataset, isc_stdtime_t now,
+	       isc_rwlocktype_t nlocktype DNS__DB_FLARG);
 /*%<
  * Add a slab header 'newheader' to a node in an RBT database.
  * The caller must have the node write-locked.
@@ -496,5 +497,7 @@ dns__cacherbt_expireheader(dns_slabheader_t *header,
 void
 dns__cacherbt_overmem(dns_rbtdb_t *rbtdb, dns_slabheader_t *newheader,
 		      isc_rwlocktype_t *tlocktypep DNS__DB_FLARG);
+void
+dns__rbtdb_clean_stale_headers(dns_slabheader_t *top);
 
 ISC_LANG_ENDDECLS

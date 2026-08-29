@@ -1,4 +1,4 @@
-/*	$NetBSD: loop_p.h,v 1.2 2025/01/26 16:25:37 christos Exp $	*/
+/*	$NetBSD: loop_p.h,v 1.3 2026/08/29 14:55:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -78,6 +78,9 @@ struct isc_loop {
 
 	/* safe memory reclamation */
 	uv_prepare_t quiescent;
+
+	/* thread pools */
+	isc__workthread_t *workthreads[ISC_WORKLANE_COUNT];
 };
 
 /*
@@ -112,7 +115,6 @@ struct isc_loopmgr {
 
 	/* per-thread objects */
 	isc_loop_t *loops;
-	isc_loop_t *helpers;
 };
 
 /*
@@ -136,18 +138,15 @@ struct isc_signal {
 #define JOB_MAGIC    ISC_MAGIC('J', 'O', 'B', ' ')
 #define VALID_JOB(t) ISC_MAGIC_VALID(t, JOB_MAGIC)
 
-/*
- * Work to be offloaded to an external thread.
- */
-struct isc_work {
-	uv_work_t work;
-	isc_loop_t *loop;
-	isc_work_cb work_cb;
-	isc_after_work_cb after_work_cb;
-	void *cbarg;
-};
-
 #define DEFAULT_LOOP(loopmgr) (&(loopmgr)->loops[0])
 #define CURRENT_LOOP(loopmgr) (&(loopmgr)->loops[isc_tid()])
 #define LOOP(loopmgr, tid)    (&(loopmgr)->loops[tid])
 #define ON_LOOP(loop)	      ((loop) == CURRENT_LOOP((loop)->loopmgr))
+
+isc__workthread_t *
+isc__loopmgr_workthread(isc_loop_t *loop, isc_worklane_t lane);
+
+void
+isc__loopmgr_starting(isc_loop_t *loop);
+void
+isc__loopmgr_stopping(isc_loop_t *loop);

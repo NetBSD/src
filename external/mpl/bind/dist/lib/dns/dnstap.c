@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.c,v 1.16 2026/04/08 00:16:13 christos Exp $	*/
+/*	$NetBSD: dnstap.c,v 1.17 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1040,6 +1040,10 @@ dns_dt_parse(isc_mem_t *mctx, isc_region_t *src, dns_dtdata_t **destp) {
 	}
 
 	m = frame->message;
+
+	if (m == NULL) {
+		CLEANUP(DNS_R_BADDNSTAP);
+	}
 
 	/* Message type */
 	switch (m->type) {

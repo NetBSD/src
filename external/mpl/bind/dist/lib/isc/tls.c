@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.9 2026/05/20 16:53:46 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.10 2026/08/29 14:55:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,6 +27,9 @@
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/dh.h>
+#if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000
+#include <openssl/engine.h>
+#endif /* if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000 */
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/opensslv.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.20 2026/05/20 16:53:46 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.21 2026/08/29 14:55:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -951,27 +951,6 @@ isc__mem_strdup(isc_mem_t *mctx, const char *s FLARG) {
 	REQUIRE(s != NULL);
 
 	len = strlen(s) + 1;
-
-	ns = isc__mem_allocate(mctx, len, 0 FLARG_PASS);
-
-	strlcpy(ns, s, len);
-
-	return ns;
-}
-
-char *
-isc__mem_strndup(isc_mem_t *mctx, const char *s, size_t size FLARG) {
-	size_t len;
-	char *ns = NULL;
-
-	REQUIRE(VALID_CONTEXT(mctx));
-	REQUIRE(s != NULL);
-	REQUIRE(size != 0);
-
-	len = strlen(s) + 1;
-	if (len > size) {
-		len = size;
-	}
 
 	ns = isc__mem_allocate(mctx, len, 0 FLARG_PASS);
 

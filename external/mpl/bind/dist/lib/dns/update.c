@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.16 2026/01/29 18:37:50 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.17 2026/08/29 14:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -943,7 +943,7 @@ static isc_result_t
 find_zone_keys(dns_zone_t *zone, isc_mem_t *mctx, unsigned int maxkeys,
 	       dst_key_t **keys, unsigned int *nkeys) {
 	dns_dnsseckeylist_t keylist;
-	dns_dnsseckey_t *k = NULL;
+	dns_dnsseckey_t *k = NULL, *n = NULL;
 	unsigned int count = 0;
 	isc_result_t result;
 	isc_stdtime_t now = isc_stdtime_now();
@@ -969,24 +969,24 @@ find_zone_keys(dns_zone_t *zone, isc_mem_t *mctx, unsigned int maxkeys,
 	}
 
 	/* Add new 'dnskeys' to 'keys' */
-	while ((k = ISC_LIST_HEAD(keylist)) != NULL) {
-		if (count >= maxkeys) {
-			result = ISC_R_NOSPACE;
-			goto next;
+	ISC_LIST_FOREACH_SAFE(keylist, k, link, n) {
+		if (count < maxkeys) {
+			/* Detect inactive keys */
+			if (!dns_dnssec_keyactive(k->key, now)) {
+				dst_key_setinactive(k->key, true);
+			}
+
+			keys[count] = k->key;
+			k->key = NULL;
+			count++;
 		}
 
-		/* Detect inactive keys */
-		if (!dns_dnssec_keyactive(k->key, now)) {
-			dst_key_setinactive(k->key, true);
-		}
-
-		keys[count] = k->key;
-		k->key = NULL;
-		count++;
-
-	next:
 		ISC_LIST_UNLINK(keylist, k, link);
 		dns_dnsseckey_destroy(mctx, &k);
+	}
+
+	if (count >= maxkeys) {
+		result = ISC_R_NOSPACE;
 	}
 
 	*nkeys = count;
@@ -1362,6 +1362,7 @@ dns_update_signatures(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 
 struct dns_update_state {
 	unsigned int magic;
+	isc_mem_t *mctx;
 	dns_diff_t diffnames;
 	dns_diff_t affected;
 	dns_diff_t sig_diff;
@@ -1418,11 +1419,9 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 			 dns_diff_t *diff, uint32_t sigvalidityinterval,
 			 dns_update_state_t **statep) {
 	isc_result_t result = ISC_R_SUCCESS;
-	dns_update_state_t mystate, *state;
-
+	dns_update_state_t mystate = { 0 }, *state = NULL;
 	dns_difftuple_t *t, *next;
 	bool flag, build_nsec;
-	unsigned int i;
 	dns_rdata_soa_t soa;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdataset_t rdataset;
@@ -1438,7 +1437,10 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 			state = &mystate;
 		} else {
 			state = isc_mem_get(diff->mctx, sizeof(*state));
+			state->mctx = NULL;
+			isc_mem_attach(diff->mctx, &state->mctx);
 		}
+		state->magic = STATE_MAGIC;
 
 		dns_diff_init(diff->mctx, &state->diffnames);
 		dns_diff_init(diff->mctx, &state->affected);
@@ -1497,7 +1499,6 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 		 */
 		CHECK(dns_diff_sort(diff, temp_order));
 		state->state = sign_updates;
-		state->magic = STATE_MAGIC;
 		if (statep != NULL) {
 			*statep = state;
 		}
@@ -2066,6 +2067,18 @@ cleanup:
 		dns_db_detachnode(db, &node);
 	}
 
+	dns_update_state_clear(&state, state != &mystate);
+	SET_IF_NOT_NULL(statep, NULL);
+
+	return result;
+}
+
+void
+dns_update_state_clear(dns_update_state_t **statep, bool destroy) {
+	REQUIRE(DNS_STATE_VALID(*statep));
+
+	dns_update_state_t *state = *statep;
+
 	dns_diff_clear(&state->sig_diff);
 	dns_diff_clear(&state->nsec_diff);
 	dns_diff_clear(&state->nsec_mindiff);
@@ -2074,17 +2087,15 @@ cleanup:
 	dns_diff_clear(&state->diffnames);
 	dns_diff_clear(&state->work);
 
-	for (i = 0; i < state->nkeys; i++) {
+	for (size_t i = 0; i < state->nkeys; i++) {
 		dst_key_free(&state->zone_keys[i]);
 	}
 
-	if (state != &mystate) {
+	if (destroy) {
 		*statep = NULL;
 		state->magic = 0;
-		isc_mem_put(diff->mctx, state, sizeof(*state));
+		isc_mem_putanddetach(&state->mctx, state, sizeof(*state));
 	}
-
-	return result;
 }
 
 static isc_stdtime_t

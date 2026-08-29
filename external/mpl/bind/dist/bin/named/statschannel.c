@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.20 2026/06/19 20:09:59 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.21 2026/08/29 14:55:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2153,9 +2153,7 @@ cleanup:
 }
 
 static void
-wrap_xmlfree(isc_buffer_t *buffer, void *arg) {
-	UNUSED(arg);
-
+wrap_xmlfree(isc_buffer_t *buffer, void *arg ISC_ATTR_UNUSED) {
 	xmlFree(isc_buffer_base(buffer));
 }
 
@@ -2299,8 +2297,7 @@ render_xml_traffic(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
 	} while (0)
 
 static void
-wrap_jsonfree(isc_buffer_t *buffer, void *arg) {
-	json_object_put(isc_buffer_base(buffer));
+wrap_jsonfree(isc_buffer_t *buffer ISC_ATTR_UNUSED, void *arg) {
 	if (arg != NULL) {
 		json_object_put((json_object *)arg);
 	}
@@ -3496,14 +3493,13 @@ render_json_traffic(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
  * neither of libxml2 or json-c is configured.
  */
 static isc_result_t
-render_xsl(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo, void *args,
-	   unsigned int *retcode, const char **retmsg, const char **mimetype,
-	   isc_buffer_t *b, isc_httpdfree_t **freecb, void **freecb_args) {
-	isc_result_t result;
-	char *p = NULL;
+render_xsl(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+	   void *args ISC_ATTR_UNUSED, unsigned int *retcode,
+	   const char **retmsg, const char **mimetype, isc_buffer_t *b,
+	   isc_httpdfree_t **freecb, void **freecb_args) {
+	REQUIRE(isc_buffer_length(b) == 0);
 
-	UNUSED(httpd);
-	UNUSED(args);
+	isc_result_t result;
 
 	*freecb = NULL;
 	*freecb_args = NULL;
@@ -3544,8 +3540,7 @@ render_xsl(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo, void *args,
 send:
 	*retcode = 200;
 	*retmsg = "OK";
-	p = UNCONST(xslmsg);
-	isc_buffer_reinit(b, p, strlen(xslmsg));
+	isc_buffer_constinit(b, xslmsg, strlen(xslmsg));
 	isc_buffer_add(b, strlen(xslmsg));
 end:
 	return ISC_R_SUCCESS;
@@ -4116,7 +4111,12 @@ named_stats_dump(named_server_t *server, FILE *fp) {
 	     result == ISC_R_SUCCESS;
 	     next = NULL, result = dns_zone_next(zone, &next), zone = next)
 	{
+		if (dns_zone_getstatlevel(zone) != dns_zonestat_full) {
+			continue;
+		}
+
 		isc_stats_t *zonestats = dns_zone_getrequeststats(zone);
+
 		if (zonestats != NULL) {
 			char zonename[DNS_NAME_FORMATSIZE];
 
@@ -4146,7 +4146,12 @@ named_stats_dump(named_server_t *server, FILE *fp) {
 	     result == ISC_R_SUCCESS;
 	     next = NULL, result = dns_zone_next(zone, &next), zone = next)
 	{
+		if (dns_zone_getstatlevel(zone) != dns_zonestat_full) {
+			continue;
+		}
+
 		isc_stats_t *gluecachestats = dns_zone_getgluecachestats(zone);
+
 		if (gluecachestats != NULL) {
 			char zonename[DNS_NAME_FORMATSIZE];
 

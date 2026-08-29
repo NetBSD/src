@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2026/01/29 18:37:58 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2026/08/29 14:55:21 christos Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -33,7 +33,7 @@ CRYPTO_SRCS=
 
 SRCS=		ascii.c assertions.c async.c base32.c base64.c \
 		commandline.c crc64.c counter.c error.c fips.c \
-		getaddresses.c hash.c hashmap.c heap.c helper.c hex.c histo.c \
+		getaddresses.c hash.c hashmap.c heap.c hex.c histo.c \
 		hmac.c httpd.c ht.c managers.c iterated_hash.c job.c \
 		lex.c lib.c log.c loop.c md.c mem.c \
 		mutexblock.c netaddr.c netscope.c parseint.c \

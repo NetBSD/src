@@ -1,4 +1,4 @@
-/*	$NetBSD: keygen.c,v 1.9 2026/05/20 16:53:43 christos Exp $	*/
+/*	$NetBSD: keygen.c,v 1.10 2026/08/29 14:55:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,6 +27,7 @@
 #include <isc/result.h>
 #include <isc/string.h>
 
+#include <dns/fixedname.h>
 #include <dns/keyvalues.h>
 #include <dns/name.h>
 
@@ -87,6 +88,33 @@ alg_bits(dns_secalg_t alg) {
 		return 512;
 	default:
 		return 0;
+	}
+}
+
+/*%
+ * Reject invalid key names and make them safe for embedding into
+ * rndc.conf and named.conf.
+ */
+void
+makesafe_keyname(const char *keyname, char *namebuf, size_t length) {
+	dns_fixedname_t fixed;
+	dns_name_t *name = dns_fixedname_initname(&fixed);
+	isc_result_t result;
+	isc_buffer_t b;
+
+	if (keyname == NULL || keyname[0] == '\0') {
+		fatal("key name must not be empty");
+	}
+	result = dns_name_fromstring(name, keyname, dns_rootname, 0, NULL);
+	if (result != ISC_R_SUCCESS) {
+		fatal("invalid key name: %s", isc_result_totext(result));
+	}
+
+	isc_buffer_init(&b, namebuf, length);
+	result = dns_name_totext(name, DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT,
+				 &b);
+	if (result != ISC_R_SUCCESS) {
+		fatal("invalid key name: %s", isc_result_totext(result));
 	}
 }
 

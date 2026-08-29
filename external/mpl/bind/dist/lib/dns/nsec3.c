@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.c,v 1.17 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.18 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,6 +34,7 @@
 #include <dns/fixedname.h>
 #include <dns/nsec.h>
 #include <dns/nsec3.h>
+#include <dns/private.h>
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
@@ -1121,7 +1122,7 @@ dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
 	dns_rdataset_t rdataset;
 	bool flag;
 	isc_result_t result = ISC_R_SUCCESS;
-	unsigned char buf[DNS_NSEC3PARAM_BUFFERSIZE + 1];
+	unsigned char buf[DNS_PRIVATE_BUFFERSIZE];
 	dns_name_t *origin = dns_zone_getorigin(zone);
 	dns_rdatatype_t privatetype = dns_zone_getprivatetype(zone);
 
@@ -1191,19 +1192,30 @@ try_private:
 	{
 		dns_rdata_reset(&rdata);
 		dns_rdataset_current(&rdataset, &rdata);
-		INSIST(rdata.length <= sizeof(buf));
-		memmove(buf, rdata.data, rdata.length);
 
 		/*
-		 * Private NSEC3 record length >= 6.
-		 * <0(1), hash(1), flags(1), iterations(2), saltlen(1)>
+		 * Filter out non-private records.  Delete private records that
+		 * were being used to creating NSEC3 chains and add private
+		 * records to remove that chains that were in the process of
+		 * being constructed.  If nonsec is set and there is a record
+		 * saying to go insecure preserve it.
+		 *
+		 * Private records have 6 <= length <= 261 (6 + saltlen) and
+		 * the following structure:
+		 *
+		 * <0(1), hash(1), flags(1), iterations(2), saltlen(1),
+		 * salt(0..255)>
 		 */
-		if (rdata.length < 6 || buf[0] != 0 ||
-		    (buf[2] & DNS_NSEC3FLAG_REMOVE) != 0 ||
-		    (nonsec && (buf[2] & DNS_NSEC3FLAG_NONSEC) != 0))
+		if (rdata.length < 6 || rdata.data[0] != 0 ||
+		    (unsigned int)rdata.data[5] + 6 != rdata.length ||
+		    (rdata.data[2] & DNS_NSEC3FLAG_REMOVE) != 0 ||
+		    (nonsec && (rdata.data[2] & DNS_NSEC3FLAG_NONSEC) != 0))
 		{
 			continue;
 		}
+
+		INSIST(rdata.length <= sizeof(buf));
+		memmove(buf, rdata.data, rdata.length);
 
 		CHECK(dns_difftuple_create(diff->mctx, DNS_DIFFOP_DEL, origin,
 					   0, &rdata, &tuple));

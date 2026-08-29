@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.21 2026/04/08 00:16:14 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.22 2026/08/29 14:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -81,7 +81,7 @@
 #define DEFAULT_EDNS_BUFSIZE 1232
 
 isc_result_t
-dns_view_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr,
+dns_view_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr ISC_ATTR_UNUSED,
 		dns_dispatchmgr_t *dispatchmgr, dns_rdataclass_t rdclass,
 		const char *name, dns_view_t **viewp) {
 	dns_view_t *view = NULL;
@@ -145,7 +145,7 @@ dns_view_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr,
 
 	dns_tsigkeyring_create(view->mctx, &view->dynamickeys);
 
-	view->failcache = dns_badcache_new(view->mctx, loopmgr);
+	view->failcache = dns_badcache_new(view->mctx);
 
 	isc_mutex_init(&view->new_zone_lock);
 

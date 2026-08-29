@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt-zonedb.c,v 1.5 2026/04/08 00:16:14 christos Exp $	*/
+/*	$NetBSD: rbt-zonedb.c,v 1.6 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -431,7 +431,7 @@ wildcard_blocked(rbtdb_search_t *search, const dns_name_t *qname,
 	/* Now reset the chain and look for a successor with data. */
 	chain = search->chain;
 	result = dns_rbtnodechain_next(&chain, NULL, NULL);
-	if (result == ISC_R_SUCCESS) {
+	if (result == ISC_R_SUCCESS || result == DNS_R_NEWORIGIN) {
 		check_next = step(search, &chain, FORWARD, next);
 	}
 
@@ -1780,8 +1780,8 @@ loading_addrdataset(void *arg, const dns_name_t *name, dns_rdataset_t *rdataset,
 
 	NODE_WRLOCK(&rbtdb->node_locks[node->locknum].lock, &nlocktype);
 	result = dns__rbtdb_add(rbtdb, node, name, rbtdb->current_version,
-				newheader, DNS_DBADD_MERGE, true, NULL,
-				0 DNS__DB_FLARG_PASS);
+				newheader, DNS_DBADD_MERGE, true, NULL, 0,
+				nlocktype DNS__DB_FLARG_PASS);
 	NODE_UNLOCK(&rbtdb->node_locks[node->locknum].lock, &nlocktype);
 
 	if (result == ISC_R_SUCCESS &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: url.c,v 1.6 2025/01/26 16:25:39 christos Exp $	*/
+/*	$NetBSD: url.c,v 1.7 2026/08/29 14:55:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -485,16 +485,15 @@ http_parse_host(const char *buf, isc_url_parser_t *up, int found_at) {
 			up->field_data[ISC_UF_HOST].len++;
 			break;
 
-		case s_http_host_v6:
-			if (s != s_http_host_v6) {
-				up->field_data[ISC_UF_HOST].off =
-					(uint16_t)(p - buf);
-			}
+		case s_http_host_v6_start:
+			up->field_data[ISC_UF_HOST].off = (uint16_t)(p - buf);
 			up->field_data[ISC_UF_HOST].len++;
 			break;
 
+		case s_http_host_v6:
 		case s_http_host_v6_zone_start:
 		case s_http_host_v6_zone:
+		case s_http_host_v6_end:
 			up->field_data[ISC_UF_HOST].len++;
 			break;
 
@@ -551,8 +550,8 @@ isc_url_parse(const char *buf, size_t buflen, bool is_connect,
 	int found_at = 0;
 	const char *p = NULL;
 
-	if (buflen == 0) {
-		return ISC_R_FAILURE;
+	if (buflen == 0 || buflen > URL_MAX_LENGTH) {
+		return ISC_R_RANGE;
 	}
 
 	up->port = up->field_set = 0;

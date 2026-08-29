@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.c,v 1.14 2026/04/08 00:16:13 christos Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.15 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -765,6 +765,16 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 
 	result = dst_key_close(tmpname, fp, filename);
 	return result;
+}
+
+isc_result_t
+dst__privelement_is_nul_terminated(const dst_private_element_t *element) {
+	if (element->length < 1 || element->data[element->length - 1] != 0 ||
+	    strlen((char *)element->data) != (size_t)element->length - 1)
+	{
+		return DST_R_INVALIDPRIVATEKEY;
+	}
+	return ISC_R_SUCCESS;
 }
 
 /*! \file */

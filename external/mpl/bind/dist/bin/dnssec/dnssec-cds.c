@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-cds.c,v 1.13 2026/01/29 18:36:26 christos Exp $	*/
+/*	$NetBSD: dnssec-cds.c,v 1.14 2026/08/29 14:55:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -655,7 +655,7 @@ matching_sigs(keyinfo_t *keytbl, dns_rdataset_t *rdataset,
 
 			result = dns_dnssec_verify(name, rdataset, ki->dst,
 						   false, 0, mctx, &sigrdata,
-						   NULL);
+						   NULL, NULL);
 
 			if (result != ISC_R_SUCCESS &&
 			    result != DNS_R_FROMWILDCARD)

@@ -1,4 +1,4 @@
-/*	$NetBSD: picohttpparser.c,v 1.7 2026/06/19 20:10:01 christos Exp $	*/
+/*	$NetBSD: picohttpparser.c,v 1.8 2026/08/29 14:55:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,
@@ -582,8 +582,10 @@ phr_parse_headers(const char *buf_start, size_t len, struct phr_header *headers,
 enum {
 	CHUNKED_IN_CHUNK_SIZE,
 	CHUNKED_IN_CHUNK_EXT,
+	CHUNKED_IN_CHUNK_HEADER_EXPECT_LF,
 	CHUNKED_IN_CHUNK_DATA,
-	CHUNKED_IN_CHUNK_CRLF,
+	CHUNKED_IN_CHUNK_DATA_EXPECT_CR,
+	CHUNKED_IN_CHUNK_DATA_EXPECT_LF,
 	CHUNKED_IN_TRAILERS_LINE_HEAD,
 	CHUNKED_IN_TRAILERS_LINE_MIDDLE
 };
@@ -656,9 +658,23 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 				if (src == bufsz) {
 					goto Exit;
 				}
-				if (buf[src] == '\012') {
+				if (buf[src] == '\015') {
 					break;
+				} else if (buf[src] == '\012') {
+					ret = -1;
+					goto Exit;
 				}
+			}
+			++src;
+			decoder->_state = CHUNKED_IN_CHUNK_HEADER_EXPECT_LF;
+		/* fall through */
+		case CHUNKED_IN_CHUNK_HEADER_EXPECT_LF:
+			if (src == bufsz) {
+				goto Exit;
+			}
+			if (buf[src] != '\012') {
+				ret = -1;
+				goto Exit;
 			}
 			++src;
 			if (decoder->bytes_left_in_chunk == 0) {
@@ -690,17 +706,23 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 			src += decoder->bytes_left_in_chunk;
 			dst += decoder->bytes_left_in_chunk;
 			decoder->bytes_left_in_chunk = 0;
-			decoder->_state = CHUNKED_IN_CHUNK_CRLF;
+			decoder->_state = CHUNKED_IN_CHUNK_DATA_EXPECT_CR;
 		}
 		/* fall through */
-		case CHUNKED_IN_CHUNK_CRLF:
-			for (;; ++src) {
-				if (src == bufsz) {
-					goto Exit;
-				}
-				if (buf[src] != '\015') {
-					break;
-				}
+		case CHUNKED_IN_CHUNK_DATA_EXPECT_CR:
+			if (src == bufsz) {
+				goto Exit;
+			}
+			if (buf[src] != '\015') {
+				ret = -1;
+				goto Exit;
+			}
+			++src;
+			decoder->_state = CHUNKED_IN_CHUNK_DATA_EXPECT_LF;
+		/* fall through */
+		case CHUNKED_IN_CHUNK_DATA_EXPECT_LF:
+			if (src == bufsz) {
+				goto Exit;
 			}
 			if (buf[src] != '\012') {
 				ret = -1;

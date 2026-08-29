@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.19 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.20 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -593,7 +593,7 @@ check_private(isc_buffer_t *source, dns_secalg_t alg) {
 		dns_fixedname_t fixed;
 
 		RETERR(dns_name_fromwire(dns_fixedname_initname(&fixed), source,
-					 DNS_DECOMPRESS_DEFAULT, NULL));
+					 DNS_DECOMPRESS_NEVER, NULL));
 	} else if (alg == DNS_KEYALG_PRIVATEOID) {
 		/*
 		 * Check that we can extract the OID from the start of the

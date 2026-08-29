@@ -1,4 +1,4 @@
-/*	$NetBSD: badcache.c,v 1.9 2025/01/26 16:25:21 christos Exp $	*/
+/*	$NetBSD: badcache.c,v 1.10 2026/08/29 14:55:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,15 +18,12 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include <isc/async.h>
 #include <isc/buffer.h>
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/loop.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
-#include <isc/rwlock.h>
-#include <isc/spinlock.h>
 #include <isc/stdtime.h>
 #include <isc/string.h>
 #include <isc/thread.h>
@@ -51,8 +48,8 @@ struct dns_badcache {
 	unsigned int magic;
 	isc_mem_t *mctx;
 	struct cds_lfht *ht;
-	struct cds_list_head *lru;
-	uint32_t nloops;
+	isc_mutex_t lru_lock;
+	struct cds_list_head lru;
 };
 
 #define BADCACHE_MAGIC	  ISC_MAGIC('B', 'd', 'C', 'a')
@@ -62,7 +59,8 @@ struct dns_badcache {
 #define BADCACHE_MIN_SIZE  (1 << 8)  /* Must be power of 2 */
 
 struct dns_bcentry {
-	isc_loop_t *loop;
+	isc_mem_t *mctx;
+
 	isc_stdtime_t expire;
 	uint32_t flags;
 
@@ -81,27 +79,21 @@ static void
 bcentry_destroy(struct rcu_head *rcu_head);
 
 static bool
-bcentry_alive(struct cds_lfht *ht, dns_bcentry_t *bad, isc_stdtime_t now);
+bcentry_alive(dns_badcache_t *bc, dns_bcentry_t *bad, isc_stdtime_t now);
 
 dns_badcache_t *
-dns_badcache_new(isc_mem_t *mctx, isc_loopmgr_t *loopmgr) {
-	REQUIRE(loopmgr != NULL);
-
-	uint32_t nloops = isc_loopmgr_nloops(loopmgr);
+dns_badcache_new(isc_mem_t *mctx) {
 	dns_badcache_t *bc = isc_mem_get(mctx, sizeof(*bc));
 	*bc = (dns_badcache_t){
 		.magic = BADCACHE_MAGIC,
-		.nloops = nloops,
 	};
 
 	bc->ht = cds_lfht_new(BADCACHE_INIT_SIZE, BADCACHE_MIN_SIZE, 0,
 			      CDS_LFHT_AUTO_RESIZE | CDS_LFHT_ACCOUNTING, NULL);
 	INSIST(bc->ht != NULL);
 
-	bc->lru = isc_mem_cget(mctx, bc->nloops, sizeof(bc->lru[0]));
-	for (size_t i = 0; i < bc->nloops; i++) {
-		CDS_INIT_LIST_HEAD(&bc->lru[i]);
-	}
+	isc_mutex_init(&bc->lru_lock);
+	CDS_INIT_LIST_HEAD(&bc->lru);
 
 	isc_mem_attach(mctx, &bc->mctx);
 
@@ -125,7 +117,7 @@ dns_badcache_destroy(dns_badcache_t **bcp) {
 	}
 	RUNTIME_CHECK(!cds_lfht_destroy(bc->ht, NULL));
 
-	isc_mem_cput(bc->mctx, bc->lru, bc->nloops, sizeof(bc->lru[0]));
+	isc_mutex_destroy(&bc->lru_lock);
 
 	isc_mem_putanddetach(&bc->mctx, bc, sizeof(dns_badcache_t));
 }
@@ -168,10 +160,10 @@ bcentry_new(isc_loop_t *loop, const dns_name_t *name,
 		.type = type,
 		.flags = flags,
 		.expire = expire,
-		.loop = isc_loop_ref(loop),
 		.lru_head = CDS_LIST_HEAD_INIT(bad->lru_head),
 	};
 
+	isc_mem_attach(mctx, &bad->mctx);
 	dns_name_init(&bad->name, NULL);
 	dns_name_dup(name, mctx, &bad->name);
 
@@ -182,43 +174,31 @@ static void
 bcentry_destroy(struct rcu_head *rcu_head) {
 	dns_bcentry_t *bad = caa_container_of(rcu_head, dns_bcentry_t,
 					      rcu_head);
-	isc_loop_t *loop = bad->loop;
-	isc_mem_t *mctx = isc_loop_getmctx(loop);
-
-	dns_name_free(&bad->name, mctx);
-	isc_mem_put(mctx, bad, sizeof(*bad));
-
-	isc_loop_unref(loop);
+	dns_name_free(&bad->name, bad->mctx);
+	isc_mem_putanddetach(&bad->mctx, bad, sizeof(*bad));
 }
 
 static void
-bcentry_evict_async(void *arg) {
-	dns_bcentry_t *bad = arg;
-
-	RUNTIME_CHECK(bad->loop == isc_loop());
-
-	cds_list_del(&bad->lru_head);
-	call_rcu(&bad->rcu_head, bcentry_destroy);
-}
-
-static void
-bcentry_evict(struct cds_lfht *ht, dns_bcentry_t *bad) {
-	if (!cds_lfht_del(ht, &bad->ht_node)) {
-		if (bad->loop == isc_loop()) {
-			bcentry_evict_async(bad);
-			return;
-		}
-
-		isc_async_run(bad->loop, bcentry_evict_async, bad);
+bcentry_evict_locked(dns_badcache_t *bc, dns_bcentry_t *bad) {
+	if (!cds_lfht_del(bc->ht, &bad->ht_node)) {
+		cds_list_del_rcu(&bad->lru_head);
+		call_rcu(&bad->rcu_head, bcentry_destroy);
 	}
 }
 
+static void
+bcentry_evict(dns_badcache_t *bc, dns_bcentry_t *bad) {
+	LOCK(&bc->lru_lock);
+	bcentry_evict_locked(bc, bad);
+	UNLOCK(&bc->lru_lock);
+}
+
 static bool
-bcentry_alive(struct cds_lfht *ht, dns_bcentry_t *bad, isc_stdtime_t now) {
+bcentry_alive(dns_badcache_t *bc, dns_bcentry_t *bad, isc_stdtime_t now) {
 	if (cds_lfht_is_node_deleted(&bad->ht_node)) {
 		return false;
 	} else if (bad->expire < now) {
-		bcentry_evict(ht, bad);
+		bcentry_evict(bc, bad);
 		return false;
 	}
 
@@ -235,12 +215,11 @@ bcentry_alive(struct cds_lfht *ht, dns_bcentry_t *bad, isc_stdtime_t now) {
 				  __typeof__(*(pos)), member))
 
 static void
-bcentry_purge(struct cds_lfht *ht, struct cds_list_head *lru,
-	      isc_stdtime_t now) {
+bcentry_purge(dns_badcache_t *bc, isc_stdtime_t now) {
 	size_t count = 10;
 	dns_bcentry_t *bad;
-	cds_list_for_each_entry_rcu(bad, lru, lru_head) {
-		if (bcentry_alive(ht, bad, now)) {
+	cds_list_for_each_entry_rcu(bad, &bc->lru, lru_head) {
+		if (bcentry_alive(bc, bad, now)) {
 			break;
 		}
 		if (--count == 0) {
@@ -256,17 +235,13 @@ dns_badcache_add(dns_badcache_t *bc, const dns_name_t *name,
 	REQUIRE(name != NULL);
 
 	isc_loop_t *loop = isc_loop();
-	uint32_t tid = isc_tid();
-	struct cds_list_head *lru = &bc->lru[tid];
-
 	isc_stdtime_t now = isc_stdtime_now();
+
 	if (expire < now) {
 		expire = now;
 	}
 
 	rcu_read_lock();
-	struct cds_lfht *ht = rcu_dereference(bc->ht);
-	INSIST(ht != NULL);
 
 	dns__bckey_t key = {
 		.name = name,
@@ -276,21 +251,23 @@ dns_badcache_add(dns_badcache_t *bc, const dns_name_t *name,
 
 	/* struct cds_lfht_iter iter; */
 	dns_bcentry_t *bad = bcentry_new(loop, name, type, flags, expire);
+
+	LOCK(&bc->lru_lock);
 	struct cds_lfht_node *ht_node;
 	do {
-		ht_node = cds_lfht_add_unique(ht, hashval, bcentry_match, &key,
-					      &bad->ht_node);
+		ht_node = cds_lfht_add_unique(bc->ht, hashval, bcentry_match,
+					      &key, &bad->ht_node);
 		if (ht_node != &bad->ht_node) {
 			dns_bcentry_t *found = caa_container_of(
 				ht_node, dns_bcentry_t, ht_node);
-			bcentry_evict(ht, found);
+			bcentry_evict_locked(bc, found);
 		}
 	} while (ht_node != &bad->ht_node);
 
-	/* No locking, instead we are using per-thread lists */
-	cds_list_add_tail_rcu(&bad->lru_head, lru);
+	cds_list_add_tail_rcu(&bad->lru_head, &bc->lru);
+	UNLOCK(&bc->lru_lock);
 
-	bcentry_purge(ht, lru, now);
+	bcentry_purge(bc, now);
 
 	rcu_read_unlock();
 }
@@ -304,8 +281,6 @@ dns_badcache_find(dns_badcache_t *bc, const dns_name_t *name,
 	isc_result_t result = ISC_R_NOTFOUND;
 
 	rcu_read_lock();
-	struct cds_lfht *ht = rcu_dereference(bc->ht);
-	INSIST(ht != NULL);
 
 	dns__bckey_t key = {
 		.name = name,
@@ -313,18 +288,16 @@ dns_badcache_find(dns_badcache_t *bc, const dns_name_t *name,
 	};
 	uint32_t hashval = bcentry_hash(&key);
 
-	dns_bcentry_t *found = bcentry_lookup(ht, hashval, &key);
+	dns_bcentry_t *found = bcentry_lookup(bc->ht, hashval, &key);
 
-	if (found != NULL && bcentry_alive(ht, found, now)) {
+	if (found != NULL && bcentry_alive(bc, found, now)) {
 		result = ISC_R_SUCCESS;
 		if (flagp != NULL) {
 			*flagp = found->flags;
 		}
 	}
 
-	uint32_t tid = isc_tid();
-	struct cds_list_head *lru = &bc->lru[tid];
-	bcentry_purge(ht, lru, now);
+	bcentry_purge(bc, now);
 
 	rcu_read_unlock();
 
@@ -336,14 +309,12 @@ dns_badcache_flush(dns_badcache_t *bc) {
 	REQUIRE(VALID_BADCACHE(bc));
 
 	rcu_read_lock();
-	struct cds_lfht *ht = rcu_dereference(bc->ht);
-	INSIST(ht != NULL);
 
 	/* Flush the hash table */
 	dns_bcentry_t *bad;
 	struct cds_lfht_iter iter;
-	cds_lfht_for_each_entry(ht, &iter, bad, ht_node) {
-		bcentry_evict(ht, bad);
+	cds_lfht_for_each_entry(bc->ht, &iter, bad, ht_node) {
+		bcentry_evict(bc, bad);
 	}
 
 	rcu_read_unlock();
@@ -357,19 +328,17 @@ dns_badcache_flushname(dns_badcache_t *bc, const dns_name_t *name) {
 	isc_stdtime_t now = isc_stdtime_now();
 
 	rcu_read_lock();
-	struct cds_lfht *ht = rcu_dereference(bc->ht);
-	INSIST(ht != NULL);
 
 	dns_bcentry_t *bad;
 	struct cds_lfht_iter iter;
-	cds_lfht_for_each_entry(ht, &iter, bad, ht_node) {
+	cds_lfht_for_each_entry(bc->ht, &iter, bad, ht_node) {
 		if (dns_name_equal(&bad->name, name)) {
-			bcentry_evict(ht, bad);
+			bcentry_evict(bc, bad);
 			continue;
 		}
 
 		/* Flush all the expired entries */
-		(void)bcentry_alive(ht, bad, now);
+		(void)bcentry_alive(bc, bad, now);
 	}
 
 	rcu_read_unlock();
@@ -383,19 +352,17 @@ dns_badcache_flushtree(dns_badcache_t *bc, const dns_name_t *name) {
 	isc_stdtime_t now = isc_stdtime_now();
 
 	rcu_read_lock();
-	struct cds_lfht *ht = rcu_dereference(bc->ht);
-	INSIST(ht != NULL);
 
 	dns_bcentry_t *bad;
 	struct cds_lfht_iter iter;
-	cds_lfht_for_each_entry(ht, &iter, bad, ht_node) {
+	cds_lfht_for_each_entry(bc->ht, &iter, bad, ht_node) {
 		if (dns_name_issubdomain(&bad->name, name)) {
-			bcentry_evict(ht, bad);
+			bcentry_evict(bc, bad);
 			continue;
 		}
 
 		/* Flush all the expired entries */
-		(void)bcentry_alive(ht, bad, now);
+		(void)bcentry_alive(bc, bad, now);
 	}
 
 	rcu_read_unlock();
@@ -423,12 +390,10 @@ dns_badcache_print(dns_badcache_t *bc, const char *cachename, FILE *fp) {
 	fprintf(fp, ";\n; %s\n;\n", cachename);
 
 	rcu_read_lock();
-	struct cds_lfht *ht = rcu_dereference(bc->ht);
-	INSIST(ht != NULL);
 
 	struct cds_lfht_iter iter;
-	cds_lfht_for_each_entry(ht, &iter, bad, ht_node) {
-		if (bcentry_alive(ht, bad, now)) {
+	cds_lfht_for_each_entry(bc->ht, &iter, bad, ht_node) {
+		if (bcentry_alive(bc, bad, now)) {
 			bcentry_print(bad, now, fp);
 		}
 	}

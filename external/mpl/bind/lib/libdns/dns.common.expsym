@@ -46,6 +46,7 @@ dns__rbtdb_attachnode
 dns__rbtdb_attachversion
 dns__rbtdb_bindrdataset
 dns__rbtdb_cachemethods
+dns__rbtdb_clean_stale_headers
 dns__rbtdb_closeversion
 dns__rbtdb_create
 dns__rbtdb_createiterator
@@ -344,6 +345,7 @@ dns_dispatchmgr_getblackhole
 dns_dispatchmgr_ref
 dns_dispatchmgr_setavailports
 dns_dispatchmgr_setblackhole
+dns_dispatchmgr_setreusetimeout
 dns_dispatchmgr_setstats
 dns_dispatchmgr_unref
 dns_dispatchset_create
@@ -760,10 +762,10 @@ dns_nsec3param_toprivate
 dns_nsec_build
 dns_nsec_buildrdata
 dns_nsec_compressbitmap
+dns_nsec_is_legal
 dns_nsec_isset
 dns_nsec_noexistnodata
 dns_nsec_nseconly
-dns_nsec_requiredtypespresent
 dns_nsec_setbit
 dns_nsec_typepresent
 dns_ntatable_add
@@ -977,6 +979,7 @@ dns_rdatalist_init
 dns_rdatalist_next
 dns_rdatalist_setownercase
 dns_rdatalist_tordataset
+dns_rdataproof_rdatasetmethods
 dns_rdataset_addclosest
 dns_rdataset_additionaldata
 dns_rdataset_addnoqname
@@ -1277,6 +1280,7 @@ dns_ttl_totext
 dns_update_signatures
 dns_update_signaturesinc
 dns_update_soaserial
+dns_update_state_clear
 dns_validator_attach
 dns_validator_cancel
 dns_validator_create
@@ -1660,6 +1664,8 @@ dst__openssl_toresult
 dst__opensslecdsa_init
 dst__openssleddsa_init
 dst__opensslrsa_init
+dst__opensslrsa_shutdown
+dst__privelement_is_nul_terminated
 dst__privstruct_free
 dst__privstruct_parse
 dst__privstruct_writefile

@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.h,v 1.9 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.10 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -123,5 +123,9 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 isc_result_t
 dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 			  const char *directory);
+
+isc_result_t
+dst__privelement_is_nul_terminated(
+	const dst_private_element_t *dst_private_element_t);
 
 ISC_LANG_ENDDECLS

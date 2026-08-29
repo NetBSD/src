@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt-cachedb.c,v 1.5 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: rbt-cachedb.c,v 1.6 2026/08/29 14:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -244,17 +244,6 @@ update_cachestats(dns_rbtdb_t *rbtdb, isc_result_t result) {
 	}
 }
 
-static void
-clean_stale_headers(dns_slabheader_t *top) {
-	dns_slabheader_t *d = NULL, *down_next = NULL;
-
-	for (d = top->down; d != NULL; d = down_next) {
-		down_next = d->down;
-		dns_slabheader_destroy(&d);
-	}
-	top->down = NULL;
-}
-
 static isc_result_t
 setup_delegation(rbtdb_search_t *search, dns_dbnode_t **nodep,
 		 dns_name_t *foundname, dns_rdataset_t *rdataset,
@@ -405,7 +394,7 @@ check_stale_header(dns_rbtnode_t *node, dns_slabheader_t *header,
 				 * which case we need to purge the stale
 				 * headers first.
 				 */
-				clean_stale_headers(header);
+				dns__rbtdb_clean_stale_headers(header);
 				if (*header_prev != NULL) {
 					(*header_prev)->next = header->next;
 				} else {
@@ -414,6 +403,7 @@ check_stale_header(dns_rbtnode_t *node, dns_slabheader_t *header,
 				dns_slabheader_destroy(&header);
 			} else {
 				dns__rbtdb_mark_ancient(header);
+				dns__rbtdb_clean_stale_headers(header);
 				*header_prev = header;
 			}
 		} else {
@@ -730,7 +720,9 @@ find_coveringnsec(rbtdb_search_t *search, const dns_name_t *name,
 		}
 		header_prev = header;
 	}
-	if (found != NULL) {
+	if (found != NULL && found->trust == dns_trust_secure &&
+	    (foundsig == NULL || foundsig->trust == dns_trust_secure))
+	{
 		dns__rbtdb_bindrdataset(search->rbtdb, node, found, now,
 					nlocktype, rdataset DNS__DB_FLARG_PASS);
 		if (foundsig != NULL) {
@@ -1396,6 +1388,7 @@ cache_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 				 * argument to the function.
 				 */
 				dns__rbtdb_mark_ancient(header);
+				dns__rbtdb_clean_stale_headers(header);
 			}
 		} else if (EXISTS(header) && !ANCIENT(header)) {
 			if (header->type == matchtype) {
@@ -1582,6 +1575,7 @@ dns__cacherbt_expireheader(dns_slabheader_t *header,
 			   isc_rwlocktype_t *tlocktypep,
 			   dns_expire_t reason DNS__DB_FLARG) {
 	dns__rbtdb_mark_ancient(header);
+	dns__rbtdb_clean_stale_headers(header);
 
 	if (isc_refcount_current(&RBTDB_HEADERNODE(header)->references) == 0) {
 		isc_rwlocktype_t nlocktype = isc_rwlocktype_write;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.20 2026/06/19 20:10:00 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.21 2026/08/29 14:55:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -131,7 +131,7 @@ dns_dnssec_keyfromrdata(const dns_name_t *name, const dns_rdata_t *rdata,
 	isc_buffer_t b;
 	isc_region_t r;
 
-	INSIST(name != NULL);
+	INSIST(DNS_NAME_VALID(name));
 	INSIST(rdata != NULL);
 	INSIST(mctx != NULL);
 	INSIST(key != NULL);
@@ -188,12 +188,14 @@ dns_dnssec_sign(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	isc_result_t ret;
 	isc_buffer_t *databuf = NULL;
 	char data[256 + 8];
+	unsigned int labels;
 	unsigned int sigsize;
 	dns_fixedname_t fnewname;
 	dns_fixedname_t fsigner;
 
-	REQUIRE(name != NULL);
-	REQUIRE(dns_name_countlabels(name) <= 255);
+	REQUIRE(DNS_NAME_VALID(name));
+	labels = dns_name_countlabels(name);
+	REQUIRE(labels <= 255 && labels > 0);
 	REQUIRE(set != NULL);
 	REQUIRE(key != NULL);
 	REQUIRE(inception != NULL);
@@ -222,7 +224,7 @@ dns_dnssec_sign(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 
 	sig.covered = set->type;
 	sig.algorithm = dst_key_alg(key);
-	sig.labels = dns_name_countlabels(name) - 1;
+	sig.labels = labels - 1;
 	if (dns_name_iswildcard(name)) {
 		sig.labels--;
 	}
@@ -354,9 +356,12 @@ cleanup_databuf:
 isc_result_t
 dns_dnssec_verify(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		  bool ignoretime, unsigned int maxbits, isc_mem_t *mctx,
-		  dns_rdata_t *sigrdata, dns_name_t *wild) {
+		  dns_rdata_t *sigrdata, dns_name_t *wild,
+		  dns_name_t *wildsigner) {
+	dns_rdata_nsec_t nsec;
 	dns_rdata_rrsig_t sig;
 	dns_fixedname_t fnewname;
+	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_region_t r;
 	isc_buffer_t envbuf;
 	dns_rdata_t *rdatas;
@@ -365,10 +370,13 @@ dns_dnssec_verify(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	isc_result_t ret;
 	unsigned char data[300];
 	dst_context_t *ctx = NULL;
-	int labels = 0;
+	unsigned int labels;
+	unsigned int siglabels;
 	bool downcase = false;
 
-	REQUIRE(name != NULL);
+	REQUIRE(DNS_NAME_VALID(name));
+	labels = dns_name_countlabels(name);
+	REQUIRE(labels > 0);
 	REQUIRE(set != NULL);
 	REQUIRE(key != NULL);
 	REQUIRE(mctx != NULL);
@@ -380,6 +388,21 @@ dns_dnssec_verify(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	}
 
 	if (set->type != sig.covered) {
+		return DNS_R_SIGINVALID;
+	}
+
+	/*
+	 * The RRSIG labels field can't indicate fewer labels than the
+	 * signer.  Also the labels shouldn't be greater than that of
+	 * the owner name.
+	 *
+	 * sig.labels doesn't include the root label, so add 1 to account
+	 * for it.
+	 */
+	siglabels = sig.labels + 1;
+	if (siglabels < dns_name_countlabels(&sig.signer) || siglabels > labels)
+	{
+		inc_stat(dns_dnssecstats_fail);
 		return DNS_R_SIGINVALID;
 	}
 
@@ -404,10 +427,25 @@ dns_dnssec_verify(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	}
 
 	/*
-	 * NS, SOA and DNSKEY records are signed by their owner.
-	 * DS records are signed by the parent.
+	 * NS, SOA and DNSKEY records are signed by their owners.
+	 * NSEC3 records are signed by the apex, exactly one level up
+	 * from their owner names.
+	 * DS records are signed by the parent zone.
 	 */
 	switch (set->type) {
+	case dns_rdatatype_nsec3: {
+		dns_name_t apex = DNS_NAME_INITEMPTY;
+		labels = dns_name_countlabels(name);
+		if (labels <= 1) {
+			inc_stat(dns_dnssecstats_fail);
+			return DNS_R_INVALIDNSEC3;
+		}
+		dns_name_split(name, labels - 1, NULL, &apex);
+		if (!dns_name_equal(&apex, &sig.signer)) {
+			inc_stat(dns_dnssecstats_fail);
+			return DNS_R_SIGINVALID;
+		}
+	} break;
 	case dns_rdatatype_ns:
 	case dns_rdatatype_soa:
 	case dns_rdatatype_dnskey:
@@ -429,6 +467,17 @@ dns_dnssec_verify(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		}
 		break;
 	}
+	/*
+	 * Check for out of zone NSEC entries.
+	 */
+	if (set->type == dns_rdatatype_nsec) {
+		RETERR(dns_rdataset_first(set));
+		dns_rdataset_current(set, &rdata);
+		RETERR(dns_rdata_tostruct(&rdata, &nsec, NULL));
+		if (!dns_name_issubdomain(&nsec.next, &sig.signer)) {
+			return DNS_R_NOVALIDNSEC;
+		}
+	}
 
 again:
 	ret = dst_context_create(key, mctx, DNS_LOGCATEGORY_DNSSEC, false,
@@ -449,10 +498,9 @@ again:
 	 * If the name is an expanded wildcard, use the wildcard name.
 	 */
 	dns_fixedname_init(&fnewname);
-	labels = dns_name_countlabels(name) - 1;
 	RUNTIME_CHECK(dns_name_downcase(name, dns_fixedname_name(&fnewname),
 					NULL) == ISC_R_SUCCESS);
-	if (labels - sig.labels > 0) {
+	if (labels > siglabels) {
 		dns_name_split(dns_fixedname_name(&fnewname), sig.labels + 1,
 			       NULL, dns_fixedname_name(&fnewname));
 	}
@@ -463,7 +511,7 @@ again:
 	 * Create an envelope for each rdata: <name|type|class|ttl>.
 	 */
 	isc_buffer_init(&envbuf, data, sizeof(data));
-	if (labels - sig.labels > 0) {
+	if (labels > siglabels) {
 		isc_buffer_putuint8(&envbuf, 1);
 		isc_buffer_putuint8(&envbuf, '*');
 		memmove(data + 2, r.base, r.length);
@@ -558,12 +606,15 @@ cleanup_struct:
 		inc_stat(dns_dnssecstats_fail);
 	}
 
-	if (ret == ISC_R_SUCCESS && labels - sig.labels > 0) {
+	if (ret == ISC_R_SUCCESS && labels > siglabels) {
 		if (wild != NULL) {
 			RUNTIME_CHECK(dns_name_concatenate(
 					      dns_wildcardname,
 					      dns_fixedname_name(&fnewname),
 					      wild, NULL) == ISC_R_SUCCESS);
+		}
+		if (wildsigner != NULL) {
+			dns_name_copy(&sig.signer, wildsigner);
 		}
 		inc_stat(dns_dnssecstats_wildcard);
 		ret = DNS_R_FROMWILDCARD;
@@ -1056,7 +1107,7 @@ dns_dnssec_signs(dns_rdata_t *rdata, const dns_name_t *name,
 		if (sig.algorithm == key.algorithm && sig.keyid == keytag) {
 			result = dns_dnssec_verify(name, rdataset, dstkey,
 						   ignoretime, 0, mctx,
-						   &sigrdata, NULL);
+						   &sigrdata, NULL, NULL);
 			if (result == ISC_R_SUCCESS) {
 				dst_key_free(&dstkey);
 				return true;
@@ -1847,9 +1898,22 @@ add_cds(dns_dnsseckey_t *key, dns_rdata_t *keyrdata, const char *keystr,
 			      DNS_LOGMODULE_DNSSEC, ISC_LOG_INFO,
 			      "CDS (%s) for key %s is now published", algbuf,
 			      keystr);
-		r = addrdata(&cdsrdata, diff, origin, ttl, mctx);
+		return addrdata(&cdsrdata, diff, origin, ttl, mctx);
 	}
-	return r;
+	return DNS_R_UNCHANGED;
+}
+
+static bool
+contains_digest(dns_kasp_digestlist_t *digests, unsigned int digesttype) {
+	for (dns_kasp_digest_t *alg = ISC_LIST_HEAD(*digests); alg != NULL;
+	     alg = ISC_LIST_NEXT(alg, link))
+	{
+		if (digesttype == alg->digest) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 static isc_result_t
@@ -1875,9 +1939,9 @@ delete_cds(dns_dnsseckey_t *key, dns_rdata_t *keyrdata, const char *keystr,
 			      DNS_LOGMODULE_DNSSEC, ISC_LOG_INFO,
 			      "CDS (%s) for key %s is now deleted", algbuf,
 			      keystr);
-		r = delrdata(&cdsrdata, diff, origin, cds->ttl, mctx);
+		return delrdata(&cdsrdata, diff, origin, cds->ttl, mctx);
 	}
-	return r;
+	return DNS_R_UNCHANGED;
 }
 
 isc_result_t
@@ -1891,6 +1955,7 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 	dns_dnsseckey_t *key;
 	dns_ttl_t cdsttl = ttl;
 	dns_ttl_t cdnskeyttl = ttl;
+	bool changed = false;
 
 	REQUIRE(digests != NULL);
 	REQUIRE(keys != NULL);
@@ -1921,9 +1986,15 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 			for (dns_kasp_digest_t *alg = ISC_LIST_HEAD(*digests);
 			     alg != NULL; alg = ISC_LIST_NEXT(alg, link))
 			{
-				CHECK(add_cds(key, &cdnskeyrdata,
-					      (const char *)keystr, cds,
-					      alg->digest, cdsttl, diff, mctx));
+				result = add_cds(key, &cdnskeyrdata,
+						 (const char *)keystr, cds,
+						 alg->digest, cdsttl, diff,
+						 mctx);
+				if (result == ISC_R_SUCCESS) {
+					changed = true;
+				} else if (result != DNS_R_UNCHANGED) {
+					goto cleanup;
+				}
 			}
 
 			if (gencdnskey &&
@@ -1937,39 +2008,62 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 					keystr);
 				RETERR(addrdata(&cdnskeyrdata, diff, origin,
 						cdnskeyttl, mctx));
+				changed = true;
 			}
 		}
 
-		if (syncdelete(key->key, now)) {
+		if (dns_rdataset_isassociated(cds)) {
 			char keystr[DST_KEY_FORMATSIZE];
 			dst_key_format(key->key, keystr, sizeof(keystr));
 
-			if (dns_rdataset_isassociated(cds)) {
-				/* Delete all possible CDS records */
-				delete_cds(key, &cdnskeyrdata,
-					   (const char *)keystr, cds,
-					   DNS_DSDIGEST_SHA1, diff, mctx);
-				delete_cds(key, &cdnskeyrdata,
-					   (const char *)keystr, cds,
-					   DNS_DSDIGEST_SHA256, diff, mctx);
-				delete_cds(key, &cdnskeyrdata,
-					   (const char *)keystr, cds,
-					   DNS_DSDIGEST_SHA384, diff, mctx);
-			}
-
-			if (dns_rdataset_isassociated(cdnskey)) {
-				if (exists(cdnskey, &cdnskeyrdata)) {
-					isc_log_write(dns_lctx,
-						      DNS_LOGCATEGORY_GENERAL,
-						      DNS_LOGMODULE_DNSSEC,
-						      ISC_LOG_INFO,
-						      "CDNSKEY for key %s is "
-						      "now deleted",
-						      keystr);
-					RETERR(delrdata(&cdnskeyrdata, diff,
-							origin, cdnskey->ttl,
-							mctx));
+			/* Delete all possible CDS records */
+			for (dns_dsdigest_t digest = DNS_DSDIGEST_SHA1;
+			     digest < DNS_DSDIGEST_TOTAL; digest++)
+			{
+				if (syncdelete(key->key, now) ||
+				    !contains_digest(digests, digest))
+				{
+					result = delete_cds(
+						key, &cdnskeyrdata,
+						(const char *)keystr, cds,
+						digest, diff, mctx);
+					switch (result) {
+					case ISC_R_SUCCESS:
+						changed = true;
+						break;
+					case DNS_R_UNCHANGED:
+					case ISC_R_NOTIMPLEMENTED:
+						/*
+						 * Either the digest is not
+						 * supported and we cannot
+						 * construct the CDS for it, or
+						 * the CDS with this digest is
+						 * not present in the CDS RRset.
+						 */
+						break;
+					default:
+						goto cleanup;
+					}
 				}
+			}
+		}
+
+		if (dns_rdataset_isassociated(cdnskey) &&
+		    exists(cdnskey, &cdnskeyrdata))
+		{
+			if (syncdelete(key->key, now) || !gencdnskey) {
+				char keystr[DST_KEY_FORMATSIZE];
+				dst_key_format(key->key, keystr,
+					       sizeof(keystr));
+
+				isc_log_write(
+					dns_lctx, DNS_LOGCATEGORY_GENERAL,
+					DNS_LOGMODULE_DNSSEC, ISC_LOG_INFO,
+					"CDNSKEY for key %s is now deleted",
+					keystr);
+				delrdata(&cdnskeyrdata, diff, origin,
+					 cdnskey->ttl, mctx);
+				changed = true;
 			}
 		}
 	}
@@ -1996,12 +2090,30 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 					     &cdnskeyrdata));
 
 		if (dns_rdataset_isassociated(cds)) {
-			delete_cds(key, &cdnskeyrdata, (const char *)keystr,
-				   cds, DNS_DSDIGEST_SHA1, diff, mctx);
-			delete_cds(key, &cdnskeyrdata, (const char *)keystr,
-				   cds, DNS_DSDIGEST_SHA256, diff, mctx);
-			delete_cds(key, &cdnskeyrdata, (const char *)keystr,
-				   cds, DNS_DSDIGEST_SHA384, diff, mctx);
+			for (dns_dsdigest_t digest = DNS_DSDIGEST_SHA1;
+			     digest < DNS_DSDIGEST_TOTAL; digest++)
+			{
+				result = delete_cds(key, &cdnskeyrdata,
+						    (const char *)keystr, cds,
+						    digest, diff, mctx);
+				switch (result) {
+				case ISC_R_SUCCESS:
+					changed = true;
+					break;
+				case DNS_R_UNCHANGED:
+				case ISC_R_NOTIMPLEMENTED:
+					/*
+					 * Either the digest is not
+					 * supported and we cannot
+					 * construct the CDS for it, or
+					 * the CDS with this digest is
+					 * not present in the CDS RRset.
+					 */
+					break;
+				default:
+					goto cleanup;
+				}
+			}
 		}
 
 		if (dns_rdataset_isassociated(cdnskey)) {
@@ -2013,11 +2125,15 @@ dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 					keystr);
 				RETERR(delrdata(&cdnskeyrdata, diff, origin,
 						cdnskey->ttl, mctx));
+				changed = true;
 			}
 		}
 	}
 
-	result = ISC_R_SUCCESS;
+	if (changed) {
+		return ISC_R_SUCCESS;
+	}
+	return DNS_R_UNCHANGED;
 
 cleanup:
 	return result;
@@ -2034,6 +2150,7 @@ dns_dnssec_syncdelete(dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
 	dns_rdata_t cds_delete = DNS_RDATA_INIT;
 	dns_rdata_t cdnskey_delete = DNS_RDATA_INIT;
 	isc_region_t r;
+	bool changed = false;
 
 	r.base = keybuf;
 	r.length = sizeof(keybuf);
@@ -2056,6 +2173,7 @@ dns_dnssec_syncdelete(dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
 				      "published",
 				      namebuf);
 			RETERR(addrdata(&cds_delete, diff, origin, ttl, mctx));
+			changed = true;
 		}
 	} else {
 		if (dns_rdataset_isassociated(cds) && exists(cds, &cds_delete))
@@ -2067,6 +2185,7 @@ dns_dnssec_syncdelete(dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
 				      namebuf);
 			RETERR(delrdata(&cds_delete, diff, origin, cds->ttl,
 					mctx));
+			changed = true;
 		}
 	}
 
@@ -2081,6 +2200,7 @@ dns_dnssec_syncdelete(dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
 				      namebuf);
 			RETERR(addrdata(&cdnskey_delete, diff, origin, ttl,
 					mctx));
+			changed = true;
 		}
 	} else {
 		if (dns_rdataset_isassociated(cdnskey) &&
@@ -2093,10 +2213,14 @@ dns_dnssec_syncdelete(dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
 				      namebuf);
 			RETERR(delrdata(&cdnskey_delete, diff, origin,
 					cdnskey->ttl, mctx));
+			changed = true;
 		}
 	}
 
-	return ISC_R_SUCCESS;
+	if (changed) {
+		return ISC_R_SUCCESS;
+	}
+	return DNS_R_UNCHANGED;
 }
 
 /*

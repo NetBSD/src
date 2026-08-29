@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.15 2026/06/19 20:10:02 christos Exp $	*/
+/*	$NetBSD: tcp.c,v 1.16 2026/08/29 14:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -764,7 +764,10 @@ isc__nm_tcp_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 		goto free;
 	}
 
-	if (nread < 0) {
+	if (nread == 0) {
+		/* EAGAIN/EWOULDBLOCK: no data yet, not an error on libuv. */
+		goto free;
+	} else if (nread < 0) {
 		if (nread != UV_EOF) {
 			isc__nm_incstats(sock, STATID_RECVFAIL);
 		}
@@ -823,7 +826,7 @@ isc__nm_tcp_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 	}
 
 free:
-	if (nread < 0) {
+	if (nread <= 0) {
 		/*
 		 * The buffer may be a null buffer on error.
 		 */

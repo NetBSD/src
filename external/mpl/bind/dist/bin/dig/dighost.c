@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.21 2026/01/29 18:36:26 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.22 2026/08/29 14:55:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3419,6 +3419,17 @@ try_next_server(dig_lookup_t *lookup) {
 	return true;
 }
 
+/*
+ * Print the lookup's startup banner.  It is skipped in +yaml mode, where
+ * the ";"-prefixed banner is not valid YAML and would corrupt the output.
+ */
+static void
+print_cmdline(const dig_lookup_t *l) {
+	if (!yaml) {
+		printf("%s", l->cmdline);
+	}
+}
+
 static void
 force_next(dig_query_t *query) {
 	dig_lookup_t *l = NULL;
@@ -3461,7 +3472,7 @@ force_next(dig_query_t *query) {
 
 		dighost_error("no response from %s", buf);
 	} else {
-		printf("%s", l->cmdline);
+		print_cmdline(l);
 		dighost_error("no servers could be reached");
 	}
 
@@ -4138,7 +4149,7 @@ recv_done(isc_nmhandle_t *handle, isc_result_t eresult, isc_region_t *region,
 			 * Otherwise, print the cmdline and an error message,
 			 * and cancel the lookup.
 			 */
-			printf("%s", l->cmdline);
+			print_cmdline(l);
 			dighost_error("no servers could be reached");
 
 			if (exitcode < 9) {
@@ -4831,6 +4842,7 @@ idn_filter(isc_buffer_t *buffer, unsigned int start) {
 	char *dst = NULL;
 	size_t srclen, dstlen;
 	int res;
+	isc_result_t result;
 
 	/*
 	 * Copy name from 'buffer' to 'src' and terminate it with NULL.
@@ -4850,7 +4862,7 @@ idn_filter(isc_buffer_t *buffer, unsigned int start) {
 	}
 	resetlocale(LC_ALL);
 	if (res != IDN2_OK) {
-		return ISC_R_SUCCESS;
+		CLEANUP(ISC_R_SUCCESS);
 	}
 
 	/*
@@ -4858,14 +4870,18 @@ idn_filter(isc_buffer_t *buffer, unsigned int start) {
 	 */
 	dstlen = strlen(dst);
 	if (isc_buffer_length(buffer) < start + dstlen) {
-		return ISC_R_NOSPACE;
+		CLEANUP(ISC_R_NOSPACE);
 	}
 	isc_buffer_subtract(buffer, srclen);
 	memmove(isc_buffer_used(buffer), dst, dstlen);
 	isc_buffer_add(buffer, dstlen);
 
-	idn2_free(dst);
-	return ISC_R_SUCCESS;
+	result = ISC_R_SUCCESS;
+cleanup:
+	if (dst != NULL) {
+		idn2_free(dst);
+	}
+	return result;
 }
 
 /*%

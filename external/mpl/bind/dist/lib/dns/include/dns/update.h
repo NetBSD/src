@@ -1,4 +1,4 @@
-/*	$NetBSD: update.h,v 1.8 2025/01/26 16:25:29 christos Exp $	*/
+/*	$NetBSD: update.h,v 1.9 2026/08/29 14:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -69,6 +69,9 @@ isc_result_t
 dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 			 dns_dbversion_t *oldver, dns_dbversion_t *newver,
 			 dns_diff_t *diff, uint32_t sigvalidityinterval,
-			 dns_update_state_t **state);
+			 dns_update_state_t **statep);
+
+void
+dns_update_state_clear(dns_update_state_t **statep, bool destroy);
 
 ISC_LANG_ENDDECLS

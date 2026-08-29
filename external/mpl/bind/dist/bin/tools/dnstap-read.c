@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap-read.c,v 1.11 2025/01/26 16:25:10 christos Exp $	*/
+/*	$NetBSD: dnstap-read.c,v 1.12 2026/08/29 14:55:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -191,6 +191,18 @@ cleanup:
 }
 
 static void
+print_ip(ProtobufCBinaryData *ip, const char *label) {
+	char buf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255")];
+	if (ip->len == 4 || ip->len == 16) {
+		if (inet_ntop(ip->len == 4 ? AF_INET : AF_INET6, ip->data, buf,
+			      sizeof(buf)) != NULL)
+		{
+			printf("  %s: \"%s\"\n", label, buf);
+		}
+	}
+}
+
+static void
 print_yaml(dns_dtdata_t *dt) {
 	Dnstap__Dnstap *frame = dt->frame;
 	Dnstap__Message *m = frame->message;
@@ -276,20 +288,14 @@ print_yaml(dns_dtdata_t *dt) {
 
 	if (m->has_query_address) {
 		ProtobufCBinaryData *ip = &m->query_address;
-		char buf[100];
 
-		(void)inet_ntop(ip->len == 4 ? AF_INET : AF_INET6, ip->data,
-				buf, sizeof(buf));
-		printf("  query_address: \"%s\"\n", buf);
+		print_ip(ip, "query_address");
 	}
 
 	if (m->has_response_address) {
 		ProtobufCBinaryData *ip = &m->response_address;
-		char buf[100];
 
-		(void)inet_ntop(ip->len == 4 ? AF_INET : AF_INET6, ip->data,
-				buf, sizeof(buf));
-		printf("  response_address: \"%s\"\n", buf);
+		print_ip(ip, "response_address");
 	}
 
 	if (m->has_query_port) {
@@ -310,6 +316,7 @@ print_yaml(dns_dtdata_t *dt) {
 
 		isc_buffer_init(&b, m->query_zone.data, m->query_zone.len);
 		isc_buffer_add(&b, m->query_zone.len);
+		isc_buffer_setactive(&b, m->query_zone.len);
 
 		result = dns_name_fromwire(name, &b, DNS_DECOMPRESS_NEVER,
 					   NULL);
