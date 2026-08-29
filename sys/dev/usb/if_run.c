@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.42 2020/06/24 21:06:39 jdolecek Exp $	*/
+/*	$NetBSD: if_run.c,v 1.43 2026/08/29 01:15:46 maya Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.42 2020/06/24 21:06:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.43 2026/08/29 01:15:46 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -733,7 +733,7 @@ run_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	ic->ic_node_alloc = run_node_alloc;
 	ic->ic_newassoc = run_newassoc;
@@ -763,6 +763,9 @@ run_attach(device_t parent, device_t self, void *aux)
 	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RUN_TX_RADIOTAP_PRESENT);
+
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	ieee80211_announce(ic);
 
