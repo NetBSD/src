@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process_lwpstatus.c,v 1.9 2026/08/28 16:15:15 riastradh Exp $	*/
+/*	$NetBSD: sys_process_lwpstatus.c,v 1.10 2026/08/29 12:46:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.9 2026/08/28 16:15:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.10 2026/08/29 12:46:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -269,7 +269,7 @@ process_doregs(struct lwp *curl /*tracer*/,
 	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
-		struct reg32 reg32 PTRACE_REGS_ALIGN;
+		process_reg32 reg32 PTRACE_REGS_ALIGN;
 
 		if ((l->l_proc->p_flag & PK_32) == 0) {
 			// 32 bit tracer can't trace 64 bit process
@@ -342,7 +342,7 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
-		struct fpreg32 fpreg32 PTRACE_REGS_ALIGN;
+		process_fpreg32 fpreg32 PTRACE_REGS_ALIGN;
 
 		if ((l->l_proc->p_flag & PK_32) == 0) {
 			// 32 bit tracer can't trace 64 bit process
@@ -418,7 +418,7 @@ process_dodbregs(struct lwp *curl /*tracer*/,
 	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
-		struct dbreg32 dbreg32 PTRACE_REGS_ALIGN;
+		process_dbreg32 dbreg32 PTRACE_REGS_ALIGN;
 
 		if ((l->l_proc->p_flag & PK_32) == 0) {
 			// 32 bit tracer can't trace 64 bit process
