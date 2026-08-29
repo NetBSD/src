@@ -1,4 +1,4 @@
-/*	$NetBSD: contextspfunc.S,v 1.1 2026/08/29 13:40:17 riastradh Exp $	*/
+/*	$NetBSD: contextspfunc.S,v 1.2 2026/08/29 20:44:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: contextspfunc.S,v 1.1 2026/08/29 13:40:17 riastradh Exp $")
+RCSID("$NetBSD: contextspfunc.S,v 1.2 2026/08/29 20:44:26 thorpej Exp $")
 
 /*
  * contextspfunc()
@@ -47,6 +47,6 @@ ENTRY(contextspfunc)
 #else
 	movl	%d0,_C_LABEL(contextsp)
 #endif
-	bsrl	PIC_PLT(_C_LABEL(contextdone))
+	jbsr	PIC_PLT(_C_LABEL(contextdone))
 	trap	#7
 END(contextspfunc)
