@@ -19,10 +19,7 @@ relevant [ISC Knowledgebase article][1].
 
 If you think you may be seeing a potential security vulnerability in BIND (for
 example, a crash with a REQUIRE, INSIST, or ASSERT failure), please report it
-immediately by [opening a confidential GitLab issue][2]. If a GitLab issue is
-not an option, please use the template from the file
-.gitlab/issue_templates/Security_issue.mde-mail and send it to
-bind-security@isc.org.
+immediately by [opening a confidential GitLab issue][2].
 
 Please do not discuss undisclosed security vulnerabilities on any public
 mailing list. ISC has a long history of handling reported

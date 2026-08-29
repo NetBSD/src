@@ -1,0 +1,30 @@
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
+	recursion no;
+	dnssec-validation no;
+	notify no;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};
+
+zone "f007.test" {
+	type primary;
+	file "f007.test.db.signed";
+};
+
+zone "!.f007.test" {
+	type primary;
+	file "child.f007.test.db.signed";
+};
+

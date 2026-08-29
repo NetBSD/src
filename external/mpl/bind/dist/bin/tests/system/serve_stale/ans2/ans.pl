@@ -70,6 +70,12 @@ my $LONGTXT = "longttl.example 600 IN TXT \"A text record with a 600 second ttl\
 my $CAA = "othertype.example 2 IN CAA 0 issue \"ca1.example.net\"";
 my $negSOA = "example 2 IN SOA . . 0 0 0 0 300";
 my $ssnegSOA = "delegated.serve.stale 2 IN SOA . . 0 0 0 0 300";
+#
+# A negative answer that stays fresh for the whole run of a test, so that a
+# resolver refreshing it can only be doing so because it wrongly considers
+# the cached entry stale.
+#
+my $LONGNEGSOA = "example 600 IN SOA . . 0 0 0 0 600";
 my $CNAME = "cname.example 7 IN CNAME target.example";
 my $TARGET = "target.example 9 IN A $localaddr";
 my $SHORTCNAME = "shortttl.cname.example 1 IN CNAME longttl.target.example";
@@ -157,6 +163,14 @@ sub reply_handler {
 	my $rr = new Net::DNS::RR($negSOA);
 	push @auth, $rr;
 	$rcode = "NOERROR";
+    } elsif ($qname eq "longttl-nodata.example") {
+	my $rr = new Net::DNS::RR($LONGNEGSOA);
+	push @auth, $rr;
+	$rcode = "NOERROR";
+    } elsif ($qname eq "longttl-nxdomain.example") {
+	my $rr = new Net::DNS::RR($LONGNEGSOA);
+	push @auth, $rr;
+	$rcode = "NXDOMAIN";
     } elsif ($qname eq "data.example") {
 	if ($qtype eq "TXT") {
 	    my $rr = new Net::DNS::RR($TXT);

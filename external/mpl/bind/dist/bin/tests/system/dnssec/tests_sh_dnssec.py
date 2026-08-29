@@ -160,6 +160,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns7/split-rrsig.db",
         "ns7/split-rrsig.db.unsplit",
         "signer/bad.db",
+        "signer/dnssec-records.*",
         "signer/example.com",
         "signer/example.db",
         "signer/example.db.after",

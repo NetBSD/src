@@ -56,6 +56,7 @@ check_PROGRAMS =	\
 	tls_test	\
 	tlsdns_test	\
 	udp_test	\
+	url_test	\
 	work_test
 
 if HAVE_LIBNGHTTP2

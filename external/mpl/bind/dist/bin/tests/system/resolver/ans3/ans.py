@@ -41,11 +41,16 @@ from ..resolver_ans import (
 )
 
 
-class ApexNSHandler(QnameHandler, StaticResponseHandler):
+class ApexNSHandler(QnameQtypeHandler, StaticResponseHandler):
     qnames = ["example.net."]
     qtypes = [dns.rdatatype.NS]
     answer = [rrset(qnames[0], dns.rdatatype.NS, f"ns.{qnames[0]}")]
     additional = [rrset(f"ns.{qnames[0]}", dns.rdatatype.A, "10.53.0.3")]
+
+
+class AttackDnameHandler(QnameHandler, StaticResponseHandler):
+    qnames = ["www.example.attack.example.net", "isc.attack.example.net."]
+    answer = [rrset("attack.example.net.", dns.rdatatype.DNAME, "org.")]
 
 
 class BadCnameHandler(QnameHandler, StaticResponseHandler):
@@ -62,6 +67,12 @@ class BadGoodDnameNsHandler(QnameQtypeHandler, StaticResponseHandler):
 class CnameSubHandler(QnameHandler, StaticResponseHandler):
     qnames = ["cname.sub.example.org."]
     answer = [rrset(qnames[0], dns.rdatatype.CNAME, "ok.sub.example.org.")]
+
+
+class ExampleOrgHandler(QnameQtypeHandler, StaticResponseHandler):
+    qnames = ["example.org."]
+    qtypes = [dns.rdatatype.A]
+    answer = [rrset(qnames[0], qtypes[0], "1.2.3.4")]
 
 
 class FooBadDnameHandler(QnameHandler, StaticResponseHandler):
@@ -93,12 +104,18 @@ class GoodCnameHandler(QnameHandler, StaticResponseHandler):
     answer = [rrset(qnames[0], dns.rdatatype.CNAME, "goodcname.example.org.")]
 
 
+class IscHandler(QnameQtypeHandler, StaticResponseHandler):
+    qnames = ["isc.org."]
+    qtypes = [dns.rdatatype.A]
+    answer = [rrset(qnames[0], qtypes[0], "1.2.3.4")]
+
+
 class LameExampleOrgDelegation(DelegationHandler):
     domains = ["lame.example.org."]
     server_number = 3
 
 
-class LargeReferralHandler(QnameHandler, StaticResponseHandler):
+class LargeReferralHandler(QnameQtypeHandler, StaticResponseHandler):
     qnames = ["large-referral.example.net."]
     qtypes = [dns.rdatatype.NS]
     authority = [
@@ -172,6 +189,11 @@ class WwwDnameSubHandler(QnameHandler, StaticResponseHandler):
     ]
 
 
+class WwwGoodDnameHandler(QnameHandler, StaticResponseHandler):
+    qnames = ["www.example.gooddname.example.net"]
+    answer = [rrset("gooddname.example.net.", dns.rdatatype.DNAME, "org.")]
+
+
 class WwwHandler(QnameHandler):
     qnames = ["www.example.net."]
 
@@ -195,9 +217,11 @@ def main() -> None:
     server = AsyncDnsServer(default_aa=True, default_rcode=dns.rcode.NOERROR)
     server.install_response_handlers(
         ApexNSHandler(),
+        AttackDnameHandler(),
         BadCnameHandler(),
         BadGoodDnameNsHandler(),
         CnameSubHandler(),
+        ExampleOrgHandler(),
         FooBadDnameHandler(),
         FooBarSubTld1Handler(),
         FooGoodDnameHandler(),
@@ -207,6 +231,7 @@ def main() -> None:
         Gl6412Ns2Handler(),
         Gl6412Ns3Handler(),
         GoodCnameHandler(),
+        IscHandler(),
         LameExampleOrgDelegation(),
         LargeReferralHandler(),
         LongCnameHandler(),
@@ -217,6 +242,7 @@ def main() -> None:
         OkSubHandler(),
         PartialFormerrHandler(),
         WwwDnameSubHandler(),
+        WwwGoodDnameHandler(),
         WwwHandler(),
     )
 

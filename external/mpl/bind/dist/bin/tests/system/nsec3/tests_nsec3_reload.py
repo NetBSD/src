@@ -11,7 +11,7 @@
 
 import shutil
 
-from nsec3.common import NSEC3_MARK, check_nsec3_case
+from nsec3.common import NSEC3_MARK, check_nsec3_case, wait_for_nsec3param
 
 import isctest
 
@@ -50,6 +50,7 @@ def test_nsec3_case(ns3, default_algorithm):
 
     # First make sure the zone is properly signed.
     isctest.kasp.wait_keymgr_done(ns3, zone)
+    wait_for_nsec3param(ns3, zone, saltlen=0)
 
     # Test case.
     check_nsec3_case(ns3, params)

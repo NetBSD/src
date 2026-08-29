@@ -13,11 +13,7 @@
 
 // NS1
 
-include "../../_common/rndc.key";
-
-controls {
-        inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 acl rfc1918 { 10/8; 192.168/16; 172.16/12; };
 

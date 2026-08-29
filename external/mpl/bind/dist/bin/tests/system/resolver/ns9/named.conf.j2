@@ -31,6 +31,7 @@ key rndc_key {
 	algorithm @DEFAULT_HMAC@;
 };
 
+/* deliberately not _common/controls.conf.j2: IPv6 control channel; the shared template is IPv4-only */
 controls {
 	inet fd92:7065:b8e:ffff::9 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };

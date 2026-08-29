@@ -15,6 +15,7 @@ import socket
 import time
 
 import dns.edns
+import dns.exception
 import dns.message
 import dns.name
 import dns.query
@@ -63,7 +64,6 @@ def test_initial_timeout(named_port):
                 raise EOFError from e
 
 
-@pytest.mark.flaky(max_runs=2, rerun_filter=isctest.mark.is_host_freebsd_13)
 def test_idle_timeout(named_port):
     #
     # The idle timeout is 5 seconds, so the third message should fail
@@ -202,10 +202,21 @@ def test_send_timeout(named_port):
         # above the interval
         time.sleep(6)
 
+        # named may be slow to enforce the send timeout under load; keep
+        # sending (without draining, to keep buffer pressure) until it closes.
+        deadline = time.time() + 30
         with pytest.raises(EOFError):
             try:
-                dns.query.send_tcp(sock, msg, timeout())
-                dns.query.receive_tcp(sock, timeout())
+                while time.time() < deadline:
+                    try:
+                        dns.query.send_tcp(sock, msg, timeout())
+                    except dns.exception.Timeout:
+                        # a blocked send is backpressure from named, not the
+                        # close we are waiting for; keep probing
+                        pass
+                    # pace the probes; the pressure comes from the unread
+                    # responses, not from the send rate
+                    time.sleep(0.5)
             except ConnectionError as e:
                 raise EOFError from e
 

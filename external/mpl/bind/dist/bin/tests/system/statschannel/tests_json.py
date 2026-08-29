@@ -119,3 +119,23 @@ def test_zone_with_many_keys_json(statsport):
 @pytest.mark.flaky(max_runs=2)
 def test_traffic_json(statsport):
     generic.test_traffic(fetch_traffic_json, statsip="10.53.0.2", statsport=statsport)
+
+
+# Coverage for the JSON response free path (GL #6024).
+def test_json_response_repeated_requests(statsport):
+    endpoints = [
+        "/json",
+        "/json/v1",
+        "/json/v1/status",
+        "/json/v1/server",
+        "/json/v1/zones",
+        "/json/v1/xfrins",
+        "/json/v1/net",
+        "/json/v1/mem",
+        "/json/v1/traffic",
+    ]
+    for _ in range(5):
+        for endpoint in endpoints:
+            r = requests.get(f"http://10.53.0.2:{statsport}{endpoint}", timeout=60)
+            assert r.status_code == 200
+            assert r.json() is not None

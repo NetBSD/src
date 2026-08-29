@@ -13,6 +13,7 @@ information regarding copyright ownership.
 
 from collections.abc import AsyncGenerator
 
+import dns.name
 import dns.rcode
 import dns.rdatatype
 import dns.rrset
@@ -33,7 +34,7 @@ class AXFRServer(DomainHandler):
     version.
     """
 
-    domains = ["xfr-and-reconfig"]
+    domains = ["xfr-and-reconfig", "private-dns-overrun"]
 
     def __init__(self) -> None:
         super().__init__()
@@ -96,6 +97,34 @@ class AXFRServer(DomainHandler):
         txt_message.answer.append(txt_rrset)
 
         yield DnsResponseSend(txt_message)
+
+        if qctx.qname == dns.name.from_text("private-dns-overrun"):
+            # A message where the malformed DNSKEY algorithm identifier
+            # finishes on a 00 byte in the next record. Assumes the
+            # next record starts with a compression pointer which is
+            # followed by the type which starts with 00.
+
+            # Generate malformed PRIVATE DNS DNSKEY
+            dnskey_message = qctx.prepare_new_response()
+            dnskey_rrset = dns.rrset.from_text(
+                qctx.qname,
+                300,
+                qctx.qclass,
+                dns.rdatatype.DNSKEY,
+                "\\# 12 00 00 00 fd 09 00 00 00 00 00 00 00",
+            )
+            dnskey_message.answer.append(dnskey_rrset)
+            # Generate well formed PRIVATE DNS DNSKEY
+            dnskey_rrset = dns.rrset.from_text(
+                qctx.qname,
+                300,
+                qctx.qclass,
+                dns.rdatatype.DNSKEY,
+                "\\# 12 00 00 00 fd 06 00 00 00 00 00 00 00",
+            )
+            dnskey_message.answer.append(dnskey_rrset)
+
+            yield DnsResponseSend(dnskey_message)
 
         # Finish the AXFR transaction by sending the second SOA RRset.
         yield DnsResponseSend(soa_message)

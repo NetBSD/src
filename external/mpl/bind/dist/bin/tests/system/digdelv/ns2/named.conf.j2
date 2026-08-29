@@ -23,6 +23,8 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "." {
 	type hint;
 	file "../../_common/root.hint";

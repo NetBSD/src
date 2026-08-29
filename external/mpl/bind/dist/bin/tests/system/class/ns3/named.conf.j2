@@ -9,14 +9,7 @@ options {
 	listen-on-v6 { none; };
 };
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
-controls {
-	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 view chaos ch {
 	match-clients { any; };

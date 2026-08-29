@@ -256,22 +256,26 @@ echo_i "Check that 'zone-statistics full;' is processed by 'rndc reconfig' ($n)"
 ret=0
 # off by default
 rndc_stats ns2 10.53.0.2 || ret=1
-sed -n '/Per Zone Query Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null && ret=0
+sed -n '/Per Zone Query Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null && ret=1
+sed -n '/Per Zone Glue Cache Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null && ret=1
 # turn on
 cp ns2/named2.conf ns2/named.conf
 rndc_reconfig ns2 10.53.0.2
 rndc_stats ns2 10.53.0.2 || ret=1
 sed -n '/Per Zone Query Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null || ret=1
+sed -n '/Per Zone Glue Cache Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null || ret=1
 # turn off
 cp ns2/named1.conf ns2/named.conf
 rndc_reconfig ns2 10.53.0.2
 rndc_stats ns2 10.53.0.2 || ret=1
-sed -n '/Per Zone Query Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null && ret=0
+sed -n '/Per Zone Query Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null && ret=1
+sed -n '/Per Zone Glue Cache Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null && ret=1
 # turn on
 cp ns2/named2.conf ns2/named.conf
 rndc_reconfig ns2 10.53.0.2
 rndc_stats ns2 10.53.0.2 || ret=1
 sed -n '/Per Zone Query Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null || ret=1
+sed -n '/Per Zone Glue Cache Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 n=$((n + 1))

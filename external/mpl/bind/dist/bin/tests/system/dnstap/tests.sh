@@ -491,7 +491,7 @@ ret=0
 hex=$($DNSTAPREAD -x ns3/dnstap.out | tail -1)
 echo $hex | $WIRETEST >dnstap.hex
 grep 'status: NOERROR' dnstap.hex >/dev/null 2>&1 || ret=1
-grep 'ANSWER: 3, AUTHORITY: 1' dnstap.hex >/dev/null 2>&1 || ret=1
+grep 'ANSWER: 3, AUTHORITY: 0' dnstap.hex >/dev/null 2>&1 || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

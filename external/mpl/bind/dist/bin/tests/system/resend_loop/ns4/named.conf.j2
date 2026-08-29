@@ -10,6 +10,8 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "." IN {
 	type hint;
 	file "root.hint";

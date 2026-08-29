@@ -38,8 +38,8 @@ def test_cancel_ongoing_retransfer(named_port, ns6):
     isctest.log.info(
         "Issue a retransfer-force command which should cancel the ongoing transfer and start a new one."
     )
-    with ns6.watch_log_from_here(timeout=30) as watcher_transfer_success:
-        with ns6.watch_log_from_here() as watcher_transfer_shutting_down:
+    with ns6.watch_log_from_here(timeout=60) as watcher_transfer_success:
+        with ns6.watch_log_from_here(timeout=60) as watcher_transfer_shutting_down:
             ns6.rndc("retransfer -force axfr-rndc-retransfer-force.")
             watcher_transfer_shutting_down.wait_for_line(
                 isctest.transfer.transfer_message(

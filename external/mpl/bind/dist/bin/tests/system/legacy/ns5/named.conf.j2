@@ -23,6 +23,8 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "plain-notcp" {
 	type primary;
 	file "plain-notcp.db";

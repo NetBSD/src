@@ -1,0 +1,7 @@
+$TTL 300
+@			SOA	ns.hack. . 0 0 0 0 300
+@			NS	ns
+ns			A	10.53.0.1
+
+sibling			NS	ns.sibling
+ns.sibling		A	10.53.0.1

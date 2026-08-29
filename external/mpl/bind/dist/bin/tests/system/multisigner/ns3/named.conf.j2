@@ -29,19 +29,20 @@ options {
 	dnssec-validation no;
 };
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
-controls {
-	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 zone "model2.multisigner." {
 	type primary;
 	allow-update { any; };
 	file "model2.multisigner.db";
+	dnssec-policy model2;
+	inline-signing no;
+};
+
+zone "model2.update-any." {
+	type primary;
+	allow-update { any; };
+	file "model2.update-any.db";
 	dnssec-policy model2;
 	inline-signing no;
 };

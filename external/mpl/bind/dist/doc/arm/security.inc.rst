@@ -31,6 +31,11 @@ can potentially cause crashes, incorrect data handling, or corruption:
 - Access to :any:`statistics-channels` from untrusted clients
 - Sockets used for :any:`update-policy` type `external`
 
+Problems that can only be triggered by configuring resources
+(views, zones, ...) with DNS classes other than Internet (IN), such as
+CHAOS (CH) or HESIOD (HS), cannot be the basis for CVE assignment or
+special security-sensitive handling of issues.
+
 Certain aspects of the DNS protocol are left unspecified, such as the handling of
 responses from DNS servers which do not fully conform to the DNS protocol. For
 such a situation, BIND implements its own safety checks and limits which are

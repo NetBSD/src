@@ -95,10 +95,6 @@ stop_server() {
   $PERL "$TOP_SRCDIR/bin/tests/system/stop.pl" "$SYSTESTDIR" "$@"
 }
 
-send() {
-  $PERL "$TOP_SRCDIR/bin/tests/system/send.pl" "$@"
-}
-
 #
 # Useful functions in test scripts
 #

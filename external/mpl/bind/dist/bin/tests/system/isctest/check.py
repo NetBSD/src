@@ -50,6 +50,14 @@ def formerr(message: dns.message.Message) -> None:
     rcode(message, dns.rcode.FORMERR)
 
 
+def aaflag(message: dns.message.Message) -> None:
+    assert (message.flags & dns.flags.AA) != 0, str(message)
+
+
+def noaaflag(message: dns.message.Message) -> None:
+    assert (message.flags & dns.flags.AA) == 0, str(message)
+
+
 def adflag(message: dns.message.Message) -> None:
     assert (message.flags & dns.flags.AD) != 0, str(message)
 

@@ -9,6 +9,8 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "tld" {
 	type primary;
 	file "tld.db";

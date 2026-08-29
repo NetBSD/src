@@ -34,8 +34,11 @@ def extract_dnstap(ns, expectedlen):
     )
 
     lines = dnstapread.out.splitlines()
-    assert expectedlen == len(lines)
-    return list(map(line_to_ips_and_queries, lines))
+    # Count distinct (destination, query) pairs, not raw lines: under load
+    # named may retransmit, adding identical entries.
+    ips_and_queries = list(dict.fromkeys(map(line_to_ips_and_queries, lines)))
+    assert expectedlen == len(ips_and_queries)
+    return ips_and_queries
 
 
 # Because DNSTAP doesn't have ordering guarantee, the order doesn't matter here.

@@ -606,6 +606,16 @@ def test_reconfiguration_when_zone_transfer_is_in_the_middle_of_soa_query(ns6):
         watcher_transfer_started.wait_for_line("Transfer started")
 
 
+def test_malformed_private_dns_identifier_overrun(ns6):
+    isctest.log.info(
+        "Check that a malformed PRIVATEDNS DNSKEY which overruns the record is rejected"
+    )
+    with ns6.watch_log_from_start(timeout=60) as watcher_transfer_completed:
+        watcher_transfer_completed.wait_for_line(
+            "zone private-dns-overrun/IN: zone transfer finished: unexpected end of input"
+        )
+
+
 # See #5767
 def test_ixfr_race(ns6):
     isctest.log.info(

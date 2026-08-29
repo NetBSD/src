@@ -25,6 +25,7 @@ key rndc_key {
 	algorithm @DEFAULT_HMAC@;
 };
 
+/* deliberately not _common/controls.conf.j2: non-ns<N> directory without the ns.ip template variable */
 controls {
 	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };

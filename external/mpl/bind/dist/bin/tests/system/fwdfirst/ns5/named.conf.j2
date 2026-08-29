@@ -1,0 +1,23 @@
+options {
+	query-source address 10.53.0.5;
+	notify-source 10.53.0.5;
+	transfer-source 10.53.0.5;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.5; };
+	listen-on-v6 { none; };
+	recursion yes;
+	allow-query { any; };
+	allow-recursion { any; };
+	dnssec-validation no;
+	qname-minimization off;
+	forward first;
+	forwarders { 10.53.0.2 port @PORT@; };
+};
+
+{% include "_common/controls.conf.j2" %}
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};

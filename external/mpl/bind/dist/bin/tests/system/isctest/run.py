@@ -15,6 +15,8 @@ import os
 import subprocess
 import time
 
+import dns.exception
+
 import isctest.log
 import isctest.text
 
@@ -150,7 +152,8 @@ def retry_with_timeout(func, timeout, delay=1, msg=None):
             if func():
                 isctest.log.debug(f"retry_with_timeout: {fname} succeeded")
                 return
-        except AssertionError as exc:
+        except (AssertionError, dns.exception.Timeout) as exc:
+            # A transient query timeout means "not ready yet"; keep retrying.
             exc_msg = str(exc)
         isctest.log.debug(f"retry_with_timeout: {fname} failed, sleep {delay}s")
         time.sleep(delay)

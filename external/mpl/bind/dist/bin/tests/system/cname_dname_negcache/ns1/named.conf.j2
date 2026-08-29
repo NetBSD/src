@@ -1,0 +1,26 @@
+options {
+    query-source address @ns.ip@;
+    port @PORT@;
+    pid-file "named.pid";
+    listen-on { @ns.ip@; };
+    listen-on-v6 { none; };
+    recursion no;
+    dnssec-validation no;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+zone "." {
+	type primary;
+	file "root.db";
+};
+
+zone "test." {
+	type primary;
+	file "test.db";
+};
+
+zone "bar.test." {
+	type primary;
+	file "bar.test.db";
+};

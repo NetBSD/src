@@ -26,6 +26,8 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 remote-servers "ns3" {
 	10.53.0.3 port @PORT@;
 };

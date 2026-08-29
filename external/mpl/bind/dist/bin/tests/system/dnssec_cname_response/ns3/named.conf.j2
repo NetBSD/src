@@ -11,12 +11,19 @@ options {
 	recursion yes;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "example." {
 	type static-stub;
 	server-addresses { 10.53.0.2; };
 };
 
 zone "secure." {
+	type static-stub;
+	server-addresses { 10.53.0.2; };
+};
+
+zone "stuffed." {
 	type static-stub;
 	server-addresses { 10.53.0.2; };
 };

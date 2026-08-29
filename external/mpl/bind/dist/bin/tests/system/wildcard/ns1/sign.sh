@@ -20,6 +20,20 @@ cp allwild.db.in allwild.db
 cp example.db.in example.db
 cp nestedwild.db.in nestedwild.db
 
+# GL #6170: NSEC3-signed zone with a wildcard above empty non-terminals.
+zone=entwild.test
+infile=entwild.db.in
+zonefile=entwild.db
+outfile=entwild.db.signed
+
+keyname1=$($KEYGEN -a ${DEFAULT_ALGORITHM} -n zone $zone 2>/dev/null)
+keyname2=$($KEYGEN -f KSK -a ${DEFAULT_ALGORITHM} -n zone $zone 2>/dev/null)
+
+cat $infile $keyname1.key $keyname2.key >$zonefile
+
+$SIGNER -3 - -H 10 -o $zone -f $outfile $zonefile >/dev/null 2>signer.err || cat signer.err
+echo_i "signed $zone"
+
 zone=nsec
 infile=nsec.db.in
 zonefile=nsec.db

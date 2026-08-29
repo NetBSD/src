@@ -24,11 +24,4 @@ options {
 	notify yes;
 };
 
-controls {
-	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { "rndc-key"; };
-};
-
-key rndc-key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
+{% include "_common/controls.conf.j2" %}

@@ -304,6 +304,7 @@ options {
 	tcp-keepalive-timeout <integer>;
 	tcp-listen-queue <integer>;
 	tcp-receive-buffer <integer>;
+	tcp-reuse-timeout <integer>;
 	tcp-send-buffer <integer>;
 	tkey-domain <quoted_string>; // obsolete
 	tkey-gssapi-credential <quoted_string>; // deprecated

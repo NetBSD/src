@@ -1,0 +1,25 @@
+// NS 9
+
+{% set max_validations_per_fetch = max_validations_per_fetch | default(16) %}
+
+options {
+	query-source address @ns.ip@;
+	notify-source @ns.ip@;
+	transfer-source @ns.ip@;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { @ns.ip@; };
+	listen-on-v6 { none; };
+
+	recursion yes;
+
+	dnssec-validation yes;
+
+	max-validations-per-fetch @max_validations_per_fetch@;
+};
+
+{% include "_common/controls.conf.j2" %}
+{% include "_common/trusted.conf.j2" %}
+{% include "_common/root.hint.conf" %}
+
+{% include "_common/zones.conf.j2" %}

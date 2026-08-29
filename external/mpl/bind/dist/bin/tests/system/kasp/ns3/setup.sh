@@ -50,7 +50,7 @@ for zn in default dnssec-keygen some-keys legacy-keys pregenerated \
   rumoured rsasha256 rsasha512 ecdsa256 ecdsa384 \
   dynamic dynamic-inline-signing inline-signing \
   checkds-ksk checkds-doubleksk checkds-csk inherit unlimited \
-  keystore; do
+  keystore cds-cdnskey; do
   setup "${zn}.kasp"
   cp template.db.in "$zonefile"
 done
@@ -138,6 +138,17 @@ ZSK2=$($KEYGEN -a RSASHA256 -L 1234 $keytimes $zone 2>keygen.out.$zone.3)
 $SETTIME -s -g $O -k $R $Tpub -r $R $Tpub -d $H $Tpub "$KSK" >settime.out.$zone.1 2>&1
 $SETTIME -s -g $O -k $R $Tpub -z $R $Tpub "$ZSK1" >settime.out.$zone.2 2>&1
 $SETTIME -s -g $O -k $R $Tpub -z $R $Tpub "$ZSK2" >settime.out.$zone.2 2>&1
+
+# CDS and CDNSKEY should be published.
+zone="cds-cdnskey.kasp"
+echo_i "setting up zone: $zone"
+Tpub="now-7d"
+Tact="now"
+keytimes="-P ${Tpub} -A ${Tact}"
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 -f KSK $keytimes $zone 2>keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 $keytimes $zone 2>keygen.out.$zone.2)
+$SETTIME -s -g $O -k $R $Tpub -r $R $Tpub -d $H $Tpub "$KSK" >settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $R $Tpub -z $R $Tpub "$ZSK" >settime.out.$zone.2 2>&1
 
 #
 # Set up zones that are already signed.

@@ -1079,7 +1079,9 @@ class GitCommit(SubGitObjectMixin):
 
     @property
     def date(self):
-        d = datetime.datetime.utcfromtimestamp(float(self.author_date_timestamp))
+        d = datetime.datetime.fromtimestamp(
+            float(self.author_date_timestamp), datetime.timezone.utc
+        )
         return d.strftime("%Y-%m-%d")
 
     @property

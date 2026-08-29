@@ -14,11 +14,23 @@ from re import compile as Re
 import os
 import time
 
+import dns.edns
+
 import isctest
+
+# Extended DNS Error INFO-CODE disclosing that a Negative Trust Anchor was
+# applied to a response (draft-farrokhi-dnsop-ede-nta).
+NTA_EDE_CODE = 33
 
 
 def active(blob):
     return len([x for x in blob.splitlines() if " expiry" in x])
+
+
+def has_ede(res, code):
+    return any(
+        opt.otype == dns.edns.OptionType.EDE and opt.code == code for opt in res.options
+    )
 
 
 # global start-time variable
@@ -418,3 +430,31 @@ def test_nta_forward(servers):
     isctest.check.servfail(res)
     isctest.check.empty_answer(res)
     isctest.check.noadflag(res)
+
+
+def test_nta_ede(servers):
+    # A response whose DNSSEC validation was suppressed by a Negative Trust
+    # Anchor must disclose that via EDE code 33 (draft-farrokhi-dnsop-ede-nta).
+    ns9 = servers["ns9"]
+
+    m = isctest.query.create("badds.example", "SOA")
+
+    # Without an NTA, validation fails: SERVFAIL and no NTA EDE.
+    res = isctest.query.tcp(m, "10.53.0.9")
+    isctest.check.servfail(res)
+    assert not has_ede(res, NTA_EDE_CODE), res
+
+    # With an NTA in place, the answer is returned (AD=0) and carries EDE 33.
+    ns9.rndc("nta badds.example")
+    try:
+        res = isctest.query.tcp(m, "10.53.0.9")
+        isctest.check.noerror(res)
+        isctest.check.noadflag(res)
+        isctest.check.ede(res, NTA_EDE_CODE)
+    finally:
+        ns9.rndc("nta -remove badds.example")
+
+    # Once the NTA is gone, the disclosure stops too.
+    res = isctest.query.tcp(m, "10.53.0.9")
+    isctest.check.servfail(res)
+    assert not has_ede(res, NTA_EDE_CODE), res

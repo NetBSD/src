@@ -13,11 +13,7 @@
 
 // NS3
 
-include "../../_common/rndc.key";
-
-controls {
-	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 options {
 	query-source address 10.53.0.3;
@@ -68,6 +64,15 @@ zone "bits" {
 	allow-update-forwarding { any; };
 	file "bits.bk";
 	sig-signing-signatures 1;	// force incremental processing
+};
+
+zone "incremental-updates" {
+    type primary;
+    file "incremental-updates.db";
+    inline-signing yes;
+    dnssec-policy inline;
+    sig-signing-signatures 1;	// force incremental processing
+    allow-update { any; };
 };
 
 server 10.53.0.4 { request-ixfr no; };

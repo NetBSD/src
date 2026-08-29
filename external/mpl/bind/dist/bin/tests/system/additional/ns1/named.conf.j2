@@ -25,11 +25,7 @@ options {
 	minimal-responses yes;
 };
 
-include "../../_common/rndc.key";
-
-controls {
-	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 zone "." {
         type primary;

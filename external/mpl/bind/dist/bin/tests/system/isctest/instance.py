@@ -11,9 +11,12 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from collections.abc import Iterator
 from pathlib import Path
 from typing import NamedTuple
 
+import abc
+import contextlib
 import os
 import re
 
@@ -23,6 +26,7 @@ import dns.update
 
 from .log import WatchLogFromHere, WatchLogFromStart, debug
 from .query import udp
+from .rndc import RNDCClient
 from .run import CmdResult, EnvCmd, perl
 from .text import TextFile
 
@@ -39,7 +43,109 @@ class NamedPorts(NamedTuple):
         )
 
 
-class NamedInstance:
+class AnsPorts(NamedTuple):
+    dns: int = 53
+
+    @staticmethod
+    def from_env():
+        return AnsPorts(
+            dns=int(os.environ["PORT"]),
+        )
+
+
+class ServerInstance(abc.ABC):
+    """
+    Common base class for the server instances used in a system test.
+
+    This class should not be used directly; instead, its subclasses,
+    `NamedInstance` and `AnsInstance`, should be used.
+    """
+
+    @property
+    @abc.abstractmethod
+    def log_filename(self) -> str:
+        """Name of the log file in the instance's directory."""
+
+    @property
+    @abc.abstractmethod
+    def identifier_prefix(self) -> str:
+        """Directory name prefix used to derive the numeric identifier."""
+
+    def __init__(self, identifier: str, num: int | None = None) -> None:
+        """
+        `identifier` is the name of the instance's directory
+
+        `num` is optional if the identifier starts with `identifier_prefix`
+        followed by a number, in which case the number is assumed to be the
+        numeric identifier; otherwise it must be provided to assign a numeric
+        identification to the server
+        """
+        self.directory = Path(identifier).absolute()
+        if not self.directory.is_dir():
+            raise ValueError(f"{self.directory} isn't a directory")
+        self.system_test_name = self.directory.parent.name
+
+        self.identifier = identifier
+        self.num = self._identifier_to_num(identifier, num)
+        self.log = TextFile(os.path.join(identifier, self.log_filename))
+
+    @property
+    def ip(self) -> str:
+        """IPv4 address of the instance."""
+        return f"10.53.0.{self.num}"
+
+    @classmethod
+    def _identifier_to_num(cls, identifier: str, num: int | None = None) -> int:
+        regex_match = re.match(
+            rf"^{cls.identifier_prefix}(?P<index>[0-9]{{1,2}})$", identifier
+        )
+        if not regex_match:
+            if num is None:
+                raise ValueError(f'Can\'t parse numeric identifier from "{identifier}"')
+            return num
+        parsed_num = int(regex_match.group("index"))
+        assert num is None or num == parsed_num, "mismatched num and identifier"
+        return parsed_num
+
+    def watch_log_from_start(
+        self, timeout: float = WatchLogFromStart.DEFAULT_TIMEOUT
+    ) -> WatchLogFromStart:
+        """
+        Return an instance of the `WatchLogFromStart` context manager for this
+        instance's log file.
+        """
+        return WatchLogFromStart(self.log.path, timeout)
+
+    def watch_log_from_here(
+        self, timeout: float = WatchLogFromHere.DEFAULT_TIMEOUT
+    ) -> WatchLogFromHere:
+        """
+        Return an instance of the `WatchLogFromHere` context manager for this
+        instance's log file.
+        """
+        return WatchLogFromHere(self.log.path, timeout)
+
+    def stop(self, args: list[str] | None = None) -> None:
+        """Stop the instance."""
+        args = args or []
+        perl(
+            f"{os.environ['srcdir']}/stop.pl",
+            [self.system_test_name, self.identifier] + args,
+        )
+
+    def start(self, args: list[str] | None = None) -> None:
+        """Start the instance."""
+        args = args or []
+        perl(
+            f"{os.environ['srcdir']}/start.pl",
+            [self.system_test_name, self.identifier] + args,
+        )
+
+    def __repr__(self):
+        return self.identifier
+
+
+class NamedInstance(ServerInstance):
     """
     A class representing a `named` instance used in a system test.
 
@@ -51,11 +157,13 @@ class NamedInstance:
     ```
     """
 
+    log_filename = "named.run"
+    identifier_prefix = "ns"
+
     def __init__(
         self,
         identifier: str,
         num: int | None = None,
-        ports: NamedPorts | None = None,
     ) -> None:
         """
         `identifier` is the name of the instance's directory
@@ -63,23 +171,9 @@ class NamedInstance:
         `num` is optional if the identifier is in a form of `ns<X>`, in which
         case `<X>` is assumed to be numeric identifier; otherwise it must be
         provided to assign a numeric identification to the server
-
-        `ports` is the `NamedPorts` instance listing the UDP/TCP ports on which
-        this `named` instance is listening for various types of traffic (both
-        DNS traffic and RNDC commands). Defaults to ports set by the test
-        framework.
         """
-        self.directory = Path(identifier).absolute()
-        if not self.directory.is_dir():
-            raise ValueError(f"{self.directory} isn't a directory")
-        self.system_test_name = self.directory.parent.name
-
-        self.identifier = identifier
-        self.num = self._identifier_to_num(identifier, num)
-        if ports is None:
-            ports = NamedPorts.from_env()
-        self.ports = ports
-        self.log = TextFile(os.path.join(identifier, "named.run"))
+        super().__init__(identifier, num)
+        self.ports = NamedPorts.from_env()
 
         self._rndc_conf = Path("../_common/rndc.conf").absolute()
         self._rndc = EnvCmd("RNDC", self.rndc_args)
@@ -88,22 +182,6 @@ class NamedInstance:
     def rndc_args(self) -> str:
         """Base arguments for calling RNDC to control the instance."""
         return f"-c {self._rndc_conf} -s {self.ip} -p {self.ports.rndc}"
-
-    @property
-    def ip(self) -> str:
-        """IPv4 address of the instance."""
-        return f"10.53.0.{self.num}"
-
-    @staticmethod
-    def _identifier_to_num(identifier: str, num: int | None = None) -> int:
-        regex_match = re.match(r"^ns(?P<index>[0-9]{1,2})$", identifier)
-        if not regex_match:
-            if num is None:
-                raise ValueError(f'Can\'t parse numeric identifier from "{identifier}"')
-            return num
-        parsed_num = int(regex_match.group("index"))
-        assert num is None or num == parsed_num, "mismatched num and identifier"
-        return parsed_num
 
     def rndc(self, command: str, timeout=10, **kwargs) -> CmdResult:
         """
@@ -115,6 +193,21 @@ class NamedInstance:
         isctest.cmd.run().
         """
         return self._rndc(command, timeout=timeout, **kwargs)
+
+    @contextlib.contextmanager
+    def rndc_client(self, timeout: float = 10) -> Iterator[RNDCClient]:
+        """
+        Connect a Python RNDC client to this instance's control channel;
+        a fast alternative to `rndc()` which does not spawn the rndc
+        binary. Only usable as a context manager:
+
+        ```python
+        with ns1.rndc_client() as client:
+            client.call("status")
+        ```
+        """
+        with RNDCClient(self.ip, self.ports.rndc, timeout=timeout) as client:
+            yield client
 
     def nsupdate(
         self, update_msg: dns.update.UpdateMessage, expected_rcode=dns.rcode.NOERROR
@@ -139,24 +232,6 @@ class NamedInstance:
         )
         return response
 
-    def watch_log_from_start(
-        self, timeout: float = WatchLogFromStart.DEFAULT_TIMEOUT
-    ) -> WatchLogFromStart:
-        """
-        Return an instance of the `WatchLogFromStart` context manager for this
-        `named` instance's log file.
-        """
-        return WatchLogFromStart(self.log.path, timeout)
-
-    def watch_log_from_here(
-        self, timeout: float = WatchLogFromHere.DEFAULT_TIMEOUT
-    ) -> WatchLogFromHere:
-        """
-        Return an instance of the `WatchLogFromHere` context manager for this
-        `named` instance's log file.
-        """
-        return WatchLogFromHere(self.log.path, timeout)
-
     def reconfigure(self, **kwargs) -> CmdResult:
         """
         Reconfigure this named `instance` and wait until reconfiguration is
@@ -176,21 +251,25 @@ class NamedInstance:
             watcher.wait_for_line("all zones loaded")
         return cmd
 
-    def stop(self, args: list[str] | None = None) -> None:
-        """Stop the instance."""
-        args = args or []
-        perl(
-            f"{os.environ['srcdir']}/stop.pl",
-            [self.system_test_name, self.identifier] + args,
-        )
 
-    def start(self, args: list[str] | None = None) -> None:
-        """Start the instance."""
-        args = args or []
-        perl(
-            f"{os.environ['srcdir']}/start.pl",
-            [self.system_test_name, self.identifier] + args,
-        )
+class AnsInstance(ServerInstance):
+    """
+    A class representing a mock `ans` server instance used in a system test.
 
-    def __repr__(self):
-        return self.identifier
+    This class is expected to be instantiated as part of the `servers` fixture:
+
+    ```python
+    def test_foo(servers):
+        assert "query received" in servers["ans4"].log
+    ```
+    """
+
+    log_filename = "ans.run"
+    identifier_prefix = "ans"
+
+    def __init__(self, identifier: str) -> None:
+        """
+        `identifier` is the name of the instance's directory
+        """
+        super().__init__(identifier)
+        self.ports = AnsPorts.from_env()

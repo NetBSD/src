@@ -1,0 +1,47 @@
+; This zone file intentionally isn't a jinja2 template.
+;
+; It needs to be read before the templates are rended, to generate hypothesis
+; test cases.
+$ORIGIN nsec3-answer.
+$TTL 300
+nsec3-answer.			IN SOA	. . (
+				1		; serial
+				20		; refresh (20 seconds)
+				20		; retry (20 seconds)
+				1814400		; expire (3 weeks)
+				3600		; minimum (1 hour)
+)
+
+nsec3-answer.			NS	ns2
+ns2			A	10.53.0.2
+
+02hc3em7bdd011a0gms3hkkjt2if5vp8		A	10.0.0.0
+a						A	10.0.0.1
+*.a.a						A	10.0.0.6
+a.a.a.a					A	10.0.0.3
+b						A	10.0.0.2
+b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b	A	10.0.0.2
+cname						CNAME	does-not-exist
+cname.cname					CNAME	cname
+cname.ent.cname					CNAME	cname.cname
+d						A	10.0.0.4
+dname-to-nowhere				DNAME	does-not-exist
+; DNAME owner longer than target to avoid YXDOMAIN dependent on QNAME
+insecure					NS	a.root-servers.nil
+ns.insecure					A	10.53.0.3
+a.root-servers.nil				A	10.53.0.1
+secure						NS	a.root-servers.nil
+secure						DS	11111 13 255 00
+occluded.secure					A	0.0.0.0
+*.wild						A	10.0.0.6
+explicit.wild					A	192.0.2.66
+z						A	10.0.0.26
+
+; randomly generated subtree to excercise unknown corner cases
+; intentionally small, to not blow up algorithms with quadratic complexity in ZoneAnalyzer and name generator
+a.a.a.b.a.a.a.b.a.a.b.b.a.random	TXT	"r"
+b.b.a.a.b.b.a.a.a.b.b.a.b.a.a.a.a.a.b.a.a.b.a.b.a.b.b.b.b.b.a.a.a.a.b.a.a.a.b.a.a.b.b.a.random	TXT	"r"
+a.a.a.b.b.a.b.b.a.b.a.b.a.b.a.b.b.b.a.random	TXT	"r"
+b.b.a.b.a.b.a.a.a.b.a.a.b.a.a.a.a.b.b.a.b.b.a.b.a.b.a.b.a.b.b.b.a.random	TXT	"r"
+a.b.a.a.b.a.b.a.b.a.a.b.a.b.a.a.a.b.b.a.b.b.a.a.b.b.a.a.b.a.b.a.b.b.b.b.a.a.a.a.a.a.a.a.b.a.b.a.b.b.a.b.a.b.a.a.a.b.a.a.b.a.a.a.a.b.b.a.b.b.a.b.a.b.a.b.a.b.b.b.a.random	TXT	"r"
+a.a.a.a.a.b.b.a.a.b.a.a.b.a.a.b.b.a.a.a.b.a.a.a.b.b.b.b.b.a.a.a.b.b.b.b.b.b.a.b.b.b.a.a.b.b.b.b.a.a.a.a.b.a.b.b.a.b.a.a.b.b.b.b.b.b.b.a.b.b.a.b.a.b.a.a.a.b.b.a.a.b.b.a.b.a.b.b.a.b.b.b.a.b.b.b.b.b.a.a.b.a.a.a.b.b.a.a.a.b.b.b.b.b.a.random	TXT	"r"

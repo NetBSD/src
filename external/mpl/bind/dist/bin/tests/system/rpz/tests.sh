@@ -124,11 +124,21 @@ setret() {
 # $1=domain
 # $2=DNS server and client IP address
 get_sn() {
-  SOA=$($DIG -p ${PORT} +short +norecurse soa "$1" "@$2" "-b$2")
-  SN=$(expr "$SOA" : '[^ ]* [^ ]* \([^ ]*\) .*' || true)
-  test "$SN" != "" && return
-  echo_i "no serial number from \`dig -p ${PORT} soa $1 @$2\` in \"$SOA\""
-  exit 1
+  gsn_n=0
+  while true; do
+    SOA=$($DIG -p ${PORT} +short +norecurse soa "$1" "@$2" "-b$2")
+    SN=$(expr "$SOA" : '[^ ]* [^ ]* \([^ ]*\) .*' || true)
+    test "$SN" != "" && return
+    # A policy zone being (re)loaded can briefly answer with no SOA
+    # (SERVFAIL/REFUSED), which +short renders as empty output; keep
+    # probing instead of failing on a single transient miss.
+    gsn_n=$((gsn_n + 1))
+    if test "$gsn_n" -gt $TEN_SECS; then
+      echo_i "no serial number from \`dig -p ${PORT} soa $1 @$2\` in \"$SOA\""
+      exit 1
+    fi
+    $WAIT_CMD
+  done
 }
 
 get_sn_fast() {
@@ -409,7 +419,7 @@ addr() {
   digcmd $2 >$DIGNM
   #ckalive "$2" "server crashed by 'dig $2'" || return 1
   ADDR_ESC=$(echo "$ADDR" | sed -e 's/\./\\./g')
-  ADDR_TTL=$(sed -n -e "s/^[-.a-z0-9]\{1,\}[	 ]*\([0-9]*\)	IN	AA*	${ADDR_ESC}\$/\1/p" $DIGNM)
+  ADDR_TTL=$(sed -n -e "s/^[-.a-z0-9]\{1,\}[	 ]*\([0-9]*\)[ 	]IN[ 	]AA*[ 	]${ADDR_ESC}\$/\1/p" $DIGNM)
   if test -z "$ADDR_TTL"; then
     setret "'dig $2' wrong; no address $ADDR record in $DIGNM"
     return 0
@@ -535,7 +545,10 @@ nochange TCP a3-9.tld2                # 33 tcp-only
 here x.servfail <<'EOF'               # 34 qname-wait-recurse yes
     ;; status: SERVFAIL, x
 EOF
-addr 35.35.35.35 "x.servfail @$ns5" # 35 qname-wait-recurse no
+addr 35.35.35.35 "x.servfail @$ns5"                                                                                                                                                                                                                                    # 35 qname-wait-recurse no
+here aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.wild.sub1.tld2 <<'EOF' # 36 wildcard CNAME name to long
+    ;; status: YXDOMAIN, x
+EOF
 end_group
 ckstats $ns3 test1 ns3 22
 ckstats $ns5 test1 ns5 1
@@ -568,8 +581,8 @@ ckstats $ns5 test1 ns5 0
 ckstats $ns6 test1 ns6 0
 
 start_group "IP rewrites" test2
-msg='rpz IP address "128.2.0.0.0.0.3.2.2001" is not the canonical "128.2.zz.3.2.2001"'
-grep "$msg" ns3/named.run >/dev/null || setret "expected 'is not the canonical' message not logged"
+msg='invalid rpz IP address "128.2.0.0.0.0.3.2.2001.rpz-ip.bl" is not in canonical form 128.2.zz.3.2.2001.rpz-nsdname.bl'
+grep "$msg" ns3/named.run >/dev/null || setret "expected 'not in canonical form' message not logged"
 nodata a3-1.tld2                    # 1 NODATA
 nochange a3-2.tld2                  # 2 no policy record so no change
 nochange a4-1.tld2                  # 3 obsolete PASSTHRU record style
@@ -955,12 +968,17 @@ if [ native = "$MODE" ]; then
 
   t=$((t + 1))
   echo_i "checking that 'servfail-until-ready yes' works (part 2) (${t})"
-  # The 'slow-rpz.' zone has 30 records (RPZ rules), and '-T rpzslow' forces a
-  # 100ms delay for each rule. Wait enough time for processing to finish.
-  wait_for_log 10 "slow-rpz: reload done" ns3/named.run
-  # Now the same request as in the previous test should return NOERROR
-  $DIG tld2. NS -p ${PORT} @$ns3 >dig.out.${t} || setret "failed"
-  grep "status: NOERROR" dig.out.${t} >/dev/null || setret "failed"
+  # RPZ becomes ready only after *all* policy zones have finished their initial
+  # update, and the zones do not finish in a fixed order. The 'slow-rpz' zone (30
+  # rules, each delayed 100ms by '-T rpzslow') only keeps RPZ busy long enough for
+  # part 1 above; it is not necessarily the last zone to finish, so its "reload
+  # done" log line does not mean RPZ is ready. Poll the query until it returns
+  # NOERROR instead.
+  _servfail_until_ready() {
+    $DIG tld2. NS -p ${PORT} @$ns3 >dig.out.${t} \
+      && grep "status: NOERROR" dig.out.${t} >/dev/null
+  }
+  retry_quiet 20 _servfail_until_ready || setret "failed"
 fi
 
 [ $status -eq 0 ] || exit 1

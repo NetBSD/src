@@ -11,7 +11,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
         "wait_for_message.*",
@@ -21,6 +23,11 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns5/named.stats",
     ]
 )
+
+pytestmark = [
+    isctest.mark.requires_net_dns,
+    EXTRA_ARTIFACTS,
+]
 
 
 @pytest.mark.flaky(max_runs=3)

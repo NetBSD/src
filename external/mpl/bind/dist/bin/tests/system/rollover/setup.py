@@ -13,10 +13,10 @@ from pathlib import Path
 
 import shutil
 
+from isctest.algorithms import Algorithm
 from isctest.kasp import private_type_record
 from isctest.run import EnvCmd
 from isctest.template import NS2, NS3, TrustAnchor, Zone
-from isctest.vars.algorithms import Algorithm
 
 import isctest
 

@@ -87,8 +87,9 @@ sed 's/ add \(.*\) IN DS / add \1 3600 IN DS /' <UP.swap >UP.swapttl
 
 sign() {
   cat >db.$1
+  cat $keyz.key $key1.key $key2.key >>db.$1
   $SIGNER >/dev/null \
-    -S -O full -o $Z -f sig.$1 db.$1
+    -O full -o $Z -f sig.$1 db.$1 $keyz $key1 $key2
 }
 
 sign null <<EOF

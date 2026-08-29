@@ -85,8 +85,10 @@ This option prints a short summary of the options and arguments to
 .INDENT 0.0
 .TP
 .B \-k keyname
-This option specifies the key name of the \fBrndc\fP \%<#\:std-iscman-rndc> authentication key. This must be a
-valid domain name. The default is \fBrndc\-key\fP\&.
+This option specifies the key name of the \fBrndc\fP \%<#\:std-iscman-rndc>
+authentication key. This must be a valid domain name and will
+be sanitized using the domain name semantics. The default is
+\fBrndc\-key\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP

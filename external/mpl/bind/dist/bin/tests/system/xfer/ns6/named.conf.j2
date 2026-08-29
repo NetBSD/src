@@ -11,11 +11,7 @@
  * information regarding copyright ownership.
  */
 
-include "../../_common/rndc.key";
-
-controls {
-	inet 10.53.0.6 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 options {
 	query-source address 10.53.0.6;
@@ -117,4 +113,13 @@ zone "ixfr-race" {
 	type secondary;
 	primaries { 10.53.0.11; };
 	file "ixfr-race.bk";
+};
+
+# GL#6004
+zone "private-dns-overrun" {
+	type secondary;
+	primaries { 10.53.0.9; };
+	file "private-dns-overrun.bk";
+	masterfile-format text; # force bug to be exercised
+	request-ixfr no; # ans9 supports only axfr
 };

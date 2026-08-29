@@ -15,8 +15,13 @@ import dns.rcode
 import dns.update
 import pytest
 
-from isctest.vars.algorithms import RSASHA1, Algorithm
-from nsec3.common import NSEC3_MARK, check_nsec3_case
+from isctest.algorithms import RSASHA1, Algorithm
+from nsec3.common import (
+    NSEC3_MARK,
+    NSEC3_SALTLEN,
+    check_nsec3_case,
+    wait_for_nsec3param,
+)
 
 import isctest
 import isctest.mark
@@ -55,6 +60,14 @@ def bootstrap():
     return {
         "zones": ZONES,
     }
+
+
+@pytest.fixture(scope="module", autouse=True)
+def after_servers_start(ns3):
+    # Make sure the zones are properly signed.
+    for zone in ZONES:
+        isctest.kasp.wait_keymgr_done(ns3, zone)
+        wait_for_nsec3param(ns3, zone, NSEC3_SALTLEN[zone].initial)
 
 
 @pytest.mark.parametrize(
@@ -123,9 +136,6 @@ def bootstrap():
 def test_nsec_case(ns3, params):
     # Get test parameters.
     zone = params["zone"]
-
-    # First make sure the zone is properly signed.
-    isctest.kasp.wait_keymgr_done(ns3, zone)
 
     # Test case.
     check_nsec3_case(ns3, params, nsec3=False)
@@ -284,11 +294,4 @@ def test_nsec_case(ns3, params):
     ],
 )
 def test_nsec3_case(ns3, params):
-    # Get test parameters.
-    zone = params["zone"]
-
-    # First make sure the zone is properly signed.
-    isctest.kasp.wait_keymgr_done(ns3, zone)
-
-    # Test case.
     check_nsec3_case(ns3, params)

@@ -1,0 +1,26 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+; GL #6170 regression zone.
+;
+; An apex wildcard combined with a deeper name (en.jun2026.2048._domainkey)
+; that forms empty non-terminals.  Querying one of those empty non-terminals
+; (e.g. 2048._domainkey) with DNSSEC requested, while the zone is served from
+; the RBT zone database, used to abort named in wildcard_blocked() because the
+; DNS_R_NEWORIGIN result of dns_rbtnodechain_next() was not handled.
+
+$TTL 3600
+@				IN SOA	ns hostmaster ( 1 3600 1200 604800 3600 )
+				IN NS	ns
+ns				IN A	10.53.0.1
+*				IN A	192.0.2.1
+en.jun2026.2048._domainkey	IN TXT	"v=DKIM1; k=rsa; p=PUBLICKEYDATA"
+crm._domainkey			IN CNAME .

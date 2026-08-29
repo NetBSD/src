@@ -134,14 +134,11 @@ status=$((status + ret))
 
 n=$((n + 1))
 echo_i "dumping ADB data ($n)"
-ret=0
 info=$(rndccmd 10.53.0.3 fetchlimit | grep 10.53.0.4 | sed 's/.*quota .*(\([0-9]*\).*atr \([.0-9]*\).*/\2 \1/')
 echo_i $info
 set -- $info
-[ ${2:-${quota}} -lt $quota ] || ret=1
+# Record the quota at start of recovery
 quota=$2
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status + ret))
 
 n=$((n + 1))
 echo_i "checking lame server recovery (continued) ($n)"

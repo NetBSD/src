@@ -51,6 +51,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns1/dsset-*",
         "ns1/*.signed",
         "ns1/allwild.db",
+        "ns1/entwild.db",
         "ns1/example.db",
         "ns1/nestedwild.db",
         "ns1/nsec.db",

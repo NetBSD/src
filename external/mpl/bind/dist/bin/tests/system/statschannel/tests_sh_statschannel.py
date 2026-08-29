@@ -11,7 +11,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "K*",
         "bind9.xsl.1",
@@ -49,6 +51,11 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns3/example.db",
     ]
 )
+
+pytestmark = [
+    isctest.mark.with_libxml2_or_json_c,
+    EXTRA_ARTIFACTS,
+]
 
 
 def test_statschannel(run_tests_sh):

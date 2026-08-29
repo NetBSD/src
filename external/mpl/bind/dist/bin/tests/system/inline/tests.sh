@@ -1383,5 +1383,44 @@ test ${ttl2:-0} -eq 400 || ret=1
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status + ret))
 
+n=$((n + 1))
+echo_i "Test oversized private record is properly ignored ($n)"
+ret=0
+zone=oversized-private-record
+cat >ns3/oversized-private-record.db <<EOF
+@ 0 IN SOA . . 0 0 0 0 0
+@ 0 IN NS ns3
+@ 0 IN NS ns7
+ns3 0 IN A 10.53.0.3
+ns7 0 IN A 10.53.0.7
+; 1st and 3rd octets are zero to ensure length check is exercised
+@ IN TYPE65534 \\# 262 ( 0041004141414141414141414141414141
+                         4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 4141414141414141414141414141414141
+			 41414141414141 )
+EOF
+$RNDCCMD 10.53.0.3 addzone $zone \
+  '{ type primary; file "oversized-private-record.db"; allow-transfer { any; }; };' || ret=1
+$RNDCCMD 10.53.0.7 addzone $zone \
+  '{ type secondary; file "oversized-private-record.bk"; primaries { 10.53.0.3;}; dnssec-policy default; };' || ret=1
+sleep 1
+dig_with_opts @10.53.0.7 $zone TYPE65534 >dig.out.ns7.test$n.soa || ret=1
+grep "status: NOERROR" dig.out.ns7.test$n.soa >/dev/null || ret=1
+grep "TYPE65534.\\\\# 262" dig.out.ns7.test$n.soa >/dev/null || ret=1
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status + ret))
+
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

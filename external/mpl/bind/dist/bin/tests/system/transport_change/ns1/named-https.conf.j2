@@ -11,11 +11,7 @@
  * information regarding copyright ownership.
  */
 
-include "../../_common/rndc.key";
-
-controls {
-	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 tls self-signed {
 	cert-file "../self-signed-cert.pem";
@@ -39,7 +35,6 @@ options {
 	allow-proxy { any; };
 	allow-proxy-on { 10.53.0.1; fd92:7065:b8e:ffff::1; };
 };
-
 
 zone "example" {
 	type primary;

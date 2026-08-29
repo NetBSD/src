@@ -1,0 +1,34 @@
+// NS2
+
+options {
+	query-source address @ns.ip@;
+	notify-source @ns.ip@;
+	transfer-source @ns.ip@;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { @ns.ip@; };
+	listen-on-v6 { none; };
+
+	key-directory "keys";
+
+	minimal-any no;
+	minimal-responses no;
+	recursion no;
+
+	dnssec-validation yes;
+
+{% if rrset_order_none is defined %}
+	rrset-order {
+		/* Keep the RRset order static in responses for zones that depend on it. */
+{% for name in rrset_order_none %}
+		name "@name@." order none;
+{% endfor %}
+	};
+{% endif %}
+};
+
+{% include "_common/controls.conf.j2" %}
+{% include "_common/trusted.conf.j2" %}
+{% include "_common/root.hint.conf" %}
+
+{% include "_common/zones.conf.j2" %}

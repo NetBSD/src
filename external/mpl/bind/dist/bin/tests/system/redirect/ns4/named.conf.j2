@@ -13,8 +13,6 @@
 
 // NS2
 
-controls { /* empty */ };
-
 acl rfc1918 { 10/8; 192.168/16; 172.16/12; };
 
 options {
@@ -32,14 +30,7 @@ options {
 };
 
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
-controls {
-	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 zone "." {
 	type hint;

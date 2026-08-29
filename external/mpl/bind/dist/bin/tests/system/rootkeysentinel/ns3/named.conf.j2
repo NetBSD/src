@@ -25,6 +25,8 @@ options {
 	root-key-sentinel yes;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "." {
 	type hint;
 	file "hint.db";

@@ -19,6 +19,8 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "ipv4-only-servers" {
 	type secondary;
 	primaries { 10.53.0.3; };

@@ -28,6 +28,8 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "example" {
 	type primary;
 	file "example.db";

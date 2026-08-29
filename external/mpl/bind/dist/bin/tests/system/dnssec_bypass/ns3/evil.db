@@ -1,0 +1,23 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$ORIGIN evil.test.
+$TTL 300
+
+@		IN SOA	ns1 hostmaster 1 3600 600 86400 300
+		IN NS	ns1
+; Try to poison the victim zone in a resolver cache.
+; If admitted, the aggressive NSEC cache will accept a range such as
+; [evil.test, b.victim.test) and will cause the victim nameserver to
+; be never queried.
+		IN NSEC	b.victim.test. NS SOA RRSIG NSEC DNSKEY
+
+ns1		IN A	10.53.0.3

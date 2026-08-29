@@ -107,13 +107,13 @@ check_PROGRAMS = acl_test$(EXEEXT) badcache_test$(EXEEXT) \
 	nametree_test$(EXEEXT) nsec3_test$(EXEEXT) \
 	nsec3param_test$(EXEEXT) private_test$(EXEEXT) \
 	qp_test$(EXEEXT) qpmulti_test$(EXEEXT) qpdb_test$(EXEEXT) \
-	qpzone_test$(EXEEXT) rbt_test$(EXEEXT) rdata_test$(EXEEXT) \
-	rdataset_test$(EXEEXT) rdatasetstats_test$(EXEEXT) \
-	resconf_test$(EXEEXT) resolver_test$(EXEEXT) rsa_test$(EXEEXT) \
-	sigs_test$(EXEEXT) skr_test$(EXEEXT) time_test$(EXEEXT) \
-	tsig_test$(EXEEXT) update_test$(EXEEXT) zonemgr_test$(EXEEXT) \
-	zt_test$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
-	$(am__EXEEXT_3)
+	qpzone_test$(EXEEXT) rbt_test$(EXEEXT) rbtdb_test$(EXEEXT) \
+	rdata_test$(EXEEXT) rdataset_test$(EXEEXT) \
+	rdatasetstats_test$(EXEEXT) resconf_test$(EXEEXT) \
+	resolver_test$(EXEEXT) rsa_test$(EXEEXT) sigs_test$(EXEEXT) \
+	skr_test$(EXEEXT) time_test$(EXEEXT) tsig_test$(EXEEXT) \
+	update_test$(EXEEXT) zonemgr_test$(EXEEXT) zt_test$(EXEEXT) \
+	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3)
 @HAVE_PERL_TRUE@am__append_2 = \
 @HAVE_PERL_TRUE@	master_test
 
@@ -335,6 +335,13 @@ rbt_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
 	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_3)
+rbtdb_test_SOURCES = rbtdb_test.c
+rbtdb_test_OBJECTS = rbtdb_test.$(OBJEXT)
+rbtdb_test_LDADD = $(LDADD)
+rbtdb_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 rdata_test_SOURCES = rdata_test.c
 rdata_test_OBJECTS = rdata_test-rdata_test.$(OBJEXT)
 rdata_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
@@ -451,7 +458,7 @@ am__depfiles_remade = ./$(DEPDIR)/acl_test.Po \
 	./$(DEPDIR)/private_test.Po ./$(DEPDIR)/qp_test.Po \
 	./$(DEPDIR)/qpdb_test.Po ./$(DEPDIR)/qpmulti_test.Po \
 	./$(DEPDIR)/qpzone_test.Po ./$(DEPDIR)/rbt_test.Po \
-	./$(DEPDIR)/rdata_test-rdata_test.Po \
+	./$(DEPDIR)/rbtdb_test.Po ./$(DEPDIR)/rdata_test-rdata_test.Po \
 	./$(DEPDIR)/rdataset_test.Po ./$(DEPDIR)/rdatasetstats_test.Po \
 	./$(DEPDIR)/resconf_test.Po ./$(DEPDIR)/resolver_test.Po \
 	./$(DEPDIR)/rsa_test-rsa_test.Po ./$(DEPDIR)/sigs_test.Po \
@@ -483,7 +490,7 @@ SOURCES = acl_test.c badcache_test.c db_test.c dbdiff_test.c \
 	keytable_test.c master_test.c name_test.c nametree_test.c \
 	nsec3_test.c nsec3param_test.c private_test.c qp_test.c \
 	qpdb_test.c qpmulti_test.c qpzone_test.c rbt_test.c \
-	rdata_test.c rdataset_test.c rdatasetstats_test.c \
+	rbtdb_test.c rdata_test.c rdataset_test.c rdatasetstats_test.c \
 	resconf_test.c resolver_test.c rsa_test.c sigs_test.c \
 	skr_test.c time_test.c tsig_test.c update_test.c \
 	zonemgr_test.c zt_test.c
@@ -493,7 +500,7 @@ DIST_SOURCES = acl_test.c badcache_test.c db_test.c dbdiff_test.c \
 	keytable_test.c master_test.c name_test.c nametree_test.c \
 	nsec3_test.c nsec3param_test.c private_test.c qp_test.c \
 	qpdb_test.c qpmulti_test.c qpzone_test.c rbt_test.c \
-	rdata_test.c rdataset_test.c rdatasetstats_test.c \
+	rbtdb_test.c rdata_test.c rdataset_test.c rdatasetstats_test.c \
 	resconf_test.c resolver_test.c rsa_test.c sigs_test.c \
 	skr_test.c time_test.c tsig_test.c update_test.c \
 	zonemgr_test.c zt_test.c
@@ -810,6 +817,7 @@ LIBNGHTTP2_CFLAGS = @LIBNGHTTP2_CFLAGS@
 LIBNGHTTP2_LIBS = @LIBNGHTTP2_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSCF_LIBS = @LIBSCF_LIBS@
 LIBTOOL = @LIBTOOL@
 LIBURCU_CFLAGS = @LIBURCU_CFLAGS@
 LIBURCU_LIBS = @LIBURCU_LIBS@
@@ -1192,6 +1200,10 @@ rbt_test$(EXEEXT): $(rbt_test_OBJECTS) $(rbt_test_DEPENDENCIES) $(EXTRA_rbt_test
 	@rm -f rbt_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(rbt_test_OBJECTS) $(rbt_test_LDADD) $(LIBS)
 
+rbtdb_test$(EXEEXT): $(rbtdb_test_OBJECTS) $(rbtdb_test_DEPENDENCIES) $(EXTRA_rbtdb_test_DEPENDENCIES) 
+	@rm -f rbtdb_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rbtdb_test_OBJECTS) $(rbtdb_test_LDADD) $(LIBS)
+
 rdata_test$(EXEEXT): $(rdata_test_OBJECTS) $(rdata_test_DEPENDENCIES) $(EXTRA_rdata_test_DEPENDENCIES) 
 	@rm -f rdata_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(rdata_test_OBJECTS) $(rdata_test_LDADD) $(LIBS)
@@ -1275,6 +1287,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qpmulti_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qpzone_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbtdb_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rdata_test-rdata_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rdataset_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rdatasetstats_test.Po@am__quote@ # am--include-marker
@@ -1770,6 +1783,13 @@ rbt_test.log: rbt_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+rbtdb_test.log: rbtdb_test$(EXEEXT)
+	@p='rbtdb_test$(EXEEXT)'; \
+	b='rbtdb_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 rdata_test.log: rdata_test$(EXEEXT)
 	@p='rdata_test$(EXEEXT)'; \
 	b='rdata_test'; \
@@ -2004,6 +2024,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/qpmulti_test.Po
 	-rm -f ./$(DEPDIR)/qpzone_test.Po
 	-rm -f ./$(DEPDIR)/rbt_test.Po
+	-rm -f ./$(DEPDIR)/rbtdb_test.Po
 	-rm -f ./$(DEPDIR)/rdata_test-rdata_test.Po
 	-rm -f ./$(DEPDIR)/rdataset_test.Po
 	-rm -f ./$(DEPDIR)/rdatasetstats_test.Po
@@ -2091,6 +2112,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/qpmulti_test.Po
 	-rm -f ./$(DEPDIR)/qpzone_test.Po
 	-rm -f ./$(DEPDIR)/rbt_test.Po
+	-rm -f ./$(DEPDIR)/rbtdb_test.Po
 	-rm -f ./$(DEPDIR)/rdata_test-rdata_test.Po
 	-rm -f ./$(DEPDIR)/rdataset_test.Po
 	-rm -f ./$(DEPDIR)/rdatasetstats_test.Po

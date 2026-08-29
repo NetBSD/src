@@ -27,6 +27,8 @@ options {
 	max-records-per-type 2;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "." {
         type hint;
         file "../../_common/root.hint";

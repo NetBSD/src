@@ -40,6 +40,7 @@ check_PROGRAMS =		\
 	qpdb_test		\
 	qpzone_test		\
 	rbt_test		\
+	rbtdb_test		\
 	rdata_test		\
 	rdataset_test		\
 	rdatasetstats_test	\

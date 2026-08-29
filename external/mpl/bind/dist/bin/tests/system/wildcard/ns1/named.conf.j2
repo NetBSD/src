@@ -24,6 +24,8 @@ options {
 	notify yes;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "." { type primary; file "root.db.signed"; };
 
 /*
@@ -37,6 +39,16 @@ zone "private.nsec" { type primary; file "private.nsec.db.signed"; };
 zone "nestedwild.test" {
         type primary;
         file "nestedwild.db";
+        check-names ignore;
+};
+
+/*
+ * GL #6170: querying an empty non-terminal in this NSEC3-signed zone, which
+ * also has a wildcard, used to abort named when served from RBTDB.
+ */
+zone "entwild.test" {
+        type primary;
+        file "entwild.db.signed";
         check-names ignore;
 };
 

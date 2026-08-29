@@ -3,7 +3,11 @@
 {% if zone.ns.name == ns.name %}
 zone "@zone.name@" {
 	type @zone.type@;
+{% if zone.type == "static-stub" %}
+        server-addresses { @zone.ns.ip@; };
+{% else %}
 	file "@zone.filepath@";
+{% endif %}
 };
 {% endif %}
 {% endfor %}

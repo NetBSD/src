@@ -25,14 +25,7 @@ options {
 	allow-new-zones yes;
 };
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
-controls {
-	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 dnssec-policy "common" {
 	offline-ksk yes;

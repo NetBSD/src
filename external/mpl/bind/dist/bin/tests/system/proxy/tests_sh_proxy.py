@@ -11,12 +11,19 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
         "ns*/example.db",
     ]
 )
+
+pytestmark = [
+    isctest.mark.with_libnghttp2,
+    EXTRA_ARTIFACTS,
+]
 
 
 def test_proxy(run_tests_sh):

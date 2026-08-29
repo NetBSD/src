@@ -38,11 +38,4 @@ zone "test" {
 	primaries { 10.53.0.1 port @PORT@ key xfrkey; };
 };
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
-controls {
-	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}

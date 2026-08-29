@@ -1,2 +1,7 @@
+{% if ns.name != "." %}
 @zone.name@.			NS	@zone.ns.name@.@zone.name@.
 @zone.ns.name@.@zone.name@.			A	@zone.ns.ip@
+{% else %}
+@zone.name@.			NS	@zone.name@.
+@zone.name@.			A	127.0.0.1
+{% endif %}

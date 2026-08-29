@@ -15,11 +15,16 @@ import pytest
 import isctest
 import isctest.mark
 
-pytestmark = pytest.mark.extra_artifacts(
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "ns*/example*.db",
     ]
 )
+
+pytestmark = [
+    isctest.mark.with_openssl_cipher_suites,
+    EXTRA_ARTIFACTS,
+]
 
 
 @pytest.fixture(scope="module")

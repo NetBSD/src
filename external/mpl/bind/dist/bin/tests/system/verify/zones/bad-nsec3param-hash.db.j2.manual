@@ -1,0 +1,7 @@
+{% include '_common/zones/soa.partial.db.j2' %}
+{% include '_common/zones/ns.partial.db.j2' %}
+
+; This NSEC3PARAM record is unusable and should cause verification failure.
+{% raw %}
+@		NSEC3PARAM 2 0 0 -
+{% endraw %}

@@ -26,16 +26,9 @@ options {
 	dnssec-validation no;
 };
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
 include "ddns.key";
 
-controls {
-	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 dlz "example one" {
 	database "dlopen ../driver/.libs/dlzexternal.so example.nil";

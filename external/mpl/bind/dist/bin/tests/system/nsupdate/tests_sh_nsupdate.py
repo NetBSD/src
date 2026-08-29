@@ -13,7 +13,9 @@ import platform
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "Kxxx*",
         "dig.out.*",
@@ -74,6 +76,11 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns10/in-addr.db",
     ]
 )
+
+pytestmark = [
+    isctest.mark.requires_net_dns,
+    EXTRA_ARTIFACTS,
+]
 
 
 MAX_RUNS = 2 if platform.system() == "FreeBSD" else 1  # GL#3846
