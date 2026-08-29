@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.41 2026/08/25 16:36:04 perseant Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.42 2026/08/29 16:32:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.41 2026/08/25 16:36:04 perseant Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.42 2026/08/29 16:32:45 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: mount_lfs.c,v 1.41 2026/08/25 16:36:04 perseant Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -316,6 +317,8 @@ invoke_cleaner(char *name)
 		execv(args[0], __UNCONST(args));
 		err(EXIT_FAILURE, "exec %s", _PATH_LFS_CLEANERD);
 	}
+
+	unreachable();
 }
 #endif /* WANT_CLEANER */
 
