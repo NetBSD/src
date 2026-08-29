@@ -204,8 +204,8 @@ am__libisc_la_SOURCES_DIST = include/isc/ascii.h \
 	include/isc/fips.h include/isc/formatcheck.h \
 	include/isc/fuzz.h include/isc/getaddresses.h \
 	include/isc/hash.h include/isc/hashmap.h include/isc/heap.h \
-	include/isc/helper.h include/isc/hex.h include/isc/histo.h \
-	include/isc/hmac.h include/isc/ht.h include/isc/httpd.h \
+	include/isc/hex.h include/isc/histo.h include/isc/hmac.h \
+	include/isc/ht.h include/isc/httpd.h \
 	include/isc/interfaceiter.h include/isc/iterated_hash.h \
 	include/isc/job.h include/isc/lang.h include/isc/lex.h \
 	include/isc/list.h include/isc/log.h include/isc/loop.h \
@@ -236,7 +236,7 @@ am__libisc_la_SOURCES_DIST = include/isc/ascii.h \
 	async_p.h backtrace.c base32.c base64.c commandline.c \
 	condition.c counter.c crc64.c dir.c errno.c errno2result.c \
 	errno2result.h error.c file.c fips.c getaddresses.c hash.c \
-	hashmap.c heap.c helper.c hex.c histo.c hmac.c ht.c httpd.c \
+	hashmap.c heap.c hex.c histo.c hmac.c ht.c httpd.c \
 	interfaceiter.c iterated_hash.c jemalloc_shim.h job.c job_p.h \
 	lex.c lib.c log.c loop.c loop_p.h managers.c md.c mem.c \
 	mem_p.h meminfo.c mutex.c mutex_p.h mutexblock.c net.c \
@@ -263,9 +263,9 @@ am_libisc_la_OBJECTS = $(am__objects_1) netmgr/libisc_la-netmgr.lo \
 	libisc_la-errno.lo libisc_la-errno2result.lo \
 	libisc_la-error.lo libisc_la-file.lo libisc_la-fips.lo \
 	libisc_la-getaddresses.lo libisc_la-hash.lo \
-	libisc_la-hashmap.lo libisc_la-heap.lo libisc_la-helper.lo \
-	libisc_la-hex.lo libisc_la-histo.lo libisc_la-hmac.lo \
-	libisc_la-ht.lo libisc_la-httpd.lo libisc_la-interfaceiter.lo \
+	libisc_la-hashmap.lo libisc_la-heap.lo libisc_la-hex.lo \
+	libisc_la-histo.lo libisc_la-hmac.lo libisc_la-ht.lo \
+	libisc_la-httpd.lo libisc_la-interfaceiter.lo \
 	libisc_la-iterated_hash.lo libisc_la-job.lo libisc_la-lex.lo \
 	libisc_la-lib.lo libisc_la-log.lo libisc_la-loop.lo \
 	libisc_la-managers.lo libisc_la-md.lo libisc_la-mem.lo \
@@ -325,8 +325,7 @@ am__depfiles_remade = ./$(DEPDIR)/libisc_la-ascii.Plo \
 	./$(DEPDIR)/libisc_la-getaddresses.Plo \
 	./$(DEPDIR)/libisc_la-hash.Plo \
 	./$(DEPDIR)/libisc_la-hashmap.Plo \
-	./$(DEPDIR)/libisc_la-heap.Plo \
-	./$(DEPDIR)/libisc_la-helper.Plo ./$(DEPDIR)/libisc_la-hex.Plo \
+	./$(DEPDIR)/libisc_la-heap.Plo ./$(DEPDIR)/libisc_la-hex.Plo \
 	./$(DEPDIR)/libisc_la-histo.Plo ./$(DEPDIR)/libisc_la-hmac.Plo \
 	./$(DEPDIR)/libisc_la-ht.Plo ./$(DEPDIR)/libisc_la-httpd.Plo \
 	./$(DEPDIR)/libisc_la-interfaceiter.Plo \
@@ -506,6 +505,7 @@ LIBNGHTTP2_CFLAGS = @LIBNGHTTP2_CFLAGS@
 LIBNGHTTP2_LIBS = @LIBNGHTTP2_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSCF_LIBS = @LIBSCF_LIBS@
 LIBTOOL = @LIBTOOL@
 LIBURCU_CFLAGS = @LIBURCU_CFLAGS@
 LIBURCU_LIBS = @LIBURCU_LIBS@
@@ -726,7 +726,6 @@ libisc_la_HEADERS = \
 	include/isc/hash.h		\
 	include/isc/hashmap.h		\
 	include/isc/heap.h		\
-	include/isc/helper.h		\
 	include/isc/hex.h		\
 	include/isc/histo.h		\
 	include/isc/hmac.h		\
@@ -804,7 +803,7 @@ libisc_la_SOURCES = $(libisc_la_HEADERS) netmgr/netmgr-int.h \
 	async_p.h backtrace.c base32.c base64.c commandline.c \
 	condition.c counter.c crc64.c dir.c errno.c errno2result.c \
 	errno2result.h error.c file.c fips.c getaddresses.c hash.c \
-	hashmap.c heap.c helper.c hex.c histo.c hmac.c ht.c httpd.c \
+	hashmap.c heap.c hex.c histo.c hmac.c ht.c httpd.c \
 	interfaceiter.c iterated_hash.c jemalloc_shim.h job.c job_p.h \
 	lex.c lib.c log.c loop.c loop_p.h managers.c md.c mem.c \
 	mem_p.h meminfo.c mutex.c mutex_p.h mutexblock.c net.c \
@@ -957,7 +956,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libisc_la-hash.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libisc_la-hashmap.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libisc_la-heap.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libisc_la-helper.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libisc_la-hex.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libisc_la-histo.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libisc_la-hmac.Plo@am__quote@ # am--include-marker
@@ -1257,13 +1255,6 @@ libisc_la-heap.lo: heap.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='heap.c' object='libisc_la-heap.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libisc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libisc_la-heap.lo `test -f 'heap.c' || echo '$(srcdir)/'`heap.c
-
-libisc_la-helper.lo: helper.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libisc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libisc_la-helper.lo -MD -MP -MF $(DEPDIR)/libisc_la-helper.Tpo -c -o libisc_la-helper.lo `test -f 'helper.c' || echo '$(srcdir)/'`helper.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libisc_la-helper.Tpo $(DEPDIR)/libisc_la-helper.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='helper.c' object='libisc_la-helper.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libisc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libisc_la-helper.lo `test -f 'helper.c' || echo '$(srcdir)/'`helper.c
 
 libisc_la-hex.lo: hex.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libisc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libisc_la-hex.lo -MD -MP -MF $(DEPDIR)/libisc_la-hex.Tpo -c -o libisc_la-hex.lo `test -f 'hex.c' || echo '$(srcdir)/'`hex.c
@@ -1849,7 +1840,6 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libisc_la-hash.Plo
 	-rm -f ./$(DEPDIR)/libisc_la-hashmap.Plo
 	-rm -f ./$(DEPDIR)/libisc_la-heap.Plo
-	-rm -f ./$(DEPDIR)/libisc_la-helper.Plo
 	-rm -f ./$(DEPDIR)/libisc_la-hex.Plo
 	-rm -f ./$(DEPDIR)/libisc_la-histo.Plo
 	-rm -f ./$(DEPDIR)/libisc_la-hmac.Plo
@@ -1985,7 +1975,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libisc_la-hash.Plo
 	-rm -f ./$(DEPDIR)/libisc_la-hashmap.Plo
 	-rm -f ./$(DEPDIR)/libisc_la-heap.Plo
-	-rm -f ./$(DEPDIR)/libisc_la-helper.Plo
 	-rm -f ./$(DEPDIR)/libisc_la-hex.Plo
 	-rm -f ./$(DEPDIR)/libisc_la-histo.Plo
 	-rm -f ./$(DEPDIR)/libisc_la-hmac.Plo

@@ -32,7 +32,32 @@ n=1
 ret=0
 
 echo_i "check pipelined TCP queries ($n)"
-pipequeries <input >raw.$n || ret=1
+# On FreeBSD, the TCP connect() call can transiently fail with
+# EADDRINUSE even after the netmgr retried it in place: the socket is
+# already bound, so retrying on the same source port cannot help.
+# pipequeries then bails out before any query is sent, which leaves
+# the ns4 cache cold, so it is safe to simply run it again (and the
+# out-of-order check below remains meaningful on a repeated run).
+#
+# This loop is a workaround for the pipequeries.c implementation.  If
+# pipequeries is ever rewritten in pure Python (using the test suite's
+# own DNS machinery, which can pick a fresh source port per attempt),
+# this retry should no longer be necessary and can be dropped.
+pq_left=10
+while :; do
+  ret=0
+  pipequeries <input >raw.$n 2>pipequeries.err.$n || ret=1
+  cat pipequeries.err.$n >&2
+  pq_left=$((pq_left - 1))
+  if [ $ret -eq 0 ] || [ $pq_left -le 0 ]; then
+    break
+  fi
+  if ! grep "address in use" pipequeries.err.$n >/dev/null; then
+    break
+  fi
+  echo_i "retrying pipequeries after a transient connect failure"
+  sleep 1
+done
 awk '{ print $1 " " $5 }' <raw.$n >output.$n
 sort <output.$n >output-sorted.$n
 diff ref output-sorted.$n || {

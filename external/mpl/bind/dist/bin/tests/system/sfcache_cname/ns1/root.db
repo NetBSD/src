@@ -1,0 +1,6 @@
+$TTL 300
+.	        IN SOA  ns. hostmaster. 1 600 600 1200 600
+.        	NS      ns
+ns		A       10.53.0.1
+foo.tld1.	CNAME	tld2.
+tld2.		A	1.2.3.4

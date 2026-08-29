@@ -11,12 +11,19 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "named.run.*",
         "ns1/managed-keys.*",
     ]
 )
+
+pytestmark = [
+    isctest.mark.with_cpu_affinity,
+    EXTRA_ARTIFACTS,
+]
 
 
 def test_cpu(run_tests_sh):

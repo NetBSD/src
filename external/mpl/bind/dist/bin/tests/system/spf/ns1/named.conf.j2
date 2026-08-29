@@ -25,6 +25,8 @@ options {
 	ixfr-from-differences yes;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "spf" {
 	type primary;
 	file "spf.db";

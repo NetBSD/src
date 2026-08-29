@@ -23,6 +23,8 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "edns512" {
 	type primary;
 	file "edns512.db.signed";

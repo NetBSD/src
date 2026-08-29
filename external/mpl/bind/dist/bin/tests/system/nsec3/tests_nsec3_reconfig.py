@@ -18,8 +18,13 @@ import dns.rdataclass
 import dns.rdatatype
 import pytest
 
-from isctest.vars.algorithms import RSASHA1, Algorithm
-from nsec3.common import NSEC3_MARK, check_nsec3_case
+from isctest.algorithms import RSASHA1, Algorithm
+from nsec3.common import (
+    NSEC3_MARK,
+    NSEC3_SALTLEN,
+    check_nsec3_case,
+    wait_for_nsec3param,
+)
 
 import isctest
 import isctest.mark
@@ -60,12 +65,10 @@ def bootstrap():
 
 @pytest.fixture(scope="module", autouse=True)
 def after_servers_start(ns3, templates):
-    # First make sure all zones are properly signed. Here we specifically need
-    # to wait until all zones have finished key management before we can
-    # reconfigure the server, because changing the DNSSEC policy relies on
-    # zones having finished applying their initial policy.
+    # First make sure all zones are properly signed.
     for zone in ZONES:
         isctest.kasp.wait_keymgr_done(ns3, zone)
+        wait_for_nsec3param(ns3, zone, NSEC3_SALTLEN[zone].initial)
 
     # Ensure rsasha1-to-nsec3-wait.kasp is fully signed prior to reconfig.
     with_rsasha1 = "RSASHA1_SUPPORTED"
@@ -82,6 +85,11 @@ def after_servers_start(ns3, templates):
     templates.render(f"{ns3.identifier}/named-fips.conf", data)
     templates.render(f"{ns3.identifier}/named-rsasha1.conf", data)
     ns3.reconfigure()
+
+    # Wait until the NSEC3 chain has finished rebuilding.
+    for zone in ZONES:
+        isctest.kasp.wait_keymgr_done(ns3, zone, reconfig=True)
+        wait_for_nsec3param(ns3, zone, NSEC3_SALTLEN[zone].reconfig)
 
 
 @pytest.mark.parametrize(
@@ -148,12 +156,6 @@ def after_servers_start(ns3, templates):
     ],
 )
 def test_nsec_case(ns3, params):
-    zone = params["zone"]
-
-    # First make sure the zone is properly signed.
-    isctest.kasp.wait_keymgr_done(ns3, zone, reconfig=True)
-
-    # Test case.
     check_nsec3_case(ns3, params, nsec3=False)
 
 
@@ -271,13 +273,6 @@ def test_nsec_case(ns3, params):
     ],
 )
 def test_nsec3_case(ns3, params):
-    # Get test parameters.
-    zone = params["zone"]
-
-    # First make sure the zone is properly signed.
-    isctest.kasp.wait_keymgr_done(ns3, zone, reconfig=True)
-
-    # Test case.
     check_nsec3_case(ns3, params)
 
 
@@ -293,9 +288,6 @@ def test_nsec3_ent(ns3, templates):
 
     zone = params["zone"]
     fqdn = f"{zone}."
-
-    # First make sure the zone is properly signed.
-    isctest.kasp.wait_keymgr_done(ns3, zone, reconfig=True)
 
     # Test case.
     check_nsec3_case(ns3, params)

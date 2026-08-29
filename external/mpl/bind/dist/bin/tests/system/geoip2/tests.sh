@@ -431,7 +431,7 @@ n=$((n + 1))
 echo_i "checking Domain database using IPv4 ($n)"
 ret=0
 lret=0
-for i in 1 2 3 4 5 6 7; do
+for i in 1 2 3 4 5 6 7 8; do
   $DIG $DIGOPTS txt example -b 10.53.0.$i >dig.out.ns2.test$n.$i || lret=1
   j=$(cat dig.out.ns2.test$n.$i | tr -d '"')
   [ "$i" = "$j" ] || lret=1
@@ -446,7 +446,7 @@ if testsock6 fd92:7065:b8e:ffff::3; then
   echo_i "checking Domain database using IPv6 ($n)"
   ret=0
   lret=0
-  for i in 1 2 3 4 5 6 7; do
+  for i in 1 2 3 4 5 6 7 8; do
     $DIG $DIGOPTS6 txt example -b fd92:7065:b8e:ffff::$i >dig.out.ns2.test$n.$i || lret=1
     j=$(cat dig.out.ns2.test$n.$i | tr -d '"')
     [ "$i" = "$j" ] || lret=1

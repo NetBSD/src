@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.18 2026/01/29 18:19:50 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.19 2026/08/29 14:32:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1442,6 +1442,7 @@ static cfg_clausedef_t options_clauses[] = {
 	{ "tcp-keepalive-timeout", &cfg_type_uint32, 0 },
 	{ "tcp-listen-queue", &cfg_type_uint32, 0 },
 	{ "tcp-receive-buffer", &cfg_type_uint32, 0 },
+	{ "tcp-reuse-timeout", &cfg_type_uint32, 0 },
 	{ "tcp-send-buffer", &cfg_type_uint32, 0 },
 	{ "tkey-dhkey", NULL, CFG_CLAUSEFLAG_ANCIENT },
 	{ "tkey-domain", &cfg_type_qstring, CFG_CLAUSEFLAG_OBSOLETE },

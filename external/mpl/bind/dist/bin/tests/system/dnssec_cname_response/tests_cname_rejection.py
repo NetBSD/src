@@ -50,6 +50,21 @@ def _sign_zone(db_in, signed_out, origin):
     return base64.b64encode(ksk_dnskey.key).decode()
 
 
+def _sign_nsec3_zone(db_in, signed_out, origin) -> isctest.template.TrustAnchor:
+    """Sign 'db_in' with NSEC3 using dnssec-signzone; write 'signed_out';
+    return the KSK as a static-key trust anchor."""
+    zone = isctest.zone.Zone(
+        origin,
+        isctest.template.Nameserver("ans2"),
+        signed=True,
+        filepath_unsigned=db_in,
+        filepath_signed=signed_out,
+    )
+    zone.add_keys()
+    zone.sign("-3 - -H 0")
+    return zone.trust_anchors("static-key")[0]
+
+
 def bootstrap():
     try:
         result = {
@@ -58,6 +73,9 @@ def bootstrap():
             ),
             "secure_ksk_public_key": _sign_zone(
                 "ans2/secure.db.in", "ans2/secure.signed.db", "secure."
+            ),
+            "stuffed_ta": _sign_nsec3_zone(
+                "stuffed.db.in", "stuffed.signed.zone", "stuffed."
             ),
         }
     except ImportError as exc:
@@ -168,5 +186,25 @@ def test_ds_cname_does_not_deadlock():
     assert (
         elapsed_time < 5.0
     ), f"DS query took too long: {elapsed_time}s (possible deadlock)"
+    isctest.check.servfail(res)
+    _assert_ns3_alive()
+
+
+def test_unsolicited_nsec3_proofs_are_rejected(ns3):
+    """
+    A malicious authoritative server can place every NSEC3 RRset and its
+    RRSIGs in an NXDOMAIN authority section. The resolver must reject the
+    response before validating all those unsolicited proof RRsets.
+    """
+    log_max_validations = Re(r"maximum number of validations exceeded")
+    msg = isctest.query.create("absent.stuffed.", "A")
+
+    start_time = time.time()
+    with ns3.watch_log_from_here(timeout=5) as watcher:
+        res = isctest.query.tcp(msg, "10.53.0.3", timeout=8)
+        watcher.wait_for_line(log_max_validations)
+    elapsed_time = time.time() - start_time
+
+    assert elapsed_time < 5.0, f"Query took too long: {elapsed_time}s"
     isctest.check.servfail(res)
     _assert_ns3_alive()

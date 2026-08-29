@@ -1,0 +1,5 @@
+trust-anchors {
+{% for ta in trust_anchors %}
+	"@ta.domain@" @ta.type@ @ta.contents@;
+{% endfor %}
+};

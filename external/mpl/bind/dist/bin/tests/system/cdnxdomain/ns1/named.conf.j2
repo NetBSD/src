@@ -1,0 +1,32 @@
+// NS1 - validating resolver, forwards "example" to the signed NS2
+
+{% include "_common/controls.conf.j2" %}
+
+options {
+	query-source address 10.53.0.1;
+	notify-source 10.53.0.1;
+	transfer-source 10.53.0.1;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.1; };
+	listen-on-v6 { none; };
+	recursion yes;
+	dnssec-validation yes;
+	servfail-ttl 0;
+};
+
+// Trust anchor for "example" (static-ds of NS2's KSK).
+include "trusted.conf";
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};
+
+// Resolve "example" only via the signed authoritative server.  The static
+// trust anchor above lets the forwarded answers validate to dns_trust_secure.
+zone "example" {
+	type forward;
+	forward only;
+	forwarders { 10.53.0.2; };
+};

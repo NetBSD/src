@@ -27,14 +27,7 @@ options {
 	synth-from-dnssec no;
 };
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
-controls {
-	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 {% if FEATURE_LIBXML2 == "1" or FEATURE_JSON_C == "1" %}
 statistics-channels {

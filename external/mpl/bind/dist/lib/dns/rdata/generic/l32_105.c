@@ -1,4 +1,4 @@
-/*	$NetBSD: l32_105.c,v 1.1.1.10 2026/01/29 18:19:55 christos Exp $	*/
+/*	$NetBSD: l32_105.c,v 1.1.1.11 2026/08/29 14:32:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -158,6 +158,8 @@ tostruct_l32(ARGS_TOSTRUCT) {
 
 	dns_rdata_toregion(rdata, &region);
 	l32->pref = uint16_fromregion(&region);
+	isc_region_consume(&region, 2);
+	INSIST(region.length == sizeof(l32->l32));
 	n = uint32_fromregion(&region);
 	l32->l32.s_addr = htonl(n);
 	return ISC_R_SUCCESS;

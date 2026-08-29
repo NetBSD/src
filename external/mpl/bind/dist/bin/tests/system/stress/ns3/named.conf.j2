@@ -11,8 +11,6 @@
  * information regarding copyright ownership.
  */
 
-controls { /* empty */ };
-
 options {
 	query-source address 10.53.0.3;
 	notify-source 10.53.0.3;
@@ -26,15 +24,7 @@ options {
 	notify yes;
 };
 
-
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
-controls {
-	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 server 10.53.0.4 {
 	provide-ixfr no;

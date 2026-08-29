@@ -134,12 +134,7 @@ def tcp(*args, **kwargs) -> Any:
 
 
 def tls(*args, **kwargs) -> Any:
-    try:
-        return generic_query(dns.query.tls, *args, **kwargs)
-    except TypeError as e:
-        raise RuntimeError(
-            "dnspython 2.5.0 or newer is required for isctest.query.tls()"
-        ) from e
+    return generic_query(dns.query.tls, *args, **kwargs)
 
 
 def create(
@@ -147,13 +142,22 @@ def create(
     qtype,
     qclass=dns.rdataclass.IN,
     dnssec: bool = True,
+    use_edns: int | bool = True,
+    payload: int = 1232,
     rd: bool = True,
     cd: bool = False,
     ad: bool = True,
+    message_id: int | None = None,
 ) -> dns.message.Message:
     """Create DNS query with defaults suitable for our tests."""
     msg = dns.message.make_query(
-        qname, qtype, qclass, use_edns=True, want_dnssec=dnssec
+        qname,
+        qtype,
+        qclass,
+        use_edns=use_edns,
+        want_dnssec=dnssec,
+        payload=payload,
+        id=message_id,
     )
     msg.flags = 0
     if rd:

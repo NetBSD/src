@@ -18,11 +18,7 @@
 # startup/reconfiguration was known to cause timeout issues in the CI
 # system, where many tests run in parallel.
 
-include "../../_common/rndc.key";
-
-controls {
-	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 tls local {
 	key-file "../CA/certs/srv04.crt01.example.com.key";

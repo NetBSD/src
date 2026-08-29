@@ -35,6 +35,11 @@
       }
    },
    {
+      "::10.53.0.8/128" : {
+         "domain" : "seven"
+      }
+   },
+   {
       "fd92:7065:b8e:ffff::1/128" : {
          "domain" : "one.de"
       }
@@ -67,6 +72,11 @@
    {
       "fd92:7065:b8e:ffff::7/128" : {
          "domain" : "seven.org"
+      }
+   },
+   {
+      "fd92:7065:b8e:ffff::8/128" : {
+         "domain" : "seven"
       }
    }
 ]

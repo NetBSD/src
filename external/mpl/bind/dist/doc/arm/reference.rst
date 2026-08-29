@@ -4030,6 +4030,20 @@ system.
    option are expected to use TCP connections for more than one message.
    This value can be updated at runtime by using :option:`rndc tcp-timeouts`.
 
+.. namedconf:statement:: tcp-reuse-timeout
+   :tags: query
+   :short: Sets the amount of time (in milliseconds) that an idle outgoing TCP connection is kept open for reuse.
+
+   This sets the amount of time, in units of 100 milliseconds, that an idle
+   outgoing TCP or TLS connection opened by :iscman:`named` (for example, to a
+   forwarder or an authoritative server) is kept open after its last outstanding
+   response has completed, so that it can be reused by a later query instead of
+   being closed and reopened. The default is 50 (5 seconds), and the maximum is
+   1200 (two minutes). A value of 0 disables keeping idle outgoing TCP or TLS
+   connections open for reuse; it does not affect sharing of a connection while
+   queries are still outstanding. Values above the maximum are adjusted with a
+   logged warning.
+
 .. namedconf:statement:: tcp-advertised-timeout
    :tags: query
    :short: Sets the timeout value (in milliseconds) that the server sends in responses containing the EDNS TCP keepalive option.

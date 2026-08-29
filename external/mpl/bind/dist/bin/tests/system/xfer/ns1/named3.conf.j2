@@ -11,11 +11,7 @@
  * information regarding copyright ownership.
  */
 
-include "../../_common/rndc.key";
-
-controls {
-	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 options {
 	query-source address 10.53.0.1;

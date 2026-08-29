@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.h,v 1.1.1.11 2025/05/21 14:40:58 christos Exp $	*/
+/*	$NetBSD: rdata.h,v 1.1.1.12 2026/08/29 14:32:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -470,6 +470,7 @@ dns_rdata_tofmttext(dns_rdata_t *rdata, const dns_name_t *origin,
  * it is undefined and falls back to the default value of 'width'
  */
 
+ISC_ATTR_WARN_UNUSED_RESULT
 isc_result_t
 dns_rdata_fromstruct(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 		     dns_rdatatype_t type, void *source, isc_buffer_t *target);

@@ -1,0 +1,24 @@
+// NS1
+
+options {
+	query-source address @ns.ip@;
+	notify-source @ns.ip@;
+	transfer-source @ns.ip@;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { @ns.ip@; };
+	listen-on-v6 { none; };
+
+	key-directory "keys";
+
+	minimal-any no;
+	minimal-responses no;
+	recursion no;
+
+	dnssec-validation yes;
+};
+
+{% include "_common/controls.conf.j2" %}
+{% include "_common/trusted.conf.j2" %}
+
+{% include "_common/zones.conf.j2" %}

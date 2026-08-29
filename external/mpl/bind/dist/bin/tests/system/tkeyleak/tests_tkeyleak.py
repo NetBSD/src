@@ -38,12 +38,18 @@ import dns.rdtypes.ANY.TKEY
 import pytest
 
 import isctest
+import isctest.mark
 
-pytestmark = pytest.mark.extra_artifacts(
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "*/*.db",
     ]
 )
+
+pytestmark = [
+    isctest.mark.with_gssapi,
+    EXTRA_ARTIFACTS,
+]
 
 TKEY_NAME = dns.name.from_text("test.key.")
 GSSAPI_ALGORITHM = dns.name.from_text("gss-tsig.")

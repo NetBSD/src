@@ -1,0 +1,24 @@
+options {
+	query-source address @ns.ip@;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { @ns.ip@; };
+	listen-on-v6 { none; };
+	recursion yes;
+	dnssec-validation no;
+	qname-minimization off;
+	servfail-ttl 5;
+	max-query-count 2;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+zone "tld1." {
+	type static-stub;
+	server-addresses { 10.53.0.1; };
+};
+
+zone "tld2." {
+	type static-stub;
+	server-addresses { 10.53.0.1; };
+};

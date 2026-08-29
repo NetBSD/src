@@ -25,6 +25,7 @@ key rndc_key {
 	algorithm @DEFAULT_HMAC@;
 };
 
+/* deliberately not _common/controls.conf.j2: read-only control channel is the test subject */
 controls {
 	inet 10.53.0.5 port @CONTROLPORT@ allow { any; } keys { rndc_key; } read-only yes;
 };

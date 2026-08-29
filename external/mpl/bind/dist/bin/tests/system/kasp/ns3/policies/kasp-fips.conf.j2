@@ -119,3 +119,36 @@ dnssec-policy "keystore" {
 		zsk key-store "zsk" lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
 	};
 };
+
+dnssec-policy "cds-cdnskey" {
+	dnskey-ttl 3600;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "cds-cdnskey-no" {
+	dnskey-ttl 3600;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	cdnskey no;
+	cds-digest-types { };
+};
+
+dnssec-policy "cds-cdnskey-alt" {
+	dnskey-ttl 3600;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	cdnskey yes;
+	cds-digest-types { "sha-384"; };
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: nid_104.c,v 1.1.1.9 2026/01/29 18:19:55 christos Exp $	*/
+/*	$NetBSD: nid_104.c,v 1.1.1.10 2026/08/29 14:32:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -153,6 +153,8 @@ tostruct_nid(ARGS_TOSTRUCT) {
 
 	dns_rdata_toregion(rdata, &region);
 	nid->pref = uint16_fromregion(&region);
+	isc_region_consume(&region, 2);
+	INSIST(region.length == sizeof(nid->nid));
 	memmove(nid->nid, region.base, region.length);
 	return ISC_R_SUCCESS;
 }

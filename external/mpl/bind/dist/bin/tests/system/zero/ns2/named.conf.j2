@@ -24,6 +24,8 @@ options {
 	allow-transfer { any; };
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "example" {
 	type primary;
 	file "example.db";

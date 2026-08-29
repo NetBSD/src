@@ -25,6 +25,8 @@ options {
 	notify yes;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "example" {
 	type secondary;
 	file "example.bk";

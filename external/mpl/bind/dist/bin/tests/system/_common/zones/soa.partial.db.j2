@@ -1,6 +1,12 @@
+{% if not ns.name.startswith("ans") %}
 $ORIGIN @zone.name@.
+{% endif %}
 $TTL 300
+{% if zone.ns.name == "." %}
+{% raw %}@{% endraw %}			IN SOA	@zone.name@. . (
+{% else %}
 {% raw %}@{% endraw %}			IN SOA	@zone.ns.name@.@zone.name@. . (
+{% endif %}
 				1		; serial
 				20		; refresh (20 seconds)
 				20		; retry (20 seconds)

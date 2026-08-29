@@ -27,6 +27,8 @@ options {
 	send-cookie no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 trust-anchors {
     evil.test. static-key 257 3 13 "yh1W7zgrqOsAZdKAh597SI7F2ye4ReiLmBNsDg+TDLJQ+3C2fXfrsQyY MvA+hmzTQdKX24zlVlD3YAVA6+VmrQ==";
 };

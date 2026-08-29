@@ -1,0 +1,6 @@
+/* A zone which has CDS and CDNSKEY published. */
+zone "cds-cdnskey.kasp" {
+	type primary;
+	file "cds-cdnskey.kasp.db";
+	dnssec-policy "cds-cdnskey";
+};

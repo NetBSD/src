@@ -26,14 +26,7 @@ options {
 	dnssec-validation no;
 };
 
-controls {
-	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
-
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
+{% include "_common/controls.conf.j2" %}
 
 zone "existing" {
 	type primary;

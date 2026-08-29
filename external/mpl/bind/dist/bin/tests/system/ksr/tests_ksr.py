@@ -18,8 +18,8 @@ import time
 
 import pytest
 
+from isctest.algorithms import Algorithm
 from isctest.kasp import KeyTimingMetadata
-from isctest.vars.algorithms import Algorithm
 from rollover.common import TIMEDELTA
 
 import isctest
@@ -318,7 +318,7 @@ def check_rrsig_bundle(bundle_keys, bundle_lines, zone, rrtype, sigend, sigstart
     count = 0
     for key in bundle_keys:
         found = False
-        alg = key.get_metadata("Algorithm")
+        alg = key.algorithm.number
         expect = f"{zone}. {ttl} IN RRSIG {rrtype} {alg} 2 {ttl} {sigend} {sigstart} {key.tag} {zone}."
         # there must be a signature of this ksk
         for line in bundle_lines:
@@ -1439,8 +1439,15 @@ def test_ksr_fast(ns1):
     isctest.kasp.check_dnssecstatus(ns1, zone, zsks, policy=policy)
     # - dnssec_verify
     isctest.kasp.check_dnssec_verify(ns1, zone)
+
     # - check keys
-    check_keys(zsks, lifetime, FASTCONFIG, with_state=True)
+    # named updates the state file asynchronously, so retry the state check
+    # until the rumoured -> omnipresent transition catches up.
+    def check_keys_state():
+        check_keys(zsks, lifetime, FASTCONFIG, with_state=True)
+        return True
+
+    isctest.run.retry_with_timeout(check_keys_state, timeout=30)
     # - check apex
     isctest.kasp.check_apex(ns1, zone, ksks, zsks, offline_ksk=True)
     # - check subdomain

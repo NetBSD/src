@@ -11,7 +11,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
         "ns*/*.signed",
@@ -24,6 +26,11 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns3/example.com.db",
     ]
 )
+
+pytestmark = [
+    isctest.mark.with_eddsa,
+    EXTRA_ARTIFACTS,
+]
 
 
 def test_eddsa(run_tests_sh):

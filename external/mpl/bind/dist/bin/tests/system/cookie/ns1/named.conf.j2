@@ -11,11 +11,6 @@
  * information regarding copyright ownership.
  */
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
 key foo {
 	secret "aaaaaaaaaaaa";
 	algorithm @DEFAULT_HMAC@;
@@ -25,9 +20,7 @@ server 10.53.0.10 {
 	keys foo;
 };
 
-controls {
-	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 options {
 	query-source address 10.53.0.1;
@@ -48,7 +41,6 @@ options {
 	send-cookie yes;
 	nocookie-udp-size 512;
 };
-
 
 zone "." {
 	type hint;

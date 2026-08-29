@@ -23,6 +23,8 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "edns512-notcp" {
 	type primary;
 	file "edns512-notcp.db.signed";

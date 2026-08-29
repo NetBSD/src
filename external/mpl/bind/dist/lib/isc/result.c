@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.1.1.15 2026/06/19 19:52:03 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.1.1.16 2026/08/29 14:32:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -202,7 +202,7 @@ static const char *description[ISC_R_NRESULTS] = {
 	[DNS_R_COVERINGNSEC] = "covering NSEC record returned",
 	[DNS_R_MXISADDRESS] = "MX is an address",
 	[DNS_R_DUPLICATE] = "duplicate query",
-	[DNS_R_INVALIDNSEC3] = "invalid NSEC3 owner name (wildcard)",
+	[DNS_R_INVALIDNSEC3] = "invalid NSEC3 owner name",
 	[DNS_R_NOTPRIMARY] = "not primary",
 	[DNS_R_BROKENCHAIN] = "broken trust chain",
 	[DNS_R_EXPIRED] = "expired",

@@ -26,6 +26,8 @@ options {
 	forwarders { 10.53.0.2; };
 };
 
+{% include "_common/controls.conf.j2" %}
+
 include "../ns1/trusted.conf";
 include "../ns1/private.nsec.conf";
 include "../ns1/private.nsec3.conf";

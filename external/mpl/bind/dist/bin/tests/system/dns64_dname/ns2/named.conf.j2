@@ -14,6 +14,8 @@ options {
 	dns64 64:ff9b::/96 { };
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "." {
 	type hint;
 	file "root.hint";

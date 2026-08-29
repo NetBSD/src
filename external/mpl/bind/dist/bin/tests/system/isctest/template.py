@@ -14,7 +14,7 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 from re import compile as Re
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import re
 
@@ -22,6 +22,9 @@ import jinja2
 
 from .log import debug
 from .vars import ALL
+
+if TYPE_CHECKING:
+    from .zone import Zone as _SetupZone
 
 NS_DIR_RE = Re(r"^(a?ns([0-9]+))/")
 
@@ -90,10 +93,10 @@ class TemplateEngine:
             data = {**self.env_vars, **data}
 
         # directory-specific "ns" var
-        assert "ns" not in data, '"ns" variable is reserved for nameserver data'
-        match = NS_DIR_RE.search(output)
-        if match:
-            data["ns"] = Nameserver(match.group(1))
+        if "ns" not in data:
+            match = NS_DIR_RE.search(output)
+            if match:
+                data["ns"] = Nameserver(match.group(1))
 
         debug("rendering template `%s` to file `%s`", template, output)
         stream = self.j2env.get_template(template).stream(data)
@@ -142,6 +145,7 @@ NS8 = Nameserver("ns8")
 NS9 = Nameserver("ns9")
 NS10 = Nameserver("ns10")
 NS11 = Nameserver("ns11")
+NO_NS = Nameserver(".", 0, "", "")
 
 
 @dataclass
@@ -163,3 +167,17 @@ class TrustAnchor:
     domain: str
     type: str
     contents: str
+
+
+def zones(zone_list: "list[_SetupZone]") -> dict[str, Zone]:
+    """
+    Convert a list of zone.Zone instances to a {name: Zone} dict for templates.
+
+    The returned dict maps zone names to plain template Zone instances, suitable
+    for use as the ``zones`` variable in jinja2 templates. The ``filepath`` of
+    each template zone is set to the actual zone file (signed or unsigned).
+    """
+    return {
+        z.name: Zone(name=z.name, ns=z.ns, type=z.type, filepath=z.filepath)
+        for z in zone_list
+    }

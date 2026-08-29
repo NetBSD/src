@@ -26,6 +26,7 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
 
 view compress {
 	match-clients { 10.53.0.1/32; };

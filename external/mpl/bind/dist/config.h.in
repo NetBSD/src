@@ -27,6 +27,9 @@
 /* define if you want TCP_FASTOPEN enabled if available */
 #undef ENABLE_TCP_FASTOPEN
 
+/* Define to 1 if you have the 'arc4random' function. */
+#undef HAVE_ARC4RANDOM
+
 /* define if the ARM yield instruction is available */
 #undef HAVE_ARM_YIELD
 
@@ -185,6 +188,10 @@
 /* Define to 1 if the system has the `returns_nonnull' function attribute */
 #undef HAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL
 
+/* Define to 1 if the system has the `warn_unused_result' function attribute
+   */
+#undef HAVE_FUNC_ATTRIBUTE_WARN_UNUSED_RESULT
+
 /* Build with GeoIP2 support */
 #undef HAVE_GEOIP2
 
@@ -247,6 +254,9 @@
 
 /* Build with DNS-over-HTTPS support */
 #undef HAVE_LIBNGHTTP2
+
+/* Define to 1 if libscf was found */
+#undef HAVE_LIBSCF
 
 /* Use libxml2 library */
 #undef HAVE_LIBXML2
@@ -478,6 +488,15 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the <urcu/assert.h> header file. */
+#undef HAVE_URCU_ASSERT_H
+
+/* Define to 1 if you have the <urcu/pointer.h> header file. */
+#undef HAVE_URCU_POINTER_H
+
+/* Define to 1 if you have the <urcu/uatomic.h> header file. */
+#undef HAVE_URCU_UATOMIC_H
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H

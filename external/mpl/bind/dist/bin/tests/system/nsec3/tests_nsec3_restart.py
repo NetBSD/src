@@ -14,8 +14,13 @@ import os
 import dns.rdatatype
 import pytest
 
-from isctest.vars.algorithms import Algorithm
-from nsec3.common import NSEC3_MARK, check_nsec3_case, check_nsec3param
+from isctest.algorithms import Algorithm
+from nsec3.common import (
+    NSEC3_MARK,
+    check_nsec3_case,
+    check_nsec3param,
+    wait_for_nsec3param,
+)
 
 import isctest
 
@@ -40,7 +45,9 @@ def perform_nsec3_tests(server, params):
     fqdn = f"{zone}."
 
     # First make sure the zone is properly signed.
+    saltlen = params.get("nsec3param", {}).get("salt-length", 0)
     isctest.kasp.wait_keymgr_done(server, zone)
+    wait_for_nsec3param(server, zone, saltlen)
 
     # Test case.
     check_nsec3_case(server, params)
@@ -48,9 +55,6 @@ def perform_nsec3_tests(server, params):
     # Return salt.
     minimum = params.get("soa-minimum", 3600)
     iterations = 0
-    saltlen = 0
-    if "nsec3param" in params:
-        saltlen = params["nsec3param"].get("salt-length", 0)
 
     match = f"{fqdn} {minimum} IN NSEC3PARAM 1 0 {iterations}"
 

@@ -183,8 +183,9 @@ named_DEPENDENCIES = $(am__DEPENDENCIES_2) $(LIBDNS_LIBS) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_5)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4) \
+	$(am__DEPENDENCIES_5)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -335,6 +336,7 @@ LIBNGHTTP2_CFLAGS = @LIBNGHTTP2_CFLAGS@
 LIBNGHTTP2_LIBS = @LIBNGHTTP2_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSCF_LIBS = @LIBSCF_LIBS@
 LIBTOOL = @LIBTOOL@
 LIBURCU_CFLAGS = @LIBURCU_CFLAGS@
 LIBURCU_LIBS = @LIBURCU_LIBS@
@@ -546,8 +548,8 @@ named_SOURCES = builtin.c config.c control.c controlconf.c \
 named_LDADD = $(LIBISC_LIBS) $(LIBDNS_LIBS) $(LIBNS_LIBS) \
 	$(LIBISCCC_LIBS) $(LIBISCCFG_LIBS) $(OPENSSL_LIBS) \
 	$(LIBCAP_LIBS) $(LMDB_LIBS) $(MAXMINDDB_LIBS) $(DNSTAP_LIBS) \
-	$(LIBUV_LIBS) $(ZLIB_LIBS) $(am__append_7) $(am__append_8) \
-	$(am__append_9)
+	$(LIBUV_LIBS) $(LIBSCF_LIBS) $(ZLIB_LIBS) $(am__append_7) \
+	$(am__append_8) $(am__append_9)
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 

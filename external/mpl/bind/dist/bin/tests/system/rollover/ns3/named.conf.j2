@@ -19,6 +19,7 @@ zone "@zone@" {
         type primary;
         file "@zone@.db";
         dnssec-policy "manual-rollover";
+        notify no;
 };
 
 {% endfor %}

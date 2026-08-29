@@ -26,6 +26,8 @@ options {
 	max-records-per-type 0;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "." {
 	type primary;
 	file "root.db";

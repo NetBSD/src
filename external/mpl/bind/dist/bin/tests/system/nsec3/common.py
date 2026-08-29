@@ -9,6 +9,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from dataclasses import dataclass
 from datetime import timedelta
 
 import dns.rcode
@@ -39,6 +40,41 @@ NSEC3_MARK = pytest.mark.extra_artifacts(
         "ans*/ans.run",
     ]
 )
+
+
+@dataclass(frozen=True)
+class NSEC3Saltlen:
+    initial: int | None
+    reconfig: int | None
+
+
+NSEC3_SALTLEN = {
+    "nsec-to-nsec3.kasp": NSEC3Saltlen(initial=None, reconfig=0),
+    # policy "nsec" on ns3
+    "nsec3-xfr-inline.kasp": NSEC3Saltlen(initial=None, reconfig=None),
+    "nsec3-dynamic-update-inline.kasp": NSEC3Saltlen(initial=None, reconfig=None),
+    "nsec3.kasp": NSEC3Saltlen(initial=0, reconfig=0),
+    "nsec3-dynamic.kasp": NSEC3Saltlen(initial=0, reconfig=0),
+    "nsec3-change.kasp": NSEC3Saltlen(initial=0, reconfig=8),
+    "nsec3-dynamic-change.kasp": NSEC3Saltlen(initial=0, reconfig=8),
+    "nsec3-dynamic-to-inline.kasp": NSEC3Saltlen(initial=0, reconfig=0),
+    "nsec3-inline-to-dynamic.kasp": NSEC3Saltlen(initial=0, reconfig=0),
+    "nsec3-to-nsec.kasp": NSEC3Saltlen(initial=0, reconfig=None),
+    "nsec3-to-nsec-altalg.kasp": NSEC3Saltlen(initial=0, reconfig=None),
+    # the reconfig to opt-out is currently not exercised [GL #2216]
+    "nsec3-to-optout.kasp": NSEC3Saltlen(initial=0, reconfig=0),
+    "nsec3-from-optout.kasp": NSEC3Saltlen(initial=0, reconfig=0),
+    "nsec3-other.kasp": NSEC3Saltlen(initial=8, reconfig=8),
+    "nsec3-ent.kasp": NSEC3Saltlen(initial=0, reconfig=0),
+    # Moving to the "rsasha1" policy switches to NSEC right away, while moving
+    # away from it can only create the NSEC3 chain once the algorithm rollover
+    # completes - at test time, all zones are expected have NSEC after
+    # reconfig.
+    "rsasha1-to-nsec3.kasp": NSEC3Saltlen(initial=None, reconfig=None),
+    "rsasha1-to-nsec3-wait.kasp": NSEC3Saltlen(initial=None, reconfig=None),
+    "nsec3-to-rsasha1.kasp": NSEC3Saltlen(initial=0, reconfig=None),
+    "nsec3-to-rsasha1-ds.kasp": NSEC3Saltlen(initial=0, reconfig=None),
+}
 
 default_config = {
     "dnskey-ttl": timedelta(hours=1),
@@ -101,6 +137,40 @@ def check_nsec3param(response, match, saltlen):
     assert len(rrs) != 0
 
     return salt
+
+
+def wait_for_nsec3param(server, zone, saltlen=None, timeout=60):
+    """
+    Wait until the NSEC3PARAM RRset served for zone matches the expected
+    NSEC3 chain state: absent if saltlen is None, otherwise present with
+    a salt of saltlen bytes.
+
+    NSEC3 chain changes are committed by zone maintenance asynchronously
+    to key management, so the "keymgr: <zone> done" log line does not
+    guarantee that the new chain is visible to queries yet.
+    """
+    query = isctest.query.create(f"{zone}.", dns.rdatatype.NSEC3PARAM)
+
+    def _nsec3param_matches():
+        response = isctest.query.tcp(query, server.ip, attempts=1, timeout=3)
+        assert response.rcode() == dns.rcode.NOERROR
+        rdatas = [
+            rdata
+            for rrset in response.answer
+            if rrset.match(
+                dns.rdataclass.IN, dns.rdatatype.NSEC3PARAM, dns.rdatatype.NONE
+            )
+            for rdata in rrset
+        ]
+        if saltlen is None:
+            return not rdatas
+        return bool(rdatas) and all(len(rdata.salt) == saltlen for rdata in rdatas)
+
+    isctest.run.retry_with_timeout(
+        _nsec3param_matches,
+        timeout=timeout,
+        msg=f"NSEC3 chain state for zone {zone} not committed within {timeout}s",
+    )
 
 
 def check_nsec3_case(server, params, nsec3=True):

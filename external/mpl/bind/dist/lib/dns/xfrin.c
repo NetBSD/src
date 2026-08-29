@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.1.1.19 2026/06/19 19:52:04 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.1.1.20 2026/08/29 14:32:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -197,15 +197,6 @@ struct dns_xfrin {
 #define XFRIN_MAGIC    ISC_MAGIC('X', 'f', 'r', 'I')
 #define VALID_XFRIN(x) ISC_MAGIC_VALID(x, XFRIN_MAGIC)
 
-#define XFRIN_WORK_MAGIC    ISC_MAGIC('X', 'f', 'r', 'W')
-#define VALID_XFRIN_WORK(x) ISC_MAGIC_VALID(x, XFRIN_WORK_MAGIC)
-
-typedef struct xfrin_work {
-	unsigned int magic;
-	isc_result_t result;
-	dns_xfrin_t *xfr;
-} xfrin_work_t;
-
 /**************************************************************************/
 /*
  * Forward declarations.
@@ -245,7 +236,7 @@ static isc_result_t
 xfrin_start(dns_xfrin_t *xfr);
 
 static void
-xfrin_connect_done(isc_result_t result, isc_region_t *region, void *arg);
+xfrin_connect_done(isc_result_t eresult, isc_region_t *region, void *arg);
 static isc_result_t
 xfrin_send_request(dns_xfrin_t *xfr);
 static void
@@ -305,7 +296,7 @@ cleanup:
 	return result;
 }
 
-static void
+static isc_result_t
 axfr_apply(void *arg);
 
 static isc_result_t
@@ -321,13 +312,7 @@ axfr_putdata(dns_xfrin_t *xfr, dns_diffop_t op, dns_name_t *name, dns_ttl_t ttl,
 
 	CHECK(dns_zone_checknames(xfr->zone, name, rdata));
 	if (dns_diff_size(&xfr->diff) > 128) {
-		xfrin_work_t work = (xfrin_work_t){
-			.magic = XFRIN_WORK_MAGIC,
-			.result = ISC_R_UNSET,
-			.xfr = xfr,
-		};
-		axfr_apply((void *)&work);
-		CHECK(work.result);
+		CHECK(axfr_apply(xfr));
 	}
 
 	CHECK(dns_difftuple_create(xfr->diff.mctx, op, name, ttl, rdata,
@@ -342,12 +327,9 @@ cleanup:
 /*
  * Store a set of AXFR RRs in the database.
  */
-static void
+static isc_result_t
 axfr_apply(void *arg) {
-	xfrin_work_t *work = arg;
-	REQUIRE(VALID_XFRIN_WORK(work));
-
-	dns_xfrin_t *xfr = work->xfr;
+	dns_xfrin_t *xfr = arg;
 	REQUIRE(VALID_XFRIN(xfr));
 
 	isc_result_t result = ISC_R_SUCCESS;
@@ -367,16 +349,13 @@ axfr_apply(void *arg) {
 
 cleanup:
 	dns_diff_clear(&xfr->diff);
-	work->result = result;
+
+	return result;
 }
 
 static void
-axfr_apply_done(void *arg) {
-	xfrin_work_t *work = arg;
-	REQUIRE(VALID_XFRIN_WORK(work));
-
-	dns_xfrin_t *xfr = work->xfr;
-	isc_result_t result = work->result;
+axfr_apply_done(void *arg, isc_result_t result) {
+	dns_xfrin_t *xfr = arg;
 
 	REQUIRE(VALID_XFRIN(xfr));
 
@@ -395,8 +374,6 @@ axfr_apply_done(void *arg) {
 cleanup:
 	xfr->diff_running = false;
 
-	isc_mem_put(xfr->mctx, work, sizeof(*work));
-
 	if (result == ISC_R_SUCCESS) {
 		if (atomic_load(&xfr->state) == XFRST_AXFR_END) {
 			xfrin_end(xfr, result);
@@ -412,14 +389,10 @@ static void
 axfr_commit(dns_xfrin_t *xfr) {
 	REQUIRE(!xfr->diff_running);
 
-	xfrin_work_t *work = isc_mem_get(xfr->mctx, sizeof(*work));
-	*work = (xfrin_work_t){
-		.magic = XFRIN_WORK_MAGIC,
-		.result = ISC_R_UNSET,
-		.xfr = dns_xfrin_ref(xfr),
-	};
+	dns_xfrin_ref(xfr);
 	xfr->diff_running = true;
-	isc_work_enqueue(xfr->loop, axfr_apply, axfr_apply_done, work);
+	isc_work_enqueue(xfr->loop, ISC_WORKLANE_SLOW, axfr_apply,
+			 axfr_apply_done, xfr);
 }
 
 static isc_result_t
@@ -561,14 +534,12 @@ cleanup:
 	return result;
 }
 
-static void
+static isc_result_t
 ixfr_apply(void *arg) {
-	xfrin_work_t *work = arg;
-	dns_xfrin_t *xfr = work->xfr;
+	dns_xfrin_t *xfr = arg;
 	isc_result_t result = ISC_R_SUCCESS;
 
 	REQUIRE(VALID_XFRIN(xfr));
-	REQUIRE(VALID_XFRIN_WORK(work));
 
 	struct __cds_wfcq_head diff_head;
 	struct cds_wfcq_tail diff_tail;
@@ -600,18 +571,13 @@ ixfr_apply(void *arg) {
 		isc_mem_put(xfr->mctx, data, sizeof(*data));
 	}
 
-	work->result = result;
+	return result;
 }
 
 static void
-ixfr_apply_done(void *arg) {
-	xfrin_work_t *work = arg;
-	REQUIRE(VALID_XFRIN_WORK(work));
-
-	dns_xfrin_t *xfr = work->xfr;
+ixfr_apply_done(void *arg, isc_result_t result) {
+	dns_xfrin_t *xfr = arg;
 	REQUIRE(VALID_XFRIN(xfr));
-
-	isc_result_t result = work->result;
 
 	if (atomic_load(&xfr->shuttingdown)) {
 		result = ISC_R_SHUTTINGDOWN;
@@ -623,14 +589,13 @@ ixfr_apply_done(void *arg) {
 	if (!xfr->retry_axfr &&
 	    !cds_wfcq_empty(&xfr->diff_head, &xfr->diff_tail))
 	{
-		isc_work_enqueue(xfr->loop, ixfr_apply, ixfr_apply_done, work);
+		isc_work_enqueue(xfr->loop, ISC_WORKLANE_SLOW, ixfr_apply,
+				 ixfr_apply_done, xfr);
 		return;
 	}
 
 cleanup:
 	xfr->diff_running = false;
-
-	isc_mem_put(xfr->mctx, work, sizeof(*work));
 
 	/*
 	 * Don't retry with AXFR (even if it was requested) because there was
@@ -696,14 +661,10 @@ ixfr_commit(dns_xfrin_t *xfr) {
 			       &data->wfcq_node);
 
 	if (!xfr->diff_running) {
-		xfrin_work_t *work = isc_mem_get(xfr->mctx, sizeof(*work));
-		*work = (xfrin_work_t){
-			.magic = XFRIN_WORK_MAGIC,
-			.result = ISC_R_UNSET,
-			.xfr = dns_xfrin_ref(xfr),
-		};
+		dns_xfrin_ref(xfr);
 		xfr->diff_running = true;
-		isc_work_enqueue(xfr->loop, ixfr_apply, ixfr_apply_done, work);
+		isc_work_enqueue(xfr->loop, ISC_WORKLANE_SLOW, ixfr_apply,
+				 ixfr_apply_done, xfr);
 	}
 
 cleanup:
@@ -1439,19 +1400,18 @@ cleanup:
  * A connection has been established.
  */
 static void
-xfrin_connect_done(isc_result_t result, isc_region_t *region ISC_ATTR_UNUSED,
+xfrin_connect_done(isc_result_t eresult, isc_region_t *region ISC_ATTR_UNUSED,
 		   void *arg) {
 	dns_xfrin_t *xfr = (dns_xfrin_t *)arg;
 	char addrtext[ISC_SOCKADDR_FORMATSIZE];
 	char signerbuf[DNS_NAME_FORMATSIZE];
 	const char *signer = "", *sep = "";
 	dns_zonemgr_t *zmgr = NULL;
+	isc_result_t result;
 
 	REQUIRE(VALID_XFRIN(xfr));
 
-	if (atomic_load(&xfr->shuttingdown)) {
-		result = ISC_R_SHUTTINGDOWN;
-	}
+	result = atomic_load(&xfr->shuttingdown) ? ISC_R_SHUTTINGDOWN : eresult;
 
 	LIBDNS_XFRIN_CONNECTED(xfr, xfr->info, result);
 
@@ -1518,7 +1478,13 @@ cleanup:
 	}
 
 detach:
-	dns_xfrin_detach(&xfr);
+	/*
+	 * If the connection was successful, then the reference now belongs to
+	 * the receive callback. Otherwise, detach it.
+	 */
+	if (eresult != ISC_R_SUCCESS) {
+		dns_xfrin_detach(&xfr);
+	}
 }
 
 /*

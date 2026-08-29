@@ -25,9 +25,9 @@ import dns.tsig
 import dns.update
 import pytest
 
+from isctest.algorithms import ECDSAP256SHA256, ECDSAP384SHA384, Algorithm
 from isctest.kasp import KeyProperties, KeyTimingMetadata
 from isctest.util import param
-from isctest.vars.algorithms import ECDSAP256SHA256, ECDSAP384SHA384, Algorithm
 
 import isctest
 import isctest.mark
@@ -175,7 +175,15 @@ def fips_properties(alg, bits=None):
 
 
 def check_all(
-    server, zone, policy, ksks, zsks, manual_mode=False, zsk_missing=False, tsig=None
+    server,
+    zone,
+    policy,
+    ksks,
+    zsks,
+    manual_mode=False,
+    zsk_missing=False,
+    cdss=None,
+    tsig=None,
 ):
     isctest.kasp.check_dnssecstatus(server, zone, ksks + zsks, policy=policy)
     isctest.kasp.check_apex(
@@ -183,6 +191,7 @@ def check_all(
         zone,
         ksks,
         zsks,
+        cdss=cdss,
         manual_mode=manual_mode,
         zsk_missing=zsk_missing,
         tsig=tsig,
@@ -1065,6 +1074,44 @@ def test_kasp_dynamic(ns3):
     check_all(ns3, zone, policy, keys, [])
     # Ensure no zone_resigninc for the unsigned version of the zone is triggered.
     assert f"zone_resigninc: zone {zone}/IN (unsigned): enter" not in "ns3/named.run"
+
+
+def test_kasp_cds_cdnskey(ns3, default_algorithm):
+    # Zone: cds-cdnskey.kasp.
+    zone = "cds-cdnskey.kasp"
+    policy = "cds-cdnskey"
+    policy_keys = [
+        f"ksk unlimited {default_algorithm.number} {default_algorithm.bits} goal:omnipresent dnskey:omnipresent krrsig:omnipresent ds:rumoured",
+        f"zsk unlimited {default_algorithm.number} {default_algorithm.bits} goal:omnipresent dnskey:omnipresent zrrsig:omnipresent",
+    ]
+
+    isctest.kasp.wait_keymgr_done(ns3, zone)
+
+    expected = isctest.kasp.policy_to_properties(ttl=3600, keys=policy_keys)
+    keys = isctest.kasp.keydir_to_keylist(zone, "ns3")
+    ksks = [k for k in keys if k.is_ksk()]
+    zsks = [k for k in keys if k.is_zsk()]
+    isctest.kasp.check_dnssec_verify(ns3, zone)
+    isctest.kasp.check_keys(zone, keys, expected)
+    check_all(ns3, zone, policy, ksks, zsks)
+
+    # Reconfig
+    shutil.copyfile("ns3/named-reconfig2.conf", "ns3/named-reconfig.conf")
+    with ns3.watch_log_from_here() as watcher:
+        ns3.rndc("reconfig")
+        watcher.wait_for_line(f"keymgr: {zone} done")
+
+    policy = "cds-cdnskey-no"
+    check_all(ns3, zone, policy, ksks, zsks, cdss=[])
+
+    # Reconfig, put CDS, CDNSKEY back
+    shutil.copyfile("ns3/named-reconfig3.conf", "ns3/named-reconfig.conf")
+    with ns3.watch_log_from_here() as watcher:
+        ns3.rndc("reconfig")
+        watcher.wait_for_line(f"keymgr: {zone} done")
+
+    policy = "cds-cdnskey-alt"
+    check_all(ns3, zone, policy, ksks, zsks, cdss=["CDNSKEY", "CDS (SHA-384)"])
 
 
 def test_kasp_checkds(ns3, default_algorithm):

@@ -7,8 +7,9 @@ h2
 hypothesis>=4.41.2
 jinja2
 pytest>=7.0.0
+pytest-xdist
+pyyaml
 requests
 
-### Utility packages for executing the tests
+### Optional packages
 flaky
-pytest-xdist

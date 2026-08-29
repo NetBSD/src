@@ -12,10 +12,49 @@
 import base64
 import os
 import re
+import subprocess
 
 import pytest
 
 import isctest
+
+INJECTION = 'backdoor"{algorithm hmac-sha256;secret "AAAA";};key "rndc-key'
+
+ESCAPED_KEY = (
+    b'key "backdoor\\"{algorithm hmac-sha256;secret \\"AAAA\\";};key \\"rndc-key"'
+)
+
+TOO_BIG_LABEL = "key012345678901234567890123456789012345678901234567890123456789X"
+
+
+def test_rndc_confgen_default():
+    cmd = isctest.run.cmd([os.environ["RNDCCONFGEN"]])
+    assert b'key "rndc-key" {' in cmd.proc.stdout
+
+
+def test_rndc_confgen_keyname_with_dots():
+    cmd = isctest.run.cmd([os.environ["RNDCCONFGEN"], "-k", "key.example.com"])
+    assert b'key "key.example.com" {' in cmd.proc.stdout
+
+
+def test_rndc_confgen_escapes_injection():
+    cmd = isctest.run.cmd([os.environ["RNDCCONFGEN"], "-k", INJECTION])
+    assert ESCAPED_KEY in cmd.proc.stdout
+
+
+def test_rndc_confgen_rejects_to_big_label():
+    with pytest.raises(subprocess.CalledProcessError):
+        isctest.run.cmd([os.environ["RNDCCONFGEN"], "-k", TOO_BIG_LABEL])
+
+
+def test_tsig_keygen_default():
+    cmd = isctest.run.cmd([os.environ["TSIGKEYGEN"]])
+    assert b'key "tsig-key" {' in cmd.proc.stdout
+
+
+def test_tsig_keygen_escapes_injection():
+    cmd = isctest.run.cmd([os.environ["TSIGKEYGEN"], INJECTION])
+    assert ESCAPED_KEY in cmd.proc.stdout
 
 
 def _extract_secret(stdout: bytes) -> bytes:

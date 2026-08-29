@@ -11,11 +11,7 @@
  * information regarding copyright ownership.
  */
 
-include "../../_common/rndc.key";
-
-controls {
-	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 tls local {
 	key-file "../self-signed-key.pem";
@@ -38,7 +34,6 @@ options {
 	check-integrity no;
 	dnssec-validation no;
 };
-
 
 zone "." {
 	type hint;

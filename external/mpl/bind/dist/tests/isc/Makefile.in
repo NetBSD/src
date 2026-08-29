@@ -115,8 +115,8 @@ check_PROGRAMS = ascii_test$(EXEEXT) async_test$(EXEEXT) \
 	spinlock_test$(EXEEXT) stats_test$(EXEEXT) \
 	symtab_test$(EXEEXT) tcp_test$(EXEEXT) tcpdns_test$(EXEEXT) \
 	time_test$(EXEEXT) timer_test$(EXEEXT) tls_test$(EXEEXT) \
-	tlsdns_test$(EXEEXT) udp_test$(EXEEXT) work_test$(EXEEXT) \
-	$(am__EXEEXT_1)
+	tlsdns_test$(EXEEXT) udp_test$(EXEEXT) url_test$(EXEEXT) \
+	work_test$(EXEEXT) $(am__EXEEXT_1)
 @HAVE_LIBNGHTTP2_TRUE@am__append_2 = \
 @HAVE_LIBNGHTTP2_TRUE@	doh_test
 
@@ -418,6 +418,12 @@ am_udp_test_OBJECTS = udp_test-udp_test.$(OBJEXT) \
 	udp_test-netmgr_common.$(OBJEXT)
 udp_test_OBJECTS = $(am_udp_test_OBJECTS)
 udp_test_DEPENDENCIES = $(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
+url_test_SOURCES = url_test.c
+url_test_OBJECTS = url_test.$(OBJEXT)
+url_test_LDADD = $(LDADD)
+url_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/tests/libtest/libtest.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 work_test_SOURCES = work_test.c
 work_test_OBJECTS = work_test.$(OBJEXT)
 work_test_LDADD = $(LDADD)
@@ -476,7 +482,8 @@ am__depfiles_remade = ./$(DEPDIR)/ascii_test.Po \
 	./$(DEPDIR)/tlsdns_test-netmgr_common.Po \
 	./$(DEPDIR)/tlsdns_test-tlsdns_test.Po \
 	./$(DEPDIR)/udp_test-netmgr_common.Po \
-	./$(DEPDIR)/udp_test-udp_test.Po ./$(DEPDIR)/work_test.Po
+	./$(DEPDIR)/udp_test-udp_test.Po ./$(DEPDIR)/url_test.Po \
+	./$(DEPDIR)/work_test.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -509,7 +516,7 @@ SOURCES = ascii_test.c async_test.c buffer_test.c counter_test.c \
 	stats_test.c symtab_test.c $(tcp_test_SOURCES) \
 	$(tcpdns_test_SOURCES) time_test.c timer_test.c \
 	$(tls_test_SOURCES) $(tlsdns_test_SOURCES) $(udp_test_SOURCES) \
-	work_test.c
+	url_test.c work_test.c
 DIST_SOURCES = ascii_test.c async_test.c buffer_test.c counter_test.c \
 	crc64_test.c $(dnsstream_utils_test_SOURCES) \
 	$(am__doh_test_SOURCES_DIST) errno_test.c file_test.c \
@@ -523,7 +530,7 @@ DIST_SOURCES = ascii_test.c async_test.c buffer_test.c counter_test.c \
 	stats_test.c symtab_test.c $(tcp_test_SOURCES) \
 	$(tcpdns_test_SOURCES) time_test.c timer_test.c \
 	$(tls_test_SOURCES) $(tlsdns_test_SOURCES) $(udp_test_SOURCES) \
-	work_test.c
+	url_test.c work_test.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -837,6 +844,7 @@ LIBNGHTTP2_CFLAGS = @LIBNGHTTP2_CFLAGS@
 LIBNGHTTP2_LIBS = @LIBNGHTTP2_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSCF_LIBS = @LIBSCF_LIBS@
 LIBTOOL = @LIBTOOL@
 LIBURCU_CFLAGS = @LIBURCU_CFLAGS@
 LIBURCU_LIBS = @LIBURCU_LIBS@
@@ -1404,6 +1412,10 @@ udp_test$(EXEEXT): $(udp_test_OBJECTS) $(udp_test_DEPENDENCIES) $(EXTRA_udp_test
 	@rm -f udp_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(udp_test_OBJECTS) $(udp_test_LDADD) $(LIBS)
 
+url_test$(EXEEXT): $(url_test_OBJECTS) $(url_test_DEPENDENCIES) $(EXTRA_url_test_DEPENDENCIES) 
+	@rm -f url_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(url_test_OBJECTS) $(url_test_LDADD) $(LIBS)
+
 work_test$(EXEEXT): $(work_test_OBJECTS) $(work_test_DEPENDENCIES) $(EXTRA_work_test_DEPENDENCIES) 
 	@rm -f work_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(work_test_OBJECTS) $(work_test_LDADD) $(LIBS)
@@ -1469,6 +1481,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tlsdns_test-tlsdns_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/udp_test-netmgr_common.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/udp_test-udp_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/url_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/work_test.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -2344,6 +2357,13 @@ udp_test.log: udp_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+url_test.log: url_test$(EXEEXT)
+	@p='url_test$(EXEEXT)'; \
+	b='url_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 work_test.log: work_test$(EXEEXT)
 	@p='work_test$(EXEEXT)'; \
 	b='work_test'; \
@@ -2510,6 +2530,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/tlsdns_test-tlsdns_test.Po
 	-rm -f ./$(DEPDIR)/udp_test-netmgr_common.Po
 	-rm -f ./$(DEPDIR)/udp_test-udp_test.Po
+	-rm -f ./$(DEPDIR)/url_test.Po
 	-rm -f ./$(DEPDIR)/work_test.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -2615,6 +2636,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/tlsdns_test-tlsdns_test.Po
 	-rm -f ./$(DEPDIR)/udp_test-netmgr_common.Po
 	-rm -f ./$(DEPDIR)/udp_test-udp_test.Po
+	-rm -f ./$(DEPDIR)/url_test.Po
 	-rm -f ./$(DEPDIR)/work_test.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic

@@ -17,8 +17,13 @@ import dns.rdataclass
 import dns.rdatatype
 import pytest
 
-from isctest.vars.algorithms import Algorithm
-from nsec3.common import NSEC3_MARK, check_nsec3_case
+from isctest.algorithms import Algorithm
+from nsec3.common import (
+    NSEC3_MARK,
+    NSEC3_SALTLEN,
+    check_nsec3_case,
+    wait_for_nsec3param,
+)
 
 import isctest
 
@@ -54,7 +59,10 @@ def after_servers_start(ns3, templates):
 
     zone = "nsec3-change.kasp"
     fqdn = f"{zone}."
+
+    # First make sure the zone is properly signed.
     isctest.kasp.wait_keymgr_done(ns3, zone)
+    wait_for_nsec3param(ns3, zone, NSEC3_SALTLEN[zone].initial)
 
     time.sleep(1)
     shutil.copyfile(f"{nsdir}/template2.db.in", f"{nsdir}/{zone}.db")
@@ -70,17 +78,11 @@ def after_servers_start(ns3, templates):
     }
     templates.render(f"{nsdir}/named-fips.conf", data)
     templates.render(f"{nsdir}/named-rsasha1.conf", data)
+    ns3.reconfigure()
 
-    # Wait for the NSEC3 chain is finished rebuilding.
-    messages = [
-        f"zone {zone}/IN (signed): generated salt",
-        f"zone_nsec3chain: zone {zone}/IN (signed): enter",
-        f"add {zone}.	900	IN	NSEC3PARAM 1 0 0",
-        f"zone_needdump: zone {zone}/IN (signed): enter",
-    ]
-    with ns3.watch_log_from_start() as watcher:
-        ns3.reconfigure()
-        watcher.wait_for_sequence(messages)
+    # Wait until the NSEC3 chain has finished rebuilding.
+    isctest.kasp.wait_keymgr_done(ns3, zone, reconfig=True)
+    wait_for_nsec3param(ns3, zone, NSEC3_SALTLEN[zone].reconfig)
 
 
 def test_nsec3_case(ns3):
@@ -98,9 +100,6 @@ def test_nsec3_case(ns3):
         ],
     }
     zone = params["zone"]
-
-    # First make sure the zone is properly signed.
-    isctest.kasp.wait_keymgr_done(ns3, zone, reconfig=True)
 
     # Test case.
     check_nsec3_case(ns3, params)

@@ -32,19 +32,12 @@ options {
 };
 
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
 key restart16 {
 	secret "1234abcd8765";
 	algorithm @DEFAULT_HMAC@;
 };
 
-controls {
-	inet 10.53.0.7 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 view restart16 {
 	match-clients { key restart16; none; };

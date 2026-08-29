@@ -40,6 +40,8 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 view "a" {
 	match-clients { key "a"; };
 	zone "x21" {

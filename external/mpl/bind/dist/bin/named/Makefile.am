@@ -107,6 +107,7 @@ named_LDADD =					\
 	$(MAXMINDDB_LIBS)			\
 	$(DNSTAP_LIBS)				\
 	$(LIBUV_LIBS)				\
+	$(LIBSCF_LIBS)				\
 	$(ZLIB_LIBS)
 
 if HAVE_JSON_C

@@ -21,9 +21,10 @@ options {
 	dnssec-validation no;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 # Should include all files matching pattern.
 include "zone*.conf";
 
 # Shouldn't break standard file pattern.
 include "mars.conf";
-

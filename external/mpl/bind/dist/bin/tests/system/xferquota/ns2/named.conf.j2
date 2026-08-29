@@ -28,6 +28,8 @@ options {
 	transfers-per-ns 5;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "." {
 	type hint;
 	file "../../_common/root.hint";

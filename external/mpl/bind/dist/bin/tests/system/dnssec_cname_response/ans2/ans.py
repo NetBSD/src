@@ -35,6 +35,10 @@ EXAMPLE = dns.zone.from_file("example.signed.db", origin="example.", relativize=
 # can validate down to the zone and reach the DS query.
 SECURE = dns.zone.from_file("secure.signed.db", origin="secure.", relativize=False)
 
+# 'stuffed.' is served faithfully for existing data, but NXDOMAIN answers
+# contain every NSEC3 RRset in the zone to exercise negative-proof filtering.
+STUFFED = dns.zone.from_file("stuffed.signed.zone", origin="stuffed.", relativize=False)
+
 
 def _append_rrset_with_rrsig(
     zone: dns.zone.Zone,
@@ -69,7 +73,7 @@ class CnameZoneHandler(DomainHandler):
         super().__init__()
 
     @property
-    def domains(self) -> list:
+    def domains(self) -> list[str]:
         return [self.zone.origin.to_text()]
 
     async def get_responses(
@@ -151,6 +155,67 @@ class LoneRecordHandler(DomainHandler):
         yield DnsResponseSend(qctx.response)
 
 
+class StuffedNsec3Handler(DomainHandler):
+    """Answer NXDOMAIN with every NSEC3 RRset from a signed zone."""
+
+    def __init__(self, zone: dns.zone.Zone) -> None:
+        self.zone = zone
+        self.nsec3_authority = []
+        super().__init__()
+
+        soa_rds = self.zone.get_rdataset(self.zone.origin, dns.rdatatype.SOA)
+        _append_rrset_with_rrsig(
+            self.zone,
+            self.nsec3_authority,
+            self.zone.origin,
+            self.zone.rdclass,
+            dns.rdatatype.SOA,
+            soa_rds,
+        )
+
+        for name, node in self.zone.items():
+            rdset = node.get_rdataset(self.zone.rdclass, dns.rdatatype.NSEC3)
+            if rdset is None:
+                continue
+            _append_rrset_with_rrsig(
+                self.zone,
+                self.nsec3_authority,
+                name,
+                self.zone.rdclass,
+                dns.rdatatype.NSEC3,
+                rdset,
+            )
+
+    @property
+    def domains(self) -> list:
+        return [self.zone.origin.to_text()]
+
+    async def get_responses(
+        self, qctx: QueryContext
+    ) -> AsyncGenerator[DnsResponseSend, None]:
+        qctx.prepare_new_response(with_zone_data=False)
+        qctx.response.flags |= dns.flags.AA
+
+        node = self.zone.get_node(qctx.qname)
+        if node is not None:
+            rds = node.get_rdataset(qctx.qclass, qctx.qtype)
+            if rds is not None:
+                _append_rrset_with_rrsig(
+                    self.zone,
+                    qctx.response.answer,
+                    qctx.qname,
+                    qctx.qclass,
+                    qctx.qtype,
+                    rds,
+                )
+                yield DnsResponseSend(qctx.response)
+                return
+
+        qctx.response.set_rcode(dns.rcode.NXDOMAIN)
+        qctx.response.authority.extend(self.nsec3_authority)
+        yield DnsResponseSend(qctx.response)
+
+
 def main() -> None:
     server = AsyncDnsServer(default_rcode=dns.rcode.NOERROR, default_aa=True)
     server.install_response_handlers(
@@ -165,6 +230,7 @@ def main() -> None:
             },
         ),
         CnameZoneHandler(SECURE, {dns.rdatatype.DS}),
+        StuffedNsec3Handler(STUFFED),
     )
     server.run()
 

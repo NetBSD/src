@@ -15,7 +15,7 @@ import os
 
 import pytest
 
-from isctest.vars.algorithms import Algorithm
+from isctest.algorithms import Algorithm
 
 import isctest
 

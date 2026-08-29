@@ -19,6 +19,16 @@ import tempfile
 import time
 
 from .. import log
+from ..algorithms import (
+    ALL_ALGORITHMS,
+    ECDSAP256SHA256,
+    ECDSAP384SHA384,
+    ED448,
+    ED25519,
+    RSASHA256,
+    RSASHA512,
+    Algorithm,
+)
 from .basic import BASIC_VARS
 
 # Algorithms are selected randomly at runtime from a list of supported
@@ -52,20 +62,6 @@ STABLE_PERIOD = 3600 * 3
 """number of secs during which algorithm selection remains stable"""
 
 
-class Algorithm(NamedTuple):
-    name: str
-    number: int
-    bits: int
-
-    @classmethod
-    def default(cls):
-        return cls(
-            os.environ["DEFAULT_ALGORITHM"],
-            int(os.environ["DEFAULT_ALGORITHM_NUMBER"]),
-            int(os.environ["DEFAULT_BITS"]),
-        )
-
-
 class AlgorithmSet(NamedTuple):
     """Collection of DEFAULT, ALTERNATIVE and DISABLED algorithms"""
 
@@ -80,26 +76,6 @@ class AlgorithmSet(NamedTuple):
     """DISABLED is an algorithm that is used for tests against the
     "disable-algorithms" configuration option."""
 
-
-RSASHA1 = Algorithm("RSASHA1", 5, 2048)
-RSASHA256 = Algorithm("RSASHA256", 8, 2048)
-RSASHA512 = Algorithm("RSASHA512", 10, 2048)
-ECDSAP256SHA256 = Algorithm("ECDSAP256SHA256", 13, 256)
-ECDSAP384SHA384 = Algorithm("ECDSAP384SHA384", 14, 384)
-ED25519 = Algorithm("ED25519", 15, 256)
-ED448 = Algorithm("ED448", 16, 456)
-
-ALL_ALGORITHMS = [
-    RSASHA1,
-    RSASHA256,
-    RSASHA512,
-    ECDSAP256SHA256,
-    ECDSAP384SHA384,
-    ED25519,
-    ED448,
-]
-
-ALL_ALGORITHMS_BY_NUM = {alg.number: alg for alg in ALL_ALGORITHMS}
 
 ALGORITHM_SETS = {
     "stable": AlgorithmSet(

@@ -24,6 +24,8 @@ options {
 	notify yes;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 include "../ns1/trusted.conf";
 
 zone "." {

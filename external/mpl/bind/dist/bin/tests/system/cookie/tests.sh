@@ -484,7 +484,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
-echo_i "check that spoofed response with a TSIG is dropped when we have a server cookie ($n)"
+echo_i "check that a spoofed response with a TSIG is rejected when we have a server cookie ($n)"
 ret=0
 pat='10\.53\.0\.9 .*\[cookie=................................\] \[ttl'
 # prime EDNS COOKIE state
@@ -492,15 +492,13 @@ $DIG $DIGOPTS @10.53.0.1 tld >dig.out.test$n.1 || ret=1
 grep "status: NOERROR" dig.out.test$n.1 >/dev/null || ret=1
 rndc_dumpdb ns1
 grep "$pat" ns1/named_dump.db.test$n >/dev/null || ret=1
-# spoofed response contains 10.53.0.10
+# The spoofed response carries a bogus TSIG and contains 10.53.0.10.  It cannot
+# be authenticated, so the resolver rejects it with SERVFAIL and never returns
+# the spoofed address.
 nextpart ns1/named.run >/dev/null
 $DIG $DIGOPTS @10.53.0.1 withtsig.tld >dig.out.test$n.2 || ret=1
-grep "status: NOERROR" dig.out.test$n.2 >/dev/null || ret=1
-grep 'A.10\.53\.0\.9' dig.out.test$n.2 >/dev/null || ret=1
+grep "status: SERVFAIL" dig.out.test$n.2 >/dev/null || ret=1
 grep 'A.10\.53\.0\.10' dig.out.test$n.2 >/dev/null && ret=1
-nextpart ns1/named.run >named.run.test$n
-count=$(grep -c ') [0-9][0-9]* NOERROR 0' named.run.test$n)
-test $count -eq 1 || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

@@ -11,7 +11,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
         "dsset-signed.",
@@ -22,6 +24,11 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns1/signed.db.signed",
     ]
 )
+
+pytestmark = [
+    isctest.mark.with_ipv6,
+    EXTRA_ARTIFACTS,
+]
 
 
 # The reclimit is known to be quite unstable. GL #1587

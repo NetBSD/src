@@ -11,7 +11,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
         "rndc.out.*",
@@ -23,6 +25,12 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns1/stale.test.db.jnl",
     ]
 )
+
+pytestmark = [
+    isctest.mark.requires_net_dns,
+    isctest.mark.requires_time_hires,
+    EXTRA_ARTIFACTS,
+]
 
 
 @pytest.mark.flaky(max_runs=2)

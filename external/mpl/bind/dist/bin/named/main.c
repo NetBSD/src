@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.21 2026/05/20 16:43:01 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.22 2026/08/29 14:32:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1084,6 +1084,7 @@ setup(void) {
 	ns_server_t *sctx;
 #ifdef HAVE_LIBSCF
 	char *instance = NULL;
+	isc_mem_t *smf_mctx = NULL;
 #endif /* ifdef HAVE_LIBSCF */
 
 	/*
@@ -1101,8 +1102,13 @@ setup(void) {
 	named_os_opendevnull();
 
 #ifdef HAVE_LIBSCF
-	/* Check if named is under smf control, before chroot. */
-	result = named_smf_get_instance(&instance, 0, named_g_mctx);
+	/*
+	 * Check if named is under smf control, before chroot.  This runs
+	 * long before create_managers() sets up named_g_mctx, so use a
+	 * private memory context for the instance name.
+	 */
+	isc_mem_create(&smf_mctx);
+	result = named_smf_get_instance(&instance, 0, smf_mctx);
 	/* We don't care about instance, just check if we got one. */
 	if (result == ISC_R_SUCCESS) {
 		named_smf_got_instance = 1;
@@ -1110,8 +1116,9 @@ setup(void) {
 		named_smf_got_instance = 0;
 	}
 	if (instance != NULL) {
-		isc_mem_free(named_g_mctx, instance);
+		isc_mem_free(smf_mctx, instance);
 	}
+	isc_mem_destroy(&smf_mctx);
 #endif /* HAVE_LIBSCF */
 
 	/*

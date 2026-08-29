@@ -25,6 +25,8 @@ options {
 	notify yes;
 };
 
+{% include "_common/controls.conf.j2" %}
+
 zone "tld0" {
 	type primary;
 	file "tld0.db";

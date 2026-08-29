@@ -1,4 +1,4 @@
-/*	$NetBSD: qpzone.c,v 1.1.1.6 2026/06/19 19:52:04 christos Exp $	*/
+/*	$NetBSD: qpzone.c,v 1.1.1.7 2026/08/29 14:32:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -919,6 +919,8 @@ bindrdataset(qpzonedb_t *qpdb, qpznode_t *node, dns_slabheader_t *header,
 	if (rdataset == NULL) {
 		return;
 	}
+
+	isc_refcount_increment0(&header->references);
 
 	qpznode_acquire(qpdb, node DNS__DB_FLARG_PASS);
 
@@ -4052,6 +4054,11 @@ rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp DNS__DB_FLARG) {
 
 	qrditer = (qpdb_rdatasetiter_t *)(*iteratorp);
 
+	if (qrditer->current != NULL) {
+		isc_refcount_decrement(&qrditer->current->references);
+		qrditer->current = NULL;
+	}
+
 	if (qrditer->common.version != NULL) {
 		closeversion(qrditer->common.db, &qrditer->common.version,
 			     false DNS__DB_FLARG_PASS);
@@ -4094,7 +4101,16 @@ rdatasetiter_first(dns_rdatasetiter_t *iterator DNS__DB_FLARG) {
 		}
 	}
 
+	if (header != NULL) {
+		isc_refcount_increment0(&header->references);
+	}
+
 	NODE_UNLOCK(nlock, &nlocktype);
+
+	if (qrditer->current != NULL) {
+		isc_refcount_decrement(&qrditer->current->references);
+		qrditer->current = NULL;
+	}
 
 	qrditer->current = header;
 
@@ -4166,7 +4182,16 @@ rdatasetiter_next(dns_rdatasetiter_t *iterator DNS__DB_FLARG) {
 		}
 	}
 
+	if (header != NULL) {
+		isc_refcount_increment0(&header->references);
+	}
+
 	NODE_UNLOCK(nlock, &nlocktype);
+
+	if (qrditer->current != NULL) {
+		isc_refcount_decrement(&qrditer->current->references);
+		qrditer->current = NULL;
+	}
 
 	qrditer->current = header;
 

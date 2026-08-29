@@ -1,0 +1,34 @@
+$TTL 300
+@       IN SOA ns.stuffed. root.stuffed. (
+                1          ; serial
+                3600       ; refresh
+                1800       ; retry
+                1814400    ; expire
+                300        ; minimum
+                )
+        IN NS   ns.stuffed.
+ns      IN A   10.53.0.2
+a00     IN TXT "data"
+a01     IN TXT "data"
+a02     IN TXT "data"
+a03     IN TXT "data"
+a04     IN TXT "data"
+a05     IN TXT "data"
+a06     IN TXT "data"
+a07     IN TXT "data"
+a08     IN TXT "data"
+a09     IN TXT "data"
+a10     IN TXT "data"
+a11     IN TXT "data"
+a12     IN TXT "data"
+a13     IN TXT "data"
+a14     IN TXT "data"
+a15     IN TXT "data"
+a16     IN TXT "data"
+a17     IN TXT "data"
+a18     IN TXT "data"
+a19     IN TXT "data"
+a20     IN TXT "data"
+a21     IN TXT "data"
+a22     IN TXT "data"
+a23     IN TXT "data"

@@ -1,0 +1,8 @@
+{% include '_common/zones/soa.partial.db.j2' %}
+{% include '_common/zones/ns.partial.db.j2' %}
+
+; This NSEC3PARAM record is unusable but should be ignored since NSEC works.
+{% raw %}
+@		NSEC @ SOA NS A NSEC3PARAM DNSKEY NSEC RRSIG
+@		NSEC3PARAM 2 0 0 -
+{% endraw %}
