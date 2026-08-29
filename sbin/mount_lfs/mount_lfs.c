@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.42 2026/08/29 16:32:45 riastradh Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.43 2026/08/29 17:56:05 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.42 2026/08/29 16:32:45 riastradh Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.43 2026/08/29 17:56:05 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -318,7 +318,7 @@ invoke_cleaner(char *name)
 		err(EXIT_FAILURE, "exec %s", _PATH_LFS_CLEANERD);
 	}
 
-	unreachable();
+	__unreachable();
 }
 #endif /* WANT_CLEANER */
 
