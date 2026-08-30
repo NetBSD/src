@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.47 2026/05/10 19:33:32 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48 2026/08/30 00:46:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.47 2026/05/10 19:33:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48 2026/08/30 00:46:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,8 +118,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/*
 	 * If specified, give the child a different stack.
 	 */
-	if (stack != NULL)
-		tf->tf_regs[15] = (u_int)stack + stacksize;
+	if (stack != NULL) {
+		tf->tf_regs[15] =
+		    ((uintptr_t)stack + stacksize) & ~STACK_ALIGNBYTES;
+	}
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)lwp_trampoline;
