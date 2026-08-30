@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.40 2026/04/03 14:59:55 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.41 2026/08/30 00:38:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -214,7 +214,7 @@ extern struct fpframe m68k_cached_fpu_idle_frame;
 
 void	userret(struct lwp *, struct frame *, u_quad_t);
 
-void	*getframe(struct lwp *, int, int *);
+void	*getframe(struct lwp *, int, int *, size_t);
 void	buildcontext(struct lwp *, void *, void *);
 #ifdef COMPAT_16
 void	sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);

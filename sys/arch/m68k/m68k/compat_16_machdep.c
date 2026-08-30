@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.19 2026/03/28 04:32:02 thorpej Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.20 2026/08/30 00:38:49 thorpej Exp $   */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.19 2026/03/28 04:32:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20 2026/08/30 00:38:49 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -89,11 +89,11 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	int onstack, error;
 	int sig = ksi->ksi_signo;
 	u_long code = KSI_TRAPCODE(ksi);
-	struct sigframe_sigcontext *fp = getframe(l, sig, &onstack), kf;
+	struct sigframe_sigcontext *fp, kf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	short ft = frame->f_format;
 
-	fp--;
+	fp = getframe(l, sig, &onstack, sizeof(*fp));
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)

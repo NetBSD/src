@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.40 2023/12/20 00:40:43 thorpej Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.41 2026/08/30 00:38:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.40 2023/12/20 00:40:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.41 2026/08/30 00:38:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	int onstack, error;
-	struct sunos_sigframe *fp = getframe(l, sig, &onstack), kf;
+	struct sunos_sigframe *fp, kf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	short ft = frame->f_format;
 
@@ -121,7 +121,7 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		return;
 	}
 
-	fp--;
+	fp = getframe(l, sig, &onstack, sizeof(*fp));
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
