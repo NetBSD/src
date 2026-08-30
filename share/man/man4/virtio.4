@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtio.4,v 1.12 2026/08/29 19:27:19 andvar Exp $
+.\"	$NetBSD: virtio.4,v 1.13 2026/08/30 13:51:37 andvar Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,8 +28,7 @@
 .Dt VIRTIO 4
 .Os
 .Sh NAME
-.Nm virtio ,
-.Nm virtio_mmio
+.Nm virtio
 .Nd Para-virtualized I/O in a virtual machine
 .Sh SYNOPSIS
 .Ss Virtio Over MMIO
@@ -48,37 +47,25 @@
 .Cd "viornd* at virtio?"
 .Cd "vioscsi* at virtio?"
 .Sh DESCRIPTION
-.Nm virtio
-is defined as an interface for efficient, standard and extensible I/O between
-the hypervisor and the virtual machine.
 The
 .Nm virtio
-device driver represents an emulated device that the hypervisor makes
-available to the virtual machine.
+driver implements the VirtIO interface for efficient, standard and extensible
+I/O between the hypervisor and the virtual machine.
 .Pp
-.Nm virtio_mmio
-can be used in virtual environments without
+It supports VirtIO devices exposed over
 .Xr pci 4
-support, typically in embedded systems, exposing the device
-through a simple memory-mapped register interface
-instead of the
-.Xr pci 4
-device.
+or over the MMIO transport.
 .Pp
-The memory-mapped
-.Xr virtio_mmio 4
-and
-.Xr virtio 4
-over
-.Xr pci 4
-transport options share a common device model.
-Most device operations, including, but not limited to, device initialization,
-queue configuration, and buffer transfers, are common to both transports.
+The MMIO transport can be used, for example, in embedded systems and microVMs.
+Devices may be discovered via
+.Xr acpi 4
+or fdt, or specified through kernel command-line parameters using
+.Xr pv 4 .
 .Pp
 The
-.Nm virtio
-driver provides the core infrastructure to communicate
-with the hypervisor (called virtqueues) and supports the following devices:
+.Nm
+driver provides the core infrastructure to communicate with the hypervisor
+and supports the following devices:
 .Pp
 .Bl -tag -width Xr -compact
 .It Xr ld 4
@@ -122,7 +109,7 @@ A SCSI adapter.
 .Re
 .Sh HISTORY
 The
-.Nm virtio
+.Nm
 driver first appeared in
 .Nx 6.0 .
 Support for attachment via
