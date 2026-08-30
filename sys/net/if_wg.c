@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.142 2026/07/04 22:22:33 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.143 2026/08/30 03:48:20 gutteridge Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.142 2026/07/04 22:22:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.143 2026/08/30 03:48:20 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -5553,12 +5553,12 @@ SYSCTL_SETUP(sysctl_net_wg_setup, "sysctl net.wg setup")
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 	    CTLTYPE_QUAD, "rekey_after_messages",
-	    SYSCTL_DESCR("session liftime by messages"),
+	    SYSCTL_DESCR("session lifetime by messages"),
 	    NULL, 0, &wg_rekey_after_messages, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "rekey_after_time",
-	    SYSCTL_DESCR("session liftime"),
+	    SYSCTL_DESCR("session lifetime"),
 	    NULL, 0, &wg_rekey_after_time, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
