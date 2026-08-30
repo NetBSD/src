@@ -1,4 +1,4 @@
-.\" $NetBSD: shquote.3,v 1.10 2017/07/03 21:32:49 wiz Exp $
+.\" $NetBSD: shquote.3,v 1.11 2026/08/30 00:48:36 jschauma Exp $
 .\"
 .\" Copyright (c) 2001 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd September 7, 2008
+.Dd August 29, 2026
 .Dt SHQUOTE 3
 .Os
 .Sh NAME
@@ -228,6 +228,13 @@ cmd[--len] = '\e0';
 .Xr sh 1 ,
 .Xr popen 3 ,
 .Xr system 3
+.Sh HISTORY
+The
+.Fn shquote
+and
+.Fn shquotev
+functions first appeard in
+.Nx 1.6 .
 .Sh BUGS
 This implementation does not currently handle strings containing multibyte
 characters properly.
