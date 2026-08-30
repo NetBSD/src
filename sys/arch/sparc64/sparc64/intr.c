@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.73 2026/08/21 18:21:51 palle Exp $ */
+/*	$NetBSD: intr.c,v 1.74 2026/08/30 19:17:15 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.73 2026/08/21 18:21:51 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.74 2026/08/30 19:17:15 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -381,7 +381,7 @@ sun4v_intr_devino_to_sysino(uint64_t devhandle, uint64_t devino, uint64_t *ino)
 	}
 	*ino = devino;
 	DPRINTF(INTRDB_SUN4V, 
-			("%s: returning devino as ino %#lx\n", __func__, *ino));
+			("%s: returning devino as sysino %#lx\n", __func__, *ino));
 	
 	return H_EOK;
 }
