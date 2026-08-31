@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.28 2026/06/30 22:28:00 rkujawa Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.29 2026/08/31 07:41:31 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.28 2026/06/30 22:28:00 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.29 2026/08/31 07:41:31 macallan Exp $");
 
 #include "adb.h"
 #include "adbkbd.h"
@@ -228,7 +228,7 @@ ofwoea_cnprobe_keyboard(void)
 	}
 #endif
 #if NPCKBC > 0
-	if (strcmp(name, "isa") == 0) {
+	if ((strcmp(name, "isa") == 0) || strcmp(name, "8042") == 0) {
 		ofprint("console keyboard type: PC Keyboard\n");
 		selected_keyboard = ofwoea_pckbd_cnattach;
 		goto kbd_found;
@@ -405,8 +405,8 @@ cninit(void)
 	rascons_cnattach();
 #endif
 	if (selected_keyboard != NULL) {
-		(*selected_keyboard)();
-
+		int res = (*selected_keyboard)();
+		OFPRINTF("keyboard %d\n", res);
 #if NWSDISPLAY > 0
 		/*
 		 * XXX This is a little gross, but we don't get to call
