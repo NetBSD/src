@@ -13,7 +13,6 @@ options 	MIPS32R2
 options 	MIPS64
 makeoptions 	CPUFLAGS+="-march=mips32"
 
-options 	NOFPU		# No FPU
 options 	FPEMUL		# emulate FPU insn
 
 # Options for necessary to use MD
