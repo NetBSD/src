@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.551.2.13 2024/04/18 18:50:59 martin Exp $
+.\"	$NetBSD: main,v 1.551.2.14 2026/08/31 09:15:02 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -509,20 +509,20 @@ possible,
 would not exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss "Dedication"
-.Pp
-.
-.Nx
-9.4 is dedicated to the memory of Wayne Knowles, who
-passed away in December 2022.
-.Pp
-Wayne was a long term contributor, working mostly on low level Mips code.
-.Pp
-Beyond his technical contributions, Wayne was always
-helpful and friendly.
-His example encouraged users to contribute to the project and share their
-work with the community.
-.Pp
+.\" .Ss "Dedication"
+.\" .Pp
+.\" .
+.\" .Nx
+.\" 9.4 is dedicated to the memory of Wayne Knowles, who
+.\" passed away in December 2022.
+.\" .Pp
+.\" Wayne was a long term contributor, working mostly on low level Mips code.
+.\" .Pp
+.\" Beyond his technical contributions, Wayne was always
+.\" helpful and friendly.
+.\" His example encouraged users to contribute to the project and share their
+.\" work with the community.
+.\" .Pp
 .\} \"  \n[FOR_RELEASE]
 .ie \n[RELEASE_BRANCH] .Ss Changes Between The NetBSD \n[oldvers] \
 and \n[major] Releases
