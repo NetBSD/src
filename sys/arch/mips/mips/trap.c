@@ -675,8 +675,9 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		/* FALLTHROUGH */
 	case T_RES_INST+T_USER:
 	case T_COP_UNUSABLE+T_USER:
-#if !defined(FPEMUL) && !defined(NOFPU)
-		if (__SHIFTOUT(cause, MIPS_CR_COP_ERR) == MIPS_CR_COP_ERR_CU1) {
+#if !defined(NOFPU)
+		if (mips_options.mips_fpu_id != 0 &&
+		    __SHIFTOUT(cause, MIPS_CR_COP_ERR) == MIPS_CR_COP_ERR_CU1) {
 			fpu_load();          	/* load FPA */
 		} else
 #endif
@@ -686,7 +687,14 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		userret(l);
 		return; /* GEN */
 	case T_FPE+T_USER:
-#if defined(FPEMUL)
+#if defined(FPEMUL) && !defined(NOFPU)
+		if (mips_options.mips_fpu_id != 0) {
+			utf->tf_regs[_R_CAUSE] = cause;
+			mips_fpu_trap(pc, utf);
+		} else {
+			mips_emul_inst(status, cause, pc, utf);
+		}
+#elif defined(FPEMUL)
 		mips_emul_inst(status, cause, pc, utf);
 #elif !defined(NOFPU)
 		utf->tf_regs[_R_CAUSE] = cause;
