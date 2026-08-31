@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.238 2022/11/04 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.239 2026/08/31 02:21:46 gutteridge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.238 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.239 2026/08/31 02:21:46 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2119,7 +2119,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "recvbuf_auto",
 		       SYSCTL_DESCR("Enable automatic receive "
-		           "buffer sizing (experimental)"),
+		           "buffer sizing"),
 		       NULL, 0, &tcp_do_autorcvbuf, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -2140,7 +2140,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "sendbuf_auto",
 		       SYSCTL_DESCR("Enable automatic send "
-		           "buffer sizing (experimental)"),
+		           "buffer sizing"),
 		       NULL, 0, &tcp_do_autosndbuf, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
