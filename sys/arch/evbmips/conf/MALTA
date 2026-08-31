@@ -189,6 +189,7 @@ com1		at isa? port 0x2f8 irq 3
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+piixide*	at pci? dev ? function ?	# Intel IDE controllers
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
 aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
 artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
