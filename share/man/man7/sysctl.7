@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.173 2026/07/10 03:27:57 kre Exp $
+.\"	$NetBSD: sysctl.7,v 1.174 2026/08/31 02:26:03 gutteridge Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd July 10, 2026
+.Dd August 31, 2026
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1495,6 +1495,9 @@ The currently defined protocols and names are:
 .It ip	grettl	integer	yes
 .It ip	hashsize	integer	yes
 .It ip	hostzerobroadcast	integer	yes
+.It ip	ifq.drops	quad	no
+.It ip	ifq.len	integer	no
+.It ip	ifq.maxlen	integer	yes
 .It ip	lowportmin	integer	yes
 .It ip	lowportmax	integer	yes
 .It ip	maxflows	integer	yes
@@ -1507,7 +1510,13 @@ The currently defined protocols and names are:
 .It ip	ttl	integer	yes
 .It tcp	rfc1323	integer	yes
 .It tcp	sendspace	integer	yes
+.It tcp	sendbuf_auto	integer	yes
+.It tcp	sendbuf_inc	integer	yes
+.It tcp	sendbuf_max	integer	yes
 .It tcp	recvspace	integer	yes
+.It tcp	recvbuf_auto	integer	yes
+.It tcp	recvbuf_inc	integer	yes
+.It tcp	recvbuf_max	integer	yes
 .It tcp	mssdflt	integer	yes
 .It tcp	syn_cache_limit	integer	yes
 .It tcp	syn_bucket_limit	integer	yes
@@ -1657,6 +1666,13 @@ Also see
 .Li ip.maxflows .
 .It Li ip.hostzerobroadcast
 All zeroes address is broadcast address.
+.It Li ip.ifq.drops
+Packets dropped due to full output queue.
+.It Li ip.ifq.len
+Current output queue length.
+.It Li ip.ifq.maxlen
+Maximum allowed output queue length.
+The default value is 256.
 .It Li ip.lowportmax
 The highest port number to use for TCP and UDP reserved port allocation.
 This cannot be set to less than 0 or greater than 1024, and must
@@ -1790,6 +1806,14 @@ is disabled.
 Do not change this value unless you really know what you are doing.
 .It Li tcp.recvspace
 The default TCP receive buffer size.
+.It Li tcp.recvbuf_auto
+If set to 1, enables automatic receive buffer sizing.
+.It Li tcp.recvbuf_inc
+Incrementor step size of the automatic receive buffer.
+Defaults to 16 KiB.
+.It Li tcp.recvbuf_max
+The maximum size of the automatic receive buffer.
+Defaults to 256 KiB.
 .It Li tcp.rfc1323
 If set to 1, enables RFC 1323 extensions to TCP.
 .It Li tcp.rstppslimit
@@ -1817,6 +1841,14 @@ If set to 1, enables RFC 3168 Explicit Congestion Notification.
 Number of times to retry sending the ECN-setup packet.
 .It Li tcp.sendspace
 The default TCP send buffer size.
+.It Li tcp.sendbuf_auto
+If set to 1, enables automatic send buffer sizing.
+.It Li tcp.sendbuf_inc
+Incrementor step size of the automatic send buffer.
+Defaults to 8 KiB.
+.It Li tcp.sendbuf_max
+The maximum size of the automatic send buffer.
+Defaults to 256 KiB.
 .It Li tcp.slowhz
 The units for tcp.keepidle and tcp.keepintvl; those variables are in ticks
 of a clock that ticks tcp.slowhz times per second.
@@ -1898,6 +1930,9 @@ The currently defined protocols and names are:
 .It ip6	hashsize	integer	yes
 .It ip6	hlim	integer	yes
 .It ip6	hdrnestlimit	integer	yes
+.It ip6	ifq.drops	quad	no
+.It ip6	ifq.len	integer	no
+.It ip6	ifq.maxlen	integer	yes
 .It ip6	kame_version	string	no
 .It ip6	keepfaith	integer	yes
 .It ip6	log_interval	integer	yes
@@ -1989,6 +2024,13 @@ The default hop limit value for an IPv6 unicast packet sourced by the node.
 This value applies to all the transport protocols on top of IPv6.
 There are APIs to override the value, as documented in
 .Xr ip6 4 .
+.It Li ip6.ifq.drops
+Packets dropped due to full output queue.
+.It Li ip6.ifq.len
+Current output queue length.
+.It Li ip6.ifq.maxlen
+Maximum allowed output queue length.
+The default value is 256.
 .It Li ip6.kame_version
 The string identifies the version of KAME IPv6 stack implemented in the kernel.
 .It Li ip6.keepfaith
