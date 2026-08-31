@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3286 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3287 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -354,5 +354,50 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		by Mark Kettenis. [thorpej 20260718]
 	sun2, sun3: Introduce a unified pmap(9) module for all
 		68k-based Sun machines. [thorpej 20260719]
+	sparc64: Add auxan(4), a driver for the i2c fan sensor found
+		on Sun Blade 2500 Silver machines. [jdc 20260726]
+	evbmips: Add a driver for Ingenic JZ4780 SD/MMC devices.
+		[rkujawa 20260726]
+	pppoe(4): Allow controlling which traffic triggers
+		dial-on-demand or keeps idle connections alive using
+		BPF-based packet filtering for dial-on-demand and
+		idle-timeout. [yamaguchi 20260728]
+	rge(4): Support for Realtek Killer E5000 5GB Ethernet.
+		[pgoyette 20260802]
+	hb68k: Add support for techav's Wrap030 homebrew
+		Motorola 68000 board. [thorpej 20260806]
+	rc(8): Disable ldconfig(8) a.out cache building by default.
+		Improves boot speed on slow machines.
+		[christos 20260816]
 	dhcpcd(8): Import v10.5.1 [roy 20260817]
+	gffb(4): Add hardware cursor support. [macallan 20260817]
+	crash(8): Add support for `mach cpu N' on x86 to examine
+		registers/stack of other CPUs. [riastradh 20260817]
+	evbarm: Add a SD/MMC driver for the Texas Instruments AM1808.
+		[yurix 20260819]
+	rc(8): Add an optional rcorder_cache=YES setting to cache the
+		rc.d scripts that run during boot. Reduces boot time
+		significantly on slow CPUs. [thorpej 20260820]
+	autofs(5): Support running inside a chroot.
+		[riastradh 20260820]
+	hppa: Add eager FPU switching - works around QEMU bug, and
+		safer. May eventually become the default.
+		[tls 20260821]
+	sparc64: sun4v: Ensure that all versions of the hypervisor
+		interrupt API can be used. [palle 20260821]
+	file(1): Recognize NetBSD file system snapshot files.
+		[riastradh 20260823]
+	mount_lfs(8): Add options -k, to invoke a kernel cleaner
+		thread, and -u, to invoke lfs_cleanerd(8). -k is
+		now the default. [perseant 20260825]
+	riscv: Add a driver for the JH7110 watchdog timer.
+		[riz 20260825]
+	cpuctl(8): Allow `cpuid leaf 4' to get cache parameters for
+		Zhaoxin and late VIA CPU models. [andvar 20260825]
+	mount(8): Add a -W option to show wedge names as labels
+		(NAME=xyzzy) instead of /dev/dkN. [kre 20260826]
+	nfs: New sysctl node vfs.nfsd.maxexportspermount. Defaults
+		to 256. [riastradh 20260826]
+	sh(1): Implement POSTX Issue 8 "-iflags=fullblock" option.
+		[kre 20260829]
 	bind: Import version 9.20.24. [christos 20260829]
