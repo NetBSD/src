@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.157 2026/08/05 08:17:41 msaitoh Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.158 2026/09/01 20:12:19 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.157 2026/08/05 08:17:41 msaitoh Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.158 2026/09/01 20:12:19 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: syslogd.c,v 1.157 2026/08/05 08:17:41 msaitoh Exp $");
  *
  * Defined Constants:
  *
- * MAXLINE -- the maximimum line length that can be handled.
+ * MAXLINE -- the maximum line length that can be handled.
  * DEFUPRI -- the default priority for user messages
  * DEFSPRI -- the default priority for kernel messages
  *

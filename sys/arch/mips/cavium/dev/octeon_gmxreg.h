@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmxreg.h,v 1.7 2022/05/23 21:46:12 andvar Exp $	*/
+/*	$NetBSD: octeon_gmxreg.h,v 1.8 2026/09/01 20:12:19 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -211,12 +211,12 @@
 #define	RXN_RRM_MIN_XXX_63_16			UINT64_C(0xffffffffffff0000)
 #define	RXN_RRM_MIN_LEN				UINT64_C(0x000000000000ffff)
 
-/* Frame Maximun-Length Registers */
+/* Frame Maximum-Length Registers */
 
 #define	RXN_RRM_MAX_XXX_63_16			UINT64_C(0xffffffffffff0000)
 #define	RXN_RRM_MAX_LEN				UINT64_C(0x000000000000ffff)
 
-/* GMX Maximun Packet-Size Registers */
+/* GMX Maximum Packet-Size Registers */
 
 #define	RXN_JABBER_XXX_63_16			UINT64_C(0xffffffffffff0000)
 #define	RXN_JABBER_CNT				UINT64_C(0x000000000000ffff)

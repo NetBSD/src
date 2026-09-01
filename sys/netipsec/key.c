@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.286 2026/02/17 22:26:51 andvar Exp $	*/
+/*	$NetBSD: key.c,v 1.287 2026/09/01 20:12:18 andvar Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.286 2026/02/17 22:26:51 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.287 2026/09/01 20:12:18 andvar Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -552,7 +552,7 @@ SYSCTL_INT(_net_key, KEYCTL_SPI_TRY,		spi_trycnt,	CTLFLAG_RW, \
 SYSCTL_INT(_net_key, KEYCTL_SPI_MIN_VALUE,	spi_minval,	CTLFLAG_RW, \
 	&key_spi_minval,	0,	"");
 
-/* maximun spi value to allocate automatically. */
+/* maximum spi value to allocate automatically. */
 SYSCTL_INT(_net_key, KEYCTL_SPI_MAX_VALUE,	spi_maxval,	CTLFLAG_RW, \
 	&key_spi_maxval,	0,	"");
 

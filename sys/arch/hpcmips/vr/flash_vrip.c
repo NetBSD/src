@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.15 2023/09/12 19:32:00 andvar Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.16 2026/09/01 20:12:19 andvar Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.15 2023/09/12 19:32:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.16 2026/09/01 20:12:19 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -288,17 +288,17 @@ flash_attach(device_t parent, device_t self, void *aux)
 	printf("write buffer size: %dbyte\n", sc->sc_write_buffer_size);
 	printf("typical word program timeout: %dusec\n",
 	       sc->sc_typ_word_prog_timo);
-	printf("maximam word program timeout: %dusec (%d time of typ)\n",
+	printf("maximum word program timeout: %dusec (%d time of typ)\n",
 	       sc->sc_typ_word_prog_timo * sc->sc_max_word_prog_timo,
 	       sc->sc_max_word_prog_timo);
 	printf("typical buffer write timeout: %dusec\n",
 	       sc->sc_typ_buffer_write_timo);
-	printf("maximam buffer write timeout: %dusec (%d time of typ)\n",
+	printf("maximum buffer write timeout: %dusec (%d time of typ)\n",
 	       sc->sc_typ_buffer_write_timo * sc->sc_max_buffer_write_timo,
 	       sc->sc_max_buffer_write_timo);
 	printf("typical block erase timeout: %dmsec\n",
 	       sc->sc_typ_block_erase_timo);
-	printf("maximam block erase timeout: %dmsec (%d time of typ)\n",
+	printf("maximum block erase timeout: %dmsec (%d time of typ)\n",
 	       sc->sc_typ_block_erase_timo * sc->sc_max_block_erase_timo,
 	       sc->sc_max_block_erase_timo);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: selection.c,v 1.12 2023/02/07 20:37:48 mlelstv Exp $ */
+/* $NetBSD: selection.c,v 1.13 2026/09/01 20:12:18 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2007 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: selection.c,v 1.12 2023/02/07 20:37:48 mlelstv Exp $");
+__RCSID("$NetBSD: selection.c,v 1.13 2026/09/01 20:12:18 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -102,8 +102,8 @@ struct selmouse {
 
 	size_t sm_x;            /* Mouse pointer column */
 	size_t sm_y;            /* Mouse pointer row */
-	size_t sm_max_x;        /* Maximun column allowed */
-	size_t sm_max_y;        /* Maximun row allowed */
+	size_t sm_max_x;        /* Maximum column allowed */
+	size_t sm_max_y;        /* Maximum row allowed */
 
 	size_t sm_slowdown_x;   /* X axis slowdown */
 	size_t sm_slowdown_y;   /* Y axis slowdown */
