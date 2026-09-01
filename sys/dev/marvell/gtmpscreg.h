@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpscreg.h,v 1.6 2026/04/07 22:22:13 andvar Exp $	*/
+/*	$NetBSD: gtmpscreg.h,v 1.7 2026/09/01 17:53:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -262,7 +262,7 @@
 /*
  * MPSC Channel Register 1 for UART Mode "Break/Stuff"
  */
-#define GTMPSC_CHR1_TCS		__BITS(7,0)	/* Constrol Stuff Character */
+#define GTMPSC_CHR1_TCS		__BITS(7,0)	/* Control Stuff Character */
 #define GTMPSC_CHR1_BRK		__BITS(23,16)	/* Break Count */
 #define GTMPSC_CHR1_RES		__BITS(15,8)|__BITS(31,24)
 /*
