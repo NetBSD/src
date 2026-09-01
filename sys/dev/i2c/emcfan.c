@@ -1,4 +1,4 @@
-/*	$NetBSD: emcfan.c,v 1.2 2025/07/08 18:15:03 gutteridge Exp $	*/
+/*	$NetBSD: emcfan.c,v 1.3 2026/09/01 19:04:49 andvar Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emcfan.c,v 1.2 2025/07/08 18:15:03 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emcfan.c,v 1.3 2026/09/01 19:04:49 andvar Exp $");
 
 /*
  * Driver for the EMC-210x and EMC-230x fan controllers on a
@@ -875,7 +875,7 @@ emcfan_refresh_210_346_230x_tach(int product_family, uint8_t product_id,
 
 /* These two tables are taken from Appendix A in the 2104 and 2106 datasheet.
  * The index into the array is the ADC value and the value of the array is a
- * precomputed kelvin1000 (i.e celcius to kelvin * 1000) temperature.
+ * precomputed kelvin1000 (i.e Celsius to kelvin * 1000) temperature.
  *
  * There are unusual holes as not all of the ADC values are present in the
  * *center* of the table these were made into xx.5 temperature values.

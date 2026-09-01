@@ -1,4 +1,4 @@
-/* $NetBSD: jh71x0_temp.c,v 1.1 2025/01/03 11:49:04 skrll Exp $ */
+/* $NetBSD: jh71x0_temp.c,v 1.2 2026/09/01 19:04:48 andvar Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh71x0_temp.c,v 1.1 2025/01/03 11:49:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh71x0_temp.c,v 1.2 2026/09/01 19:04:48 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -60,7 +60,7 @@ struct jh71x0_temp_softc {
 #define JH71X0_TEMP_RUN		__BIT(2)
 #define JH71X0_TEMP_DOUT_MASK	__BITS(27, 16)
 
-/* DOUT to Celcius conversion constants */
+/* DOUT to Celsius conversion constants */
 #define JH71X0TEMP_Y1000	237500L
 #define JH71X0TEMP_Z		4094L
 #define JH71X0TEMP_K1000	81100L

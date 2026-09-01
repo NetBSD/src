@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280.c,v 1.4 2025/09/13 16:16:40 thorpej Exp $	*/
+/*	$NetBSD: bmx280.c,v 1.5 2026/09/01 19:04:48 andvar Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.4 2025/09/13 16:16:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.5 2026/09/01 19:04:48 andvar Exp $");
 
 /*
  * Common driver for the Bosch BMP280/BME280 temperature, humidity (sometimes) and
@@ -912,7 +912,7 @@ bmx280_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 						DPRINTF(sc, 1, ("%s: Refresh compensated temp: %d - t_fine: %d\n",
 						    device_xname(sc->sc_dev), comp_temp, t_fine));
 
-						/* comp_temp is in Celcius * 100.  This converts it to microkelvin */
+						/* comp_temp is in Celsius * 100.  This converts it to microkelvin */
 
 						uint32_t q;
 

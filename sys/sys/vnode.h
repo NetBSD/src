@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.305 2026/03/21 14:26:06 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.306 2026/09/01 19:04:48 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -394,7 +394,7 @@ extern const int	vttoif_tab[];
  * Flags to various vnode functions.
  */
 #define	SKIPSYSTEM	0x0001	/* vflush: skip vnodes marked VSYSTEM */
-#define	FORCECLOSE	0x0002	/* vflush: force file closeure */
+#define	FORCECLOSE	0x0002	/* vflush: force file closure */
 #define	WRITECLOSE	0x0004	/* vflush: only close writable files */
 #define	V_SAVE		0x0001	/* vinvalbuf: sync file first */
 
@@ -413,7 +413,7 @@ extern const int	vttoif_tab[];
 #define VDEAD_NOWAIT	0x0001	/* vdead_check: do not sleep */
 
 /*
- * Flags some filesystems intenally use for their "UPDATE" functions.
+ * Flags some filesystems internally use for their "UPDATE" functions.
  * (Historically, these used to be VOP_UPDATE flags.)
  */
 #define	UPDATE_WAIT	0x0001	/* update: wait for completion */
@@ -467,7 +467,7 @@ extern unsigned int	numvnodes;	/* current number of vnodes */
 
 
 /*
- * Mods for exensibility.
+ * Mods for extensibility.
  */
 
 /*

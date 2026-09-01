@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.6 2026/01/29 17:51:58 nia Exp $	*/
+/*	$NetBSD: time.c,v 1.7 2026/09/01 19:04:49 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000
@@ -153,7 +153,7 @@ EfiTimeToUnixTime(EFI_TIME *ETime)
     */
     if ( ETime->TimeZone != EFI_UNSPECIFIED_TIMEZONE ) {
     	/*
-    	//  TimeZone is kept in minues...
+    	//  TimeZone is kept in minutes...
     	*/
     	UTime += (ETime->TimeZone * 60);
     }

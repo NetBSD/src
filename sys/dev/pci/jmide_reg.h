@@ -1,4 +1,4 @@
-/*      $NetBSD: jmide_reg.h,v 1.4 2011/10/24 16:06:43 njoly Exp $    */
+/*      $NetBSD: jmide_reg.h,v 1.5 2026/09/01 19:04:49 andvar Exp $    */
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  *
  */
 
-/* registers definitions for the JMicon JMB36x IDE/SATA controllers */
+/* registers definitions for the JMicron JMB36x IDE/SATA controllers */
 
 #define PCI_JM_CONTROL0	0x40 /* controller control register 0 */
 #define JM_CONTROL0_ROM_EN	0x80000000 /* external ROM enable */
