@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ipuv3var.h,v 1.3 2015/12/21 04:26:28 hkenken Exp $	*/
+/*	$NetBSD: imx51_ipuv3var.h,v 1.4 2026/09/01 17:47:53 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011, 2012  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/bus.h>
 
-/* IPUV3 Contoroller */
+/* IPUV3 Controller */
 struct imx51_ipuv3_screen {
 	LIST_ENTRY(imx51_ipuv3_screen) link;
 

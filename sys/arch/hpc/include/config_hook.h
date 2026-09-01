@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.7 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.8 2026/09/01 17:47:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -197,7 +197,7 @@ config_hook_call_reverse(int type, long id, void *msg)
 #define PCIINTR		CONFIG_HOOK_PCIINTR
 
 /* ID nicknames */
-/* power contorol */
+/* power control */
 #define PWCTL_COM0	CONFIG_HOOK_POWER_COM0
 #define PWCTL_COM1	CONFIG_HOOK_POWER_COM1
 #define PWCTL_COM2	CONFIG_HOOK_POWER_COM2

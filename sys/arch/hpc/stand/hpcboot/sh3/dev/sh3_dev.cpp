@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh3_dev.cpp,v 1.6 2008/04/28 20:23:20 martin Exp $	*/
+/* -*-C++-*-	$NetBSD: sh3_dev.cpp,v 1.7 2026/09/01 17:47:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -510,7 +510,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 #undef DBG_BIT_PRINT
 	DPRINTF((TEXT("\n")));
 
-	DPRINTF((TEXT("PCC1 General Contorol Register\n")));
+	DPRINTF((TEXT("PCC1 General Control Register\n")));
 	r8 = _reg_read_1(HD64461_PCC1GCR_REG8);
 	bitdisp(r8);
 #define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC1GCR_##m, #m)

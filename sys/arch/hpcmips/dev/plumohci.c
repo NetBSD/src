@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.18 2021/08/07 16:18:54 thorpej Exp $ */
+/*	$NetBSD: plumohci.c,v 1.19 2026/09/01 17:47:53 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.18 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.19 2026/09/01 17:47:53 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ plumohci_attach(device_t parent, device_t self, void *aux)
 	/* power up */
 	/*
 	 * in the case of PLUM2, UHOSTC uses the VRAM as the shared RAM
-	 * so establish power/clock of Video contoroller
+	 * so establish power/clock of Video controller
 	 */
 	plum_power_establish(pa->pa_pc, PLUM_PWR_EXTPW1);
 	plum_power_establish(pa->pa_pc, PLUM_PWR_USB);

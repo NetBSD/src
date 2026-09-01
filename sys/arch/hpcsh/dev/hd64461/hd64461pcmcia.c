@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.57 2025/08/06 11:11:34 andvar Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.58 2026/09/01 17:47:52 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.57 2025/08/06 11:11:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.58 2026/09/01 17:47:52 andvar Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -1192,7 +1192,7 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 #undef _
 	printf("\n");
 
-	printf("PCC1 General Contorol Register\n");
+	printf("PCC1 General Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1GCR_REG8);
 #define	_(m)	dbg_bitmask_print(r8, HD64461_PCC1GCR_##m, #m)
 	_(P1DRVE);_(P1PCCR);_(P1VCC0);_(P1MMOD);_(P1PA25);_(P1PA24);_(P1REG);

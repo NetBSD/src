@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmciareg.h,v 1.4 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64461pcmciareg.h,v 1.5 2026/09/01 17:47:52 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #define HD64461_PCC0ISR_P0BVD1			HD64461_PCCISR_BVD1
 #define HD64461_PCC0ISR_STSCHG0			HD64461_PCCISR_BVD1
 
-/* PCC0 General Contorol Register (R/W) */
+/* PCC0 General Control Register (R/W) */
 #define HD64461_PCC0GCR_REG8				0xb0002002
 #define HD64461_PCC0GCR_P0DRVE			HD64461_PCCGCR_DRVE
 #define HD64461_PCC0GCR_P0PCCR			HD64461_PCCGCR_PCCR
@@ -109,7 +109,7 @@
 #define HD64461_PCC1ISR_P1BVD2			HD64461_PCCISR_BVD2
 #define HD64461_PCC1ISR_P1BVD1			HD64461_PCCISR_BVD1
 
-/* PCC1 General Contorol Register (R/W) */
+/* PCC1 General Control Register (R/W) */
 #define HD64461_PCC1GCR_REG8				0xb0002012
 #define HD64461_PCC1GCR_P1DRVE			HD64461_PCCGCR_DRVE
 #define HD64461_PCC1GCR_P1PCCR			HD64461_PCCGCR_PCCR
