@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.15 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.16 2026/09/01 09:07:28 macallan Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.15 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.16 2026/09/01 09:07:28 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ static paddr_t	chipsfb_mmap(void *, void *, off_t, int);
 static void	chipsfb_clearscreen(struct chipsfb_softc *);
 static void	chipsfb_init_screen(void *, struct vcons_screen *, int,
 			    long *);
-
+static void	chipsfb_set_video(struct chipsfb_softc *, int);
 
 struct wsdisplay_accessops chipsfb_accessops = {
 	chipsfb_ioctl,
@@ -301,7 +301,7 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 		chipsfb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
 		j += 3;
 	}
-	
+
 	aa.console = console;
 	aa.scrdata = &chipsfb_screenlist;
 	aa.accessops = &chipsfb_accessops;
@@ -611,7 +611,7 @@ chipsfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 
 	if (__predict_false((sc->sc_mode != WSDISPLAYIO_MODE_EMUL)))
 		return;
-	
+
 	if (__predict_false((!CHAR_IN_FONT(c, font))))
 		return;
 
@@ -884,7 +884,11 @@ chipsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		}
 		}
 		return 0;
-	
+	case WSDISPLAYIO_SVIDEO: {
+		int mode = *(int*)data;
+		chipsfb_set_video(sc, mode == WSDISPLAYIO_VIDEO_ON);
+		return 0;
+	}
 	case WSDISPLAYIO_GET_FBINFO: {
 		struct wsdisplayio_fbinfo *fbi = data;
 		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
@@ -904,10 +908,6 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct chipsfb_softc *sc = vd->cookie;
 	paddr_t pa;
 
-	if (sc->sc_mmap != NULL) {
-		pa = sc->sc_mmap(v, vs, offset, prot);
-		if (pa != -1) return pa;
-	}
 
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->memsize) {
@@ -916,6 +916,10 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 		return pa;
 	}
 
+	if (sc->sc_mmap != NULL) {
+		pa = sc->sc_mmap(v, vs, offset, prot);
+		if (pa != -1) return pa;
+	}
 	/*
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
@@ -1033,3 +1037,14 @@ chipsfb_probe_vram(struct chipsfb_softc *sc)
 
 	return ofs;
 }
+
+static void
+chipsfb_set_video(struct chipsfb_softc *sc, int on)
+{
+	uint8_t reg;
+
+	reg = chipsfb_read_indexed(sc, SEQ_INDEX, 1);
+	reg = on ? reg & 0xdf : reg | 0x20;
+	chipsfb_write_indexed(sc, SEQ_INDEX, 1, reg);
+}
+
