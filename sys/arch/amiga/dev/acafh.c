@@ -1,4 +1,4 @@
-/*	$NetBSD: acafh.c,v 1.7 2023/12/20 00:40:42 thorpej Exp $ */
+/*	$NetBSD: acafh.c,v 1.8 2026/09/01 18:01:24 andvar Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.7 2023/12/20 00:40:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acafh.c,v 1.8 2026/09/01 18:01:24 andvar Exp $");
 
 /*
  * Individual Computers ACA500 driver. 
@@ -160,7 +160,7 @@ acafh_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* 
-	 * Map the ACA500 registers into kernel virutal space.
+	 * Map the ACA500 registers into kernel virtual space.
 	 */
 	for (i = ACAFH_BASE; i < ACAFH_END; i += PAGE_SIZE)
 		pmap_enter(vm_map_pmap(kernel_map),

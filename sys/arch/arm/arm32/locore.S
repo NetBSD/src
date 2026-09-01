@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.44 2022/04/02 11:16:07 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.45 2026/09/01 18:01:24 andvar Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -40,7 +40,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: locore.S,v 1.44 2022/04/02 11:16:07 skrll Exp $")
+	RCSID("$NetBSD: locore.S,v 1.45 2026/09/01 18:01:24 andvar Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -165,7 +165,7 @@ ENTRY_NP(cpu_reset)
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
 	/*
-	 * Load the virutal address of the MD reset function first.
+	 * Load the virtual address of the MD reset function first.
 	 */
 	ldr	r4, .Lcpu_reset_address
 	ldr	r4, [r4]

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2026/07/19 17:09:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 2026/09/01 18:01:25 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2026/07/19 17:09:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2026/09/01 18:01:25 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1011,7 +1011,7 @@ pmeg_verify_empty(vaddr_t va)
 
 
 /****************************************************************
- * Physical-to-virutal lookup support
+ * Physical-to-virtual lookup support
  *
  * Need memory for the pv_alloc/pv_free list heads
  * and elements.  We know how many to allocate since

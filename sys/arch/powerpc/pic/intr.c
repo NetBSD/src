@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.39 2026/03/04 10:54:32 jmcneill Exp $ */
+/*	$NetBSD: intr.c,v 1.40 2026/09/01 18:01:24 andvar Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.39 2026/03/04 10:54:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40 2026/09/01 18:01:24 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_interrupt.h"
@@ -324,7 +324,7 @@ intr_disestablish(void *arg)
 		is->is_type = IST_NONE;
 		evcnt_detach(&is->is_ev);
 		/*
-		 * Make the virutal IRQ available again.
+		 * Make the virtual IRQ available again.
 		 */
 		virq_map[virq] = 0;
 		virq_mask |= PIC_VIRQ_TO_MASK(virq);
