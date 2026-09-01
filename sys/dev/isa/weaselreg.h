@@ -1,4 +1,4 @@
-/*	$NetBSD: weaselreg.h,v 1.8 2022/04/11 20:57:38 andvar Exp $	*/
+/*	$NetBSD: weaselreg.h,v 1.9 2026/09/01 19:22:21 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -139,7 +139,7 @@ struct weasel_config_block {
  *
  * To service the watchdog when armed:
  *
- *	tmp = WDT_SEMPAPHORE;
+ *	tmp = WDT_SEMAPHORE;
  *	WDT_SEMAPHORE ~= tmp;
  */
 #define WDT_ATTENTION   0x22    /* get the attention of the WDT state engine */

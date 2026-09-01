@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.18 2013/08/11 05:42:41 dholland Exp $	*/
+/*	$NetBSD: init.c,v 1.19 2026/09/01 19:22:22 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)init.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.18 2013/08/11 05:42:41 dholland Exp $");
+__RCSID("$NetBSD: init.c,v 1.19 2026/09/01 19:22:22 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ struct	gettystrs gettystrs[] = {
 	{ "lm", "login: ",   NULL },	/* login message */
 	{ "er", M(VERASE),   NULL },	/* erase character */
 	{ "kl", M(VKILL),    NULL },	/* kill character */
-	{ "et", M(VEOF),     NULL },	/* eof chatacter (eot) */
+	{ "et", M(VEOF),     NULL },	/* eof character (eot) */
 	{ "pc", "",          NULL },	/* pad character */
 	{ "tt", NULL,        NULL },	/* terminal type */
 	{ "ev", NULL,        NULL },	/* environment */

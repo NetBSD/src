@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.50 2026/08/15 10:12:49 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.51 2026/09/01 19:22:21 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -131,7 +131,7 @@ struct editline {
 	el_prompt_t	  el_prompt;	/* Prompt stuff			*/
 	el_prompt_t	  el_rprompt;	/* Prompt stuff			*/
 	el_literal_t	  el_literal;	/* prompt literal bits		*/
-	el_chared_t	  el_chared;	/* Characted editor stuff	*/
+	el_chared_t	  el_chared;	/* Character editor stuff	*/
 	el_map_t	  el_map;	/* Key mapping stuff		*/
 	el_keymacro_t	  el_keymacro;	/* Key binding stuff		*/
 	el_history_t	  el_history;	/* History stuff		*/
