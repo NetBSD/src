@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550reg.h,v 1.3 2017/02/02 19:55:05 macallan Exp $	*/
+/*	$NetBSD: ct65550reg.h,v 1.4 2026/09/01 08:56:45 macallan Exp $	*/
 
 /*
  * Copyright 2006 by Michael Lorenz.
@@ -67,7 +67,7 @@
 	 * upper 16 bit are destination stride in bytes
 	 * lower 16 bit are source stride in bytes
 	 */
-	 
+
 #define CT_BLT_BG	0x04
 #define CT_BLT_FG	0x08
 #define CT_BLT_EXPCTL	0x0c	/* expansion control */
@@ -81,7 +81,7 @@
 	#define MONO_SRC_ALIGN_LONG	0x04000000
 	#define MONO_SRC_ALIGN_LONGLONG	0x05000000
 	#define MONO_SELECT_ALT_FG_BG	0x08000000 /* use CT_SRC_EXP_* */
-	
+
 #define CT_BLT_CONTROL	0x10
 	#define BLT_ROP_MASK		0x000000ff
 	#define BLT_START_RIGHT		0x00000100 /* 0 for start left */
@@ -131,7 +131,7 @@
 #define XR_IO_CONTROL		0x09
 	#define ENABLE_CRTC_EXT	0x01
 	#define ENABLE_ATTR_EXT	0x02
-	
+
 #define XR_ADDR_MAPPING		0x0a
 	#define ENABLE_MAPPING	0x01	/* in VGA window */
 	#define ENABLE_LINEAR	0x02
@@ -151,20 +151,20 @@
 	#define BLITTER_16BIT	0x10
 	#define BLITTER_24BIT	0x20
 	#define BLITTER_32BIT	0x30	/* reserved */
-	
+
 #define XR_DRAM_ACCESS_CONTROL	0x40
 	#define	ENABLE_64BIT	0x01
 	#define DISABLE_WRAP	0x02	/* otherwise only 256kB */
 	#define EXTENDED_TEXT	0x10
-	
+
 #define XR_DRAM_TYPE		0x41
 	#define DRAM_FASTPAGE	0x00
 	#define DRAM_EDO	0x01
-	
+
 #define XR_DRAM_CONFIG		0x42
 	#define DRAM_8BIT_COL	0x00
 	#define DRAM_9BIT_COL	0x01
-	
+
 #define XR_DRAM_INTERFACE	0x43
 #define XR_DRAM_TIMING		0x44
 
@@ -177,12 +177,12 @@
 	#define DDC_HV_POWERDOWN 0x10
 	#define DDC_ENABLE_HSYNC 0x20
 	#define DDC_ENABLE_VSYNC 0x40
-	
+
 /*
  * upper 6 bit define if corresponding bits in DATA are input or output 
  * 1 selects output
  */
-#define XR_GPIO_CONTROL		0x62	
+#define XR_GPIO_CONTROL		0x62
 #define XR_GPIO_DATA		0x63
 
 #define XR_PIN_TRISTATE_CONTROL	0x67
@@ -199,7 +199,7 @@
 	#define ENABLE_PIXEL_AVERAGING	0x20
 	#define SELECT_PIXEL_STREAM	0x40	/* 1 for P1 */
 	#define ENABLE_8BIT_DAC		0x80	/* 6 bit otherwise */
-	
+
 #define XR_PIXEL_PIPELINE_CTL_1	0x81
 	#define COLOR_VGA		0x00
 	#define COLOR_8BIT_EXTENDED	0x02
@@ -207,13 +207,13 @@
 	#define COLOR_16BIT		0x05
 	#define COLOR_24BIT		0x06
 	#define COLOR_32BIT		0x07
-	
+
 #define XR_PIXEL_PIPELINE_CTL_2	0x82
 	#define ENABLE_BLANK_PEDESTAL	0x01
 	#define ENABLE_SYNC_ON_GREEN	0x02
 	#define ENABLE_VIDEO_GAMMA	0x04
 	#define ENABLE_GRAPHICS_GAMMA	0x08
-	
+
 #define XR_CURSOR_1_CTL		0xa0
 #define XR_CURSOR_1_VERT_EXT	0xa1
 #define XR_CURSOR_1_BASEADDR_LO	0xa2
@@ -277,11 +277,11 @@
 #define FP_FEATURE		0x00
 	#define PANEL_EXISTS	0x01
 	#define POPUP_EXISTS	0x04
-	
+
 #define FP_CRT_FP_CONTROL	0x01
 	#define ENABLE_CRT	0x01
 	#define ENABLE_PANEL	0x02
-	
+
 #define FP_MODE_CONTROL		0x02
 #define FP_DOT_CLOCK_SOURCE	0x03
 	#define FP_CLOCK_0	0x00
@@ -289,7 +289,7 @@
 	#define FP_CLOCK_2	0x08
 	#define USE_VIDEO_CLOCK	0x00
 	#define USE_MEM_CLOCK	0x10
-	
+
 #define FP_POWER_SEQ_DELAY	0x04
 /*
  * upper 4 bits select power up delay in 3.4ms increments
@@ -301,7 +301,7 @@
 	#define PANEL_POWER_OFF	0x08
 	#define HOST_STANDBY	0x10
 	#define PANEL_TRISTATE	0x20
-	#define NO_SEFL_REFRESH	0x40
+	#define NO_SELF_REFRESH	0x40
 	#define PANEL_INACTIVE	0x80
 
 /* these bits are effective when the panel is powered down */
@@ -309,7 +309,7 @@
 	#define FP_VGA_PALETTE_POWERDOWN	0x01
 	#define FP_VGA_PALETTE_ENABLE		0x02
 	#define FP_ENABLE_SYNC			0x04
-	
+
 #define FP_PIN_POLARITY		0x08
 	#define FP_DISPLAY_NEGATIVE	0x02
 	#define FP_HSYNC_NEGATIVE	0x04
@@ -318,7 +318,7 @@
 	#define FP_GRAPHICS_INVERT	0x20
 	#define CRT_HSYNC_NEGATIVE	0x40
 	#define CRT_VSYNC_NEGATIVE	0x80
-	
+
 #define FP_OUTPUT_DRIVE		0x0a
 	#define VL_THRESHOLD_5V		0x02	/* 3.3v otherwise */
 	#define FP_DRIVE_HIGH		0x04	/* req. with 3.3v */
@@ -326,7 +326,7 @@
 	#define MEM_DRIVE_HIGHER	0x10
 	#define MEM_C_DRIVE_HIGHER	0x20
 	#define SYNC_DRIVE_HIGHER	0x40
-	
+
 #define FP_PIN_CONTROL_1	0x0b
 	#define DISPLAY_ENABLE_ON_69	0x01	/* M signal otherwise */
 	#define DISPLAY_ENABLE_ON_68	0x02	/* FP Hsync otherwise */
@@ -335,7 +335,7 @@
 	#define GPIO_ON_154		0x10
 	#define SIMPLE_COMPOSITE_SYNC	0x20
 	#define MEM_C_TRISTATE		0x80
-	
+
 #define FP_PIN_CONTROL_2	0x0c
 	#define ACTI_ON_53		0x00
 	#define COMPOSITE_SYNC_ON_53	0x08
@@ -345,12 +345,12 @@
 	#define COMPOSITE_SYNC_ON_54	0x40
 	#define GPIO_IN_ON_54		0x80
 	#define GPIO_OUT_ON_54		0xc0
-	
+
 #define FP_ACTIVITY_CONTROL	0x0f
 /* the lower 5 bits select a timeout in 28.1s increments */
 	#define PANEL_OFF_ON_TIMEOUT	0x40 /* backlight off otherwise */
 	#define ENABLE_ACTIVITY_TIMER	0x80
-	
+
 #define FP_PANEL_FORMAT_0	0x10
 	#define SINGLE_PANEL_SINGLE_DRIVE	0x00
 	#define DUAL_PANEL_DUAL_DRIVE		0x03
@@ -359,9 +359,9 @@
 	#define MONO_GREEN_ONLY			0x08
 	#define COLOUR_PANEL			0x0c
 	#define SHIFT_CLOCK_DIVIDER_MASK	0x70
-	
+
 #define FP_PANEL_FORMAT_1	0x11
-	
+
 #define FP_PANEL_FORMAT_2	0x12
 #define FP_PANEL_FORMAT_3	0x13
 
@@ -385,17 +385,17 @@
  * upper 4 bits are upper 4 bits of FP_HSYNC_START
  * lower 4 bits are upper 4 bits of FP_HSIZE_LSB
  */
- 
+
 #define FP_HORZ_OVERFLOW_2	0x26
 /*
  * upper 4 bits are upper 4 bits of FP_HSYNC_DELAY_LSB
  * lower 4 bits are upper 4 bits of FP_HTOTAL_LSB
  */
- 
+
 #define FP_HSYNC_WIDTH_DISABLE	0x27
 /* lower 7 bits are HSYNC width - 1 */
 	#define DELAY_DISABLE	0x80
-	
+
 #define FP_VSIZE_LSB		0x30 /* panel size - 1 */
 #define FP_VSYNC_START		0x31 /* value - 1 */
 #define FP_VSYNC_END		0x32 /* value - 1 */
@@ -417,7 +417,7 @@
 	#define FP_VSYNC_WIDTH_MASK	0x38 /* value - 1 */
 	#define FP_VSYNC_IS_CRT_VSYNC	0x40
 	#define FP_VSYNC_DELAY_DISABLE	0x80
-	
+
 #define FP_HORZ_COMPENSATION	0x40
 #define FP_VERT_COMPENSATION	0x41
 #define FP_VERT_COMPENSATION2	0x48
@@ -428,7 +428,5 @@
 #define FP_TEXT_VSTRETCH_1_LSB	0x4c
 #define FP_TEXT_LINE_REPL	0x4d
 #define FP_SEL_VSTRETCH_DISABLE	0x4e
-
-
 
 #endif
