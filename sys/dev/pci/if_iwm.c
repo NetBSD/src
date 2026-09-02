@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.93 2025/12/21 16:24:39 mlelstv Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.94 2026/09/02 04:48:07 mlelstv Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.93 2025/12/21 16:24:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.94 2026/09/02 04:48:07 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -4223,6 +4223,7 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 
 	if (iwm_rx_addbuf(sc, IWM_RBUF_SIZE, sc->rxq.cur) != 0)
 		return;
+	MCLAIM(sc->rxq.data[sc->rxq.cur].m, &sc->sc_ec.ec_rx_mowner);
 
 	m_set_rcvif(m, IC2IFP(ic));
 
@@ -4551,6 +4552,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 			err = ENOMEM;
 			goto out;
 		}
+		MCLAIM(m, &sc->sc_ec.ec_tx_mowner);
 		MEXTMALLOC(m, IWM_RBUF_SIZE, M_DONTWAIT);
 		if (!(m->m_flags & M_EXT)) {
 			device_printf(sc->sc_dev,
@@ -8921,6 +8923,22 @@ iwm_attach_hook(device_t dev)
 	iwm_config_complete(sc);
 }
 
+static void             
+iwm_claim_rx_ring(struct iwm_softc *sc)
+{               
+	struct iwm_rx_ring *ring = &sc->rxq;
+	struct mbuf *m;
+	int i;  
+
+	/* Claim mbufs from RX ring */
+	for (i = 0; i < IWM_RX_RING_COUNT; i++) {
+	        m = ring->data[i].m;
+	        if (m != NULL) {
+	                MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
+	        }
+	}       
+}               
+
 static void
 iwm_attach(device_t parent, device_t self, void *aux)
 {
@@ -9362,6 +9380,8 @@ iwm_config_complete(struct iwm_softc *sc)
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
+
+	iwm_claim_rx_ring(sc);
 
 	ic->ic_node_alloc = iwm_node_alloc;
 
