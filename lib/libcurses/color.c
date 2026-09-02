@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.50 2026/08/04 07:36:08 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.51 2026/09/02 04:20:20 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.50 2026/08/04 07:36:08 blymn Exp $");
+__RCSID("$NetBSD: color.c,v 1.51 2026/09/02 04:20:20 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -39,7 +39,6 @@ __RCSID("$NetBSD: color.c,v 1.50 2026/08/04 07:36:08 blymn Exp $");
 
 /* Have we initialised colours? */
 int	__using_color = 0;
-int	__do_color_init = 0; /* force refresh to init color in all cells */
 
 /* Default colour number */
 attr_t	__default_color = 0;
@@ -241,7 +240,6 @@ start_color(void)
 	    __default_pair.flags;
 
 	__using_color = 1;
-	__do_color_init = 1;
 
 	/* Set all positions on all windows to curses default colours. */
 	for (wlp = _cursesi_screen->winlistp; wlp != NULL; wlp = wlp->nextp) {
@@ -536,8 +534,7 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 {
 	short	pair;
 
-	if ((__do_color_init != 1) &&
-	    ((curscr->wattr & __COLOR) == (attr & __COLOR)))
+	if ((curscr->wattr & __COLOR) == (attr & __COLOR))
 		return;
 
 	pair = PAIR_NUMBER((uint32_t)attr);

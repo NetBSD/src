@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.83 2026/06/29 06:01:44 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.84 2026/09/02 04:20:20 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -430,5 +430,4 @@ extern int		 __noqch;
 extern attr_t		 __mask_op, __mask_me, __mask_ue, __mask_se;
 extern WINDOW		*__virtscr;
 extern int		 __using_color;
-extern int		 __do_color_init;
 extern attr_t		 __default_color;

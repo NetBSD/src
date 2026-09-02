@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.136 2026/08/04 07:36:08 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.137 2026/09/02 04:20:20 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.136 2026/08/04 07:36:08 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.137 2026/09/02 04:20:20 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -805,7 +805,6 @@ doupdate(void)
 cleanup:
 	/* Don't leave the screen with attributes set. */
 	__unsetattr(0);
-	__do_color_init = 0;
 #ifdef DEBUG
 #ifdef HAVE_WCHAR
 	{
@@ -1316,8 +1315,8 @@ makech(int wy)
 	while (wx <= lch) {
 		__CTRACE(__CTRACE_REFRESH, "makech: wx=%d,lch=%d, nlsp=%d\n", wx, lch, nlsp);
 #ifdef HAVE_WCHAR
-		__CTRACE(__CTRACE_REFRESH, "makech: farnarkle: flags 0x%x, cflags 0x%x, color_init %d, celleq %d\n",
-			wlp->flags, nsp->cflags, __do_color_init, _cursesi_celleq(nsp, csp));
+		__CTRACE(__CTRACE_REFRESH, "makech: farnarkle: flags 0x%x, cflags 0x%x, celleq %d\n",
+			wlp->flags, nsp->cflags, _cursesi_celleq(nsp, csp));
 		__CTRACE(__CTRACE_REFRESH, "makech: nsp=(%x,%x,%d,%x,%x,%d,%p)\n",
 			nsp->ch, nsp->attr, nsp->wcols, win->bch, win->battr,
 			win->wcols, nsp->nsp);
@@ -1394,8 +1393,7 @@ makech(int wy)
 				      (! __using_color))) {
 					if (wlp->line[wx].attr & win->screen->nca) {
 						__unsetattr(0);
-					} else if (__using_color /*&&
-					    (__do_color_init == 1)*/) {
+					} else if (__using_color ) {
 						__set_color(curscr,
 						    blank.attr);
 					}
