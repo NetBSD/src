@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ptrace.c,v 1.10 2026/08/28 16:02:31 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_ptrace.c,v 1.11 2026/09/02 16:39:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.10 2026/08/28 16:02:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.11 2026/09/02 16:39:41 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -330,6 +330,9 @@ netbsd32_dodbregs(struct lwp *curl /*tracer*/,
 {
 #if defined(PT_GETDBREGS) || defined(PT_SETDBREGS)
 	process_dbreg32 r32;
+
+	KASSERT(rw_lock_held(&l->l_proc->p_reflock));
+	process_alloc_dbregs(l);
 
 	return netbsd32_proc_regio(l, uio, &r32, sizeof(r32),
 	    process_read_dbregs32_wrapper,
