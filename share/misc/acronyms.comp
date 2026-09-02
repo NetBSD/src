@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.427 2026/07/17 16:13:53 nia Exp $
+$NetBSD: acronyms.comp,v 1.428 2026/09/02 19:19:59 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -901,6 +901,7 @@ KDF	key derivation function
 KEK	key encryption key
 KEM	key encapsulation mechanism
 KLOC	thousand lines of code
+KMIP	Key Management Interoperability Protocol
 KMS	kernel-mode setting
 KPI	kernel programming interface
 KSK	key signing key
