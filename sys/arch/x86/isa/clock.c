@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.42 2025/02/24 07:18:02 imil Exp $	*/
+/*	$NetBSD: clock.c,v 1.43 2026/09/02 10:06:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2025/02/24 07:18:02 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.43 2026/09/02 10:06:11 andvar Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -328,11 +328,13 @@ startrtclock(void)
 	int s;
 
 	/*
-	 * Check that RTC is present, bits 0 to 6 of register D are
-	 * read-only and must be 0. At least on QEMU/microvm, when
-	 * rtc=off, all bits are set to 1
+	 * For VM guests, check that the RTC is present.  On QEMU/microvm,
+	 * when rtc=off, bits 0 to 6 of register D are set to 1.  On actual
+	 * hardware these bits may be used for a date alarm, so this test
+	 * would fail.
 	 */
-	if ((mc146818_read(NULL, MC_REGD) & 0x7f) != 0)
+	if ((vm_guest != VM_GUEST_NO) &&
+	    (mc146818_read(NULL, MC_REGD) & 0x7f) != 0)
 		return;
 
 	if (!rtclock_init)
