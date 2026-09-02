@@ -1,0 +1,105 @@
+.\" $NetBSD$
+.\"
+.\" Copyright (c) 2026 berte
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd August 26, 2026
+.Dt UWE5622_SDIO 4
+.Os
+.Sh NAME
+.Nm uwe5622_sdio
+.Nd UNISOC/Spreadtrum uwe5622 SDIO wireless network driver
+.Sh SYNOPSIS
+.Cd "uwe5622_sdio* at sdmmc?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the UNISOC (Spreadtrum) uwe5622 combination
+Wi-Fi/Bluetooth chip's SDIO wireless function, as found on the Orange Pi
+Zero 2 and similar single-board computers.
+Only the Wi-Fi function is supported; the Bluetooth function of the same
+chip is not handled by this driver.
+.Pp
+The uwe5622 firmware implements the entire 802.11 MAC internally
+(authentication, association, and the WPA key handshake); the host driver
+exchanges control commands and already-decapsulated Ethernet frames with
+it over the SDIO bus.
+.Nm
+supports both 2.4GHz and 5GHz operation, open networks, and
+WPA2-Personal (PSK/CCMP) via
+.Xr wpa_supplicant 8 .
+.Pp
+WPA3-Personal (SAE) is not supported: the vendor command protocol this
+firmware generation implements has no AKM suite or authentication-type
+value for SAE, so it cannot be added without a firmware change.
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8
+and
+.Xr wpa_supplicant 8 .
+.Ss MIB Variables
+The following per-interface variables are implemented in the
+.Va hw.uwe5622_sdio Ns Em X
+branch of the
+.Xr sysctl 3
+MIB.
+.Bl -tag -width ".Va dump_stats"
+.It Va wifi_psk
+Set a WPA2-PSK passphrase directly on the device, bypassing
+.Xr wpa_supplicant 8 .
+Writing an empty string selects an open (unencrypted) network instead.
+Normal operation with
+.Xr wpa_supplicant 8
+does not need this variable.
+.It Va verbose
+Enable per-packet TX/RX debug logging.
+Off by default; only useful while debugging the driver itself.
+.It Va dump_stats
+Writing a nonzero value prints a one-shot census of RX packet types,
+TX/credit/queue counters, and protocol-level counters (BA, key install,
+IP notification) to the console.
+.El
+.Sh HARDWARE
+The
+.Nm
+driver has been tested on the Orange Pi Zero 2 (Allwinner H616), where the
+uwe5622 module is attached via SDIO to the SoC's second MMC controller.
+.Sh SEE ALSO
+.Xr ifmedia 4 ,
+.Xr sdmmc 4 ,
+.Xr ifconfig.if 5 ,
+.Xr ifconfig 8 ,
+.Xr wpa_supplicant 8
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An berte
+.Aq Mt behzaterte@pm.me .
+.Sh BUGS
+WPA3-Personal (SAE) is not supported; see
+.Sx DESCRIPTION .
+.Pp
+The Bluetooth function of the same physical chip is not yet supported.

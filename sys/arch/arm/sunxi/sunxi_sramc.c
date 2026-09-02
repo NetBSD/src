@@ -50,6 +50,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun50i-a64-system-control" },
 	{ .compat = "allwinner,sun50i-h5-system-control" },
 	{ .compat = "allwinner,sun50i-h6-system-control" },
+        { .compat = "allwinner,sun50i-h616-system-control" },
 	DEVICE_COMPAT_EOL
 };
 

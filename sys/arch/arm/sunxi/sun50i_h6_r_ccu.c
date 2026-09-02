@@ -51,6 +51,7 @@ static void sun50i_h6_r_ccu_attach(device_t, device_t, void *);
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun50i-h6-r-ccu" },
+     { .compat = "allwinner,sun50i-h616-r-ccu" },
 	DEVICE_COMPAT_EOL
 };
 
