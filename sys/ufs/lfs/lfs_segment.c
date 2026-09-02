@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.309 2026/09/02 19:53:48 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.310 2026/09/02 19:55:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.309 2026/09/02 19:53:48 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.310 2026/09/02 19:55:13 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -502,7 +502,8 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			error = lfs_writefile(fs, sp, vp);
 			if (error) {
 				vrele(vp);
-				if (error == EAGAIN) {
+				if (error == EAGAIN
+				    && LFS_STARVED_FOR_SEGS(fs)) {
 					/*
 					 * This error from lfs_putpages
 					 * indicates we need to drop
