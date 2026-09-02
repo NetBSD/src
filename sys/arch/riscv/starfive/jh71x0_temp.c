@@ -1,4 +1,4 @@
-/* $NetBSD: jh71x0_temp.c,v 1.2 2026/09/01 19:04:48 andvar Exp $ */
+/* $NetBSD: jh71x0_temp.c,v 1.3 2026/09/02 09:38:30 andvar Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh71x0_temp.c,v 1.2 2026/09/01 19:04:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh71x0_temp.c,v 1.3 2026/09/02 09:38:30 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -65,7 +65,7 @@ struct jh71x0_temp_softc {
 #define JH71X0TEMP_Z		4094L
 #define JH71X0TEMP_K1000	81100L
 
-/* Calculate the temperature in milli Celcius */
+/* Calculate the temperature in milli Celsius */
 static int32_t
 jh71x0_temp_get(struct jh71x0_temp_softc *sc)
 {
@@ -80,7 +80,7 @@ jh71x0_temp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct jh71x0_temp_softc * const sc = sme->sme_cookie;
 
-	// Convert milli Celcius to micro Kelvin
+	// Convert milli Celsius to micro Kelvin
 	sc->sc_sensor.value_cur = 273150000 + 1000 * jh71x0_temp_get(sc);
 	sc->sc_sensor.state = ENVSYS_SVALID;
 }
