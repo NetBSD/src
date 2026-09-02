@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.308 2026/01/30 15:52:54 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.309 2026/09/02 19:53:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.308 2026/01/30 15:52:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.309 2026/09/02 19:53:48 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -285,8 +285,9 @@ lfs_vflush(struct vnode *vp)
 	fs->lfs_flushvp = vp;
 	if (LFS_SHOULD_CHECKPOINT(fs, fs->lfs_sp->seg_flags)) {
 		error = lfs_segwrite(vp->v_mount, SEGM_CKP | SEGM_SYNC);
-		fs->lfs_flushvp = NULL;
 		KASSERT(fs->lfs_flushvp_fakevref == 0);
+#if 0
+		fs->lfs_flushvp = NULL;
 		lfs_segunlock(fs);
 
 		/* Make sure that any pending buffers get written */
@@ -299,6 +300,7 @@ lfs_vflush(struct vnode *vp)
 		mutex_exit(vp->v_interlock);
 
 		goto out;
+#endif
 	}
 	sp = fs->lfs_sp;
 
@@ -318,6 +320,10 @@ lfs_vflush(struct vnode *vp)
 		/* panic("lfs_vflush: VU_DIROP being flushed...this can\'t happen"); */
 	}
 #endif
+
+	/* Ensure that we write this inode */
+	if (vp != fs->lfs_ivnode)
+		LFS_SET_UINO(ip, IN_MODIFIED);
 
 	do {
 #ifdef DEBUG
@@ -409,6 +415,7 @@ lfs_vflush(struct vnode *vp)
 
  out:
 	lfs_writer_leave(fs);
+	fs->lfs_reclino = 0;
 	return error;
 }
 
