@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.119 2023/12/20 05:33:58 thorpej Exp $	*/
+/*	$NetBSD: iommu.c,v 1.120 2026/09/03 08:09:14 jdc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.119 2023/12/20 05:33:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.120 2026/09/03 08:09:14 jdc Exp $");
 
 #include "opt_ddb.h"
 
@@ -743,10 +743,11 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	struct strbuf_ctl *sb = (struct strbuf_ctl *)map->_dm_cookie;
 	struct iommu_state *is = sb->sb_is;
 
-	/* Flush the iommu */
+	/* Nothing to do */
 	if (!map->_dm_dvmastart)
-		panic("%s: error dvmastart is zero!\n", __func__);
+		return;
 
+	/* Flush the iommu */
 	if (is->is_flags & IOMMU_SYNC_BEFORE_UNMAP) {
 
 		/* Flush the caches */
