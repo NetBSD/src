@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.15 2026/07/08 09:34:32 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.16 2026/09/03 08:00:39 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.15 2026/07/08 09:34:32 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.16 2026/09/03 08:00:39 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -41,8 +41,16 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.15 2026/07/08 09:34:32 jdc Exp $");
 #include <sparc64/sparc64/ofw_patch.h>
 #include <sparc64/sparc64/static_edid.h>
 
+/*
+ * GPIO pin configurations
+ *   num: the bit representing the pin
+ *   act: on/off are reversed
+ *   def: default state for LED or ALERT (will be set or checked by the driver)
+ *   to: timeout (secs) before which we need to read the state
+ */
 static void
-add_gpio_pin(prop_array_t pins, const char *name, int num, int act, int def)
+add_gpio_pin(prop_array_t pins, const char *name, int num, int act,
+    int def, int to)
 {
 	prop_dictionary_t pin = prop_dictionary_create();
 	prop_dictionary_set_string(pin, "name", name);
@@ -50,6 +58,8 @@ add_gpio_pin(prop_array_t pins, const char *name, int num, int act, int def)
 	prop_dictionary_set_bool(pin, "active_high", act);
 	if (def != -1)
 		prop_dictionary_set_int32(pin, "default_state", def);
+	if (to != -1)
+		prop_dictionary_set_int32(pin, "timeout", to);
 	prop_array_add(pins, pin);
 	prop_object_release(pin);
 }
@@ -108,27 +118,27 @@ add_gpio_props_v210(device_t dev, void *aux)
 	switch (ia->ia_addr) {
 		case 0x38:	/* front panel LEDs */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "LED indicator", 7, 0, -1);
-			add_gpio_pin(pins, "LED fault", 5, 0, 0);
-			add_gpio_pin(pins, "LED power", 4, 0, 1);
+			add_gpio_pin(pins, "LED indicator", 7, 0, -1, -1);
+			add_gpio_pin(pins, "LED fault", 5, 0, 0, -1);
+			add_gpio_pin(pins, "LED power", 4, 0, 1, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x23:	/* drive bay O/1 LEDs */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "LED bay0_fault", 10, 0, 0);
-			add_gpio_pin(pins, "LED bay1_fault", 11, 0, 0);
-			add_gpio_pin(pins, "LED bay0_remove", 12, 0, 0);
-			add_gpio_pin(pins, "LED bay1_remove", 13, 0, 0);
+			add_gpio_pin(pins, "LED bay0_fault", 10, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay1_fault", 11, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay0_remove", 12, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay1_remove", 13, 0, 0, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x25:	/* drive bay 2/3 LEDs (v240 only)*/
 			pins = prop_array_create();
-			add_gpio_pin(pins, "LED bay2_fault", 10, 0, 0);
-			add_gpio_pin(pins, "LED bay3_fault", 11, 0, 0);
-			add_gpio_pin(pins, "LED bay2_remove", 12, 0, 0);
-			add_gpio_pin(pins, "LED bay3_remove", 13, 0, 0);
+			add_gpio_pin(pins, "LED bay2_fault", 10, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay3_fault", 11, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay2_remove", 12, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay3_remove", 13, 0, 0, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
@@ -143,17 +153,53 @@ add_gpio_props_v245(device_t dev, void *aux)
 	prop_array_t pins;
 
 	switch (ia->ia_addr) {
-		case 0x22:	/* Disks present */
+		case 0x12:	/* V215 disk status / LED's */
+			break;
 			pins = prop_array_create();
-			add_gpio_pin(pins,
-			    "INDICATOR HDD 0 present", 8, 1, -1);
-			add_gpio_pin(pins,
-			    "INDICATOR HDD 1 present", 9, 1, -1);
-			add_gpio_pin(pins,
-			    "INDICATOR HDD 2 present", 10, 1, -1);
-			add_gpio_pin(pins,
-			    "INDICATOR HDD 3 present", 11, 1, -1);
+			add_gpio_pin(pins, "ALERT HDD 0 present",
+			    6, 1, -1, -1);
+			add_gpio_pin(pins, "ALERT HDD 1 present",
+			    7, 1, -1, -1);
+			add_gpio_pin(pins, "LED hdd0_fault", 0, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd0_remove", 4, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd1_fault", 1, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd1_remove", 5, 0, 0, -1);
 			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+		case 0x22:	/* V245 disk status / LED's */
+			pins = prop_array_create();
+			add_gpio_pin(pins, "ALERT HDD 0 present",
+			    8, 1, -1, -1);
+			add_gpio_pin(pins, "ALERT HDD 1 present",
+			    9, 1, -1, -1);
+			add_gpio_pin(pins, "ALERT HDD 2 present",
+			    10, 1, -1, -1);
+			add_gpio_pin(pins, "ALERT HDD 3 present",
+			    11, 1, -1, -1);
+			add_gpio_pin(pins, "LED hdd0_fault", 0, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd0_remove", 4, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd1_fault", 1, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd1_remove", 5, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd2_fault", 2, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd2_remove", 6, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd3_fault", 3, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd3_remove", 7, 0, 0, -1);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+		case 0x3e:	/* PSU 0 */
+			pins = prop_array_create();
+			prop_dictionary_set(dict, "pins", pins);
+			add_gpio_pin(pins, "ALERT PSU 0 input power",
+			    6, 0, 0, -1);
+			prop_object_release(pins);
+			break;
+		case 0x3f:	/* PSU 1 */
+			pins = prop_array_create();
+			prop_dictionary_set(dict, "pins", pins);
+			add_gpio_pin(pins, "ALERT PSU 1 input power",
+			    6, 0, 0, -1);
 			prop_object_release(pins);
 			break;
 	}
@@ -169,8 +215,8 @@ add_gpio_props_u45(device_t dev, void *aux)
 	switch (ia->ia_addr) {
 		case 0x18:	/* front panel LEDs */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "LED power", 0, 1, -1);
-			add_gpio_pin(pins, "LED fault", 1, 0, -1);
+			add_gpio_pin(pins, "LED power", 0, 1, -1, -1);
+			add_gpio_pin(pins, "LED fault", 1, 0, -1, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
@@ -187,62 +233,64 @@ add_gpio_props_e250(device_t dev, void *aux)
 	switch (ia->ia_addr) {
 		case 0x38:	/* interrupt status */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "ALERT high_temp", 1, 0, 30);
-			add_gpio_pin(pins, "ALERT disk_event", 2, 0, 30);
-			add_gpio_pin(pins, "ALERT fan_fail", 4, 0, 30);
-			add_gpio_pin(pins, "ALERT key_event", 5, 0, 30);
-			add_gpio_pin(pins, "ALERT psu_event", 6, 0, 30);
+			add_gpio_pin(pins, "ALERT high_temp", 1, 0, -1, 30);
+			add_gpio_pin(pins, "ALERT disk_event", 2, 0, -1, 30);
+			add_gpio_pin(pins, "ALERT fan_fail", 4, 0, -1, 30);
+			add_gpio_pin(pins, "ALERT key_event", 5, 0, -1, 30);
+			add_gpio_pin(pins, "ALERT psu_event", 6, 0, -1, 30);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x39:	/* PSU status */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "INDICATOR psu0_present", 0, 0, -1);
-			add_gpio_pin(pins, "INDICATOR psu1_present", 1, 0, -1);
-			add_gpio_pin(pins, "INDICATOR psu0_fault", 4, 0, -1);
-			add_gpio_pin(pins, "INDICATOR psu1_fault", 5, 0, -1);
+			add_gpio_pin(pins, "INDICATOR psu0_present",
+			    0, 0, -1, -1);
+			add_gpio_pin(pins, "INDICATOR psu1_present",
+			    1, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT psu0_fault", 4, 0, 1, -1);
+			add_gpio_pin(pins, "ALERT psu1_fault", 5, 0, 1, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x3d:	/* disk status */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "INDICATOR disk0_present",
-			    0, 0, -1);
-			add_gpio_pin(pins, "INDICATOR disk1_present",
-			    1, 0, -1);
-			add_gpio_pin(pins, "INDICATOR disk2_present",
-			    2, 0, -1);
-			add_gpio_pin(pins, "INDICATOR disk3_present",
-			    3, 0, -1);
-			add_gpio_pin(pins, "INDICATOR disk4_present",
-			    4, 0, -1);
-			add_gpio_pin(pins, "INDICATOR disk5_present",
-			    5, 0, -1);
+			add_gpio_pin(pins, "ALERT disk0_present",
+			    0, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT disk1_present",
+			    1, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT disk2_present",
+			    2, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT disk3_present",
+			    3, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT disk4_present",
+			    4, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT disk5_present",
+			    5, 0, -1, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x3e:	/* front panel LEDs (E250/E450) */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "LED disk_fault", 0, 0, -1);
-			add_gpio_pin(pins, "LED psu_fault", 1, 0, -1);
-			add_gpio_pin(pins, "LED overtemp", 2, 0, -1);
-			add_gpio_pin(pins, "LED fault", 3, 0, -1);
-			add_gpio_pin(pins, "LED activity", 4, 0, -1);
+			add_gpio_pin(pins, "LED disk_fault", 0, 0, -1, -1);
+			add_gpio_pin(pins, "LED psu_fault", 1, 0, -1, -1);
+			add_gpio_pin(pins, "LED overtemp", 2, 0, -1, -1);
+			add_gpio_pin(pins, "LED fault", 3, 0, -1, -1);
+			add_gpio_pin(pins, "LED activity", 4, 0, -1, -1);
 			/* Pin 5 is power LED, but not controllable */
-			add_gpio_pin(pins, "INDICATOR key_normal", 6, 0, -1);
-			add_gpio_pin(pins, "INDICATOR key_diag", 7, 0, -1);
+			add_gpio_pin(pins, "INDICATOR key_normal", 6, 0, -1, -1);
+			add_gpio_pin(pins, "INDICATOR key_diag", 7, 0, -1, -1);
 			/* If not "normal" or "diag", key is "lock" */
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x3f:	/* disk fault LEDs */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "LED disk0_fault", 0, 0, -1);
-			add_gpio_pin(pins, "LED disk1_fault", 1, 0, -1);
-			add_gpio_pin(pins, "LED disk2_fault", 2, 0, -1);
-			add_gpio_pin(pins, "LED disk3_fault", 3, 0, -1);
-			add_gpio_pin(pins, "LED disk4_fault", 4, 0, -1);
-			add_gpio_pin(pins, "LED disk5_fault", 5, 0, -1);
+			add_gpio_pin(pins, "LED disk0_fault", 0, 0, -1, -1);
+			add_gpio_pin(pins, "LED disk1_fault", 1, 0, -1, -1);
+			add_gpio_pin(pins, "LED disk2_fault", 2, 0, -1, -1);
+			add_gpio_pin(pins, "LED disk3_fault", 3, 0, -1, -1);
+			add_gpio_pin(pins, "LED disk4_fault", 4, 0, -1, -1);
+			add_gpio_pin(pins, "LED disk5_fault", 5, 0, -1, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
@@ -354,15 +402,20 @@ add_env_sensors_u45(device_t busdev)
  * Add V245 environmental sensors that are not in the OFW tree.
  */
 static void
-add_env_sensors_v245(device_t busdev)
+add_env_sensors_v245(device_t busdev, int model)
 {
 	prop_array_t cfg;
 
 	DPRINTF(ACDB_PROBE, ("\nAdding sensors for %s ", machine_model));
 	cfg = create_i2c_dict(busdev);
 
-	/* PCA9555 at 0x22 */
-	add_i2c_device(cfg, "temperature-sensor", "i2c-pca9555", 0x22, 0);
+	/* PCA9556 at 0x12 (V215) */
+	if (model == 215)
+		add_i2c_device(cfg, "gpio", "i2c-pca9556", 0x12, 0);
+
+	/* PCA9555 at 0x22 (V245) */
+	if (model == 245)
+		add_i2c_device(cfg, "gpio", "i2c-pca9555", 0x22, 0);
 
 	/* LM95221 at 0x2b */
 	add_i2c_device(cfg, "temperature-sensor", "i2c-lm95221", 0x2b, 0);
@@ -525,7 +578,9 @@ set_i2c_bus_props(device_t busdev, uint64_t busnode)
 	if (device_is_a(busdev, "firei2c")) {
 		if (!strcmp(machine_model, "SUNW,Sun-Fire-V245") ||
 		    !strcmp(machine_model, "SUNW,Sun-Fire-V215")) {
-			add_env_sensors_v245(busdev);
+			add_env_sensors_v245(busdev,
+			    strcmp(machine_model, "SUNW,Sun-Fire-V245")
+			    ? 215 : 245);
 			fix_properties_v245(busdev);
 		}
 	}
@@ -552,9 +607,36 @@ set_i2c_dev_props(device_t dev, device_t busdev, void *aux)
 		}
 	}
 
-	if (!strcmp(machine_model, "SUNW,Sun-Fire-V245"))
-		if (device_is_a(dev, "pcagpio"))
+	if (!strcmp(machine_model, "SUNW,Sun-Fire-V245") ||
+	    !strcmp(machine_model, "SUNW,Sun-Fire-V215")) {
+		/* CPU temperatures are offset by 30C */
+		if (device_is_a(dev, "adt7462sm")){
+			prop_dictionary_t props = device_properties(dev);
+			prop_dictionary_set_uint32(props,
+			    "temp_off", 0x001e1e00);
+		}
+		/* Disk status / LED's */
+		if (device_is_a(dev, "pcagpio") ||
+		     device_is_a(dev, "pcf8574io"))
 			add_gpio_props_v245(dev, aux);
+
+		/* Tach pulse is set incorrectly */
+		if (device_is_a(dev, "dbcool")) {
+			prop_dictionary_t props = device_properties(dev);
+			prop_dictionary_set_uint16(props,
+			    "fan_div", 0x0022);
+		}
+	}
+
+	if (!strcmp(machine_model, "SUNW,Sun-Blade-2500-S") ||
+	    !strcmp(machine_model, "SUNW,Sun-Blade-1500-S")) {
+		/* Tach pulse is set incorrectly on both chips */
+		if (device_is_a(dev, "dbcool")) {
+			prop_dictionary_t props = device_properties(dev);
+			prop_dictionary_set_uint16(props,
+			    "fan_div", 0x0044);
+		}
+	}
 
 	/* U45 has 5 measured fans */
 	if (!strcmp(machine_model, "SUNW,A70")) {
@@ -571,6 +653,7 @@ set_i2c_dev_props(device_t dev, device_t busdev, void *aux)
 		    device_is_a(busdev, "firei2c"))
 			add_gpio_props_u45(dev, aux);
 
+	/* E250 GPIO's */
 	if (!strcmp(machine_model, "SUNW,Ultra-250"))
 		if (device_is_a(dev, "pcf8574io"))
 			add_gpio_props_e250(dev, aux);
