@@ -1,4 +1,4 @@
-/* $NetBSD: adt7462.c,v 1.2 2026/07/07 12:28:44 jdc Exp $ */
+/* $NetBSD: adt7462.c,v 1.3 2026/09/03 05:29:12 jdc Exp $ */
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7462.c,v 1.2 2026/07/07 12:28:44 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7462.c,v 1.3 2026/09/03 05:29:12 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,7 @@ struct adt7462_softc {
 	int sc_crit_therm[ADT7462_MAX_SENSORS];
 	uint8_t sc_highlim[ADT7462_MAX_SENSORS];
 	uint8_t sc_lowlim[ADT7462_MAX_SENSORS];
+	int sc_temp_off[ADT7462_MAX_TEMPS];
 	uint8_t sc_fan_conf;
 	char sc_sys_ctrl[ADT7462_NUM_PWM][ADT7462_DESC_LEN]; /* sysctl str */
 	struct sysctllog *sc_sysctl_log;
@@ -163,7 +164,7 @@ bool adt7462_pmf_resume(device_t, const pmf_qual_t *);
 static int adt7462_start_monitor(struct adt7462_softc *, int);
 static int adt7462_stop_monitor(struct adt7462_softc *);
 static int adt7462_setup_fans(struct adt7462_softc *, uint8_t *);
-static int adt7462_setup_temps(struct adt7462_softc *, uint8_t *);
+static int adt7462_setup_temps(struct adt7462_softc *, uint8_t *, uint32_t);
 static int adt7462_setup_volts(struct adt7462_softc *, uint8_t *);
 static int adt7462_setup_faults(struct adt7462_softc *);
 static int adt7462_setup_sysctl(struct adt7462_softc *, uint8_t *);
@@ -264,6 +265,7 @@ adt7462_attach(device_t parent, device_t self, void *aux)
 	struct adt7462_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	prop_dictionary_t props = device_properties(self);
+	uint32_t temp_off;
 	uint8_t reg, rev, val, pin_cfg[4];
 
 	sc->sc_tag = ia->ia_tag;
@@ -274,6 +276,11 @@ adt7462_attach(device_t parent, device_t self, void *aux)
 	if (prop_dictionary_get_uint8(props, "fan_conf",
 	    &sc->sc_fan_conf) == 0)
 		sc->sc_fan_conf = 0xff;	/* 4 + 4 fans */
+
+	/* Property override for temperature offsets */
+	if (prop_dictionary_get_uint32(props, "temp_off",
+	    &temp_off) == 0)
+		temp_off = 0x0;	/* no offsets */
 
 	(void) adt7462_ident(sc->sc_tag, sc->sc_address, 0, &rev);
 	aprint_normal(": ADT7462 system monitor: rev. 0x%x\n", rev);
@@ -315,7 +322,7 @@ adt7462_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nfaults = 0;
 	if (adt7462_setup_fans(sc, pin_cfg))
 		goto bad;
-	if (adt7462_setup_temps(sc, pin_cfg))
+	if (adt7462_setup_temps(sc, pin_cfg, temp_off))
 		goto bad;
 	if (adt7462_setup_volts(sc, pin_cfg))
 		goto bad;
@@ -456,11 +463,18 @@ static int
 adt7462_setup_fans(struct adt7462_softc *sc, uint8_t *pin_cfg)
 {
 	int i, map, snum;
-	uint8_t reg, val;
+	uint8_t reg, tach_en, val;
+
+	reg = ADT7462_TACH_EN;
+	if (adt7462_read_reg(sc->sc_tag, sc->sc_address, reg, &tach_en) != 0) {
+		aprint_error_dev(sc->sc_dev, "unable to read tach enable\n");
+		return 1;
+	}
 
 	for (i = 0; i < ADT7462_MAX_FANS; i++) {
-		/* Check fan conf and pin1/pin2 configurations. */
-		if (!(sc->sc_fan_conf & (1 << i)) ||
+		/* Check fan conf, tach en. and pin1/pin2 configurations. */
+		if (!ADT7462_FAN_TACH_EN(sc->sc_fan_conf, i) ||
+		    !ADT7462_FAN_TACH_EN(tach_en, i) ||
 		    !ADT7462_PCR1_TACH(pin_cfg[0], i) ||
 		    !ADT7462_PCR2_TACH(pin_cfg[1], i))
 			continue;
@@ -497,10 +511,12 @@ adt7462_setup_fans(struct adt7462_softc *sc, uint8_t *pin_cfg)
 }
 
 static int
-adt7462_setup_temps(struct adt7462_softc *sc, uint8_t *pin_cfg)
+adt7462_setup_temps(struct adt7462_softc *sc, uint8_t *pin_cfg,
+    uint32_t temp_off)
 {
 	int i, map, snum;
 	uint8_t reg, val, val2;
+	int8_t temp_off1;
 
 	for (i = 0; i < ADT7462_MAX_TEMPS; i++) {
 		/* Check pin1 configurations. */
@@ -508,6 +524,10 @@ adt7462_setup_temps(struct adt7462_softc *sc, uint8_t *pin_cfg)
 			continue;
 
 		snum = ADT7462_TEMP_NUM(i);
+
+		/* Store the offset in uK */
+		temp_off1 = temp_off >> (i * 8) & 0xff;
+		sc->sc_temp_off[i] = temp_off1 * 1000000;
 
 		/* Store initial limits */
 		reg = ADT7462_TEMP_THERM1(i);
@@ -1053,7 +1073,7 @@ adt7462_read_temp_val(struct adt7462_softc *sc, envsys_data_t *edata)
 		return;
 	}
 
-	edata->value_cur = VAL_TO_TEMP(msb, lsb);
+	edata->value_cur = VAL_TO_TEMP(msb, lsb) + sc->sc_temp_off[temp];
 	edata->state = ENVSYS_SVALID;
 }
 
@@ -1159,19 +1179,19 @@ adt7462_get_temp_limits(struct adt7462_softc *sc, envsys_data_t *edata,
 		reg = ADT7462_TEMP_THERM2(temp);
 	if (adt7462_read_reg(sc->sc_tag, sc->sc_address, reg, &val) != 0)
 		return;
-	limits->sel_critmax = VAL_TO_TEMP(val, 0);
+	limits->sel_critmax = VAL_TO_TEMP(val, 0) + sc->sc_temp_off[temp];
 	*props |= PROP_CRITMAX;
 
 	reg = ADT7462_TEMP_HIGH(temp);
 	if (adt7462_read_reg(sc->sc_tag, sc->sc_address, reg, &val) != 0)
 		return;
-	limits->sel_warnmax = VAL_TO_TEMP(val, 0);
+	limits->sel_warnmax = VAL_TO_TEMP(val, 0) + sc->sc_temp_off[temp];
 	*props |= PROP_WARNMAX;
 
 	reg = ADT7462_TEMP_LOW(temp);
 	if (adt7462_read_reg(sc->sc_tag, sc->sc_address, reg, &val) != 0)
 		return;
-	limits->sel_warnmin = VAL_TO_TEMP(val, 0);
+	limits->sel_warnmin = VAL_TO_TEMP(val, 0) + sc->sc_temp_off[temp];
 	*props |= PROP_WARNMIN;
 }
 
@@ -1239,7 +1259,7 @@ static void
 adt7462_set_temp_limits(struct adt7462_softc *sc, envsys_data_t *edata,
 	sysmon_envsys_lim_t *limits, uint32_t *props)
 {
-	int temp, snum;
+	int temp, snum, off;
 	uint8_t	reg, val;
 
 	temp = sc->sc_env_map[edata->sensor];
@@ -1252,7 +1272,8 @@ adt7462_set_temp_limits(struct adt7462_softc *sc, envsys_data_t *edata,
 			else
 				val = sc->sc_therm2[snum];
 		} else {
-			val = TEMP_TO_MSB(limits->sel_critmax);
+			off = limits->sel_critmax - sc->sc_temp_off[temp];
+			val = TEMP_TO_MSB(off);
 		}
 		/* Don't change order of therm limits */
 		if (sc->sc_crit_therm[snum] == 1) {
@@ -1273,7 +1294,8 @@ adt7462_set_temp_limits(struct adt7462_softc *sc, envsys_data_t *edata,
 		if (limits == NULL)	/* Restore defaults */
 			val = sc->sc_highlim[snum];
 		else {
-			val = TEMP_TO_MSB(limits->sel_warnmax);
+			off = limits->sel_warnmax - sc->sc_temp_off[temp];
+			val = TEMP_TO_MSB(off);
 		}
 		reg = ADT7462_TEMP_HIGH(temp);
 		adt7462_write_reg(sc->sc_tag, sc->sc_address, reg, val);
@@ -1283,7 +1305,8 @@ adt7462_set_temp_limits(struct adt7462_softc *sc, envsys_data_t *edata,
 		if (limits == NULL)	/* Restore defaults */
 			val = sc->sc_lowlim[snum];
 		else {
-			val = TEMP_TO_MSB(limits->sel_warnmin);
+			off = limits->sel_warnmin - sc->sc_temp_off[temp];
+			val = TEMP_TO_MSB(off);
 		}
 		reg = ADT7462_TEMP_LOW(temp);
 		adt7462_write_reg(sc->sc_tag, sc->sc_address, reg, val);
