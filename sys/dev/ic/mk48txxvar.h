@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxvar.h,v 1.7 2011/01/04 01:28:15 matt Exp $ */
+/*	$NetBSD: mk48txxvar.h,v 1.8 2026/09/03 05:52:43 jdc Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,6 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <dev/sysmon/sysmonvar.h>
+
 struct mk48txx_softc;
 
 typedef uint8_t (*mk48txx_nvrd_t)(struct mk48txx_softc *, int);
@@ -49,9 +51,15 @@ struct mk48txx_softc {
 	u_int		sc_flag;
 #define MK48TXX_NO_CENT_ADJUST	0x0001
 #define MK48TXX_HAVE_CENT_REG	0x0002
+#define MK48TXX_EXT_REGISTERS	0x0004	/* Has extended register set */
 
 	mk48txx_nvrd_t	sc_nvrd;	/* NVRAM/RTC read function */
 	mk48txx_nvwr_t	sc_nvwr;	/* NVRAM/RTC write function */
+
+	struct sysmon_envsys	*sc_sme;	/* envsys config. */
+	envsys_data_t	sc_sensor;
+
+	int		sc_osc_stp;	/* Oscillator stop (sysctl) */
 };
 
 /* Chip attach function */

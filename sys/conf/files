@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1323 2026/09/03 02:12:14 gutteridge Exp $
+#	$NetBSD: files,v 1.1324 2026/09/03 05:52:43 jdc Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1110,7 +1110,7 @@ file	dev/ic/aic6915.c		sf
 
 # Mostek time-of-day clock and NVRAM
 #
-define	mk48txx
+define	mk48txx: sysmon_envsys
 file	dev/ic/mk48txx.c		mk48txx
 
 # OKI MSM6242B

@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.29 2025/09/07 21:45:16 thorpej Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.30 2026/09/03 05:52:43 jdc Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.29 2025/09/07 21:45:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.30 2026/09/03 05:52:43 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/sysctl.h>
 
 #include <sys/bus.h>
 #include <dev/clock_subr.h>
@@ -49,13 +50,14 @@ int mk48txx_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 int mk48txx_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 uint8_t mk48txx_def_nvrd(struct mk48txx_softc *, int);
 void mk48txx_def_nvwr(struct mk48txx_softc *, int, uint8_t);
+void mk48txx_refresh(struct sysmon_envsys *, envsys_data_t *);
+static int sysctl_mk48txx_osc(SYSCTLFN_ARGS);
 
 const struct {
 	const char *name;
 	bus_size_t nvramsz;
 	bus_size_t clkoff;
 	int flags;
-#define MK48TXX_EXT_REGISTERS	1	/* Has extended register set */
 } mk48txx_models[] = {
 	{ "mk48t02", MK48T02_CLKSZ, MK48T02_CLKOFF, 0 },
 	{ "mk48t08", MK48T08_CLKSZ, MK48T08_CLKOFF, 0 },
@@ -68,7 +70,9 @@ void
 mk48txx_attach(struct mk48txx_softc *sc)
 {
 	todr_chip_handle_t handle;
+	const struct sysctlnode *me = NULL, *node = NULL;
 	int i;
+	uint8_t csr;
 
 	aprint_normal(": %s", sc->sc_model);
 
@@ -82,6 +86,7 @@ mk48txx_attach(struct mk48txx_softc *sc)
 
 	sc->sc_nvramsz = mk48txx_models[i].nvramsz;
 	sc->sc_clkoffset = mk48txx_models[i].clkoff;
+	sc->sc_flag |= mk48txx_models[i].flags;
 
 	handle = &sc->sc_handle;
 	KASSERT(sc->sc_dev != NULL);
@@ -94,6 +99,64 @@ mk48txx_attach(struct mk48txx_softc *sc)
 	if (sc->sc_nvwr == NULL)
 		sc->sc_nvwr = mk48txx_def_nvwr;
 
+	csr = (*sc->sc_nvrd)(sc, sc->sc_clkoffset + MK48TXX_ISEC);
+	if (csr & MK48TXX_SEC_STOP) {
+		aprint_normal("\n");
+		aprint_error_dev(sc->sc_dev,
+		    "WARNING: oscillator is stopped (0x%02x)", csr);
+		sc->sc_osc_stp = 1;
+	} else
+		sc->sc_osc_stp = 0;
+
+	/* Setup envsys if the chip has the battery low flag */
+	if (sc->sc_flag & MK48TXX_EXT_REGISTERS) {
+		sc->sc_sme = sysmon_envsys_create();
+
+		sc->sc_sensor.units = ENVSYS_INDICATOR;
+		sc->sc_sensor.state = ENVSYS_SINVALID;
+		sc->sc_sensor.value_cur = 0;
+		sc->sc_sensor.flags |= ENVSYS_FMONCRITICAL;
+		(void)strlcpy(sc->sc_sensor.desc, "battery low",
+		    sizeof(sc->sc_sensor.desc));
+		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
+			aprint_error_dev(sc->sc_dev,
+			    "unable to attach sensor to sysmon\n");
+		} else {
+			sc->sc_sme->sme_name = device_xname(sc->sc_dev);
+			sc->sc_sme->sme_cookie = sc;
+			sc->sc_sme->sme_refresh = mk48txx_refresh;
+			if (sysmon_envsys_register(sc->sc_sme)) {
+				sysmon_envsys_destroy(sc->sc_sme);
+				sc->sc_sme = NULL;
+				aprint_error_dev(sc->sc_dev,
+				    "unable to register with sysmon\n");
+				sysmon_envsys_destroy(sc->sc_sme);
+			}
+		}
+	}
+
+	/* Setup sysctl for the oscillator control */
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL);
+ 
+	if (me == NULL)
+		aprint_error_dev(sc->sc_dev, "unable to add sysctl root\n");
+	else {
+		sysctl_createv(NULL, 0, NULL, &node,
+		    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+		    CTLTYPE_INT, "stop_oscillator", "Stop the chip oscillator",
+		    sysctl_mk48txx_osc, 1, (void *)sc, 0,
+		    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
+		if (node == NULL)
+			aprint_error_dev(sc->sc_dev,
+			    "unable to add sysctl node\n");
+	}
+ 
 	todr_attach(handle);
 }
 
@@ -222,4 +285,80 @@ mk48txx_def_nvwr(struct mk48txx_softc *sc, int off, uint8_t v)
 {
 
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, off, v);
+}
+
+void
+mk48txx_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	struct mk48txx_softc *sc = sme->sme_cookie;
+	uint8_t	flgs;
+
+	/*
+	 * The chip checks the battery every 24h, so we change the
+	 * monitoring timeout after the first refresh @ 30s.
+	 */
+	sme->sme_events_timeout = 86400;
+
+	flgs = (*sc->sc_nvrd)(sc, sc->sc_clkoffset + MK48TXX_IFLAGS);
+	if (flgs &= MK48TXX_FLAGS_BATTLOW) {
+		edata->value_cur = 1;
+		edata->state = ENVSYS_SCRITICAL;
+	} else {
+		edata->value_cur = 0;
+		edata->state = ENVSYS_SVALID;
+	}
+
+}
+
+static int
+sysctl_mk48txx_osc(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct mk48txx_softc *sc = node.sysctl_data;
+	todr_chip_handle_t handle = &sc->sc_handle;
+	bus_size_t clkoff;
+	int stp;
+	uint8_t sec;
+
+	if (newp) {
+		/* write */
+		clkoff = sc->sc_clkoffset;
+
+		stp = sc->sc_osc_stp;
+		node.sysctl_data = &stp;
+		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+			if (stp != 0 && stp != 1)
+				return EINVAL;
+
+			if (stp != sc->sc_osc_stp) {
+				sc->sc_osc_stp = stp;
+				/*
+				 * We ignore any existing seconds values,
+				 * because we're either stopping or starting
+				 * the oscillator and the seconds
+				 * soon will be or are already incorrect.
+				 */
+				if (stp)
+					sec = MK48TXX_SEC_STOP;
+				else
+					sec = 0;
+				if (handle->todr_setwen != NULL)
+					handle->todr_setwen(handle, 1);
+				(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ISEC,
+				     sec);
+				if (handle->todr_setwen != NULL)
+					handle->todr_setwen(handle, 0);
+			}
+
+			return 0;
+		}
+		return EINVAL;
+	} else {
+
+		node.sysctl_data = &sc->sc_osc_stp;
+		node.sysctl_size = 4;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+
+	return 0;
 }

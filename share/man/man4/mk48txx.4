@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk48txx.4,v 1.16 2009/04/10 17:14:07 joerg Exp $
+.\"	$NetBSD: mk48txx.4,v 1.17 2026/09/03 05:52:43 jdc Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 1, 2006
+.Dd June 9, 2026
 .Dt MK48TXX 4
 .Os
 .Sh NAME
@@ -51,6 +51,41 @@ are provided through the
 .Em TODR
 interface defined in
 .Xr todr 9 .
+.Pp
+The chip supports stopping the oscillator to conserve battery life
+if the computer will be stored for an extended period.
+The
+.Nm
+driver
+makes the oscillator control available via
+.Xr sysctl 8 .
+For example:
+.Bd -literal -offset indent
+hw.clock0.stop_oscillator = 0
+.Ed
+.Pp
+A value of
+.Dq 0
+means that the oscillator is running when the computer is powered off,
+and a value of
+.Dq 1
+means that the oscillator is stopped.
+If the oscillator is stopped, then the driver will output a warning message
+at attach time, but does not automatically restart the oscillator.
+Note, that on some computers, the firmware will restart the oscillator
+at power-on or reset time.
+.Pp
+M48T59 and compatible variants of the chip check the battery on power-up,
+and every 24 hours as long as the oscillator is running.
+They set an internal battery low flag if the battery voltage is less
+than approximately 2.5 V.
+The status of this flag is reported through the
+.Xr envstat 8
+interface.
+.Bl -column ".Li battery low" "TRUE/FALSE" -offset indent
+.It Sy Sensor     Ta Sy Units  Ta Sy Description
+.It Li battery low      Ta TRUE/FALSE    Ta Battery low alert
+.El
 .Pp
 To tie an instance of this device to the system, use the
 .Fn mk48txx_attach
@@ -97,8 +132,9 @@ Must be one of
 .Dq mk48t02 ,
 .Dq mk48t08 ,
 .Dq mk48t18 ,
+.Dq mk48t59 ,
 or
-.Dq mk48t59 .
+.Dq ds1553 .
 .It Fa sc_nvramsz
 Size of non-volatile RAM in the
 .Tn Mostek
@@ -156,9 +192,12 @@ The following models are supported:
 .It Tn Mostek MK48T08
 .It Tn Mostek MK48T18
 .It Tn Mostek MK48T59
+.It Tn Dallas DS1553
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr envstat 8 ,
+.Xr sysctl 8 ,
 .Xr todr 9
 .Sh HISTORY
 The
