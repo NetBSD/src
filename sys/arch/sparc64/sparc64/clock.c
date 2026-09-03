@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.124 2024/07/12 22:31:40 andvar Exp $ */
+/*	$NetBSD: clock.c,v 1.125 2026/09/03 02:12:14 gutteridge Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.124 2024/07/12 22:31:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.125 2026/09/03 02:12:14 gutteridge Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -349,7 +349,7 @@ stopcounter(struct timer_4u *creg)
 }
 
 /*
- * Untill interrupts are established per CPU, we rely on the special
+ * Until interrupts are established per CPU, we rely on the special
  * handling of tickintr in locore.s.
  * We establish this interrupt if there is no real counter-timer on
  * the machine, or on secondary CPUs. The latter would normally not be

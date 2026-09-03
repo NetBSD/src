@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.50 2026/08/15 14:18:00 riastradh Exp $ */
+/*	$NetBSD: mbr.c,v 1.51 2026/09/03 02:12:15 gutteridge Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2235,7 +2235,7 @@ mbr_add_part(struct disk_partitions *arg,
 			return NO_PART;
 		}
 
-		/* walk the chain untill we find a proper insert position */
+		/* walk the chain until we find a proper insert position */
 		daddr_t e_end, e_start;
 		for (last = m, m = m->extended; m != NULL;
 		    last = m, m = m->extended) {

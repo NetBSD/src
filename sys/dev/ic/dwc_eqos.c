@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.55 2026/06/13 17:28:49 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.56 2026/09/03 02:12:14 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.55 2026/06/13 17:28:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.56 2026/09/03 02:12:14 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -956,7 +956,7 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 			break;
 		}
 
-		/* now discarding untill the last packet */
+		/* now discarding until the last packet */
 		if (discarding)
 			goto rx_next;
 

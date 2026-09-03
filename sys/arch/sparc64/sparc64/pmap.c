@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.321 2026/08/23 22:08:40 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.322 2026/09/03 02:12:14 gutteridge Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.321 2026/08/23 22:08:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322 2026/09/03 02:12:14 gutteridge Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1274,7 +1274,7 @@ cpu_pmap_prepare(struct cpu_info *ci, bool initial)
 		 * Initially share ctxbusy with the boot cpu, the
 		 * cpu will replace it as soon as it runs (and can
 		 * probe the number of available contexts itself).
-		 * Untill then only context 0 (aka kernel) will be
+		 * Until then only context 0 (aka kernel) will be
 		 * referenced anyway.
 		 */
 		ci->ci_numctx = curcpu()->ci_numctx;

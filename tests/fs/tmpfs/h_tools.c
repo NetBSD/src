@@ -1,4 +1,4 @@
-/*	$NetBSD: h_tools.c,v 1.5 2018/01/17 00:22:29 maya Exp $	*/
+/*	$NetBSD: h_tools.c,v 1.6 2026/09/03 02:12:14 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ getfh_main(int argc, char **argv)
 		/*
 		 * The kernel provides the necessary size in fh_size -
 		 * but it may change if someone moves things around,
-		 * so retry untill we have enough memory.
+		 * so retry until we have enough memory.
 		 */
 		error = getfh(argv[1], fh, &fh_size);
 		if (error == 0) {

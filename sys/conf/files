@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1322 2026/07/28 07:10:42 yamaguchi Exp $
+#	$NetBSD: files,v 1.1323 2026/09/03 02:12:14 gutteridge Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1259,7 +1259,7 @@ define	pcdisplayops
 file	dev/ic/pcdisplay_subr.c	pcdisplayops
 file	dev/ic/pcdisplay_chars.c	pcdisplayops
 # an attribute used by arch specific config files to include /dev/fb* (or
-# equivalent) support - on most archs this is just a NOP (untill, maybe
+# equivalent) support - on most archs this is just a NOP (until, maybe
 # someday when we might make /dev/fb* support MI)
 define	fb
 # VGA graphics

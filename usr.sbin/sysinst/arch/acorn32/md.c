@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2022/01/29 16:01:16 martin Exp $ */
+/*	$NetBSD: md.c,v 1.9 2026/09/03 02:12:15 gutteridge Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -354,7 +354,7 @@ md_pre_mount(struct install_partition_desc *install, size_t ndx)
 #ifdef HAVE_GPT
 /*
  * New GPT partitions have been written, update bootloader or remember
- * data untill needed in md_post_newfs
+ * data until needed in md_post_newfs
  */
 bool
 md_gpt_post_write(struct disk_partitions *parts, part_id root_id,

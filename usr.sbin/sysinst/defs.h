@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.98 2026/06/28 11:03:14 gson Exp $	*/
+/*	$NetBSD: defs.h,v 1.99 2026/09/03 02:12:15 gutteridge Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -665,7 +665,7 @@ bool	md_check_partitions(struct install_partition_desc*);
 #ifdef HAVE_GPT
 /*
  * New GPT partitions have been written, update bootloader or remember
- * data untill needed in md_post_newfs
+ * data until needed in md_post_newfs
  */
 bool	md_gpt_post_write(struct disk_partitions*, part_id root_id,
 	    bool root_is_new, part_id efi_id, bool efi_is_new);
