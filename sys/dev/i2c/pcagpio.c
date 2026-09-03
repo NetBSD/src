@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.15 2026/08/03 12:51:29 jdc Exp $ */
+/* $NetBSD: pcagpio.c,v 1.16 2026/09/03 07:55:10 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.15 2026/08/03 12:51:29 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.16 2026/09/03 07:55:10 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ struct pcagpio_led {
 struct pcagpio_pin {
 	int pin_sensor;
 	int pin_active;
+	int pin_default;
 	char pin_desc[ENVSYS_DESCLEN];
 };
 
@@ -94,7 +95,7 @@ static uint32_t pcagpio_readreg(struct pcagpio_softc *, int);
 static void	pcagpio_attach_led(
 			struct pcagpio_softc *, char *, int, int, int);
 static int	pcagpio_attach_sysmon(
-			struct pcagpio_softc *, char *, int, int, int);
+			struct pcagpio_softc *, char *, int, int, int, int);
 void		pcagpio_refresh(struct sysmon_envsys *, envsys_data_t *);
 static int	pcagpio_get(void *);
 static void	pcagpio_set(void *, int);
@@ -210,11 +211,30 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 				continue;
 			spptr += 1;
 			strncpy(name, spptr, 31);
+
+			
+			/* LED's with an optional default state to set. */
 			if (!strncmp(nptr, "LED ", 4))
 				pcagpio_attach_led(sc, name, num, act, def);
+
+			/* Indicator: status is either true, or false. */
 			if (!strncmp(nptr, "INDICATOR ", 10)) {
 				if (pcagpio_attach_sysmon(sc,
-				    name, envc, num, act))
+				    name, envc, num, act, -1))
+					return;
+				envc++;
+			}
+
+			/*
+			 * Alert:
+			 *   - status is either true, or false
+			 *   - set envsys state to critical if a default is set
+			 *     and status != default 
+			 *   - display a message if the status changes
+			 */
+			if (!strncmp(nptr, "ALERT ", 6)) {
+				if (pcagpio_attach_sysmon(sc,
+				    name, envc, num, act, -1))
 					return;
 				envc++;
 			}
@@ -317,7 +337,7 @@ pcagpio_attach_led(struct pcagpio_softc *sc, char *n, int pin, int act, int def)
 
 static int
 pcagpio_attach_sysmon(struct pcagpio_softc *sc, char *name, int envc, int pin,
-	int act)
+	int act, int def)
 {
 	int ret;
 
@@ -332,6 +352,12 @@ pcagpio_attach_sysmon(struct pcagpio_softc *sc, char *name, int envc, int pin,
 	sc->sc_pins[envc].pin_sensor = pin;
 	sc->sc_sensor[envc].state = ENVSYS_SINVALID;
 	sc->sc_sensor[envc].units = ENVSYS_INDICATOR;
+	if (def == -1)
+		sc->sc_pins[envc].pin_default = def;
+	else {
+		sc->sc_pins[envc].pin_default = def << pin;
+		sc->sc_sensor[envc].flags = ENVSYS_FMONCRITICAL;
+	}
 	strlcpy(sc->sc_sensor[envc].desc, name,
 	    sizeof(sc->sc_sensor[envc].desc));
 	ret = sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[envc]);
@@ -352,7 +378,8 @@ pcagpio_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct pcagpio_softc *sc = sme->sme_cookie;
 	int pin = sc->sc_pins[edata->sensor].pin_sensor;
-	int act = sc->sc_pins[pin].pin_active;
+	int act = sc->sc_pins[edata->sensor].pin_active;
+	int def = sc->sc_pins[edata->sensor].pin_default;
 	u_int32_t prev_state = sc->sc_in;
 
 	sc->sc_in = pcagpio_readreg(sc, PCAGPIO_INPUT);
@@ -360,7 +387,12 @@ pcagpio_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->value_cur = sc->sc_in & 1 << pin ? TRUE : FALSE;
 	else
 		edata->value_cur = sc->sc_in & 1 << pin ? FALSE : TRUE;
-	edata->state = ENVSYS_SVALID;
+
+	/* Is this an alert pin with a default value? */
+	if (def != -1 && (sc->sc_in & (1 << pin)) != def)
+		edata->state = ENVSYS_SCRITICAL;
+	else
+		edata->state = ENVSYS_SVALID;
 
 	if (sc->sc_state != prev_state) {
 		DPRINTF("%s: (refresh) status change: 0x%02x > 0x%02x\n",

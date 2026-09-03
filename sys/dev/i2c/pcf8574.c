@@ -1,4 +1,4 @@
-/* $NetBSD: pcf8574.c,v 1.11 2026/07/31 06:48:11 jdc Exp $ */
+/* $NetBSD: pcf8574.c,v 1.12 2026/09/03 07:55:10 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.11 2026/07/31 06:48:11 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.12 2026/09/03 07:55:10 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ struct pcf8574_led {
 struct pcf8574_pin {
 	int pin_sensor;
 	int pin_active;
+	int pin_default;
 	char pin_desc[ENVSYS_DESCLEN];
 };
 
@@ -96,7 +97,7 @@ static int	pcf8574_write(struct pcf8574_softc *sc, uint8_t);
 static void	pcf8574_attach_led(
 			struct pcf8574_softc *, char *, int, int, int);
 static int	pcf8574_attach_sysmon(
-			struct pcf8574_softc *, char *, int, int, int);
+			struct pcf8574_softc *, char *, int, int, int, int);
 void		pcf8574_refresh(struct sysmon_envsys *, envsys_data_t *);
 int		pcf8574_get_led(void *);
 void		pcf8574_set_led(void *, int);
@@ -133,7 +134,8 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t dict = device_properties(self);
 	prop_array_t pins;
 	prop_dictionary_t pin;
-	int i, num, def, envc = 0;
+	int i, num, envc = 0;
+	int32_t def, to;
 	char name[32];
 	const char *nptr = NULL, *spptr;
 	bool ok = TRUE, act;
@@ -178,9 +180,11 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 		ok &= prop_dictionary_get_string(pin, "name", &nptr);
 		ok &= prop_dictionary_get_uint32(pin, "pin", &num);
 		ok &= prop_dictionary_get_bool(pin, "active_high", &act);
-		/* optional default state */
+		/* optional default state and timeout */
 		def = -1;
 		prop_dictionary_get_int32(pin, "default_state", &def);
+		to = 0;
+		prop_dictionary_get_int32(pin, "timeout", &to);
 		if (!ok)
 			continue;
 		/* Extract pin type from the name */
@@ -190,24 +194,40 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 		spptr += 1;
 		strncpy(name, spptr, 31);
 		sc->sc_pins[num].pin_active = act;
+
+		/* LED's with an optional default state to set. */
 		if (!strncmp(nptr, "LED ", 4)) {
 			sc->sc_mask &= ~(1 << num);
 			pcf8574_attach_led(sc, name, num, act, def);
 		}
+
+		/* Indicator: status is either true, or false. */
 		if (!strncmp(nptr, "INDICATOR ", 10)) {
-			if (pcf8574_attach_sysmon(sc, name, envc, num, act))
+			if (pcf8574_attach_sysmon(sc, name, envc,
+			    num, act, -1))
 				return;
 			envc++;
 		}
+
+		/*
+		 * Alert:
+		 *   - status is either true, or false
+		 *   - if a default is set:
+		 *     - set envsys state to critical if a default is set
+		 *       and status != default 
+		 *   - if no default is set:
+		 *     - display a message if the status changes
+		 */
 		if (!strncmp(nptr, "ALERT ", 6)) {
 			u_int64_t alert_time;
 
-			if (pcf8574_attach_sysmon(sc, name, envc, num, act))
+			if (pcf8574_attach_sysmon(sc, name, envc,
+			    num, act, def))
 				return;
 
-			/* Adjust our timeout if the alert times out. */
-			if (def != -1)
-				alert_time = def / 2;
+			/* Adjust our timeout if the alert has a time out. */
+			if (to > 10)
+				alert_time = to / 2;
 			else
 				alert_time = PCF8574_DEFAULT_TIMER;
 			
@@ -215,7 +235,9 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 			    alert_time < sc->sc_callout_time)
 				sc->sc_callout_time = alert_time;
 
-			sc->sc_alert_mask |= (1 << num);
+			/* Check alerts if sysmon doesn't (i.e. no default). */
+			if (def == -1)
+				sc->sc_alert_mask |= (1 << num);
 			envc++;
 		}
 	}
@@ -310,7 +332,7 @@ pcf8574_attach_led(struct pcf8574_softc *sc, char *name, int pin, int act,
 
 static int
 pcf8574_attach_sysmon(struct pcf8574_softc *sc, char *name, int envc, int pin,
-	int act)
+	int act, int def)
 {
 	int ret;
 
@@ -325,6 +347,12 @@ pcf8574_attach_sysmon(struct pcf8574_softc *sc, char *name, int envc, int pin,
 	sc->sc_pins[envc].pin_sensor = pin;
 	sc->sc_sensor[envc].state = ENVSYS_SINVALID;
 	sc->sc_sensor[envc].units = ENVSYS_INDICATOR;
+	if (def == -1)
+		sc->sc_pins[envc].pin_default = def;
+	else {
+		sc->sc_pins[envc].pin_default = def << pin;
+		sc->sc_sensor[envc].flags = ENVSYS_FMONCRITICAL;
+	}
 	strlcpy(sc->sc_sensor[envc].desc, name,
 	    sizeof(sc->sc_sensor[envc].desc));
 	ret = sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[envc]);
@@ -345,7 +373,8 @@ pcf8574_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct pcf8574_softc *sc = sme->sme_cookie;
 	int pin = sc->sc_pins[edata->sensor].pin_sensor;
-	int act = sc->sc_pins[pin].pin_active;
+	int act = sc->sc_pins[edata->sensor].pin_active;
+	int def = sc->sc_pins[edata->sensor].pin_default;
 	u_int8_t prev_state = sc->sc_state;
 
 	pcf8574_read(sc, &sc->sc_state);
@@ -353,7 +382,12 @@ pcf8574_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->value_cur = sc->sc_state & 1 << pin ? TRUE : FALSE;
 	else
 		edata->value_cur = sc->sc_state & 1 << pin ? FALSE : TRUE;
-	edata->state = ENVSYS_SVALID;
+
+	/* Is this an alert pin with a default value? */
+	if (def != -1 && (sc->sc_state & (1 << pin)) != def)
+		edata->state = ENVSYS_SCRITICAL;
+	else
+		edata->state = ENVSYS_SVALID;
 
 	/* We read all the pins, so check for alerts on any pin now */
 	if (sc->sc_state != prev_state) {
@@ -428,12 +462,12 @@ pcf8574_check_alert(struct pcf8574_softc *sc, uint8_t prev_state,
 				printf("%s: Alert: %s = %s\n",
 				    device_xname(sc->sc_dev),
 				    sc->sc_pins[i].pin_desc,
-				    sc->sc_state & 1 << i ?  "True" : "False");
+				    sc->sc_state & 1 << i ?  "TRUE" : "FALSE");
 			else
 				printf("%s: Alert: %s = %s\n",
 				    device_xname(sc->sc_dev),
 				    sc->sc_pins[i].pin_desc,
-				    sc->sc_state & 1 << i ?  "False" : "True");
+				    sc->sc_state & 1 << i ?  "FALSE" : "TRUE");
 		}
 	}
 }
