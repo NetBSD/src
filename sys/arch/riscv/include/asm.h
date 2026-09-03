@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13 2026/08/25 15:44:10 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.14 2026/09/03 14:09:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -163,7 +163,6 @@
 #define	PTR_ADD		add
 #define	PTR_ADDI	addi
 #define	PTR_SUB		sub
-#define	PTR_SUBI	subi
 #define	PTR_LA		la
 #define	PTR_SLLI	slli
 #define	PTR_SLL		sll
@@ -196,20 +195,18 @@
 #define	INT_SCALESHIFT	2
 #ifdef _LP64
 #define	INT_ADD		addw
-#define	INT_ADDI	addwi
+#define	INT_ADDI	addiw
 #define	INT_SUB		subw
-#define	INT_SUBI	subwi
-#define	INT_SLL		sllwi
+#define	INT_SLL		slliw
 #define	INT_SLLV	sllw
-#define	INT_SRL		srlwi
+#define	INT_SRL		srliw
 #define	INT_SRLV	srlw
-#define	INT_SRA		srawi
+#define	INT_SRA		sraiw
 #define	INT_SRAV	sraw
 #else
 #define	INT_ADD		add
 #define	INT_ADDI	addi
 #define	INT_SUB		sub
-#define	INT_SUBI	subi
 #define	INT_SLLI	slli
 #define	INT_SLL		sll
 #define	INT_SRLI	srli
@@ -222,7 +219,6 @@
 #define	LONG_ADD	add
 #define	LONG_ADDI	addi
 #define	LONG_SUB	sub
-#define	LONG_SUBI	subi
 #define	LONG_SLLI	slli
 #define	LONG_SLL	sll
 #define	LONG_SRLI	srli
