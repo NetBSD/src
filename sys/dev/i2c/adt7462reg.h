@@ -1,4 +1,4 @@
-/* $NetBSD: adt7462reg.h,v 1.2 2026/07/07 12:27:03 jdc Exp $ */
+/* $NetBSD: adt7462reg.h,v 1.3 2026/09/03 05:26:58 jdc Exp $ */
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7462reg.h,v 1.2 2026/07/07 12:27:03 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7462reg.h,v 1.3 2026/09/03 05:26:58 jdc Exp $");
 
 #define ADT7462_ADDR1		0x58
 #define ADT7462_ADDR2		0x5c
@@ -294,6 +294,9 @@ __KERNEL_RCSID(0, "$NetBSD: adt7462reg.h,v 1.2 2026/07/07 12:27:03 jdc Exp $");
 #define ADT7462_GPIO8_POL	0x40	/* GPIO8 polarity (0 low, 1 high) */
 #define ADT7462_GPIO8_DIR	0x80	/* GPIO8 direction (0 in, 1 out) */
 
+#define ADT7462_GPIO_POL(val, x)	(val & (1 << (i * 2)) ? 1 : 0)
+#define ADT7462_GPIO_DIR(val, x)	(val & (1 << (i * 2 + 1)) ? 1 : 0)
+
 /* 0x0b: Dynamix Tmin control register 1 */
 #define ADT7462_REM1_EN		0x01	/* Enable dynamic rem 1 Tmin control */
 #define ADT7462_REM2_EN		0x02	/* Enable dynamic rem 2 Tmin control */
@@ -347,6 +350,8 @@ __KERNEL_RCSID(0, "$NetBSD: adt7462reg.h,v 1.2 2026/07/07 12:27:03 jdc Exp $");
 #define ADT7462_PCR1_PIN19_V(val)	(!(val & ADT7462_DIODE3_CONF))
 #define ADT7462_PCR1_PIN15_V(val)	(!(val & ADT7462_DIODE1_CONF))
 #define ADT7462_PCR1_VIDS(val)		((val & ADT7462_VID_EN) != 0)
+#define ADT7462_PCR1_GPIO(val, x)	(x > 3 || \
+    (!(val & ADT7462_VID_EN) && !(val & (1 << (4 - x)))))
 
 /* 0x11: Pin configuration register 2 */
 #define ADT7462_PIN23_CONF	0x03	/* 00 = Vcc, 2.5v, 1.8v, 11 = 1.5v */
@@ -393,6 +398,11 @@ __KERNEL_RCSID(0, "$NetBSD: adt7462reg.h,v 1.2 2026/07/07 12:27:03 jdc Exp $");
 
 #define ADT7462_PCR4_P29_15V(val)	((val & ADT7462_PIN29_CONF) == 0x10)
 #define ADT7462_PCR4_P28_15V(val)	((val & ADT7462_PIN28_CONF) == 0x10)
+#define ADT7462_PCR4_GPIO(val, x)	(x < 4 || \
+    (x == 4 && !(val & ADT7462_PIN31_CONF)) || \
+    (x == 5 && !(val & ADT7462_PIN32_CONF)) || \
+    (x == 6 && !(val & ADT7462_PIN28_CONF)) || \
+    (x == 7 && !(val & ADT7462_PIN28_CONF)))
 
 /* 0x14: Easy configuration options */
 #define ADT7462_EASY1		0x01	/* Enable easy option 1 */
@@ -685,14 +695,7 @@ __KERNEL_RCSID(0, "$NetBSD: adt7462reg.h,v 1.2 2026/07/07 12:27:03 jdc Exp $");
 #define ADT7462_15V1_TRIP	0x80
 
 /* 0xbd, 0xc5: Host/BMC fan status register */
-#define ADT7462_FAN1_FAULT	0x01
-#define ADT7462_FAN2_FAULT	0x02
-#define ADT7462_FAN3_FAULT	0x04
-#define ADT7462_FAN4_FAULT	0x08
-#define ADT7462_FAN5_FAULT	0x10
-#define ADT7462_FAN6_FAULT	0x20
-#define ADT7462_FAN7_FAULT	0x40
-#define ADT7462_FAN8_FAULT	0x80
+#define ADT7462_FAN_FAULT(val, x)	(val & (1 << x))
 
 /* 0xbe, 0xc6: Host/BMC digital status register */
 #define ADT7462_FAN2MAX_ASSERT	0x08
@@ -701,14 +704,7 @@ __KERNEL_RCSID(0, "$NetBSD: adt7462reg.h,v 1.2 2026/07/07 12:27:03 jdc Exp $");
 #define ADT7462_VID_COMP_FLT	0x40
 #define ADT7462_CHASSIS_ASSERT	0x80
 
-/* 0xbe, 0xc6: Host/BMC GPIO status register */
-#define ADT7462_GPIO1_ASSERT	0x01
-#define ADT7462_GPIO2_ASSERT	0x02
-#define ADT7462_GPIO3_ASSERT	0x04
-#define ADT7462_GPIO4_ASSERT	0x08
-#define ADT7462_GPIO5_ASSERT	0x10
-#define ADT7462_GPIO6_ASSERT	0x20
-#define ADT7462_GPIO7_ASSERT	0x40
-#define ADT7462_GPIO8_ASSERT	0x80
+/* 0xbf: Host/BMC GPIO status register */
+#define ADT7462_GPIO_ASSERT(val, x)	(val & (1 << x))
 
 #endif /* _DEV_I2C_ADT7462REG_H_ */
