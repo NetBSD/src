@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.16 2026/09/03 08:00:39 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.17 2026/09/04 13:04:40 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.16 2026/09/03 08:00:39 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.17 2026/09/04 13:04:40 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -609,11 +609,11 @@ set_i2c_dev_props(device_t dev, device_t busdev, void *aux)
 
 	if (!strcmp(machine_model, "SUNW,Sun-Fire-V245") ||
 	    !strcmp(machine_model, "SUNW,Sun-Fire-V215")) {
-		/* CPU temperatures are offset by 30C */
+		/* CPU temperatures are offset by 29C */
 		if (device_is_a(dev, "adt7462sm")){
 			prop_dictionary_t props = device_properties(dev);
 			prop_dictionary_set_uint32(props,
-			    "temp_off", 0x001e1e00);
+			    "temp_off", 0x001d1d00);
 		}
 		/* Disk status / LED's */
 		if (device_is_a(dev, "pcagpio") ||
