@@ -216,7 +216,7 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 		struct tlbmask tlbmask = {
 			.tlb_hi = -PAGE_SIZE | KERNEL_PID,
 #if PGSHIFT & 1
-			.tlb_lo1 = tlb_lo,
+			.tlb_lo0 = tlb_lo,
 			.tlb_lo1 = tlb_lo + MIPS3_PG_NEXT,
 #else
 			.tlb_lo0 = 0,
@@ -318,6 +318,23 @@ mips_fixup_addr(const uint32_t *stubp)
 		switch (insn.IType.op) {
 		case OP_LUI:
 			regs[insn.IType.rt] = (int16_t)insn.IType.imm << 16;
+			used |= (1 << insn.IType.rt);
+			break;
+		case OP_ADDIU:
+			/*
+			 * Clang does not tail-call all of the indirect functions used
+			 * for stubs.  Accept its stack adjustment without trying to
+			 * model the stack, and handle ADDIU used to form the address of
+			 * an indirect function pointer.
+			 */
+			if (insn.IType.rs == _R_SP && insn.IType.rt == _R_SP)
+				break;
+			if ((used & (1 << insn.IType.rs)) == 0) {
+				errstr = "ADDIU";
+				goto out;
+			}
+			regs[insn.IType.rt] = regs[insn.IType.rs]
+			    + (int16_t)insn.IType.imm;
 			used |= (1 << insn.IType.rt);
 			break;
 #ifdef _LP64

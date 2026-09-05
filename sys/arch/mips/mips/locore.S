@@ -60,6 +60,7 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
+#include <mips/mipsNN.h>
 #include <mips/trap.h>
 #include <mips/locore.h>
 
@@ -155,6 +156,13 @@ EXPORT_OBJECT(kernel_text)			# libkvm refers this
 #ifdef NOFPU
 	li	t1, 0				# Dummy FPU_ID
 #else
+#if defined(FPEMUL) && defined(MIPSNN)
+	/* Avoid touching COP1 when Config1 says that no FPU is present. */
+	mfc0	t1, MIPS_COP_0_CONFIG1
+	andi	t1, MIPSNN_CFG1_FP
+	beqz	t1, 1f
+	 nop
+#endif
 	/* Enable the FPU to read FPUID */
 	mfc0	k0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
@@ -167,6 +175,12 @@ EXPORT_OBJECT(kernel_text)			# libkvm refers this
 	/* Disable again, we don't want it on in the kernel */
 	and	k0, ~MIPS_SR_COP_1_BIT
 	mtc0	k0, MIPS_COP_0_STATUS
+#if defined(FPEMUL) && defined(MIPSNN)
+	b	2f
+	 nop
+1:	li	t1, 0				# No hardware FPU
+2:
+#endif
 #endif
 
 	INT_S	t0, _C_LABEL(mips_options)+MO_CPU_ID # save PRID register

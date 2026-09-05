@@ -1,6 +1,7 @@
 #include "mips_arch.h"
 
 .text
+.local	K256
 .set	noat
 #if !defined(__mips_eabi) && (!defined(__vxworks) || defined(__pic__))
 .option	pic2

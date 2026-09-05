@@ -3460,6 +3460,9 @@ def mno_check_zero_division : Flag<["-"], "mno-check-zero-division">,
                               Group<m_mips_Features_Group>;
 def mcompact_branches_EQ : Joined<["-"], "mcompact-branches=">,
                            Group<m_mips_Features_Group>;
+foreach i = {1-31} in
+  def ffixed_#i : Flag<["-"], "ffixed-"#i>, Group<m_Group>,
+    HelpText<"Reserve the MIPS GPR "#i#" register (MIPS only)">;
 def mbranch_likely : Flag<["-"], "mbranch-likely">, Group<m_Group>,
   IgnoredGCCCompat;
 def mno_branch_likely : Flag<["-"], "mno-branch-likely">, Group<m_Group>,
