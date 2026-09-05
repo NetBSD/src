@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.27 2022/04/12 20:27:56 andvar Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.28 2026/09/05 16:53:05 tls Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.27 2022/04/12 20:27:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.28 2026/09/05 16:53:05 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -672,6 +672,19 @@ clockpro_movereferencebit(struct vm_page *pg, bool locked)
 			return;
 		}
 		PDPOL_EVCNT_INCR(locksuccess);
+
+		/* check page didn't change state while in trylock */
+		mutex_enter(&pg->interlock);
+		if ((pg->uobject == NULL && pg->uanon == NULL) ||
+		    pg->wire_count > 0 ||
+		    clockpro_getq(pg) == CLOCKPRO_NOQUEUE) {
+		    mutex_exit(&pg->interlock);
+		    if (!locked)
+		        mutex_exit(lock);
+		    return;
+		}
+		mutex_exit(&pg->interlock);
+
 	}
 	referenced = pmap_clear_reference(pg);
 	if (!locked) {
@@ -1369,7 +1382,19 @@ uvmpdpol_selectvictim(kmutex_t **plock)
 		}
 		mutex_exit(&s->lock);
 		lock = uvmpd_trylockowner(pg);
-		/* pg->interlock now dropped */
+		/* pg->interlock now dropped; recheck page state */
+		if (lock != NULL) {
+		    mutex_enter(&pg->interlock);
+		    if ((pg->uobject == NULL && pg->uanon == NULL) ||
+		        pg->wire_count > 0 ||
+		        clockpro_getq(pg) == CLOCKPRO_NOQUEUE) {
+		        mutex_exit(&pg->interlock);
+		        mutex_exit(lock);
+		        lock = NULL;
+		        continue;
+		    }
+		    mutex_exit(&pg->interlock);
+		}
 	} while (lock == NULL);
 	*plock = lock;
 	return pg;
@@ -1408,6 +1433,16 @@ clockpro_dropswap(pageq_t *q, int *todo)
 			/* XXXAD lost position in queue */
 			continue;
 		}
+		/* have to check page didn't change state */
+		mutex_enter(&pg->interlock);
+		if ((pg->uobject == NULL && pg->uanon == NULL) ||
+		    pg->wire_count > 0 ||
+		    clockpro_getq(pg) == CLOCKPRO_NOQUEUE) {
+		    mutex_exit(&pg->interlock);
+		    mutex_exit(lock);
+		    continue;
+		}
+		mutex_exit(&pg->interlock);
 
 		/*
 		 * if there's a shortage of swap slots, try to free it.

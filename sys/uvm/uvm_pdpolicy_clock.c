@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.42 2025/05/20 10:22:27 bouyer Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.43 2026/09/05 16:53:05 tls Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.42 2025/05/20 10:22:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.43 2026/09/05 16:53:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -332,6 +332,21 @@ uvmpdpol_selectvictim(krwlock_t **plock)
 		}
 
 		/*
+		 * There was a very brief interval with interlock and
+		 * s_lock dropped.  Check we would not now be scribbling
+		 * on someone else's work.
+		 */
+		mutex_enter(&pg->interlock);
+		if (uvmpdpol_pagerealize_locked(pg) ||
+		    (pg->pqflags & PQ_INACTIVE) == 0 ||
+		    pg->wire_count != 0) {
+		    mutex_exit(&pg->interlock);
+		    rw_exit(lock);
+		    continue;
+		}
+		mutex_exit(&pg->interlock);
+
+		/*
 		 * move referenced pages back to active queue and skip to
 		 * next page.
 		 */
@@ -402,7 +417,7 @@ uvmpdpol_balancequeue(int swap_shortage)
 
 		/*
 		 * try to lock the object that owns the page.  see comments
-		 * in uvmpdol_selectvictim().
+		 * in uvmpdpol_selectvictim().
 	         */
 	        mutex_exit(&s->lock);
         	lock = uvmpd_trylockowner(p);
@@ -412,6 +427,20 @@ uvmpdpol_balancequeue(int swap_shortage)
 			/* didn't get it - try the next page. */
 			continue;
 		}
+
+		/*
+		 * As in selectvictim, check we would not now be scribbling
+		 * on someone else's work.
+		 */
+		mutex_enter(&p->interlock);
+		if (uvmpdpol_pagerealize_locked(p) ||
+		    (p->pqflags & PQ_ACTIVE) == 0 ||
+		    p->wire_count != 0) {
+		    mutex_exit(&p->interlock);
+		    rw_exit(lock);
+		    continue;
+		}
+		mutex_exit(&p->interlock);
 
 		/*
 		 * if there's a shortage of swap slots, try to free it.
