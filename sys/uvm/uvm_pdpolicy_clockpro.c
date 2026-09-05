@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.29 2026/09/05 16:55:32 tls Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.30 2026/09/05 17:39:23 tls Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.29 2026/09/05 16:55:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.30 2026/09/05 17:39:23 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -641,7 +641,7 @@ clockpro_tune(void)
 static void
 clockpro_movereferencebit(struct vm_page *pg, bool locked)
 {
-	kmutex_t *lock;
+	struct krwlock *lock;
 	bool referenced;
 
 	KASSERT(mutex_owned(&clockpro.lock));
@@ -680,7 +680,7 @@ clockpro_movereferencebit(struct vm_page *pg, bool locked)
 		    clockpro_getq(pg) == CLOCKPRO_NOQUEUE) {
 		    mutex_exit(&pg->interlock);
 		    if (!locked)
-		        mutex_exit(lock);
+		        rw_exit(lock);
 		    return;
 		}
 		mutex_exit(&pg->interlock);
@@ -688,7 +688,7 @@ clockpro_movereferencebit(struct vm_page *pg, bool locked)
 	}
 	referenced = pmap_clear_reference(pg);
 	if (!locked) {
-		mutex_exit(lock);
+		rw_exit(lock);
 	}
 	if (referenced) {
 		pg->pqflags |= PQ_REFERENCED;
@@ -1235,7 +1235,7 @@ uvmpdpol_pagerealize_locked(struct vm_page *pg)
 	/* XXX this needs to be called from elsewhere, like uvmpdpol_clock. */
 
 	pqflags = pg->pqflags;
-	pq->pqflags &= ~(PQ_INTENT_SET | PQ_INTENT_QUEUED);
+	pg->pqflags &= ~(PQ_INTENT_SET | PQ_INTENT_QUEUED);
 	switch (pqflags & (PQ_INTENT_MASK | PQ_INTENT_SET)) {
 	case PQ_INTENT_A | PQ_INTENT_SET:
 		uvmpdpol_pageactivate_locked(pg);
@@ -1282,6 +1282,15 @@ uvmpdpol_init(void)
 {
 
 	clockpro_init();
+}
+
+void
+uvmpdpol_init_cpu(struct uvm_cpu *ucpu)
+{
+
+	ucpu->pdq = NULL;
+	ucpu->pdqhead = 0;
+	ucpu->pdqtail = 0;
 }
 
 void
@@ -1346,12 +1355,12 @@ uvmpdpol_scanfini(void)
 }
 
 struct vm_page *
-uvmpdpol_selectvictim(kmutex_t **plock)
+uvmpdpol_selectvictim(struct krwlock **plock)
 {
 	struct clockpro_state * const s = &clockpro;
 	struct clockpro_scanstate * const ss = &scanstate;
 	struct vm_page *pg;
-	kmutex_t *lock = NULL;
+	struct krwlock *lock = NULL;
 
 	do {
 		mutex_enter(&s->lock);
@@ -1389,7 +1398,7 @@ uvmpdpol_selectvictim(kmutex_t **plock)
 		        pg->wire_count > 0 ||
 		        clockpro_getq(pg) == CLOCKPRO_NOQUEUE) {
 		        mutex_exit(&pg->interlock);
-		        mutex_exit(lock);
+		        rw_exit(lock);
 		        lock = NULL;
 		        continue;
 		    }
@@ -1404,7 +1413,7 @@ static void
 clockpro_dropswap(pageq_t *q, int *todo)
 {
 	struct vm_page *pg;
-	kmutex_t *lock;
+	struct krwlock *lock;
 
 	KASSERT(mutex_owned(&clockpro.lock));
 
@@ -1439,7 +1448,7 @@ clockpro_dropswap(pageq_t *q, int *todo)
 		    pg->wire_count > 0 ||
 		    clockpro_getq(pg) == CLOCKPRO_NOQUEUE) {
 		    mutex_exit(&pg->interlock);
-		    mutex_exit(lock);
+		    rw_exit(lock);
 		    continue;
 		}
 		mutex_exit(&pg->interlock);
@@ -1453,7 +1462,7 @@ clockpro_dropswap(pageq_t *q, int *todo)
 				(*todo)--;
 			}
 		}
-		mutex_exit(lock);
+		rw_exit(lock);
 	}
 }
 
@@ -1502,7 +1511,7 @@ uvmpdpol_tune(void)
 }
 
 void
-uvmpdpol_idle(void)
+uvmpdpol_idle(struct uvm_cpu *ucpu __unused)
 {
 
 }
