@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.23 2025/07/01 18:42:37 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.24 2026/09/05 17:43:56 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.23 2025/07/01 18:42:37 joe Exp $");
 MODULE(MODULE_CLASS_MISC, npf, "bpf");
 #else
 /* This module autoloads via /dev/npf so it needs to be a driver */
-MODULE(MODULE_CLASS_DRIVER, npf, "bpf");
+MODULE(MODULE_CLASS_DRIVER, npf, "bpf_filter");
 #endif
 
 #define	NPF_IOCTL_DATA_LIMIT	(4 * 1024 * 1024)
