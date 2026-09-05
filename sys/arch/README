@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.66 2024/01/02 18:18:47 thorpej Exp $
+$NetBSD: README,v 1.67 2026/09/05 14:56:06 thorpej Exp $
 
 acorn32	arm	20011118	Acorn computers Ltd. ARM 6/7/SA based machines
 algor	mipsel,mips64el	20010528	Algorithmics, Ltd. MIPS evaluation boards
@@ -20,6 +20,7 @@ evbmips	mipseb,mipsel,mips64eb,mips64el	20020307	MIPS-based eval boards
 evbppc	powerpc,powerpc64	20021209	PowerPC-based eval boards
 evbsh3	sh3eb,sh3el	20010206	Hitachi SuperH(TM) sh3 and sh4 eval boards
 ews4800mips	mipseb	20051229	NEC's MIPS based EWS4800 workstations
+hb68k	m68000,m68k	20260718	Homebrew machines based on the Motorola 68K CPUs
 hp300	m68k	19930512	Hewlett Packard 300- and 400-series machines
 hppa	hppa	20020606	Hewlett Packard 700-series machines
 hpcarm	arm	20010220	ARM based handheld PCs
