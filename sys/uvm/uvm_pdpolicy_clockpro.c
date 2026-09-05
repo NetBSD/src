@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.28 2026/09/05 16:53:05 tls Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.29 2026/09/05 16:55:32 tls Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.28 2026/09/05 16:53:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.29 2026/09/05 16:55:32 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -1221,7 +1221,7 @@ void
 uvmpdpol_pageenqueue(struct vm_page *pg)
 {
 
-	uvmpdpol_set_intent(pg, PQ_INTENT_D);
+	uvmpdpol_set_intent(pg, PQ_INTENT_E);
 }
 
 static bool
