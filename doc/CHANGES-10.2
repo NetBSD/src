@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.128 2026/08/31 10:07:01 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.129 2026/09/06 11:34:00 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5761,3 +5761,17 @@ external/gpl2/groff/tmac/mdoc.local             (manually edited)
 	Fix operating system versions which got accidently set to
 	11.99 in the processing of ticket #1219.
 	[martin]
+
+sys/arch/arm/broadcom/bcm2835_vcaudio.c		1.23
+sys/external/bsd/vchiq/dist/interface/vchi/vchi.h 1.3
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_2835_arm.c 1.26
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_arm.c 1.23
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_core.c 1.18
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_core.h 1.11
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_if.h 1.5
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_shim.c 1.8
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_shim.c 1.9
+
+	vchiq: apply change from upstream.
+	[skrll, ticket #1335]
+
