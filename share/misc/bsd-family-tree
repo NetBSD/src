@@ -455,27 +455,28 @@ FreeBSD 5.2           |      |                 |                       |
  |     |      |       |      *-NBSD 10.0 |      |        |             |
  |     |      |       |      |     |     |      |    OBSD 7.5          |
  |     |      |       |      |     | NBSD 9.4   |        |             |
- |     |      |       |      |     |        NBSD 8.3     |             |
- | FBSD 14.1  |       |      |     |                     |             |
- |     |      |  macOS 15    |     |                     |             |
- |     |      |       |      |     `------.              |             |
- |     |  FBSD 13.4   |      |            |              |             |
- |     |      |       |      |            |          OBSD 7.6          |
- | FBSD 14.2  |       |      |            |              |             |
- |     |      |       |      |        NBSD 10.1          |             |
- |     |  FBSD 13.5   |      |                           |             |
- |     |              |      |                       OBSD 7.7      DBSD 6.4.1
- |     `------.       |      |                           |         DBSD 6.4.2
- |            |       |      |                           |             |
- |        FBSD 14.3   |      |                           |             |
- |            |       |      |                           |             |
- *-FBSD 15.0  |       |      |                           |             |
- |     |      |  macOS 26    |                           |             |
- |     |      |       .      |                           |             |
- |     |      |              |                       OBSD 7.8          |
- |     |  FBSD 14.4          |                           |             |
- |     |                     |                       OBSD 7.9          |
- | FBSD 15.1                 *--NBSD 11.0                |             |
+ |     |      |       |      |     |     |  NBSD 8.3     |             |
+ | FBSD 14.1  |       |      |     |     |               |             |
+ |     |      |  macOS 15    |     |     `------.        |             |
+ |     |      |       |      |     `------.     |        |             |
+ |     |  FBSD 13.4   |      |            |     |        |             |
+ |     |      |       |      |            |     |    OBSD 7.6          |
+ | FBSD 14.2  |       |      |            |     |        |             |
+ |     |      |       |      |        NBSD 10.1 |        |             |
+ |     |  FBSD 13.5   |      |                  |        |             |
+ |     |              |      |                  |    OBSD 7.7      DBSD 6.4.1
+ |     `------.       |      |                  |        |         DBSD 6.4.2
+ |            |       |      |                  |        |             |
+ |        FBSD 14.3   |      |                  |        |             |
+ |            |       |      |                  |        |             |
+ *-FBSD 15.0  |       |      |                  |        |             |
+ |     |      |  macOS 26    |                  |        |             |
+ |     |      |      ...     |                  |        |             |
+ |     |      |              |                  |    OBSD 7.8          |
+ |     |  FBSD 14.4          |                  |        |             |
+ |     |                     |                  |    OBSD 7.9          |
+ | FBSD 15.1                 *--NBSD 11.0       |        |             |
+ |                           |              NBSD 9.5     |             |
  |                           |                           |             |
 FBSD 16 -current             NBSD 12 -current        OBSD-current  DBSD-current
  |                           |                    |                    |
@@ -928,6 +929,7 @@ FreeBSD 14.4		2026-03-10 [FBD]
 OpenBSD 7.9		2026-05-19 [OBD]
 FreeBSD 15.1		2026-06-16 [FBD]
 NetBSD 11.0		2026-07-30 [NBD]
+NetBSD 9.5		2026-08-31 [NBD]
 
 Bibliography
 ------------------------
@@ -992,4 +994,4 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2023 Wolfram Schneider <wosch@FreeBSD.org>
 URL: https://cgit.freebsd.org/src/tree/share/misc/bsd-family-tree
 
-$NetBSD: bsd-family-tree,v 1.88 2026/09/05 15:10:17 ast Exp $
+$NetBSD: bsd-family-tree,v 1.89 2026/09/06 12:58:58 ast Exp $
