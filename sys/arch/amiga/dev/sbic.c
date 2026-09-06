@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.75 2016/03/09 20:11:41 christos Exp $ */
+/*	$NetBSD: sbic.c,v 1.76 2026/09/06 06:16:23 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.75 2016/03/09 20:11:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.76 2026/09/06 06:16:23 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1231,17 +1231,11 @@ int
 sbicxfin(sbic_regmap_t regs, int len, void *bp)
 {
 	int wait;
-	u_char orig_csr, csr, asr;
+	u_char orig_csr, asr;
 	u_char *buf;
-#ifdef DEBUG
-	u_char *obp;
-#endif
 
 	wait = sbic_data_wait;
 	buf = bp;
-#ifdef DEBUG
-	obp = bp;
-#endif
 
 	GET_SBIC_csr (regs, orig_csr);
 	__USE(orig_csr);
@@ -1249,53 +1243,40 @@ sbicxfin(sbic_regmap_t regs, int len, void *bp)
 
 	QPRINTF(("sbicxfin %d, csr=%02x\n", len, orig_csr));
 
+	SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI);
+	SBIC_TC_PUT (regs, (unsigned)len);
+
 	WAIT_CIP (regs);
 	SET_SBIC_cmd (regs, SBIC_CMD_XFER_INFO);
-	for (;len > 0; len--) {
+
+	do {
 		GET_SBIC_asr (regs, asr);
+
 		if ((asr & SBIC_ASR_PE)) {
-#ifdef DEBUG
 			printf("sbicxfin parity error: l%d i%x w%d\n",
 			       len, asr, wait);
-/*			return ((unsigned long)buf - (unsigned long)bp); */
-#ifdef DDB
-			Debugger();
-#endif
-#endif
-		}
-		while ((asr & SBIC_ASR_DBR) == 0) {
-			if ((asr & SBIC_ASR_INT) || --wait < 0) {
-#ifdef DEBUG
-				if (sbic_debug) {
-	QPRINTF(("sbicxfin fail:{%d} %02x %02x %02x %02x %02x %02x "
-	    "%02x %02x %02x %02x\n", len, obp[0], obp[1], obp[2],
-	    obp[3], obp[4], obp[5], obp[6], obp[7], obp[8], obp[9]));
-					printf("sbicxfin fail: l%d i%x w%d\n",
-					    len, asr, wait);
-}
-#endif
-				return len;
-			}
-
-			if (!(asr & SBIC_ASR_BSY)) {
-				GET_SBIC_csr(regs, csr);
-				__USE(csr);
-				CSR_TRACE('<',csr,asr,len);
-				QPRINTF(("[CSR%02xASR%02x]", csr, asr));
-			}
-
-/*			DELAY(1);*/
-			GET_SBIC_asr (regs, asr);
 		}
 
-		GET_SBIC_data (regs, *buf);
-/*		QPRINTF(("asr=%02x, csr=%02x, data=%02x\n", asr, csr, *buf));*/
-		buf++;
-	}
+		if (asr & SBIC_ASR_DBR) {
+			if (len) {
+				GET_SBIC_data (regs, *buf);
+				buf++;
+				len--;
+			} else {
+				u_char foo;
+				GET_SBIC_data (regs, foo);
+				__USE(foo);
+			}
+			wait = sbic_data_wait;
+		}
+
+	} while ((asr & SBIC_ASR_INT) == 0 && wait-- > 0);
 
 	QPRINTF(("sbicxfin {%d} %02x %02x %02x %02x %02x %02x "
-	    "%02x %02x %02x %02x\n", len, obp[0], obp[1], obp[2],
-	    obp[3], obp[4], obp[5], obp[6], obp[7], obp[8], obp[9]));
+	    "%02x %02x %02x %02x\n", len, buf[0], buf[1], buf[2],
+	    buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9]));
+
+	SBIC_TC_PUT (regs, 0);
 
 	/* this leaves with one csr to be read */
 	return len;
