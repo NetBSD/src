@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.316 2026/08/07 02:25:54 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.317 2026/09/06 05:32:19 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.316 2026/08/07 02:25:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.317 2026/09/06 05:32:19 mlelstv Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -297,7 +297,7 @@ wdc_drvprobe(struct ata_channel *chp)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	u_int8_t st0 = 0, st1 = 0;
-	int i, j, error, tfd;
+	int i, error, tfd;
 
 	ata_channel_lock(chp);
 	if (atabus_alloc_drives(chp, wdc->wdc_maxdrives) != 0) {
@@ -498,16 +498,10 @@ wdc_drvprobe(struct ata_channel *chp)
 				    chp->ch_channel, i), DEBUG_PROBE);
 				chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
 				ata_channel_unlock(chp);
-			} else {
-				for (j = 0; j < chp->ch_ndrives; j++) {
-					if (chp->ch_drive[i].drive_type !=
-					    ATA_DRIVET_NONE) {
-						chp->ch_drive[j].drive_type =
-						    ATA_DRIVET_OLD;
-					}
-				}
-				ata_channel_unlock(chp);
+				continue;
 			}
+			chp->ch_drive[i].drive_type = ATA_DRIVET_OLD;
+			ata_channel_unlock(chp);
 		}
 	}
 }
