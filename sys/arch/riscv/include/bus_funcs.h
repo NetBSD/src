@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.4 2025/02/02 11:29:37 skrll Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.4.2.1 2026/09/06 18:09:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -117,10 +117,10 @@
  * Allocation and deallocation operations.
  */
 #define	bus_space_alloc(t, rs, re, s, a, b, c, ap, hp)			\
-	(*(t)->bs_alloc)((t)->bs_cookie, (rs), (re), (s), (a), (b),	\
+	(*(t)->bs_alloc)((t), (rs), (re), (s), (a), (b),		\
 	    (c), (ap), (hp))
 #define	bus_space_free(t, h, s)						\
-	(*(t)->bs_free)((t)->bs_cookie, (h), (s))
+	(*(t)->bs_free)((t), (h), (s))
 
 /*
  * Get kernel virtual address for ranges mapped BUS_SPACE_MAP_LINEAR.
@@ -132,7 +132,7 @@
  * MMap bus space for a user application.
  */
 #define bus_space_mmap(t, a, o, p, f)					\
-	(*(t)->bs_mmap)((t)->bs_cookie, (a), (o), (p), (f))
+	(*(t)->bs_mmap)((t), (a), (o), (p), (f))
 
 /*
  * Bus barrier operations.
