@@ -2087,7 +2087,7 @@ exec_command (char **argv, char **envp)
     case ENOEXEC:
       {
 	/* The file is not executable.  Try it as a shell script.  */
-	extern char *getenv ();
+	extern char *getenv (const char *);
 	char *shell;
 	char **new_argv;
 	int argc;

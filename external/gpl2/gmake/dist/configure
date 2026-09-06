@@ -3699,8 +3699,8 @@ main ()
   for (i = 0; i < 256; i++)
     if (XOR (islower (i), ISLOWER (i))
 	|| toupper (i) != TOUPPER (i))
-      exit(2);
-  exit (0);
+      return (2);
+  return (0);
 }
 _ACEOF
 rm -f conftest$ac_exeext
@@ -7527,7 +7527,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C" void (*signal (int, void (*)(int)))(int);
 #else
-void (*signal ()) ();
+void (*signal (int, void (*)(int)))(int);
 #endif
 
 int
