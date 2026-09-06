@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.18.16.1 2024/02/16 12:08:02 skrll Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.18.16.2 2026/09/06 11:30:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.18.16.1 2024/02/16 12:08:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.18.16.2 2026/09/06 11:30:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -258,6 +258,17 @@ vcaudio_childdet(device_t self, device_t child)
 		sc->sc_audiodev = NULL;
 }
 
+static ssize_t
+vcaudio_memcpy_wrapper(void *_src, void *_dst, size_t offset, size_t size)
+{
+	uint8_t *src = _src;
+	uint8_t *dst = _dst;
+
+	memcpy(dst + offset, src + offset, size);
+
+	return size;
+}
+
 static int
 vcaudio_init(struct vcaudio_softc *sc)
 {
@@ -325,8 +336,8 @@ vcaudio_init(struct vcaudio_softc *sc)
 
 	memset(&msg, 0, sizeof(msg));
 	msg.type = VC_AUDIO_MSG_TYPE_OPEN;
-	error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
-	    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
+	error = vchi_msg_queue(sc->sc_service, vcaudio_memcpy_wrapper,
+	    &msg, sizeof(msg));
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't send OPEN message (%d)\n", error);
@@ -467,8 +478,7 @@ vcaudio_worker(void *priv)
 
 		vchi_service_use(sc->sc_service);
 
-		error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
-		    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
+		error = vchi_msg_queue(sc->sc_service, vcaudio_memcpy_wrapper, &msg, sizeof(msg));
 		if (error) {
 			printf("%s: failed to write (%d)\n", __func__, error);
 			goto done;
@@ -477,8 +487,7 @@ vcaudio_worker(void *priv)
 		while (resid > 0) {
 			nb = uimin(resid, msg.u.write.max_packet);
 			error = vchi_msg_queue(sc->sc_service,
-			    (char *)block + off, nb,
-			    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
+			    vcaudio_memcpy_wrapper, (char *)block + off, nb);
 			if (error) {
 				/* XXX What to do here? */
 				device_printf(sc->sc_dev,
@@ -502,9 +511,8 @@ vcaudio_worker(void *priv)
 
 				memset(&msg, 0, sizeof(msg));
 				msg.type = VC_AUDIO_MSG_TYPE_START;
-				error = vchi_msg_queue(sc->sc_service, &msg,
-				    sizeof(msg), VCHI_FLAGS_BLOCK_UNTIL_QUEUED,
-				    NULL);
+				error = vchi_msg_queue(sc->sc_service,
+				    vcaudio_memcpy_wrapper,  &msg, sizeof(msg));
 				if (error) {
 					device_printf(sc->sc_dev,
 					    "failed to start (%d)\n", error);
@@ -533,8 +541,8 @@ vcaudio_msg_sync(struct vcaudio_softc *sc, VC_AUDIO_MSG_T *msg, size_t msglen)
 	sc->sc_success = -1;
 	sc->sc_msgdone = false;
 
-	error = vchi_msg_queue(sc->sc_service, msg, msglen,
-	    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
+	error = vchi_msg_queue(sc->sc_service, vcaudio_memcpy_wrapper,
+	    msg, msglen);
 	if (error) {
 		printf("%s: failed to queue message (%d)\n", __func__, error);
 		goto done;
@@ -587,8 +595,8 @@ vcaudio_halt_output(void *priv)
 	memset(&msg, 0, sizeof(msg));
 	msg.type = VC_AUDIO_MSG_TYPE_STOP;
 	msg.u.stop.draining = 0;
-	error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
-	    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
+	error = vchi_msg_queue(sc->sc_service, vcaudio_memcpy_wrapper,
+	    &msg, sizeof(msg));
 	if (error) {
 		device_printf(sc->sc_dev, "couldn't send STOP message (%d)\n",
 		    error);
