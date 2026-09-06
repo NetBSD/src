@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.109 2026/08/11 12:13:07 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.110 2026/09/06 17:29:26 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.109 2026/08/11 12:13:07 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.110 2026/09/06 17:29:26 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2022,6 +2022,11 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case WSDISPLAYIO_GET_FBINFO: {
 		struct wsdisplayio_fbinfo *fbi = data;
 		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+	}
+	case WSDISPLAYIO_SVIDEO: {
+		int new_mode = *(int*)data;
+		machfb_blank(sc, new_mode == WSDISPLAYIO_VIDEO_ON ? 0 : 1);
+		return 0;
 	}
 	}
 	return EPASSTHROUGH;
