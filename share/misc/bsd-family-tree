@@ -479,8 +479,8 @@ FreeBSD 5.2           |      |                 |                       |
  |                           |              NBSD 9.5     |             |
  |                           |                           |             |
 FBSD 16 -current             NBSD 12 -current        OBSD-current  DBSD-current
- |                           |                    |                    |
- v                           v                    v                    v
+ |                           |                           |             |
+ v                           v                           v             v
 
 Time
 ----------------
@@ -994,4 +994,4 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2023 Wolfram Schneider <wosch@FreeBSD.org>
 URL: https://cgit.freebsd.org/src/tree/share/misc/bsd-family-tree
 
-$NetBSD: bsd-family-tree,v 1.89 2026/09/06 12:58:58 ast Exp $
+$NetBSD: bsd-family-tree,v 1.90 2026/09/06 13:07:24 ast Exp $
