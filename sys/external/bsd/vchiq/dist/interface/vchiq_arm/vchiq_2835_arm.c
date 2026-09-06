@@ -242,20 +242,6 @@ vchiq_platform_get_arm_state(VCHIQ_STATE_T *state)
    return &((VCHIQ_2835_ARM_STATE_T*)state->platform_state)->arm_state;
 }
 
-VCHIQ_STATUS_T
-vchiq_copy_from_user(void *dst, const void *src, int size)
-{
-	vaddr_t va = (vaddr_t)src;
-
-	if (IS_USER_ADDRESS(va)) {
-		int error = copyin(src, dst, size);
-		return error ? VCHIQ_ERROR : VCHIQ_SUCCESS;
-	} else {
-		kcopy(src, dst, size);
-		return VCHIQ_SUCCESS;
-	}
-}
-
 typedef struct bulkinfo_struct {
 	void		*pagelist;
 	bus_dma_segment_t pagelist_sgs[1];
