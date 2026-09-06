@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.35 2022/11/19 08:00:51 yamt Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.36 2026/09/06 05:23:04 mlelstv Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -322,7 +322,7 @@ lltable_drop_entry_queue(struct llentry *lle)
 	LLE_WLOCK_ASSERT(lle);
 
 	pkts_dropped = 0;
-	while ((lle->la_numheld > 0) && (lle->la_hold != NULL)) {
+	while (lle->la_hold != NULL) {
 		next = lle->la_hold->m_nextpkt;
 		m_freem(lle->la_hold);
 		lle->la_hold = next;
