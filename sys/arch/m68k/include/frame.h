@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.35 2024/01/13 17:07:26 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.35.4.1 2026/09/06 18:02:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -208,7 +208,7 @@ void	reenter_syscall(struct frame *, int) __attribute__((__noreturn__));
 extern void m68k_make_fpu_idle_frame(void);
 extern struct fpframe m68k_cached_fpu_idle_frame;
 
-void	*getframe(struct lwp *, int, int *);
+void	*getframe(struct lwp *, int, int *, size_t);
 void	buildcontext(struct lwp *, void *, void *);
 #ifdef COMPAT_16
 void	sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
