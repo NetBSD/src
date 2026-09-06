@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.27 2024/09/14 08:30:44 mlelstv Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.28 2026/09/06 05:09:54 mlelstv Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.27 2024/09/14 08:30:44 mlelstv Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.28 2026/09/06 05:09:54 mlelstv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -647,8 +647,11 @@ disk_getgeometry(int argc, char *argv[])
 	if (ioctl(fd, DIOCGSECTORSIZE, &secsize) == -1)
 		warn("%s: getsectorsize", dvname);
 
-	printf("%s: %"PRIu64" bytes in %"PRIu64" blocks of %u bytes\n",
-	    dvname, bytes, bytes/secsize, secsize);
+	if (secsize == 0)
+		printf("%s: %"PRIu64" bytes\n", dvname, bytes);
+	else
+		printf("%s: %"PRIu64" bytes in %"PRIu64" blocks of %u bytes\n",
+		    dvname, bytes, bytes/secsize, secsize);
 }
 
 static void
