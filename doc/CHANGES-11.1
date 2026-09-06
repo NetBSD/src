@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.10 2026/08/27 17:14:53 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.11 2026/09/06 18:13:36 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -311,4 +311,96 @@ sys/arch/x86/x86/identcpu.c			1.143
 	amd64: PR 60641: temporarily disable SMAP for CPUVENDOR_IDT
 	vendor CPUs (if available).
 	[andvar, ticket #445]
+
+external/gpl2/gmake/dist/ar.c                   up to 1.2
+external/gpl2/gmake/dist/arscan.c               up to 1.4
+external/gpl2/gmake/dist/configure              up to 1.4
+external/gpl2/gmake/dist/getopt.c               up to 1.2
+external/gpl2/gmake/dist/getopt.h               up to 1.2
+external/gpl2/gmake/dist/getopt1.c              up to 1.2
+external/gpl2/gmake/dist/job.c                  up to 1.4
+external/gpl2/gmake/dist/main.c                 up to 1.3
+external/gpl2/gmake/dist/make.h                 up to 1.4
+external/gpl2/gmake/dist/read.c                 up to 1.4
+external/gpl2/gmake/dist/glob/fnmatch.c         up to 1.2
+external/gpl2/groff/dist/src/libs/libgroff/getopt.c up to 1.2
+external/gpl2/groff/tmac/mdoc.local             up to 1.12
+external/gpl2/texinfo/dist/intl/dcigettext.c    up to 1.2
+external/gpl2/texinfo/dist/intl/gettextP.h      up to 1.2
+external/gpl2/texinfo/dist/lib/getopt.c         up to 1.3
+external/gpl2/texinfo/dist/lib/getopt_.h        up to 1.2
+external/gpl2/texinfo/dist/makeinfo/cmds.c      up to 1.5
+external/gpl2/texinfo/dist/makeinfo/cmds.h      up to 1.4
+external/gpl2/texinfo/dist/makeinfo/defun.c     up to 1.4
+external/gpl2/texinfo/dist/makeinfo/defun.h     up to 1.4
+external/gpl2/texinfo/dist/makeinfo/float.c     up to 1.4
+external/gpl2/texinfo/dist/makeinfo/footnote.c  up to 1.4
+external/gpl2/texinfo/dist/makeinfo/footnote.h  up to 1.4
+external/gpl2/texinfo/dist/makeinfo/index.c     up to 1.6
+external/gpl2/texinfo/dist/makeinfo/insertion.c up to 1.4
+external/gpl2/texinfo/dist/makeinfo/insertion.h up to 1.4
+external/gpl2/texinfo/dist/makeinfo/lang.c      up to 1.4
+external/gpl2/texinfo/dist/makeinfo/lang.h      up to 1.4
+external/gpl2/texinfo/dist/makeinfo/macro.c     up to 1.4
+external/gpl2/texinfo/dist/makeinfo/macro.h     up to 1.4
+external/gpl2/texinfo/dist/makeinfo/makeinfo.c  up to 1.5
+external/gpl2/texinfo/dist/makeinfo/multi.c     up to 1.5
+external/gpl2/texinfo/dist/makeinfo/node.c      up to 1.5
+external/gpl2/texinfo/dist/makeinfo/sectioning.c up to 1.5
+external/gpl2/texinfo/dist/makeinfo/sectioning.h up to 1.4
+external/gpl2/texinfo/dist/makeinfo/toc.c       up to 1.4
+external/gpl2/texinfo/dist/makeinfo/toc.h       up to 1.4
+external/gpl2/texinfo/dist/makeinfo/xref.c      up to 1.4
+external/gpl2/texinfo/dist/util/texindex.c      up to 1.6
+external/lgpl3/gmp/dist/configure		1.13
+
+	Support building with modern compilers.
+	[bsiegert, ticket #446]
+
+lib/libc/arch/m68k/gen/_lwp.c			1.11
+
+	m68k: _lwp_makecontext(): ensure the stack is aligned.
+	[thorpej, ticket #447]
+
+sys/arch/m68k/include/frame.h			1.41
+sys/arch/m68k/m68k/compat_16_machdep.c		1.20
+sys/arch/m68k/m68k/sig_machdep.c		1.53
+sys/arch/m68k/m68k/sunos_machdep.c		1.41
+
+	m68k: make sure the stack is aligned when delivering signals.
+	[thorpej, ticket #448]
+
+sys/arch/m68k/m68k/vm_machdep.c			1.48
+
+	m68k: cpu_lwp_fork(): if a stack is specified, make sure it's aligned.
+	[thorpej, ticket #449]
+
+sys/arch/x86/isa/clock.c			1.43
+
+	x86: PR 60672: check if RTC is disabled only in virtualized
+	environments.
+	[andvar, ticket #450]
+
+sys/arch/riscv/include/asm.h			1.14
+
+	risc-v: fix assemble opcode helper macros.
+	[skrll, ticket #451]
+
+sys/arch/riscv/include/bus_funcs.h		1.6
+
+	riscv: fix bus_space_{alloc,free,mmap} macros.
+	[skrll, ticket #452]
+
+sys/arch/arm/broadcom/bcm2835_vcaudio.c		1.23
+sys/external/bsd/vchiq/dist/interface/vchi/vchi.h 1.3
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_2835_arm.c 1.26
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_arm.c 1.23
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_core.c 1.18
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_core.h 1.11
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_if.h 1.5
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_shim.c 1.8
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_shim.c 1.9
+
+	vchiq: apply change from upstream.
+	[skrll, ticket #453]
 
