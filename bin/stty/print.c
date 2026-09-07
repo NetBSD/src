@@ -1,4 +1,4 @@
-/* $NetBSD: print.c,v 1.23 2013/09/12 19:47:23 christos Exp $ */
+/* $NetBSD: print.c,v 1.24 2026/09/07 18:27:09 tls Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.23 2013/09/12 19:47:23 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.24 2026/09/07 18:27:09 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,8 +132,8 @@ print(struct termios *tp, struct winsize *wp, int queue, const char *ldisc,
 	put("-onlcr", ONLCR, 1);
 	put("-ocrnl", OCRNL, 0);
 	put("-oxtabs", OXTABS, 1);
-	put("-onocr", OXTABS, 0);
-	put("-onlret", OXTABS, 0);
+	put("-onocr", ONOCR, 0);
+	put("-onlret", ONLRET, 0);
 
 	/* control flags (hardware state) */
 	tmp = tp->c_cflag;
