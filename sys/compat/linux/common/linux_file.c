@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.134 2026/06/09 21:45:21 andvar Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.135 2026/09/07 15:10:11 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.134 2026/06/09 21:45:21 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.135 2026/09/07 15:10:11 sborrill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1123,11 +1123,9 @@ linux_sys_copy_file_range(lwp_t *l,
 		DPRINTF("%s: Input or output is a directory\n", __func__);
 		goto out;
 	}
-	if ((SCARG(uap, off_in) != NULL && *SCARG(uap, off_in) < 0) ||
-	    (SCARG(uap, off_out) != NULL && *SCARG(uap, off_out) < 0) ||
-	    vattr_in.va_type != VREG || vattr_out.va_type != VREG) {
+	if (vattr_in.va_type != VREG || vattr_out.va_type != VREG) {
 		error = EINVAL;
-		DPRINTF("%s: Invalid offset or file type\n", __func__);
+		DPRINTF("%s: Invalid file type\n", __func__);
 		goto out;
 	}
 
