@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.273 2025/10/13 04:04:52 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.274 2026/09/07 08:02:15 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.273 2025/10/13 04:04:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.274 2026/09/07 08:02:15 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -207,7 +207,7 @@ find_cpus(void)
 	 * Set default processor architecture version
 	 *
 	 * All sun4 and sun4c platforms have v7 CPUs;
-	 * sun4m may have v7 (Cyrus CY7C601 modules) or v8 CPUs (all
+	 * sun4m may have v7 (Cypress CY7C601 modules) or v8 CPUs (all
 	 * other models, presumably).
 	 */
 	cpu_arch = 7;
