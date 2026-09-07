@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.174 2026/08/31 02:26:03 gutteridge Exp $
+.\"	$NetBSD: sysctl.7,v 1.175 2026/09/07 15:09:51 gutteridge Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd August 31, 2026
+.Dd September 7, 2026
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -274,6 +274,11 @@ The bytes of non-kernel memory as a 32-bit integer.
 .It Li hw.usermem64 ( Dv HW_USERMEM64 )
 The bytes of non-kernel memory as a 64-bit integer.
 .El
+.Pp
+There are also various device-specific nodes exposed in this part of the
+subtree.
+For example, see those documented for
+.Xr acpi 4 .
 .Ss The kern.* subtree
 This subtree includes data generally related to the kernel.
 The string and integer information available for the
@@ -577,6 +582,9 @@ to leak the addresses.
 .It Li kern.dump_on_panic ( Dv KERN_DUMP_ON_PANIC )
 Perform a crash dump on system
 .Xr panic 9 .
+.It Li kern.entropy.*
+These are documented in detail in
+.Xr rnd 4 .
 .It Li kern.file ( Dv KERN_FILE )
 Return the entire file table.
 The returned data consists of a single
@@ -1429,6 +1437,7 @@ protocol number, though this is not always the case.
 .It net.route	routing messages	no
 .It net.inet	IPv4 values	yes
 .It net.inet6	IPv6 values	yes
+.It net.interfaces	interface-specific settings  yes
 .It net.key	IPsec key management values	yes
 .El
 .Bl -tag -width "123456"
@@ -2215,6 +2224,8 @@ Please refer to
 section above.
 For variables net.*.ipsec6, please refer to
 .Xr ipsec 4 .
+.It Li net.interfaces.*
+Interface-specific settings akin to the net.inet.ip.ifq.* nodes.
 .It Li net.key ( Dv PF_KEY )
 Get or set various global information about the IPsec key management.
 The third level name is the variable name.
