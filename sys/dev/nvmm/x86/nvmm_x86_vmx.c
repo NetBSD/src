@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.97 2026/08/08 12:47:47 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.98 2026/09/07 15:58:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.97 2026/08/08 12:47:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.98 2026/09/07 15:58:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2395,7 +2395,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	struct vpid_desc vpid_desc;
 	struct cpu_info *ci;
-	uint64_t exitcode;
+	uint64_t exitcode = 0;	// XXX: gcc
 	uint64_t intstate;
 	uint64_t machgen;
 	int hcpu, ret;
