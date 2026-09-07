@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.258 2024/10/20 14:03:51 mlelstv Exp $	*/
+/*	$NetBSD: bpf.c,v 1.259 2026/09/07 15:47:16 tls Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.258 2024/10/20 14:03:51 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.259 2026/09/07 15:47:16 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -111,11 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.258 2024/10/20 14:03:51 mlelstv Exp $");
 static int bpf_bufsize = BPF_BUFSIZE;
 static int bpf_maxbufsize = BPF_DFLTBUFSIZE;	/* XXX set dynamically, see above */
 static bool bpf_jit = false;
-
-struct bpfjit_ops bpfjit_module_ops = {
-	.bj_generate_code = NULL,
-	.bj_free_code = NULL
-};
 
 /*
  * Global BPF statistics returned by net.bpf.stats sysctl.
@@ -299,27 +294,6 @@ const struct cdevsw bpf_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
-
-bpfjit_func_t
-bpf_jit_generate(bpf_ctx_t *bc, void *code, size_t size)
-{
-	struct bpfjit_ops *ops = &bpfjit_module_ops;
-	bpfjit_func_t (*generate_code)(const bpf_ctx_t *,
-	    const struct bpf_insn *, size_t);
-
-	generate_code = atomic_load_acquire(&ops->bj_generate_code);
-	if (generate_code != NULL) {
-		return generate_code(bc, code, size);
-	}
-	return NULL;
-}
-
-void
-bpf_jit_freecode(bpfjit_func_t jcode)
-{
-	KASSERT(bpfjit_module_ops.bj_free_code != NULL);
-	bpfjit_module_ops.bj_free_code(jcode);
-}
 
 static int
 bpf_movein(struct ifnet *ifp, struct uio *uio, int linktype, uint64_t mtu,

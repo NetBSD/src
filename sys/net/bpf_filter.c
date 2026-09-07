@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.73 2024/09/02 15:34:08 christos Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.74 2026/09/07 15:47:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.73 2024/09/02 15:34:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.74 2026/09/07 15:47:16 tls Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -47,6 +47,8 @@ static const char rcsid[] =
 #endif
 
 #include <sys/param.h>
+#include <sys/atomic.h>
+
 #include <sys/time.h>
 #include <sys/kmem.h>
 #include <sys/endian.h>
@@ -815,6 +817,38 @@ out:
 #endif
 	return ok;
 }
+
+#ifdef _KERNEL
+/*
+ * bpfjit is used by other in-kernel callers, such as npf, so define
+ * its hooks and accessors here, not in the bpf.c device node interface.
+ */
+struct bpfjit_ops bpfjit_module_ops = {
+	.bj_generate_code = NULL,
+	.bj_free_code = NULL
+};
+
+bpfjit_func_t
+bpf_jit_generate(bpf_ctx_t *bc, void *code, size_t size)
+{
+	struct bpfjit_ops *ops = &bpfjit_module_ops;
+	bpfjit_func_t (*generate_code)(const bpf_ctx_t *,
+	    const struct bpf_insn *, size_t);
+
+	generate_code = atomic_load_acquire(&ops->bj_generate_code);
+	if (generate_code != NULL) {
+		return generate_code(bc, code, size);
+	}
+	return NULL;
+}
+
+void
+bpf_jit_freecode(bpfjit_func_t jcode)
+{
+	KASSERT(bpfjit_module_ops.bj_free_code != NULL);
+	bpfjit_module_ops.bj_free_code(jcode);
+}
+#endif
 
 /* Kernel module interface */
 
