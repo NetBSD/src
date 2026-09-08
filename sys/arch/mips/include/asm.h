@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.77 2025/01/06 10:46:43 martin Exp $	*/
+/*	$NetBSD: asm.h,v 1.78 2026/09/08 07:53:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -313,14 +313,15 @@ _C_LABEL(x):
  *	exception vector entrypoint
  *	XXX: regmask should be used to generate .mask
  */
-#define	VECTOR(x, regmask)		\
-	.ent	_C_LABEL(x);		\
-	EXPORT(x);			\
+#define	VECTOR(x, regmask)				\
+	.ent	_C_LABEL(x);				\
+	EXPORT(x);					\
 
-#define	VECTOR_END(x)			\
-	EXPORT(__CONCAT(x,_end));	\
-	END(x);				\
-	.org _C_LABEL(x) + 0x80
+#define	VECTOR_END(x)					\
+	EXPORT(__CONCAT(x,_end));			\
+	END(x);						\
+        .space 0x80 - (. - _C_LABEL(x));		\
+        .org _C_LABEL(x) + 0x80
 
 /*
  * Macros to panic and printf from assembly language.
