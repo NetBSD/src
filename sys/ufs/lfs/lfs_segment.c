@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.312 2026/09/08 22:32:36 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.313 2026/09/08 22:57:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.312 2026/09/08 22:32:36 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.313 2026/09/08 22:57:29 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2733,15 +2733,17 @@ lfs_cluster_work(struct work *wk, void *arg)
 
 	/* Note i/o done */
 	if (cl->flags & LFS_CL_SYNC) {
+		lfs_prelock(fs, 0);
 		if (--cl->seg->seg_iocount == 0)
 			wakeup(&cl->seg->seg_iocount);
+		lfs_preunlock(fs);
 	}
 
 	pool_put(&fs->lfs_bpppool, cl->bpp);
 	cl->bpp = NULL;
 	pool_put(&fs->lfs_clpool, cl);
+
 	mutex_enter(&lfs_lock);
-	
 	KASSERTMSG((fs->lfs_iocount != 0),
 	    "lfs_cluster_aiodone: zero iocount");
 	if (--fs->lfs_iocount <= 1)
