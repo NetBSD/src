@@ -1,4 +1,4 @@
-#	$NetBSD: files.starfive,v 1.13 2026/08/25 20:46:17 riz Exp $
+#	$NetBSD: files.starfive,v 1.14 2026/09/08 05:10:46 skrll Exp $
 #
 # Configuration info for StarFive SoCs
 #
@@ -24,7 +24,7 @@ device	jh7100pinctrl: fdt_gpio, fdt_pinctrl
 attach	jh7100pinctrl at fdt with jh7100_pinctrl
 file	arch/riscv/starfive/jh7100_pinctrl.c		jh7100_pinctrl
 
-# JH7100 Pin control
+# JH7110 Pin control
 device	jh7110pinctrl: fdt_gpio, fdt_pinctrl
 attach	jh7110pinctrl at fdt with jh7110_pinctrl
 file	arch/riscv/starfive/jh7110_pinctrl.c		jh7110_pinctrl
