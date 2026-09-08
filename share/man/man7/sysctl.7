@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.176 2026/09/07 15:15:11 gutteridge Exp $
+.\"	$NetBSD: sysctl.7,v 1.177 2026/09/08 02:02:02 gutteridge Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -551,6 +551,12 @@ field is always a NUL terminated string.
 The
 .Va d_bmajor
 field will be set to \-1 if the driver doesn't have a block device.
+.It Li kern.dump_on_panic ( Dv KERN_DUMP_ON_PANIC )
+Perform a crash dump on system
+.Xr panic 9 .
+.It Li kern.entropy.*
+These are documented in detail in
+.Xr rnd 4 .
 .It Li kern.expose_address
 Expose kernel addresses in
 .Xr sysctl 3
@@ -580,12 +586,6 @@ otherwise.
 Allowing general access renders KASLR ineffective; allowing only kmem
 accessing programs weakens KASLR if those programs can be subverted
 to leak the addresses.
-.It Li kern.dump_on_panic ( Dv KERN_DUMP_ON_PANIC )
-Perform a crash dump on system
-.Xr panic 9 .
-.It Li kern.entropy.*
-These are documented in detail in
-.Xr rnd 4 .
 .It Li kern.file ( Dv KERN_FILE )
 Return the entire file table.
 The returned data consists of a single
