@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.311 2026/09/08 22:30:44 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.312 2026/09/08 22:32:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.311 2026/09/08 22:30:44 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.312 2026/09/08 22:32:36 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -224,7 +224,7 @@ lfs_vflush(struct vnode *vp)
 	mutex_exit(vp->v_interlock);
 
 	/* Protect against deadlock in vinvalbuf() */
-	lfs_seglock(fs, SEGM_SYNC | ((error != 0) ? SEGM_RECLAIM : 0));
+	lfs_seglock(fs, ((error != 0) ? SEGM_RECLAIM : 0));
 	if (error != 0) {
 		fs->lfs_reclino = ip->i_number;
 		error = 0;
@@ -284,7 +284,7 @@ lfs_vflush(struct vnode *vp)
 
 	fs->lfs_flushvp = vp;
 	if (LFS_SHOULD_CHECKPOINT(fs, fs->lfs_sp->seg_flags)) {
-		error = lfs_segwrite(vp->v_mount, SEGM_CKP | SEGM_SYNC);
+		error = lfs_segwrite(vp->v_mount, SEGM_CKP);
 		KASSERT(fs->lfs_flushvp_fakevref == 0);
 #if 0
 		fs->lfs_flushvp = NULL;

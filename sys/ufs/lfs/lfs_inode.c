@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.165 2026/01/05 05:02:47 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.166 2026/09/08 22:32:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.165 2026/01/05 05:02:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.166 2026/09/08 22:32:36 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -187,7 +187,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 		fs->lfs_writer++;
 		if (vp->v_uflag & VU_DIROP) {
 			KASSERT(fs->lfs_dirops == 0);
-			lfs_flush_fs(fs, SEGM_SYNC);
+			lfs_flush_fs(fs, 0);
 		}
 		mutex_exit(&lfs_lock);
 		error = lfs_vflush(vp);
