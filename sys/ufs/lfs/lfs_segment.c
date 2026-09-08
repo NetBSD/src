@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.310 2026/09/02 19:55:13 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.311 2026/09/08 22:30:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.310 2026/09/02 19:55:13 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.311 2026/09/08 22:30:44 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -320,10 +320,6 @@ lfs_vflush(struct vnode *vp)
 		/* panic("lfs_vflush: VU_DIROP being flushed...this can\'t happen"); */
 	}
 #endif
-
-	/* Ensure that we write this inode */
-	if (vp != fs->lfs_ivnode)
-		LFS_SET_UINO(ip, IN_MODIFIED);
 
 	do {
 #ifdef DEBUG

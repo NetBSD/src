@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.401 2026/08/28 06:06:53 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.402 2026/09/08 22:30:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.401 2026/08/28 06:06:53 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.402 2026/09/08 22:30:44 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -439,7 +439,7 @@ lfs_writerd(void *arg)
  	for (;;) {
 		KASSERT(mutex_owned(&lfs_lock));
 		if (wrote_something == 0)
-			cv_timedwait(&lfs_writerd_cv, &lfs_lock, hz/10 + 1);
+			cv_timedwait(&lfs_writerd_cv, &lfs_lock, 2 * hz);
 		KASSERT(mutex_owned(&lfs_lock));
 		wrote_something = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.354 2026/08/25 16:34:33 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.355 2026/09/08 22:30:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.354 2026/08/25 16:34:33 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.355 2026/09/08 22:30:44 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -442,7 +442,8 @@ lfs_fsync(void *v)
 	if (error)
 		goto out;
 
-	if ((ap->a_flags & FSYNC_DATAONLY) == 0)
+	if ((ap->a_flags & FSYNC_DATAONLY) == 0
+	    && (ip->i_flags & IN_MODIFIED))
 		error = lfs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {

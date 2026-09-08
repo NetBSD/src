@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.30 2026/08/28 23:02:30 perseant Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.31 2026/09/08 22:30:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.30 2026/08/28 23:02:30 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.31 2026/09/08 22:30:44 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -204,6 +204,7 @@ write_and_wait(struct lfs *fs, struct vnode *vp, struct vm_page *pg,
 			/* Write gathered pages */
 			lfs_updatemeta(sp);
 			lfs_release_finfo(fs);
+			lfs_writeinode(fs, sp, ip);
 			(void) lfs_writeseg(fs, sp);
 
 			/*
@@ -413,7 +414,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 int
 lfs_putpages(void *v)
 {
-	int error;
+	int error = 0;
 	struct vop_putpages_args /* {
 		struct vnode *a_vp;
 		voff_t a_offlo;
@@ -690,16 +691,9 @@ retry:
 
 		/*
 		 * The flush will have cleaned out this vnode as well,
-		 *  no need to do more to it.
-		 *  XXX then why are we falling through and continuing?
+		 * no need to do more to it.  We may, though, need to wait.
 		 */
-
-		/*
-		 * XXX State may have changed while we dropped the
-		 * lock; start over just in case.  The above comment
-		 * suggests this should maybe instead be goto out.
-		 */
-		goto retry;
+		goto wait;
 	}
 
 	/*
@@ -849,19 +843,6 @@ retry:
 	sp->vp = NULL;
 
 	/*
-	 * If we were called from lfs_writefile, we don't need to clean up
-	 * the FIP or unlock the segment lock.	We're done.
-	 */
-	if (seglocked) {
-		KASSERT(!rw_write_held(vp->v_uobj.vmobjlock));
-		goto out;
-	}
-
-	/* Clean up FIP and send it to disk. */
-	lfs_release_finfo(fs);
-	lfs_writeseg(fs, fs->lfs_sp);
-
-	/*
 	 * Remove us from paging queue if we wrote all our pages.
 	 */
 	if (origendoffset == 0 || ap->a_flags & PGO_ALLPAGES) {
@@ -874,12 +855,27 @@ retry:
 	}
 
 	/*
+	 * If we were called from lfs_writefile, we don't need to clean up
+	 * the FIP or unlock the segment lock.	We're done.
+	 */
+	if (seglocked) {
+		KASSERT(!rw_write_held(vp->v_uobj.vmobjlock));
+		goto out;
+	}
+
+	/* Clean up FIP and send it to disk. */
+	lfs_release_finfo(fs);
+	lfs_writeinode(fs, sp, ip);
+	lfs_writeseg(fs, fs->lfs_sp);
+
+	/*
 	 * XXX - with the malloc/copy writeseg, the pages are freed by now
 	 * even if we don't wait (e.g. if we hold a nested lock).  This
 	 * will not be true if we stop using malloc/copy.
 	 */
 	lfs_segunlock(fs);
 
+wait:
 	/*
 	 * Wait for v_numoutput to drop to zero.  The seglock should
 	 * take care of this, but there is a slight possibility that
@@ -895,7 +891,7 @@ retry:
 		mutex_exit(vp->v_interlock);
 	}
 
-out:;
+out:
 	if (trans_mp)
 		fstrans_done(trans_mp);
 	KASSERT(!rw_write_held(vp->v_uobj.vmobjlock));
