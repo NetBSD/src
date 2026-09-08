@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.16 2026/08/05 21:48:37 andvar Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.17 2026/09/08 06:53:29 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.16 2026/08/05 21:48:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.17 2026/09/08 06:53:29 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -201,7 +201,7 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 		    /* XXX */ 0, ca->ca_core, ca->ca_thread);
 		KASSERT(ci != NULL);
 		if (ccsc->sc_tlbinfo == NULL)
-			ccsc->sc_tlbinfo = ci->ci_tlb_info;
+			ccsc->sc_tlbinfo = cpu_tlb_info(ci);
 		sc->sc_dev = self;
 		sc->sc_ci = ci;
 		ci->ci_softc = (void *)sc;

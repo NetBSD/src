@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.37 2025/12/21 07:00:28 skrll Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.38 2026/09/08 06:53:30 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.37 2025/12/21 07:00:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.38 2026/09/08 06:53:30 skrll Exp $");
 
 #include "ksyms.h"
 
@@ -203,7 +203,7 @@ booke_cpu_startup(const char *model)
 	/*
 	 * Register the tlb's evcnts
 	 */
-	pmap_tlb_info_evcnt_attach(curcpu()->ci_tlb_info);
+	pmap_tlb_info_evcnt_attach(cpu_tlb_info(curcpu()));
 
 	/*
 	 * Set up the board properties database.

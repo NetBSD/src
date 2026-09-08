@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.66 2025/09/06 12:42:16 riastradh Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.67 2026/09/08 06:53:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019, 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.66 2025/09/06 12:42:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.67 2026/09/08 06:53:29 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -880,7 +880,7 @@ cpu_debug_dump(void)
 void
 cpu_hatch(struct cpu_info *ci)
 {
-	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
+	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
 
 	/*
 	 * Invalidate all the TLB enties (even wired ones) and then reserve

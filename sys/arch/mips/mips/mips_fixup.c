@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.25 2026/06/16 05:33:07 skrll Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.26 2026/09/08 06:53:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.25 2026/06/16 05:33:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.26 2026/09/08 06:53:29 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips3_wired.h"
@@ -172,7 +172,7 @@ bool
 mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 {
 	struct cpu_info * const ci = curcpu();
-	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
+	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
 
 	KASSERT(MIPS_KSEG0_P(load_addr));
 	KASSERT(!MIPS_CACHE_VIRTUAL_ALIAS);

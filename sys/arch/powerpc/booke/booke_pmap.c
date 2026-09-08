@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.39 2024/09/24 07:29:55 skrll Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.40 2026/09/08 06:53:30 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.39 2024/09/24 07:29:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.40 2026/09/08 06:53:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -410,7 +410,7 @@ bool
 pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 {
 	pmap_t pm = ctx;
-	struct pmap_asid_info * const pai = PMAP_PAI(pm, curcpu()->ci_tlb_info);
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(curcpu()));
 
 	if (asid != pai->pai_asid)
 		return true;
