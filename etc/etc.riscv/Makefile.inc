@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2026/08/02 02:59:14 brook Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2026/09/08 02:48:06 rxg Exp $
 #
 #	etc.riscv/Makefile.inc -- riscv-specific etc Makefile targets
 #
@@ -52,6 +52,9 @@ INSTALLATION_DIRS+=	installation/misc
 smp_riscv64: __mkimage
 MKI_OPTS.smp_riscv64=		-K ${IMAGE.kern}
 SNAP_MD_POST_DEPS_IMGZ+=	smp_riscv64
+smp_riscv64mbr: __mkimage
+MKI_OPTS.smp_riscv64mbr=	-K ${IMAGE.kern}
+SNAP_MD_POST_DEPS+=		smp_riscv64mbr
 .endif
 
 
