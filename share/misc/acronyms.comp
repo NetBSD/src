@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.428 2026/09/02 19:19:59 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.429 2026/09/08 13:13:43 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1448,6 +1448,7 @@ RDF	Resource Description Framework
 RDM	relational data model
 RDMA	remote direct memory access
 RDP	remote desktop protocol
+RDS	Reliable Datagram Sockets
 RDRAM	Rambus DRAM
 RE	regular expression
 REPL	read, evaluate, print, loop
