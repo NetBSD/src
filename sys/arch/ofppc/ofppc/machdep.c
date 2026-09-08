@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 2024/12/16 11:52:43 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122 2026/09/08 09:02:52 macallan Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2024/12/16 11:52:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2026/09/08 09:02:52 macallan Exp $");
 
 #include "opt_ofwoea.h"
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2024/12/16 11:52:43 martin Exp $")
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_cons.h>
 #include <powerpc/rtas.h>
+#include <powerpc/ofw_machdep.h>
 
 #include "com.h"
 #if (NCOM > 0)
@@ -79,14 +80,14 @@ struct model_data modeldata;
 static void model_init(void);
 
 #ifdef OFWOEA_DEBUG
-#define	DPRINTF printf
+#define	DPRINTF ofprint
 #else
 #define	DPRINTF while (0) printf
 #endif
 
-/*              
+/*
  * Scan the device tree for ranges, and return them as bitmap 0..15
- */     
+ */
 static uint16_t
 ranges_bitmap(int node, uint16_t bitmap)
 {
@@ -146,7 +147,7 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 		bitmap = ranges_bitmap(node, 0);
 		oea_batinit(0);
 
-		for (i = 1; i < 0x10; i++) {
+		for (i = 1; i < 0x0f; i++) {
 			/* skip the three vital SR regions */
 			if (i == USER_SR || i == KERNEL_SR || i == KERNEL2_SR) {
 				continue;
@@ -156,6 +157,13 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 				DPRINTF("Batmapped 256M at 0x%x\n",
 				    0x10000000 * i);
 			}
+		}
+		if (bitmap & 0x8000) {
+			/* grackle space is 0x80000000 - 0xff000000 */
+			oea_iobat_add(0xf0000000, BAT_BL_128M);
+			oea_iobat_add(0xf8000000, BAT_BL_64M);
+			oea_iobat_add(0xfc000000, BAT_BL_32M);
+			oea_iobat_add(0xfe000000, BAT_BL_16M);
 		}
 	}
 
@@ -488,6 +496,11 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 		 * won't have linebytes either
 		 */
 		prop_dictionary_set_uint32(dict, "depth", 8);
+	}
+	if (of_to_dataprop(dict, node, "EDID", "EDID")) {
+		aprint_debug("found EDID property...\n");
+	} else if (of_to_dataprop(dict, node, "edid", "EDID")) {
+		aprint_debug("found edid\n");
 	}
 	if (!of_to_uint32_prop(dict, node, "address", "address")) {
 		uint32_t fbaddr = 0;
