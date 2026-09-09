@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.9 2026/09/09 05:56:04 skrll Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.10 2026/09/09 06:17:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -63,61 +63,61 @@
 
 /* Processor specific relocation types */
 
-#define R_AARCH64_NONE			0
-#define R_AARCH64_NONE2			256
+#define R_AARCH64_NONE				0
+#define R_AARCH64_NONE2				256
 
-#define	R_AARCH64_ABS64			257	/* S + A */
-#define	R_AARCH64_ABS32			258	/* S + A */
-#define	R_AARCH64_ABS16			259	/* S + A */
-#define	R_AARCH64_PREL64		260	/* S + A - P */
-#define	R_AARCH64_PREL32		261	/* S + A - P */
-#define	R_AARCH64_PREL16		262	/* S + A - P */
-#define R_AARCH64_MOVW_UABS_G0		263	/* S + A [bits 0..15] */
-#define R_AARCH64_MOVW_UABS_G0_NC	264	/* S + A [bits 0..15] */
-#define R_AARCH64_MOVW_UABS_G1		265	/* S + A [bits 16..31] */
-#define R_AARCH64_MOVW_UABS_G1_NC	266	/* S + A [bits 16..31] */
-#define R_AARCH64_MOVW_UABS_G2		267	/* S + A [bits 32..47] */
-#define R_AARCH64_MOVW_UABS_G2_NC	268	/* S + A [bits 32..47] */
-#define R_AARCH64_MOVW_UABS_G3		269	/* S + A [bits 48..63] */
-#define R_AARCH64_MOVW_SABS_G0		270	/* S + A [bits 0..15] */
-#define R_AARCH64_MOVW_SABS_G1		271	/* S + A [bits 16..31] */
-#define R_AARCH64_MOVW_SABS_G2		272	/* S + A [bits 32..47] */
-#define	R_AARCH64_LD_PREL_LO19		273	/* S + A - P */
-#define	R_AARCH64_ADR_PREL_LO21		274	/* S + A - P */
-#define	R_AARCH64_ADR_PREL_PG_HI21	275	/* Page(S + A) - Page(P) */
-#define	R_AARCH64_ADR_PREL_PG_HI21_NC	276	/* Page(S + A) - Page(P) */
-#define R_AARCH64_ADD_ABS_LO12_NC	277	/* S + A */
-#define	R_AARCH64_LDST8_ABS_LO12_NC	278	/* S + A */
-#define R_AARCH64_TSTBR14		279	/* S + A - P */
-#define R_AARCH64_CONDBR19		281	/* S + A - P */
-#define R_AARCH64_JUMP26		282	/* S + A - P */
-#define R_AARCH64_CALL26		283	/* S + A - P */
-#define R_AARCH64_LDST16_ABS_LO12_NC	284	/* S + A */
-#define R_AARCH64_LDST32_ABS_LO12_NC	285	/* S + A */
-#define R_AARCH64_LDST64_ABS_LO12_NC	286	/* S + A */
-#define R_AARCH64_MOVW_PREL_G0		287	/* S + A - P */
-#define R_AARCH64_MOVW_PREL_G0_NC	288	/* S + A - P */
-#define R_AARCH64_MOVW_PREL_G1		289	/* S + A - P */
-#define R_AARCH64_MOVW_PREL_G1_NC	290	/* S + A - P */
-#define R_AARCH64_MOVW_PREL_G2		291	/* S + A - P */
-#define R_AARCH64_MOVW_PREL_G2_NC	292	/* S + A - P */
-#define R_AARCH64_MOVW_PREL_G3		293	/* S + A - P */
+#define	R_AARCH64_ABS64				257	/* S + A */
+#define	R_AARCH64_ABS32				258	/* S + A */
+#define	R_AARCH64_ABS16				259	/* S + A */
+#define	R_AARCH64_PREL64			260	/* S + A - P */
+#define	R_AARCH64_PREL32			261	/* S + A - P */
+#define	R_AARCH64_PREL16			262	/* S + A - P */
+#define R_AARCH64_MOVW_UABS_G0			263	/* S + A [bits 0..15] */
+#define R_AARCH64_MOVW_UABS_G0_NC		264	/* S + A [bits 0..15] */
+#define R_AARCH64_MOVW_UABS_G1			265	/* S + A [bits 16..31] */
+#define R_AARCH64_MOVW_UABS_G1_NC		266	/* S + A [bits 16..31] */
+#define R_AARCH64_MOVW_UABS_G2			267	/* S + A [bits 32..47] */
+#define R_AARCH64_MOVW_UABS_G2_NC		268	/* S + A [bits 32..47] */
+#define R_AARCH64_MOVW_UABS_G3			269	/* S + A [bits 48..63] */
+#define R_AARCH64_MOVW_SABS_G0			270	/* S + A [bits 0..15] */
+#define R_AARCH64_MOVW_SABS_G1			271	/* S + A [bits 16..31] */
+#define R_AARCH64_MOVW_SABS_G2			272	/* S + A [bits 32..47] */
+#define	R_AARCH64_LD_PREL_LO19			273	/* S + A - P */
+#define	R_AARCH64_ADR_PREL_LO21			274	/* S + A - P */
+#define	R_AARCH64_ADR_PREL_PG_HI21		275	/* Page(S + A) - Page(P) */
+#define	R_AARCH64_ADR_PREL_PG_HI21_NC		276	/* Page(S + A) - Page(P) */
+#define R_AARCH64_ADD_ABS_LO12_NC		277	/* S + A */
+#define	R_AARCH64_LDST8_ABS_LO12_NC		278	/* S + A */
+#define R_AARCH64_TSTBR14			279	/* S + A - P */
+#define R_AARCH64_CONDBR19			281	/* S + A - P */
+#define R_AARCH64_JUMP26			282	/* S + A - P */
+#define R_AARCH64_CALL26			283	/* S + A - P */
+#define R_AARCH64_LDST16_ABS_LO12_NC		284	/* S + A */
+#define R_AARCH64_LDST32_ABS_LO12_NC		285	/* S + A */
+#define R_AARCH64_LDST64_ABS_LO12_NC		286	/* S + A */
+#define R_AARCH64_MOVW_PREL_G0			287	/* S + A - P */
+#define R_AARCH64_MOVW_PREL_G0_NC		288	/* S + A - P */
+#define R_AARCH64_MOVW_PREL_G1			289	/* S + A - P */
+#define R_AARCH64_MOVW_PREL_G1_NC		290	/* S + A - P */
+#define R_AARCH64_MOVW_PREL_G2			291	/* S + A - P */
+#define R_AARCH64_MOVW_PREL_G2_NC		292	/* S + A - P */
+#define R_AARCH64_MOVW_PREL_G3			293	/* S + A - P */
 
-#define R_AARCH64_LDST128_ABS_LO12_NC	299	/* S + A */
-#define R_AARCH64_MOVW_GOTOFF_G0	300	/* G(GDAT(S + A)) - GOT */
-#define R_AARCH64_MOVW_GOTOFF_G0_NC	301	/* G(GDAT(S + A)) - GOT */
-#define R_AARCH64_MOVW_GOTOFF_G1	302	/* G(GDAT(S + A)) - GOT */
-#define R_AARCH64_MOVW_GOTOFF_G1_NC	303	/* G(GDAT(S + A)) - GOT */
-#define R_AARCH64_MOVW_GOTOFF_G2	304	/* G(GDAT(S + A)) - GOT */
-#define R_AARCH64_MOVW_GOTOFF_G2_NC	305	/* G(GDAT(S + A)) - GOT */
-#define R_AARCH64_MOVW_GOTOFF_G3	306	/* G(GDAT(S + A)) - GOT */
-#define R_AARCH64_GOTREL64		307	/* S + A - GOT */
-#define R_AARCH64_GOTREL32		308	/* S + A - GOT */
-#define R_AARCH64_GOT_LD_PREL19		309	/* G(GDAT(S + A)) - P */
-#define R_AARCH64_LD64_GOTOFF_LO15	310	/* G(GDAT(S + A)) - GOT */
-#define R_AARCH64_ADR_GOT_PAGE		311	/* Page(G(GDAT(S + A))) - Page(GOT) */
-#define R_AARCH64_LD64_GOT_LO12_NC	312	/* G(GDAT(S + A)) */
-#define R_AARCH64_LD64_GOTPAGE_LO15	313	/* G(GDAT(S + A)) - Page(GOT) */
+#define R_AARCH64_LDST128_ABS_LO12_NC		299	/* S + A */
+#define R_AARCH64_MOVW_GOTOFF_G0		300	/* G(GDAT(S + A)) - GOT */
+#define R_AARCH64_MOVW_GOTOFF_G0_NC		301	/* G(GDAT(S + A)) - GOT */
+#define R_AARCH64_MOVW_GOTOFF_G1		302	/* G(GDAT(S + A)) - GOT */
+#define R_AARCH64_MOVW_GOTOFF_G1_NC		303	/* G(GDAT(S + A)) - GOT */
+#define R_AARCH64_MOVW_GOTOFF_G2		304	/* G(GDAT(S + A)) - GOT */
+#define R_AARCH64_MOVW_GOTOFF_G2_NC		305	/* G(GDAT(S + A)) - GOT */
+#define R_AARCH64_MOVW_GOTOFF_G3		306	/* G(GDAT(S + A)) - GOT */
+#define R_AARCH64_GOTREL64			307	/* S + A - GOT */
+#define R_AARCH64_GOTREL32			308	/* S + A - GOT */
+#define R_AARCH64_GOT_LD_PREL19			309	/* G(GDAT(S + A)) - P */
+#define R_AARCH64_LD64_GOTOFF_LO15		310	/* G(GDAT(S + A)) - GOT */
+#define R_AARCH64_ADR_GOT_PAGE			311	/* Page(G(GDAT(S + A))) - Page(GOT) */
+#define R_AARCH64_LD64_GOT_LO12_NC		312	/* G(GDAT(S + A)) */
+#define R_AARCH64_LD64_GOTPAGE_LO15		313	/* G(GDAT(S + A)) - Page(GOT) */
 
 #define R_AARCH64_TLSGD_ADR_PREL21		512	/* G(GTLSIDX(S,A)) - P */
 #define R_AARCH64_TLSGD_ADR_PAGE21		513	/* Page(G(GTLSIDX(S,A))) - Page(P) */
@@ -151,57 +151,57 @@
 #define R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21	541	/* Page(G(GTPREL(S+A))) - Page(P) */
 #define R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC	542	/* G(GTPREL(S+A)) */
 #define R_AARCH64_TLSIE_LD_GOTTPREL_PREL19	543	/* G(GTPREL(S+A)) - P */
-#define R_AARCH64_TLSLE_MOVW_TPREL_G2	544	/* TPREL(S+A) */
-#define R_AARCH64_MOVW_TPREL_G1		545	/* TPREL(S+A) */
-#define R_AARCH64_MOVW_TPREL_G1_NC	546	/* TPREL(S+A) */
-#define R_AARCH64_MOVW_TPREL_G0		547	/* TPREL(S+A) */
-#define R_AARCH64_MOVW_TPREL_G0_NC	548	/* TPREL(S+A) */
-#define R_AARCH64_ADD_TPREL_HI12	549	/* TPREL(S+A) */
-#define R_AARCH64_ADD_TPREL_LO12	550	/* TPREL(S+A) */
-#define R_AARCH64_ADD_TPREL_LO12_NC	551	/* TPREL(S+A) */
-#define R_AARCH64_LDST8_TPREL_LO12	552	/* TPREL(S+A) */
-#define R_AARCH64_LDST8_TPREL_LO12_NC	553	/* TPREL(S+A) */
-#define R_AARCH64_LDST16_TPREL_LO12	554	/* TPREL(S+A) */
-#define R_AARCH64_LDST16_TPREL_LO12_NC	555	/* TPREL(S+A) */
-#define R_AARCH64_LDST32_TPREL_LO12	556	/* TPREL(S+A) */
-#define R_AARCH64_LDST32_TPREL_LO12_NC	557	/* TPREL(S+A) */
-#define R_AARCH64_LDST64_TPREL_LO12	558	/* TPREL(S+A) */
-#define R_AARCH64_LDST64_TPREL_LO12_NC	559	/* TPREL(S+A) */
-#define R_AARCH64_TLSDESC_LD_PREL19	560	/* G(GTLSDESC(S+A)) - P */
-#define R_AARCH64_TLSDESC_LD_PREL21	561	/* G(GTLSDESC(S+A)) - P */
-#define R_AARCH64_TLSDESC_LD_PAGE21	562	/* Page(G(GTLSDESC(S+A))) - Page(P) */
-#define R_AARCH64_TLSDESC_LD64_LO12	563	/* G(GTLSDESC(S+A)) */
-#define R_AARCH64_TLSDESC_ADD_LO12	564	/* G(GTLSDESC(S+A)) */
-#define R_AARCH64_TLSDESC_OFF_G1	565	/* G(GTLSDESC(S+A)) - GOT */
-#define R_AARCH64_TLSDESC_OFF_G0_NC	566	/* G(GTLSDESC(S+A)) - GOT */
-#define R_AARCH64_TLSDESC_LDR		567	/* */
-#define R_AARCH64_TLSDESC_ADD		568	/* */
-#define R_AARCH64_TLSDESC_CALL		569	/* */
+#define R_AARCH64_TLSLE_MOVW_TPREL_G2		544	/* TPREL(S+A) */
+#define R_AARCH64_MOVW_TPREL_G1			545	/* TPREL(S+A) */
+#define R_AARCH64_MOVW_TPREL_G1_NC		546	/* TPREL(S+A) */
+#define R_AARCH64_MOVW_TPREL_G0			547	/* TPREL(S+A) */
+#define R_AARCH64_MOVW_TPREL_G0_NC		548	/* TPREL(S+A) */
+#define R_AARCH64_ADD_TPREL_HI12		549	/* TPREL(S+A) */
+#define R_AARCH64_ADD_TPREL_LO12		550	/* TPREL(S+A) */
+#define R_AARCH64_ADD_TPREL_LO12_NC		551	/* TPREL(S+A) */
+#define R_AARCH64_LDST8_TPREL_LO12		552	/* TPREL(S+A) */
+#define R_AARCH64_LDST8_TPREL_LO12_NC		553	/* TPREL(S+A) */
+#define R_AARCH64_LDST16_TPREL_LO12		554	/* TPREL(S+A) */
+#define R_AARCH64_LDST16_TPREL_LO12_NC		555	/* TPREL(S+A) */
+#define R_AARCH64_LDST32_TPREL_LO12		556	/* TPREL(S+A) */
+#define R_AARCH64_LDST32_TPREL_LO12_NC		557	/* TPREL(S+A) */
+#define R_AARCH64_LDST64_TPREL_LO12		558	/* TPREL(S+A) */
+#define R_AARCH64_LDST64_TPREL_LO12_NC		559	/* TPREL(S+A) */
+#define R_AARCH64_TLSDESC_LD_PREL19		560	/* G(GTLSDESC(S+A)) - P */
+#define R_AARCH64_TLSDESC_LD_PREL21		561	/* G(GTLSDESC(S+A)) - P */
+#define R_AARCH64_TLSDESC_LD_PAGE21		562	/* Page(G(GTLSDESC(S+A))) - Page(P) */
+#define R_AARCH64_TLSDESC_LD64_LO12		563	/* G(GTLSDESC(S+A)) */
+#define R_AARCH64_TLSDESC_ADD_LO12		564	/* G(GTLSDESC(S+A)) */
+#define R_AARCH64_TLSDESC_OFF_G1		565	/* G(GTLSDESC(S+A)) - GOT */
+#define R_AARCH64_TLSDESC_OFF_G0_NC		566	/* G(GTLSDESC(S+A)) - GOT */
+#define R_AARCH64_TLSDESC_LDR			567	/* */
+#define R_AARCH64_TLSDESC_ADD			568	/* */
+#define R_AARCH64_TLSDESC_CALL			569	/* */
 #define R_AARCH64_TLSLE_LDST128_TPREL_LO12	570	/* TPREL(S+A) */
 #define R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC	571	/* TPREL(S+A) */
 #define R_AARCH64_TLSLD_LDST128_DTPREL_LO12	572	/* DTPREL(S+A) */
 #define R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC	573	/* DTPREL(S+A) */
 
 /* Dynamic Relocations */
-#define R_AARCH64_P32_COPY		180
-#define R_AARCH64_P32_GLOB_DAT		181	/* S + A */
-#define R_AARCH64_P32_JUMP_SLOT		182	/* S + A */
-#define R_AARCH64_P32_RELATIVE		183	/* Delta(S) + A */
-#define R_AARCH64_P32_TLS_DTPREL	184	/* DTPREL(S+A) */
-#define R_AARCH64_P32_TLS_DTPMOD	185	/* LBM(S) */
-#define R_AARCH64_P32_TLS_TPREL		186	/* TPREL(S+A) */
-#define R_AARCH64_P32_TLSDESC		187	/* TLSDESC(S+A) */
-#define R_AARCH64_P32_IRELATIVE		188	/* Indirect(Delta(S) + A) */
+#define R_AARCH64_P32_COPY			180
+#define R_AARCH64_P32_GLOB_DAT			181	/* S + A */
+#define R_AARCH64_P32_JUMP_SLOT			182	/* S + A */
+#define R_AARCH64_P32_RELATIVE			183	/* Delta(S) + A */
+#define R_AARCH64_P32_TLS_DTPREL		184	/* DTPREL(S+A) */
+#define R_AARCH64_P32_TLS_DTPMOD		185	/* LBM(S) */
+#define R_AARCH64_P32_TLS_TPREL			186	/* TPREL(S+A) */
+#define R_AARCH64_P32_TLSDESC			187	/* TLSDESC(S+A) */
+#define R_AARCH64_P32_IRELATIVE			188	/* Indirect(Delta(S) + A) */
 
-#define R_AARCH64_COPY			1024
-#define R_AARCH64_GLOB_DAT		1025	/* S + A */
-#define R_AARCH64_JUMP_SLOT		1026	/* S + A */
-#define R_AARCH64_RELATIVE		1027	/* Delta(S) + A */
-#define R_AARCH64_TLS_DTPREL64		1028	/* DTPREL(S+A) */
-#define R_AARCH64_TLS_DTPMOD64		1029	/* LBM(S) */
-#define R_AARCH64_TLS_TPREL64		1030	/* TPREL(S+A) */
-#define R_AARCH64_TLSDESC		1031	/* TLSDESC(S+A) */
-#define R_AARCH64_IRELATIVE		1032	/* Indirect(Delta(S) + A) */
+#define R_AARCH64_COPY				1024
+#define R_AARCH64_GLOB_DAT			1025	/* S + A */
+#define R_AARCH64_JUMP_SLOT			1026	/* S + A */
+#define R_AARCH64_RELATIVE			1027	/* Delta(S) + A */
+#define R_AARCH64_TLS_DTPREL64			1028	/* DTPREL(S+A) */
+#define R_AARCH64_TLS_DTPMOD64			1029	/* LBM(S) */
+#define R_AARCH64_TLS_TPREL64			1030	/* TPREL(S+A) */
+#define R_AARCH64_TLSDESC			1031	/* TLSDESC(S+A) */
+#define R_AARCH64_IRELATIVE			1032	/* Indirect(Delta(S) + A) */
 
 /* Processor specific program header types */
 #define PT_AARCH64_ARCHEXT	(PT_LOPROC + 0)
