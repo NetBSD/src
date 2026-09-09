@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.108 2026/09/09 06:04:56 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.109 2026/09/09 07:24:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -37,7 +37,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.108 2026/09/09 06:04:56 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.109 2026/09/09 07:24:52 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -162,7 +162,6 @@ ASENTRY_NP(aarch64_start)
 	lsr	x20, x20, #2
 	DPRINTREG("CurrentEL        = ", x20)
 #endif /* LOCORE_EL2 */
-
 
 	bl	mmu_disable
 	bl	init_sysregs
@@ -810,7 +809,6 @@ load_ttbrs:
 	msr	ttbr1_el1, x1
 	ret
 
-
 init_mmutable:
 	stp	x26, lr, [sp, #-16]!
 
@@ -947,7 +945,6 @@ mmu_enable:
 
 	ret
 
-
 	.align 3
 mair_setting:
 	.quad (						\
@@ -994,7 +991,6 @@ tcr_setting:
 #else
 #define SCTLR_SA_CONFIG		0
 #endif
-
 
 sctlr_set:
 	.quad ( \
