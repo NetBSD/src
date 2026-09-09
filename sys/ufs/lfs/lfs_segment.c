@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.313 2026/09/08 22:57:29 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.314 2026/09/09 03:16:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.313 2026/09/08 22:57:29 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.314 2026/09/09 03:16:23 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2048,7 +2048,9 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr,
 	if (fs->lfs_sp->seg_flags & SEGM_SYNC) {
 		cl->flags |= LFS_CL_SYNC;
 		cl->seg = fs->lfs_sp;
+		mutex_enter(&lfs_lock);
 		++cl->seg->seg_iocount;
+		mutex_exit(&lfs_lock);
 	}
 
 	/* Get an empty buffer header, or maybe one with something on it */
@@ -2733,10 +2735,10 @@ lfs_cluster_work(struct work *wk, void *arg)
 
 	/* Note i/o done */
 	if (cl->flags & LFS_CL_SYNC) {
-		lfs_prelock(fs, 0);
+		mutex_enter(&lfs_lock);
 		if (--cl->seg->seg_iocount == 0)
 			wakeup(&cl->seg->seg_iocount);
-		lfs_preunlock(fs);
+		mutex_exit(&lfs_lock);
 	}
 
 	pool_put(&fs->lfs_bpppool, cl->bpp);
