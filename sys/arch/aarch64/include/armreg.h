@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.78 2026/07/31 13:48:31 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.79 2026/09/09 06:04:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -859,6 +859,27 @@ AARCH64REG_WRITE_INLINE(hcr_el2)
 #define	HCR_EL2_PTW		__BIT(2)	// Protect table walk
 #define	HCR_EL2_SWIO		__BIT(1)	// override DC ISW to DC CISW
 #define	HCR_EL2_VM		__BIT(0)	// enable stage2 translation
+
+AARCH64REG_READ_INLINE(cptr_el2)	// Architectural Feature Trap Register
+AARCH64REG_WRITE_INLINE(cptr_el2)
+
+#define CPTR_EL2_E0TP1E		__BIT(33)
+#define CPTR_EL2_E0TP0E		__BIT(32)
+#define CPTR_EL2_E0POE		__BIT(29)
+#define CPTR_EL2_TCPAC		__BIT(31)
+#define CPTR_EL2_TAM		__BIT(30)
+#define CPTR_EL2_TTA		__BIT(28)
+#define CPTR_EL2_VHE_SMEN	__BITS(25,24)
+#define CPTR_EL2_VHE_FPEN	__BITS(21,20)
+#define CPTR_EL2_VHE_ZEN	__BITS(17,16)
+#define CPTR_EL2_NVHE_TTA	__BIT(20)
+#define CPTR_EL2_NVHE_TSM	__BIT(12)
+#define CPTR_EL2_NVHE_TFP	__BIT(10)
+#define CPTR_EL2_NVHE_TZ	__BIT(8)
+
+#define CPTR_EL2_NVHE_RES1	(__BIT(13) | __BIT(9) | __BITS(7, 0))
+#define CPTR_EL2_NVHE_RES0	(__BITS(63, 32) | __BITS(29, 21) | __BITS(19, 14) | __BIT(11))
+
 
 AARCH64REG_READ_INLINE(hpfar_el2)		// Hypervisor IPA Fault Address Register
 AARCH64REG_WRITE_INLINE(hpfar_el2)

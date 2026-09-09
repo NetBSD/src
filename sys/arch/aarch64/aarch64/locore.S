@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.107 2026/07/11 12:23:51 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.108 2026/09/09 06:04:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -35,10 +35,9 @@
 #include "opt_multiprocessor.h"
 
 #include <aarch64/asm.h>
-#include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.107 2026/07/11 12:23:51 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.108 2026/09/09 06:04:56 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE

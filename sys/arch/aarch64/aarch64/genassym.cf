@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.44 2026/07/31 13:48:31 skrll Exp $
+# $NetBSD: genassym.cf,v 1.45 2026/09/09 06:04:56 skrll Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -379,9 +379,12 @@ define	SCTLR_EnIB		SCTLR_EnIB
 define	SCTLR_EnDA		SCTLR_EnDA
 define	SCTLR_EnDB		SCTLR_EnDB
 
+define	HCR_EL2_RW		HCR_EL2_RW
+
+define	CPTR_EL2_NVHE_RES1	CPTR_EL2_NVHE_RES1
+
 define	ICC_SRE_EL2_EN		ICC_SRE_EL2_EN
 define	ICC_SRE_EL2_SRE		ICC_SRE_EL2_SRE
-
 
 # for bus_space_asm
 define	BS_STRIDE		offsetof(struct bus_space, bs_stride)

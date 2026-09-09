@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.15 2026/07/31 13:48:31 skrll Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.16 2026/09/09 06:04:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -29,10 +29,9 @@
  */
 
 #include <aarch64/asm.h>
-#include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.15 2026/07/31 13:48:31 skrll Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.16 2026/09/09 06:04:56 skrll Exp $")
 
 /*
  * For use in #include "locore_el2.S".
@@ -70,7 +69,7 @@ in_el2:
 
 no_el2_host_mode:
 	/* EL1 will be AArch64. */
-	mov	x2, #(HCR_RW)
+	mov	x2, #HCR_EL2_RW
 	msr	hcr_el2, x2
 
 	/* Mirror the Virtualization Process ID Register. */
@@ -103,7 +102,7 @@ no_el2_host_mode:
 	isb
 
 	/* Don't trap to EL2 on access to various registers. */
-	mov	x2, #CPTR_RES1
+	mov	x2, #CPTR_EL2_NVHE_RES1
 	msr	cptr_el2, x2
 
 	/* Don't trap to EL2 on CP15 traps. */
