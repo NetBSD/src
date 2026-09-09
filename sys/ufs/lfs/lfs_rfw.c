@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.44 2026/02/23 20:19:28 andvar Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.45 2026/09/09 22:15:02 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.44 2026/02/23 20:19:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.45 2026/09/09 22:15:02 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -86,6 +86,7 @@ static void update_inoblk_copy_dinode(struct lfs *, union lfs_dinode *,
 static int update_inogen(struct lfs_inofuncarg *);
 static int update_inoblk(struct lfs_inofuncarg *);
 static int finfo_func_rfw(struct lfs_finfofuncarg *);
+static int raise_maxino(struct lfs *, ino_t);
 
 static int update_meta(struct lfs *, ino_t, int, daddr_t, daddr_t, size_t,
 		       struct lwp *l);
@@ -96,6 +97,19 @@ static bool lfs_isseq(const struct lfs *fs, long int lbn1, long int lbn2);
 extern int lfs_do_rfw;
 int rblkcnt;
 int lfs_rfw_max_psegs = 0;
+
+static int
+raise_maxino(struct lfs *fs, ino_t ino)
+{
+	int error = 0;
+
+	while (ino >= LFS_MAXINO(fs)) {
+		error = lfs_extend_ifile(fs, NOCRED);
+		if (error)
+			break;
+	}
+	return error;
+}
 
 /*
  * Allocate a particular inode with a particular version number, freeing
@@ -116,11 +130,12 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 	struct inode *ip;
 	int error;
 
-	KASSERT(ino > LFS_IFILE_INUM);
-	LFS_ASSERT_MAXINO(fs, ino);
-	
 	ASSERT_SEGLOCK(fs); /* XXX it doesn't, really */
 
+	KASSERT(ino > LFS_IFILE_INUM);
+	if ((error = raise_maxino(fs, ino)) != 0)
+		return error;
+	
 	/*
 	 * First, just try a vget. If the version number is the one we want,
 	 * we don't have to do anything else.  If the version number is wrong,
@@ -230,8 +245,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 
 	KASSERT(lbn >= 0);	/* no indirect blocks */
 	KASSERT(ino > LFS_IFILE_INUM);
-	LFS_ASSERT_MAXINO(fs, ino);
-	
+
 	DLOG((DLOG_RF, "update_meta: ino %d lbn %d size %d at 0x%jx\n",
 	      (int)ino, (int)lbn, (int)size, (uintmax_t)ndaddr));
 
@@ -449,7 +463,8 @@ update_inoblk(struct lfs_inofuncarg *lifa)
 		if (ino <= LFS_IFILE_INUM)
 			continue;
 
-		LFS_ASSERT_MAXINO(fs, ino);
+		if ((error = raise_maxino(fs, ino)) != 0)
+			continue;
 			
 		/* Check generation number */
 		LFS_IENTRY(ifp, fs, lfs_dino_getinumber(fs, dip), ibp);
