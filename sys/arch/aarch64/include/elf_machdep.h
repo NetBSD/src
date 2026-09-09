@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.8 2025/11/28 19:12:58 jkoshy Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.9 2026/09/09 05:56:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -88,13 +88,13 @@
 #define	R_AARCH64_ADR_PREL_PG_HI21_NC	276	/* Page(S + A) - Page(P) */
 #define R_AARCH64_ADD_ABS_LO12_NC	277	/* S + A */
 #define	R_AARCH64_LDST8_ABS_LO12_NC	278	/* S + A */
-#define R_AARCH_TSTBR14			279	/* S + A - P */
-#define R_AARCH_CONDBR19		281	/* S + A - P */
-#define R_AARCH_JUMP26			282	/* S + A - P */
-#define R_AARCH_CALL26			283	/* S + A - P */
-#define R_AARCH_LDST16_ABS_LO12_NC	284	/* S + A */
-#define R_AARCH_LDST32_ABS_LO12_NC	285	/* S + A */
-#define R_AARCH_LDST64_ABS_LO12_NC	286	/* S + A */
+#define R_AARCH64_TSTBR14		279	/* S + A - P */
+#define R_AARCH64_CONDBR19		281	/* S + A - P */
+#define R_AARCH64_JUMP26		282	/* S + A - P */
+#define R_AARCH64_CALL26		283	/* S + A - P */
+#define R_AARCH64_LDST16_ABS_LO12_NC	284	/* S + A */
+#define R_AARCH64_LDST32_ABS_LO12_NC	285	/* S + A */
+#define R_AARCH64_LDST64_ABS_LO12_NC	286	/* S + A */
 #define R_AARCH64_MOVW_PREL_G0		287	/* S + A - P */
 #define R_AARCH64_MOVW_PREL_G0_NC	288	/* S + A - P */
 #define R_AARCH64_MOVW_PREL_G1		289	/* S + A - P */

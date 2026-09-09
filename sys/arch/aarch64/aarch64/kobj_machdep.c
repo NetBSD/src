@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.10 2026/09/09 05:47:52 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.11 2026/09/09 05:56:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.10 2026/09/09 05:47:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.11 2026/09/09 05:56:04 skrll Exp $");
 
 #define ELFSIZE		ARCH_ELFSIZE
 
@@ -61,14 +61,14 @@ static const struct rtypeinfo rtypetbl[] = {
 	{ R_AARCH64_ABS64,		"R_AARCH64_ABS64"		},
 	{ R_AARCH64_ADD_ABS_LO12_NC,	"R_AARCH64_ADD_ABS_LO12_NC"	},
 	{ R_AARCH64_LDST128_ABS_LO12_NC, "R_AARCH64_LDST128_ABS_LO12_NC"},
-	{ R_AARCH_LDST64_ABS_LO12_NC,	"R_AARCH64_LDST64_ABS_LO12_NC"	},
-	{ R_AARCH_LDST32_ABS_LO12_NC,	"R_AARCH64_LDST32_ABS_LO12_NC"	},
-	{ R_AARCH_LDST16_ABS_LO12_NC,	"R_AARCH64_LDST16_ABS_LO12_NC"	},
+	{ R_AARCH64_LDST64_ABS_LO12_NC,	"R_AARCH64_LDST64_ABS_LO12_NC"	},
+	{ R_AARCH64_LDST32_ABS_LO12_NC,	"R_AARCH64_LDST32_ABS_LO12_NC"	},
+	{ R_AARCH64_LDST16_ABS_LO12_NC,	"R_AARCH64_LDST16_ABS_LO12_NC"	},
 	{ R_AARCH64_LDST8_ABS_LO12_NC,	"R_AARCH64_LDST8_ABS_LO12_NC"	},
 	{ R_AARCH64_ADR_PREL_PG_HI21_NC, "R_AARCH64_ADR_PREL_PG_HI21_NC"},
 	{ R_AARCH64_ADR_PREL_PG_HI21,	"R_AARCH64_ADR_PREL_PG_HI21"	},
-	{ R_AARCH_JUMP26,		"R_AARCH64_JUMP26"		},
-	{ R_AARCH_CALL26,		"R_AARCH64_CALL26"		},
+	{ R_AARCH64_JUMP26,		"R_AARCH64_JUMP26"		},
+	{ R_AARCH64_CALL26,		"R_AARCH64_CALL26"		},
 	{ R_AARCH64_PREL32,		"R_AARCH64_PREL32"		},
 	{ R_AARCH64_PREL16,		"R_AARCH64_PREL16"		}
 };
@@ -219,22 +219,22 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 	case R_AARCH64_ADD_ABS_LO12_NC:
 	case R_AARCH64_LDST8_ABS_LO12_NC:
-	case R_AARCH_LDST16_ABS_LO12_NC:
-	case R_AARCH_LDST32_ABS_LO12_NC:
-	case R_AARCH_LDST64_ABS_LO12_NC:
+	case R_AARCH64_LDST16_ABS_LO12_NC:
+	case R_AARCH64_LDST32_ABS_LO12_NC:
+	case R_AARCH64_LDST64_ABS_LO12_NC:
 	case R_AARCH64_LDST128_ABS_LO12_NC:
 		switch (rtype) {
 		case R_AARCH64_ADD_ABS_LO12_NC:
 		case R_AARCH64_LDST8_ABS_LO12_NC:
 			shift = 0;
 			break;
-		case R_AARCH_LDST16_ABS_LO12_NC:
+		case R_AARCH64_LDST16_ABS_LO12_NC:
 			shift = 1;
 			break;
-		case R_AARCH_LDST32_ABS_LO12_NC:
+		case R_AARCH64_LDST32_ABS_LO12_NC:
 			shift = 2;
 			break;
-		case R_AARCH_LDST64_ABS_LO12_NC:
+		case R_AARCH64_LDST64_ABS_LO12_NC:
 			shift = 3;
 			break;
 		case R_AARCH64_LDST128_ABS_LO12_NC:
@@ -285,8 +285,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		    (immlo << 29) | (immhi << 5));
 		break;
 
-	case R_AARCH_JUMP26:
-	case R_AARCH_CALL26:
+	case R_AARCH64_JUMP26:
+	case R_AARCH64_CALL26:
 		/*
 		 * S + A - P
 		 *  e.g.) b <sym>+<addend>
