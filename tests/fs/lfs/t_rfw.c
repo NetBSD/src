@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rfw.c,v 1.8 2025/10/30 15:30:17 perseant Exp $	*/
+/*	$NetBSD: t_rfw.c,v 1.9 2026/09/09 22:22:41 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -34,7 +34,7 @@
 #define FSSIZE 10000
 
 /* Actually run the test */
-void test(int);
+void test(int, int);
 
 ATF_TC(rfw32);
 ATF_TC_HEAD(rfw32, tc)
@@ -52,6 +52,22 @@ ATF_TC_HEAD(rfw64, tc)
 	atf_tc_set_md_var(tc, "timeout", "20");
 }
 
+ATF_TC(norfw32);
+ATF_TC_HEAD(norfw32, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"LFS32 rolls forward without asking");
+	atf_tc_set_md_var(tc, "timeout", "20");
+}
+
+ATF_TC(norfw64);
+ATF_TC_HEAD(norfw64, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"LFS64 rolls forward without asking");
+	atf_tc_set_md_var(tc, "timeout", "20");
+}
+
 #define UNCHANGED_CONTROL MP "/3-unchanged-control"
 #define TO_BE_DELETED     MP "/4-to-be-deleted"
 #define TO_BE_APPENDED    MP "/5-to-be-appended"
@@ -61,15 +77,25 @@ const char *sblock[2] = { SBLOCK0_COPY, SBLOCK1_COPY };
 
 ATF_TC_BODY(rfw32, tc)
 {
-	test(32);
+	test(32, 1);
 }
 
 ATF_TC_BODY(rfw64, tc)
 {
-	test(64);
+	test(64, 1);
 }
 
-void test(int width)
+ATF_TC_BODY(norfw32, tc)
+{
+	test(32, 0);
+}
+
+ATF_TC_BODY(norfw64, tc)
+{
+	test(64, 0);
+}
+
+void test(int width, int rfw)
 {
 	struct ufs_args args;
 	char buf[MAXLINE];
@@ -162,12 +188,12 @@ void test(int width)
 #endif /* USE_DUMPLFS */
 
 	/*
-	 * Roll forward.
+	 * Roll forward, if requested.
 	 */
 
 	/* Mount filesystem; this will roll forward. */
 	fprintf(stderr, "* Mount fs [3, to roll forward]\n");
-	if (rump_sys_mount(MOUNT_LFS, MP, 0, &args, sizeof(args)) == -1)
+	if (rump_sys_mount(MOUNT_LFS, MP, (rfw ? MNT_LOG : 0), &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("rump_sys_mount failed [3]");
 
 	/* Unmount filesystem */
@@ -188,7 +214,9 @@ void test(int width)
 #endif /* USE_DUMPLFS */
 	
 	/*
-	 * Check file system contents
+	 * Check file system contents.  If we roll forward,
+	 * we expect the system calls to return zero.  If
+	 * we are not, we expect the opposite result.
 	 */
 
 	/* Mount filesystem one last time */
@@ -199,19 +227,19 @@ void test(int width)
 	if (check_file(UNCHANGED_CONTROL, CHUNKSIZE, 3) != 0)
 		atf_tc_fail("Unchanged control file differs(!)");
 
-	if (rump_sys_access(TO_BE_DELETED, F_OK) == 0)
-		atf_tc_fail("Removed file still present");
+	if (!rump_sys_access(TO_BE_DELETED, F_OK) == !!rfw)
+		atf_tc_fail("Removed file %s", rfw ? "still present" : "absent");
 	else 
 		fprintf(stderr, "%s: no problem\n", TO_BE_DELETED);
 
-	if (check_file(TO_BE_APPENDED, 2 * CHUNKSIZE, 5) != 0)
-		atf_tc_fail("Appended file differs");
+	if (!check_file(TO_BE_APPENDED, 2 * CHUNKSIZE, 5) != !!rfw)
+		atf_tc_fail("Appended file differs from expected");
 
-	if (rump_sys_access(NEWLY_CREATED, F_OK) != 0)
-		atf_tc_fail("Newly added file missing");
+	if (!rump_sys_access(NEWLY_CREATED, F_OK) != !!rfw)
+		atf_tc_fail("Newly added file %s", rfw ? "missing" : "present");
 
-	if (check_file(NEWLY_CREATED, CHUNKSIZE, 6) != 0)
-		atf_tc_fail("Newly added file differs");
+	if (!check_file(NEWLY_CREATED, CHUNKSIZE, 6) != !!rfw)
+		atf_tc_fail("Newly added file differs from expected");
 
 	/* Umount filesystem */
 	rump_sys_unmount(MP, 0);
@@ -229,5 +257,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, rfw32);
 	ATF_TP_ADD_TC(tp, rfw64);
+	ATF_TP_ADD_TC(tp, norfw32);
+	ATF_TP_ADD_TC(tp, norfw64);
 	return atf_no_error();
 }

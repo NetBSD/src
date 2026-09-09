@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.43 2026/08/29 17:56:05 kre Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.44 2026/09/09 22:22:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.43 2026/08/29 17:56:05 kre Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.44 2026/09/09 22:22:41 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ static const struct mntopt mopts[] = {
 	MOPT_GETARGS,
 	MOPT_NOATIME,
 	MOPT_RELATIME,
+	MOPT_LOG,
 	MOPT_NULL,
 };
 
@@ -109,7 +110,7 @@ mount_lfs_parseargs(int argc, char *argv[],
 
 	memset(args, 0, sizeof(*args));
 	nsegs = "4";
-	*mntflags = 0;
+	*mntflags = MNT_LOG;
 	howclean = HOWCLEAN_KERNEL;
 	cleaner_bytes = 1;
 	while ((ch = getopt(argc, argv, "bdikN:no:su")) != -1)

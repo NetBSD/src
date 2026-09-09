@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.402 2026/09/08 22:30:44 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.403 2026/09/09 22:22:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.402 2026/09/08 22:30:44 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.403 2026/09/09 22:22:41 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -913,7 +913,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct ulfsmount *ump;
 	struct vnode *vp;
 	dev_t dev;
-	int error, i, ronly, fsbsize;
+	int error, i, ronly, fsbsize, rfw;
 	kauth_cred_t cred;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
@@ -934,6 +934,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
+	rfw = (mp->mnt_flag & MNT_LOG) != 0;
 
 	/* Don't free random space on error. */
 	primarybuf = NULL;
@@ -1251,7 +1252,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* Set lastcleaned to an invalid value */
 	fs->lfs_lastcleaned = (uint32_t)-1;
 
-	if (!ronly) {
+	if (rfw && !ronly) {
 		/* Roll forward */
 		lfs_roll_forward(fs, mp, l);
 		lfs_reset_avail(fs);
