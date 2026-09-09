@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2243 2026/09/08 14:21:56 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.2244 2026/09/09 10:05:26 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -819,7 +819,7 @@ import. Talk to haad before importing new version.
 
 Package:	libpcap
 Version:	1.10.6
-Current Vers:	1.10.6
+Current Vers:	1.10.7
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
