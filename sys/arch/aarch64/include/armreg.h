@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.79 2026/09/09 06:04:56 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.80 2026/09/09 06:11:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1768,6 +1768,19 @@ AARCH64REG_READ_INLINE2(icc_iar1_el1, s3_0_c12_c12_0)
 #define	icc_sgi1r_write		reg_icc_sgi1r_el1_write
 #define	icc_iar1_read		reg_icc_iar1_el1_read
 #define	icc_eoi1r_write		reg_icc_eoir1_el1_write
+
+AARCH64REG_READ_INLINE(ich_hcr_el2)
+AARCH64REG_WRITE_INLINE(ich_hcr_el2)
+
+#define ICH_HCR_EL2_EN		__BIT(0)	// Virtualization enable
+#define ICH_HCR_EL2_UIE		__BIT(1)	// Underflow Interrupt Enable
+#define ICH_HCR_EL2_LRENPIE	__BIT(2)	// List Register Entry Not Present Interrupt Enable
+#define ICH_HCR_EL2_NPIE	__BIT(3)	// No Pending Interrupt Enable
+#define ICH_HCR_EL2_VGrp0EIE	__BIT(4)	// Virtual Group 0 Enable for EL1 Interrupts
+#define ICH_HCR_EL2_VGrp1EIE	__BIT(5)	// Virtual Group 1 Enable for EL1 Interrupts
+#define ICH_HCR_EL2_TC		__BIT(10)	// Trap Control
+#define ICH_HCR_EL2_TALL0	__BIT(11)	// Trap All Group 0 interrupts
+#define ICH_HCR_EL2_TALL1	__BIT(12)	// Trap All Group 1 interrupts
 
 #if defined(_KERNEL)
 
