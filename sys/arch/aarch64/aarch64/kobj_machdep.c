@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.11 2026/09/09 05:56:04 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.12 2026/09/09 15:17:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.11 2026/09/09 05:56:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.12 2026/09/09 15:17:56 skrll Exp $");
 
 #define ELFSIZE		ARCH_ELFSIZE
 
@@ -57,20 +57,26 @@ struct rtypeinfo {
 	const char *name;
 };
 
+#define RTYPE(type)							\
+	{								\
+		.rtype = R_AARCH64_ ## type,				\
+		.name = "R_AARCH64_" # type,				\
+	}
+
 static const struct rtypeinfo rtypetbl[] = {
-	{ R_AARCH64_ABS64,		"R_AARCH64_ABS64"		},
-	{ R_AARCH64_ADD_ABS_LO12_NC,	"R_AARCH64_ADD_ABS_LO12_NC"	},
-	{ R_AARCH64_LDST128_ABS_LO12_NC, "R_AARCH64_LDST128_ABS_LO12_NC"},
-	{ R_AARCH64_LDST64_ABS_LO12_NC,	"R_AARCH64_LDST64_ABS_LO12_NC"	},
-	{ R_AARCH64_LDST32_ABS_LO12_NC,	"R_AARCH64_LDST32_ABS_LO12_NC"	},
-	{ R_AARCH64_LDST16_ABS_LO12_NC,	"R_AARCH64_LDST16_ABS_LO12_NC"	},
-	{ R_AARCH64_LDST8_ABS_LO12_NC,	"R_AARCH64_LDST8_ABS_LO12_NC"	},
-	{ R_AARCH64_ADR_PREL_PG_HI21_NC, "R_AARCH64_ADR_PREL_PG_HI21_NC"},
-	{ R_AARCH64_ADR_PREL_PG_HI21,	"R_AARCH64_ADR_PREL_PG_HI21"	},
-	{ R_AARCH64_JUMP26,		"R_AARCH64_JUMP26"		},
-	{ R_AARCH64_CALL26,		"R_AARCH64_CALL26"		},
-	{ R_AARCH64_PREL32,		"R_AARCH64_PREL32"		},
-	{ R_AARCH64_PREL16,		"R_AARCH64_PREL16"		}
+	RTYPE(ABS64),
+	RTYPE(ADD_ABS_LO12_NC),
+	RTYPE(LDST128_ABS_LO12_NC),
+	RTYPE(LDST64_ABS_LO12_NC),
+	RTYPE(LDST32_ABS_LO12_NC),
+	RTYPE(LDST16_ABS_LO12_NC),
+	RTYPE(LDST8_ABS_LO12_NC),
+	RTYPE(ADR_PREL_PG_HI21_NC),
+	RTYPE(ADR_PREL_PG_HI21),
+	RTYPE(JUMP26),
+	RTYPE(CALL26),
+	RTYPE(PREL32),
+	RTYPE(PREL16),
 };
 
 static const char *
