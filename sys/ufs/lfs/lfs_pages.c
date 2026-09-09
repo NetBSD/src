@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.32 2026/09/08 22:32:36 perseant Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.33 2026/09/09 15:23:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.32 2026/09/08 22:32:36 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.33 2026/09/09 15:23:11 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -687,7 +687,6 @@ retry:
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, 0);
 		mutex_exit(&lfs_lock);
-		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 
 		/*
 		 * The flush will have cleaned out this vnode as well,
