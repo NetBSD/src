@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.106 2024/05/27 02:39:15 nia Exp $
+.\"	$NetBSD: audio.4,v 1.107 2026/09/10 13:18:47 nia Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 27, 2024
+.Dd September 10, 2026
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -378,6 +378,12 @@ The encoding parameter can have the following values:
 mu-law encoding, 8 bits/sample
 .It Dv AUDIO_ENCODING_ALAW
 A-law encoding, 8 bits/sample
+.It Dv AUDIO_ENCODING_LINEAR
+Portable equivalent to
+.Dv AUDIO_ENCODING_SLINEAR .
+.It Dv AUDIO_ENCODING_LINEAR8
+Portable equivalent to
+.Dv AUDIO_ENCODING_ULINEAR .
 .It Dv AUDIO_ENCODING_SLINEAR
 two's complement signed linear encoding with the platform byte order
 .It Dv AUDIO_ENCODING_ULINEAR
@@ -757,6 +763,29 @@ string values.
 .It Pa /dev/sound
 .It Pa /dev/mixer
 .El
+.Sh COMPATIBILITY
+.Pa /dev/audio
+intends to be compatible with SunOS's audio interface.
+This was later known as SADA in Solaris and illumos.
+However, it has been extended with numerous extra features specific to
+.Nx .
+.Pp
+Use
+.Dv AUDIO_GETINFO
+in applications intended to be portable, rather than
+.Dv AUDIO_GETBUFINFO .
+.Pp
+Use
+.Dv AUDIO_ENCODING_LINEAR
+and
+.Dv AUDIO_ENCODING_LINEAR8
+in applications intended to be portable, rather than signedness or
+endian-specific variants.
+.Pp
+The programming interface exposed by
+.Pa /dev/mixer
+is specific to
+.Nx .
 .Sh SEE ALSO
 .Xr audiocfg 1 ,
 .Xr audioctl 1 ,
@@ -827,8 +856,37 @@ string values.
 .Xr ym 4
 .\" .Xr zaudio 4
 .Sh HISTORY
+The generic audio subsystem first appeared in
+.Nx 1.1 .
 Support for virtual channels and mixing first appeared in
 .Nx 8.0 .
+.Pp
+The
+.Dv AUDIO_PERROR
+ioctl first appeared in
+.Nx 1.2 .
+.Pp
+The
+.Dv AUDIO_WSEEK ,
+.Dv AUDIO_GETPROPS ,
+.Dv AUDIO_GETIOFFS ,
+and
+.Dv AUDIO_GETOOFFS
+ioctls first appeared in
+.Nx 1.3 .
+.Pp
+The
+.Dv AUDIO_GETBUFINFO
+ioctl first appeared in
+.Nx 5.0 .
+.Pp
+The
+.Dv AUDIO_GETFORMAT ,
+.Dv AUDIO_SETFORMAT ,
+and
+.Dv AUDIO_QUERYFORMAT
+ioctls first appeared in
+.Nx 9.0 .
 .Sh BUGS
 If the device is used in
 .Xr mmap 2
