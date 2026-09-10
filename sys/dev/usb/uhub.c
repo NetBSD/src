@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.163 2026/02/25 05:28:35 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.164 2026/09/10 05:19:03 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.163 2026/02/25 05:28:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.164 2026/09/10 05:19:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -171,7 +171,7 @@ struct uhub_softc {
 #define UHUB_IS_SINGLE_TT(sc) ((sc)->sc_proto == UDPROTO_HSHUBSTT)
 
 #define PORTSTAT_ISSET(sc, port) \
-	((sc)->sc_status[(port) / 8] & (1 << ((port) % 8)))
+    ((sc)->sc_status[(port) / 8] & (1 << ((port) % 8)))
 
 Static usbd_status uhub_explore(struct usbd_device *);
 Static void uhub_intr(struct usbd_xfer *, void *, usbd_status);
@@ -328,8 +328,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
 	if (dev->ud_depth > 0 && UHUB_IS_HIGH_SPEED(sc)) {
 		aprint_normal_dev(self, "%s transaction translator%s\n",
-		       UHUB_IS_SINGLE_TT(sc) ? "single" : "multiple",
-		       UHUB_IS_SINGLE_TT(sc) ? "" : "s");
+		    UHUB_IS_SINGLE_TT(sc) ? "single" : "multiple",
+		    UHUB_IS_SINGLE_TT(sc) ? "" : "s");
 	}
 
 	err = usbd_set_config_index(dev, 0, 1);
@@ -420,9 +420,9 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	sc->sc_explorepending = true;
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
-		  USBD_SHORT_XFER_OK|USBD_MPSAFE, &sc->sc_ipipe, sc,
-		  sc->sc_statusbuf, sc->sc_statuslen,
-		  uhub_intr, USBD_DEFAULT_INTERVAL);
+	    USBD_SHORT_XFER_OK | USBD_MPSAFE, &sc->sc_ipipe, sc,
+	    sc->sc_statusbuf, sc->sc_statuslen,
+	    uhub_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		aprint_error_dev(self, "cannot open interrupt pipe\n");
 		goto bad;
@@ -847,7 +847,7 @@ uhub_explore(struct usbd_device *dev)
 
 		/* Get device info and set its address. */
 		err = usbd_new_device(sc->sc_dev, dev->ud_bus,
-			  dev->ud_depth + 1, speed, port, up);
+		    dev->ud_depth + 1, speed, port, up);
 
 		if (dev->ud_bus->ub_hctype == USBHCTYPE_VHCI) {
 			kcov_remote_leave(KCOV_REMOTE_VHCI,
