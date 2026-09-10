@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.107 2026/09/10 13:18:47 nia Exp $
+.\"	$NetBSD: audio.4,v 1.108 2026/09/10 13:34:37 nia Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -873,12 +873,17 @@ The
 and
 .Dv AUDIO_GETOOFFS
 ioctls first appeared in
-.Nx 1.3 .
+.Nx 1.3
+to support
+.Xr ossaudio 3 .
 .Pp
 The
 .Dv AUDIO_GETBUFINFO
 ioctl first appeared in
-.Nx 5.0 .
+.Nx 5.0
+to improve the performance of
+.Xr ossaudio 3
+emulation.
 .Pp
 The
 .Dv AUDIO_GETFORMAT ,
@@ -886,7 +891,8 @@ The
 and
 .Dv AUDIO_QUERYFORMAT
 ioctls first appeared in
-.Nx 9.0 .
+.Nx 9.0
+with the separation of the hardware and application tracks.
 .Sh BUGS
 If the device is used in
 .Xr mmap 2
