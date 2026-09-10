@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.17 2025/12/13 01:14:00 gutteridge Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.18 2026/09/10 20:10:17 yurix Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -220,6 +220,13 @@
 		<string>TI OMAP4 PandaBoard-ES</string>
 		<key>u-boot-pkg</key>
 		<string>pandaboard</string>
+	</dict>
+	<key>lego,ev3</key>
+	<dict>
+		<key>description</key>
+		<string>Lego Mindstorms EV3</string>
+		<key>u-boot-pkg</key>
+		<string>lego-ev3</string>
 	</dict>
 
 	<!--
