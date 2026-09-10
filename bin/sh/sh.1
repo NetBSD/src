@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.282 2026/08/15 19:27:08 kre Exp $
+.\"	$NetBSD: sh.1,v 1.283 2026/09/10 12:24:25 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1091,29 +1091,53 @@ command or some other special construct may have been recognized.
 .Ss Simple Commands
 .\"
 If a simple command has been recognized, the shell performs
-the following actions:
+the following actions, though not precisely in the order suggested:
 .Bl -enum -offset indent
 .It
 Leading words of the form
-.Dq Ar name Ns Li = Ns Ar value
-are stripped off, the value is expanded, as described below,
-and the results are assigned to the environment of the simple command.
+.Dq Ar name Ns Li = Ns Ar value ,
+where no part of
+.Ar name Ns Li =
+is quoted,
+are set aside.
+The
+.Ar value
+is then expanded, as described below, by performing
+tilde, parameter, and arithmetic expansions, and command substitutions.
+No pathname expansion or field splitting is performed.
+The result has quotes removed and is then assigned to the environment of
+the simple command.
 Redirection operators and their arguments (as described below) are
 stripped off and saved for processing in step 3 below.
 .It
 The remaining words are expanded as described in the
 .Sx Word Expansions
 section below.
+All expansions are applied.
 The first remaining word is considered the command name and the
 command is located.
-Any remaining words are considered the arguments of the command.
+Any more remaining words are considered the arguments of the command.
 If no command name resulted, then the
 .Dq Ar name Ns Li = Ns Ar value
 variable assignments recognized in item 1 affect the current shell,
-but are not automatically added to the environment (are not exported).
+but are not automatically added to the environment (are not exported),
+unless the variable
+.Ar name
+was previously exported, or the
+.Fl a
+option is enabled.
+This also occurs in this
+.Nm
+if the command being invoked is one of the special-built-in commands.
 .It
 Redirections are performed, from first to last, in the order given,
 as described in the next section.
+In the case where no command name results from the expansions of the
+argument words (if any), once performed, the redirections are undone.
+To have redirections apply to the current shell environment, specify
+them with the
+.Ic exec
+special-built-in command, with no other arguments (no command to execute).
 .El
 .\"
 .\"
