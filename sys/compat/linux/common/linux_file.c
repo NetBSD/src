@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.135 2026/09/07 15:10:11 sborrill Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.136 2026/09/11 13:55:42 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.135 2026/09/07 15:10:11 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.136 2026/09/11 13:55:42 sborrill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -889,6 +889,34 @@ linux_sys_pwritev(struct lwp *l, const struct linux_sys_pwritev_args *uap,
 	SCARG(&ua, offset) = linux_hilo_to_off_t(SCARG(uap, off_hi),
 						 SCARG(uap, off_lo));
 	return sys_pwritev(l, &ua, retval);
+}
+
+/*
+ * writev(2)
+ */
+int
+linux_sys_writev(struct lwp *l, const struct linux_sys_writev_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const struct iovec *) iovp;
+		syscallarg(int) iovcnt;
+	} */
+
+	int iovcnt = SCARG(uap, iovcnt);
+
+	if (iovcnt == 0) {
+		*retval = 0;
+		return 0;
+	}
+
+	struct sys_writev_args wra;
+
+	SCARG(&wra, fd) = SCARG(uap, fd);
+	SCARG(&wra, iovp) = SCARG(uap, iovp);
+	SCARG(&wra, iovcnt) = iovcnt;
+
+	return sys_writev(l, &wra, retval);
 }
 
 int
