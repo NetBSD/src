@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.143 2026/09/10 20:19:55 yurix Exp $
+#	$NetBSD: Makefile.inc,v 1.144 2026/09/11 06:56:48 yurix Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -166,7 +166,7 @@ SNAP_MD_POST_DEPS_BOOTABLE+=	smp_armv7-${board}.img.gz
 .endfor
 .endif
 
-.if !empty(MACHINE_ARCH:M*armv5*) && empty(ALL_KERNELS)
+.if !empty(MACHINE_ARCH:M*armv5*) && empty(MACHINE_ARCH:M*armv5hf*) && empty(ALL_KERNELS)
 smp_armv5.img: __mkimage
 smp_armv5.img.gz: __mkcompressed
 MKI_OPTS.smp_armv5.img=		-K ${IMAGE.kern} -x
