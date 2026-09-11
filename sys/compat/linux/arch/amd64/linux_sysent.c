@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.88 2026/09/11 13:08:11 sborrill Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.89 2026/09/11 13:55:56 sborrill Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.88 2026/09/11 13:08:11 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.89 2026/09/11 13:55:56 sborrill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -140,9 +140,9 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)sys_readv
 	},		/* 19 = readv */
 	{
-		ns(struct sys_writev_args),
+		ns(struct linux_sys_writev_args),
 		.sy_flags = SYCALL_ARG_PTR | SYCALL_RET_WIDE,
-		.sy_call = (sy_call_t *)sys_writev
+		.sy_call = (sy_call_t *)linux_sys_writev
 	},		/* 20 = writev */
 	{
 		ns(struct sys_access_args),

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.88 2026/09/11 13:08:11 sborrill Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.89 2026/09/11 13:55:56 sborrill Exp $ */
 
 /*
  * System call argument lists.
@@ -126,7 +126,12 @@ check_syscall_args(linux_sys_pwrite)
 
 struct sys_readv_args;
 
-struct sys_writev_args;
+struct linux_sys_writev_args {
+	syscallarg(int) fd;
+	syscallarg(const struct iovec *) iovp;
+	syscallarg(int) iovcnt;
+};
+check_syscall_args(linux_sys_writev)
 
 struct sys_access_args;
 
@@ -1382,7 +1387,7 @@ int	linux_sys_pwrite(struct lwp *, const struct linux_sys_pwrite_args *, registe
 
 int	sys_readv(struct lwp *, const struct sys_readv_args *, register_t *);
 
-int	sys_writev(struct lwp *, const struct sys_writev_args *, register_t *);
+int	linux_sys_writev(struct lwp *, const struct linux_sys_writev_args *, register_t *);
 
 int	sys_access(struct lwp *, const struct sys_access_args *, register_t *);
 
