@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.90 2024/10/01 16:41:29 riastradh Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.91 2026/09/11 13:39:55 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.90 2024/10/01 16:41:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.91 2026/09/11 13:39:55 sborrill Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -645,6 +645,13 @@ linux_sys_rt_queueinfo(struct lwp *l, const struct linux_sys_rt_queueinfo_args *
 	*/
 	int error;
 	linux_siginfo_t info;
+
+	int pid = SCARG(uap, pid);
+
+	if (pid <= 0) {
+		error = ESRCH;
+		return error;
+	}
 
 	error = copyin(SCARG(uap, uinfo), &info, sizeof(info));
 	if (error)
