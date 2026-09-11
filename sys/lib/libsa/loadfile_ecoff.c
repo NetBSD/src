@@ -58,7 +58,7 @@ loadfile_coff(int fd, struct ecoff_exechdr *coff, u_long *marks, int flags)
 	ssize_t nr;
 
 	/* some ports dont use the offset */
-	offset = offset;
+	(void)offset;
 
 	/* Read in text. */
 	if (lseek(fd, ECOFF_TXTOFF(coff), SEEK_SET) == -1)  {

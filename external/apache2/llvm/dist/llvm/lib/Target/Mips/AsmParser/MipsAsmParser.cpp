@@ -2927,11 +2927,11 @@ bool MipsAsmParser::loadAndAddSymbolAddress(const MCExpr *SymExpr,
 
     bool IsPtr64 = ABI.ArePtrs64bit();
     bool IsLocalSym =
-        Res.getSymA()->getSymbol().isInSection() ||
         Res.getSymA()->getSymbol().isTemporary() ||
-        (Res.getSymA()->getSymbol().isELF() &&
-         cast<MCSymbolELF>(Res.getSymA()->getSymbol()).getBinding() ==
-             ELF::STB_LOCAL);
+        (Res.getSymA()->getSymbol().isELF()
+             ? cast<MCSymbolELF>(Res.getSymA()->getSymbol()).getBinding() ==
+                   ELF::STB_LOCAL
+             : Res.getSymA()->getSymbol().isInSection());
     bool UseXGOT = STI->getFeatureBits()[Mips::FeatureXGOT] && !IsLocalSym;
 
     // The case where the result register is $25 is somewhat special. If the

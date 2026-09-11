@@ -28,9 +28,13 @@
 #endif
 
 #if defined(__mips__)
-  #include <sys/cachectl.h>
-  #include <sys/syscall.h>
-  #include <unistd.h>
+  #if defined(__NetBSD__)
+    #include <mips/cachectl.h>
+  #else
+    #include <sys/cachectl.h>
+    #include <sys/syscall.h>
+    #include <unistd.h>
+  #endif
   #if defined(__ANDROID__) && defined(__LP64__)
     /*
      * clear_mips_cache - Invalidates instruction cache for Mips.
@@ -118,7 +122,9 @@ void __clear_cache(void *start, void *end) {
 #elif defined(__mips__)
   const uintptr_t start_int = (uintptr_t) start;
   const uintptr_t end_int = (uintptr_t) end;
-    #if defined(__ANDROID__) && defined(__LP64__)
+    #if defined(__NetBSD__)
+        _cacheflush(start, end_int - start_int, BCACHE);
+    #elif defined(__ANDROID__) && defined(__LP64__)
         // Call synci implementation for short address range.
         const uintptr_t address_range_limit = 256;
         if ((end_int - start_int) <= address_range_limit) {
@@ -171,4 +177,3 @@ void __clear_cache(void *start, void *end) {
     #endif
 #endif
 }
-

@@ -172,6 +172,12 @@ getReservedRegs(const MachineFunction &MF) const {
   for (unsigned I = 0; I < array_lengthof(ReservedGPR64); ++I)
     Reserved.set(ReservedGPR64[I]);
 
+  // Mark user-reserved GPRs and their 64-bit super-registers. GPR32 is
+  // deliberately ordered by architectural register number.
+  for (unsigned I = 1; I < 32; ++I)
+    if (Subtarget.isGPRReservedByUser(I))
+      markSuperRegs(Reserved, Mips::GPR32RegClass.getRegister(I));
+
   // For mno-abicalls, GP is a program invariant!
   if (!Subtarget.isABICalls()) {
     Reserved.set(Mips::GP);

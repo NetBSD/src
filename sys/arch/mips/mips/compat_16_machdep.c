@@ -97,7 +97,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	struct pcb * const pcb = lwp_getpcb(l);
 	int onstack, error;
 	struct sigcontext *scp = getframe(l, sig, &onstack,
-	    sizeof(*scp), _Alignof(*scp));
+	    sizeof(*scp), _Alignof(struct sigcontext));
 	struct sigcontext ksc;
 	struct trapframe * const tf = l->l_md.md_utf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;

@@ -50,6 +50,13 @@ GP?=		${DEFGP}
 .if ${ACTIVE_CC} == "gcc"
 COPTS.mips_fpu.c+=	-mhard-float -Wa,-mhard-float
 AFLAGS.fp.S+=		-Wa,-mhard-float
+.elif ${ACTIVE_CC} == "clang"
+.for _f in cache_r4k_pcache16.S cache_r4k_pcache32.S \
+	cache_r4k_pcache64.S cache_r4k_pcache128.S \
+	cache_r4k_scache16.S cache_r4k_scache32.S \
+	cache_r4k_scache64.S cache_r4k_scache128.S
+AFLAGS.${_f}+=		-mllvm -asm-macro-max-nesting-depth=64
+.endfor
 .endif
 
 CFLAGS+=	${GP} -mno-abicalls -msoft-float -ffixed-24

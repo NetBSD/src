@@ -40,6 +40,9 @@ namespace Mips {
     // Pure lower 16 bit fixup resulting in - R_MIPS_LO16.
     fixup_Mips_LO16,
 
+    // 16-bit fixup that must be resolved by the assembler.
+    fixup_Mips_AnyImm16,
+
     // 16 bit fixup for GP offest resulting in - R_MIPS_GPREL16.
     fixup_Mips_GPREL16,
 

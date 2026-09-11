@@ -287,6 +287,11 @@ LINTFLAGS.trunctfdf2.c += -X 117,132
 LINTFLAGS.trunctfsf2.c += -X 117,132
 .endif
 
+.if ${LIBC_MACHINE_CPU} == "mips"
+GENERIC_SRCS+= \
+	clear_cache.c
+.endif
+
 .if ${LIBC_MACHINE_ARCH} == "powerpc" || ${LIBC_MACHINE_ARCH} == "powerpc64"
 GENERIC_SRCS+= \
 	clear_cache.c

@@ -50,8 +50,17 @@
 	int splhigh_noprof(void);	\
 	void splx_noprof(int);
 #else   /* !_KERNEL */
-/* Make __mcount static. */
+/*
+ * Clang emits a CALL16 relocation for the inline-assembly call below.  MIPS
+ * ELF requires the target of that relocation to have global binding, so keep
+ * the helper private to libc with hidden visibility instead of making it a
+ * local symbol.
+ */
+#ifdef __clang__
+#define	_KERNEL_MCOUNT_DECL	__attribute__((visibility("hidden")))
+#else
 #define	_KERNEL_MCOUNT_DECL	static
+#endif
 #endif	/* !_KERNEL */
 
 #ifdef _KERNEL

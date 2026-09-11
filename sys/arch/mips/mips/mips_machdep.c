@@ -1810,12 +1810,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "fpu_present", NULL,
-		       NULL,
-#ifdef NOFPU
-		       0,
-#else
-		       1,
-#endif
+		       NULL, mips_options.mips_fpu_id != 0,
 		       NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 

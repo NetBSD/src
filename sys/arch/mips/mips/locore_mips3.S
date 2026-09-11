@@ -123,7 +123,7 @@ RCSID("$NetBSD: locore_mips3.S,v 1.116 2023/02/23 14:56:00 riastradh Exp $")
  *============================================================================
  */
 	.set	noreorder
-#if (__mips < 3) || __mips_o32
+#if (__mips < 3) || defined(__mips_o32)
 	.set	mips3
 #endif
 
@@ -582,7 +582,7 @@ LEAF(mips3_cp0_pg_mask_write)
 	JR_HB_RA
 END(mips3_cp0_pg_mask_write)
 
-#if __mips != 32
+#if __mips != 32 || defined(__mips_o32)
 LEAF(mips3_ld)
 #if defined(__mips_o32)
 #if (MIPS64R2) > 0
@@ -719,7 +719,7 @@ END(baderr64)
 LEAF(mips3_cp0_tlb_entry_hi_probe)
 	dmfc0	t0, MIPS_COP_0_TLB_HI
 	li	v0, -1		/* all 1s */
-#if defined(__mips_isa_rev) && __mips_isa_rev >= 2
+#if defined(__mips_isa_rev) && __mips_isa_rev >= 2 && !defined(__mips_o32)
 	dinsu	v0, zero, 62, 2
 #else
 	dsll	v0, v0, 2	/* except the top 2 */
@@ -745,7 +745,7 @@ LEAF(mips3_cp0_tlb_entry_hi_probe)
 	jr	ra
 	 nop
 END(mips3_cp0_tlb_entry_hi_probe)
-#endif /* __mips != 32 */
+#endif /* __mips != 32 || defined(__mips_o32) */
 
 /*
  * uint64_t mips3_cp0_tlb_entry_lo_probe(void);

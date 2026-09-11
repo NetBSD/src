@@ -391,6 +391,7 @@ STATIC_LEAF(_splsw_splcheck)
 END(_splsw_splcheck)
 
 	.rdata
+	.p2align PTR_SCALESHIFT
 	.globl _C_LABEL(std_splsw)
 _C_LABEL(std_splsw):
 	PTR_WORD _C_LABEL(_splsw_splhigh)
