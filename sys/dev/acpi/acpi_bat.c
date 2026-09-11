@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.123 2024/04/27 00:40:06 christos Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.124 2026/09/11 01:44:16 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.123 2024/04/27 00:40:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.124 2026/09/11 01:44:16 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -162,6 +162,7 @@ struct acpibat_softc {
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "PNP0C0A" },
+	{ .compat = "MSHW0146" },  /* Microsoft Surface Go 3 */
 	DEVICE_COMPAT_EOL
 };
 
