@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5.14.1 2023/08/11 13:43:43 martin Exp $
+# $NetBSD: Makefile,v 1.5.14.2 2026/09/11 16:22:32 martin Exp $
 
 .include <bsd.own.mk>
 PROGDPLIBSSTATIC=yes
@@ -21,9 +21,13 @@ FILES+=rsakey.pem
 FILES+=default.cnf
 .endif
 
+FILES+=8489a545.0
+FILESDIR_8489a545.0=	${TESTSDIR}/store
+
 HELPER_SRCS=	${${HAVE_OPENSSL} == 10 :? mttest.c : threadstest.c}
 
 .include <bsd.init.mk>
 
 .PATH:		${OPENSSLSRC}/apps
 .PATH:		${OPENSSLSRC}/test/recipes/90-test_threads_data
+.PATH:		${OPENSSLSRC}/test/recipes/90-test_threads_data/store

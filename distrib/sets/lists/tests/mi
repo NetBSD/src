@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238.2.25 2026/08/22 10:50:04 martin Exp $
+# $NetBSD: mi,v 1.1238.2.26 2026/09/11 16:22:31 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1460,6 +1460,8 @@
 ./usr/tests/crypto/libcrypto/h_x509v3test		comp-obsolete		obsolete
 ./usr/tests/crypto/libcrypto/h_x509v3test		tests-crypto-tests	compattestfile,atf,openssl=10
 ./usr/tests/crypto/libcrypto/rsakey.pem			tests-crypto-tests	atf,compattestfile,openssl=30
+./usr/tests/crypto/libcrypto/store			tests-crypto-tests	atf,compattestfile,openssl=30
+./usr/tests/crypto/libcrypto/store/8489a545.0		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/t_certs			comp-obsolete		obsolete
 ./usr/tests/crypto/libcrypto/t_certs			tests-crypto-tests	compattestfile,atf,openssl=10
 ./usr/tests/crypto/libcrypto/t_ciphers			tests-crypto-tests	compattestfile,atf
