@@ -1,4 +1,4 @@
-/*	$NetBSD: vpcivar.h,v 1.1 2015/02/12 04:48:37 palle Exp $	*/
+/*	$NetBSD: vpcivar.h,v 1.2 2026/09/12 20:49:21 palle Exp $	*/
 
 /*
  * Copyright (c) 2015 Palle Lyckegaard
@@ -61,6 +61,7 @@ struct vpci_softc {
 	int sc_ign;
 	bus_dma_tag_t sc_dmat;
 	bus_space_tag_t sc_bustag;
+	uint64_t		sc_devhandle;
 #if 0
 FIXME	
 	bus_addr_t sc_csr, sc_xbc;

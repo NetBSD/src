@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.16 2026/08/04 18:11:05 palle Exp $	*/
+/*	$NetBSD: vpci.c,v 1.17 2026/09/12 20:49:21 palle Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.16 2026/08/04 18:11:05 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.17 2026/09/12 20:49:21 palle Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -160,6 +160,7 @@ FIXME
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_csr = ma->ma_reg[0].ur_paddr;
+	sc->sc_devhandle = (ma->ma_reg[0].ur_paddr >> 32) & 0x0fffffff;
 #if 0
 FIXME	
 	sc->sc_xbc = ma->ma_reg[1].ur_paddr;
@@ -373,22 +374,29 @@ vpci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct vpci_pbm *pbm = pa->pa_pc->cookie;
 	uint64_t devhandle = pbm->vp_devhandle;
-	uint64_t devino = INTINO(*ihp);
-	DPRINTF(VDB_INTR, ("vpci_intr_map(): devhandle 0x%lx\n", devhandle));
-	DPRINTF(VDB_INTR, ("vpci_intr_map(): devino 0x%lx\n", devino));
-	uint64_t sysino;
+	uint64_t devino, sysino;
 	int err;
 
+	/*
+	 * If we didn't find a PROM mapping for this interrupt.  Try
+	 * to construct one ourselves based on the swizzled interrupt
+	 * pin.
+	 */
+	if (*ihp == (pci_intr_handle_t)-1 && pa->pa_intrpin != 0)
+		*ihp = pa->pa_intrpin;
+
 	if (*ihp != (pci_intr_handle_t)-1) {
-		err = hv_intr_devino_to_sysino(devhandle, devino, &sysino);
+		devino = INTVEC(*ihp);
+		DPRINTF(VDB_INTR, ("vpci_intr_map(): devhandle 0x%lx devino 0x%lx\n",
+						   devhandle, devino));
+		err = sun4v_intr_devino_to_sysino(devhandle, devino, &sysino);
 		if (err != H_EOK) {
-			printf("vpci_intr_map: hv_intr_devino_to_sysino(%#" PRIx64 ", %#" PRIx64 ") failed - err = %d\n", 
-			       devhandle, devino, err);
+			printf("sun4v_intr_devino_to_sysino(%#lx, %#lx) failed - err = %d\n", 
+				   (long unsigned int)devhandle, (long unsigned int)devino, err);
 			return (-1);
 		}
-		KASSERT(sysino == INTVEC(sysino));
-		*ihp = sysino;
 		DPRINTF(VDB_INTR, ("vpci_intr_map(): sysino 0x%lx\n", sysino));
+		*ihp = sysino;
 		return (0);
 	}
 
@@ -568,11 +576,14 @@ void *
 vpci_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
 {
+	struct vpci_pbm *pbm = t->cookie;
+	struct vpci_softc *sc = pbm->vp_sc;
+	uint64_t devhandle = sc->sc_devhandle;
 	struct intrhand *ih = NULL;
 	int ino;
 
 	ino = INTINO(ihandle);
-	DPRINTF(VDB_INTR, ("%s: ih %lx; level %d ino %#x\n", __func__, (u_long)ihandle, level, ino));
+	DPRINTF(VDB_INTR, ("%s: ih %lx; level %d initial ino %#x\n", __func__, (u_long)ihandle, level, ino));
 
 	if (level == IPL_NONE) {
 		level = INTLEV(ihandle);
@@ -584,7 +595,7 @@ vpci_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	}
 
 	ino |= INTVEC(ihandle);
-	DPRINTF(VDB_INTR, ("%s: ih %lx; level %d ino %#x\n", __func__, (u_long)ihandle, level, ino));
+	DPRINTF(VDB_INTR, ("%s: ih %lx; level %d updated ino %#x\n", __func__, (u_long)ihandle, level, ino));
 
 	ih = intrhand_alloc();
 
@@ -595,6 +606,7 @@ vpci_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	ih->ih_number = ino;
 	ih->ih_pending = 0;
 	ih->ih_ack = vpci_intr_ack;
+	ih->ih_bus = t;
 	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
 	uint64_t sysino = INTVEC(ihandle);
@@ -602,21 +614,28 @@ vpci_intr_establish(bus_space_tag_t t, int ihandle, int level,
 
 	int err;
 
-	err = hv_intr_settarget(sysino, cpus->ci_cpuid);
+	err = sun4v_intr_setcookie(devhandle, sysino, (vaddr_t)ih);
 	if (err != H_EOK)
-		panic("hv_intr_settarget(%lu, %u) failed - err = %d\n", 
-		       (long unsigned int)sysino, cpus->ci_cpuid, err);
+		printf("sun4v_intr_setcookie(%#lx, %#lx, %#lx) failed - err = %d\n", 
+			   (long unsigned int)devhandle,(long unsigned int)sysino,
+			   (long unsigned int)ih, err);
+	
+	err = sun4v_intr_settarget(devhandle, sysino, cpus->ci_cpuid);
+	if (err != H_EOK)
+		printf("sun4v_intr_settarget(%#lx, %#lx, %d) failed - err = %d\n", 
+			   (long unsigned int)devhandle, (long unsigned int)sysino,
+			   cpus->ci_cpuid, err);
 
 	/* Clear pending interrupts. */
-	err = hv_intr_setstate(sysino, INTR_IDLE);
+	err = sun4v_intr_setstate(devhandle, sysino, INTR_IDLE);
 	if (err != H_EOK)
-	  panic("hv_intr_setstate(%lu, INTR_IDLE) failed - err = %d\n", 
-		(long unsigned int)sysino, err);
+	  printf("sun4v_intr_setstate(%lx, %lu, INTR_IDLE) failed - err = %d\n", 
+			 (long unsigned int)devhandle, (long unsigned int)sysino, err);
 
-	err = hv_intr_setenabled(sysino, INTR_ENABLED);
+	err = sun4v_intr_setenabled(devhandle, sysino, INTR_ENABLED);
 	if (err != H_EOK)
-	  panic("hv_intr_setenabled(%lu) failed - err = %d\n", 
-		(long unsigned int)sysino, err);
+	  printf("sun4v_intr_setenabled(%lx, %lu) failed - err = %d\n", 
+			 (long unsigned int)devhandle, (long unsigned int)sysino, err);
 
 	DPRINTF(VDB_INTR, ("%s() returning %p\n", __func__, ih));
 	return (ih);
@@ -625,11 +644,18 @@ vpci_intr_establish(bus_space_tag_t t, int ihandle, int level,
 void
 vpci_intr_ack(struct intrhand *ih)
 {
+	bus_space_tag_t t = ih->ih_bus;
+	struct vpci_pbm *pbm = t->cookie;
+	uint64_t devhandle = pbm->vp_devhandle;
+#if 0	
+	DPRINTF(VDB_INTR, ("%s() devhandle %#lx ih_number %#x\n",
+					   __func__, devhandle, ih->ih_number));
+#endif	
 	int err;
-	err = hv_intr_setstate(ih->ih_number, INTR_IDLE);
+	err = sun4v_intr_setstate(devhandle, ih->ih_number, INTR_IDLE);
 	if (err != H_EOK)
-	  panic("%s(%u, INTR_IDLE) failed - err = %d\n", 
-		__func__, ih->ih_number, err);
+		printf("%s(%#lx, %u, INTR_IDLE) failed - err = %d\n", 
+			   __func__, (long unsigned int)devhandle, ih->ih_number, err);
 }
 
 static void *
