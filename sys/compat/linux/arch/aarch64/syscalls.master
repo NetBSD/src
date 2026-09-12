@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17 2025/11/10 15:41:37 christos Exp $
+	$NetBSD: syscalls.master,v 1.18 2026/09/12 08:07:08 mrg Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -170,7 +170,7 @@
 			    size_t nbyte); }
 65	NOARGS		{ ssize_t|sys||readv(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-66	NOARGS		{ ssize_t|sys||writev(int fd, \
+66	STD		{ ssize_t|linux_sys||writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
 67	STD		{ int|linux_sys||pread(int fd, char *buf, \
 			    size_t nbyte, off_t offset); }

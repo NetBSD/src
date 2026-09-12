@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.139 2025/11/10 15:41:38 christos Exp $
+	$NetBSD: syscalls.master,v 1.140 2026/09/12 08:07:09 mrg Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -258,7 +258,7 @@
 144	NOARGS		{ int|sys|13|msync(void *addr, size_t len, int flags); }
 145	NOARGS		{ ssize_t|sys||readv(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-146	NOARGS		{ ssize_t|sys||writev(int fd, \
+146	STD		{ ssize_t|linux_sys||writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
 147	NOARGS		{ pid_t|sys||getsid(pid_t pid); }
 148	STD		{ int|linux_sys||fdatasync(int fd); }
