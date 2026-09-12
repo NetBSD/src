@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.108 2026/03/10 21:59:29 andvar Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.109 2026/09/12 09:43:42 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006,2024 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.108 2026/03/10 21:59:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.109 2026/09/12 09:43:42 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -1353,6 +1353,7 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 				    seg->first_sect, seg->last_sect);
 			}
 			xbdi->xbdi_pendingreqs++; /* xbdback_io_error will -- */
+			xbd_io->xio_need_bounce = 0; /* bouncebuf not setup yet */
 			xbdback_io_error(xbd_io, EINVAL);
 			/* do not retry */
 			xbdi->xbdi_cont = xbdback_co_main_incr;
@@ -1395,7 +1396,7 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	xbd_io->xio_buf.b_bcount = bcount;
 	if (__predict_false(xbd_io->xio_need_bounce)) {
 		if (__predict_false(xbdi->xbdi_bouncebuf_use)) {
-			KASSERT(xbdi->xbdi_pendingreqs > 1);
+			KASSERT(xbdi->xbdi_pendingreqs > 0);
 			/* retry later */
 			xbdi->xbdi_cont_restart = xbdback_co_io_gotio;
 			xbdi->xbdi_cont_restart_obj = xbd_io;
