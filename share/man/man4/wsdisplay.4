@@ -238,6 +238,39 @@ field contains
 and the
 .Va fbi_cmapinfo
 field contains the number of color map entries.
+.Pp
+The
+.Va fbi_flags
+field may contain
+.Dv WSFB_VRAM_IS_RAM ,
+.Dv WSFB_VRAM_IS_SPLIT ,
+or
+.Dv WSFB_VRAM_NEEDS_DAMAGE .
+The last flag indicates that changes to the mapped framebuffer must be
+reported with
+.Dv WSDISPLAYIO_DAMAGE .
+.It Dv WSDISPLAYIO_DAMAGE Pq Li "struct wsdisplay_damage"
+Report a changed rectangle of a mapped framebuffer.
+The returned framebuffer information must include
+.Dv WSFB_VRAM_NEEDS_DAMAGE
+for this call to be necessary.
+The argument structure is as follows:
+.Bd -literal -offset indent
+struct wsdisplay_damage {
+	uint32_t flags;
+	uint32_t x;
+	uint32_t y;
+	uint32_t width;
+	uint32_t height;
+};
+.Ed
+.Pp
+The rectangle must be within the framebuffer bounds.
+If
+.Dv WSDISPLAY_DAMAGE_WAIT
+is set in
+.Va flags ,
+the call waits until all queued framebuffer updates have completed.
 .It Dv WSDISPLAYIO_GINFO Pq Li "struct wsdisplay_fbinfo"
 Retrieve basic information about a framebuffer display.
 The returned structure is as follows:

@@ -688,6 +688,7 @@ struct wsdisplayio_fbinfo {
 /* fbi_flags */
 #define WSFB_VRAM_IS_RAM	0x0001	/* hint for wsfb - don't shadow */
 #define WSFB_VRAM_IS_SPLIT	0x0002	/* workaround for wildcat... */
+#define WSFB_VRAM_NEEDS_DAMAGE	0x0004	/* framebuffer needs damage reports */
 
 #define WSDISPLAYIO_GET_FBINFO	_IOWR('W', 104, struct wsdisplayio_fbinfo)
 
@@ -752,5 +753,21 @@ struct wsdisplay_getfont {
  * returns EINVAL if depth is unsupported
  */
 #define WSDISPLAYIO_SET_DEPTH	_IOW('W', 109, int)
+
+/*
+ * Report a changed framebuffer rectangle.
+ *
+ * This is only necessary if WSFB_VRAM_NEEDS_DAMAGE is set in fbi_flags.
+ */
+struct wsdisplay_damage {
+	uint32_t flags;
+#define WSDISPLAY_DAMAGE_WAIT	0x0001	/* wait for the update to finish */
+	uint32_t x;
+	uint32_t y;
+	uint32_t width;
+	uint32_t height;
+};
+
+#define WSDISPLAYIO_DAMAGE	_IOWR('W', 110, struct wsdisplay_damage)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */
