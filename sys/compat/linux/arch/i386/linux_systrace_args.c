@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.27 2026/09/11 13:08:12 sborrill Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.28 2026/09/12 08:07:34 mrg Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -942,9 +942,9 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
-	/* sys_writev */
+	/* linux_sys_writev */
 	case 146: {
-		const struct sys_writev_args *p = params;
+		const struct linux_sys_writev_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, iovp); /* const struct iovec * */
 		iarg[2] = SCARG(p, iovcnt); /* int */
@@ -3780,7 +3780,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* sys_writev */
+	/* linux_sys_writev */
 	case 146:
 		switch(ndx) {
 		case 0:
@@ -6726,7 +6726,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "ssize_t";
 		break;
-	/* sys_writev */
+	/* linux_sys_writev */
 	case 146:
 		if (ndx == 0 || ndx == 1)
 			p = "ssize_t";
