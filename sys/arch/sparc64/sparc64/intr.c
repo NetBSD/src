@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.74 2026/08/30 19:17:15 palle Exp $ */
+/*	$NetBSD: intr.c,v 1.75 2026/09/12 20:44:12 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.74 2026/08/30 19:17:15 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.75 2026/09/12 20:44:12 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -375,7 +375,7 @@ sun4v_intr_devino_to_sysino(uint64_t devhandle, uint64_t devino, uint64_t *ino)
 	DPRINTF(INTRDB_SUN4V, 
 			("%s: devhandle %#lx devino %#lx\n", __func__, devhandle, devino));
 
-	if (sun4v_group_interrupt_major < 2) {
+	if (sun4v_group_interrupt_major < 3) {
 		DPRINTF(INTRDB_SUN4V, ("%s: using deprecated api\n", __func__));
 		return hv_intr_devino_to_sysino(devhandle, devino, ino);
 	}
@@ -393,7 +393,7 @@ sun4v_intr_setcookie(uint64_t devhandle, uint64_t ino, uint64_t cookie_value)
 			("%s: devhandle %#lx ino %#lx cookie_value %#lx\n",
 			 __func__, devhandle, ino, cookie_value));
 
-	if (sun4v_group_interrupt_major < 2) {
+	if (sun4v_group_interrupt_major < 3) {
 		DPRINTF(INTRDB_SUN4V, ("%s: using deprecated api\n", __func__));
 		return H_EOK;
 	}
@@ -408,7 +408,7 @@ sun4v_intr_setenabled(uint64_t devhandle, uint64_t ino, uint64_t intr_enabled)
 			("%s: devhandle %#lx ino %#lx intr_enabled %#lx\n",
 			 __func__, devhandle, ino, intr_enabled));
 
-	if (sun4v_group_interrupt_major < 2) {
+	if (sun4v_group_interrupt_major < 3) {
 		DPRINTF(INTRDB_SUN4V, ("%s: using deprecated api\n", __func__));
 		return hv_intr_setenabled(ino, intr_enabled);
 	}
@@ -422,7 +422,7 @@ sun4v_intr_setstate(uint64_t devhandle, uint64_t ino, uint64_t intr_state)
 			("%s: devhandle %#lx ino %#lx intr_state %#lx\n",
 			 __func__, devhandle, ino, intr_state));
 
-	if (sun4v_group_interrupt_major < 2) {
+	if (sun4v_group_interrupt_major < 3) {
 		DPRINTF(INTRDB_SUN4V, ("%s: using deprecated api\n", __func__));
 		return hv_intr_setstate(ino, intr_state);
 	}
@@ -437,7 +437,7 @@ sun4v_intr_settarget(uint64_t devhandle, uint64_t ino, uint64_t cpuid)
 			("%s: devhandle %#lx ino %#lx cpuid %#lx\n",
 			 __func__, devhandle, ino, cpuid));
 
-	if (sun4v_group_interrupt_major < 2) {
+	if (sun4v_group_interrupt_major < 3) {
 		DPRINTF(INTRDB_SUN4V, ("%s: using deprecated api\n", __func__));
 		return hv_intr_settarget(ino, cpuid);
 	}
