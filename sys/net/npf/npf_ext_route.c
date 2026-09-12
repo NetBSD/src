@@ -33,7 +33,7 @@
 
  #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.2 2026/09/12 10:02:15 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.3 2026/09/12 21:03:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -106,10 +106,9 @@ npf_route_dtor(npf_rproc_t *rp, void *meta)
 }
 
 static void
-npf_chcksum(struct ifnet *ifp1, struct mbuf *m0, struct ip *ip1, int *sw_csum)
+npf_chcksum(struct ifnet *ifp1, struct mbuf *m, struct ip *ip1, int *sw_csum)
 {
 	int hlen;
-	struct mbuf *m = m0;
 	struct ip *ip = ip1;
 	struct ifnet *ifp = ifp1;
 	int csum;
@@ -172,10 +171,10 @@ npf_fragment(npf_t *npf, struct ifnet *ifp, struct ip *ip1,
 		return EINVAL;
 	}
 	/*
-		* We can't use HW checksumming if we're about to fragment the packet.
-		*
-		* XXX Some hardware can do this.
-		*/
+	 * We can't use HW checksumming if we're about to fragment the packet.
+	 *
+	 * XXX Some hardware can do this.
+	 */
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 		if (IN_NEED_CHECKSUM(ifp,
 			m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4))) {
@@ -273,10 +272,9 @@ npf_validate_saddr(npf_t * npf, struct ip *ip, struct ifnet* ifp)
 #if defined(INET6)
 /* this code is copied from ip6_output*/
 static void
-npf_validate_s6addr(struct mbuf *m0, struct ifnet *ifp1, int *sw_csum)
+npf_validate_s6addr(struct mbuf *m, struct ifnet *ifp1, int *sw_csum)
 {
 	struct in6_ifaddr *ia6;
-	struct mbuf *m = m0;
 	struct ifnet *ifp = ifp1;
 	struct ip6_hdr *ip6;
 	int csum;
@@ -309,7 +307,7 @@ npf_validate_s6addr(struct mbuf *m0, struct ifnet *ifp1, int *sw_csum)
 static bool
 npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int *decision)
 {
-	struct mbuf *m0 = nbuf_head_mbuf(npc->npc_nbuf);
+	struct mbuf *m = nbuf_head_mbuf(npc->npc_nbuf);
 	const npf_ext_route_t *route = meta;
 	npf_t *npf = npf_getkernctx();
 	struct ifnet *ifp;
@@ -351,32 +349,31 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int
 			}
 		}
 
-		npf_validate_s6addr(m0, ifp, &sw_csum);
+		npf_validate_s6addr(m, ifp, &sw_csum);
 
-		if (m0->m_pkthdr.len <= ifp->if_mtu) {
+		if (m->m_pkthdr.len <= ifp->if_mtu) {
 			if (__predict_false(sw_csum & M_CSUM_TSOv6)) {
 				/*
 				 * TSO6 is required by a packet, but disabled for
 				 * the interface.
 				 */
-				error = ip6_tso_output(ifp, ifp, m0, &dst.v6, NULL);
+				error = ip6_tso_output(ifp, ifp, m, &dst.v6, NULL);
 			} else
-				error = ip6_if_output(ifp, ifp, m0, &dst.v6, NULL);
+				error = ip6_if_output(ifp, ifp, m, &dst.v6, NULL);
 
 			if (error) {
-				m0 = NULL;
+				m = NULL;
 				goto bad;
 			}
 
 		} else {
 			/* router not allowed to fragmenrt */
 			npf_stats_inc(npf, NPF_STAT_NOFRAGMENT);
-			icmp6_error(m0, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
+			icmp6_error(m, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
 		}
 #endif
 	} else if (npf_iscached(npc, NPC_IP4)) {
 		struct ip *ip = npc->npc_ip.v4;
-		struct mbuf *m = m0;
 
 		KASSERT(ip != NULL);
 		KASSERT(m != NULL);
@@ -407,13 +404,13 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int
 			error = ip_if_output(ifp, m, sintocsa(&dst.v4), NULL);
 
 		if (error) {
-			m0 = NULL;
+			m = NULL;
 			goto bad;
 		}
 		goto done;
 
 fragment:
-		error = npf_fragment(npf, ifp, ip, &m0, &dst.v4);
+		error = npf_fragment(npf, ifp, ip, &m, &dst.v4);
 		if (error) {
 			goto bad;
 		}
@@ -426,14 +423,13 @@ fragment:
  */
 done:
 	npf_stats_inc(npf, NPF_STAT_REROUTE);
-	m0 = NULL;
+	m = NULL;
 	KERNEL_UNLOCK_ONE(NULL);
 	return false;
 
 bad:
 	npf_stats_inc(npf, NPF_STAT_NOREROUTE);
-	m_freem(m0);
-	m0 = NULL;
+	m_freem(m);
 	KERNEL_UNLOCK_ONE(NULL);
 	return true;
 }
