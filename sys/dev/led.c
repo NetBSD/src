@@ -32,6 +32,7 @@ __KERNEL_RCSID(0, "$NetBSD: led.c,v 1.3 2018/01/10 15:58:40 jakllsch Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/errno.h>
 #include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
@@ -53,6 +54,7 @@ struct led_device {
 static TAILQ_HEAD(, led_device) led_devices =
     TAILQ_HEAD_INITIALIZER(led_devices);
 static kmutex_t led_lock;
+static ONCE_DECL(led_once);
 
 static int
 led_init(void)
@@ -126,12 +128,11 @@ void *
 led_attach(const char *name, void *priv, led_getstate_fn getstate,
     led_setstate_fn setstate)
 {
-	static ONCE_DECL(control);
 	struct led_device *led;
 	const struct sysctlnode *node;
 	int error;
 
-	if (RUN_ONCE(&control, led_init) != 0)
+	if (RUN_ONCE(&led_once, led_init) != 0)
 		return NULL;
 
 	led = kmem_zalloc(sizeof(*led), KM_SLEEP);
@@ -185,4 +186,21 @@ led_detach(void *handle)
 	led_free(led);
 
 	mutex_exit(&led_lock);
+}
+
+int
+led_set_by_name(const char *name, int state)
+{
+	struct led_device *led;
+
+	if (RUN_ONCE(&led_once, led_init) != 0)
+		return ENXIO;
+
+	mutex_enter(&led_lock);
+	led = led_lookup(name);
+	if (led != NULL)
+		led->setstate(led->priv, state);
+	mutex_exit(&led_lock);
+
+	return led != NULL ? 0 : ENOENT;
 }

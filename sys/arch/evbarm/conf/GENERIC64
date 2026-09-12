@@ -23,6 +23,7 @@ options 	SOC_RK3588
 options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
 options 	SOC_SUN50I_H6
+options 	SOC_SUN50I_H616
 options 	SOC_TEGRA210
 options 	MULTIPROCESSOR
 
@@ -238,6 +239,7 @@ sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)
 sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
 sun50ia64rccu*	at fdt? pass 2		# Allwinner A64 CCU (PRCM)
 sun50ih6ccu*	at fdt? pass 2		# Allwinner H6 CCU
+sun50ih616ccu*  at fdt? pass 2          # Allwinner H616 CCU
 sun50ih6rccu*	at fdt? pass 2		# Allwinner H6 CCU (PRCM)
 sunxide2ccu*	at fdt? pass 3		# Allwinner DE2 clock controller
 sunxiresets*	at fdt? pass 1		# Allwinner misc. resets
@@ -439,6 +441,7 @@ ld2		at sdmmc2
 ld3		at sdmmc3
 ld*		at sdmmc?
 bwfm*		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
+uwe5622_sdio*	at sdmmc?
 
 # SATA
 ahcisata*	at fdt?			# AHCI SATA

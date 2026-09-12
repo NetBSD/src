@@ -100,6 +100,11 @@ extern const struct sunxi_gpio_padconf sun50i_a64_r_padconf;
 #ifdef SOC_SUN50I_H6
 extern const struct sunxi_gpio_padconf sun50i_h6_padconf;
 extern const struct sunxi_gpio_padconf sun50i_h6_r_padconf;
+
+#ifdef SOC_SUN50I_H616
+extern const struct sunxi_gpio_padconf sun50i_h616_padconf;
+extern const struct sunxi_gpio_padconf sun50i_h616_r_padconf;
+#endif
 #endif
 
 #endif /* _ARM_SUNXI_GPIO_H */

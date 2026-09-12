@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rsb.c,v 1.16 2025/09/16 11:55:17 thorpej Exp $ */
+/* $NetBSD: sunxi_rsb.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.16 2025/09/16 11:55:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -163,6 +163,9 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/* configure pins for rsb/p2wi function */
+	fdtbus_pinctrl_set_config_index(phandle, 0);
+
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&sc->sc_intr_wait, "sunxirsb");
 
@@ -178,10 +181,40 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
+	/* switch pmic from i2c to rsb mode */
+	if (sc->sc_type == SUNXI_RSB) {
+		int retry;
+
+		/* configure bus clock: 3mhz from 24mhz parent */
+		RSB_WRITE(sc, RSB_CCR_REG,
+		    __SHIFTIN(1, RSB_CCR_SDA_ODLY) |
+		    __SHIFTIN(3, RSB_CCR_CLK_DIV));
+
+		/* send mode switch command to pmic */
+		RSB_WRITE(sc, RSB_PMCR_REG,
+		    RSB_PMCR_PMU_INIT_SEND |
+		    __SHIFTIN(0x7c, RSB_PMCR_PMU_INIT_DATA) |
+		    __SHIFTIN(0x3e, RSB_PMCR_PMU_MODE_CTRL_REG_ADDR) |
+		    __SHIFTIN(0x00, RSB_PMCR_PMU_DEVICE_ADDR));
+
+		/* wait for completion */
+		for (retry = 1000; retry > 0; retry--) {
+			if (!(RSB_READ(sc, RSB_PMCR_REG) &
+			    RSB_PMCR_PMU_INIT_SEND))
+				break;
+			delay(100);
+		}
+		if (retry == 0)
+			aprint_error_dev(self,
+			    "device mode init timed out\n");
+	}
+
 	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_exec = sunxi_rsb_exec;
 
+	//fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
+	//fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
 	iicbus_attach(self, &sc->sc_ic);
 }
 
@@ -325,6 +358,18 @@ sunxi_rsb_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 		mutex_exit(&sc->sc_intr_lock);
 		device_printf(sc->sc_dev, "soft reset timed out\n");
 		return error;
+	}
+ 
+	/*
+	 * soft reset clears all registers including CCR.
+	 * reconfigure bus clock: 3mhz from 24mhz parent.
+	 * bus_freq = parent_clk / (2 * (divider + 1))
+	 * 24000000 / (2 * 4) = 3000000
+	 */
+	if (sc->sc_type == SUNXI_RSB) {
+		RSB_WRITE(sc, RSB_CCR_REG,
+		    __SHIFTIN(1, RSB_CCR_SDA_ODLY) |
+		    __SHIFTIN(3, RSB_CCR_CLK_DIV));
 	}
 
 	if ((flags & I2C_F_POLL) == 0) {

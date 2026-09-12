@@ -254,6 +254,7 @@ sunxi_platform_device_register(device_t self, void *aux)
 			{ .compat = "allwinner,sun50i-a64",	.value = 64 },
 			{ .compat = "allwinner,sun50i-h5",	.value = 64 },
 			{ .compat = "allwinner,sun50i-h6",	.value = 256 },
+                        { .compat = "allwinner,sun50i-h616",    .value = 256 },
 			DEVICE_COMPAT_EOL
 		};
 		const struct device_compatible_entry *dce =
@@ -546,3 +547,4 @@ static const struct fdt_platform sun50i_h6_platform = {
 };
 
 FDT_PLATFORM(sun50i_h6, "allwinner,sun50i-h6", &sun50i_h6_platform);
+FDT_PLATFORM(sun50i_h616, "allwinner,sun50i-h616", &sun50i_h6_platform);

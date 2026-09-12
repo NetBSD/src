@@ -29,3 +29,17 @@ file	dev/sdmmc/if_bwfm_sdio.c	bwfm_sdio
 # Broadcom SoftMAC SDIO wireless driver
 attach bwi at sdmmc with bwi_sdio
 file	dev/sdmmc/if_bwi_sdio.c		bwi_sdio
+
+
+#device	uwe5622_sdio: ifnet, ieee80211
+#attach	uwe5622_sdio at sdmmc
+#file	dev/sdmmc/if_uwe5622_sdio.c	uwe5622_sdio
+
+device	uwe5622_sdio
+attach	uwe5622_sdio at sdmmc
+file	dev/sdmmc/if_uwe5622_sdio.c		uwe5622_sdio
+file	dev/sdmmc/if_uwe5622_sdio_transport.c	uwe5622_sdio
+file	dev/sdmmc/if_uwe5622_sdio_fw.c		uwe5622_sdio
+file	dev/sdmmc/if_uwe5622_sdio_proto.c	uwe5622_sdio
+file	dev/sdmmc/if_uwe5622_sdio_data.c	uwe5622_sdio
+file	dev/sdmmc/if_uwe5622_sdio_net80211.c	uwe5622_sdio

@@ -48,4 +48,13 @@ void *	led_attach(const char *, void *, led_getstate_fn, led_setstate_fn);
  */
 void	led_detach(void *);
 
+/*
+ * Set the state of a previously attached LED device by name (the same
+ * name passed to led_attach(), i.e. the hw.led.<name> sysctl node).
+ * Returns 0 on success, ENOENT if no LED with that name is attached.
+ * Safe to call from thread/kthread context; do not call from hard
+ * interrupt context.
+ */
+int	led_set_by_name(const char *, int);
+
 #endif /* !_DEV_LED_H */
