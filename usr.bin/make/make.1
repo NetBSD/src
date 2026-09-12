@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.394 2026/07/03 15:31:34 sjg Exp $
+.\"	$NetBSD: make.1,v 1.395 2026/09/12 02:59:27 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd July  3, 2026
+.Dd September 11, 2026
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -900,9 +900,17 @@ mode, see
 Is used in error handling, see
 .Va MAKE_PRINT_VAR_ON_ERROR .
 .It Va .INCLUDEDFROMDIR
-The directory of the file this makefile was included from.
+The directory name of the file this makefile was included from.
 .It Va .INCLUDEDFROMFILE
-The filename of the file this makefile was included from.
+The basename of the file this makefile was included from.
+Like
+.Sq Va .PARSEFILE ,
+this variable and
+.Sq Va .INCLUDEDFROMDIR
+are set only while the makefiles are being parsed.
+To retain their current values,
+assign them to a variable using assignment with expansion
+.Sq Cm \&:= .
 .\" .INCLUDES is intentionally undocumented, as it is obsolete.
 .\" .LIBS is intentionally undocumented, as it is obsolete.
 .It Va MACHINE
