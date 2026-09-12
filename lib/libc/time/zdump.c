@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.68 2026/07/13 18:44:45 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.69 2026/09/12 19:43:35 christos Exp $	*/
 /* Dump time zone data in a textual format.  */
 
 /*
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.68 2026/07/13 18:44:45 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.69 2026/09/12 19:43:35 christos Exp $");
 #endif /* !defined lint */
 
 #ifndef NETBSD_INSPIRED
@@ -716,7 +716,7 @@ delta_nonneg(struct tm *newp, struct tm *oldp)
 	intmax_t sec = SECSPERREPEAT, result = cycles * sec;
 	int tmy = oldp->tm_year + cycles * YEARSPERREPEAT;
 	for ( ; tmy < newp->tm_year; ++tmy)
-		result += DAYSPERNYEAR + isleap_sum(tmy, TM_YEAR_BASE);
+	  result += year_sum_days(tmy, TM_YEAR_BASE);
 	result += newp->tm_yday - oldp->tm_yday;
 	result *= HOURSPERDAY;
 	result += newp->tm_hour - oldp->tm_hour;
@@ -743,7 +743,7 @@ adjusted_yday(struct tm const *a, struct tm const *b)
 {
 	int yday = a->tm_yday;
 	if (b->tm_year < a->tm_year)
-		yday += 365 + isleap_sum(b->tm_year, TM_YEAR_BASE);
+		yday += year_sum_days(b->tm_year, TM_YEAR_BASE);
 	return yday;
 }
 #endif

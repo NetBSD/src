@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.77 2026/07/13 18:44:45 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.78 2026/09/12 19:43:35 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -269,6 +269,9 @@ strnlen (char const *s, size_t maxlen)
 #ifndef ENOMEM
 # define ENOMEM EINVAL
 #endif
+#ifndef ENOSYS
+# define ENOSYS EINVAL
+#endif
 #ifndef ENOTCAPABLE
 # define ENOTCAPABLE EINVAL
 #endif
@@ -277,6 +280,9 @@ strnlen (char const *s, size_t maxlen)
 #endif
 #ifndef EOVERFLOW
 # define EOVERFLOW EINVAL
+#endif
+#ifndef EPERM
+# define EPERM EINVAL
 #endif
 
 #if HAVE_GETTEXT
@@ -319,6 +325,7 @@ extern int optind;
 
 #ifndef HAVE_ISSETUGID
 # if (defined __FreeBSD__ || defined __NetBSD__ || defined __OpenBSD__ \
+      || defined __DragonFly__ \
       || (defined __linux__ && !defined __GLIBC__) /* Android, musl, etc. */ \
       || (defined __APPLE__ && defined __MACH__) || defined __sun)
 #  define HAVE_ISSETUGID 1
@@ -829,6 +836,7 @@ void tzset(void);
 # if (202311 <= __STDC_VERSION__ \
       || defined __GLIBC__ || defined __tm_zone /* musl */ \
       || defined __FreeBSD__ || defined __NetBSD__ || defined __OpenBSD__ \
+      || defined __DragonFly__ || defined __HAIKU__ \
       || (defined __APPLE__ && defined __MACH__))
 #  define HAVE_DECL_TIMEGM 1
 # else
@@ -857,7 +865,8 @@ extern char **environ;
 
 #ifndef HAVE_MEMPCPY
 # if (defined mempcpy \
-      || defined __FreeBSD__ || defined __NetBSD__ || defined __linux__ \
+      || defined __FreeBSD__ || defined __NetBSD__ || defined __DragonFly__ \
+      || defined __linux__ \
       || defined HAVE_NBTOOL_CONFIG_H)
 #  define HAVE_MEMPCPY 1
 # else
@@ -926,6 +935,7 @@ time_t posix2time(time_t);
      || defined __GLIBC__ \
      || defined __tm_zone /* musl */ \
      || defined __FreeBSD__ || defined __NetBSD__ || defined __OpenBSD__ \
+     || defined __DragonFly__ || defined __HAIKU__ \
      || (defined __APPLE__ && defined __MACH__))
 # if !defined TM_GMTOFF && !defined NO_TM_GMTOFF
 #  define TM_GMTOFF tm_gmtoff
@@ -1200,6 +1210,7 @@ enum {
 #endif
 
 #define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
+#define year_days(y) (DAYSPERNYEAR + isleap(y))
 
 /*
 ** Since everything in isleap is modulo 400 (or a factor of 400), we know that
@@ -1213,7 +1224,7 @@ enum {
 ** We use this to avoid addition overflow problems.
 */
 
-#define isleap_sum(a, b)	isleap((a) % 400 + (b) % 400)
+#define year_sum_days(a, b) (DAYSPERNYEAR + isleap((a) % 400 + (b) % 400))
 
 #ifdef _LIBC
 #include "reentrant.h"

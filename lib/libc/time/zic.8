@@ -1,9 +1,9 @@
-.\" $NetBSD: zic.8,v 1.55 2026/07/13 18:44:45 christos Exp $
+.\" $NetBSD: zic.8,v 1.56 2026/09/12 19:43:35 christos Exp $
 .\" @(#)zic.8	8.6
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
 .\" .TH zic 8
-.Dd July 13, 2026
+.Dd September 12, 2026
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -311,12 +311,7 @@ and the encoding's non-unibyte characters should consist entirely of
 .No non- Ns Tn PPCS
 bytes.
 .No Non- Ns Tn PPCS
-characters typically occur only in comments:
-although output file names and time zone abbreviations can contain
-nearly any character, other software will work better if these are
-limited to the restricted syntax described under the
-.Fl v
-option.
+characters typically occur only in comments.
 .Pp
 Input lines are made up of fields.
 Fields are separated from one another by one or more white space characters.
@@ -335,15 +330,16 @@ Any line that is blank (after comment stripping) is ignored.
 Nonblank lines are expected to be of one of three types:
 rule lines, zone lines, and link lines.
 .Pp
-Names must be in English and are case insensitive.
+Keywords are in English and are case insensitive.
+They are not reserved words.
 They appear in several contexts, and include month and weekday names
-and keywords such as
+and other words such as
 .Ql maximum ,
 .Ql only ,
 .Ql Rolling ,
 and
 .Ql Zone .
-A name can be abbreviated by omitting all but an initial prefix; any
+A keyword can be abbreviated by omitting all but an initial prefix; any
 abbreviation must be unambiguous in context.
 .\"
 .\" Rule Line
@@ -592,11 +588,26 @@ The name of the timezone.
 This is the name used in creating the time conversion information file for the
 timezone.
 It should not contain a file name component
+that is empty or is
 .Ql \&.
 or
 .Ql \&.. ;
 a file name component is a maximal substring that does not contain
 .Ql / .
+Names can be further restricted by the operating system or file system.
+Most systems reject a name
+.Ar A/B
+if there is another name
+.Ar A ,
+some reject names differing only in case,
+and some reject names containing special characters like
+.Ql \&:
+and
+.Ql \e .
+Other software will work better if names are
+limited to the restricted syntax described under the
+.Fl v
+option.
 .\"
 .It Ar STDOFF
 The amount of time to add to UT to get standard time,
@@ -757,6 +768,12 @@ has the form
 .Bl -column -compact -offset indent "Link" "Europe/Istanbul" "Asia/Istanbul"
 .It Link	TARGET	LINK-NAME
 .El
+Where
+.Ar TARGET
+and
+.Ar LINK-NAME
+both have the same syntax as a zone line's
+.Ar NAME .
 .Pp
 For example:
 .Pp
@@ -773,10 +790,7 @@ field in some zone line or as the
 field in some link line.
 The
 .Ar LINK-NAME
-field is used as an alternative name for that zone;
-it has the same syntax as a zone line's
-.Ar NAME
-field.
+field is an alternative name for that zone.
 Links can chain together, although the behavior is unspecified if a
 chain of one or more links does not terminate in a Zone name.
 A link line can appear before the line that defines the link target.

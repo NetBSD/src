@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.60 2026/03/08 21:04:54 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.61 2026/09/12 19:43:35 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.60 2026/03/08 21:04:54 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.61 2026/09/12 19:43:35 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -524,9 +524,7 @@ label:
 						int	bot;
 						int	top;
 
-						len = isleap_sum(year, base) ?
-							DAYSPERLYEAR :
-							DAYSPERNYEAR;
+						len = year_sum_days(year, base);
 						/*
 						** What yday (-3 ... 3) does
 						** the ISO year begin on?
@@ -553,9 +551,8 @@ label:
 							break;
 						}
 						--base;
-						yday += isleap_sum(year, base) ?
-							DAYSPERLYEAR :
-							DAYSPERNYEAR;
+						yday += year_sum_days(year,
+								      base);
 					}
 #ifdef XPG4_1994_04_09
 					if ((w == 52 &&
