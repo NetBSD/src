@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.11 2026/09/06 18:13:36 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.12 2026/09/13 13:58:42 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -403,4 +403,89 @@ sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_shim.c 1.9
 
 	vchiq: apply change from upstream.
 	[skrll, ticket #453]
+
+sys/compat/linux/common/linux_file.c		1.135
+
+	compat_linux: fix panic in copy_file_range when off_in or off_out
+	are not NULL.
+	[sborrill, ticket #454]
+
+sys/uvm/uvm_pdpolicy_clock.c			1.43
+sys/uvm/uvm_pdpolicy_clockpro.c			1.28-1.30
+
+	uvm: fix a race in the page daemon.
+	[tls, ticket #455]
+
+sys/arch/sparc64/dev/pcfiic_ebus.c		1.10 (patch)
+sys/dev/ic/pcf8584.c				1.23 (patch)
+sys/dev/ic/pcf8584var.h 			1.7 (patch)
+
+	sparc64: when reading from an i2c device register, use repeat start on
+	the bus. This avoids the situation where another master gets the bus
+	between our register select (i.e. write) and the following read.
+	Add a delay after accessing our registers for the PIC implementation
+	of the PCF8584 (e.g. on the Sun Ultra 45).
+	Change swapregs to flags to handle multiple quirks and set the flags
+	appropriately in the Ebus frontend.
+	[jdc, ticket #456]
+
+sys/arch/sparc64/conf/GENERIC			1.245 (via patch)
+sys/arch/sparc64/conf/files.sparc64		1.169 (via patch)
+sys/arch/sparc64/dev/bq4802_ebus.c		1.1,1.2
+sys/dev/ic/bq4802reg.h				1.1,1.2
+
+	Add a driver for the Texas Instruments bq4802Y/bq4802LY RTC chip,
+	used in the Sun Ultra 45.
+	[jdc, ticket #457]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.247 (patch)
+sys/arch/sparc64/sparc64/ofw_patch.c		1.10 (patch)
+sys/arch/sparc64/sparc64/ofw_patch.h		1.5
+
+	Reduce the amount of patching conditions in autoconf.c by moving the
+	machine model checks to ofw_patch.c.  We now have one patch routine for
+	i2c buses and another for i2c devices.
+	[jdc, ticket #458]
+
+share/man/man4/adm1026hm.4			1.2-1.4
+sys/dev/i2c/adm1026.c				1.14-1.17
+sys/dev/i2c/adm1026reg.h			1.6
+
+        Add limits (therm, high and low) to ADM1026 sensors.
+        Fix reversed high/therm to warnmax/critmax mapping.
+        Fix restoring limits: check for NULL limits pointer
+	[jdc, ticket #459]
+
+sys/dev/i2c/lm75.c				1.51
+
+	Fix setting limits for lm75 sensors:
+	- check for NULL limits pointer (restore)
+	- handle degc (user) or raw (restore initial) values
+	[jdc, ticket #460]
+
+sys/net/bpf.c					1.259
+sys/net/bpf_filter.c				1.74
+sys/net/npf/files.npf				1.26
+sys/net/npf/npf_os.c				1.24,1.25
+
+	npf(4): fix crash in kernels without "pseudo-device bpfilter".
+	[tls, ticket #461]
+
+bin/stty/print.c				1.24
+
+	stty(1): fix mis-printing of ONOCR and ONLRET.
+	[tls, ticket #462]
+
+lib/libc/time/zic.c				(apply patch)
+UPDATING					(apply patch)
+
+	zic(8): PR 60715: apply upstream fix.
+	[kre, ticket #463]
+
+sys/arch/xen/xen/xbdback_xenbus.c		1.109
+
+	xen: fix a broken KASSERT that could trigger panics
+	in a DIAGNOSTIC dom0 kernel and another possible state corruption by
+	a malicious guest.
+	[bouyer, ticket #464]
 
