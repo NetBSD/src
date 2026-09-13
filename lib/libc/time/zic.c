@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.95 2025/04/02 14:18:56 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.95.2.1 2026/09/13 13:46:28 martin Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.95 2025/04/02 14:18:56 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.95.2.1 2026/09/13 13:46:28 martin Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -3285,7 +3285,7 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				startttisut);
 			if (usestart) {
 				addtt(starttime, type);
-				if (useuntil && nonTZlimtime < starttime) {
+				if (nonTZlimtime < starttime) {
 				  nonTZlimtime = starttime;
 				  nonTZlimtype = type;
 				}

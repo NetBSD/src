@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.383 2025/07/21 17:07:26 martin Exp $
+$NetBSD: UPDATING,v 1.383.2.1 2026/09/13 13:46:28 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20260911:
+	zic(8) has been updated, update builds (build.sh -u)
+	need to manually remove ${DESTDIR}/usr/share/zoneinfo/*
+	and ${OBJDIR)/external/public-domain/tz/share/zoneinfo/*
+	to ensure the timezone data is rebuilt correctly with the new zic.
 
 20250721:
 	GCC 12.5 was imported and there may be weird build issues.
