@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.243 2024/11/19 20:38:24 palle Exp $ */
+/*	$NetBSD: autoconf.c,v 1.243.2.1 2026/09/13 10:43:06 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.243 2024/11/19 20:38:24 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.243.2.1 2026/09/13 10:43:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1131,17 +1131,8 @@ device_register(device_t dev, void *aux)
 			return;
 
 		ofnode = (int)ia->ia_cookie;
-		if (device_is_a(dev, "pcagpio")) {
-			if (!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
-			    !strcmp(machine_model, "SUNW,Sun-Fire-V210")) {
-				add_gpio_props_v210(dev, aux);
-			}
-		} 
-		if (device_is_a(dev, "pcf8574io")) {
-			if (!strcmp(machine_model, "SUNW,Ultra-250")) {
-				add_gpio_props_e250(dev, aux);
-			}
-		} 
+		set_i2c_dev_props(dev, aux);    /* i2c device patches */
+
 		return;
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
@@ -1363,23 +1354,7 @@ noether:
 			}
 		}
 
-		if (!strcmp(machine_model, "TAD,SPARCLE"))
-			add_spdmem_props_sparcle(busdev);
-
-		if (device_is_a(busdev, "pcfiic") &&
-		    (!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
-		    !strcmp(machine_model, "SUNW,Sun-Fire-V210")))
-			add_env_sensors_v210(busdev);
-
-		/* E450 SUNW,envctrl */
-		if (device_is_a(busdev, "pcfiic") &&
-		    (!strcmp(machine_model, "SUNW,Ultra-4")))
-			add_i2c_props_e450(busdev, busnode);
-
-		/* E250 SUNW,envctrltwo */
-		if (device_is_a(busdev, "pcfiic") &&
-		    (!strcmp(machine_model, "SUNW,Ultra-250")))
-			add_i2c_props_e250(busdev, busnode);
+		set_i2c_bus_props(busdev, busnode);	/* i2c bus patches */
 	}
 
 	/* set properties for PCI framebuffers */
@@ -1446,8 +1421,6 @@ noether:
 #endif
 		set_static_edid(dict);
 	}
-
-	set_hw_props(dev);
 }
 
 /*

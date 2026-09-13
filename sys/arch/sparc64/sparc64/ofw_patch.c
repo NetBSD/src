@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7 2020/12/23 07:01:14 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.26.1 2026/09/13 10:43:06 martin Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7 2020/12/23 07:01:14 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.26.1 2026/09/13 10:43:06 martin Exp $");
 
 #include <sys/param.h>
 
@@ -72,7 +72,7 @@ create_i2c_dict(device_t busdev)
 
 static void
 add_i2c_device(prop_array_t cfg, const char *name, const char *compat,
-uint32_t addr, uint64_t node)
+    uint32_t addr, uint64_t node)
 {
 	prop_dictionary_t dev;
 
@@ -89,7 +89,7 @@ uint32_t addr, uint64_t node)
 	prop_object_release(dev);
 }
 
-void
+static void
 add_gpio_props_v210(device_t dev, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
@@ -126,7 +126,7 @@ add_gpio_props_v210(device_t dev, void *aux)
 	}
 }
 
-void
+static void
 add_gpio_props_e250(device_t dev, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
@@ -249,7 +249,7 @@ add_drivebay_props(device_t dev, int ofnode, void *aux)
 /*
  * Add SPARCle spdmem devices (0x50 and 0x51) that are not in the OFW tree
  */
-void
+static void
 add_spdmem_props_sparcle(device_t busdev)
 {
 	prop_array_t cfg;
@@ -266,7 +266,7 @@ add_spdmem_props_sparcle(device_t busdev)
 /*
  * Add V210/V240 environmental sensors that are not in the OFW tree.
  */
-void
+static void
 add_env_sensors_v210(device_t busdev)
 {
 	prop_array_t cfg;
@@ -276,12 +276,13 @@ add_env_sensors_v210(device_t busdev)
 
 	/* ADM1026 at 0x2e */
 	add_i2c_device(cfg, "hardware-monitor", "i2c-adm1026", 0x2e, 0);
+
 	/* LM75 at 0x4e */
 	add_i2c_device(cfg, "temperature-sensor", "i2c-lm75", 0x4e, 0);
 }
 
 /* Sensors and GPIO's for E450 and E250 */
-void
+static void
 add_i2c_props_e450(device_t busdev, uint64_t node)
 {
 	prop_array_t cfg;
@@ -307,7 +308,7 @@ add_i2c_props_e450(device_t busdev, uint64_t node)
 	prop_object_release(cfg);
 }
 
-void
+static void
 add_i2c_props_e250(device_t busdev, uint64_t node)
 {
 	prop_array_t cfg;
@@ -337,32 +338,54 @@ add_i2c_props_e250(device_t busdev, uint64_t node)
 	prop_object_release(cfg);
 }
 
-/* Hardware specific device properties */
+/* Hardware specific i2c bus properties */
 void
-set_hw_props(device_t dev)
+set_i2c_bus_props(device_t busdev, uint64_t busnode)
 {
-	device_t busdev = device_parent(dev);
+
+	if (!strcmp(machine_model, "TAD,SPARCLE"))
+		add_spdmem_props_sparcle(busdev);
+
+	if (device_is_a(busdev, "pcfiic")) {
+		if (!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
+		    !strcmp(machine_model, "SUNW,Sun-Fire-V210"))
+			add_env_sensors_v210(busdev);
+
+		/* E450 SUNW,envctrl */
+		if (!strcmp(machine_model, "SUNW,Ultra-4"))
+			add_i2c_props_e450(busdev, busnode);
+
+		/* E250 SUNW,envctrltwo */
+		if (!strcmp(machine_model, "SUNW,Ultra-250"))
+			add_i2c_props_e250(busdev, busnode);
+	}
+}
+
+
+/* Hardware specific i2c device properties */
+void
+set_i2c_dev_props(device_t dev, void *aux)
+{
 
 	if ((!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
 	    !strcmp(machine_model, "SUNW,Sun-Fire-V210"))) {
-		device_t busparent = device_parent(busdev);
-		prop_dictionary_t props = device_properties(dev);
+		if (device_is_a(dev, "pcagpio"))
+			add_gpio_props_v210(dev, aux);
 
-		if (busparent != NULL && device_is_a(busparent, "pcfiic") &&
-		    device_is_a(dev, "adm1026hm") && props != NULL) {
+		if (device_is_a(dev, "adm1026hm")) {
+			prop_dictionary_t props = device_properties(dev);
 			prop_dictionary_set_uint8(props, "fan_div2", 0x55);
-			prop_dictionary_set_bool(props, "multi_read", true);
+			/* There are only 3 fans in the 1st group on V240 */
+			if (!strcmp(machine_model, "SUNW,Sun-Fire-V240"))
+				prop_dictionary_set_uint8(props,
+				    "fan_mask", 0x08);
 		}
 	}
 
-	if (!strcmp(machine_model, "SUNW,Sun-Fire-V440")) {
-		device_t busparent = device_parent(busdev);
-		prop_dictionary_t props = device_properties(dev);
-		if (busparent != NULL && device_is_a(busparent, "pcfiic") &&
-		    device_is_a(dev, "adm1026hm") && props != NULL) {
-			prop_dictionary_set_bool(props, "multi_read", true);
-		}
-	}
+	if (!strcmp(machine_model, "SUNW,Ultra-250"))
+		if (device_is_a(dev, "pcf8574io"))
+			add_gpio_props_e250(dev, aux);
+
 }
 
 /* Static EDID definitions */

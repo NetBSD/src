@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.h,v 1.4 2020/10/29 06:47:38 jdc Exp $ */
+/*	$NetBSD: ofw_patch.h,v 1.4.28.1 2026/09/13 10:43:06 martin Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -41,14 +41,9 @@ extern int autoconf_debug;
 #define DPRINTF(l, s)
 #endif
 
-void add_gpio_props_v210(device_t, void *);
-void add_gpio_props_e250(device_t, void *);
+void set_i2c_bus_props(device_t, uint64_t);
+void set_i2c_dev_props(device_t, void *);
 void add_drivebay_props(device_t, int, void *);
-void add_spdmem_props_sparcle(device_t);
-void add_env_sensors_v210(device_t);
-void add_i2c_props_e450(device_t, uint64_t);
-void add_i2c_props_e250(device_t, uint64_t);
-void set_hw_props(device_t);
 void set_static_edid(prop_dictionary_t);
 
 #endif /* OFW_PATCH_H */
