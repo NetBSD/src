@@ -33,7 +33,7 @@
 
  #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.3 2026/09/12 21:03:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.4 2026/09/13 01:11:56 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -362,7 +362,6 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int
 				error = ip6_if_output(ifp, ifp, m, &dst.v6, NULL);
 
 			if (error) {
-				m = NULL;
 				goto bad;
 			}
 
@@ -404,7 +403,6 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int
 			error = ip_if_output(ifp, m, sintocsa(&dst.v4), NULL);
 
 		if (error) {
-			m = NULL;
 			goto bad;
 		}
 		goto done;
@@ -423,13 +421,13 @@ fragment:
  */
 done:
 	npf_stats_inc(npf, NPF_STAT_REROUTE);
-	m = NULL;
+	memset(npc->npc_nbuf,0, sizeof(nbuf_t));
 	KERNEL_UNLOCK_ONE(NULL);
 	return false;
 
 bad:
 	npf_stats_inc(npf, NPF_STAT_NOREROUTE);
-	m_freem(m);
+	memset(npc->npc_nbuf, 0, sizeof(nbuf_t));
 	KERNEL_UNLOCK_ONE(NULL);
 	return true;
 }
