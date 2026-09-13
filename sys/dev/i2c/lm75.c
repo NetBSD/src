@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.47 2025/01/02 18:40:54 skrll Exp $	*/
+/*	$NetBSD: lm75.c,v 1.47.2.1 2026/09/13 10:53:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.47 2025/01/02 18:40:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.47.2.1 2026/09/13 10:53:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,17 +438,21 @@ lmtemp_setlim_lm75(struct sysmon_envsys *sme, envsys_data_t *edata,
 {
 	struct lmtemp_softc *sc = sme->sme_cookie;
 	int32_t limit;
+	int degc;
 
-	if (*props & PROP_CRITMAX) {
-		if (limits == NULL)	/* Restore defaults */
+	if (limits == NULL || *props & PROP_CRITMAX) {
+		if (limits == NULL) {	/* Restore defaults */
 			limit = sc->sc_smax;
-		else
+			degc = 1;
+		} else {
 			limit = limits->sel_critmax;
+			degc = 0;
+		}
 		if (iic_acquire_bus(sc->sc_tag, 0))
 			return;
 		lmtemp_temp_write(sc, LM75_REG_THYST_SET_POINT,
-		    limit - 5000000, 0);
-		lmtemp_temp_write(sc, LM75_REG_TOS_SET_POINT, limit, 0);
+		    limit - 5000000, degc);
+		lmtemp_temp_write(sc, LM75_REG_TOS_SET_POINT, limit, degc);
 		iic_release_bus(sc->sc_tag, 0);
 
 		/* Synchronise sysctl */
@@ -462,28 +466,38 @@ lmtemp_setlim_lm77(struct sysmon_envsys *sme, envsys_data_t *edata,
 {
 	struct lmtemp_softc *sc = sme->sme_cookie;
 	int32_t limit;
+	int degc;
 
 	iic_acquire_bus(sc->sc_tag, 0);
-	if (*props & PROP_CRITMAX) {
-		if (limits == NULL)	/* Restore defaults */
+	if (limits == NULL || *props & PROP_CRITMAX) {
+		if (limits == NULL) {	/* Restore defaults */
 			limit = sc->sc_scrit;
-		else
+			degc = 1;
+		} else {
 			limit = limits->sel_critmax;
-		lmtemp_temp_write(sc, LM77_REG_TCRIT_SET_POINT, limit, 0);
+			degc = 0;
+		}
+		lmtemp_temp_write(sc, LM77_REG_TCRIT_SET_POINT, limit, degc);
 	}
-	if (*props & PROP_WARNMAX) {
-		if (limits == NULL)	/* Restore defaults */
+	if (limits == NULL || *props & PROP_WARNMAX) {
+		if (limits == NULL) {	/* Restore defaults */
 			limit = sc->sc_smax;
-		else
+			degc = 1;
+		} else {
 			limit = limits->sel_warnmax;
-		lmtemp_temp_write(sc, LM77_REG_THIGH_SET_POINT, limit, 0);
+			degc = 0;
+		}
+		lmtemp_temp_write(sc, LM77_REG_THIGH_SET_POINT, limit, degc);
 	}
-	if (*props & PROP_WARNMIN) {
-		if (limits == NULL)	/* Restore defaults */
+	if (limits == NULL || *props & PROP_WARNMIN) {
+		if (limits == NULL) {	/* Restore defaults */
 			limit = sc->sc_smin;
-		else
+			degc = 1;
+		} else {
 			limit = limits->sel_warnmin;
-		lmtemp_temp_write(sc, LM77_REG_TLOW_SET_POINT, limit, 0);
+			degc = 0;
+		}
+		lmtemp_temp_write(sc, LM77_REG_TLOW_SET_POINT, limit, degc);
 	}
 	iic_release_bus(sc->sc_tag, 0);
 }
