@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 2026/09/08 09:02:52 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123 2026/09/13 09:08:30 macallan Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2026/09/08 09:02:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2026/09/13 09:08:30 macallan Exp $");
 
 #include "opt_ofwoea.h"
 
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2026/09/08 09:02:52 macallan Exp $
 #include <powerpc/rtas.h>
 #include <powerpc/ofw_machdep.h>
 
+#include <dev/wsfb/genfbvar.h>
+
 #include "com.h"
 #if (NCOM > 0)
 #include <sys/termios.h>
@@ -75,9 +77,12 @@ extern u_int l2cr_config;
 #if (NRTAS > 0)
 extern int machine_has_rtas;
 #endif
+extern int console_instance;
 
 struct model_data modeldata;
 static void model_init(void);
+
+struct genfb_colormap_callback gfb_cb;
 
 #ifdef OFWOEA_DEBUG
 #define	DPRINTF ofprint
@@ -465,9 +470,18 @@ ofppc_init_comcons(int isa_node)
 #endif /*NCOM*/
 }
 
+static void
+of_set_palette(void *cookie, int index, int r, int g, int b)
+{
+	int ih = (int)cookie;
+
+	OF_call_method_1("color!", ih, 4, r, g, b, index);
+}
+
 void
 copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 {
+	uint64_t cmap_cb;
 	uint32_t temp;
 	char typestr[32];
 
@@ -502,6 +516,12 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 	} else if (of_to_dataprop(dict, node, "edid", "EDID")) {
 		aprint_debug("found edid\n");
 	}
+
+	gfb_cb.gcc_cookie = (void *)console_instance;
+	gfb_cb.gcc_set_mapreg = of_set_palette;
+	cmap_cb = (uint64_t)(uintptr_t)&gfb_cb;
+	prop_dictionary_set_uint64(dict, "cmap_callback", cmap_cb);
+
 	if (!of_to_uint32_prop(dict, node, "address", "address")) {
 		uint32_t fbaddr = 0;
 
