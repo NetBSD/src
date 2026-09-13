@@ -1,7 +1,7 @@
-/* $NetBSD: gicv3.c,v 1.58 2026/04/03 06:29:28 skrll Exp $ */
+/* $NetBSD: gicv3.c,v 1.59 2026/09/13 15:53:44 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2018-2026 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.58 2026/04/03 06:29:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.59 2026/09/13 15:53:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,12 +139,8 @@ gicv3_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 	if (group == 0) {
 		atomic_or_32(&sc->sc_enabled_sgippi, mask);
 		gicr_write_4(sc, ci->ci_gic_redist, GICR_ISENABLER0, mask);
-		while (gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR) & GICR_CTLR_RWP)
-			;
 	} else {
 		gicd_write_4(sc, GICD_ISENABLERn(group), mask);
-		while (gicd_read_4(sc, GICD_CTRL) & GICD_CTRL_RWP)
-			;
 	}
 }
 
