@@ -33,7 +33,7 @@
 
  #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.7 2026/09/13 13:28:11 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.8 2026/09/13 23:26:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -87,7 +87,7 @@ npf_route_ctor(npf_rproc_t *rp, const nvlist_t* params)
 	npf_ext_route_t *meta;
 	const char *ifname;
 
-	meta = kmem_zalloc(sizeof(*meta), KM_SLEEP);
+	meta = kmem_intr_zalloc(sizeof(*meta), KM_SLEEP);
 	ifname = nvlist_get_string(params, "route-interface");
 
 	if (!ifname)
@@ -102,7 +102,7 @@ npf_route_ctor(npf_rproc_t *rp, const nvlist_t* params)
 static void
 npf_route_dtor(npf_rproc_t *rp, void *meta)
 {
-	kmem_free(meta, sizeof(npf_ext_route_t));
+	kmem_intr_free(meta, sizeof(npf_ext_route_t));
 }
 
 static void
