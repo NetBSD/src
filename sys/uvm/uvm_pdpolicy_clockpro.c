@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.27 2022/04/12 20:27:56 andvar Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.27.12.1 2026/09/13 10:28:53 martin Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.27 2022/04/12 20:27:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.27.12.1 2026/09/13 10:28:53 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -641,7 +641,7 @@ clockpro_tune(void)
 static void
 clockpro_movereferencebit(struct vm_page *pg, bool locked)
 {
-	kmutex_t *lock;
+	struct krwlock *lock;
 	bool referenced;
 
 	KASSERT(mutex_owned(&clockpro.lock));
@@ -672,10 +672,23 @@ clockpro_movereferencebit(struct vm_page *pg, bool locked)
 			return;
 		}
 		PDPOL_EVCNT_INCR(locksuccess);
+
+		/* check page didn't change state while in trylock */
+		mutex_enter(&pg->interlock);
+		if ((pg->uobject == NULL && pg->uanon == NULL) ||
+		    pg->wire_count > 0 ||
+		    clockpro_getq(pg) == CLOCKPRO_NOQUEUE) {
+		    mutex_exit(&pg->interlock);
+		    if (!locked)
+		        rw_exit(lock);
+		    return;
+		}
+		mutex_exit(&pg->interlock);
+
 	}
 	referenced = pmap_clear_reference(pg);
 	if (!locked) {
-		mutex_exit(lock);
+		rw_exit(lock);
 	}
 	if (referenced) {
 		pg->pqflags |= PQ_REFERENCED;
@@ -1208,7 +1221,7 @@ void
 uvmpdpol_pageenqueue(struct vm_page *pg)
 {
 
-	uvmpdpol_set_intent(pg, PQ_INTENT_D);
+	uvmpdpol_set_intent(pg, PQ_INTENT_E);
 }
 
 static bool
@@ -1222,7 +1235,7 @@ uvmpdpol_pagerealize_locked(struct vm_page *pg)
 	/* XXX this needs to be called from elsewhere, like uvmpdpol_clock. */
 
 	pqflags = pg->pqflags;
-	pq->pqflags &= ~(PQ_INTENT_SET | PQ_INTENT_QUEUED);
+	pg->pqflags &= ~(PQ_INTENT_SET | PQ_INTENT_QUEUED);
 	switch (pqflags & (PQ_INTENT_MASK | PQ_INTENT_SET)) {
 	case PQ_INTENT_A | PQ_INTENT_SET:
 		uvmpdpol_pageactivate_locked(pg);
@@ -1269,6 +1282,15 @@ uvmpdpol_init(void)
 {
 
 	clockpro_init();
+}
+
+void
+uvmpdpol_init_cpu(struct uvm_cpu *ucpu)
+{
+
+	ucpu->pdq = NULL;
+	ucpu->pdqhead = 0;
+	ucpu->pdqtail = 0;
 }
 
 void
@@ -1333,12 +1355,12 @@ uvmpdpol_scanfini(void)
 }
 
 struct vm_page *
-uvmpdpol_selectvictim(kmutex_t **plock)
+uvmpdpol_selectvictim(struct krwlock **plock)
 {
 	struct clockpro_state * const s = &clockpro;
 	struct clockpro_scanstate * const ss = &scanstate;
 	struct vm_page *pg;
-	kmutex_t *lock = NULL;
+	struct krwlock *lock = NULL;
 
 	do {
 		mutex_enter(&s->lock);
@@ -1369,7 +1391,19 @@ uvmpdpol_selectvictim(kmutex_t **plock)
 		}
 		mutex_exit(&s->lock);
 		lock = uvmpd_trylockowner(pg);
-		/* pg->interlock now dropped */
+		/* pg->interlock now dropped; recheck page state */
+		if (lock != NULL) {
+		    mutex_enter(&pg->interlock);
+		    if ((pg->uobject == NULL && pg->uanon == NULL) ||
+		        pg->wire_count > 0 ||
+		        clockpro_getq(pg) == CLOCKPRO_NOQUEUE) {
+		        mutex_exit(&pg->interlock);
+		        rw_exit(lock);
+		        lock = NULL;
+		        continue;
+		    }
+		    mutex_exit(&pg->interlock);
+		}
 	} while (lock == NULL);
 	*plock = lock;
 	return pg;
@@ -1379,7 +1413,7 @@ static void
 clockpro_dropswap(pageq_t *q, int *todo)
 {
 	struct vm_page *pg;
-	kmutex_t *lock;
+	struct krwlock *lock;
 
 	KASSERT(mutex_owned(&clockpro.lock));
 
@@ -1408,6 +1442,16 @@ clockpro_dropswap(pageq_t *q, int *todo)
 			/* XXXAD lost position in queue */
 			continue;
 		}
+		/* have to check page didn't change state */
+		mutex_enter(&pg->interlock);
+		if ((pg->uobject == NULL && pg->uanon == NULL) ||
+		    pg->wire_count > 0 ||
+		    clockpro_getq(pg) == CLOCKPRO_NOQUEUE) {
+		    mutex_exit(&pg->interlock);
+		    rw_exit(lock);
+		    continue;
+		}
+		mutex_exit(&pg->interlock);
 
 		/*
 		 * if there's a shortage of swap slots, try to free it.
@@ -1418,7 +1462,7 @@ clockpro_dropswap(pageq_t *q, int *todo)
 				(*todo)--;
 			}
 		}
-		mutex_exit(lock);
+		rw_exit(lock);
 	}
 }
 
@@ -1467,7 +1511,7 @@ uvmpdpol_tune(void)
 }
 
 void
-uvmpdpol_idle(void)
+uvmpdpol_idle(struct uvm_cpu *ucpu __unused)
 {
 
 }
