@@ -33,7 +33,7 @@
 
  #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.6 2026/09/13 13:11:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.7 2026/09/13 13:28:11 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -356,7 +356,7 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi,
 		npf_validate_s6addr(m, ifp, &sw_csum);
 
 		if (m->m_pkthdr.len > ifp->if_mtu) {
-			/* router not allowed to fragmenrt */
+			/* router not allowed to fragment */
 			npf_stats_inc(npf, NPF_STAT_NOFRAGMENT);
 			goto bad;
 		}
