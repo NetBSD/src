@@ -33,7 +33,7 @@
 
  #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.5 2026/09/13 01:19:40 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.6 2026/09/13 13:11:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -305,36 +305,40 @@ npf_validate_s6addr(struct mbuf *m, struct ifnet *ifp1, int *sw_csum)
 
 /* main routing function for kernel module */
 static bool
-npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int *decision)
+npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi,
+    int *decision)
 {
 	struct mbuf *m = nbuf_head_mbuf(npc->npc_nbuf);
 	const npf_ext_route_t *route = meta;
 	npf_t *npf = npf_getkernctx();
 	struct ifnet *ifp;
-	int error;
-	int sw_csum;
-
+	int error, sw_csum;
+	bool consumed, rv;
+	int stats;
 	union {
 		struct sockaddr_in v4;
 		struct sockaddr_in6 v6;
 	} dst;
+
+	consumed = false;
+	rv = true;
+	stats = NPF_STAT_NOREROUTE;
 
 	/* Skip, if already blocking.
 	 * also when routing is applied to a stateful rule, incoming packets
 	 * are routed since the procedure becomes attached to the connection
 	 * and hence will not be desirable
 	 */
-	if (*decision == NPF_DECISION_BLOCK ||
-    (mi->mi_di == PFIL_IN)) {
-			return true;
+	if (*decision == NPF_DECISION_BLOCK || mi->mi_di == PFIL_IN) {
+		return true;
 	}
 
 	/* global lock for interface lookup */
 	KERNEL_LOCK(1, NULL);
 	ifp = ifunit(route->ifname);
 	if (ifp == NULL) {
-			/* XXX: oops */
-			goto bad;
+		/* XXX: oops */
+		goto bad;
 	}
 
 	if (npf_iscached(npc, NPC_IP6)) {
@@ -356,6 +360,7 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int
 			npf_stats_inc(npf, NPF_STAT_NOFRAGMENT);
 			goto bad;
 		}
+		consumed = true;
 		if (__predict_false(sw_csum & M_CSUM_TSOv6)) {
 			/*
 			 * TSO6 is required by a packet, but disabled for
@@ -372,9 +377,6 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int
 	} else if (npf_iscached(npc, NPC_IP4)) {
 		struct ip *ip = npc->npc_ip.v4;
 
-		KASSERT(ip != NULL);
-		KASSERT(m != NULL);
-
 		/*
 		 * NB: This code is copied from ip_output and re-arranged
 		 * checks fragmentation, checksum and source address validity
@@ -385,6 +387,7 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int
 		if (error)
 			goto bad;
 
+		consumed = true;
 		if (ntohs(ip->ip_len) > ifp->if_mtu)
 			goto fragment;
 
@@ -418,16 +421,14 @@ fragment:
  * after we leave the filtering context
  */
 done:
-	npf_stats_inc(npf, NPF_STAT_REROUTE);
-	memset(npc->npc_nbuf,0, sizeof(nbuf_t));
-	KERNEL_UNLOCK_ONE(NULL);
-	return false;
-
+	stats = NPF_STAT_REROUTE;
+	rv = false;
 bad:
-	npf_stats_inc(npf, NPF_STAT_NOREROUTE);
-	memset(npc->npc_nbuf, 0, sizeof(nbuf_t));
+	npf_stats_inc(npf, stats);
+	if (consumed)
+		memset(npc->npc_nbuf, 0, sizeof(*npc->npc_nbuf));
 	KERNEL_UNLOCK_ONE(NULL);
-	return true;
+	return rv;
 }
 
 __dso_public int
