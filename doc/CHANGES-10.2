@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.130 2026/09/11 16:23:39 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.131 2026/09/13 14:05:40 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -5789,4 +5789,32 @@ tests/crypto/libcrypto/threads/Makefile				(apply patch)
 	openssl: add missing file for openssl tests, accidently missed
 	in ticket #1276.
 	[nia, ticket #1337]
+
+sys/arch/xen/xen/xbdback_xenbus.c		1.109
+
+	xen: fix a broken KASSERT that could trigger panics
+	in a DIAGNOSTIC dom0 kernel and another possible state corruption by
+	a malicious guest.
+	[bouyer, ticket #1338]
+
+external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.11
+external/public-domain/tz/dist/Makefile         up to 1.7
+external/public-domain/tz/dist/NEWS             up to 1.9
+external/public-domain/tz/dist/README           up to 1.4
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.47
+external/public-domain/tz/dist/asia             up to 1.17
+external/public-domain/tz/dist/backward         up to 1.13
+external/public-domain/tz/dist/backzone         up to 1.5
+external/public-domain/tz/dist/northamerica     up to 1.8
+external/public-domain/tz/dist/southamerica     up to 1.6
+external/public-domain/tz/dist/theory.html      up to 1.7
+external/public-domain/tz/dist/version          up to 1.20
+external/public-domain/tz/dist/zone.tab         up to 1.7
+external/public-domain/tz/dist/zone1970.tab     up to 1.8
+external/public-domain/tz/dist/zonenow.tab      up to 1.9
+doc/3RDPARTY					(apply patch)
+
+	Updated tzdata to 2026d (via local 2026dgtz).
+	[kre, ticket #1339]
+
 
