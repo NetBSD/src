@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.c,v 1.13 2022/08/20 11:34:08 riastradh Exp $ */
+/* $NetBSD: fpu.c,v 1.14 2026/09/13 11:52:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.13 2022/08/20 11:34:08 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.14 2026/09/13 11:52:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -83,7 +83,7 @@ fpu_state_load(lwp_t *l, unsigned int flags)
 	KASSERT(l == curlwp);
 
 	if (__predict_false((flags & PCU_VALID) == 0)) {
-		uint64_t mvfr1 = reg_mvfr1_el1_read();
+		uint64_t mvfr1 = curcpu()->ci_id.ac_mvfr1;
 		bool fp16 = false;
 		uint32_t fpcr = 0;
 
