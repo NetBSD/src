@@ -33,7 +33,7 @@
 
  #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.4 2026/09/13 01:11:56 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.5 2026/09/13 01:19:40 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -351,24 +351,22 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int
 
 		npf_validate_s6addr(m, ifp, &sw_csum);
 
-		if (m->m_pkthdr.len <= ifp->if_mtu) {
-			if (__predict_false(sw_csum & M_CSUM_TSOv6)) {
-				/*
-				 * TSO6 is required by a packet, but disabled for
-				 * the interface.
-				 */
-				error = ip6_tso_output(ifp, ifp, m, &dst.v6, NULL);
-			} else
-				error = ip6_if_output(ifp, ifp, m, &dst.v6, NULL);
-
-			if (error) {
-				goto bad;
-			}
-
-		} else {
+		if (m->m_pkthdr.len > ifp->if_mtu) {
 			/* router not allowed to fragmenrt */
 			npf_stats_inc(npf, NPF_STAT_NOFRAGMENT);
-			icmp6_error(m, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
+			goto bad;
+		}
+		if (__predict_false(sw_csum & M_CSUM_TSOv6)) {
+			/*
+			 * TSO6 is required by a packet, but disabled for
+			 * the interface.
+			*/
+			error = ip6_tso_output(ifp, ifp, m, &dst.v6, NULL);
+		} else
+			error = ip6_if_output(ifp, ifp, m, &dst.v6, NULL);
+
+		if (error) {
+			goto bad;
 		}
 #endif
 	} else if (npf_iscached(npc, NPC_IP4)) {
