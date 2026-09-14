@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.428 2025/09/03 16:07:12 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.429 2026/09/14 17:59:04 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.428 2025/09/03 16:07:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.429 2026/09/14 17:59:04 andvar Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1089,7 +1089,7 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
 	if (opte != npte) {
 		pmap_pte_set(pte, npte);
 		pmap_pte_flush();
-		invlpg(va);
+		pmap_update_pg(va);
 	}
 }
 #endif /* defined(__x86_64__) */
