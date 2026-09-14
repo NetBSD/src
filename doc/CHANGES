@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3292 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3293 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -401,5 +401,23 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	dd(1): Implement POSIX Issue 8 "-iflags=fullblock" option.
 		[kre 20260829]
 	bind: Import version 9.20.24. [christos 20260829]
+	mk48txx(4): Add support for monitoring the battery low flag
+		via envstat, and stopping/starting the clock oscillator
+		via sysmon. [jdc 20260903]
+	wdc(4): When IDENTIFY fails on a drive, don't force all drives
+		on that channel into pre-ATA mode. [mlelstv 20260906]
+	machfb(4): Support blanking the display with
+		WSDISPLAYIO_SVIDEO. [macallan 20260906]
+	sparc64: Add envmon(4) sensor driver for Sun Ultra 25/45 and
+		V215/V245. Reports front panel temperature, fan
+		fault indicators, status LEDs, etc. [jdc 20260907]
+	riscv: Support building a RISCV64 MBR image through the
+		embedded-image framework. [rxg 20260908]
+	mount_lfs(8): Allow disabling roll-forward with "-o nolog".
+		[perseant 20260909]
+	evbarm: Support building an ARMv5 FDT image through the
+		embedded-image framework. [yurix 20260910]
+	compat_linux(8): Make writev(2) bug-compatible with Linux when
+		called with iovcnt=0. [sborrill 20260911]
 	tzdata: Updated to 2026d (using 2026dgtz) [kre 20260912]
 	tzcode: Updated to 2026d. [christos 20260912]
