@@ -123,7 +123,9 @@ extern char mips64r2_systemcall[];
 #define	MIPS_JR_K0	0x03400008	/* instruction code for jr k0 */
 #define	MIPS_ERET	0x42000018	/* instruction code for eret */
 
+#ifdef _KERNEL
 int main(void *);	/* XXX */
+#endif
 
 /*
  * Functions ``special'' enough to print by name

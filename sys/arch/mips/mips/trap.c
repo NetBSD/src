@@ -675,8 +675,9 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		/* FALLTHROUGH */
 	case T_RES_INST+T_USER:
 	case T_COP_UNUSABLE+T_USER:
-#if !defined(FPEMUL) && !defined(NOFPU)
-		if (__SHIFTOUT(cause, MIPS_CR_COP_ERR) == MIPS_CR_COP_ERR_CU1) {
+#if !defined(NOFPU)
+		if (mips_options.mips_fpu_id != 0 &&
+		    __SHIFTOUT(cause, MIPS_CR_COP_ERR) == MIPS_CR_COP_ERR_CU1) {
 			fpu_load();          	/* load FPA */
 		} else
 #endif
@@ -686,7 +687,14 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		userret(l);
 		return; /* GEN */
 	case T_FPE+T_USER:
-#if defined(FPEMUL)
+#if defined(FPEMUL) && !defined(NOFPU)
+		if (mips_options.mips_fpu_id != 0) {
+			utf->tf_regs[_R_CAUSE] = cause;
+			mips_fpu_trap(pc, utf);
+		} else {
+			mips_emul_inst(status, cause, pc, utf);
+		}
+#elif defined(FPEMUL)
 		mips_emul_inst(status, cause, pc, utf);
 #elif !defined(NOFPU)
 		utf->tf_regs[_R_CAUSE] = cause;
@@ -849,40 +857,54 @@ frame_dump(const struct trapframe *tf, struct pcb *pcb)
 {
 
 	printf("trapframe %p\n", tf);
-	printf("ast %#018lx   v0 %#018lx   v1 %#018lx\n",
+	printf("ast %#018" PRIxREGISTER "   v0 %#018" PRIxREGISTER
+	    "   v1 %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_AST], tf->tf_regs[_R_V0], tf->tf_regs[_R_V1]);
-	printf(" a0 %#018lx   a1 %#018lx   a2 %#018lx\n",
+	printf(" a0 %#018" PRIxREGISTER "   a1 %#018" PRIxREGISTER
+	    "   a2 %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_A0], tf->tf_regs[_R_A1], tf->tf_regs[_R_A2]);
 #if defined(__mips_n32) || defined(__mips_n64)
-	printf(" a3 %#018lx   a4  %#018lx  a5  %#018lx\n",
+	printf(" a3 %#018" PRIxREGISTER "   a4  %#018" PRIxREGISTER
+	    "  a5  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_A3], tf->tf_regs[_R_A4], tf->tf_regs[_R_A5]);
-	printf(" a6 %#018lx   a7  %#018lx  t0  %#018lx\n",
+	printf(" a6 %#018" PRIxREGISTER "   a7  %#018" PRIxREGISTER
+	    "  t0  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_A6], tf->tf_regs[_R_A7], tf->tf_regs[_R_T0]);
-	printf(" t1 %#018lx   t2  %#018lx  t3  %#018lx\n",
+	printf(" t1 %#018" PRIxREGISTER "   t2  %#018" PRIxREGISTER
+	    "  t3  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_T1], tf->tf_regs[_R_T2], tf->tf_regs[_R_T3]);
 #else
-	printf(" a3 %#018lx   t0  %#018lx  t1  %#018lx\n",
+	printf(" a3 %#018" PRIxREGISTER "   t0  %#018" PRIxREGISTER
+	    "  t1  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_A3], tf->tf_regs[_R_T0], tf->tf_regs[_R_T1]);
-	printf(" t2 %#018lx   t3  %#018lx  t4  %#018lx\n",
+	printf(" t2 %#018" PRIxREGISTER "   t3  %#018" PRIxREGISTER
+	    "  t4  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_T2], tf->tf_regs[_R_T3], tf->tf_regs[_R_T4]);
-	printf(" t5 %#018lx   t6  %#018lx  t7  %#018lx\n",
+	printf(" t5 %#018" PRIxREGISTER "   t6  %#018" PRIxREGISTER
+	    "  t7  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_T5], tf->tf_regs[_R_T6], tf->tf_regs[_R_T7]);
 #endif
-	printf(" s0 %#018lx   s1  %#018lx  s2  %#018lx\n",
+	printf(" s0 %#018" PRIxREGISTER "   s1  %#018" PRIxREGISTER
+	    "  s2  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_S0], tf->tf_regs[_R_S1], tf->tf_regs[_R_S2]);
-	printf(" s3 %#018lx   s4  %#018lx  s5  %#018lx\n",
+	printf(" s3 %#018" PRIxREGISTER "   s4  %#018" PRIxREGISTER
+	    "  s5  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_S3], tf->tf_regs[_R_S4], tf->tf_regs[_R_S5]);
-	printf(" s6 %#018lx   s7  %#018lx  t8  %#018lx\n",
+	printf(" s6 %#018" PRIxREGISTER "   s7  %#018" PRIxREGISTER
+	    "  t8  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_S6], tf->tf_regs[_R_S7], tf->tf_regs[_R_T8]);
-	printf(" t9 %#018lx   k0  %#018lx  k1  %#018lx\n",
+	printf(" t9 %#018" PRIxREGISTER "   k0  %#018" PRIxREGISTER
+	    "  k1  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_T9], tf->tf_regs[_R_K0], tf->tf_regs[_R_K1]);
-	printf(" gp %#018lx   sp  %#018lx  s8  %#018lx\n",
+	printf(" gp %#018" PRIxREGISTER "   sp  %#018" PRIxREGISTER
+	    "  s8  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_GP], tf->tf_regs[_R_SP], tf->tf_regs[_R_S8]);
-	printf(" ra %#018lx   sr  %#018lx  pc  %#018lx\n",
+	printf(" ra %#018" PRIxREGISTER "   sr  %#018" PRIxREGISTER
+	    "  pc  %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_RA], tf->tf_regs[_R_SR], tf->tf_regs[_R_PC]);
-	printf(" mullo     %#018lx mulhi %#018lx\n",
+	printf(" mullo     %#018" PRIxREGISTER " mulhi %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_MULLO], tf->tf_regs[_R_MULHI]);
-	printf(" badvaddr  %#018lx cause %#018lx\n",
+	printf(" badvaddr  %#018" PRIxREGISTER " cause %#018" PRIxREGISTER "\n",
 	    tf->tf_regs[_R_BADVADDR], tf->tf_regs[_R_CAUSE]);
 	printf("\n");
 	hexdump(printf, "Stack dump", tf, 256);
@@ -895,10 +917,10 @@ sigdebug(const struct trapframe *tf, const ksiginfo_t *ksi, int e,
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 
-	printf("pid %d.%d (%s): signal %d code=%d (trap %#lx) "
-	    "@pc %#lx addr %#lx error=%d\n",
+	printf("pid %d.%d (%s): signal %d code=%d (trap %#" PRIxREGISTER ") "
+	    "@pc %#" PRIxVADDR " addr %#" PRIxREGISTER " error=%d\n",
 	    p->p_pid, l->l_lid, p->p_comm, ksi->ksi_signo, ksi->ksi_code,
-	    tf->tf_regs[_R_CAUSE], (unsigned long)pc, tf->tf_regs[_R_BADVADDR],
+	    tf->tf_regs[_R_CAUSE], pc, tf->tf_regs[_R_BADVADDR],
 	    e);
 	frame_dump(tf, lwp_getpcb(l));
 }
