@@ -1,4 +1,4 @@
-/*	$NetBSD: apc.c,v 1.3 2025/05/31 15:14:40 jdc Exp $	*/
+/*	$NetBSD: apc.c,v 1.4 2026/09/15 18:15:35 jdc Exp $	*/
 
 /*
  * Copyright (c) 2010 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apc.c,v 1.3 2025/05/31 15:14:40 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apc.c,v 1.4 2026/09/15 18:15:35 jdc Exp $");
 
 
 /*
@@ -73,10 +73,8 @@ apcattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct apc_softc *sc = device_private(self);
-#ifdef MULTIPROCESSOR
 	struct cpu_info *cpi;
 	CPU_INFO_ITERATOR n;
-#endif
 
 	sc->sc_bt = sa->sa_bustag;
 	if (sbus_bus_map(sa->sa_bustag,
@@ -86,13 +84,9 @@ apcattach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("\n");
 	apc = sc;
-#ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(n, cpi)) {
 		cpi->idlespin = apc_cpu_sleep;
 	}
-#else
-	curcpu()->idlespin = apc_cpu_sleep;
-#endif
 }
 
 static void
