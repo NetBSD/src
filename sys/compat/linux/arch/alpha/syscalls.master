@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.112 2025/11/10 15:41:37 christos Exp $
+	$NetBSD: syscalls.master,v 1.113 2026/09/15 10:42:02 sborrill Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -254,8 +254,8 @@
 119	UNIMPL
 120	NOARGS		{ ssize_t|sys||readv(int fd, const struct iovec *iovp, \
 				int iovcnt); }
-121	NOARGS		{ ssize_t|sys||writev(int fd, const struct iovec *iovp, \
-				int iovcnt); }
+121	STD		{ ssize_t|linux_sys||writev(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
 122	STD		{ int|linux_sys||osf1_settimeofday(struct osf1_timeval *tv, \
 			    struct osf1_timezone *tzp); }
 123	NOARGS		{ int|sys||__posix_fchown(int fd, uid_t uid, \
