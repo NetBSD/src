@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.21 2026/07/18 09:46:28 kre Exp $
+# $NetBSD: tzdata2netbsd,v 1.22 2026/09/15 12:21:45 kre Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -392,6 +392,7 @@ DOIT()
 		"$@"
 	else
 		printf 'NOT DOING THE ABOVE COMMAND\n'
+		return 1
 	fi
 }
 
@@ -941,7 +942,9 @@ EOF
 	if cmp "${WORKDIR}"/old-dist-files "${WORKDIR}"/new-dist-files
 	then
 		DOIT hg commit -l "${IMPORTMSGFILE}" &&
-			touch "${IMPORTDONEFILE}"
+			touch "${IMPORTDONEFILE}"    &&
+			hg tag -m "TZDATA branch ${NEWVER_UC} import tag" \
+			    "TZDATA/${CVSNEWTAG#TZDATA}"
 		return
 	fi
 
@@ -972,12 +975,13 @@ EOF
 
 	DOIT hg addremove -s 90 &&
 	DOIT hg commit -l "${IMPORTMSGFILE}" &&
-	touch "${IMPORTDONEFILE}"
+		touch "${IMPORTDONEFILE}"    &&
+		hg tag -m "TZDATA branch ${NEWVER_UC} import tag" \
+			"TZDATA/${CVSNEWTAG#TZDATA}"
 )
 
 cvsmerge()
 {
-
 	cd -P "${TZDISTDIR}" || exit 1
 	if [ -e "${MERGEDONEFILE}" ]
 	then
@@ -1005,18 +1009,11 @@ The hg merge has already been performed.
 EOF
 		return 0
 	fi
-	DOIT hg merge TZDATA &&
-		touch "${MERGEDONEFILE}" &&
-		return 0
 
-	if [ -z "$( hg resolve -l | grep -v '^R' >/dev/null 2>&1 )" ]
-	then
-		# All conflicts already resolved, just note that
-		printf 'Auto-resolving merge "conflicts"\n.'
-		hg resolve -m &&
-			touch "${MERGEDONEFILE}"
-		return 0
-	fi
+	DOIT hg merge TZDATA && {
+		touch "${MERGEDONEFILE}"
+		return 0	# no conflicts found
+	}
 
 	printf '\n*********************************** CONFLICTS\n'
 	printf 'The following files have conflicts:\n'
@@ -1024,14 +1021,11 @@ EOF
 	hg resolve -l
 
 	printf '%s\n' \
-	    'Resolve these issues, and run\n\thg resolve -m file...'	\
+	    $'Resolve these issues, and run\n\thg resolve -m file...'	\
 	    'as each file listed above is corrected.' ''		\
-	    'Then re-run this script.'
+	    $'Use\n\thg resolve -l\nto see an updated list of work' ''	\
+	    'Then run this script again (use the same args).'
 
-	# Don't repeat the above if there are unresolved conflicts,
-	# Rather hgcommitmerge() will refuse to proceed until they
-	# are fixed.
-	touch "${MERGEDONEFILE}"
 	exit 1
 }
 
@@ -1085,20 +1079,15 @@ checkfilecontents()
 	for file
 	do
 		case "${file}" in
-		*.orig | *.rej)	continue;;	# Patch noise
+		*.orig | *.rej) rm -f "${file}"; continue;;	# Patch noise
 		esac
 		if ! test -e "${file}"
 		then
 			printf 'In distribution but not in new tree: %s\n' \
 			    "${file}"
 			cp "${EXTRACTDIR}${file}" .
-			if "${Hg:-false}"
-			then
-				DOIT hg add "${file}"
-			else
-				DOIT cvs -d "${CVSROOT}" add \
-				    -m "Added by ${NEWVER}" "${file}"
-			fi
+			DOIT cvs -d "${CVSROOT}" add \
+			    -m "Added by ${NEWVER}" "${file}"
 			continue
 		fi
 
@@ -1161,13 +1150,8 @@ checkfilecontents()
 		(*)	exit 1;;
 		esac
 
-		if "${Hg:-false}"
-		then
-			DOIT hg remove "$@" || continue
-		else
-			rm -f "$@"
-			DOIT cvs -d "${CVSROOT}" remove "${@}" || continue
-		fi
+		rm -f "$@"
+		DOIT cvs -d "${CVSROOT}" remove "${@}" || continue
 		break
 	done
 
@@ -1224,7 +1208,8 @@ EOF
 		return 0
 	fi
 	DOIT hg commit -m "Merge tzdata${NEWVER}" &&
-		touch "${COMMITMERGEDONEFILE}"
+		touch "${COMMITMERGEDONEFILE}" &&
+		hg tag -m "${CVSNEWTAG} merge tag" "${CVSNEWTAG}"
 }
 
 setlistupdate()
@@ -1413,9 +1398,12 @@ docupdate()
 		G=$V
 		"${GLOBAL}" && G=${G}gtz
 
+		YMD=$(date -u +'%Y-%m-%d')
+
 		sed < 3RDPARTY > 3RDPARTY.new				\
 		    -e '1,/^Package:	tz$/{p;d;}'			\
 		    -e '/^Notes:/,${p;d;}'				\
+		    -e "/^Date:	/s,	2.*,	${YMD},"		\
 		    -e "/^Version:	/s, / ${D}.*, / ${D}${G},"	\
 		    -e "/^Current Vers:/s,tz.*$,${C}${V} / ${D}${V}," && {
 
@@ -1477,6 +1465,21 @@ And if necessary (if not already done by the script):
  * Edit and commit  src/doc/CHANGES
 EOF
 
+	if "${Hg:-false}"
+	then
+		cat <<EOF
+
+Now verify that a release build succeeds.  If it fails, work out
+why and correct the problem.  Iterate until the release build succeeds.
+
+Once that is done:
+
+	hg push
+
+to make this update available to the world.
+EOF
+	fi
+
 	rm -f "${UPDATE_FROM}"	# just to try to make sure, as we're done!
 }
 
@@ -1519,16 +1522,17 @@ main()
 		cvsimport
 		cvsmerge
 		resolveconflicts
+		checkfilecontents
 	fi
-	checkfilecontents
+
+	updatedzones	# Aborts the script on failure
+
 	if "${Hg:-false}"
 	then
 		hgcommitmerge
 	else
 		cvscommitmerge
 	fi
-	updatedzones
-
 	setlistupdate
 
 	rm -f "${UPDATE_FROM}"
