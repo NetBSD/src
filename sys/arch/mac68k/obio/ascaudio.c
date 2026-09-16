@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.19 2026/09/16 02:40:05 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.20 2026/09/16 02:42:09 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.19 2026/09/16 02:40:05 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.20 2026/09/16 02:42:09 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,7 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.19 2026/09/16 02:40:05 nat Exp $");
 #define	MAC68K_ASCAUDIO_LEN		0x2000
 
 #define BUFSIZE 			32768
-#define PLAYBLKSIZE			8192
+#define PLAYBLKUNIT			1024	/* one FIFO half: 512 frames */
+#define PLAYBLKMIN			2048	/* 92 ms */
+#define PLAYBLKSIZE			8192	/* 368 ms, the cap */
 #define RECBLKSIZE			1024
 
 #define ASC_VIA_CLR_INTR()     via_reg(VIA2, vIFR) = V2IF_ASC
@@ -760,10 +762,15 @@ ascaudio_round_blocksize(void *opaque, int blksize, int mode,
 	sc = (ascaudio_softc_t *)opaque;
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	if (mode == AUMODE_PLAY)
-		return PLAYBLKSIZE;
-	else
-		return RECBLKSIZE;
+	if (mode == AUMODE_PLAY) {
+		blksize = roundup(blksize, PLAYBLKUNIT);
+		if (blksize < PLAYBLKMIN)
+			blksize = PLAYBLKMIN;
+		if (blksize > PLAYBLKSIZE)
+			blksize = PLAYBLKSIZE;
+		return blksize;
+	}
+	return RECBLKSIZE;
 }
 
 static void
