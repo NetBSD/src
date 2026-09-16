@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_generic.S,v 1.9 2026/08/25 18:16:13 skrll Exp $	*/
+/*	$NetBSD: bus_space_generic.S,v 1.10 2026/09/16 17:53:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <riscv/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: bus_space_generic.S,v 1.9 2026/08/25 18:16:13 skrll Exp $")
+RCSID("$NetBSD: bus_space_generic.S,v 1.10 2026/09/16 17:53:28 skrll Exp $")
 
 
 /* void bs_c_1(a0: tag, a1: src, srcoffset, dst, dstoffset, count); */
@@ -72,11 +72,7 @@ ENTRY_NP(generic_bs_r_4)
 	PTR_L	a5, BS_STRIDE(a0)	/* stride */
 	PTR_SLL	a2, a2, a5		/* offset <<= stride */
 	PTR_ADD	a2, a2, a1		/* add to address */
-#ifdef _LP64
-	lwu	a0, 0(a2)		/* load 32-bit */
-#else
 	lw	a0, 0(a2)		/* load 32-bit */
-#endif
 	ret
 END(generic_bs_r_4)
 
