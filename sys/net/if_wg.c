@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.144 2026/09/16 13:51:57 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.145 2026/09/16 13:54:37 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.144 2026/09/16 13:51:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.145 2026/09/16 13:54:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2807,6 +2807,8 @@ wg_need_to_send_init_message(struct wg_session *wgs)
 static void
 wg_schedule_peer_task(struct wg_peer *wgp, unsigned int task)
 {
+
+	KASSERT(task != 0);
 
 	mutex_enter(wgp->wgp_intr_lock);
 	WG_DLOG("tasks=%d, task=%d\n", wgp->wgp_tasks, task);
