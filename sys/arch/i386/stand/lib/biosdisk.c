@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.61 2024/01/06 21:26:43 mlelstv Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.62 2026/09/16 22:04:36 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -1345,7 +1345,7 @@ biosdisk_find_name(const char *fname, int *biosdev,
 	int part;
 	int ret = -1;
 
-	/* Strip leadinf NAME= and cut after the coloon included */
+	/* Strip leading NAME= and cut after the colon included */
 	strlcpy(name, fname + 5, MAXDEVNAME);
 	sep = strchr(name, ':');
 	if (sep)
