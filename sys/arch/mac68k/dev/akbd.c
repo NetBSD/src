@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.30 2026/05/23 20:52:49 nat Exp $	*/
+/*	$NetBSD: akbd.c,v 1.31 2026/09/16 06:10:38 nat Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.30 2026/05/23 20:52:49 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.31 2026/09/16 06:10:38 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -493,8 +493,9 @@ akbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 		return 0;
 	case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
-		mac68k_ring_bell(d->pitch, d->period * hz / 1000, 100);
-		/* comes in as msec, goes out as ticks; volume ignored */
+		/* period: msec in, ticks out; volume is 0-100 */
+		mac68k_ring_bell(d->pitch, d->period * hz / 1000,
+		    d->volume > 100 ? 100 : d->volume);
 #undef d
 		return (0);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
