@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.22 2026/09/16 02:52:55 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.23 2026/09/16 02:55:04 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.22 2026/09/16 02:52:55 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.23 2026/09/16 02:55:04 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -260,19 +260,20 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
 
-	if (mac68k_machine.aux_interrupts) {
-		intr_establish(ascaudio_intr_est, sc, ASCIRQ);
-	} else {
-		via2_register_irq(VIA2_ASC, ascaudio_intr, sc);
-	}
-	ascaudio_intr_enable();
-
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 	callout_init(&sc->sc_pcallout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_pcallout, ascaudio_done_output, sc);
 	callout_init(&sc->sc_rcallout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_rcallout, ascaudio_done_input, sc);
+
+	/* The handler takes sc_intr_lock, so it goes live only now. */
+	if (mac68k_machine.aux_interrupts) {
+		intr_establish(ascaudio_intr_est, sc, ASCIRQ);
+	} else {
+		via2_register_irq(VIA2_ASC, ascaudio_intr, sc);
+	}
+	ascaudio_intr_enable();
 
 	sc->sc_vol = 180;
 	sc->sc_recvol = 255;
