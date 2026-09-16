@@ -1,4 +1,4 @@
-/*	$NetBSD: pcfiic_ebus.c,v 1.12 2026/07/09 14:55:03 thorpej Exp $	*/
+/*	$NetBSD: pcfiic_ebus.c,v 1.13 2026/09/16 06:40:12 jdc Exp $	*/
 /*	$OpenBSD: pcfiic_ebus.c,v 1.13 2008/06/08 03:07:40 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.12 2026/07/09 14:55:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.13 2026/09/16 06:40:12 jdc Exp $");
 
 /*
  * Device specific driver for the EBus i2c devices found on some sun4u
@@ -103,10 +103,12 @@ pcfiic_ebus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_regmap[PCF8584_S0] = PCF8584_S0;
 	sc->sc_regmap[PCF8584_S1] = PCF8584_S1;
 
-	/* E450 and E250 have a different clock */
+	/* E450 and E250 have a different clock and no interrupts */
 	if ((strcmp(ea->ea_name, "SUNW,envctrl") == 0) ||
-	    (strcmp(ea->ea_name, "SUNW,envctrltwo") == 0))
+	    (strcmp(ea->ea_name, "SUNW,envctrltwo") == 0)) {
 		clock = PCF8584_CLK_12 | PCF8584_SCL_45;
+		sc->sc_poll = true;
+	}
 
 	sc->sc_dev = self;
 	if (OF_getprop(ea->ea_node, "compatible", compat, sizeof(compat)) > 0 &&
