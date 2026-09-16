@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584var.h,v 1.10 2026/07/09 14:55:03 thorpej Exp $	*/
+/*	$NetBSD: pcf8584var.h,v 1.11 2026/09/16 06:51:01 jdc Exp $	*/
 /*	$OpenBSD: pcf8584var.h,v 1.5 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -24,18 +24,31 @@ struct pcfiic_softc {
 	device_t		sc_dev;
 
 	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	bus_space_handle_t	sc_mux_ioh;
-	u_int8_t		sc_addr;
-	u_int8_t		sc_clock;
+	bus_space_handle_t	sc_ioh;		/* Handle for bus */
+	bus_space_handle_t	sc_mux_ioh;	/* Handle for mux */
+	u_int8_t		sc_addr;	/* Our address */
+	u_int8_t		sc_clock;	/* Our clock settings */
 	u_int8_t		sc_regmap[2];
 
-	bool			sc_has_mux;
-	bool			sc_poll;
+	bool			sc_has_mux;	/* We have 2 buses */
+	bool			sc_poll;	/* Poll only (no intr) */
 
-	int			sc_delay;
+	int			sc_delay;	/* HW needs R, W delay */
 
 	struct i2c_controller	sc_i2c;
+
+	kmutex_t		sc_mutex;	/* Interrupt mutex ... */
+	kcondvar_t		sc_cv;		/* ... and condvar */
+
+	int			sc_op;		/* Operation to run */
+	int			sc_stage;	/* Exec stage */
+	i2c_addr_t		sc_target;	/* Saved exec args */
+	const u_int8_t *	sc_cmdbuf;	/* ... */
+	size_t			sc_cmdlen;	/* ... */
+	u_int8_t *		sc_buf;		/* ... */
+	size_t			sc_len;		/* ... */
+	int			sc_i;		/* How far through buf */
+	int			sc_err;		/* Error during transaction */
 };
 
 /*
@@ -50,4 +63,14 @@ struct pcfiic_softc {
 void	pcfiic_attach(struct pcfiic_softc *, i2c_addr_t, u_int8_t);
 int	pcfiic_intr(void *);
 
+/* i2c operations */
+#define PCFIIC_OP_READ		0x01
+#define PCFIIC_OP_WRITE		0x02
+#define PCFIIC_OP_WR_RD		0x04
+
+/* i2c stages */
+#define PCFIIC_STAGE_IDLE	0x00
+#define PCFIIC_STAGE_WRITE	0x01
+#define PCFIIC_STAGE_READ	0x02
+#define PCFIIC_STAGE_STOP	0x04
 #endif /* _DEV_IC_PCF8584VAR_H_ */

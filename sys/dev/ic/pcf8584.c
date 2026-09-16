@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.25 2026/07/09 14:55:03 thorpej Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.26 2026/09/16 06:51:01 jdc Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -20,7 +20,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 #include <sys/kernel.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/bus.h>
 
@@ -29,19 +31,15 @@
 #include <dev/ic/pcf8584var.h>
 #include <dev/ic/pcf8584reg.h>
 
-/* Write then read */
-#define REPEAT_START		1
-
 void		pcfiic_init(struct pcfiic_softc *);
 int		pcfiic_i2c_acquire_bus(void *, int);
 void		pcfiic_i2c_release_bus(void *, int);
 int		pcfiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 		    size_t, void *, size_t, int);
 
-int		pcfiic_xmit(struct pcfiic_softc *, u_int8_t, const u_int8_t *,
-		    size_t, const u_int8_t *, size_t, int);
-int		pcfiic_recv(struct pcfiic_softc *, u_int8_t, u_int8_t *,
-		    size_t, int);
+int		pcfiic_xmit(struct pcfiic_softc *, const u_int8_t *, size_t,
+		    const u_int8_t *, size_t);
+int		pcfiic_recv(struct pcfiic_softc *, u_int8_t *, size_t);
 
 u_int8_t	pcfiic_read(struct pcfiic_softc *, bus_size_t);
 void		pcfiic_write(struct pcfiic_softc *, bus_size_t, u_int8_t);
@@ -81,12 +79,8 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock)
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = pcfiic_i2c_exec;
 
-	/*
-	 * Note: This driver ALWAYS polls, at the moment anyway.
-	 * It's not exactly in a performance-critical path, and
-	 * we're only only operating in master mode in any case.
-	 */
-	sc->sc_poll = true;
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&sc->sc_cv, "pcfiic");
 
 	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 }
@@ -94,7 +88,98 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock)
 int
 pcfiic_intr(void *arg)
 {
-	return (0);
+	struct pcfiic_softc	*sc = arg;
+	u_int8_t 		s1, r;
+
+	mutex_enter(&sc->sc_mutex);
+
+	if (sc->sc_stage == PCFIIC_STAGE_IDLE) {
+		/* printf("%s: intr and idle\n", device_xname(sc->sc_dev)); */
+		mutex_exit(&sc->sc_mutex);
+		return (0);
+	}
+
+	s1 = pcfiic_read(sc, PCF8584_S1);
+	if ((s1 & PCF8584_STATUS_PIN) != 0) {
+		/* printf("%s: intr +PIN (0x%02x)\n",
+		    device_xname(sc->sc_dev), s1); */
+		mutex_exit(&sc->sc_mutex);
+		return (0);
+	}
+
+	switch (sc->sc_stage) {
+	case PCFIIC_STAGE_WRITE:
+		if (s1 & PCF8584_STATUS_LRB) {
+			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
+			sc->sc_err = 1;
+			sc->sc_stage = PCFIIC_STAGE_STOP;
+			break;
+		}
+
+		/* Start the write from cmd */
+		if (sc->sc_i < sc->sc_cmdlen) {
+			pcfiic_write(sc, PCF8584_S0, sc->sc_cmdbuf[sc->sc_i]);
+			sc->sc_i++;
+			break;
+		}
+
+		/* If a read OP, switch with repeat start after writing cmd */
+		if (sc->sc_op == PCFIIC_OP_WR_RD) {
+			sc->sc_i = 0;
+			sc->sc_stage = PCFIIC_STAGE_READ;
+			pcfiic_write(sc, PCF8584_S1,
+			    PCF8584_CMD_REPSTART | PCF8584_CTRL_ENI);
+			pcfiic_write(sc, PCF8584_S0,
+			    (sc->sc_target << 1) | 0x01);
+			break;
+		}
+
+		/* If a write OP, continue the write, now from buf */
+		if (sc->sc_i < sc->sc_cmdlen + sc->sc_len) {
+			pcfiic_write(sc, PCF8584_S0,
+			    sc->sc_buf[sc->sc_i - sc->sc_cmdlen]);
+			sc->sc_i++;
+		} else {
+			/* All data written, send stop */
+			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
+			sc->sc_stage = PCFIIC_STAGE_STOP;
+		}
+		break;
+
+	case PCFIIC_STAGE_READ:
+		if ((sc->sc_i != sc->sc_len) && (s1 & PCF8584_STATUS_LRB)) {
+			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
+			pcfiic_read(sc, PCF8584_S0);
+			sc->sc_err = 1;
+			sc->sc_stage = PCFIIC_STAGE_STOP;
+			break;
+		}
+
+		/* Read to buf, send nak on last - 1 */
+		if (sc->sc_i == sc->sc_len - 1) {
+			pcfiic_write(sc, PCF8584_S1,
+			    PCF8584_CMD_NAK | PCF8584_CTRL_ENI);
+		} else if (sc->sc_i == sc->sc_len) {
+			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
+			sc->sc_stage = PCFIIC_STAGE_STOP;
+		}
+
+		/* We need a dummy read to start data shifting into S0 */
+		r = pcfiic_read(sc, PCF8584_S0);
+		if (sc->sc_i > 0)
+			sc->sc_buf[sc->sc_i - 1] = r;
+
+		sc->sc_i++;
+		break;
+	}
+
+	if (sc->sc_stage == PCFIIC_STAGE_STOP) {
+		cv_signal(&sc->sc_cv);
+	}
+
+	mutex_exit(&sc->sc_mutex);
+
+	return (1);
 }
 
 int
@@ -103,6 +188,8 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 {
 	struct pcfiic_softc	*sc = arg;
 	int			ret = 0;
+	u_int8_t		intr;
+	unsigned		deadline, rem;
 
 #if 0
         printf("%s: exec op: %d addr: 0x%x cmdlen: %d len: %d flags 0x%x\n",
@@ -114,87 +201,136 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 
 	if (sc->sc_has_mux)
 		pcfiic_choose_bus(sc, addr >> 7);
+	addr &= 0x7f;
 
-	/*
-	 * If we are writing, write address, cmdbuf, buf.
-	 * If we are reading, either:
-	 *   write addr, cmdbuf, repeat-start, then read addr to buf, or:
-	 *   read addr to buf.
-	 */
-	if (I2C_OP_WRITE_P(op)) {
-		ret = pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen,
-		    buf, len, 0);
+	if (I2C_OP_WRITE_P(op))
+		sc->sc_op = PCFIIC_OP_WRITE;
+	else
+		if(cmdlen > 0)
+			sc->sc_op = PCFIIC_OP_WR_RD;
+		else
+			sc->sc_op = PCFIIC_OP_READ;
+
+	if (flags & I2C_F_POLL) {
+		intr = 0;
 	} else {
-		if(cmdlen > 0) {
-			if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen,
-			    NULL, 0, REPEAT_START) != 0)
-				return (1);
-			ret = pcfiic_recv(sc, addr & 0x7f, buf, len,
-			    REPEAT_START);
-		} else
-			ret = pcfiic_recv(sc, addr & 0x7f, buf, len,
-			    0);
+		/* Interrupt-driven setup */
+		intr = PCF8584_CTRL_ENI;
+		sc->sc_target = addr;
+		sc->sc_cmdbuf = cmdbuf;
+		sc->sc_cmdlen = cmdlen;
+		sc->sc_buf = buf;
+		sc->sc_len = len;
+		sc->sc_i = 0;
+		sc->sc_err = 0;
+		mutex_enter(&sc->sc_mutex);
+		sc->sc_stage = PCFIIC_STAGE_IDLE;
+		mutex_exit(&sc->sc_mutex);
 	}
-	return (ret);
-}
-
-int
-pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *cmdbuf,
-    size_t cmdlen, const u_int8_t *buf, size_t len, int flags)
-{
-	int			i;
-	volatile u_int8_t	r;
 
 	if (pcfiic_wait_BBN(sc) != 0) {
 		printf("%s: transmit failed (BBN)\n", device_xname(sc->sc_dev));
 		return (1);
 	}
 
-	pcfiic_write(sc, PCF8584_S0, addr << 1);
-	pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_START);
+	/* Start the transaction */
+	if (sc->sc_op == PCFIIC_OP_READ) {
+		mutex_enter(&sc->sc_mutex);
+		sc->sc_stage = PCFIIC_STAGE_READ;
+		mutex_exit(&sc->sc_mutex);
+		pcfiic_write(sc, PCF8584_S0, (addr << 1) | 0x01);
+	} else {
+		mutex_enter(&sc->sc_mutex);
+		sc->sc_stage = PCFIIC_STAGE_WRITE;
+		mutex_exit(&sc->sc_mutex);
+		pcfiic_write(sc, PCF8584_S0, (addr << 1));
+	}
+	pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_START | intr);
+
+	if (flags & I2C_F_POLL) {
+		/*
+		 * If we are writing, write address, cmdbuf, buf.
+		 * If we are reading, either:
+		 *   write addr, cmdbuf, repeat-start, then read addr to buf,
+		 * or:
+		 *   read addr to buf.
+		 */
+		if (sc->sc_op == PCFIIC_OP_WRITE) {
+			ret = pcfiic_xmit(sc, cmdbuf, cmdlen, buf, len);
+			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
+		} else {
+			if (sc->sc_op == PCFIIC_OP_WR_RD) {
+				if (pcfiic_xmit(sc, cmdbuf, cmdlen,
+				    NULL, 0) != 0) {
+					pcfiic_write(sc, PCF8584_S1,
+					    PCF8584_CMD_STOP);
+					return (1);
+				}
+				pcfiic_write(sc, PCF8584_S1,
+				    PCF8584_CMD_REPSTART);
+				pcfiic_write(sc, PCF8584_S0,
+				    (addr << 1) | 0x01);
+			}
+			/* PCFIIC_OP_READ */
+			ret = pcfiic_recv(sc, buf, len);
+		}
+		return (ret);
+	} else {	/* interrupt-driven */
+		/* Wait for the transfer to complete (stop). */
+		deadline = getticks() +
+		    /*timeout*/ hz / 10 + 10 * (cmdlen + len);
+		mutex_enter(&sc->sc_mutex);
+		while (sc->sc_stage != PCFIIC_STAGE_STOP) {
+			rem = deadline - getticks();
+			if (!rem || rem >= INT_MAX) {
+				printf("%s: intr timeout\n",
+				    device_xname(sc->sc_dev));
+				sc->sc_stage = PCFIIC_STAGE_IDLE;
+				mutex_exit(&sc->sc_mutex);
+				pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
+				return (1);
+			}
+			cv_timedwait(&sc->sc_cv, &sc->sc_mutex, rem);
+		}
+		mutex_exit(&sc->sc_mutex);
+		return (sc->sc_err);
+	}
+}
+
+/* Polling write */
+int
+pcfiic_xmit(struct pcfiic_softc *sc, const u_int8_t *cmdbuf, size_t cmdlen,
+    const u_int8_t *buf, size_t len)
+{
+	int			i;
+	volatile u_int8_t	r;
 
 	for (i = 0; i <= cmdlen + len; i++) {
 		if (pcfiic_wait_pin(sc, &r) != 0) {
-			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
 			printf("%s: transmit failed at %d (PIN)\n",
 			    device_xname(sc->sc_dev), i);
 			return (1);
 		}
 
 		if (r & PCF8584_STATUS_LRB) {
-			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
 			return (1);
 		}
 
+		/* Write from cmd then buf */
 		if (i < cmdlen)
 			pcfiic_write(sc, PCF8584_S0, cmdbuf[i]);
 		else if (i < cmdlen + len)
 			pcfiic_write(sc, PCF8584_S0, buf[i - cmdlen]);
 	}
-	if (flags != REPEAT_START)
-		pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
 	return (0);
 }
 
+/* Polling read */
 int
-pcfiic_recv(struct pcfiic_softc *sc, u_int8_t addr, u_int8_t *buf, size_t len,
-    int flags)
+pcfiic_recv(struct pcfiic_softc *sc, u_int8_t *buf, size_t len)
 {
 	int			i = 0, err = 0;
 	volatile u_int8_t	r;
-
-	if (flags != REPEAT_START) {
-		if (pcfiic_wait_BBN(sc) != 0) {
-			printf("%s: receive failed (BBN)\n",
-			    device_xname(sc->sc_dev));
-			return (1);
-		}
-		pcfiic_write(sc, PCF8584_S0, (addr << 1) | 0x01);
-		pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_START);
-	} else {
-		pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_REPSTART);
-		pcfiic_write(sc, PCF8584_S0, (addr << 1) | 0x01);
-	}
 
 	for (i = 0; i <= len; i++) {
 		if (pcfiic_wait_pin(sc, &r) != 0) {
@@ -210,12 +346,14 @@ pcfiic_recv(struct pcfiic_softc *sc, u_int8_t addr, u_int8_t *buf, size_t len,
 			return (1);
 		}
 
+		/* Read to buf, send nak on last - 1 */
 		if (i == len - 1) {
 			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_NAK);
 		} else if (i == len) {
 			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
 		}
 
+		/* We need a dummy read to start data shifting into S0 */
 		r = pcfiic_read(sc, PCF8584_S0);
 		if (i > 0)
 			buf[i - 1] = r;
