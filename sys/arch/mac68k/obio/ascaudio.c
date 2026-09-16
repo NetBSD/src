@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.21 2026/09/16 02:44:35 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.22 2026/09/16 02:52:55 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.21 2026/09/16 02:44:35 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.22 2026/09/16 02:52:55 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -798,6 +798,7 @@ ascaudio_intr(void *arg)
 	struct ascaudio_softc *sc = arg;
 	uint8_t status;
 	int8_t val;
+	int16_t scaled;
 	int loc_a, loc_b, total, count, i;
 
 	if (!sc)
@@ -844,8 +845,12 @@ ascaudio_intr(void *arg)
 				val = bus_space_read_1(sc->sc_tag,
 				    sc->sc_handle, loc_a);
 				val ^= 0x80;
-				val = val * sc->sc_recvol / 64;
-				*sc->sc_rptr++ = val;
+				scaled = val * sc->sc_recvol / 64;
+				if (scaled > INT8_MAX)
+					scaled = INT8_MAX;
+				else if (scaled < INT8_MIN)
+					scaled = INT8_MIN;
+				*sc->sc_rptr++ = scaled;
 				if (loc_b) {
 					(void)bus_space_read_1
 					    (sc->sc_tag, sc->sc_handle, loc_b);
