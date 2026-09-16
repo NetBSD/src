@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.20 2026/09/16 02:42:09 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.21 2026/09/16 02:44:35 nat Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.20 2026/09/16 02:42:09 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.21 2026/09/16 02:44:35 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1031,7 +1031,7 @@ static const struct cfiattrdata * const ascaudio_attrs[] = {
 	&audiobuscf_iattrdata, NULL
 };
 
-CFDRIVER_DECL(ascaudio, DV_DULL, ascaud_attrs);
+CFDRIVER_DECL(ascaudio, DV_DULL, ascaudio_attrs);
 extern struct cfattach ascaudio_ca;
 static int ascaudioloc[] = { -1, -1 };
 
@@ -1061,7 +1061,7 @@ ascaudio_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 
-		error = config_cfattach_attach(ascaudio_cd.cd_name, &ascaud_ca);
+		error = config_cfattach_attach(ascaudio_cd.cd_name, &ascaudio_ca);
 		if (error) {
 			config_cfdriver_detach(&ascaudio_cd);
 			aprint_error("%s: unable to register cfattach\n",
@@ -1072,7 +1072,7 @@ ascaudio_modcmd(modcmd_t cmd, void *arg)
 
 		error = config_cfdata_attach(ascaudio_cfdata, 1);
 		if (error) {
-			config_cfattach_detach(ascaudio_cd.cd_name, &ascaud_ca);
+			config_cfattach_detach(ascaudio_cd.cd_name, &ascaudio_ca);
 			config_cfdriver_detach(&ascaudio_cd);
 			aprint_error("%s: unable to register cfdata\n",
 				ascaudio_cd.cd_name);
@@ -1087,7 +1087,7 @@ ascaudio_modcmd(modcmd_t cmd, void *arg)
 			if (error) {
 				return error;
 			}
-			config_cfattach_detach(ascaudio_cd.cd_name, &ascaud_ca);
+			config_cfattach_detach(ascaudio_cd.cd_name, &ascaudio_ca);
 			config_cfdriver_detach(&ascaudio_cd);
 			aprint_error("%s: unable to register devsw\n",
 				ascaudio_cd.cd_name);
@@ -1104,7 +1104,7 @@ ascaudio_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 
-		config_cfattach_detach(ascaudio_cd.cd_name, &ascaud_ca);
+		config_cfattach_detach(ascaudio_cd.cd_name, &ascaudio_ca);
 		config_cfdriver_detach(&ascaudio_cd);
 		devsw_detach(NULL, &ascaudio_cdevsw);
 
