@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk.c,v 1.11 2024/01/06 21:26:43 mlelstv Exp $	*/
+/*	$NetBSD: efidisk.c,v 1.12 2026/09/16 21:49:14 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -393,7 +393,8 @@ efidisk_get_efi_system_partition(int dev, int *partition)
 			continue;
 		if (part[i].fstype == FS_UNUSED)
 			continue;
-		if (guid_is_equal(part[i].guid->guid, &GET_efi))
+		if (part[i].guid != NULL &&
+		    guid_is_equal(part[i].guid->guid, &GET_efi))
 			break;
 	}
 	dealloc_biosdisk_part(part, nparts);
