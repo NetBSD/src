@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.79 2026/09/17 16:28:32 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.80 2026/09/17 16:34:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -616,13 +616,13 @@ _C_LABEL(x):
  * on p. 2168 of Cavium OCTEON III CN78XX Hardware Reference Manual,
  * CN78XX-HM-0.99E, September 2014:
  *
- *	Core A (writer)
+ * Core A (writer)
  *
- *	SW R1, DATA#		change shared DATA value
- *	LI R1, 1
- *	SYNCW# (or SYNCWS)	Perform DATA store before performing FLAG store
- *	SW R2, FLAG#		say that the shared DATA value is valid
- *	SYNCW# (or SYNCWS)	Force the FLAG store soon (CN78XX-specific)
+ * SW R1, DATA	#		change shared DATA value
+ * LI R2, 1
+ * SYNCW	# (or SYNCWS)	Perform DATA store before performing FLAG store
+ * SW R2, FLAG	#		say that the shared DATA value is valid
+ * SYNCW	# (or SYNCWS)	Force the FLAG store soon (CN78XX-specific)
  *
  *	...
  *
@@ -636,6 +636,10 @@ _C_LABEL(x):
  *	attempt to merge them before sending the store on the CMI.)
  *	Applications should include this second SYNCW instruction after
  *	flag or lock release.
+ *
+ * (This is not actually CN78XX-specific; it applies to other cnMIPS
+ * models too like CN50XX, whose manual calls it `OCTEON-specific'
+ * rather than `CN78XX-specific'.)
  */
 #define	LLSCSYNC	/* nothing */
 #define	BDSYNC		sync
