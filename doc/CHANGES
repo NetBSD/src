@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3293 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3294 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -421,3 +421,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		called with iovcnt=0. [sborrill 20260911]
 	tzdata: Updated to 2026d (using 2026dgtz) [kre 20260912]
 	tzcode: Updated to 2026d. [christos 20260912]
+	unbound(8): Import 1.26.1. [christos 20260917]
