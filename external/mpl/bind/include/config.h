@@ -28,6 +28,9 @@
 /* define if you want TCP_FASTOPEN enabled if available */
 #define ENABLE_TCP_FASTOPEN 1
 
+/* Define to 1 if you have the 'arc4random' function. */
+#define HAVE_ARC4RANDOM 1
+
 /* define if the ARM yield instruction is available */
 /* #undef HAVE_ARM_YIELD */
 
@@ -186,6 +189,10 @@
 /* Define to 1 if the system has the `returns_nonnull' function attribute */
 #define HAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL 1
 
+/* Define to 1 if the system has the `warn_unused_result' function attribute
+   */
+#define HAVE_FUNC_ATTRIBUTE_WARN_UNUSED_RESULT 1
+
 /* Build with GeoIP2 support */
 /* #undef HAVE_GEOIP2 */
 
@@ -253,8 +260,8 @@
 /* Build with DNS-over-HTTPS support */
 /* #undef HAVE_LIBNGHTTP2 */
 
-/* Use libsystemd library */
-/* #undef HAVE_LIBSYSTEMD */
+/* Define to 1 if libscf was found */
+/* #undef HAVE_LIBSCF */
 
 /* Use libxml2 library */
 /* #undef HAVE_LIBXML2 */
@@ -487,6 +494,15 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to 1 if you have the <urcu/assert.h> header file. */
+#define HAVE_URCU_ASSERT_H 1
+
+/* Define to 1 if you have the <urcu/pointer.h> header file. */
+#define HAVE_URCU_POINTER_H 1
+
+/* Define to 1 if you have the <urcu/uatomic.h> header file. */
+#define HAVE_URCU_UATOMIC_H 1
+
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
 
@@ -528,10 +544,10 @@
 #define PACKAGE_NAME "BIND"
 
 /* A short hash from git */
-#define PACKAGE_SRCID "e5d43f1"
+#define PACKAGE_SRCID "c3d4465"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "BIND 9.20.27"
+#define PACKAGE_STRING "BIND 9.20.29"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "bind"
@@ -540,7 +556,7 @@
 #define PACKAGE_URL "https://www.isc.org/downloads/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "9.20.27"
+#define PACKAGE_VERSION "9.20.29"
 
 /* BIND 9 Extra part of the version */
 #define PACKAGE_VERSION_EXTRA ""
@@ -552,7 +568,7 @@
 #define PACKAGE_VERSION_MINOR "20"
 
 /* BIND 9 Patch part of the version */
-#define PACKAGE_VERSION_PATCH "27"
+#define PACKAGE_VERSION_PATCH "29"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -686,7 +702,7 @@
 #define VALIDATION_DEFAULT "auto"
 
 /* Version number of package */
-#define VERSION "9.20.27"
+#define VERSION "9.20.29"
 
 /* Define to enable very verbose query trace logging. */
 #define WANT_QUERYTRACE 1

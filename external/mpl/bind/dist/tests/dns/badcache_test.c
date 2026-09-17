@@ -1,4 +1,4 @@
-/*	$NetBSD: badcache_test.c,v 1.3 2026/08/29 14:55:20 christos Exp $	*/
+/*	$NetBSD: badcache_test.c,v 1.4 2026/09/17 18:01:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -142,10 +142,12 @@ ISC_LOOP_TEST_IMPL(print) {
 	dns_badcache_add(bc, name, dns_rdatatype_aaaa, flags, expire);
 
 	file = fopen("./badcache.out", "w");
+	assert_non_null(file);
 	dns_badcache_print(bc, "badcache", file);
 	fclose(file);
 
 	file = fopen("./badcache.out", "r");
+	assert_non_null(file);
 	len = fread(buf, sizeof(buf[0]), ARRAY_SIZE(buf), file);
 	assert_int_equal(len, 68);
 	fclose(file);

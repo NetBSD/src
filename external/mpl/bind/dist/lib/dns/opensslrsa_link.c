@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.15 2026/08/29 14:55:16 christos Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.16 2026/09/17 18:01:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,8 +50,15 @@ typedef struct rsa_components {
 	const BIGNUM *e, *n, *d, *p, *q, *dmp1, *dmq1, *iqmp;
 } rsa_components_t;
 
-#define OPENSSLRSA_MAX_MODULUS_BITS 4096
-#define OPENSSLRSA_MIN_MODULUS_BITS 512
+#ifndef __lint__
+static const int rsa_max_modulus_bits = 4096;
+#else
+#define rsa_max_modulus_bits 4096
+#endif
+static const int rsa_min_modulus_bits = 512;
+static const unsigned int rsa_max_modulus_bytes = (rsa_max_modulus_bits + 7) /
+						  8;
+static const unsigned int rsa_max_exponent_bytes = 5; /* 2^32 + 1 */
 
 static BIGNUM *rsa_exponent_min = NULL;
 static BIGNUM *rsa_exponent_max = NULL;
@@ -395,8 +402,8 @@ opensslrsa_verify2(dst_context_t *dctx, int maxbits, const isc_region_t *sig) {
 	evp_md_ctx = dctx->ctxdata.evp_md_ctx;
 	pkey = key->keydata.pkeypair.pub;
 
-	if (!opensslrsa_check_modulus_bits(pkey, OPENSSLRSA_MIN_MODULUS_BITS,
-					   OPENSSLRSA_MAX_MODULUS_BITS) ||
+	if (!opensslrsa_check_modulus_bits(pkey, rsa_min_modulus_bits,
+					   rsa_max_modulus_bits) ||
 	    !opensslrsa_rsa_exponent_is_allowed(pkey))
 	{
 		return DST_R_VERIFYFAILURE;
@@ -890,14 +897,19 @@ opensslrsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length < e_bytes) {
 		DST_RET(DST_R_INVALIDPUBLICKEY);
 	}
+	if (e_bytes > rsa_max_exponent_bytes ||
+	    r.length - e_bytes > rsa_max_modulus_bytes)
+	{
+		CLEANUP(ISC_R_RANGE);
+	}
 	c.e = BN_bin2bn(r.base, e_bytes, NULL);
 	isc_region_consume(&r, e_bytes);
 	c.n = BN_bin2bn(r.base, r.length, NULL);
 	if (c.e == NULL || c.n == NULL) {
 		DST_RET(ISC_R_NOMEMORY);
 	}
-	if (BN_num_bits(c.n) < OPENSSLRSA_MIN_MODULUS_BITS ||
-	    BN_num_bits(c.n) > OPENSSLRSA_MAX_MODULUS_BITS)
+	if (BN_num_bits(c.n) < rsa_min_modulus_bits ||
+	    BN_num_bits(c.n) > rsa_max_modulus_bits)
 	{
 		DST_RET(ISC_R_RANGE);
 	}
@@ -1149,8 +1161,8 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	if (c.n == NULL || c.e == NULL) {
 		DST_RET(DST_R_INVALIDPRIVATEKEY);
 	}
-	if (BN_num_bits(c.n) < OPENSSLRSA_MIN_MODULUS_BITS ||
-	    BN_num_bits(c.n) > OPENSSLRSA_MAX_MODULUS_BITS)
+	if (BN_num_bits(c.n) < rsa_min_modulus_bits ||
+	    BN_num_bits(c.n) > rsa_max_modulus_bits)
 	{
 		DST_RET(ISC_R_RANGE);
 	}
@@ -1192,8 +1204,8 @@ opensslrsa_fromlabel(dst_key_t *key, const char *engine, const char *label,
 	CHECK(dst__openssl_fromlabel(EVP_PKEY_RSA, engine, label, pin, &pubpkey,
 				     &privpkey));
 
-	if (!opensslrsa_check_modulus_bits(pubpkey, OPENSSLRSA_MIN_MODULUS_BITS,
-					   OPENSSLRSA_MAX_MODULUS_BITS))
+	if (!opensslrsa_check_modulus_bits(pubpkey, rsa_min_modulus_bits,
+					   rsa_max_modulus_bits))
 	{
 		DST_RET(ISC_R_RANGE);
 	}

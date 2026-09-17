@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_message_checksig.c,v 1.3 2025/01/26 16:25:20 christos Exp $	*/
+/*	$NetBSD: dns_message_checksig.c,v 1.4 2026/09/17 18:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -126,8 +126,6 @@ static char c3[] = "sig0key. 0 IN SOA . . 0 0 0 0 0\n\
 sig0key. 0 IN NS .\n\
 sig0key. 0 IN KEY 512 3 8 AwEAAa22lgHi1vAbQvu5ETdTrm2H8rwga9tvyMa6LFiSDyevLvSv0Uo5 uvfrXnxaLdtBMts6e1Ly2piSH9JRbOGMNibOK4EXWhWAn8MII4SWgQAs bFwtiz4HyPn2wScrUQdo8DocKiQJBanesr7vDO8fdA6Rg1e0yAtSeNti e8avx46/HJa6CFs3CoE0sf6oOFSxM954AgCBTXOGNBt1Nt3Bhfqt2qyA TLFii5K1jLDTZDVkoiyDXL1M7wcTwKf9METgj1eQmH3GGlRM/OJ/j8xk ZiFGbL3cipWdiH48031jiV2hlc92mKn8Ya0d9AN6c44piza/JSFydZXw sY32nxzjDbs=\n";
 
-static bool destroy_dst = false;
-
 int
 LLVMFuzzerInitialize(int *argc ISC_ATTR_UNUSED, char ***argv ISC_ATTR_UNUSED) {
 	isc_result_t result;
@@ -181,7 +179,6 @@ LLVMFuzzerInitialize(int *argc ISC_ATTR_UNUSED, char ***argv ISC_ATTR_UNUSED) {
 			isc_result_totext(result));
 		return 1;
 	}
-	destroy_dst = true;
 
 	isc_loopmgr_create(mctx, 1, &loopmgr);
 

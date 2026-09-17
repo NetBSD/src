@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.13 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.14 2026/09/17 18:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -488,9 +488,7 @@ dns_cache_flushnode(dns_cache_t *cache, const dns_name_t *name, bool tree) {
 	dns_dbnode_t *node = NULL;
 	dns_db_t *db = NULL;
 
-	if (tree && dns_name_equal(name, dns_rootname)) {
-		return dns_cache_flush(cache);
-	}
+	REQUIRE(!(tree && dns_name_equal(name, dns_rootname)));
 
 	LOCK(&cache->lock);
 	if (cache->db != NULL) {

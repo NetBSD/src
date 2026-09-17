@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneverify.c,v 1.15 2026/08/29 14:55:17 christos Exp $	*/
+/*	$NetBSD: zoneverify.c,v 1.16 2026/09/17 18:01:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -723,7 +723,7 @@ verifynsec3(const vctx_t *vctx, const dns_name_t *name,
 					     &rdataset, NULL);
 	}
 	if (result != ISC_R_SUCCESS &&
-	    (!delegation || (empty && !optout) ||
+	    (!delegation || !optout ||
 	     (!empty && dns_nsec_isset(types, dns_rdatatype_ds))))
 	{
 		dns_name_format(name, namebuf, sizeof(namebuf));

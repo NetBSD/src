@@ -1,4 +1,4 @@
-/*	$NetBSD: named-rrchecker.c,v 1.10 2025/07/17 19:01:45 christos Exp $	*/
+/*	$NetBSD: named-rrchecker.c,v 1.11 2026/09/17 18:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -123,7 +123,7 @@ main(int argc, char *argv[]) {
 					continue;
 				}
 				dns_rdataclass_format(t, text, sizeof(text));
-				if (strncmp(text, "CLASS", 4) != 0) {
+				if (strncmp(text, "CLASS", 5) != 0) {
 					fprintf(stdout, "%s\n", text);
 				}
 			}

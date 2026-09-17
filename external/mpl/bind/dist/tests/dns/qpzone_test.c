@@ -1,4 +1,4 @@
-/*	$NetBSD: qpzone_test.c,v 1.5 2026/04/08 00:16:17 christos Exp $	*/
+/*	$NetBSD: qpzone_test.c,v 1.6 2026/09/17 18:01:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -527,10 +527,127 @@ ISC_RUN_TEST_IMPL(diffop_addresign) {
 	assert_null(db);
 }
 
+/*
+ * Add a single record to the database in a new version.
+ */
+static void
+add_record(dns_db_t *db, const char *owner, dns_rdatatype_t rdtype,
+	   const char *text) {
+	isc_result_t result;
+	dns_fixedname_t fowner;
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	unsigned char rdata_data[256];
+
+	dns_test_namefromstring(owner, &fowner);
+	result = dns_test_rdatafromstring(&rdata, dns_rdataclass_in, rdtype,
+					  rdata_data, sizeof(rdata_data), text,
+					  false);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	WITH_NEWVERSION(db, newversion, true) {
+		result = apply_dns_update(db, newversion,
+					  dns_fixedname_name(&fowner), rdtype,
+					  dns_rdataclass_in, 300, rdata.data,
+					  rdata.length, DNS_DIFFOP_ADD);
+		assert_int_equal(result, ISC_R_SUCCESS);
+	}
+}
+
+/*
+ * Look up 'qname'/'rdtype' in the current version of the database and
+ * return the result, with the found name in 'found'.
+ */
+static isc_result_t
+find_record(dns_db_t *db, const char *qname, dns_rdatatype_t rdtype,
+	    unsigned int options, dns_name_t *found) {
+	isc_result_t result;
+	dns_dbversion_t *version = NULL;
+	dns_fixedname_t fqname;
+	dns_rdataset_t rdataset;
+
+	dns_test_namefromstring(qname, &fqname);
+	dns_rdataset_init(&rdataset);
+	dns_db_currentversion(db, &version);
+	result = dns_db_find(db, dns_fixedname_name(&fqname), version, rdtype,
+			     options, 0, NULL, found, &rdataset, NULL);
+	if (dns_rdataset_isassociated(&rdataset)) {
+		dns_rdataset_disassociate(&rdataset);
+	}
+	dns_db_closeversion(db, &version, false);
+
+	return result;
+}
+
+/*
+ * Nodes that are not below the zone origin can end up in the database
+ * (e.g. from a secondary zone file carrying out-of-zone data).  They
+ * must not be visible through lookups: not as zone cuts, DNAMEs or
+ * wildcards above the apex, nor as answers for names outside the zone.
+ */
+ISC_RUN_TEST_IMPL(nodes_outside_zone) {
+	isc_result_t result;
+	dns_db_t *db = NULL;
+	dns_fixedname_t ffound, fexpected;
+	dns_name_t *found = dns_fixedname_initname(&ffound);
+	dns_name_t *expected = NULL;
+
+	result = dns__qpzone_create(mctx, &example_org_name, dns_dbtype_zone,
+				    dns_rdataclass_in, 0, NULL, NULL, &db);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_non_null(db);
+
+	add_record(db, "example.org.", dns_rdatatype_soa,
+		   "ns.example.org. root.example.org. 1 300 300 300 300");
+	add_record(db, "example.org.", dns_rdatatype_ns, "ns.example.org.");
+	add_record(db, "ns.example.org.", dns_rdatatype_a, "10.0.0.2");
+	add_record(db, "www.example.org.", dns_rdatatype_a, "10.0.0.1");
+
+	/* Above the origin. */
+	add_record(db, "org.", dns_rdatatype_ns, "ns.attacker.");
+	add_record(db, "org.", dns_rdatatype_dname, "attacker.");
+	add_record(db, "*.org.", dns_rdatatype_a, "192.0.2.1");
+
+	/* Outside the zone altogether. */
+	add_record(db, "mail.attacker.", dns_rdatatype_a, "192.0.2.2");
+	add_record(db, "*.attacker.", dns_rdatatype_a, "192.0.2.3");
+
+	/* Names in the zone are answered from the zone. */
+	result = find_record(db, "www.example.org.", dns_rdatatype_a, 0, found);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	dns_test_namefromstring("www.example.org.", &fexpected);
+	expected = dns_fixedname_name(&fexpected);
+	assert_true(dns_name_equal(found, expected));
+
+	result = find_record(db, "example.org.", dns_rdatatype_soa, 0, found);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_true(dns_name_equal(found, &example_org_name));
+
+	/* The closest encloser of a nonexistent name is in the zone. */
+	result = find_record(db, "nx.example.org.", dns_rdatatype_a, 0, found);
+	assert_int_equal(result, DNS_R_NXDOMAIN);
+	assert_true(dns_name_equal(found, &example_org_name));
+	assert_false(found->attributes.wildcard);
+
+	/* Names outside the zone are not found, with or without glue. */
+	result = find_record(db, "mail.attacker.", dns_rdatatype_a, 0, found);
+	assert_int_equal(result, ISC_R_NOTFOUND);
+
+	result = find_record(db, "attacker.", dns_rdatatype_a,
+			     DNS_DBFIND_GLUEOK, found);
+	assert_int_equal(result, ISC_R_NOTFOUND);
+
+	result = find_record(db, "org.", dns_rdatatype_ns, 0, found);
+	assert_int_equal(result, ISC_R_NOTFOUND);
+
+	dns_db_detach(&db);
+	assert_null(db);
+}
+
 ISC_TEST_LIST_START
 ISC_TEST_ENTRY(ownercase)
 ISC_TEST_ENTRY(setownercase)
 ISC_TEST_ENTRY(diffop_add_sub)
+ISC_TEST_ENTRY(nodes_outside_zone)
 ISC_TEST_ENTRY(diffop_addresign)
 ISC_TEST_LIST_END
 

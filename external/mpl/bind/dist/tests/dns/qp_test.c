@@ -1,4 +1,4 @@
-/*	$NetBSD: qp_test.c,v 1.3 2026/01/29 18:37:56 christos Exp $	*/
+/*	$NetBSD: qp_test.c,v 1.4 2026/09/17 18:01:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -232,7 +232,7 @@ ISC_RUN_TEST_IMPL(qpiter) {
 
 		item[ival] = ival;
 
-		inserted = n = 0;
+		inserted = 0;
 
 		/* randomly insert or remove */
 		dns_qpkey_t key;

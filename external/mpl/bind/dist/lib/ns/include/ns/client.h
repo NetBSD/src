@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.22 2026/08/29 14:55:20 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.23 2026/09/17 18:01:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -187,6 +187,7 @@ struct ns_client {
 	uint16_t	extflags;
 	int16_t		ednsversion; /* -1 noedns */
 	uint16_t	additionaldepth;
+	uint16_t	additionaltotal;
 	void (*cleanup)(ns_client_t *);
 	ns_query_t     query;
 	isc_time_t     requesttime;

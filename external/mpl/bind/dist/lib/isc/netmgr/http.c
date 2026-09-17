@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.10 2026/08/29 14:55:19 christos Exp $	*/
+/*	$NetBSD: http.c,v 1.11 2026/09/17 18:01:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -311,12 +311,6 @@ http_get_listener_endpoints(isc_nmsocket_t *listener, const int tid);
 static void
 http_initsocket(isc_nmsocket_t *sock);
 
-static bool
-http_session_active(isc_nm_http_session_t *session) {
-	REQUIRE(VALID_HTTP2_SESSION(session));
-	return !session->closed && !session->closing;
-}
-
 static void *
 http_malloc(size_t sz, isc_mem_t *mctx) {
 	return isc_mem_allocate(mctx, sz);
@@ -422,6 +416,13 @@ isc__nm_httpsession_handle(isc_nm_http_session_t *session) {
 	REQUIRE(VALID_HTTP2_SESSION(session));
 
 	return session->handle;
+}
+
+bool
+isc__nm_httpsession_active(isc_nm_http_session_t *session) {
+	REQUIRE(VALID_HTTP2_SESSION(session));
+
+	return !session->closed && !session->closing && session->handle != NULL;
 }
 
 static http_cstream_t *
@@ -1083,7 +1084,7 @@ http_process_input_data(isc_nm_http_session_t *session,
 	REQUIRE(VALID_HTTP2_SESSION(session));
 	REQUIRE(input_data != NULL);
 
-	if (!http_session_active(session)) {
+	if (!isc__nm_httpsession_active(session)) {
 		return 0;
 	}
 
@@ -1330,7 +1331,7 @@ http_writecb(isc_nmhandle_t *handle, isc_result_t result, void *arg) {
 	REQUIRE(VALID_HTTP2_SESSION(session));
 	REQUIRE(VALID_NMHANDLE(handle));
 
-	if (http_session_active(session)) {
+	if (isc__nm_httpsession_active(session)) {
 		INSIST(session->handle == handle);
 	}
 
@@ -1399,7 +1400,7 @@ http_send_outgoing(isc_nm_http_session_t *session, isc_nmhandle_t *httphandle,
 	size_t max_total_write_size = 0;
 #endif /* ENABLE_HTTP_WRITE_BUFFERING */
 
-	if (!http_session_active(session)) {
+	if (!isc__nm_httpsession_active(session)) {
 		if (cb != NULL) {
 			isc__nm_uvreq_t *req =
 				isc__nm_uvreq_get(httphandle->sock);
@@ -2095,7 +2096,7 @@ isc__nm_http_request(isc_nmhandle_t *handle, isc_region_t *region,
 	sock = handle->sock;
 
 	isc__nm_http_read(handle, cb, cbarg);
-	if (!http_session_active(handle->sock->h2->session)) {
+	if (!isc__nm_httpsession_active(handle->sock->h2->session)) {
 		/* the callback was called by isc__nm_http_read() */
 		return ISC_R_CANCELED;
 	}
@@ -2559,7 +2560,7 @@ isc__nm_http_bad_request(isc_nmhandle_t *handle) {
 	REQUIRE(VALID_HTTP2_SESSION(sock->h2->session));
 
 	if (sock->h2->response_submitted ||
-	    !http_session_active(sock->h2->session))
+	    !isc__nm_httpsession_active(sock->h2->session))
 	{
 		return;
 	}
@@ -2719,7 +2720,7 @@ server_httpsend(isc_nmhandle_t *handle, isc_nmsocket_t *sock,
 	isc_nm_cb_t cb = req->cb.send;
 	void *cbarg = req->cbarg;
 	if (isc__nmsocket_closing(sock) ||
-	    !http_session_active(handle->httpsession))
+	    !isc__nm_httpsession_active(handle->httpsession))
 	{
 		failed_send_cb(sock, req, ISC_R_CANCELED);
 		return;
@@ -2800,7 +2801,7 @@ isc__nm_http_read(isc_nmhandle_t *handle, isc_nm_recv_cb_t cb, void *cbarg) {
 	REQUIRE(VALID_NMHANDLE(handle));
 
 	session = handle->sock->h2->session;
-	if (!http_session_active(session)) {
+	if (!isc__nm_httpsession_active(session)) {
 		cb(handle, ISC_R_CANCELED, NULL, cbarg);
 		return;
 	}

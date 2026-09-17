@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.9 2025/01/26 16:25:26 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.10 2026/09/17 18:01:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -201,12 +201,16 @@ dns_cache_flush(dns_cache_t *cache);
 isc_result_t
 dns_cache_flushnode(dns_cache_t *cache, const dns_name_t *name, bool tree);
 /*
- * Flush a given name from the cache.  If 'tree' is true, then
- * also flush all names under 'name'.
+ * Flush the data for node 'name' from the cache.
+ *
+ * If 'tree' is true, then also flush all nodes under 'name'. (Note that
+ * flushing of a tree only works for names below the root. To flush the
+ * entire tree, use dns_cache_flush().)
  *
  * Requires:
  *\li	'cache' to be valid.
  *\li	'name' to be valid.
+ *\li	if 'tree' is true, then 'name' is not root.
  *
  * Returns:
  *\li	#ISC_R_SUCCESS

@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.17 2026/08/29 14:55:16 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.18 2026/09/17 18:01:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -246,7 +246,9 @@ loadctx_destroy(dns_loadctx_t *lctx);
 			} else                                               \
 				goto log_and_cleanup;                        \
 		}                                                            \
-		if ((token)->type == isc_tokentype_special) {                \
+		if ((token)->type == isc_tokentype_special ||                \
+		    (token)->type == isc_tokentype_unknown)                  \
+		{                                                            \
 			result = DNS_R_SYNTAX;                               \
 			if (MANYERRS(lctx, result)) {                        \
 				SETRESULT(lctx, result);                     \
@@ -550,7 +552,6 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx, unsigned int options,
 		 * in lib/dns/tests/dnstest.c.
 		 */
 		memset(specials, 0, sizeof(specials));
-		specials[0] = 1;
 		specials['('] = 1;
 		specials[')'] = 1;
 		specials['"'] = 1;

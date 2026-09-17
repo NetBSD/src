@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc-confgen.c,v 1.10 2026/08/29 14:55:02 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.11 2026/09/17 18:00:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -126,7 +126,7 @@ main(int argc, char **argv) {
 	isc_commandline_errprint = false;
 
 	while ((ch = isc_commandline_parse(argc, argv,
-					   "aA:b:c:hk:Mmp:r:s:t:u:Vy")) != -1)
+					   "aA:b:c:hk:Mmp:qr:s:t:u:Vy")) != -1)
 	{
 		switch (ch) {
 		case 'a':

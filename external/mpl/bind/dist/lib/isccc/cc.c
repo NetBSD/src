@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.9 2025/01/26 16:25:44 christos Exp $	*/
+/*	$NetBSD: cc.c,v 1.10 2026/09/17 18:01:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -575,6 +575,7 @@ table_fromwire(isccc_region_t *source, isccc_region_t *secret,
 			goto bad;
 		}
 		if (isccc_alist_define(alist, key, value) == NULL) {
+			isccc_sexpr_free(&value);
 			result = ISC_R_NOMEMORY;
 			goto bad;
 		}

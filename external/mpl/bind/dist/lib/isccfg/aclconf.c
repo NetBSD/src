@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.c,v 1.12 2025/05/21 14:48:05 christos Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.13 2026/09/17 18:01:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,11 +13,13 @@
  * information regarding copyright ownership.
  */
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/mem.h>
+#include <isc/parseint.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -584,7 +586,20 @@ parse_geoip_element(const cfg_obj_t *obj, isc_log_t *lctx,
 		strlcpy(de.geoip_elem.as_string, search,
 			sizeof(de.geoip_elem.as_string));
 	} else if (strcasecmp(stype, "asnum") == 0) {
+		const char *s = search;
+		uint32_t val;
+
+		/* check asnum validity */
 		subtype = dns_geoip_as_asnum;
+		if (strncasecmp(s, "AS", 2) == 0) {
+			s += 2;
+		}
+		if (isc_parse_uint32(&val, s, 10) != ISC_R_SUCCESS) {
+			cfg_obj_log(obj, lctx, ISC_LOG_ERROR,
+				    "invalid asnum '%s'", search);
+			return ISC_R_UNEXPECTEDTOKEN;
+		}
+
 		strlcpy(de.geoip_elem.as_string, search,
 			sizeof(de.geoip_elem.as_string));
 	} else if (strcasecmp(stype, "org") == 0) {

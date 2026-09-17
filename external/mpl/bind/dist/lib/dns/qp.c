@@ -1,4 +1,4 @@
-/*	$NetBSD: qp.c,v 1.6 2026/06/19 20:10:00 christos Exp $	*/
+/*	$NetBSD: qp.c,v 1.7 2026/09/17 18:01:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -114,8 +114,8 @@ static isc_mutex_t qp_mutex = PTHREAD_MUTEX_INITIALIZER;
 				      DNS_LOGMODULE_QP, ISC_LOG_DEBUG(7),      \
 				      "%s:%d:%s(qp %p uctx \"%s\"):t%u: " fmt, \
 				      __FILE__, __LINE__, __func__, qp,        \
-				      qp ? TRIENAME(qp) : "(null)", isc_tid(), \
-				      ##__VA_ARGS__);                          \
+				      qp ? TRIENAME(qp) : "(null)",            \
+				      isc_tid(), ##__VA_ARGS__);               \
 		}                                                              \
 	} while (0)
 #else

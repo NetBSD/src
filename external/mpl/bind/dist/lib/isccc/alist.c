@@ -1,4 +1,4 @@
-/*	$NetBSD: alist.c,v 1.9 2025/01/26 16:25:44 christos Exp $	*/
+/*	$NetBSD: alist.c,v 1.10 2026/09/17 18:01:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -171,11 +171,13 @@ isccc_alist_define(isccc_sexpr_t *alist, const char *key,
 		}
 		kv = isccc_sexpr_cons(k, value);
 		if (kv == NULL) {
-			isccc_sexpr_free(&kv);
+			isccc_sexpr_free(&k);
 			return NULL;
 		}
 		elt = isccc_sexpr_addtolist(&alist, kv);
 		if (elt == NULL) {
+			/* 'value' is freed by caller */
+			CDR(kv) = NULL;
 			isccc_sexpr_free(&kv);
 			return NULL;
 		}

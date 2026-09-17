@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
+/*	$NetBSD: keytable_test.c,v 1.4 2026/09/17 18:01:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -576,6 +576,8 @@ ISC_LOOP_TEST_IMPL(issecuredomain) {
 /* check dns_keytable_dump() */
 ISC_LOOP_TEST_IMPL(dump) {
 	FILE *f = fopen("/dev/null", "w");
+
+	assert_non_null(f);
 
 	UNUSED(arg);
 

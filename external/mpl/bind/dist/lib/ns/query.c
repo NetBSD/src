@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.30 2026/08/29 14:55:19 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.31 2026/09/17 18:01:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1020,12 +1020,112 @@ query_checkcacheaccess(ns_client_t *client, const dns_name_t *name,
 }
 
 static isc_result_t
+query_validateacls(ns_client_t *client, const dns_name_t *name,
+		   dns_rdatatype_t qtype, dns_getdb_options_t options,
+		   ns_dbversion_t *dbversion, dns_acl_t *queryacl,
+		   dns_acl_t *queryonacl) {
+	isc_result_t result;
+
+	if (options.ignoreacl) {
+		return ISC_R_SUCCESS;
+	}
+	if (dbversion->acl_checked) {
+		return dbversion->queryok ? ISC_R_SUCCESS : DNS_R_REFUSED;
+	}
+
+	if (queryacl == NULL) {
+		queryacl = client->view->queryacl;
+		if ((client->query.attributes & NS_QUERYATTR_QUERYOKVALID) != 0)
+		{
+			/*
+			 * We've evaluated the view's queryacl already.  If
+			 * queryok is set, then the client is allowed to make
+			 * queries, otherwise the query should be refused.
+			 */
+			dbversion->acl_checked = true;
+			if ((client->query.attributes & NS_QUERYATTR_QUERYOK) ==
+			    0)
+			{
+				dbversion->queryok = false;
+				return DNS_R_REFUSED;
+			}
+			dbversion->queryok = true;
+			return ISC_R_SUCCESS;
+		}
+	}
+
+	result = ns_client_checkaclsilent(client, NULL, queryacl, true);
+	if (!options.nolog) {
+		char msg[NS_CLIENT_ACLMSGSIZE("query")];
+		if (result == ISC_R_SUCCESS) {
+			if (isc_log_wouldlog(ns_lctx, ISC_LOG_DEBUG(3))) {
+				ns_client_aclmsg("query", name, qtype,
+						 client->view->rdclass, msg,
+						 sizeof(msg));
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "%s approved",
+					      msg);
+			}
+		} else {
+			ns_client_aclmsg("query", name, qtype,
+					 client->view->rdclass, msg,
+					 sizeof(msg));
+			ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+				      NS_LOGMODULE_QUERY, ISC_LOG_INFO,
+				      "%s denied", msg);
+			dns_ede_add(&client->edectx, DNS_EDE_PROHIBITED, NULL);
+		}
+	}
+
+	if (queryacl == client->view->queryacl) {
+		if (result == ISC_R_SUCCESS) {
+			/*
+			 * We were allowed by the default "allow-query" ACL.
+			 * Remember this so we don't have to check again.
+			 */
+			client->query.attributes |= NS_QUERYATTR_QUERYOK;
+		}
+		/*
+		 * We've now evaluated the view's query ACL, and the queryok
+		 * attribute is now valid.
+		 */
+		client->query.attributes |= NS_QUERYATTR_QUERYOKVALID;
+	}
+
+	/* If and only if we've gotten this far, check allow-query-on too. */
+	if (result == ISC_R_SUCCESS) {
+		if (queryonacl == NULL) {
+			queryonacl = client->view->queryonacl;
+		}
+
+		result = ns_client_checkaclsilent(client, &client->destaddr,
+						  queryonacl, true);
+		if (result != ISC_R_SUCCESS) {
+			dns_ede_add(&client->edectx, DNS_EDE_PROHIBITED, NULL);
+		}
+		if (!options.nolog && result != ISC_R_SUCCESS) {
+			ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+				      NS_LOGMODULE_QUERY, ISC_LOG_INFO,
+				      "query-on denied");
+		}
+	}
+
+	dbversion->acl_checked = true;
+	if (result != ISC_R_SUCCESS) {
+		dbversion->queryok = false;
+		return DNS_R_REFUSED;
+	}
+	dbversion->queryok = true;
+
+	return ISC_R_SUCCESS;
+}
+
+static isc_result_t
 query_validatezonedb(ns_client_t *client, const dns_name_t *name,
 		     dns_rdatatype_t qtype, dns_getdb_options_t options,
 		     dns_zone_t *zone, dns_db_t *db,
 		     dns_dbversion_t **versionp) {
-	isc_result_t result;
-	dns_acl_t *queryacl, *queryonacl;
 	ns_dbversion_t *dbversion;
 
 	REQUIRE(zone != NULL);
@@ -1080,106 +1180,10 @@ query_validatezonedb(ns_client_t *client, const dns_name_t *name,
 		return DNS_R_SERVFAIL;
 	}
 
-	if (options.ignoreacl) {
-		goto approved;
-	}
-	if (dbversion->acl_checked) {
-		if (!dbversion->queryok) {
-			return DNS_R_REFUSED;
-		}
-		goto approved;
-	}
+	RETERR(query_validateacls(client, name, qtype, options, dbversion,
+				  dns_zone_getqueryacl(zone),
+				  dns_zone_getqueryonacl(zone)));
 
-	queryacl = dns_zone_getqueryacl(zone);
-	if (queryacl == NULL) {
-		queryacl = client->view->queryacl;
-		if ((client->query.attributes & NS_QUERYATTR_QUERYOKVALID) != 0)
-		{
-			/*
-			 * We've evaluated the view's queryacl already.  If
-			 * NS_QUERYATTR_QUERYOK is set, then the client is
-			 * allowed to make queries, otherwise the query should
-			 * be refused.
-			 */
-			dbversion->acl_checked = true;
-			if ((client->query.attributes & NS_QUERYATTR_QUERYOK) ==
-			    0)
-			{
-				dbversion->queryok = false;
-				return DNS_R_REFUSED;
-			}
-			dbversion->queryok = true;
-			goto approved;
-		}
-	}
-
-	result = ns_client_checkaclsilent(client, NULL, queryacl, true);
-	if (!options.nolog) {
-		char msg[NS_CLIENT_ACLMSGSIZE("query")];
-		if (result == ISC_R_SUCCESS) {
-			if (isc_log_wouldlog(ns_lctx, ISC_LOG_DEBUG(3))) {
-				ns_client_aclmsg("query", name, qtype,
-						 client->view->rdclass, msg,
-						 sizeof(msg));
-				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
-					      NS_LOGMODULE_QUERY,
-					      ISC_LOG_DEBUG(3), "%s approved",
-					      msg);
-			}
-		} else {
-			ns_client_aclmsg("query", name, qtype,
-					 client->view->rdclass, msg,
-					 sizeof(msg));
-			ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
-				      NS_LOGMODULE_QUERY, ISC_LOG_INFO,
-				      "%s denied", msg);
-			dns_ede_add(&client->edectx, DNS_EDE_PROHIBITED, NULL);
-		}
-	}
-
-	if (queryacl == client->view->queryacl) {
-		if (result == ISC_R_SUCCESS) {
-			/*
-			 * We were allowed by the default
-			 * "allow-query" ACL.  Remember this so we
-			 * don't have to check again.
-			 */
-			client->query.attributes |= NS_QUERYATTR_QUERYOK;
-		}
-		/*
-		 * We've now evaluated the view's query ACL, and
-		 * the NS_QUERYATTR_QUERYOK attribute is now valid.
-		 */
-		client->query.attributes |= NS_QUERYATTR_QUERYOKVALID;
-	}
-
-	/* If and only if we've gotten this far, check allow-query-on too */
-	if (result == ISC_R_SUCCESS) {
-		queryonacl = dns_zone_getqueryonacl(zone);
-		if (queryonacl == NULL) {
-			queryonacl = client->view->queryonacl;
-		}
-
-		result = ns_client_checkaclsilent(client, &client->destaddr,
-						  queryonacl, true);
-		if (result != ISC_R_SUCCESS) {
-			dns_ede_add(&client->edectx, DNS_EDE_PROHIBITED, NULL);
-		}
-		if (!options.nolog && result != ISC_R_SUCCESS) {
-			ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
-				      NS_LOGMODULE_QUERY, ISC_LOG_INFO,
-				      "query-on denied");
-		}
-	}
-
-	dbversion->acl_checked = true;
-	if (result != ISC_R_SUCCESS) {
-		dbversion->queryok = false;
-		return DNS_R_REFUSED;
-	}
-	dbversion->queryok = true;
-
-approved:
 	/* Transfer ownership, if necessary. */
 	SET_IF_NOT_NULL(versionp, dbversion->version);
 	return ISC_R_SUCCESS;
@@ -1453,10 +1457,10 @@ query_getdb(ns_client_t *client, dns_name_t *name, dns_rdatatype_t qtype,
 	    dns_getdb_options_t options, dns_zone_t **zonep, dns_db_t **dbp,
 	    dns_dbversion_t **versionp, bool *is_zonep) {
 	isc_result_t result;
-	isc_result_t tresult;
 	unsigned int namelabels;
 	unsigned int zonelabels;
 	dns_zone_t *zone = NULL;
+	dns_view_t *view = client->view;
 
 	REQUIRE(zonep != NULL && *zonep == NULL);
 
@@ -1477,63 +1481,56 @@ query_getdb(ns_client_t *client, dns_name_t *name, dns_rdatatype_t qtype,
 	 * If # zone labels < # name labels, try to find an even better match
 	 * Only try if DLZ drivers are loaded for this view
 	 */
-	if (zonelabels < namelabels &&
-	    !ISC_LIST_EMPTY(client->view->dlz_searched))
-	{
+	if (zonelabels < namelabels && !ISC_LIST_EMPTY(view->dlz_searched)) {
 		dns_clientinfomethods_t cm;
 		dns_clientinfo_t ci;
 		dns_db_t *tdbp;
+		ns_dbversion_t *dbversion;
+		isc_result_t tresult;
 
 		dns_clientinfomethods_init(&cm, ns_client_sourceip);
 		dns_clientinfo_init(&ci, client, NULL);
 		dns_clientinfo_setecs(&ci, &client->ecs);
 
 		tdbp = NULL;
-		tresult = dns_view_searchdlz(client->view, name, zonelabels,
-					     &cm, &ci, &tdbp);
+
 		/* If we successful, we found a better match. */
+		tresult = dns_view_searchdlz(view, name, zonelabels, &cm, &ci,
+					     &tdbp);
 		if (tresult == ISC_R_SUCCESS) {
-			ns_dbversion_t *dbversion;
+			/* We found a better match. */
+			dbversion = ns_client_findversion(client, tdbp);
 
 			/*
-			 * If the previous search returned a zone, detach it.
+			 * Discard the database found by the previous search.
 			 */
 			if (zone != NULL) {
 				dns_zone_detach(&zone);
 			}
-
-			/*
-			 * If the previous search returned a database,
-			 * detach it.
-			 */
 			if (*dbp != NULL) {
 				dns_db_detach(dbp);
 			}
-
-			/*
-			 * If the previous search returned a version, clear it.
-			 */
 			*versionp = NULL;
 
-			dbversion = ns_client_findversion(client, tdbp);
-			if (dbversion == NULL) {
-				tresult = ISC_R_NOMEMORY;
-			} else {
-				/*
-				 * Be sure to return our database.
-				 */
-				*dbp = tdbp;
-				*versionp = dbversion->version;
+			tresult = query_validateacls(
+				client, name, qtype, options, dbversion,
+				view->queryacl, view->queryonacl);
+			if (tresult != ISC_R_SUCCESS) {
+				dns_db_detach(&tdbp);
+				result = tresult;
+				goto out;
 			}
 
 			/*
 			 * We return a null zone, No stats for DLZ zones.
 			 */
-			zone = NULL;
-			result = tresult;
+			*dbp = tdbp;
+			*versionp = dbversion->version;
+			result = ISC_R_SUCCESS;
 		}
 	}
 
+out:
 	/* If successful, Transfer ownership of zone. */
 	if (result == ISC_R_SUCCESS) {
 		*zonep = zone;
@@ -1787,6 +1784,10 @@ query_additional_cb(void *arg, const dns_name_t *name, dns_rdatatype_t qtype,
 	}
 
 	CTRACE(ISC_LOG_DEBUG(3), "query_additional_cb");
+
+	if (client->additionaltotal++ >= DNS_RDATASET_MAXADDITIONAL * 2) {
+		return DNS_R_TOOMANYRECORDS;
+	}
 
 	dns_clientinfomethods_init(&cm, ns_client_sourceip);
 	dns_clientinfo_init(&ci, client, NULL);
@@ -2140,7 +2141,9 @@ addname:
 
 cleanup:
 	CTRACE(ISC_LOG_DEBUG(3), "query_additional_cb: cleanup");
-	ns_client_putrdataset(client, &rdataset);
+	if (rdataset != NULL) {
+		ns_client_putrdataset(client, &rdataset);
+	}
 	if (sigrdataset != NULL) {
 		ns_client_putrdataset(client, &sigrdataset);
 	}
@@ -3982,7 +3985,8 @@ rpz_rewrite_name(ns_client_t *client, dns_name_t *trig_name,
 			 * With more than one applicable policy, prefer
 			 * the earliest configured policy,
 			 * client-IP over QNAME over IP over NSDNAME over NSIP,
-			 * and the smallest name.
+			 * and the name that appears last in DNSSEC canonical
+			 * order.
 			 * We known st->m.rpz->num >= rpz->num  and either
 			 * st->m.rpz->num > rpz->num or st->m.type >= rpz_type
 			 */
@@ -5010,6 +5014,13 @@ redirect(ns_client_t *client, dns_name_t *name, dns_rdataset_t *rdataset,
 	result = ns_client_checkaclsilent(
 		client, NULL, dns_zone_getqueryacl(client->view->redirect),
 		true);
+	if (result != ISC_R_SUCCESS) {
+		return ISC_R_NOTFOUND;
+	}
+
+	result = ns_client_checkaclsilent(
+		client, &client->destaddr,
+		dns_zone_getqueryonacl(client->view->redirect), true);
 	if (result != ISC_R_SUCCESS) {
 		return ISC_R_NOTFOUND;
 	}
@@ -7682,33 +7693,6 @@ query_addnoqnameproof(query_ctx_t *qctx) {
 	query_addrrset(qctx, &fname, &neg, &negsig, dbuf,
 		       DNS_SECTION_AUTHORITY);
 
-	if ((qctx->noqname->attributes & DNS_RDATASETATTR_CLOSEST) == 0) {
-		goto cleanup;
-	}
-
-	if (fname == NULL) {
-		dbuf = ns_client_getnamebuf(client);
-		fname = ns_client_newname(client, dbuf, &b);
-	}
-
-	if (neg == NULL) {
-		neg = ns_client_newrdataset(client);
-	} else if (dns_rdataset_isassociated(neg)) {
-		dns_rdataset_disassociate(neg);
-	}
-
-	if (negsig == NULL) {
-		negsig = ns_client_newrdataset(client);
-	} else if (dns_rdataset_isassociated(negsig)) {
-		dns_rdataset_disassociate(negsig);
-	}
-
-	result = dns_rdataset_getclosest(qctx->noqname, fname, neg, negsig);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
-
-	query_addrrset(qctx, &fname, &neg, &negsig, dbuf,
-		       DNS_SECTION_AUTHORITY);
-
 cleanup:
 	if (neg != NULL) {
 		ns_client_putrdataset(client, &neg);
@@ -8041,6 +8025,7 @@ query_addanswer(query_ctx_t *qctx) {
 		}
 	} else if (qctx->client->query.dns64_aaaaok != NULL) {
 		query_filter64(qctx);
+		qctx->noqname = NULL;
 		ns_client_putrdataset(qctx->client, &qctx->rdataset);
 		isc_mem_cput(qctx->client->manager->mctx,
 			     qctx->client->query.dns64_aaaaok,
@@ -8080,9 +8065,10 @@ query_respond(query_ctx_t *qctx) {
 	 */
 	INSIST(qctx->client->query.dns64_aaaaok == NULL);
 
-	if (qctx->qtype == dns_rdatatype_aaaa && !qctx->dns64_exclude &&
-	    !ISC_LIST_EMPTY(qctx->view->dns64) &&
+	if (qctx->qtype == dns_rdatatype_aaaa &&
 	    qctx->client->message->rdclass == dns_rdataclass_in &&
+	    !ISC_LIST_EMPTY(qctx->view->dns64) && !qctx->dns64_exclude &&
+	    qctx->client->query.dns64_aaaa == NULL &&
 	    !dns64_aaaaok(qctx->client, qctx->rdataset, qctx->sigrdataset))
 	{
 		/*

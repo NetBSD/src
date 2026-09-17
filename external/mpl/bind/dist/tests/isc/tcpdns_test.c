@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdns_test.c,v 1.3 2025/05/21 14:48:08 christos Exp $	*/
+/*	$NetBSD: tcpdns_test.c,v 1.4 2026/09/17 18:01:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,6 +32,7 @@
 #include <cmocka.h>
 
 #include <isc/async.h>
+#include <isc/job.h>
 #include <isc/loop.h>
 #include <isc/nonce.h>
 #include <isc/os.h>
@@ -66,6 +67,41 @@ tcpdns_connect(isc_nm_t *nm) {
 	isc_nm_streamdnsconnect(nm, &tcp_connect_addr, &tcp_listen_addr,
 				connect_connect_cb, tcpdns_connect, T_CONNECT,
 				NULL, NULL, NULL, get_proxy_type(), NULL);
+}
+
+static isc_job_t trailing_job = ISC_JOB_INITIALIZER;
+
+static void
+trailing_cb(void *arg) {
+	UNUSED(arg);
+}
+
+static void
+double_read_cb(isc_nmhandle_t *handle, isc_result_t eresult,
+	       isc_region_t *region, void *cbarg) {
+	uint64_t magic = 0;
+
+	UNUSED(cbarg);
+
+	assert_int_equal(eresult, ISC_R_SUCCESS);
+	assert_true(region->length >= sizeof(magic));
+	memmove(&magic, region->base, sizeof(magic));
+	assert_int_equal(magic, send_magic);
+	atomic_fetch_add(&creads, 1);
+
+	/*
+	 * Both calls take the asynchronous path because this callback is still
+	 * processing the previous message.  They must share one pending job.
+	 */
+	isc_nm_read(handle, double_read_cb, NULL);
+	isc_nm_read(handle, double_read_cb, NULL);
+	isc_job_run(isc_loop(), &trailing_job, trailing_cb, NULL);
+	assert_ptr_not_equal(handle->sock->job.link.prev, &handle->sock->job);
+
+	isc_loopmgr_shutdown(loopmgr);
+	isc_nmhandle_close(handle);
+	isc_refcount_decrement(&active_creads);
+	isc_nmhandle_detach(&handle);
 }
 
 ISC_LOOP_TEST_IMPL(tcpdns_noop) {
@@ -112,6 +148,14 @@ ISC_LOOP_TEST_IMPL(tcpdns_recv_one) {
 	isc_async_current(stream_recv_send_connect, tcpdns_connect);
 }
 
+ISC_LOOP_TEST_IMPL(tcpdns_double_read) {
+	start_listening(ISC_NM_LISTEN_ONE, listen_accept_cb, listen_read_cb);
+
+	atomic_store(&nsends, 1);
+	connect_readcb = double_read_cb;
+	isc_async_current(stream_recv_send_connect, tcpdns_connect);
+}
+
 ISC_LOOP_TEST_IMPL(tcpdns_recv_two) {
 	start_listening(ISC_NM_LISTEN_ONE, listen_accept_cb, listen_read_cb);
 
@@ -155,6 +199,8 @@ ISC_TEST_ENTRY_CUSTOM(tcpdns_noresponse, stream_noresponse_setup,
 ISC_TEST_ENTRY_CUSTOM(tcpdns_timeout_recovery, stream_timeout_recovery_setup,
 		      stream_timeout_recovery_teardown)
 ISC_TEST_ENTRY_CUSTOM(tcpdns_recv_one, stream_recv_one_setup,
+		      stream_recv_one_teardown)
+ISC_TEST_ENTRY_CUSTOM(tcpdns_double_read, stream_recv_one_setup,
 		      stream_recv_one_teardown)
 ISC_TEST_ENTRY_CUSTOM(tcpdns_recv_two, stream_recv_two_setup,
 		      stream_recv_two_teardown)

@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.11 2026/01/29 18:37:48 christos Exp $	*/
+/*	$NetBSD: acl.c,v 1.12 2026/09/17 18:01:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -424,7 +424,13 @@ dns_aclelement_match(const isc_netaddr_t *reqaddr, const dns_name_t *reqsigner,
 		if (env == NULL || env->geoip == NULL) {
 			return false;
 		}
-		return dns_geoip_match(reqaddr, env->geoip, &e->geoip_elem);
+		if (dns_geoip_match(reqaddr, env->geoip, &e->geoip_elem)) {
+			if (matchelt != NULL) {
+				*matchelt = e;
+			}
+			return true;
+		}
+		return false;
 #endif /* if defined(HAVE_GEOIP2) */
 	default:
 		UNREACHABLE();

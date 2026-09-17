@@ -1,4 +1,4 @@
-/*	$NetBSD: doh_test.c,v 1.4 2025/05/21 14:48:08 christos Exp $	*/
+/*	$NetBSD: doh_test.c,v 1.5 2026/09/17 18:01:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -75,21 +75,11 @@ static atomic_int_fast64_t creads = 0;
 static atomic_int_fast64_t ctimeouts = 0;
 static atomic_int_fast64_t total_sends = 0;
 
-static int expected_ssends;
-static int expected_sreads;
 static int expected_csends;
-static int expected_cconnects;
 static int expected_creads;
-static int expected_ctimeouts;
 
-#define have_expected_ssends(v) ((v) >= expected_ssends && expected_ssends >= 0)
-#define have_expected_sreads(v) ((v) >= expected_sreads && expected_sreads >= 0)
 #define have_expected_csends(v) ((v) >= expected_csends && expected_csends >= 0)
-#define have_expected_cconnects(v) \
-	((v) >= expected_cconnects && expected_cconnects >= 0)
 #define have_expected_creads(v) ((v) >= expected_creads && expected_creads >= 0)
-#define have_expected_ctimeouts(v) \
-	((v) >= expected_ctimeouts && expected_ctimeouts >= 0)
 
 static bool noanswer = false;
 
@@ -307,7 +297,6 @@ setup_test(void **state) {
 		return -1;
 	}
 	close(tcp_listen_sock);
-	tcp_listen_sock = -1;
 
 	if (env_workers != NULL) {
 		workers = atoi(env_workers);
@@ -326,12 +315,8 @@ setup_test(void **state) {
 	atomic_store(&ctimeouts, 0);
 	atomic_store(&active_cconnects, 0);
 
-	expected_cconnects = -1;
 	expected_csends = -1;
 	expected_creads = -1;
-	expected_sreads = -1;
-	expected_ssends = -1;
-	expected_ctimeouts = -1;
 
 	atomic_store(&POST, false);
 	atomic_store(&use_TLS, false);

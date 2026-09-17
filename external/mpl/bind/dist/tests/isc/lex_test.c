@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_test.c,v 1.3 2025/01/26 16:25:49 christos Exp $	*/
+/*	$NetBSD: lex_test.c,v 1.4 2026/09/17 18:01:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,6 +33,151 @@
 #include <tests/isc.h>
 
 #define AS_STR(x) (x).value.as_textregion.base
+
+/* check handling of 0x00 */
+ISC_RUN_TEST_IMPL(lex_0x00) {
+	isc_result_t result;
+	isc_lex_t *lex = NULL;
+	isc_buffer_t buf;
+	isc_token_t token;
+
+	unsigned char nul_then_A[] = { '\0', 'A' };
+	unsigned char embedded_null[] = { '"', 'a', '\0', 'b', '"' };
+	unsigned char escaped_null[] = { 'a', '\\', '\0', 'b' };
+
+	UNUSED(state);
+
+	isc_lex_create(mctx, 1024, &lex);
+
+	isc_buffer_init(&buf, &nul_then_A[0], sizeof(nul_then_A));
+	isc_buffer_add(&buf, sizeof(nul_then_A));
+
+	result = isc_lex_openbuffer(lex, &buf);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	result = isc_lex_gettoken(lex, 0, &token);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(token.type, isc_tokentype_unknown);
+
+	result = isc_lex_gettoken(lex, 0, &token);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(token.type, isc_tokentype_string);
+
+	isc_lex_close(lex);
+
+	/*
+	 * Check that an embedded NUL is preserved in a quoted string.
+	 */
+	isc_buffer_init(&buf, &embedded_null[0], sizeof(embedded_null));
+	isc_buffer_add(&buf, sizeof(embedded_null));
+
+	result = isc_lex_openbuffer(lex, &buf);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	result = isc_lex_gettoken(lex, ISC_LEXOPT_QSTRING, &token);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(token.type, isc_tokentype_qstring);
+	assert_int_equal(token.value.as_textregion.length, 3);
+	assert_memory_equal(token.value.as_textregion.base, "a\0b", 3);
+
+	isc_lex_close(lex);
+
+	/*
+	 * Check that an escaped NUL is preserved.
+	 */
+	isc_buffer_init(&buf, &escaped_null[0], sizeof(escaped_null));
+	isc_buffer_add(&buf, sizeof(escaped_null));
+
+	result = isc_lex_openbuffer(lex, &buf);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	result = isc_lex_gettoken(lex, ISC_LEXOPT_ESCAPE, &token);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(token.type, isc_tokentype_string);
+	assert_int_equal(token.value.as_textregion.length, 4);
+	assert_memory_equal(token.value.as_textregion.base, "a\\\0b", 4);
+
+	isc_lex_destroy(&lex);
+}
+
+/*
+ * A NUL token must not preserve a stale beginning-of-line state:
+ * whitespace following the NUL is not initial whitespace.
+ */
+ISC_RUN_TEST_IMPL(lex_0x00_initialws) {
+	isc_result_t result;
+	isc_lex_t *lex = NULL;
+	isc_buffer_t buf;
+	isc_token_t token;
+
+	unsigned char nul_then_ws[] = { 'a', '\n', '\0', ' ', 'b' };
+
+	UNUSED(state);
+
+	isc_lex_create(mctx, 1024, &lex);
+
+	isc_buffer_init(&buf, &nul_then_ws[0], sizeof(nul_then_ws));
+	isc_buffer_add(&buf, sizeof(nul_then_ws));
+
+	result = isc_lex_openbuffer(lex, &buf);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	result = isc_lex_gettoken(lex, ISC_LEXOPT_INITIALWS, &token);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(token.type, isc_tokentype_string);
+
+	result = isc_lex_gettoken(lex, ISC_LEXOPT_INITIALWS, &token);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(token.type, isc_tokentype_unknown);
+	/*
+	 * The unknown token must not leave the previous token's text
+	 * region pointer behind for a caller to dereference.
+	 */
+	assert_null(token.value.as_textregion.base);
+	assert_int_equal(token.value.as_textregion.length, 0);
+
+	result = isc_lex_gettoken(lex, ISC_LEXOPT_INITIALWS, &token);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(token.type, isc_tokentype_string);
+	assert_string_equal(AS_STR(token), "b");
+
+	isc_lex_destroy(&lex);
+}
+
+/*
+ * A NUL inside brace-delimited text is corruption and must yield an
+ * unknown token instead of being embedded in the btext token.
+ */
+ISC_RUN_TEST_IMPL(lex_0x00_btext) {
+	isc_result_t result;
+	isc_lex_t *lex = NULL;
+	isc_buffer_t buf;
+	isc_token_t token;
+	isc_lexspecials_t specials;
+
+	unsigned char btext_null[] = { '{', 'a', '\0', 'b', '}' };
+
+	UNUSED(state);
+
+	isc_lex_create(mctx, 1024, &lex);
+
+	memset(specials, 0, sizeof(specials));
+	specials['{'] = 1;
+	specials['}'] = 1;
+	isc_lex_setspecials(lex, specials);
+
+	isc_buffer_init(&buf, &btext_null[0], sizeof(btext_null));
+	isc_buffer_add(&buf, sizeof(btext_null));
+
+	result = isc_lex_openbuffer(lex, &buf);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	result = isc_lex_gettoken(lex, ISC_LEXOPT_BTEXT, &token);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(token.type, isc_tokentype_unknown);
+
+	isc_lex_destroy(&lex);
+}
 
 /* check handling of 0xff */
 ISC_RUN_TEST_IMPL(lex_0xff) {
@@ -73,8 +218,8 @@ ISC_RUN_TEST_IMPL(lex_setline) {
 
 	isc_lex_create(mctx, 1024, &lex);
 
-	isc_buffer_init(&buf, &text[0], sizeof(text));
-	isc_buffer_add(&buf, sizeof(text));
+	isc_buffer_init(&buf, &text[0], sizeof(text) - 1);
+	isc_buffer_add(&buf, sizeof(text) - 1);
 
 	result = isc_lex_openbuffer(lex, &buf);
 	assert_int_equal(result, ISC_R_SUCCESS);
@@ -341,6 +486,9 @@ ISC_RUN_TEST_IMPL(lex_keypair) {
 }
 
 ISC_TEST_LIST_START
+ISC_TEST_ENTRY(lex_0x00)
+ISC_TEST_ENTRY(lex_0x00_initialws)
+ISC_TEST_ENTRY(lex_0x00_btext)
 ISC_TEST_ENTRY(lex_0xff)
 ISC_TEST_ENTRY(lex_keypair)
 ISC_TEST_ENTRY(lex_setline)

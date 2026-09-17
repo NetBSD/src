@@ -1,4 +1,4 @@
-/*	$NetBSD: time_test.c,v 1.5 2026/08/29 14:55:20 christos Exp $	*/
+/*	$NetBSD: time_test.c,v 1.6 2026/09/17 18:01:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -103,7 +103,15 @@ ISC_RUN_TEST_IMPL(isc_time_now_test) {
 	assert_int_not_equal(t1.seconds, 0);
 	assert_int_not_equal(t2.seconds, 0);
 	assert_int_equal(isc_time_compare(&t2, &t1), 1);
-	assert_int_equal(t2.seconds - t1.seconds, 1);
+	/*
+	 * The coarse clock readings may lag real time by a scheduler tick
+	 * and nanosleep() may overshoot, hence the tolerance in both
+	 * directions.
+	 */
+	assert_true(isc_time_microdiff(&t2, &t1) >
+		    US_PER_SEC - 100 * US_PER_MS);
+	assert_true(isc_time_microdiff(&t2, &t1) <
+		    US_PER_SEC + 100 * US_PER_MS);
 
 	tm = time(NULL);
 	t1 = isc_time_now_hires();

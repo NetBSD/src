@@ -80,7 +80,6 @@ dns__rbtnode_release
 dns__rdataset_clone
 dns__rdataset_disassociate
 dns__rdataset_expire
-dns__rdataset_getclosest
 dns__rdataset_getnoqname
 dns__rdatasetiter_current
 dns__rdatasetiter_destroy
@@ -964,7 +963,6 @@ dns_rdataclass_fromtext
 dns_rdataclass_ismeta
 dns_rdataclass_totext
 dns_rdataclass_tounknowntext
-dns_rdatalist_addclosest
 dns_rdatalist_addnoqname
 dns_rdatalist_clone
 dns_rdatalist_count
@@ -972,7 +970,6 @@ dns_rdatalist_current
 dns_rdatalist_disassociate
 dns_rdatalist_first
 dns_rdatalist_fromrdataset
-dns_rdatalist_getclosest
 dns_rdatalist_getnoqname
 dns_rdatalist_getownercase
 dns_rdatalist_init
@@ -980,7 +977,6 @@ dns_rdatalist_next
 dns_rdatalist_setownercase
 dns_rdatalist_tordataset
 dns_rdataproof_rdatasetmethods
-dns_rdataset_addclosest
 dns_rdataset_additionaldata
 dns_rdataset_addnoqname
 dns_rdataset_clearprefetch

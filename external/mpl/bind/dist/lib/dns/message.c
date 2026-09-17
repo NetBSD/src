@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.25 2026/08/29 14:55:16 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.26 2026/09/17 18:01:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1599,6 +1599,10 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t dctx,
 				if (dns_rdata_compare(rdata, first) != 0) {
 					DO_ERROR(DNS_R_FORMERR);
 				}
+				if (!best_effort) {
+					dns_rdata_reset(rdata);
+					dns_message_puttemprdata(msg, &rdata);
+				}
 				break;
 			case ISC_R_SUCCESS:
 				ISC_LIST_APPEND(name->list, rdataset, link);
@@ -1624,8 +1628,10 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t dctx,
 		}
 
 		/* Append this rdata to the rdataset. */
-		dns_rdatalist_fromrdataset(rdataset, &rdatalist);
-		ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
+		if (rdata != NULL) {
+			dns_rdatalist_fromrdataset(rdataset, &rdatalist);
+			ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
+		}
 
 		/*
 		 * If this is an OPT, SIG(0) or TSIG record, remember it.
