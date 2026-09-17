@@ -12,9 +12,7 @@
  */
 
 options {
-	listen-on port @PORT@ { 10.53.0.2; };
-	transfer-source 10.53.0.2;
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	recursion no;
 };
 

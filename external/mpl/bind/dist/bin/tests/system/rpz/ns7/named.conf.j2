@@ -12,22 +12,15 @@
  */
 
 options {
-	query-source address 10.53.0.7;
-	notify-source 10.53.0.7;
-	transfer-source 10.53.0.7;
-	port @PORT@;
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	statistics-file "named.stats";
 	session-keyfile "session.key";
-	listen-on { 10.53.0.7; };
-	listen-on-v6 { none; };
 	allow-transfer { any; };
 	minimal-responses no;
-	recursion yes;
 	dnssec-validation yes;
 
 	response-policy {
-	    zone "policy2" add-soa no ede none;
+		zone "policy2" add-soa no ede none;
 	} qname-wait-recurse no
 	nsip-enable yes
 	nsdname-enable yes

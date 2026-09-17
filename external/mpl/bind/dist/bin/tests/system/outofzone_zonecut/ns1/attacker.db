@@ -1,0 +1,5 @@
+$TTL 300
+attacker.		IN SOA	ns.attacker. hostmaster.attacker. 1 3600 900 2419200 300
+attacker.		NS	ns.attacker.
+ns.attacker.		A	10.53.0.1
+*.attacker.		A	192.0.2.66

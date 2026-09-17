@@ -16,22 +16,12 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation yes;
 	/* only SHA-256 is enabled */
 	disable-ds-digests . { SHA-1; SHA-384; 5; 6; 7; 8; 9; };
 };
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 include "trusted.conf";

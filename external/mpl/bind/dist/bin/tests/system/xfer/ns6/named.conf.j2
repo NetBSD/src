@@ -14,27 +14,17 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.6;
-	notify-source 10.53.0.6;
-	transfer-source 10.53.0.6;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.6; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-transfer { any; };
 	recursion no;
 	dnssec-validation no;
-	notify yes;
 	ixfr-from-differences primary;
 	check-integrity no;
 	tcp-idle-timeout 600;
 	min-transfer-rate-in 10240 300;  # this is tested as seconds, when used with '-T transferinsecs' (i.e. convert the default '10240 5' back so that it doesn't interfere with other tests)
 };
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "primary" {
 	type primary;

@@ -1,0 +1,5 @@
+$TTL 86400
+.		IN SOA	ns2. hostmaster.ns2. ( 1 3600 1800 604800 86400 )
+.		IN NS	ns2.
+ns2.		IN A	10.53.0.2
+tree.example.	IN NS	ns2.

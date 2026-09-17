@@ -17,10 +17,7 @@ key one {
 };
 
 options {
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.2; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	recursion no;
 	allow-query { key one; };
 	dnssec-validation no;
@@ -28,10 +25,7 @@ options {
 
 {% include "_common/controls.conf.j2" %}
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "normal.example" {
 	type primary;

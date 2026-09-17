@@ -1,0 +1,8 @@
+$TTL 300
+nszone.example.		IN SOA	ns.nszone.example. hostmaster.nszone.example. 1 3600 900 2419200 300
+nszone.example.		NS	ns.nszone.example.
+ns.nszone.example.	A	10.53.0.2
+www.nszone.example.	A	10.0.0.1
+; Out-of-zone data above the apex, as persisted by a secondary that
+; accepted it from its primary in a zone transfer.
+example.		NS	ns.attacker.

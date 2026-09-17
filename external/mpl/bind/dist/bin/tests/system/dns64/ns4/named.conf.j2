@@ -15,17 +15,14 @@
 // NS4
 
 options {
-	query-source address 10.53.0.4;
-	query-source-v6 address fd92:7065:b8e:fffe::10.53.0.4;
-	notify-source 10.53.0.4;
-	notify-source-v6 fd92:7065:b8e:fffe::10.53.0.4;
-	transfer-source 10.53.0.4;
-	transfer-source-v6 fd92:7065:b8e:fffe::10.53.0.4;
+	{% include_indented "_common/options/sources.conf.j2" %}
+	query-source-v6 address fd92:7065:b8e:fffe::@ns.ip@;
+	notify-source-v6 fd92:7065:b8e:fffe::@ns.ip@;
+	transfer-source-v6 fd92:7065:b8e:fffe::@ns.ip@;
 	port @EXTRAPORT1@;
 	pid-file "named.pid";
-	listen-on port @PORT@ { 10.53.0.4; };	// for start.pl
-	listen-on-v6 { fd92:7065:b8e:fffe::10.53.0.4; };
-	notify yes;
+	listen-on port @PORT@ { @ns.ip@; };	// for start.pl
+	listen-on-v6 { fd92:7065:b8e:fffe::@ns.ip@; };
 	dnssec-validation no;
 	recursion no;
 };

@@ -64,8 +64,47 @@ for subdomain in digest-alg-unsupported ds-unsupported secure badds \
   dnskey-unknown dnskey-unsupported dnskey-unsupported-2 \
   dnskey-nsec3-unknown managed-future future revkey \
   dname-at-apex-nsec3 occluded rsasha1 rsasha1-1024 \
-  extrabadkey; do
+  extrabadkey keytrap3; do
   cp "../ns3/dsset-$subdomain.example." .
+done
+
+# Build a flooded DS RRset for the "keytrap.example." delegation: many
+# DS records, each with a unique key tag, none matching the child's real
+# DNSKEY (GL #5349).  dnssec-signzone -g inserts these into the parent
+# below; the resolver must reject the zone with bounded per-DS work.
+: >"dsset-keytrap.example."
+i=1
+while [ $i -le 25 ]; do
+  keytag=$((60000 + i))
+  digest=$(printf '%064x' "$i")
+  echo "keytrap.example. IN DS $keytag $DEFAULT_ALGORITHM_NUMBER 2 $digest" >>"dsset-keytrap.example."
+  i=$((i + 1))
+done
+
+# Build a smaller mismatched DS RRset for the "keytrap2.example."
+# delegation (GL #5349).  Fewer DS records than the per-DS validation
+# quota, but the child's multi-key DNSKEY RRset makes the DS-by-DNSKEY
+# product exceed the up-front combination cap.
+: >"dsset-keytrap2.example."
+i=1
+while [ $i -le 12 ]; do
+  keytag=$((62000 + i))
+  digest=$(printf '%064x' "$i")
+  echo "keytrap2.example. IN DS $keytag $DEFAULT_ALGORITHM_NUMBER 2 $digest" >>"dsset-keytrap2.example."
+  i=$((i + 1))
+done
+
+# Add enough ignored DS records to the valid "keytrap3.example." delegation
+# to exceed the combination cap if the raw RRset size is used.  Half use an
+# unsupported DNSKEY algorithm and half use an unsupported digest type; the
+# generated supported DS must still validate the child.
+i=1
+while [ $i -le 16 ]; do
+  keytag=$((63000 + i))
+  digest=$(printf '%064x' "$i")
+  echo "keytrap3.example. IN DS $keytag 255 2 $digest" >>"dsset-keytrap3.example."
+  echo "keytrap3.example. IN DS $keytag $DEFAULT_ALGORITHM_NUMBER 255 $digest" >>"dsset-keytrap3.example."
+  i=$((i + 1))
 done
 
 # Sign the "example." zone.

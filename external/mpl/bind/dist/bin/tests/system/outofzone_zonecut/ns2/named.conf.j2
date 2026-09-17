@@ -1,0 +1,42 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+/* Authoritative-only server. */
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	recursion no;
+	dnssec-validation no;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+/*
+ * Secondary zones whose backup files carry records above the zone apex.
+ * The primaries are unreachable, so the databases are only ever loaded
+ * from these files and never replaced by a transfer.
+ */
+
+zone "nszone.example" {
+	type secondary;
+	primaries { 10.53.0.100; };
+	file "nszone.db";
+	masterfile-format text;
+};
+
+zone "dnamezone.example" {
+	type secondary;
+	primaries { 10.53.0.100; };
+	file "dnamezone.db";
+	masterfile-format text;
+};

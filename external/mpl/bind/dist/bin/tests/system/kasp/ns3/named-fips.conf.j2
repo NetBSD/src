@@ -22,10 +22,10 @@ zone "default.kasp" {
 
 /* A zone with special characters. */
 zone {% raw %}"i-am.\":\;?&[]\@!\$*+,|=\.\(\)special.kasp."{% endraw %} {
-        type primary;
-        file "i-am.special.kasp.db";
-        check-names ignore;
-        dnssec-policy "default";
+	type primary;
+	file "i-am.special.kasp.db";
+	check-names ignore;
+	dnssec-policy "default";
 };
 
 /* checkds: Zone with one KSK. */

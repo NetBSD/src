@@ -15,29 +15,22 @@
 {% set family = family | default("v4") %}
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on-v6 { fd92:7065:b8e:ffff::4; };
+	{% include_indented "_common/options-dual.conf.j2" %}
 	recursion no;
 	dnssec-validation no;
-	notify yes;
 	minimal-responses no;
 };
 
 {% if family == "v6" %}
-        plugin query "../../../../plugins/.libs/filter-@filtertype@.so" {
-                filter-@filtertype@-on-v6 break-dnssec;
-                filter-@filtertype@ { fd92:7065:b8e:ffff::4; };
-        };
+plugin query "../../../../plugins/.libs/filter-@filtertype@.so" {
+	filter-@filtertype@-on-v6 break-dnssec;
+	filter-@filtertype@ { @ns.ip6@; };
+};
 {% else %}
-        plugin query "../../../../plugins/.libs/filter-@filtertype@.so" {
-                filter-@filtertype@-on-v4 break-dnssec;
-                filter-@filtertype@ { 10.53.0.4; };
-        };
+plugin query "../../../../plugins/.libs/filter-@filtertype@.so" {
+	filter-@filtertype@-on-v4 break-dnssec;
+	filter-@filtertype@ { @ns.ip@; };
+};
 {% endif %}
 
 {% include "_common/controls.conf.j2" %}

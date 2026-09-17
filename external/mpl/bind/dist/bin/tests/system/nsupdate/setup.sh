@@ -14,6 +14,7 @@
 . ../conf.sh
 
 cp -f ns1/example1.db ns1/example.db
+cp -f ns1/grant-external.test.db.in ns1/grant-external.test.db
 sed 's/example.nil/other.nil/g' ns1/example1.db >ns1/other.db
 sed 's/example.nil/unixtime.nil/g' ns1/example1.db >ns1/unixtime.db
 sed 's/example.nil/yyyymmddvv.nil/g' ns1/example1.db >ns1/yyyymmddvv.db

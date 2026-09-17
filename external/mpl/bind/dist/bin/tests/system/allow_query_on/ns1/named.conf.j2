@@ -1,0 +1,64 @@
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	recursion no;
+	dnssec-validation no;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+view "vredirect" {
+	match-clients { 10.53.0.1; };
+	zone "." {
+		type primary;
+		file "root.db";
+	};
+
+	zone "." {
+		type redirect;
+		file "redirect.db";
+		allow-query { any; };
+		allow-query-on { none; };
+	};
+};
+
+view "vdlz1" {
+	match-clients { 10.53.0.2; };
+	dlz other {
+		database "dlopen @TOP_BUILDDIR@/bin/tests/system/dlzexternal/driver/.libs/dlzexternal.so example.nil";
+		search yes;
+	};
+	allow-query { none; };
+	allow-query-on { any; }; /* Ignored, as allow-query is none anyway */
+	zone "." {
+		type primary;
+		file "root.db";
+	};
+};
+
+view "vdlz2" {
+	match-clients { 10.53.0.3; };
+	dlz other {
+		database "dlopen @TOP_BUILDDIR@/bin/tests/system/dlzexternal/driver/.libs/dlzexternal.so example.nil";
+		search yes;
+	};
+	allow-query { any; };
+	allow-query-on { 10.53.0.3; };
+	zone "." {
+		type primary;
+		file "root.db";
+	};
+};
+
+view "vdlz3" {
+	match-clients { 10.53.0.4; };
+	dlz other {
+		database "dlopen @TOP_BUILDDIR@/bin/tests/system/dlzexternal/driver/.libs/dlzexternal.so example.nil";
+		search yes;
+	};
+	allow-query { any; };
+	allow-query-on { 10.53.0.1; };
+	zone "." {
+		type primary;
+		file "root.db";
+	};
+};

@@ -14,14 +14,8 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port @PORT@;
+	{% include_indented "_common/options-dual.conf.j2" %}
 	tls-port @TLSPORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on-v6 { fd92:7065:b8e:ffff::4; };
 	allow-transfer { any; };
 	notify no;
 	notify-delay 0;
@@ -39,7 +33,7 @@ options {
 			default-primaries { 10.53.0.1 key tsig_key tls ephemeral; };
 		zone "catalog-self.example"
 			min-update-interval 1s
-			default-primaries { 10.53.0.4; };
+			default-primaries { @ns.ip@; };
 	};
 };
 

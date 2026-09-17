@@ -1,0 +1,25 @@
+// validating resolver
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	dnssec-validation yes;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+{% include "_common/root.hint.conf" %}
+
+zone "victim.example" {
+	type static-stub;
+	server-addresses { 10.53.0.1; };
+};
+
+zone "abc.example" {
+	type static-stub;
+	server-addresses { 10.53.0.1; };
+};
+
+trust-anchors {
+	victim.example. static-key 257 3 13 "@VICTIM_DNSKEY@";
+	abc.example. static-key 257 3 13 "@ATTACKER_DNSKEY@";
+};

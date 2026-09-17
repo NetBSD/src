@@ -19,15 +19,9 @@ tls local {
 };
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port @PORT@;
+	{% include_indented "_common/options.conf.j2" %}
 	tls-port @TLSPORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on tls local { 10.53.0.4; };             // DoT
-	listen-on-v6 { none; };
+	listen-on tls local { @ns.ip@; };             // DoT
 	recursion no;
 	notify no;
 	ixfr-from-differences yes;
@@ -35,10 +29,7 @@ options {
 	dnssec-validation no;
 };
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 tls tls-v1.3 {
 	protocols { TLSv1.3; };

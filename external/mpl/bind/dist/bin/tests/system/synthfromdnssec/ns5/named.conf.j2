@@ -14,14 +14,7 @@
 // NS5
 
 options {
-	query-source address 10.53.0.5;
-	notify-source 10.53.0.5;
-	transfer-source 10.53.0.5;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.5; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	notify no;
 	dnssec-validation yes;
 	synth-from-dnssec yes;
@@ -32,7 +25,7 @@ options {
 
 {% if FEATURE_LIBXML2 == "1" or FEATURE_JSON_C == "1" %}
 statistics-channels {
-	inet 10.53.0.5 port @EXTRAPORT1@ allow { any; };
+	inet @ns.ip@ port @EXTRAPORT1@ allow { any; };
 };
 {% endif %}
 

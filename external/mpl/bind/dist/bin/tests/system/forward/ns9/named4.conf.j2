@@ -12,13 +12,7 @@
  */
 
 options {
-	query-source address 10.53.0.9;
-	notify-source 10.53.0.9;
-	transfer-source 10.53.0.9;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.9; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation no;
 	edns-udp-size 1232;
 };
@@ -29,10 +23,7 @@ server 10.53.0.10 {
 	edns no;
 };
 
-zone "." {
-	type hint;
-	file "root.db";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "local.tld." {
 	type primary;

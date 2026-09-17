@@ -12,11 +12,8 @@
  */
 
 options {
-	port @PORT@;
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	session-keyfile "session.key";
-	listen-on { 10.53.0.2; };
-	listen-on-v6 { none; };
 	recursion no;
 	dnssec-validation no;
 };
@@ -33,14 +30,11 @@ key secondkey {
 
 /* deliberately not _common/controls.conf.j2: multi-key control channel is the test subject */
 controls {
-	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; secondkey; };
+	inet @ns.ip@ port @CONTROLPORT@ allow { any; } keys { rndc_key; secondkey; };
 };
 
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "nil" {
 	type primary;

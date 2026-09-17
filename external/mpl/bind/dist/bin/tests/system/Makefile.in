@@ -810,6 +810,7 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver $(am__append_2)
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	checkds			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	checknames		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	checkzone		\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	cname_recursion		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	cookie			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	cpu			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	database		\
@@ -858,6 +859,7 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver $(am__append_2)
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	names			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	notify			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	nsec3			\
+@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	nsec_wildcard_wrong_zone \
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	nslookup		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	nsupdate		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	nzd2nzf			\
@@ -872,19 +874,6 @@ SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver $(am__append_2)
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	resolver		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rndc			\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover		\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_algo_csk	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_algo_ksk_zsk	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_csk_roll1	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_csk_roll2	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_dynamic2inline	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_enable_dnssec	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_going_insecure	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_ksk_3crowd	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_ksk_doubleksk	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_lifetime	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_multisigner	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_straight2none	\
-@HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rollover_zsk_prepub	\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rootkeysentinel		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rpzextra		\
 @HAVE_PERL_TRUE@@HAVE_PYTEST_TRUE@@HAVE_PYTHON_TRUE@	rrchecker		\
@@ -1547,6 +1536,13 @@ checkzone.log: checkzone
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+cname_recursion.log: cname_recursion
+	@p='cname_recursion'; \
+	b='cname_recursion'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 cookie.log: cookie
 	@p='cookie'; \
 	b='cookie'; \
@@ -1883,6 +1879,13 @@ nsec3.log: nsec3
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+nsec_wildcard_wrong_zone.log: nsec_wildcard_wrong_zone
+	@p='nsec_wildcard_wrong_zone'; \
+	b='nsec_wildcard_wrong_zone'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 nslookup.log: nslookup
 	@p='nslookup'; \
 	b='nslookup'; \
@@ -1977,97 +1980,6 @@ rndc.log: rndc
 rollover.log: rollover
 	@p='rollover'; \
 	b='rollover'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_algo_csk.log: rollover_algo_csk
-	@p='rollover_algo_csk'; \
-	b='rollover_algo_csk'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_algo_ksk_zsk.log: rollover_algo_ksk_zsk
-	@p='rollover_algo_ksk_zsk'; \
-	b='rollover_algo_ksk_zsk'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_csk_roll1.log: rollover_csk_roll1
-	@p='rollover_csk_roll1'; \
-	b='rollover_csk_roll1'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_csk_roll2.log: rollover_csk_roll2
-	@p='rollover_csk_roll2'; \
-	b='rollover_csk_roll2'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_dynamic2inline.log: rollover_dynamic2inline
-	@p='rollover_dynamic2inline'; \
-	b='rollover_dynamic2inline'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_enable_dnssec.log: rollover_enable_dnssec
-	@p='rollover_enable_dnssec'; \
-	b='rollover_enable_dnssec'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_going_insecure.log: rollover_going_insecure
-	@p='rollover_going_insecure'; \
-	b='rollover_going_insecure'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_ksk_3crowd.log: rollover_ksk_3crowd
-	@p='rollover_ksk_3crowd'; \
-	b='rollover_ksk_3crowd'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_ksk_doubleksk.log: rollover_ksk_doubleksk
-	@p='rollover_ksk_doubleksk'; \
-	b='rollover_ksk_doubleksk'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_lifetime.log: rollover_lifetime
-	@p='rollover_lifetime'; \
-	b='rollover_lifetime'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_multisigner.log: rollover_multisigner
-	@p='rollover_multisigner'; \
-	b='rollover_multisigner'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_straight2none.log: rollover_straight2none
-	@p='rollover_straight2none'; \
-	b='rollover_straight2none'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-rollover_zsk_prepub.log: rollover_zsk_prepub
-	@p='rollover_zsk_prepub'; \
-	b='rollover_zsk_prepub'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

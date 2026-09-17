@@ -34,6 +34,7 @@ ROLLOVER_MARK = pytest.mark.extra_artifacts(
         "ns*/K*.state",
         "ns*/keygen.out.*",
         "ns*/managed-keys.**",
+        "ns*/policy/*.conf",
         "ns*/settime.out.*",
         "ns*/signer.out.*",
         "ns*/zones",

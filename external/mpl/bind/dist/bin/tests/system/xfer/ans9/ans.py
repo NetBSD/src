@@ -11,132 +11,153 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Collection
 
 import dns.name
 import dns.rcode
+import dns.rdataclass
 import dns.rdatatype
 import dns.rrset
 
 from isctest.asyncserver import (
+    AxfrHandler,
     ControllableAsyncDnsServer,
     DnsResponseSend,
-    DomainHandler,
     QueryContext,
     ResponseAction,
+    ResponseHandler,
     ToggleResponsesCommand,
 )
 
+TTL = 300
 
-class AXFRServer(DomainHandler):
-    """
-    Yield SOA and AXFR responses. Every new AXFR response increments the SOA
-    version.
-    """
+RECONFIG_ZONE = "xfr-and-reconfig."
+OVERRUN_ZONE = "private-dns-overrun."
 
-    domains = ["xfr-and-reconfig", "private-dns-overrun"]
+# The malformed DNSKEY's algorithm identifier finishes on a 00 byte in the
+# record that follows it in the same message.  That following record, the
+# well-formed DNSKEY, starts with a compression pointer followed by the type,
+# which starts with 00.
+OVERRUN_DNSKEY = "\\# 12 00 00 00 fd 09 00 00 00 00 00 00 00"
+WELL_FORMED_DNSKEY = "\\# 12 00 00 00 fd 06 00 00 00 00 00 00 00"
+
+
+def rrset(
+    owner: str | dns.name.Name, rdtype: dns.rdatatype.RdataType, rdata: str
+) -> dns.rrset.RRset:
+    return dns.rrset.from_text(owner, TTL, dns.rdataclass.IN, rdtype, rdata)
+
+
+def soa(owner: str | dns.name.Name, serial: int) -> dns.rrset.RRset:
+    return rrset(owner, dns.rdatatype.SOA, f". . {serial} 0 0 0 0")
+
+
+def ns(owner: str | dns.name.Name) -> dns.rrset.RRset:
+    return rrset(owner, dns.rdatatype.NS, ".")
+
+
+def txt(owner: str | dns.name.Name) -> dns.rrset.RRset:
+    return rrset(owner, dns.rdatatype.TXT, "foo bar")
+
+
+def dnskey(owner: str | dns.name.Name, keydata: str) -> dns.rrset.RRset:
+    return rrset(owner, dns.rdatatype.DNSKEY, keydata)
+
+
+class SerialCounter:
+    """
+    Shared SOA serial advanced by one after every completed AXFR, so each
+    secondary refresh sees a newer serial and re-transfers the zone.
+    """
 
     def __init__(self) -> None:
+        self.serial = 0
+
+
+class SerialCounted(ResponseHandler):
+    def __init__(self, serials: SerialCounter) -> None:
         super().__init__()
-        self.soa_version = 0
+        self._serials = serials
+
+
+class SoaHandler(SerialCounted):
+    def match(self, qctx: QueryContext) -> bool:
+        return qctx.qtype == dns.rdatatype.SOA
+
+    async def get_responses(
+        self, qctx: QueryContext
+    ) -> AsyncGenerator[DnsResponseSend, None]:
+        qctx.response.answer.append(soa(qctx.qname, self._serials.serial))
+        yield DnsResponseSend(qctx.response)
+
+
+class ZoneAxfrHandler(AxfrHandler, SerialCounted):
+    """
+    Serve an AXFR for a single zone whose SOA serial is drawn from a shared
+    SerialCounter, bumping it once the transfer completes.  Subclasses set
+    `zone` and define `zone_contents`.
+    """
+
+    zone: str
+
+    def match(self, qctx: QueryContext) -> bool:
+        return super().match(qctx) and qctx.qname == dns.name.from_text(self.zone)
 
     async def get_responses(
         self, qctx: QueryContext
     ) -> AsyncGenerator[ResponseAction, None]:
-        # This is oversimplified because I am lazy - we are appending the SOA
-        # RRset to the ANSWER section for _every_ QTYPE.  named is only
-        # expected to send a SOA query over UDP and then an AXFR query over
-        # TCP.  Responses to both of those start with a SOA RRset in the ANSWER
-        # section :-)
-        soa_message = qctx.response
-        soa_rrset = dns.rrset.from_text(
-            qctx.qname,
-            300,
-            qctx.qclass,
-            dns.rdatatype.SOA,
-            f". . {self.soa_version} 0 0 0 0",
-        )
-        soa_message.answer.append(soa_rrset)
+        async for action in super().get_responses(qctx):
+            yield action
+        self._serials.serial += 1
 
-        yield DnsResponseSend(soa_message)
+    @property
+    def initial_soa(self) -> dns.rrset.RRset:
+        return soa(self.zone, self._serials.serial)
 
-        if qctx.qtype == dns.rdatatype.SOA:
-            # If QTYPE=SOA, the SOA record is the complete response.
-            return
-
-        if qctx.qtype != dns.rdatatype.AXFR:
-            # If QTYPE=AXFR, we will continue cramming RRsets into the ANSWER
-            # section of a subsequent DNS message below.
-            #
-            # If QTYPE was not SOA or AXFR, abort.  Yeah, we just sent a broken
-            # response by yielding DnsResponseSend() with a SOA RRset in the
-            # ANSWER section above.  We will have to carry that burden for the
-            # rest of our lives.
-            return
-
-        # Send just the obligatory NS RRset at zone apex in the next message.
-        # This is stupidly inefficient, but makes looping below simpler as we
-        # will already have been done with the mandatory stuff by then.
-        ns_message = qctx.prepare_new_response()
-        ns_rrset = dns.rrset.from_text(
-            qctx.qname, 300, qctx.qclass, dns.rdatatype.NS, "."
-        )
-        ns_message.answer.append(ns_rrset)
-
-        yield DnsResponseSend(ns_message)
-
-        # Generate the AXFR with a txt rrset.
-        txt_message = qctx.prepare_new_response()
-        txt_rrset = dns.rrset.from_text(
-            qctx.qname,
-            300,
-            qctx.qclass,
-            dns.rdatatype.TXT,
-            "foo bar",
-        )
-        txt_message.answer.append(txt_rrset)
-
-        yield DnsResponseSend(txt_message)
-
-        if qctx.qname == dns.name.from_text("private-dns-overrun"):
-            # A message where the malformed DNSKEY algorithm identifier
-            # finishes on a 00 byte in the next record. Assumes the
-            # next record starts with a compression pointer which is
-            # followed by the type which starts with 00.
-
-            # Generate malformed PRIVATE DNS DNSKEY
-            dnskey_message = qctx.prepare_new_response()
-            dnskey_rrset = dns.rrset.from_text(
-                qctx.qname,
-                300,
-                qctx.qclass,
-                dns.rdatatype.DNSKEY,
-                "\\# 12 00 00 00 fd 09 00 00 00 00 00 00 00",
-            )
-            dnskey_message.answer.append(dnskey_rrset)
-            # Generate well formed PRIVATE DNS DNSKEY
-            dnskey_rrset = dns.rrset.from_text(
-                qctx.qname,
-                300,
-                qctx.qclass,
-                dns.rdatatype.DNSKEY,
-                "\\# 12 00 00 00 fd 06 00 00 00 00 00 00 00",
-            )
-            dnskey_message.answer.append(dnskey_rrset)
-
-            yield DnsResponseSend(dnskey_message)
-
-        # Finish the AXFR transaction by sending the second SOA RRset.
-        yield DnsResponseSend(soa_message)
-
-        # This makes sure that the next SOA request causes a new zone transfer
-        self.soa_version += 1
+    @property
+    def final_soa(self) -> dns.rrset.RRset:
+        return soa(self.zone, self._serials.serial)
 
 
-if __name__ == "__main__":
+class ReconfigAxfrHandler(ZoneAxfrHandler):
+    zone = RECONFIG_ZONE
+
+    @property
+    def zone_contents(self) -> Collection[dns.rrset.RRset]:
+        return [
+            ns(self.zone),
+            txt(self.zone),
+        ]
+
+
+class OverrunAxfrHandler(ZoneAxfrHandler):
+    """Serve the malformed PRIVATEDNS DNSKEY overrun; see OVERRUN_DNSKEY."""
+
+    zone = OVERRUN_ZONE
+
+    @property
+    def zone_contents(self) -> Collection[dns.rrset.RRset]:
+        return [
+            ns(self.zone),
+            txt(self.zone),
+            dnskey(self.zone, OVERRUN_DNSKEY),
+            dnskey(self.zone, WELL_FORMED_DNSKEY),
+        ]
+
+
+def main() -> None:
     server = ControllableAsyncDnsServer(
         default_aa=True, default_rcode=dns.rcode.NOERROR
     )
     server.install_control_command(ToggleResponsesCommand())
-    server.install_response_handler(AXFRServer())
+    serials = SerialCounter()
+    server.install_response_handlers(
+        SoaHandler(serials),
+        OverrunAxfrHandler(serials),
+        ReconfigAxfrHandler(serials),
+    )
     server.run()
+
+
+if __name__ == "__main__":
+    main()

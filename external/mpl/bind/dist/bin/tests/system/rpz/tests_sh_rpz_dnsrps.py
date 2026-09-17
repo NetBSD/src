@@ -49,6 +49,7 @@ pytestmark = [
             "ns3/mixed-case-rpz.db",
             "ns3/named.conf.tmp",
             "ns3/named.stats",
+            "ns3/outofzone.db",
             "ns3/slow-rpz.db",
             "ns3/wild-cname.db",
             "ns5/bl.db",

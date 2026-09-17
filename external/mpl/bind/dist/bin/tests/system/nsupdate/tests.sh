@@ -2150,6 +2150,32 @@ wait_for_log 10 "too many DNS UPDATEs queued" ns1/named.run || ret=1
   status=1
 }
 
+n=$((n + 1))
+ret=0
+echo_i "check that grant external pass client address properly ($n)" {
+($PERL "${TOP_SRCDIR}/bin/tests/system/authsock.pl" --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 >authsock.out.test$n 2>&1 &) &
+sleep 1
+nextpart authsock.out.test$n >/dev/null
+$NSUPDATE -k ns1/ddns.key -d <<EOF >nsupdate.udp.test$n 2>&1 || ret=1
+server 10.53.0.1 ${PORT}
+zone grant-external.test
+update add cnameoverudp.grant-external.test 0 IN CNAME grant-external.test.
+send
+EOF
+nextpart authsock.out.test$n | grep ' addr= ' >/dev/null || ret=1
+$NSUPDATE -v -d <<EOF >nsupdate.tcp.test$n 2>&1 || ret=1
+server 10.53.0.1 ${PORT}
+zone grant-external.test
+update add cnameovertcp.grant-external.test 0 IN CNAME grant-external.test.
+send
+EOF
+nextpart authsock.out.test$n | grep ' addr=10.53.0.1 ' >/dev/null || ret=1
+kill $(cat authsock.pid) || true
+[ $ret = 0 ] || {
+  echo_i "failed"
+  status=1
+}
+
 if ! $FEATURETEST --gssapi; then
   echo_i "SKIPPED: GSSAPI tests"
 else

@@ -12,10 +12,7 @@
  */
 
 options {
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.5; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	recursion no;
 	dnssec-validation no;
 };
@@ -27,10 +24,7 @@ key rndc_key {
 
 /* deliberately not _common/controls.conf.j2: read-only control channel is the test subject */
 controls {
-	inet 10.53.0.5 port @CONTROLPORT@ allow { any; } keys { rndc_key; } read-only yes;
+	inet @ns.ip@ port @CONTROLPORT@ allow { any; } keys { rndc_key; } read-only yes;
 };
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}

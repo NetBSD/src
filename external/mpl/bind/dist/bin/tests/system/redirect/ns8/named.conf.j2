@@ -1,9 +1,7 @@
 // NS8
 
 options {
-	port @PORT@;
-	listen-on port @PORT@ { 10.53.0.8; };
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	nxdomain-redirect redirect;
 	dnssec-validation no;
 	dns64 64:ff9b::/96 {
@@ -16,6 +14,6 @@ options {
 {% include "_common/controls.conf.j2" %}
 
 zone "." {
-        type hint;
-        file "root.hints";
+	type hint;
+	file "root.hints";
 };

@@ -12,17 +12,10 @@
  */
 
 options {
-	query-source address 10.53.0.3;
-	query-source-v6 fd92:7065:b8e:ffff::3;
-	notify-source 10.53.0.3;
-	notify-source-v6 fd92:7065:b8e:ffff::3;
-	transfer-source 10.53.0.3;
-	transfer-source-v6 fd92:7065:b8e:ffff::3;
-	port @PORT@;
+	{% include_indented "_common/options/sources-dual.conf.j2" %}
+	{% include_indented "_common/options/server.conf.j2" %}
+	{% include_indented "_common/options/listen.conf.j2" %}
 	tls-port @TLSPORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { none; };
 	recursion no;
 	dnssec-validation no;
 	notify no;
@@ -31,7 +24,7 @@ options {
 	allow-new-zones yes;
 };
 
-statistics-channels { inet 10.53.0.3 port @EXTRAPORT1@ allow { localhost; }; };
+statistics-channels { inet @ns.ip@ port @EXTRAPORT1@ allow { localhost; }; };
 
 {% include "_common/controls.conf.j2" %}
 

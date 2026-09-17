@@ -14,15 +14,8 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.3;
-	notify-source 10.53.0.3;
-	transfer-source 10.53.0.3;
-	port @PORT@;
+	{% include_indented "_common/options.conf.j2" %}
 	session-keyfile "session.key";
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { none; };
-	recursion yes;
 	dnssec-validation no;
 	response-policy { zone "policy"; }
 		qname-wait-recurse yes

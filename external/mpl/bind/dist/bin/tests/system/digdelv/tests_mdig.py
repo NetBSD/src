@@ -54,6 +54,12 @@ def test_ednsopt_malformed(mdig, ns3):
     assert "ednsopt no code point specified" in result.err
 
 
+def test_ednsopt_ednsopts(mdig, ns3):
+    """Check that mdig handles multiple queries with ednsopts."""
+    result = mdig(f"@{ns3.ip} +ednsopt=100:00 a.example b.example")
+    assert result.rc == 0
+
+
 def test_dnskey_norrcomments(mdig, ns3, zsk):
     """Check that +multi +norrcomments suppresses the DNSKEY comment
     (the default is rrcomments)."""

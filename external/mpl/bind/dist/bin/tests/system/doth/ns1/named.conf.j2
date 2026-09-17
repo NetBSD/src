@@ -65,27 +65,24 @@ tls tls-forward-secrecy-mutual-tls {
 };
 
 options {
-	port @PORT@;
+	{% include_indented "_common/options.conf.j2" %}
 	tls-port @TLSPORT@;
 	https-port @HTTPSPORT@;
 	http-port @HTTPPORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on tls tls-forward-secrecy { 10.53.0.1; };             // DoT
-	listen-on-v6 tls tls-forward-secrecy { fd92:7065:b8e:ffff::1;};
-	listen-on tls ephemeral http local { 10.53.0.1; };  // DoH
-	listen-on-v6 tls ephemeral http local { fd92:7065:b8e:ffff::1; };
-	listen-on tls none http local { 10.53.0.1; };       // unencrypted DoH
-	listen-on-v6 tls none http local { fd92:7065:b8e:ffff::1; };
-	listen-on-v6 { none; };
-	listen-on port @EXTRAPORT1@ tls tls-pfs-aes256 { 10.53.0.1; };             // DoT
-	listen-on-v6 port @EXTRAPORT1@ tls tls-pfs-aes256 { fd92:7065:b8e:ffff::1;};
-	listen-on port @EXTRAPORT2@ tls tls-no-subject-alt-name { 10.53.0.1; };             // DoT
-	listen-on port @EXTRAPORT3@ tls tls-no-subject-alt-name http local { 10.53.0.1; };  // DoH
-	listen-on port @EXTRAPORT4@ tls tls-expired { 10.53.0.1; };             // DoT
-	listen-on port @EXTRAPORT5@ tls tls-forward-secrecy-mutual-tls { 10.53.0.1; }; // DoT
-	listen-on port @EXTRAPORT6@ tls tls-forward-secrecy-mutual-tls http local { 10.53.0.1; }; // DoH
-	listen-on port @EXTRAPORT7@ tls tls-forward-secrecy { 10.53.0.1; }; // DoT
+	listen-on tls tls-forward-secrecy { @ns.ip@; };             // DoT
+	listen-on-v6 tls tls-forward-secrecy { @ns.ip6@;};
+	listen-on tls ephemeral http local { @ns.ip@; };  // DoH
+	listen-on-v6 tls ephemeral http local { @ns.ip6@; };
+	listen-on tls none http local { @ns.ip@; };       // unencrypted DoH
+	listen-on-v6 tls none http local { @ns.ip6@; };
+	listen-on port @EXTRAPORT1@ tls tls-pfs-aes256 { @ns.ip@; };             // DoT
+	listen-on-v6 port @EXTRAPORT1@ tls tls-pfs-aes256 { @ns.ip6@;};
+	listen-on port @EXTRAPORT2@ tls tls-no-subject-alt-name { @ns.ip@; };             // DoT
+	listen-on port @EXTRAPORT3@ tls tls-no-subject-alt-name http local { @ns.ip@; };  // DoH
+	listen-on port @EXTRAPORT4@ tls tls-expired { @ns.ip@; };             // DoT
+	listen-on port @EXTRAPORT5@ tls tls-forward-secrecy-mutual-tls { @ns.ip@; }; // DoT
+	listen-on port @EXTRAPORT6@ tls tls-forward-secrecy-mutual-tls http local { @ns.ip@; }; // DoH
+	listen-on port @EXTRAPORT7@ tls tls-forward-secrecy { @ns.ip@; }; // DoT
 	recursion no;
 	notify explicit;
 	also-notify { 10.53.0.2 port @PORT@; };

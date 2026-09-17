@@ -46,15 +46,12 @@ tls tls-pfs-chacha20 {
 };
 
 options {
-	port @PORT@;
+	{% include_indented "_common/options.conf.j2" %}
 	tls-port @TLSPORT@;
-	pid-file "named.pid";
-	listen-on-v6 { none; };
-	listen-on { 10.53.0.1; };
-	listen-on tls tls-perfect-forward-secrecy { 10.53.0.1; };
-	listen-on port @EXTRAPORT1@ tls tls-pfs-aes128 { 10.53.0.1; };
-	listen-on port @EXTRAPORT2@ tls tls-pfs-aes256 { 10.53.0.1; };
-	listen-on port @EXTRAPORT3@ tls tls-pfs-chacha20 { 10.53.0.1; };
+	listen-on tls tls-perfect-forward-secrecy { @ns.ip@; };
+	listen-on port @EXTRAPORT1@ tls tls-pfs-aes128 { @ns.ip@; };
+	listen-on port @EXTRAPORT2@ tls tls-pfs-aes256 { @ns.ip@; };
+	listen-on port @EXTRAPORT3@ tls tls-pfs-chacha20 { @ns.ip@; };
 	recursion no;
 	notify explicit;
 	also-notify { 10.53.0.2 port @PORT@; };

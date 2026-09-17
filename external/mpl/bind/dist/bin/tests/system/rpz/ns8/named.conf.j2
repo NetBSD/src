@@ -16,23 +16,15 @@
  */
 
 options {
-	query-source address 10.53.0.8;
-	notify-source 10.53.0.8;
-	transfer-source 10.53.0.8;
-	port @PORT@;
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	statistics-file	"named.stats";
 	session-keyfile "session.key";
-	listen-on { 10.53.0.8; };
-	listen-on-v6 { none; };
 	allow-transfer { any; };
-	notify yes;
 	minimal-responses no;
-	recursion yes;
 	dnssec-validation no;
 
 	response-policy {
-	    zone "manual-update-rpz";
+		zone "manual-update-rpz";
 	}
 	// add-soa yes // do not set testing default mode
 	min-ns-dots 0
@@ -43,7 +35,7 @@ options {
 	;
 
 	include "../dnsrps.conf";
-	also-notify { 10.53.0.8 port @EXTRAPORT1@; };
+	also-notify { @ns.ip@ port @EXTRAPORT1@; };
 	notify-delay 0;
 };
 

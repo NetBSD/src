@@ -14,18 +14,13 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.2;
-	notify-source 10.53.0.2;
-	transfer-source 10.53.0.2;
-	port @PORT@;
-	listen-on { 10.53.0.2; };
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	notify no;
 	dnssec-validation no;
 	allow-query { any; };
 };
 
-# 10.53.0.2 is authoritative for .test domain
+# @ns.ip@ is authoritative for .test domain
 zone "test" {
 	type primary;
 	file "test.db";

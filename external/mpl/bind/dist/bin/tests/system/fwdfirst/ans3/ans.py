@@ -11,38 +11,32 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
-from collections.abc import AsyncGenerator
-
 import dns.rcode
+import dns.rdataclass
 import dns.rdatatype
 import dns.rrset
 
-from isctest.asyncserver import (
-    AsyncDnsServer,
-    DnsResponseSend,
-    QueryContext,
-    ResponseAction,
-    ResponseHandler,
-)
+from isctest.asyncserver import AsyncDnsServer, QnameQtypeHandler, StaticResponseHandler
+
+VICTIM = "victim.sibling.hack."
+POISON_ADDRESS = "6.6.6.6"
 
 
-class AttackerAuthority(ResponseHandler):
-    async def get_responses(
-        self, qctx: QueryContext
-    ) -> AsyncGenerator[ResponseAction, None]:
-        if qctx.qtype == dns.rdatatype.A:
-            qctx.response.answer.append(
-                dns.rrset.from_text(
-                    qctx.qname, 300, qctx.qclass, dns.rdatatype.A, "6.6.6.6"
-                )
-            )
+def a(name: str) -> dns.rrset.RRset:
+    return dns.rrset.from_text(
+        name, 300, dns.rdataclass.IN, dns.rdatatype.A, POISON_ADDRESS
+    )
 
-        yield DnsResponseSend(qctx.response)
+
+class PoisonedAHandler(QnameQtypeHandler, StaticResponseHandler):
+    qnames = [VICTIM]
+    qtypes = [dns.rdatatype.A]
+    answer = [a(VICTIM)]
 
 
 def main() -> None:
     server = AsyncDnsServer(default_aa=True, default_rcode=dns.rcode.NOERROR)
-    server.install_response_handler(AttackerAuthority())
+    server.install_response_handler(PoisonedAHandler())
     server.run()
 
 

@@ -271,7 +271,7 @@ fi
 
 echo_i "check that a malformed truncated response to a TSIG query is handled"
 ret=0
-$DIG -p $PORT @10.53.0.1 bad-tsig >dig.out.bad-tsig || ret=1
+$DIG +timeout=15 -p $PORT @10.53.0.1 bad-tsig >dig.out.bad-tsig || ret=1
 grep "status: SERVFAIL" dig.out.bad-tsig >/dev/null || ret=1
 if [ $ret -eq 1 ]; then
   echo_i "failed"

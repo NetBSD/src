@@ -1,0 +1,45 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS2: recursive resolver, also authoritative for zones with a CNAME
+// pointing to a name outside of the zone: one static, one added at
+// runtime with "rndc addzone", one added at runtime as a catalog zone
+// member
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	dnssec-validation no;
+	allow-query { any; };
+	allow-new-zones yes;
+	catalog-zones {
+		zone "catalog"
+			default-primaries { 10.53.0.1; }
+			min-update-interval 1s
+			in-memory yes;
+	};
+};
+
+{% include "_common/controls.conf.j2" %}
+
+{% include "_common/root.hint.conf" %}
+
+zone "internal" {
+	type primary;
+	file "internal.db";
+};
+
+zone "catalog" {
+	type secondary;
+	file "catalog.db";
+	primaries { 10.53.0.1; };
+};

@@ -9,56 +9,46 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-"""
-Authoritative server that simulates Kaminsky-style off-path spoofing on UDP:
-for every UDP query for trigger.example./A it sends one response with a
-deliberately flipped DNS message id.  A resolver that escalates to TCP on
-the first id mismatch will still get the correct answer over TCP, which
-this server serves normally.
-"""
-
 from collections.abc import AsyncGenerator
 
-import dns.name
 import dns.rdatatype
 
 from isctest.asyncserver import (
     AsyncDnsServer,
     DnsProtocol,
     DnsResponseSend,
+    QnameQtypeHandler,
     QueryContext,
     ResponseAction,
-    ResponseHandler,
 )
 
 
-class MismatchOnUdpHandler(ResponseHandler):
+class MismatchedIdOnUdpHandler(QnameQtypeHandler):
     """
-    Spoof UDP queries for trigger.example./A with a properly-formed
-    response whose DNS message id does not match the request.  Answer
-    the same query normally on TCP using the zone data prepared by the
-    framework.
+    Simulate Kaminsky-style off-path spoofing: answer every UDP query for
+    trigger.example./A with the correct response prepared from zone data,
+    but with a deliberately flipped DNS message id.  TCP queries do not
+    match this handler and are answered from zone data as usual, so a
+    resolver that escalates to TCP on the first id mismatch still gets
+    the correct answer.
     """
 
-    def __init__(self) -> None:
-        self._trigger = dns.name.from_text("trigger.example.")
+    qnames = ["trigger.example."]
+    qtypes = [dns.rdatatype.A]
 
     def match(self, qctx: QueryContext) -> bool:
-        return qctx.qname == self._trigger and qctx.qtype == dns.rdatatype.A
+        return qctx.protocol == DnsProtocol.UDP and super().match(qctx)
 
     async def get_responses(
         self, qctx: QueryContext
     ) -> AsyncGenerator[ResponseAction, None]:
-        if qctx.protocol == DnsProtocol.UDP:
-            qctx.response.id = qctx.query.id ^ 0xFFFF
-            yield DnsResponseSend(qctx.response)
-        else:
-            yield DnsResponseSend(qctx.response)
+        qctx.response.id = qctx.query.id ^ 0xFFFF
+        yield DnsResponseSend(qctx.response)
 
 
 def main() -> None:
     server = AsyncDnsServer()
-    server.install_response_handler(MismatchOnUdpHandler())
+    server.install_response_handler(MismatchedIdOnUdpHandler())
     server.run()
 
 

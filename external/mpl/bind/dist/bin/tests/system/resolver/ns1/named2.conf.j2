@@ -13,19 +13,12 @@
 {% set wrongoption = wrongoption | default(False) %}
 
 options {
-	query-source address 10.53.0.1;
-	notify-source 10.53.0.1;
-	transfer-source 10.53.0.1;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation no;
 	attach-cache "globalcache";
-        max-zone-ttl unlimited;
-        resolver-query-timeout 5000; # 5 seconds
-        max-recursion-queries 100;
+	max-zone-ttl unlimited;
+	resolver-query-timeout 5000; # 5 seconds
+	max-recursion-queries 100;
 };
 
 view "default" {
@@ -33,9 +26,9 @@ view "default" {
 		type hint;
 		file "root.hint";
 	};
-{% if wrongoption %}
+	{% if wrongoption %}
 	forwarders port 9999999 { 127.0.0.1; };
-{% endif %}
+	{% endif %}
 };
 
 {% include "_common/controls.conf.j2" %}

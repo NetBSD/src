@@ -27,9 +27,11 @@ ns9.no-ent			A	10.53.0.9
 $ORIGIN explicit.dspublish.ns2.
 good				NS	ns9.good
 reference			NS	ns9.reference
+tls-reference			NS	ns9.tls-reference
 resolver			NS	ns9.resolver
 ns9.good			A	10.53.0.9
 ns9.reference			A	10.53.0.9
+ns9.tls-reference		A	10.53.0.9
 ns9.resolver			A	10.53.0.9
 
 $ORIGIN yes.dspublish.ns2.

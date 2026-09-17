@@ -102,13 +102,14 @@ target_triplet = @target@
 check_PROGRAMS = acl_test$(EXEEXT) badcache_test$(EXEEXT) \
 	db_test$(EXEEXT) dbdiff_test$(EXEEXT) dbiterator_test$(EXEEXT) \
 	dbversion_test$(EXEEXT) diff_test$(EXEEXT) \
-	dispatch_test$(EXEEXT) dns64_test$(EXEEXT) dst_test$(EXEEXT) \
-	ede_test$(EXEEXT) keytable_test$(EXEEXT) name_test$(EXEEXT) \
-	nametree_test$(EXEEXT) nsec3_test$(EXEEXT) \
-	nsec3param_test$(EXEEXT) private_test$(EXEEXT) \
-	qp_test$(EXEEXT) qpmulti_test$(EXEEXT) qpdb_test$(EXEEXT) \
-	qpzone_test$(EXEEXT) rbt_test$(EXEEXT) rbtdb_test$(EXEEXT) \
-	rdata_test$(EXEEXT) rdataset_test$(EXEEXT) \
+	dispatch_test$(EXEEXT) dns64_test$(EXEEXT) \
+	dnssecsignstats_test$(EXEEXT) dst_test$(EXEEXT) \
+	ede_test$(EXEEXT) keytable_test$(EXEEXT) message_test$(EXEEXT) \
+	name_test$(EXEEXT) nametree_test$(EXEEXT) ncache_test$(EXEEXT) \
+	nsec3_test$(EXEEXT) nsec3param_test$(EXEEXT) \
+	private_test$(EXEEXT) qp_test$(EXEEXT) qpmulti_test$(EXEEXT) \
+	qpdb_test$(EXEEXT) qpzone_test$(EXEEXT) rbt_test$(EXEEXT) \
+	rbtdb_test$(EXEEXT) rdata_test$(EXEEXT) rdataset_test$(EXEEXT) \
 	rdatasetstats_test$(EXEEXT) resconf_test$(EXEEXT) \
 	resolver_test$(EXEEXT) rsa_test$(EXEEXT) sigs_test$(EXEEXT) \
 	skr_test$(EXEEXT) time_test$(EXEEXT) tsig_test$(EXEEXT) \
@@ -225,6 +226,13 @@ dns64_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
 	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_3)
+dnssecsignstats_test_SOURCES = dnssecsignstats_test.c
+dnssecsignstats_test_OBJECTS = dnssecsignstats_test.$(OBJEXT)
+dnssecsignstats_test_LDADD = $(LDADD)
+dnssecsignstats_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 dnstap_test_SOURCES = dnstap_test.c
 dnstap_test_OBJECTS = dnstap_test-dnstap_test.$(OBJEXT)
 am__DEPENDENCIES_4 = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
@@ -265,6 +273,13 @@ master_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
 	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_3)
+message_test_SOURCES = message_test.c
+message_test_OBJECTS = message_test.$(OBJEXT)
+message_test_LDADD = $(LDADD)
+message_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
 name_test_SOURCES = name_test.c
 name_test_OBJECTS = name_test.$(OBJEXT)
 name_test_LDADD = $(LDADD)
@@ -277,6 +292,13 @@ nametree_test_OBJECTS = nametree_test.$(OBJEXT)
 nametree_test_LDADD = $(LDADD)
 nametree_test_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
+	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_3)
+ncache_test_SOURCES = ncache_test.c
+ncache_test_OBJECTS = ncache_test.$(OBJEXT)
+ncache_test_LDADD = $(LDADD)
+ncache_test_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(LIBDNS_LIBS) \
 	$(top_builddir)/tests/libtest/libtest.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_3)
 nsec3_test_SOURCES = nsec3_test.c
@@ -449,11 +471,13 @@ am__depfiles_remade = ./$(DEPDIR)/acl_test.Po \
 	./$(DEPDIR)/dbdiff_test.Po ./$(DEPDIR)/dbiterator_test.Po \
 	./$(DEPDIR)/dbversion_test.Po ./$(DEPDIR)/diff_test.Po \
 	./$(DEPDIR)/dispatch_test.Po ./$(DEPDIR)/dns64_test.Po \
+	./$(DEPDIR)/dnssecsignstats_test.Po \
 	./$(DEPDIR)/dnstap_test-dnstap_test.Po \
 	./$(DEPDIR)/dst_test-dst_test.Po ./$(DEPDIR)/ede_test.Po \
 	./$(DEPDIR)/geoip_test-geoip_test.Po \
 	./$(DEPDIR)/keytable_test.Po ./$(DEPDIR)/master_test.Po \
-	./$(DEPDIR)/name_test.Po ./$(DEPDIR)/nametree_test.Po \
+	./$(DEPDIR)/message_test.Po ./$(DEPDIR)/name_test.Po \
+	./$(DEPDIR)/nametree_test.Po ./$(DEPDIR)/ncache_test.Po \
 	./$(DEPDIR)/nsec3_test.Po ./$(DEPDIR)/nsec3param_test.Po \
 	./$(DEPDIR)/private_test.Po ./$(DEPDIR)/qp_test.Po \
 	./$(DEPDIR)/qpdb_test.Po ./$(DEPDIR)/qpmulti_test.Po \
@@ -486,8 +510,9 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = acl_test.c badcache_test.c db_test.c dbdiff_test.c \
 	dbiterator_test.c dbversion_test.c diff_test.c dispatch_test.c \
-	dns64_test.c dnstap_test.c dst_test.c ede_test.c geoip_test.c \
-	keytable_test.c master_test.c name_test.c nametree_test.c \
+	dns64_test.c dnssecsignstats_test.c dnstap_test.c dst_test.c \
+	ede_test.c geoip_test.c keytable_test.c master_test.c \
+	message_test.c name_test.c nametree_test.c ncache_test.c \
 	nsec3_test.c nsec3param_test.c private_test.c qp_test.c \
 	qpdb_test.c qpmulti_test.c qpzone_test.c rbt_test.c \
 	rbtdb_test.c rdata_test.c rdataset_test.c rdatasetstats_test.c \
@@ -496,8 +521,9 @@ SOURCES = acl_test.c badcache_test.c db_test.c dbdiff_test.c \
 	zonemgr_test.c zt_test.c
 DIST_SOURCES = acl_test.c badcache_test.c db_test.c dbdiff_test.c \
 	dbiterator_test.c dbversion_test.c diff_test.c dispatch_test.c \
-	dns64_test.c dnstap_test.c dst_test.c ede_test.c geoip_test.c \
-	keytable_test.c master_test.c name_test.c nametree_test.c \
+	dns64_test.c dnssecsignstats_test.c dnstap_test.c dst_test.c \
+	ede_test.c geoip_test.c keytable_test.c master_test.c \
+	message_test.c name_test.c nametree_test.c ncache_test.c \
 	nsec3_test.c nsec3param_test.c private_test.c qp_test.c \
 	qpdb_test.c qpmulti_test.c qpzone_test.c rbt_test.c \
 	rbtdb_test.c rdata_test.c rdataset_test.c rdatasetstats_test.c \
@@ -1136,6 +1162,10 @@ dns64_test$(EXEEXT): $(dns64_test_OBJECTS) $(dns64_test_DEPENDENCIES) $(EXTRA_dn
 	@rm -f dns64_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(dns64_test_OBJECTS) $(dns64_test_LDADD) $(LIBS)
 
+dnssecsignstats_test$(EXEEXT): $(dnssecsignstats_test_OBJECTS) $(dnssecsignstats_test_DEPENDENCIES) $(EXTRA_dnssecsignstats_test_DEPENDENCIES) 
+	@rm -f dnssecsignstats_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(dnssecsignstats_test_OBJECTS) $(dnssecsignstats_test_LDADD) $(LIBS)
+
 dnstap_test$(EXEEXT): $(dnstap_test_OBJECTS) $(dnstap_test_DEPENDENCIES) $(EXTRA_dnstap_test_DEPENDENCIES) 
 	@rm -f dnstap_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(dnstap_test_OBJECTS) $(dnstap_test_LDADD) $(LIBS)
@@ -1160,6 +1190,10 @@ master_test$(EXEEXT): $(master_test_OBJECTS) $(master_test_DEPENDENCIES) $(EXTRA
 	@rm -f master_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(master_test_OBJECTS) $(master_test_LDADD) $(LIBS)
 
+message_test$(EXEEXT): $(message_test_OBJECTS) $(message_test_DEPENDENCIES) $(EXTRA_message_test_DEPENDENCIES) 
+	@rm -f message_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(message_test_OBJECTS) $(message_test_LDADD) $(LIBS)
+
 name_test$(EXEEXT): $(name_test_OBJECTS) $(name_test_DEPENDENCIES) $(EXTRA_name_test_DEPENDENCIES) 
 	@rm -f name_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(name_test_OBJECTS) $(name_test_LDADD) $(LIBS)
@@ -1167,6 +1201,10 @@ name_test$(EXEEXT): $(name_test_OBJECTS) $(name_test_DEPENDENCIES) $(EXTRA_name_
 nametree_test$(EXEEXT): $(nametree_test_OBJECTS) $(nametree_test_DEPENDENCIES) $(EXTRA_nametree_test_DEPENDENCIES) 
 	@rm -f nametree_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(nametree_test_OBJECTS) $(nametree_test_LDADD) $(LIBS)
+
+ncache_test$(EXEEXT): $(ncache_test_OBJECTS) $(ncache_test_DEPENDENCIES) $(EXTRA_ncache_test_DEPENDENCIES) 
+	@rm -f ncache_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(ncache_test_OBJECTS) $(ncache_test_LDADD) $(LIBS)
 
 nsec3_test$(EXEEXT): $(nsec3_test_OBJECTS) $(nsec3_test_DEPENDENCIES) $(EXTRA_nsec3_test_DEPENDENCIES) 
 	@rm -f nsec3_test$(EXEEXT)
@@ -1271,14 +1309,17 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/diff_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dispatch_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns64_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssecsignstats_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnstap_test-dnstap_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dst_test-dst_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ede_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/geoip_test-geoip_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/keytable_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/master_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/message_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/name_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nametree_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ncache_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nsec3_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nsec3param_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/private_test.Po@am__quote@ # am--include-marker
@@ -1692,6 +1733,13 @@ dns64_test.log: dns64_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+dnssecsignstats_test.log: dnssecsignstats_test$(EXEEXT)
+	@p='dnssecsignstats_test$(EXEEXT)'; \
+	b='dnssecsignstats_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 dst_test.log: dst_test$(EXEEXT)
 	@p='dst_test$(EXEEXT)'; \
 	b='dst_test'; \
@@ -1713,6 +1761,13 @@ keytable_test.log: keytable_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+message_test.log: message_test$(EXEEXT)
+	@p='message_test$(EXEEXT)'; \
+	b='message_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 name_test.log: name_test$(EXEEXT)
 	@p='name_test$(EXEEXT)'; \
 	b='name_test'; \
@@ -1723,6 +1778,13 @@ name_test.log: name_test$(EXEEXT)
 nametree_test.log: nametree_test$(EXEEXT)
 	@p='nametree_test$(EXEEXT)'; \
 	b='nametree_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+ncache_test.log: ncache_test$(EXEEXT)
+	@p='ncache_test$(EXEEXT)'; \
+	b='ncache_test'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -2008,14 +2070,17 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/diff_test.Po
 	-rm -f ./$(DEPDIR)/dispatch_test.Po
 	-rm -f ./$(DEPDIR)/dns64_test.Po
+	-rm -f ./$(DEPDIR)/dnssecsignstats_test.Po
 	-rm -f ./$(DEPDIR)/dnstap_test-dnstap_test.Po
 	-rm -f ./$(DEPDIR)/dst_test-dst_test.Po
 	-rm -f ./$(DEPDIR)/ede_test.Po
 	-rm -f ./$(DEPDIR)/geoip_test-geoip_test.Po
 	-rm -f ./$(DEPDIR)/keytable_test.Po
 	-rm -f ./$(DEPDIR)/master_test.Po
+	-rm -f ./$(DEPDIR)/message_test.Po
 	-rm -f ./$(DEPDIR)/name_test.Po
 	-rm -f ./$(DEPDIR)/nametree_test.Po
+	-rm -f ./$(DEPDIR)/ncache_test.Po
 	-rm -f ./$(DEPDIR)/nsec3_test.Po
 	-rm -f ./$(DEPDIR)/nsec3param_test.Po
 	-rm -f ./$(DEPDIR)/private_test.Po
@@ -2096,14 +2161,17 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/diff_test.Po
 	-rm -f ./$(DEPDIR)/dispatch_test.Po
 	-rm -f ./$(DEPDIR)/dns64_test.Po
+	-rm -f ./$(DEPDIR)/dnssecsignstats_test.Po
 	-rm -f ./$(DEPDIR)/dnstap_test-dnstap_test.Po
 	-rm -f ./$(DEPDIR)/dst_test-dst_test.Po
 	-rm -f ./$(DEPDIR)/ede_test.Po
 	-rm -f ./$(DEPDIR)/geoip_test-geoip_test.Po
 	-rm -f ./$(DEPDIR)/keytable_test.Po
 	-rm -f ./$(DEPDIR)/master_test.Po
+	-rm -f ./$(DEPDIR)/message_test.Po
 	-rm -f ./$(DEPDIR)/name_test.Po
 	-rm -f ./$(DEPDIR)/nametree_test.Po
+	-rm -f ./$(DEPDIR)/ncache_test.Po
 	-rm -f ./$(DEPDIR)/nsec3_test.Po
 	-rm -f ./$(DEPDIR)/nsec3param_test.Po
 	-rm -f ./$(DEPDIR)/private_test.Po

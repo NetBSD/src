@@ -16,16 +16,9 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.8;
-	notify-source 10.53.0.8;
-	transfer-source 10.53.0.8;
-	port @PORT@;
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	session-keyfile "session.key";
-	listen-on { 10.53.0.8; };
-	listen-on-v6 { none; };
 	recursion no;
-	notify yes;
 	try-tcp-refresh no;
 	notify-delay 0;
 	allow-new-zones yes;

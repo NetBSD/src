@@ -13,11 +13,7 @@
 
 /* deliberately not _common/controls.conf.j2: setup.sh appends a runtime-generated multi-key channel on EXTRAPORT7 */
 options {
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation no;
 };
 

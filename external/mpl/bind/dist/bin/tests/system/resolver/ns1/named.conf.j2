@@ -12,20 +12,13 @@
  */
 
 options {
-	query-source address 10.53.0.1;
-	notify-source 10.53.0.1;
-	transfer-source 10.53.0.1;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation no;
 	deny-answer-addresses { 192.0.2.0/24; 2001:db8:beef::/48; }
-		 except-from { "example.org"; };
+	except-from { "example.org"; };
 	deny-answer-aliases { "example.org"; }
-		except-from { "goodcname.example.net";
-			      "gooddname.example.net"; };
+	except-from { "goodcname.example.net";
+		"gooddname.example.net"; };
 	allow-query {!10.53.0.8; any; };
 	max-zone-ttl unlimited;
 	resolver-query-timeout 5000; # 5 seconds
@@ -39,15 +32,15 @@ server 10.53.0.3 {
 };
 
 server 10.42.23.3/32 {
-     notify-source 10.42.22.1;
-     query-source address 10.42.22.1 port 0;
-     transfer-source 10.42.22.1;
+	notify-source 10.42.22.1;
+	query-source address 10.42.22.1 port 0;
+	transfer-source 10.42.22.1;
 };
 
 server fd92:7065:b8e:ffff::1000 {
-     notify-source-v6 fd92:7065:b8e:ffff::1001;
-     query-source-v6 address fd92:7065:b8e:ffff::1001 port 0;
-     transfer-source-v6 fd92:7065:b8e:ffff::1001;
+	notify-source-v6 fd92:7065:b8e:ffff::1001;
+	query-source-v6 address fd92:7065:b8e:ffff::1001 port 0;
+	transfer-source-v6 fd92:7065:b8e:ffff::1001;
 };
 
 /*
@@ -56,9 +49,9 @@ server fd92:7065:b8e:ffff::1000 {
  */
 view "class" chaos {
 	zone "chaostest" CHAOS {
-                type primary;
-                file "chaostest.db";
-        };
+		type primary;
+		file "chaostest.db";
+	};
 };
 
 /*

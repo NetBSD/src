@@ -1,0 +1,27 @@
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	dnssec-validation no;
+	response-policy {
+		zone "nsdname.";
+	};
+
+	/*
+	 * This is the default, but this config covers a crash fix
+	 * where a parent zone and a child zone are on the same auth.
+	 * Here, 127.IN-ADDR.ARPA (parent of the "0.0.127.in-addr.arpa" below)
+	 * is implicitly created.
+	 */
+	 empty-zones-enable yes;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+zone "0.0.127.in-addr.arpa" {
+	type primary;
+	file "0.0.127.in-addr.arpa.db";
+};
+
+zone "nsdname." {
+	type primary;
+	file "nsdname.db";
+};

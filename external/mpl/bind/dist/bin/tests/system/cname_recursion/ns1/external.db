@@ -1,0 +1,18 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300
+external.		IN SOA	ns1.external. hostmaster.external. 1 600 600 1200 600
+external.		NS	ns1.external.
+ns1.external.		A	10.53.0.1
+target.external.	A	10.0.0.99
+target2.external.	A	10.0.0.98
+target3.external.	A	10.0.0.97

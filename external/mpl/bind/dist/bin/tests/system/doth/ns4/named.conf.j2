@@ -31,18 +31,12 @@ http local {
 };
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port @PORT@;
+	{% include_indented "_common/options.conf.j2" %}
 	tls-port @TLSPORT@;
 	https-port @HTTPSPORT@;
 	http-port @HTTPPORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on tls local { 10.53.0.4; };             // DoT
-	listen-on tls local http local { 10.53.0.4; };  // DoH
-	listen-on-v6 { none; };
+	listen-on tls local { @ns.ip@; };             // DoT
+	listen-on tls local http local { @ns.ip@; };  // DoH
 	recursion no;
 	notify no;
 	ixfr-from-differences yes;
@@ -52,10 +46,7 @@ options {
 };
 
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 tls tls-v1.2-pfs {
 	protocols { TLSv1.2; };

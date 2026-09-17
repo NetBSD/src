@@ -14,25 +14,14 @@
 // NS6
 
 options {
-	query-source address 10.53.0.6;
-	notify-source 10.53.0.6;
-	transfer-source 10.53.0.6;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.6; };
-	listen-on-v6 { none; };
-	recursion yes;
-	notify yes;
+	{% include_indented "_common/options.conf.j2" %}
 	disable-algorithms . { @ALTERNATIVE_ALGORITHM@; };
 	dnssec-validation yes;
 };
 
 {% include "_common/controls.conf.j2" %}
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "optout-tld" {
 	type primary;

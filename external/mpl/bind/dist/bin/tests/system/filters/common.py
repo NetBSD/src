@@ -22,6 +22,7 @@ ARTIFACTS = [
     "ns*/K*",
     "ns*/dsset-*",
     "ns*/signer.err",
+    "ans*/ans.run",
 ]
 
 

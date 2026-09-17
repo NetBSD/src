@@ -32,6 +32,16 @@ def test_rndc_confgen_default():
     assert b'key "rndc-key" {' in cmd.proc.stdout
 
 
+def test_rndc_confgen_keyonly():
+    cmd = isctest.run.cmd([os.environ["RNDCCONFGEN"], "-a", "-c", "rndc.key"])
+    assert b'wrote key file "rndc.key"' in cmd.proc.stdout
+
+
+def test_rndc_confgen_keyonlyquiet():
+    cmd = isctest.run.cmd([os.environ["RNDCCONFGEN"], "-a", "-c", "rndc.key", "-q"])
+    assert b'wrote key file "rndc.key"' not in cmd.proc.stdout
+
+
 def test_rndc_confgen_keyname_with_dots():
     cmd = isctest.run.cmd([os.environ["RNDCCONFGEN"], "-k", "key.example.com"])
     assert b'key "key.example.com" {' in cmd.proc.stdout

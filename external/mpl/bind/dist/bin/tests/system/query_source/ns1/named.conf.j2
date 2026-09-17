@@ -14,14 +14,12 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on-v6 { fd92:7065:b8e:ffff::1; };
-	listen-on { 10.53.0.1; };
+	{% include_indented "_common/options/server.conf.j2" %}
+	{% include_indented "_common/options/listen-dual.conf.j2" %}
 	recursion no;
 	dnssec-validation no;
-	query-source 10.53.0.1;
-	query-source-v6 fd92:7065:b8e:ffff::1;
+	query-source @ns.ip@;
+	query-source-v6 @ns.ip6@;
 };
 
 zone "." {

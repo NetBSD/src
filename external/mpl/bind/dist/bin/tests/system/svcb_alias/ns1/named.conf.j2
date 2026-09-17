@@ -1,0 +1,14 @@
+{% include "_common/controls.conf.j2" %}
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	recursion yes;
+	dnssec-validation no;
+	allow-query { any; };
+	allow-recursion { any; };
+	// minimal-responses defaults to no-auth-recursive, the affected setting
+};
+
+zone "." {
+	type hint;
+	file "root.hint";
+};

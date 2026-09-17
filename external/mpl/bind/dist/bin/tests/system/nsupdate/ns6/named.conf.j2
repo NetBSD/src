@@ -12,19 +12,9 @@
  */
 
 options {
-	query-source address 10.53.0.6;
-	notify-source 10.53.0.6;
-	transfer-source 10.53.0.6;
-	query-source-v6 address fd92:7065:b8e:ffff::6;
-	notify-source-v6 fd92:7065:b8e:ffff::6;
-	transfer-source-v6 fd92:7065:b8e:ffff::6;
-	port @PORT@;
-	pid-file "named.pid";
+	{% include_indented "_common/options-dual.conf.j2" %}
 	session-keyfile "session.key";
-	listen-on { 10.53.0.6; };
-	listen-on-v6 { fd92:7065:b8e:ffff::6; };
 	recursion no;
-	notify yes;
 	minimal-responses no;
 	dnssec-validation no;
 };

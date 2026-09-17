@@ -163,6 +163,7 @@ def bootstrap():
         "ksk+zsk.optout",
         "zsk-only.nsec3",
         "zsk-only.nsec",
+        "no-nsec3-at-insecure-delegation",
     ],
 )
 def test_verify_good_zone_files(zone):
@@ -257,6 +258,11 @@ def test_verify_bad_zone_files_no_dnssec_keys():
 def test_verify_bad_zone_files_unequal_nsec3_chains():
     cmd = verify_bad_zone("ksk+zsk.nsec3.extra-nsec3")
     assert "Expected and found NSEC3 chains not equal" in cmd.err
+
+
+def test_verify_bad_zone_files_missing_nsec3_at_insecure_delegation():
+    cmd = verify_bad_zone("missing-nsec3-at-insecure-delegation")
+    assert "Missing NSEC3 record for" in cmd.err
 
 
 # checking error message when -o is not used

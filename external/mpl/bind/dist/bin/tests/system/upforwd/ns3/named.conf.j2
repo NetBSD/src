@@ -12,19 +12,12 @@
  */
 
 options {
-	query-source address 10.53.0.3;
-	notify-source 10.53.0.3;
-	transfer-source 10.53.0.3;
-	port @PORT@;
+	{% include_indented "_common/options.conf.j2" %}
 	tls-port @TLSPORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; };
-	listen-on tls ephemeral { 10.53.0.3; };
-	listen-on-v6 { none; };
+	listen-on tls ephemeral { @ns.ip@; };
 	allow-transfer { any; };
 	recursion no;
 	dnssec-validation no;
-	notify yes;
 	include "dnstap.conf";
 };
 

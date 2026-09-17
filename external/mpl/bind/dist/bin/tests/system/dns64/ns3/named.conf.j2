@@ -17,18 +17,11 @@
 acl rfc1918 { 10/8; 192.168/16; 172.16/12; };
 
 options {
-	query-source address 10.53.0.3;
-	query-source-v6 address fd92:7065:b8e:ffff::3;
-	notify-source 10.53.0.3;
-	notify-source-v6 fd92:7065:b8e:ffff::3;
-	transfer-source 10.53.0.3;
-	transfer-source-v6 fd92:7065:b8e:ffff::3;
+	{% include_indented "_common/options/sources-dual.conf.j2" %}
+	{% include_indented "_common/options/listen-dual.conf.j2" %}
 	port @EXTRAPORT1@;
 	pid-file "named.pid";
-	listen-on port @PORT@ { 10.53.0.3; };	// for start.pl
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { fd92:7065:b8e:ffff::3; };
-	notify yes;
+	listen-on port @PORT@ { @ns.ip@; };	// for start.pl
 	dnssec-validation no;
 	allow-recursion { any; };
 	resolver-use-dns64 yes;

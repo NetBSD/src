@@ -12,13 +12,7 @@
  */
 
 options {
-	query-source address 10.53.0.1;
-	notify-source 10.53.0.1;
-	transfer-source 10.53.0.1;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-transfer { any; };
 	recursion no;
 	dnssec-validation no;
@@ -93,17 +87,17 @@ dnssec-policy "fast" {
 		ksk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
 		zsk lifetime 8792 algorithm @DEFAULT_ALGORITHM@;
 	};
-        dnskey-ttl 439;
-        max-zone-ttl 4396;
-        zone-propagation-delay 439;
-        signatures-validity 6;
-        signatures-validity-dnskey 6;
-        signatures-refresh 2;
-        signatures-jitter 0;
-        publish-safety 1;
-        retire-safety 1;
-        parent-ds-ttl 5;
-        parent-propagation-delay 5;
+	dnskey-ttl 439;
+	max-zone-ttl 4396;
+	zone-propagation-delay 439;
+	signatures-validity 6;
+	signatures-validity-dnskey 6;
+	signatures-refresh 2;
+	signatures-jitter 0;
+	publish-safety 1;
+	retire-safety 1;
+	parent-ds-ttl 5;
+	parent-propagation-delay 5;
 };
 
 dnssec-policy "invalid-skr" {

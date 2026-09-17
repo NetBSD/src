@@ -14,37 +14,32 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.2;
-	notify-source 10.53.0.2;
-	transfer-source 10.53.0.2;
-	port @PORT@;
-	listen-on { 10.53.0.2; };
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	notify no;
 	dnssec-validation no;
 	allow-query { any; };
 };
 
 zone "allowed" {
-    type primary;
+	type primary;
 	file "allowed.db";
 	allow-transfer { none; };
 };
 
 zone "baddomain" {
-    type primary;
-    file "baddomain.db";
-    allow-transfer { none; };
+	type primary;
+	file "baddomain.db";
+	allow-transfer { none; };
 };
 
 zone "gooddomain" {
-    type primary;
-    file "gooddomain.db";
-    allow-transfer { none; };
+	type primary;
+	file "gooddomain.db";
+	allow-transfer { none; };
 };
 
 zone "rpz-external.local" {
-    type primary;
-    file "rpz-external.local.db";
-    allow-transfer { any; };
+	type primary;
+	file "rpz-external.local.db";
+	allow-transfer { any; };
 };

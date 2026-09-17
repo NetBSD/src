@@ -12,10 +12,7 @@
  */
 
 options {
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.2; };
-	listen-on-v6 { fd92:7065:b8e:ffff::2; };
+	{% include_indented "_common/options-dual.conf.j2" %}
 	dnssec-validation no;
 };
 
@@ -28,5 +25,5 @@ zone "ipv4-only-servers" {
 
 zone "ipv6-only-servers" {
 	type secondary;
-	primaries { fd92:7065:b8e:ffff::2; };
+	primaries { @ns.ip6@; };
 };

@@ -658,6 +658,10 @@ class QnameQtypeHandler(QnameHandler):
         return qctx.qtype in self._qtypes and super().match(qctx)
 
 
+class _UnsetEdnsType:
+    pass
+
+
 class StaticResponseHandler(ResponseHandler):
     """
     Base class used for deriving custom static response handlers.
@@ -712,6 +716,15 @@ class StaticResponseHandler(ResponseHandler):
         """
         return 0.0
 
+    @property
+    def edns(self) -> int | bool | None | _UnsetEdnsType:
+        """
+        Value passed to the response's ``use_edns()``.  Left unset by default,
+        so EDNS is untouched; set it to anything ``use_edns()`` accepts (e.g.
+        ``None`` to strip EDNS and mimic a non-EDNS server).
+        """
+        return _UnsetEdnsType()
+
     async def get_responses(
         self, qctx: QueryContext
     ) -> AsyncGenerator[DnsResponseSend, None]:
@@ -721,6 +734,8 @@ class StaticResponseHandler(ResponseHandler):
         qctx.response.additional.extend(self.additional)
         if self.rcode is not None:
             qctx.response.set_rcode(self.rcode)
+        if not isinstance(self.edns, _UnsetEdnsType):
+            qctx.response.use_edns(self.edns)
         yield DnsResponseSend(
             qctx.response, authoritative=self.authoritative, delay=self.delay
         )

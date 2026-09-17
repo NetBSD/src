@@ -1,0 +1,8 @@
+$TTL 300
+dnamezone.example.	IN SOA	ns.dnamezone.example. hostmaster.dnamezone.example. 1 3600 900 2419200 300
+dnamezone.example.	NS	ns.dnamezone.example.
+ns.dnamezone.example.	A	10.53.0.2
+www.dnamezone.example.	A	10.0.0.1
+; Out-of-zone data above the apex, as persisted by a secondary that
+; accepted it from its primary in a zone transfer.
+example.		DNAME	attacker.

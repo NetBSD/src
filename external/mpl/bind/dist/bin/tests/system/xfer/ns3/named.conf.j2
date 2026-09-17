@@ -12,17 +12,9 @@
  */
 
 options {
-	query-source address 10.53.0.3;
-	notify-source 10.53.0.3;
-	transfer-source 10.53.0.3;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-transfer { any; };
-	recursion yes;
 	dnssec-validation no;
-	notify yes;
 };
 
 {% include "_common/controls.conf.j2" %}
@@ -32,10 +24,7 @@ key tsigzone. {
 	secret "1234abcd8765";
 };
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "example" {
 	type secondary;
@@ -45,7 +34,7 @@ zone "example" {
 
 zone "primary" {
 	type secondary;
-	transfer-source 10.53.0.3 port @EXTRAPORT1@;
+	transfer-source @ns.ip@ port @EXTRAPORT1@;
 	primaries { 10.53.0.6; };
 	file "primary.bk";
 };

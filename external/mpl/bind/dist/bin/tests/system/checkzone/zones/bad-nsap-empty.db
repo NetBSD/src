@@ -14,5 +14,5 @@ $TTL 600
 		NS	ns
 ns		A	192.0.2.1
 
-; NSAP with an odd number of hex digits
-example NSAP 0x47000580005a0000000001e133ffffff000161000
+; empty NSAP address
+example NSAP 0x

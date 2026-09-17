@@ -13,5 +13,5 @@ $TTL 600
 @		SOA	ns hostmaster 2011012708 3600 1200 604800 1200
 		NS	ns
 ns		A	192.0.2.1
-bad		BAD	65535 .
+bad		AFSDB	65535 .
 bad		CNAME	@

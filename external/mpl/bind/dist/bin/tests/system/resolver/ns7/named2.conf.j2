@@ -14,14 +14,7 @@
 // NS7
 
 options {
-	query-source address 10.53.0.7;
-	notify-source 10.53.0.7;
-	transfer-source 10.53.0.7;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.7; };
-	listen-on-v6 { fd92:7065:b8e:ffff::7; };
-	recursion yes;
+	{% include_indented "_common/options-dual.conf.j2" %}
 	dnssec-validation no;
 	empty-zones-enable yes;
 	disable-empty-zone 20.172.in-addr.arpa;

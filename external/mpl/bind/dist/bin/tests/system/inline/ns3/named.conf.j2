@@ -16,16 +16,9 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.3;
-	notify-source 10.53.0.3;
-	transfer-source 10.53.0.3;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	recursion no;
 	allow-transfer { any; };
-	notify yes;
 	try-tcp-refresh no;
 	notify-delay 0;
 	allow-new-zones yes;
@@ -67,12 +60,12 @@ zone "bits" {
 };
 
 zone "incremental-updates" {
-    type primary;
-    file "incremental-updates.db";
-    inline-signing yes;
-    dnssec-policy inline;
-    sig-signing-signatures 1;	// force incremental processing
-    allow-update { any; };
+	type primary;
+	file "incremental-updates.db";
+	inline-signing yes;
+	dnssec-policy inline;
+	sig-signing-signatures 1;	// force incremental processing
+	allow-update { any; };
 };
 
 server 10.53.0.4 { request-ixfr no; };
@@ -93,7 +86,7 @@ zone "primary" {
 	file "primary.db";
 	notify explicit;
 	also-notify {
-		10.53.0.3;
+		@ns.ip@;
 	};
 };
 

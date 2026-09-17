@@ -616,8 +616,8 @@ def test_malformed_private_dns_identifier_overrun(ns6):
         )
 
 
-# See #5767
-def test_ixfr_race(ns6):
+# See #5767 and #6114
+def test_ixfr_race(named_port, ns6):
     isctest.log.info(
         "Check that ixfr-race has been successfully transferred by the secondary"
     )
@@ -631,9 +631,13 @@ def test_ixfr_race(ns6):
                 "zone ixfr-race/IN: zone transfer finished: success"
             )
 
-    isctest.log.info("Try to reload the zone from the primary")
+    isctest.log.info("Trigger IXFR fallback while a second diff is queued")
     with ns6.watch_log_from_here() as watcher_transfer_completed:
         ns6.rndc("reload ixfr-race")
+        watcher_transfer_completed.wait_for_line(
+            f"transfer of 'ixfr-race/IN' from 10.53.0.11#{named_port}: "
+            "got SERVFAIL, retrying with AXFR"
+        )
         watcher_transfer_completed.wait_for_line(
             "zone ixfr-race/IN: zone transfer finished: success"
         )

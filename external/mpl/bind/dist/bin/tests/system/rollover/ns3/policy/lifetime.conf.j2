@@ -1,0 +1,29 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+dnssec-policy "unlimited-lifetime" {
+	keys {
+		csk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+dnssec-policy "short-lifetime" {
+	keys {
+		csk lifetime P6M algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "long-lifetime" {
+	keys {
+		csk lifetime P1Y algorithm @DEFAULT_ALGORITHM@;
+	};
+};

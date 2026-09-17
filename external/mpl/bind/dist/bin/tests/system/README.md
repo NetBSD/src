@@ -272,15 +272,8 @@ Inside a template, all the runner's environment variables are available with
 
 ```jinja
 options {
-    port @PORT@;
-    listen-on { 10.53.0.1; };
-};
-key rndc_key {
-    secret "1234abcd8765";
-    algorithm @DEFAULT_HMAC@;
-};
-controls {
-    inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+	{% include_indented "_common/options.conf.j2" %}
+	tls-port @TLSPORT@;
 };
 ```
 

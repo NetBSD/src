@@ -14,17 +14,11 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.1;
-	notify-source 10.53.0.1;
-	transfer-source 10.53.0.1;
-	port @PORT@;
+	{% include_indented "_common/options.conf.j2" %}
 	tls-port @TLSPORT@;
 	allow-new-zones yes;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on port @EXTRAPORT1@ { 10.53.0.1; };
-	listen-on tls ephemeral { 10.53.0.1; };
-	listen-on-v6 { none; };
+	listen-on port @EXTRAPORT1@ { @ns.ip@; };
+	listen-on tls ephemeral { @ns.ip@; };
 	notify no;
 	notify-delay 0;
 	recursion no;
@@ -180,6 +174,6 @@ key next_key. {
 };
 
 key longlonglongname0123456789abcdef. {
-    secret "LaAnCU+Z";
-    algorithm @DEFAULT_HMAC@;
+	secret "LaAnCU+Z";
+	algorithm @DEFAULT_HMAC@;
 };

@@ -13,18 +13,12 @@
 {% set maxdelegationservers = maxdelegationservers | default(None) %}
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation no;
 	dnstap { resolver query; };
 	dnstap-output file "dnstap.out";
 	{% if maxdelegationservers %}
-        @maxdelegationservers@
+	@maxdelegationservers@
 	{% endif %}
 };
 
@@ -44,9 +38,6 @@ server 10.53.1.1 { tcp-only true; };
 server 10.53.1.2 { tcp-only true; };
 server 10.53.2.1 { tcp-only true; };
 
-zone "." {
-	type hint;
-	file "root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 {% include "_common/controls.conf.j2" %}

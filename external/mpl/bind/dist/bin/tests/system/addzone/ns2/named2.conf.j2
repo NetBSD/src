@@ -14,25 +14,22 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.2; 10.53.0.4; };
+	{% include_indented "_common/options/sources.conf.j2" %}
+	{% include_indented "_common/options/server.conf.j2" %}
+	listen-on { @ns.ip@; 10.53.0.4; };
 	listen-on-v6 { none; };
 	recursion no;
 	dnssec-validation no;
 };
 
 view internal {
-	match-clients { 10.53.0.2; };
+	match-clients { @ns.ip@; };
 	allow-new-zones no;
 	recursion yes;
 
 	response-policy { zone "policy"; };
 
-	zone "." {
-		type hint;
-		file "../../_common/root.hint";
-	};
+	{% include_indented "_common/root.hint.conf" %}
 
 	zone "policy" {
 		type primary;
@@ -44,10 +41,7 @@ view external {
 	match-clients { any; };
 	allow-new-zones yes;
 
-	zone "." {
-		type hint;
-		file "../../_common/root.hint";
-	};
+	{% include_indented "_common/root.hint.conf" %}
 };
 
 # This view is only here to test that configuration context is cleaned

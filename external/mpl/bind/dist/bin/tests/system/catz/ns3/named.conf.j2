@@ -14,15 +14,9 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.3;
-	notify-source 10.53.0.3;
-	transfer-source 10.53.0.3;
-	port @PORT@;
+	{% include_indented "_common/options-dual.conf.j2" %}
 	allow-new-zones yes;
-	pid-file "named.pid";
 	provide-ixfr no;
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { fd92:7065:b8e:ffff::3; };
 	allow-transfer { any; };
 	notify no;
 	notify-delay 0;

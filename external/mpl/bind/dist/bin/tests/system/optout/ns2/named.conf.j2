@@ -15,14 +15,11 @@
 {% set policy = "optout" if not reconfiged else "nsec" %}
 
 options {
-        port @PORT@;
-        pid-file "named.pid";
-        listen-on { 10.53.0.2; };
-        listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-transfer { any; };
-        recursion no;
-        dnssec-validation no;
-        ixfr-from-differences yes;
+	recursion no;
+	dnssec-validation no;
+	ixfr-from-differences yes;
 	sig-signing-nodes 900;
 	sig-signing-signatures 900;
 };

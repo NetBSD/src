@@ -16,15 +16,7 @@ include "named-tls.conf";
 {% endif %}
 
 options {
-	query-source address 10.53.0.3;
-	notify-source 10.53.0.3;
-	transfer-source 10.53.0.3;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { fd92:7065:b8e:ffff::3; };
-	recursion yes;
-	notify yes;
+	{% include_indented "_common/options-dual.conf.j2" %}
 	dnssec-validation no;
 
 {% if FEATURE_FIPS_DH == "1" %}
@@ -35,10 +27,7 @@ options {
 
 {% include "_common/controls.conf.j2" %}
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "example" {
 	type secondary;
@@ -51,5 +40,5 @@ zone "example" {
 zone "notify-source-port-test" {
 	type primary;
 	file "notify-source-port-test.db";
-	notify-source 10.53.0.3 port @EXTRAPORT2@;
+	notify-source @ns.ip@ port @EXTRAPORT2@;
 };

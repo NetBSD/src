@@ -14,18 +14,9 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	port @PORT@;
-	pid-file "named.pid";
+	{% include_indented "_common/options-dual.conf.j2" %}
 
-	listen-on { 10.53.0.1; };
-	query-source address 10.53.0.1;
-	notify-source 10.53.0.1;
-	transfer-source 10.53.0.1;
 
-	listen-on-v6 { fd92:7065:b8e:ffff::1; };
-	query-source-v6 address fd92:7065:b8e:ffff::1;
-	notify-source-v6 fd92:7065:b8e:ffff::1;
-	transfer-source-v6 fd92:7065:b8e:ffff::1;
 
 	recursion no;
 	servfail-ttl 0;

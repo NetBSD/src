@@ -53,6 +53,9 @@ cp ns3/slow-rpz.db.in ns3/slow-rpz.db
 cp ns5/fast-expire.db.in ns5/fast-expire.db
 cp ns5/expire.conf.in ns5/expire.conf
 
+# a policy zone holding a record from outside the zone
+cp ns3/outofzone.db.in ns3/outofzone.db
+
 # $1=directory
 # $2=domain name
 # $3=input zone file

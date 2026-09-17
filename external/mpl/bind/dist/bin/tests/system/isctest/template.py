@@ -19,6 +19,9 @@ from typing import TYPE_CHECKING, Any
 import re
 
 import jinja2
+import jinja2.ext
+import jinja2.nodes
+import jinja2.parser
 
 from .log import debug
 from .vars import ALL
@@ -27,6 +30,59 @@ if TYPE_CHECKING:
     from .zone import Zone as _SetupZone
 
 NS_DIR_RE = Re(r"^(a?ns([0-9]+))/")
+
+
+class IncludeIndented(jinja2.ext.Extension):
+    """
+    `{% include_indented "template" %}` — like `{% include %}`, but keeps the
+    inserted block aligned with the tag's own indentation, which a plain
+    include cannot do. The tag's leading whitespace is detected at parse time
+    and the tag expands to the equivalent of
+
+        {% filter indent(leading_whitespace) %}{% include ... %}{% endfilter %}
+
+    so the runtime semantics are exactly those of the builtin include and
+    indent. Only whitespace may precede the tag on its line: that leading
+    whitespace indents the first included line (which is why lstrip_blocks
+    must stay disabled), the indent filter indents the rest.
+    """
+
+    tags = {"include_indented"}
+
+    def parse(self, parser: jinja2.parser.Parser) -> jinja2.nodes.Node:
+        lineno = parser.stream.expect("name:include_indented").lineno
+        template = parser.parse_expression()
+        indent = self._tag_indentation(parser, lineno)
+        include = jinja2.nodes.Include(template, True, False, lineno=lineno)
+        indent_filter = jinja2.nodes.Filter(
+            None,  # filled in with the block contents by the compiler
+            "indent",
+            [jinja2.nodes.Const(indent)],
+            [jinja2.nodes.Keyword("first", jinja2.nodes.Const(False))],
+            None,
+            None,
+            lineno=lineno,
+        )
+        return jinja2.nodes.FilterBlock([include], indent_filter, lineno=lineno)
+
+    def _tag_indentation(self, parser: jinja2.parser.Parser, lineno: int) -> str:
+        if parser.name is None or self.environment.loader is None:
+            parser.fail(
+                "include_indented requires a loader-backed template "
+                "to detect its indentation",
+                lineno,
+            )
+        source, _, _ = self.environment.loader.get_source(self.environment, parser.name)
+        line = source.splitlines()[lineno - 1]
+        match = re.match(
+            rf"([ \t]*){re.escape(self.environment.block_start_string)}", line
+        )
+        if match is None:
+            parser.fail(
+                "include_indented must be preceded by indentation only",
+                lineno,
+            )
+        return match.group(1)
 
 
 class TemplateEngine:
@@ -60,6 +116,7 @@ class TemplateEngine:
             variable_end_string="@",
             trim_blocks=True,
             keep_trailing_newline=True,
+            extensions=[IncludeIndented],
         )
         # allow instantiating the template dataclasses in jinja2 templates when
         # using {% set %}

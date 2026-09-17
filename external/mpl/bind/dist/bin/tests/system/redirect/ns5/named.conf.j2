@@ -14,9 +14,7 @@
 // NS5
 
 options {
-	port @PORT@;
-	listen-on port @PORT@ { 10.53.0.5; };
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	nxdomain-redirect signed;
 	dnssec-validation no;
 };
@@ -24,12 +22,12 @@ options {
 {% include "_common/controls.conf.j2" %}
 
 zone "." {
-        type primary;
-        file "root.db.signed";
+	type primary;
+	file "root.db.signed";
 };
 
 // An unsigned zone that ns6 has a delegation for.
 zone "unsigned." {
-        type primary;
-        file "unsigned.db";
+	type primary;
+	file "unsigned.db";
 };

@@ -16,10 +16,14 @@
  */
 
 options {
+	# This instance queries the root servers on the live internet.
+	# The options-level port and the *-source addresses must stay at
+	# their defaults so that outgoing traffic uses port 53 and a
+	# routable source address.
+	port 53;
 	pid-file "named.pid";
-	listen-on port @PORT@ { 10.53.0.1; };
-	recursion yes;
+	listen-on port @PORT@ { @ns.ip@; };
+	listen-on-v6 { none; };
 };
 
 {% include "_common/controls.conf.j2" %}
-

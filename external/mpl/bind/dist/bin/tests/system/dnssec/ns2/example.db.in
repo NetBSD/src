@@ -185,3 +185,21 @@ extrabadkey		NS	ns3.extrabadkey
 ns3.extrabadkey		A	10.53.0.3
 
 dname-at-apex-nsec3	NS	ns3
+
+; A secure subdomain whose DS RRset is flooded with many mismatched DS
+; records, each with a unique key tag (GL #5349).  The DS records are
+; hand-built in sign.sh (dsset-keytrap.example.); none match the child's
+; real DNSKEY, so validation must fail.
+keytrap			NS	ns3.keytrap
+ns3.keytrap		A	10.53.0.3
+
+; A companion to keytrap whose child has several DNSKEYs, so a smaller
+; (still mismatched) DS RRset is enough to exceed the DS-by-DNSKEY
+; combination cap (GL #5349).
+keytrap2		NS	ns3.keytrap2
+ns3.keytrap2		A	10.53.0.3
+
+; A valid delegation with many additional unsupported DS algorithm and digest
+; records.  Only the generated supported DS requires DNSKEY matching.
+keytrap3		NS	ns3.keytrap3
+ns3.keytrap3		A	10.53.0.3
