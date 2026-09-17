@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.78 2026/09/08 07:53:04 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.79 2026/09/17 16:28:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -684,7 +684,52 @@ _C_LABEL(x):
 #define	SYNC_PRODUCER	SYNC_REL
 #define	SYNC_CONSUMER	SYNC_ACQ
 
-/* CPU dependent hook for cp0 load delays */
+/*
+ * CPU dependent hook for CP0 load delays -- must be issued between
+ * mfc0/dmfc0 and the use of the result register.
+ *
+ * Required for, e.g., R3000-class CPUs which don't make the result
+ * available until a cycle late.  For example:
+ *
+ *	> If one instruction delivers a result used by a subsequent
+ *	> instruction, and either instruction is listed in Table 13.1,
+ *	> “Instructions with scheduling implications”, the sum of the
+ *	> late-result count of the first instruction and the
+ *	> early-operand count of the second gives the number of nop or
+ *	> other intervening (non-dependent) instructions required to
+ *	> prevent a hazard or interlock.
+ *	> [...]
+ *	> Instruction		Early Operand	Late Result	Hazard?
+ *	> [...]
+ *	> Integer/control			1		3
+ *	> register moves:
+ *	> mfc0, mtc0
+ *
+ *	Integrated Device Technology, Inc., IDT R30xx Family Software
+ *	Reference Manual, Revision 1.0, Ch. 13 `Instruction Timing and
+ *	Optimization', pp. 13-1--13-2.
+ *	https://student.cs.uwaterloo.ca/~cs350/common/r3000-manual.pdf#page=188
+ *
+ *	> It should be noted that this sequence for fetching the
+ *	> co-processor zero registers is required because there is a
+ *	> one clock delay in the register value actually being loaded
+ *	> into the general registers after the execution of the mfc0
+ *	> instruction.
+ *
+ *	Integrated Device Technology, Inc., IDT79R3041, Integrated
+ *	RISController for Low-Cost Systems, Hardware User's Manual,
+ *	Revision 1.12, July 1, 1995, Ch. 6 `Exception Handling',
+ *	Sec. `Preserving Context', p. 6-15.
+ *	https://stuff.mit.edu/afs/sipb/contrib/doc/specs/ic/cpu/mips/r3041.pdf#page=79
+ *
+ * In GNU binutils/gas without .set noreorder, a nop is issued
+ * automatically for any mfcN/dmfcN instruction or similar
+ * (INSN_LOAD_COPROC, or LC for short in opcodes/mips-opc.c).
+ *
+ * We issue the super-scalar SSNOP (sll $0,$0,1) rather than NOP
+ * because `some mips3 are superscalar and need this to do the right
+ * thing' [citation needed].
+ */
 #if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
 #define	MFC0_HAZARD	sll $0,$0,1	/* super scalar nop */
 #else
