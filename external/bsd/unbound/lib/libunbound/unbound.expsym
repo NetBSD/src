@@ -90,6 +90,7 @@ auth_xfer_transfer_http_callback
 auth_xfer_transfer_lookup_callback
 auth_xfer_transfer_tcp_callback
 auth_xfer_transfer_timer_callback
+auth_zone_clear_data
 auth_zone_cmp
 auth_zone_create
 auth_zone_find
@@ -172,6 +173,7 @@ cfg_tls_protocols_allowed
 cfg_tls_protocols_is_valid
 cfg_uid
 check_auth_name_for_ssl
+chunkline_count_parens
 codeline_cmp
 comm_base_create
 comm_base_create_event
@@ -278,6 +280,7 @@ create_local_accept_sock
 create_tcp_accept_sock
 create_udp_sock
 ctx_logfile_overridden
+deleg_port_number
 delegpt_add_addr
 delegpt_add_addr_mlc
 delegpt_add_neg_msg
@@ -371,6 +374,8 @@ donotq_create
 donotq_delete
 donotq_get_mem
 donotq_lookup
+doq_stream_add_meshstate
+doq_stream_remove_mesh_state
 drop_cookie_secret
 ds_digest_algo_is_supported
 ds_digest_match_dnskey
@@ -733,7 +738,9 @@ make_new_reply_info
 memdup
 mesh_add_sub
 mesh_area_find
+mesh_area_find_unique
 mesh_attach_sub
+mesh_copy_client_info
 mesh_create
 mesh_delete
 mesh_delete_all
@@ -821,6 +828,7 @@ nsec3_prove_nxornodata
 nsec3_prove_wildcard
 nsec_closest_encloser
 nsec_has_type
+nsec_nextowner_subdomain
 nsec_proves_nodata
 nsecbitmap_has_type_rdata
 options_remote_is_address
@@ -927,6 +935,7 @@ remote_control_callback
 remote_get_opt_ssl
 replay_var_compare
 reply_all_rrsets_secure
+reply_an_ns_rrsets_secure
 reply_check_cname_chain
 reply_equal
 reply_find_answer_rrset
@@ -1025,6 +1034,7 @@ rrset_markdel
 rrset_trust_to_string
 rrset_update_sec_status
 rrsetdata_equal
+rrsig_get_signer
 rrstr_get_rr_content
 rtt_init
 rtt_lost
@@ -1051,6 +1061,11 @@ set_auth_name_on_ssl
 set_ip_dscp
 setup_domain_limits
 setup_wait_limits
+shared_ports_create
+shared_ports_delete
+shared_ports_fetch_random
+shared_ports_find_if
+shared_ports_return_port
 siphash
 skip_pkt_rrs
 slabhash_adjust_size
@@ -1292,6 +1307,8 @@ tcl_list_get_mem
 tcl_list_swap_tree
 tcl_new_connection
 tcp_connect_errno_needs_log
+tcp_more_read_again_cb
+tcp_read_again_cb
 tcp_req_info_add_meshstate
 tcp_req_info_clear
 tcp_req_info_create
@@ -1490,6 +1507,7 @@ val_nsec_proves_name_error
 val_nsec_proves_no_wc
 val_nsec_proves_positive_wildcard
 val_operate
+val_reply_remove_answers
 val_reply_remove_auth
 val_rrset_wildcard
 val_state_to_string
