@@ -1,4 +1,4 @@
-/*	$NetBSD: mdig.c,v 1.1.1.15 2026/04/07 23:58:18 christos Exp $	*/
+/*	$NetBSD: mdig.c,v 1.1.1.16 2026/09/17 17:45:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1808,6 +1808,23 @@ clone_default_query(void) {
 		memmove(query->ecs_addr, default_query.ecs_addr, len);
 	}
 
+	if (default_query.ednsopts != NULL) {
+		newopts(query);
+		for (size_t i = 0; i < default_query.ednsoptscnt; i++) {
+			query->ednsopts[i].code =
+				default_query.ednsopts[i].code;
+			if (default_query.ednsopts[i].value != NULL) {
+				query->ednsopts[i].value = isc_mem_allocate(
+					mctx, default_query.ednsopts[i].length);
+				memmove(query->ednsopts[i].value,
+					default_query.ednsopts[i].value,
+					default_query.ednsopts[i].length);
+				query->ednsopts[i].length =
+					default_query.ednsopts[i].length;
+			}
+		}
+	}
+
 	if (query->timeout == 0) {
 		query->timeout = tcp_mode ? TCPTIMEOUT : UDPTIMEOUT;
 	}
@@ -1875,6 +1892,26 @@ preparse_args(int argc, char **argv) {
 		if (rc == 0) {
 			break;
 		}
+	}
+}
+
+static void
+free_query(struct query *query) {
+	if (query->ecs_addr != NULL) {
+		isc_mem_free(mctx, query->ecs_addr);
+	}
+
+	if (query->ednsopts != NULL) {
+		for (size_t i = 0; i < EDNSOPTS; i++) {
+			if (query->ednsopts[i].value != NULL) {
+				isc_mem_free(mctx, query->ednsopts[i].value);
+			}
+		}
+		isc_mem_free(mctx, query->ednsopts);
+	}
+
+	if (query != &default_query) {
+		isc_mem_free(mctx, query);
 	}
 }
 
@@ -2026,12 +2063,7 @@ parse_args(bool is_batchfile, int argc, char **argv) {
 			fclose(batchfp);
 		}
 	}
-	if (query != &default_query) {
-		if (query->ecs_addr != NULL) {
-			isc_mem_free(mctx, query->ecs_addr);
-		}
-		isc_mem_free(mctx, query);
-	}
+	free_query(query);
 }
 
 /*
@@ -2102,11 +2134,10 @@ setup(void *arg ISC_ATTR_UNUSED) {
 /*% Main processing routine for mdig */
 int
 main(int argc, char *argv[]) {
-	struct query *query = NULL;
+	struct query *query = NULL, *next;
 	isc_result_t result;
 	isc_log_t *lctx = NULL;
 	isc_logconfig_t *lcfg = NULL;
-	unsigned int i;
 	int ns;
 
 	if (isc_net_probeipv4() == ISC_R_SUCCESS) {
@@ -2188,30 +2219,11 @@ main(int argc, char *argv[]) {
 
 	isc_log_destroy(&lctx);
 
-	query = ISC_LIST_HEAD(queries);
-	while (query != NULL) {
-		struct query *next = ISC_LIST_NEXT(query, link);
-
-		if (query->ednsopts != NULL) {
-			for (i = 0; i < EDNSOPTS; i++) {
-				if (query->ednsopts[i].value != NULL) {
-					isc_mem_free(mctx,
-						     query->ednsopts[i].value);
-				}
-			}
-			isc_mem_free(mctx, query->ednsopts);
-		}
-		if (query->ecs_addr != NULL) {
-			isc_mem_free(mctx, query->ecs_addr);
-			query->ecs_addr = NULL;
-		}
-		isc_mem_free(mctx, query);
-		query = next;
+	ISC_LIST_FOREACH_SAFE(queries, query, link, next) {
+		free_query(query);
 	}
 
-	if (default_query.ecs_addr != NULL) {
-		isc_mem_free(mctx, default_query.ecs_addr);
-	}
+	free_query(&default_query);
 
 	isc_managers_destroy(&mctx, &loopmgr, &netmgr);
 	return 0;

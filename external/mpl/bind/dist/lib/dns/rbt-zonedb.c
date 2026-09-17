@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt-zonedb.c,v 1.1.1.5 2026/08/29 14:32:12 christos Exp $	*/
+/*	$NetBSD: rbt-zonedb.c,v 1.1.1.6 2026/09/17 17:45:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -120,6 +120,19 @@ zone_zonecut_callback(dns_rbtnode_t *node, dns_name_t *name,
 	}
 
 	onode = search->rbtdb->origin_node;
+
+	/*
+	 * The database may contain nodes above its origin (out-of-zone
+	 * data loaded from a secondary zone file or a journal).  They are
+	 * not part of the zone and must not act as zone cuts or wildcard
+	 * parents for the names inside it.  The origin itself is the
+	 * usual callback node, so spare it the name comparison.
+	 */
+	if (node != onode &&
+	    !dns_name_issubdomain(name, &search->rbtdb->common.origin))
+	{
+		return result;
+	}
 
 	NODE_RDLOCK(&(search->rbtdb->node_locks[node->locknum].lock),
 		    &nlocktype);
@@ -605,11 +618,12 @@ find_wildcard(rbtdb_search_t *search, dns_rbtnode_t **nodep,
 			}
 		}
 
-		if (active) {
+		if (active || node == rbtdb->origin_node) {
 			/*
-			 * The level node is active.  Any wildcarding
-			 * present at higher levels has no
-			 * effect and we're done.
+			 * The level node is active, or it is the origin
+			 * of the zone.  Any wildcarding present at higher
+			 * levels has no effect (the nodes above the origin
+			 * are not part of the zone) and we're done.
 			 */
 			result = ISC_R_NOTFOUND;
 			break;
@@ -681,6 +695,22 @@ previous_closest_nsec(dns_rdatatype_t type, rbtdb_search_t *search,
 	REQUIRE(type == dns_rdatatype_nsec3 || firstp != NULL);
 
 	if (type == dns_rdatatype_nsec3) {
+		dns_rbtnode_t *current = NULL;
+
+		/*
+		 * The NSEC3 nodes of the zone form the subtree of its
+		 * origin node in the NSEC3 tree, and in DNSSEC order the
+		 * origin node comes first: once it has been examined,
+		 * anything before it in the tree is outside the zone.
+		 */
+		result = dns_rbtnodechain_current(&search->chain, NULL, NULL,
+						  &current);
+		if (result == ISC_R_SUCCESS &&
+		    current == search->rbtdb->nsec3_origin_node)
+		{
+			return ISC_R_NOMORE;
+		}
+
 		result = dns_rbtnodechain_prev(&search->chain, NULL, NULL);
 		if (result != ISC_R_SUCCESS && result != DNS_R_NEWORIGIN) {
 			return result;
@@ -756,6 +786,17 @@ previous_closest_nsec(dns_rdatatype_t type, rbtdb_search_t *search,
 			return result;
 		}
 
+		/*
+		 * The NSEC tree may contain nodes outside the zone; a
+		 * predecessor that is not below the origin means that the
+		 * walk has left the zone.
+		 */
+		if (!dns_name_issubdomain(target,
+					  &search->rbtdb->common.origin))
+		{
+			return ISC_R_NOMORE;
+		}
+
 		*nodep = NULL;
 		result = dns_rbt_findnode(search->rbtdb->tree, target, NULL,
 					  nodep, &search->chain,
@@ -777,6 +818,39 @@ previous_closest_nsec(dns_rdatatype_t type, rbtdb_search_t *search,
 			return DNS_R_BADDB;
 		}
 	}
+}
+
+/*
+ * Point the search chain at the last node of the zone in 'tree', skipping
+ * any nodes that sort after it (out-of-zone data loaded from a secondary
+ * zone file or a journal).
+ */
+static isc_result_t
+last_in_zone(rbtdb_search_t *search, dns_rbt_t *tree) {
+	dns_fixedname_t fname, forigin, ffull;
+	dns_name_t *name = dns_fixedname_initname(&fname);
+	dns_name_t *origin = dns_fixedname_initname(&forigin);
+	dns_name_t *full = dns_fixedname_initname(&ffull);
+	isc_result_t result;
+
+	result = dns_rbtnodechain_last(&search->chain, tree, NULL, NULL);
+	while (result == ISC_R_SUCCESS || result == DNS_R_NEWORIGIN) {
+		result = dns_rbtnodechain_current(&search->chain, name, origin,
+						  NULL);
+		if (result != ISC_R_SUCCESS) {
+			break;
+		}
+		result = dns_name_concatenate(name, origin, full, NULL);
+		if (result != ISC_R_SUCCESS) {
+			break;
+		}
+		if (dns_name_issubdomain(full, &search->rbtdb->common.origin)) {
+			return ISC_R_SUCCESS;
+		}
+		result = dns_rbtnodechain_prev(&search->chain, NULL, NULL);
+	}
+
+	return result;
 }
 
 /*
@@ -959,9 +1033,12 @@ again:
 	}
 
 	if (result == ISC_R_NOMORE && wraps) {
-		result = dns_rbtnodechain_last(&search->chain, tree, NULL,
-					       NULL);
-		if (result == ISC_R_SUCCESS || result == DNS_R_NEWORIGIN) {
+		/*
+		 * Start over from the last node of the zone in the NSEC3
+		 * tree, skipping any nodes that sort after it.
+		 */
+		result = last_in_zone(search, tree);
+		if (result == ISC_R_SUCCESS) {
 			wraps = false;
 			goto again;
 		}
@@ -1027,6 +1104,17 @@ zone_find(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 	dns_rbtnodechain_init(&search.chain);
 
 	TREE_RDLOCK(&search.rbtdb->tree_lock, &tlocktype);
+
+	/*
+	 * The database may contain nodes that are not below its origin
+	 * (out-of-zone data loaded from a secondary zone file or a
+	 * journal).  A name that is not below the origin is not in the
+	 * zone, whatever stray nodes exist for it.
+	 */
+	if (!dns_name_issubdomain(name, &search.rbtdb->common.origin)) {
+		result = ISC_R_NOTFOUND;
+		goto tree_exit;
+	}
 
 	/*
 	 * Search down from the root of the tree.  If, while going down, we

@@ -12,16 +12,7 @@
  */
 
 options {
-	query-source address 10.53.0.3;
-	query-source-v6 address fd92:7065:b8e:ffff::3;
-	notify-source 10.53.0.3;
-	notify-source-v6 fd92:7065:b8e:ffff::3;
-	transfer-source 10.53.0.3;
-	transfer-source-v6 fd92:7065:b8e:ffff::3;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { fd92:7065:b8e:ffff::3; };
+	{% include_indented "_common/options-dual.conf.j2" %}
 	forwarders { fd92:7065:b8e:ffff::2; };
 	forward first;
 	dnssec-validation no;

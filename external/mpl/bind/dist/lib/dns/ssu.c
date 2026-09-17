@@ -1,4 +1,4 @@
-/*	$NetBSD: ssu.c,v 1.1.1.9 2025/01/26 16:12:33 christos Exp $	*/
+/*	$NetBSD: ssu.c,v 1.1.1.10 2026/09/17 17:45:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -527,8 +527,8 @@ dns_ssutable_checkrules(dns_ssutable_t *table, const dns_name_t *signer,
 			break;
 		case dns_ssumatchtype_external:
 			if (!dns_ssu_external_match(rule->identity, signer,
-						    name, addr, type, key,
-						    table->mctx))
+						    name, tcp ? addr : NULL,
+						    type, key, table->mctx))
 			{
 				continue;
 			}

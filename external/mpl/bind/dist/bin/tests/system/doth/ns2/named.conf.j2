@@ -24,26 +24,19 @@ http local {
 };
 
 options {
-	query-source address 10.53.0.2;
-	notify-source 10.53.0.2;
-	transfer-source 10.53.0.2;
-	port @PORT@;
+	{% include_indented "_common/options.conf.j2" %}
 	tls-port @TLSPORT@;
 	https-port @HTTPSPORT@;
 	http-port @HTTPPORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.2; };
-	listen-on tls local { 10.53.0.2; };             // DoT
-	listen-on-v6 tls local { fd92:7065:b8e:ffff::2; };
-	listen-on tls local http local { 10.53.0.2; };  // DoH
-	listen-on-v6 tls local http local { fd92:7065:b8e:ffff::2; };
-	listen-on tls none http local { 10.53.0.2; };   // unencrypted DoH
-	listen-on-v6 tls none http local { fd92:7065:b8e:ffff::2; };
-	listen-on-v6 { none; };
-	recursion yes;
+	listen-on tls local { @ns.ip@; };             // DoT
+	listen-on-v6 tls local { @ns.ip6@; };
+	listen-on tls local http local { @ns.ip@; };  // DoH
+	listen-on-v6 tls local http local { @ns.ip6@; };
+	listen-on tls none http local { @ns.ip@; };   // unencrypted DoH
+	listen-on-v6 tls none http local { @ns.ip6@; };
 	allow-recursion { any; };
 	allow-query-cache { any; };
-	allow-recursion-on { 10.53.0.2; }; # allow-query-cache-on inherits;
+	allow-recursion-on { @ns.ip@; }; # allow-query-cache-on inherits;
 	notify no;
 	ixfr-from-differences yes;
 	check-integrity no;
@@ -53,10 +46,7 @@ options {
 	transfers-out 100;
 };
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 tls tls-example-primary-wrong-ca {
 	remote-hostname "srv01.crt01.example.com"; // enable Strict TLS
@@ -66,7 +56,7 @@ tls tls-example-primary-wrong-ca {
 zone "test.example.com" {
 	type forward;
 	forward only;
-	forwarders port @TLSPORT@ { 10.53.0.2 tls tls-example-primary-wrong-ca; };
+	forwarders port @TLSPORT@ { @ns.ip@ tls tls-example-primary-wrong-ca; };
 };
 
 tls tls-example-primary {
@@ -168,7 +158,7 @@ zone "example8" {
 };
 
 tls tls-example-primary-mutual-tls {
-    remote-hostname "srv01.crt01.example.com";
+	remote-hostname "srv01.crt01.example.com";
 	ca-file "../CA/CA.pem";
 	cert-file "../CA/certs/srv01.client02-ns2.example.com.pem";
 	key-file "../CA/certs/srv01.client02-ns2.example.com.key";
@@ -189,7 +179,7 @@ zone "example10" {
 };
 
 tls tls-example-primary-mutual-tls-expired {
-    remote-hostname "srv01.crt01.example.com";
+	remote-hostname "srv01.crt01.example.com";
 	ca-file "../CA/CA.pem";
 	cert-file "../CA/certs/srv01.client03-ns2-expired.example.com.pem";
 	key-file "../CA/certs/srv01.client03-ns2-expired.example.com.key";

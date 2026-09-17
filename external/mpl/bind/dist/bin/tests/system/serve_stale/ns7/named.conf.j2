@@ -14,14 +14,7 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.7;
-	notify-source 10.53.0.7;
-	transfer-source 10.53.0.7;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.7; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation no;
 	qname-minimization off;
 
@@ -31,6 +24,10 @@ options {
 
 	stale-answer-client-timeout off;
 	stale-refresh-time 30;
+
+	# Cap the resolver timeout so the stale-CNAME checks that force a
+	# resolver failure do not each block for the 10s default.
+	resolver-query-timeout 2000;
 
 	max-cache-ttl 300;
 	max-ncache-ttl 300;
@@ -43,13 +40,13 @@ zone "." {
 
 // Authoritative zone: nonexist.target.stale -> NXDOMAIN
 zone "target.stale" {
-    type primary;
-    file "target.stale.db";
+	type primary;
+	file "target.stale.db";
 };
 
 // Forward source.stale queries to ans2
 zone "source.stale" {
-    type forward;
-    forward only;
-    forwarders { 10.53.0.2 port @PORT@; };
+	type forward;
+	forward only;
+	forwarders { 10.53.0.2 port @PORT@; };
 };

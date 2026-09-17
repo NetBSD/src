@@ -114,29 +114,40 @@ class SignResponses(ResponseHandlerWrapper):
         return f"SignResponses({self._inner}, key={self._key})"
 
 
-class SignFirstResponse(ResponseHandlerWrapper):
+class SignFirstAndLastResponses(ResponseHandlerWrapper):
+    """Sign the first and last of the three responses yielded by AxfrHandler."""
+
     def __init__(self, inner: ResponseHandler, key: dns.tsig.Key = DEFAULT_KEY) -> None:
         super().__init__(inner)
         self._key = key
-        self._first_yielded = False
+        self._response_number = 0
+        self._tsig_ctx: dns.tsig.GSSTSig | dns.tsig.HMACTSig | None = None
 
     def _on_query_received(self, qctx: QueryContext) -> None:
-        self._first_yielded = False
+        self._response_number = 0
+        self._tsig_ctx = None
 
     def _modify_response(
         self, qctx: QueryContext, response_action: ResponseAction
     ) -> None:
         assert isinstance(
             response_action, DnsResponseSend
-        ), "SignFirstResponse can only wrap handlers that yield DnsResponseSend"
-        if not self._first_yielded:
-            response_action.response.use_tsig(self._key)
-            self._first_yielded = True
+        ), "sparse signing requires DnsResponseSend"
+        response = response_action.response
+        if self._response_number == 1:
+            response.tsig = None
+            wire = response.to_wire(max_size=65535)
+            assert self._tsig_ctx is not None
+            # Keep the unsigned message in the digest so the final TSIG is valid.
+            self._tsig_ctx.update(wire)
         else:
-            response_action.response.tsig = None
+            response.use_tsig(self._key)
+            _ = response.to_wire(multi=True, tsig_ctx=self._tsig_ctx)
+            self._tsig_ctx = response.tsig_ctx
+        self._response_number += 1
 
     def __str__(self) -> str:
-        return f"SignFirstResponse({self._inner}, key={self._key})"
+        return f"SignFirstAndLastResponses({self._inner}, key={self._key})"
 
 
 class Add50ToMessageIdFromSecondResponse(ResponseHandlerWrapper):
@@ -366,7 +377,7 @@ def main() -> None:
             ),
             "partial": (
                 SignResponses(SoaHandler(serial := 4)),
-                SignFirstResponse(
+                SignFirstAndLastResponses(
                     XferAxfrHandler(
                         soa_serial=serial,
                         txt_data="partially signed AXFR",

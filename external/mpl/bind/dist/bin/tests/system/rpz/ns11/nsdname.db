@@ -1,0 +1,6 @@
+nsdname.			60 IN SOA localhost. localhost.localdomain. 1 60 60 60 60
+				60 IN NS .
+$ORIGIN nsdname.
+ns.0xc0f1c3a5.com.rpz-nsdname	60 IN CNAME *.walled-garden.example.com.
+ns.0xc0f1c3a5.net.rpz-nsdname	60 IN CNAME *.walled-garden.example.com.
+ns.0xc0f1c3a5.org.rpz-nsdname	60 IN CNAME *.walled-garden.example.com.

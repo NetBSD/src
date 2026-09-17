@@ -19,13 +19,14 @@ tls self-signed {
 };
 
 options {
-	pid-file "named.pid";
+	{% include_indented "_common/options/sources.conf.j2" %}
+	{% include_indented "_common/options/server.conf.j2" %}
 	##
 	# generic
-	listen-on port @PORT@ { 10.53.0.1; };
+	listen-on { @ns.ip@; };
 	# test TLS
-	listen-on port @EXTRAPORT1@ tls none http default { 10.53.0.1; };
-	listen-on-v6 port @EXTRAPORT1@ tls none http default { fd92:7065:b8e:ffff::1; };
+	listen-on port @EXTRAPORT1@ tls none http default { @ns.ip@; };
+	listen-on-v6 port @EXTRAPORT1@ tls none http default { @ns.ip6@; };
 	##
 	recursion no;
 	notify explicit;
@@ -33,7 +34,7 @@ options {
 	dnssec-validation no;
 	tcp-initial-timeout 1200;
 	allow-proxy { any; };
-	allow-proxy-on { 10.53.0.1; fd92:7065:b8e:ffff::1; };
+	allow-proxy-on { @ns.ip@; @ns.ip6@; };
 };
 
 zone "example" {

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.1.1.18 2026/08/29 14:32:11 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.1.1.19 2026/09/17 17:45:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -366,12 +366,12 @@ mock_assert(const int result, const char *const expression,
 #define FATAL_ERROR(...) \
 	isc_error_fatal(__FILE__, __LINE__, __func__, __VA_ARGS__)
 
-#define REPORT_SYSERROR(report, err, fmt, ...)                        \
-	{                                                             \
-		char strerr[ISC_STRERRORSIZE];                        \
-		strerror_r(err, strerr, sizeof(strerr));              \
-		report(__FILE__, __LINE__, __func__, fmt ": %s (%d)", \
-		       ##__VA_ARGS__, strerr, err);                   \
+#define REPORT_SYSERROR(report, err, fmt, ...)                       \
+	{                                                            \
+		char strerr[ISC_STRERRORSIZE];                       \
+		strerror_r(err, strerr, sizeof(strerr));             \
+		report(__FILE__, __LINE__, __func__,                 \
+		       fmt ": %s (%d)", ##__VA_ARGS__, strerr, err); \
 	}
 
 #define UNEXPECTED_SYSERROR(err, ...) \

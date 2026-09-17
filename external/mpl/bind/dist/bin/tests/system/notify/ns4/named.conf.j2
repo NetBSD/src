@@ -12,25 +12,17 @@
  */
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
+	{% include_indented "_common/options/sources.conf.j2" %}
+	{% include_indented "_common/options/listen.conf.j2" %}
 	port @EXTRAPORT1@;
 	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on-v6 { none; };
 	allow-transfer { any; };
-	recursion yes;
-	notify yes;
 	dnssec-validation no;
 };
 
 {% include "_common/controls.conf.j2" %}
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "x21" {
 	type secondary;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.c,v 1.1.1.12 2026/04/07 23:58:26 christos Exp $	*/
+/*	$NetBSD: netmgr.c,v 1.1.1.13 2026/09/17 17:45:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2222,7 +2222,9 @@ get_proxy_handle(isc_nmhandle_t *handle) {
 		return handle;
 #ifdef HAVE_LIBNGHTTP2
 	case isc_nm_httpsocket:
-		if (sock->h2 != NULL) {
+		if (sock->h2 != NULL &&
+		    isc__nm_httpsession_active(sock->h2->session))
+		{
 			return get_proxy_handle(
 				isc__nm_httpsession_handle(sock->h2->session));
 		}

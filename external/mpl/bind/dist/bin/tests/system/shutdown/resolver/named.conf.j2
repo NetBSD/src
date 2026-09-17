@@ -21,7 +21,7 @@ logging {
 };
 
 key rndc_key {
-    secret "1234abcd8765";
+	secret "1234abcd8765";
 	algorithm @DEFAULT_HMAC@;
 };
 
@@ -36,6 +36,7 @@ options {
 	transfer-source 10.53.0.3;
 	port @PORT@;
 	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
 	pid-file "named.pid";
 	notify no;
 	dnssec-validation no;

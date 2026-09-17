@@ -1,4 +1,4 @@
-/*	$NetBSD: qpcache.c,v 1.1.1.7 2026/08/29 14:32:12 christos Exp $	*/
+/*	$NetBSD: qpcache.c,v 1.1.1.8 2026/09/17 17:45:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -327,7 +327,6 @@ typedef struct {
 	unsigned int options;
 	dns_qpchain_t chain;
 	dns_qpiter_t iter;
-	bool need_cleanup;
 	qpcnode_t *zonecut;
 	dns_slabheader_t *zonecut_header;
 	dns_slabheader_t *zonecut_sigheader;
@@ -1169,15 +1168,12 @@ bindrdataset(qpcache_t *qpdb, qpcnode_t *node, dns_slabheader_t *header,
 	if (header->noqname != NULL) {
 		rdataset->attributes |= DNS_RDATASETATTR_NOQNAME;
 	}
-	rdataset->slab.closest = header->closest;
-	if (header->closest != NULL) {
-		rdataset->attributes |= DNS_RDATASETATTR_CLOSEST;
-	}
 }
 
 static isc_result_t
 setup_delegation(qpc_search_t *search, dns_dbnode_t **nodep,
 		 dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
+		 isc_rwlocktype_t nlocktype,
 		 isc_rwlocktype_t tlocktype DNS__DB_FLARG) {
 	dns_typepair_t type;
 	qpcnode_t *node = NULL;
@@ -1185,6 +1181,7 @@ setup_delegation(qpc_search_t *search, dns_dbnode_t **nodep,
 	REQUIRE(search != NULL);
 	REQUIRE(search->zonecut != NULL);
 	REQUIRE(search->zonecut_header != NULL);
+	REQUIRE(nlocktype == isc_rwlocktype_none);
 
 	/*
 	 * The caller MUST NOT be holding any node locks.
@@ -1194,16 +1191,11 @@ setup_delegation(qpc_search_t *search, dns_dbnode_t **nodep,
 	type = search->zonecut_header->type;
 
 	if (nodep != NULL) {
-		/*
-		 * Note that we don't have to increment the node's reference
-		 * count here because we're going to use the reference we
-		 * already have in the search block.
-		 */
-		*nodep = node;
-		search->need_cleanup = false;
+		qpcnode_acquire(search->qpdb, node, nlocktype,
+				tlocktype DNS__DB_FLARG_PASS);
+		*nodep = (dns_dbnode_t *)node;
 	}
 	if (rdataset != NULL) {
-		isc_rwlocktype_t nlocktype = isc_rwlocktype_none;
 		isc_rwlock_t *nlock =
 			&search->qpdb->buckets[node->locknum].lock;
 		NODE_RDLOCK(nlock, &nlocktype);
@@ -1374,15 +1366,19 @@ check_zonecut(qpcnode_t *node, void *arg DNS__DB_FLARG) {
 	     (search->options & DNS_DBFIND_PENDINGOK) != 0))
 	{
 		/*
-		 * We increment the reference count on node to ensure that
-		 * search->zonecut_header will still be valid later.
+		 * We increment the reference count on the node to keep it
+		 * alive, and we attach to the DNAME header (and its signature)
+		 * so that they stay valid after the node lock is released.
 		 */
 		qpcnode_acquire(search->qpdb, node, nlocktype,
 				isc_rwlocktype_none DNS__DB_FLARG_PASS);
 		search->zonecut = node;
+		isc_refcount_increment(&dname_header->references);
 		search->zonecut_header = dname_header;
-		search->zonecut_sigheader = sigdname_header;
-		search->need_cleanup = true;
+		if (sigdname_header != NULL) {
+			isc_refcount_increment(&sigdname_header->references);
+			search->zonecut_sigheader = sigdname_header;
+		}
 		result = DNS_R_PARTIALMATCH;
 	} else {
 		result = DNS_R_CONTINUE;
@@ -1623,6 +1619,50 @@ find_coveringnsec(qpc_search_t *search, const dns_name_t *name,
 	return result;
 }
 
+static void
+qpc_search_init(qpc_search_t *search, qpcache_t *db, unsigned int options,
+		isc_stdtime_t now) {
+	/*
+	 * qpc_search_t contains two structures with large buffers (dns_qpiter_t
+	 * and dns_qpchain_t). Those two structures will be initialized later by
+	 * dns_qp_lookup anyway.
+	 * To avoid the overhead of zero initialization, we avoid designated
+	 * initializers and initialize all "small" fields manually.
+	 */
+	search->qpdb = (qpcache_t *)db;
+	search->options = options;
+	/*
+	 * qpch->in - Init by dns_qp_lookup
+	 * qpiter - Init by dns_qp_lookup
+	 */
+	search->now = now ? now : isc_stdtime_now();
+	search->zonecut = NULL;
+	search->zonecut_header = NULL;
+	search->zonecut_sigheader = NULL;
+}
+
+static void
+qpc_search_deinit(qpc_search_t *search DNS__DB_FLARG) {
+	if (search->zonecut_sigheader != NULL) {
+		isc_refcount_decrement(&search->zonecut_sigheader->references);
+	}
+	if (search->zonecut_header != NULL) {
+		isc_refcount_decrement(&search->zonecut_header->references);
+	}
+	if (search->zonecut != NULL) {
+		qpcnode_t *node = search->zonecut;
+		isc_rwlock_t *nlock =
+			&search->qpdb->buckets[node->locknum].lock;
+		isc_rwlocktype_t nlocktype = isc_rwlocktype_none;
+		isc_rwlocktype_t tlocktype = isc_rwlocktype_none;
+
+		NODE_RDLOCK(nlock, &nlocktype);
+		qpcnode_release(search->qpdb, node, &nlocktype, &tlocktype,
+				false DNS__DB_FLARG_PASS);
+		NODE_UNLOCK(nlock, &nlocktype);
+	}
+}
+
 static isc_result_t
 find(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
      dns_rdatatype_t type, unsigned int options, isc_stdtime_t now,
@@ -1655,11 +1695,7 @@ find(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 		now = isc_stdtime_now();
 	}
 
-	search = (qpc_search_t){
-		.qpdb = (qpcache_t *)db,
-		.options = options,
-		.now = now,
-	};
+	qpc_search_init(&search, (qpcache_t *)db, options, now);
 
 	TREE_RDLOCK(&search.qpdb->tree_lock, &tlocktype);
 
@@ -1722,7 +1758,7 @@ find(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 		}
 		if (search.zonecut != NULL) {
 			result = setup_delegation(&search, nodep, rdataset,
-						  sigrdataset,
+						  sigrdataset, nlocktype,
 						  tlocktype DNS__DB_FLARG_PASS);
 			goto tree_exit;
 		} else {
@@ -2048,21 +2084,7 @@ node_exit:
 tree_exit:
 	TREE_UNLOCK(&search.qpdb->tree_lock, &tlocktype);
 
-	/*
-	 * If we found a zonecut but aren't going to use it, we have to
-	 * let go of it.
-	 */
-	if (search.need_cleanup) {
-		node = search.zonecut;
-		INSIST(node != NULL);
-		nlock = &search.qpdb->buckets[node->locknum].lock;
-
-		NODE_RDLOCK(nlock, &nlocktype);
-		qpcnode_release(search.qpdb, node, &nlocktype, &tlocktype,
-				true DNS__DB_FLARG_PASS);
-		NODE_UNLOCK(nlock, &nlocktype);
-		INSIST(tlocktype == isc_rwlocktype_none);
-	}
+	qpc_search_deinit(&search DNS__DB_FLARG_PASS);
 
 	update_cachestats(search.qpdb, result);
 	return result;
@@ -2090,11 +2112,7 @@ findzonecut(dns_db_t *db, const dns_name_t *name, unsigned int options,
 		now = isc_stdtime_now();
 	}
 
-	search = (qpc_search_t){
-		.qpdb = (qpcache_t *)db,
-		.options = options,
-		.now = now,
-	};
+	qpc_search_init(&search, (qpcache_t *)db, options, now);
 
 	if (dcnull) {
 		dcname = foundname;
@@ -2226,7 +2244,7 @@ findzonecut(dns_db_t *db, const dns_name_t *name, unsigned int options,
 tree_exit:
 	TREE_UNLOCK(&search.qpdb->tree_lock, &tlocktype);
 
-	INSIST(!search.need_cleanup);
+	qpc_search_deinit(&search DNS__DB_FLARG_PASS);
 
 	if (result == DNS_R_DELEGATION) {
 		result = ISC_R_SUCCESS;
@@ -3104,12 +3122,6 @@ find_header:
 				header->noqname = newheader->noqname;
 				newheader->noqname = NULL;
 			}
-			if (header->closest == NULL &&
-			    newheader->closest != NULL)
-			{
-				header->closest = newheader->closest;
-				newheader->closest = NULL;
-			}
 			dns_slabheader_destroy(&newheader);
 			if (addedrdataset != NULL) {
 				bindrdataset(qpdb, qpnode, header, now,
@@ -3166,12 +3178,6 @@ find_header:
 			{
 				header->noqname = newheader->noqname;
 				newheader->noqname = NULL;
-			}
-			if (header->closest == NULL &&
-			    newheader->closest != NULL)
-			{
-				header->closest = newheader->closest;
-				newheader->closest = NULL;
 			}
 			dns_slabheader_destroy(&newheader);
 			if (addedrdataset != NULL) {
@@ -3380,52 +3386,6 @@ cleanup:
 	return result;
 }
 
-static isc_result_t
-addclosest(isc_mem_t *mctx, dns_slabheader_t *newheader, uint32_t maxrrperset,
-	   dns_rdataset_t *rdataset) {
-	isc_result_t result;
-	dns_slabheader_proof_t *closest = NULL;
-	dns_name_t name = DNS_NAME_INITEMPTY;
-	dns_rdataset_t neg = DNS_RDATASET_INIT, negsig = DNS_RDATASET_INIT;
-	isc_region_t r1 = { .base = NULL }, r2 = { .base = NULL };
-
-	result = dns_rdataset_getclosest(rdataset, &name, &neg, &negsig);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
-
-	result = dns_rdataslab_fromrdataset(&neg, mctx, &r1, 0, maxrrperset);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-
-	result = dns_rdataslab_fromrdataset(&negsig, mctx, &r2, 0, maxrrperset);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-
-	closest = isc_mem_get(mctx, sizeof(*closest));
-	*closest = (dns_slabheader_proof_t){
-		.neg = r1.base,
-		.negsig = r2.base,
-		.name = DNS_NAME_INITEMPTY,
-		.type = neg.type,
-	};
-	dns_name_dup(&name, mctx, &closest->name);
-	newheader->closest = closest;
-
-cleanup:
-	if (result != ISC_R_SUCCESS) {
-		if (r1.base != NULL) {
-			isc_mem_put(mctx, r1.base, r1.length);
-		}
-		if (r2.base != NULL) {
-			isc_mem_put(mctx, r2.base, r2.length);
-		}
-	}
-	dns_rdataset_disassociate(&neg);
-	dns_rdataset_disassociate(&negsig);
-	return result;
-}
-
 static void
 expire_ttl_headers(qpcache_t *qpdb, unsigned int locknum,
 		   isc_rwlocktype_t *nlocktypep, isc_rwlocktype_t *tlocktypep,
@@ -3501,14 +3461,6 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	}
 	if ((rdataset->attributes & DNS_RDATASETATTR_NOQNAME) != 0) {
 		result = addnoqname(qpdb->common.mctx, newheader,
-				    qpdb->maxrrperset, rdataset);
-		if (result != ISC_R_SUCCESS) {
-			dns_slabheader_destroy(&newheader);
-			return result;
-		}
-	}
-	if ((rdataset->attributes & DNS_RDATASETATTR_CLOSEST) != 0) {
-		result = addclosest(qpdb->common.mctx, newheader,
 				    qpdb->maxrrperset, rdataset);
 		if (result != ISC_R_SUCCESS) {
 			dns_slabheader_destroy(&newheader);
@@ -4356,9 +4308,6 @@ deletedata(dns_db_t *db ISC_ATTR_UNUSED, dns_dbnode_t *node ISC_ATTR_UNUSED,
 
 	if (header->noqname != NULL) {
 		dns_slabheader_freeproof(db->mctx, &header->noqname);
-	}
-	if (header->closest != NULL) {
-		dns_slabheader_freeproof(db->mctx, &header->closest);
 	}
 }
 

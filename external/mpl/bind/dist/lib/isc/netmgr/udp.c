@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.1.1.11 2026/08/29 14:32:11 christos Exp $	*/
+/*	$NetBSD: udp.c,v 1.1.1.12 2026/09/17 17:45:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -197,6 +197,7 @@ start_udp_child(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nmsocket_t *sock,
 		csock->fd = isc__nm_udp_lb_socket(mgr,
 						  iface->type.sa.sa_family);
 	} else {
+		INSIST(fd >= 0);
 		csock->fd = dup(fd);
 	}
 	INSIST(csock->fd >= 0);
@@ -293,7 +294,7 @@ route_socket(uv_os_sock_t *fdp) {
 	isc_result_t result;
 	uv_os_sock_t fd = -1;
 #ifdef USE_NETLINK
-	struct sockaddr_nl sa;
+	struct sockaddr_nl sa = { 0 };
 	int r;
 #endif
 
@@ -308,8 +309,9 @@ route_socket(uv_os_sock_t *fdp) {
 	sa.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
 	r = bind(fd, (struct sockaddr *)&sa, sizeof(sa));
 	if (r < 0) {
+		result = isc_errno_toresult(errno);
 		isc__nm_closesocket(fd);
-		return isc_errno_toresult(r);
+		return result;
 	}
 #endif
 

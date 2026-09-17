@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.1.1.15 2026/01/29 18:19:51 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.1.1.16 2026/09/17 17:45:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3152,7 +3152,7 @@ cfg_parse_netprefix(cfg_parser_t *pctx, const cfg_type_t *type,
 		    cfg_obj_t **ret) {
 	cfg_obj_t *obj = NULL;
 	isc_result_t result;
-	isc_netaddr_t netaddr;
+	isc_netaddr_t netaddr = { .family = AF_UNSPEC };
 	unsigned int addrlen = 0, prefixlen;
 	bool expectprefix;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.1.1.25 2026/08/29 14:32:11 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.1.1.26 2026/09/17 17:45:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -700,7 +700,8 @@ add_bad(fetchctx_t *fctx, dns_message_t *rmessage, dns_adbaddrinfo_t *addrinfo,
 	isc_result_t reason, badnstype_t badtype);
 static isc_result_t
 findnoqname(fetchctx_t *fctx, dns_message_t *message, dns_name_t *name,
-	    dns_rdatatype_t type, dns_name_t **noqname);
+	    dns_rdatatype_t type, dns_name_t **noqnamep,
+	    dns_rdatatype_t *noqnametypep);
 
 #define fctx_done_detach(fctxp, result)                                 \
 	if (fctx__done(*fctxp, result, __func__, __FILE__, __LINE__)) { \
@@ -5557,27 +5558,14 @@ validated(void *arg) {
 		inc_stats(res, dns_resstatscounter_valfail);
 		fctx->valfail++;
 		fctx->vresult = val->result;
-		if (fctx->vresult != DNS_R_BROKENCHAIN) {
-			result = ISC_R_NOTFOUND;
-			if (val->rdataset != NULL) {
-				result = dns_db_findnode(fctx->cache, val->name,
-							 false, &node);
+		switch (fctx->vresult) {
+		case DNS_R_BROKENCHAIN:
+		case ISC_R_CANCELED:
+		case ISC_R_SHUTTINGDOWN:
+		case ISC_R_QUOTA:
+			if (negative) {
+				break;
 			}
-			if (result == ISC_R_SUCCESS) {
-				(void)dns_db_deleterdataset(fctx->cache, node,
-							    NULL, val->type, 0);
-			}
-			if (result == ISC_R_SUCCESS && val->sigrdataset != NULL)
-			{
-				(void)dns_db_deleterdataset(
-					fctx->cache, node, NULL,
-					dns_rdatatype_rrsig, val->type);
-			}
-			if (result == ISC_R_SUCCESS) {
-				dns_db_detachnode(fctx->cache, &node);
-			}
-		}
-		if (fctx->vresult == DNS_R_BROKENCHAIN && !negative) {
 			/*
 			 * Cache the data as pending for later
 			 * validation.
@@ -5601,6 +5589,27 @@ validated(void *arg) {
 			if (result == ISC_R_SUCCESS) {
 				dns_db_detachnode(fctx->cache, &node);
 			}
+			break;
+		default:
+			result = ISC_R_NOTFOUND;
+			if (val->rdataset != NULL) {
+				result = dns_db_findnode(fctx->cache, val->name,
+							 false, &node);
+			}
+			if (result == ISC_R_SUCCESS) {
+				(void)dns_db_deleterdataset(fctx->cache, node,
+							    NULL, val->type, 0);
+			}
+			if (result == ISC_R_SUCCESS && val->sigrdataset != NULL)
+			{
+				(void)dns_db_deleterdataset(
+					fctx->cache, node, NULL,
+					dns_rdatatype_rrsig, val->type);
+			}
+			if (result == ISC_R_SUCCESS) {
+				dns_db_detachnode(fctx->cache, &node);
+			}
+			break;
 		}
 		result = fctx->vresult;
 		add_bad(fctx, message, addrinfo, result, badns_validation);
@@ -5616,10 +5625,21 @@ validated(void *arg) {
 		} else if (sentresponse) {
 			done = true;
 			goto cleanup_fetchctx;
-		} else if (result == DNS_R_BROKENCHAIN) {
+		}
+
+		/*
+		 * A broken trust chain isn't recoverable, and neither is an
+		 * exhausted DNSSEC validation budget: retrying would only do
+		 * more validation work against the same quota.
+		 */
+		switch (result) {
+		case DNS_R_BROKENCHAIN:
+		case ISC_R_CANCELED:
+		case ISC_R_SHUTTINGDOWN:
+		case ISC_R_QUOTA:
 			done = true;
 			goto cleanup_fetchctx;
-		} else {
+		default:
 			fctx_try(fctx, true);
 			goto cleanup_fetchctx;
 		}
@@ -5689,28 +5709,25 @@ validated(void *arg) {
 
 	if (val->proofs[DNS_VALIDATOR_NOQNAMEPROOF] != NULL) {
 		result = dns_rdataset_addnoqname(
-			val->rdataset, val->proofs[DNS_VALIDATOR_NOQNAMEPROOF]);
+			val->rdataset, val->proofs[DNS_VALIDATOR_NOQNAMEPROOF],
+			val->noqnametype);
 		if (result != ISC_R_SUCCESS) {
 			goto noanswer_response;
 		}
 		INSIST(val->sigrdataset != NULL);
 		val->sigrdataset->ttl = val->rdataset->ttl;
-		if (val->proofs[DNS_VALIDATOR_CLOSESTENCLOSER] != NULL) {
-			result = dns_rdataset_addclosest(
-				val->rdataset,
-				val->proofs[DNS_VALIDATOR_CLOSESTENCLOSER]);
-			RUNTIME_CHECK(result == ISC_R_SUCCESS);
-		}
 	} else if (val->rdataset->trust == dns_trust_answer &&
 		   val->rdataset->type != dns_rdatatype_rrsig)
 	{
 		isc_result_t tresult;
 		dns_name_t *noqname = NULL;
+		dns_rdatatype_t noqnametype = dns_rdatatype_none;
 		tresult = findnoqname(fctx, message, val->name,
-				      val->rdataset->type, &noqname);
+				      val->rdataset->type, &noqname,
+				      &noqnametype);
 		if (tresult == ISC_R_SUCCESS && noqname != NULL) {
 			tresult = dns_rdataset_addnoqname(val->rdataset,
-							  noqname);
+							  noqname, noqnametype);
 			RUNTIME_CHECK(tresult == ISC_R_SUCCESS);
 		}
 	}
@@ -5983,7 +6000,8 @@ fctx_log(void *arg, int level, const char *fmt, ...) {
 
 static isc_result_t
 findnoqname(fetchctx_t *fctx, dns_message_t *message, dns_name_t *name,
-	    dns_rdatatype_t type, dns_name_t **noqnamep) {
+	    dns_rdatatype_t type, dns_name_t **noqnamep,
+	    dns_rdatatype_t *noqnametypep) {
 	dns_rdataset_t *nrdataset, *next, *sigrdataset;
 	dns_rdata_rrsig_t rrsig;
 	isc_result_t result;
@@ -6001,6 +6019,7 @@ findnoqname(fetchctx_t *fctx, dns_message_t *message, dns_name_t *name,
 	FCTXTRACE("findnoqname");
 
 	REQUIRE(noqnamep != NULL && *noqnamep == NULL);
+	REQUIRE(noqnametypep != NULL);
 
 	/*
 	 * Find the SIG for this rdataset, if we have it.
@@ -6111,6 +6130,7 @@ findnoqname(fetchctx_t *fctx, dns_message_t *message, dns_name_t *name,
 		}
 		if (sigrdataset != NULL) {
 			*noqnamep = noqname;
+			*noqnametypep = found;
 		}
 	}
 	return result;
@@ -6240,6 +6260,13 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_message_t *message,
 		}
 
 		/*
+		 * Do not cache or otherwise process out-of-bailiwick data.
+		 */
+		if (EXTERNAL(rdataset)) {
+			continue;
+		}
+
+		/*
 		 * If CNAME, delete other RRsets at the same name
 		 * from the cache.
 		 */
@@ -6292,9 +6319,7 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_message_t *message,
 		 * only cached if validated within the context of a
 		 * query to the domain that owns them.)
 		 */
-		if (secure_domain && rdataset->trust != dns_trust_glue &&
-		    !EXTERNAL(rdataset))
-		{
+		if (secure_domain && rdataset->trust != dns_trust_glue) {
 			dns_trust_t trust;
 
 			/*
@@ -6358,14 +6383,18 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_message_t *message,
 				{
 					isc_result_t tresult;
 					dns_name_t *noqname = NULL;
+					dns_rdatatype_t noqnametype =
+						dns_rdatatype_none;
 					tresult = findnoqname(
 						fctx, message, name,
-						rdataset->type, &noqname);
+						rdataset->type, &noqname,
+						&noqnametype);
 					if (tresult == ISC_R_SUCCESS &&
 					    noqname != NULL)
 					{
 						(void)dns_rdataset_addnoqname(
-							rdataset, noqname);
+							rdataset, noqname,
+							noqnametype);
 					}
 				}
 				if ((fctx->options & DNS_FETCHOPT_PREFETCH) !=
@@ -6485,7 +6514,7 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_message_t *message,
 					eresult = DNS_R_DNAME;
 				}
 			}
-		} else if (!EXTERNAL(rdataset)) {
+		} else {
 			/*
 			 * It's OK to cache this rdataset now.
 			 */
@@ -6531,12 +6560,15 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_message_t *message,
 			{
 				isc_result_t tresult;
 				dns_name_t *noqname = NULL;
+				dns_rdatatype_t noqnametype =
+					dns_rdatatype_none;
 				tresult = findnoqname(fctx, message, name,
-						      rdataset->type, &noqname);
+						      rdataset->type, &noqname,
+						      &noqnametype);
 				if (tresult == ISC_R_SUCCESS && noqname != NULL)
 				{
-					(void)dns_rdataset_addnoqname(rdataset,
-								      noqname);
+					(void)dns_rdataset_addnoqname(
+						rdataset, noqname, noqnametype);
 				}
 			}
 

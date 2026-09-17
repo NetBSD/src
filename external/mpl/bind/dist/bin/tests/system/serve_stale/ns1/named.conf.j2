@@ -19,15 +19,8 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.1;
-	notify-source 10.53.0.1;
-	transfer-source 10.53.0.1;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-transfer { any; };
-	recursion yes;
 	dnssec-validation no;
 	max-stale-ttl @max_stale_ttl@;
 	stale-answer-ttl @stale_answer_ttl@;
@@ -36,6 +29,10 @@ options {
 {% if stale_refresh_time is not none %}
 	stale-refresh-time @stale_refresh_time@;
 {% endif %}
+	# The auth is local; with the default 'off' client-timeout the test
+	# blocks on the full resolver-query-timeout whenever it forces a
+	# resolver failure, so cap it low to keep those waits short.
+	resolver-query-timeout 2000;
 	servfail-ttl 0;
 };
 

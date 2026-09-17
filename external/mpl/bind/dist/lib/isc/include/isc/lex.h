@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.h,v 1.1.1.7 2025/01/26 16:12:31 christos Exp $	*/
+/*	$NetBSD: lex.h,v 1.1.1.8 2026/09/17 17:45:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -210,7 +210,7 @@ void
 isc_lex_setspecials(isc_lex_t *lex, isc_lexspecials_t specials);
 /*!<
  * The characters in 'specials' are returned as tokens.  Along with
- * whitespace, they delimit strings and numbers.
+ * whitespace and NUL, they delimit strings and numbers.
  *
  * Note:
  *\li	Comment processing takes precedence over special character

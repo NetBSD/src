@@ -20,6 +20,7 @@ import isctest
 
 pytestmark = pytest.mark.extra_artifacts(
     [
+        "ns*/*.db.jnl",
         "ns2/nil.db",
         "ns2/other.db",
         "ns2/secondkey.conf",

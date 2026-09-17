@@ -95,6 +95,7 @@ TESTS =				\
 	checkds			\
 	checknames		\
 	checkzone		\
+	cname_recursion		\
 	cookie			\
 	cpu			\
 	database		\
@@ -143,6 +144,7 @@ TESTS =				\
 	names			\
 	notify			\
 	nsec3			\
+	nsec_wildcard_wrong_zone \
 	nslookup		\
 	nsupdate		\
 	nzd2nzf			\
@@ -157,19 +159,6 @@ TESTS =				\
 	resolver		\
 	rndc			\
 	rollover		\
-	rollover_algo_csk	\
-	rollover_algo_ksk_zsk	\
-	rollover_csk_roll1	\
-	rollover_csk_roll2	\
-	rollover_dynamic2inline	\
-	rollover_enable_dnssec	\
-	rollover_going_insecure	\
-	rollover_ksk_3crowd	\
-	rollover_ksk_doubleksk	\
-	rollover_lifetime	\
-	rollover_multisigner	\
-	rollover_straight2none	\
-	rollover_zsk_prepub	\
 	rootkeysentinel		\
 	rpzextra		\
 	rrchecker		\

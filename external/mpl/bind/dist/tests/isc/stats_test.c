@@ -1,4 +1,4 @@
-/*	$NetBSD: stats_test.c,v 1.1.1.2 2025/01/26 16:12:36 christos Exp $	*/
+/*	$NetBSD: stats_test.c,v 1.1.1.3 2026/09/17 17:45:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -73,21 +73,9 @@ ISC_RUN_TEST_IMPL(isc_stats_basic) {
 		assert_int_equal(isc_stats_get_counter(stats, i), i + 1);
 	}
 
-	/* Test resize. */
-	isc_stats_resize(&stats, 3);
-	assert_int_equal(isc_stats_ncounters(stats), 4);
-	isc_stats_resize(&stats, 4);
-	assert_int_equal(isc_stats_ncounters(stats), 4);
-	isc_stats_resize(&stats, 5);
-	assert_int_equal(isc_stats_ncounters(stats), 5);
-
-	/* Existing counters are retained */
+	/* Counter values can be retrieved. */
 	for (int i = 0; i < isc_stats_ncounters(stats); i++) {
-		uint32_t expect = i + 1;
-		if (i == 4) {
-			expect = 0;
-		}
-		assert_int_equal(isc_stats_get_counter(stats, i), expect);
+		assert_int_equal(isc_stats_get_counter(stats, i), i + 1);
 	}
 
 	isc_stats_detach(&stats);

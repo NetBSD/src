@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimiter.h,v 1.1.1.7 2025/01/26 16:12:31 christos Exp $	*/
+/*	$NetBSD: ratelimiter.h,v 1.1.1.8 2026/09/17 17:45:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -111,6 +111,10 @@ isc_ratelimiter_dequeue(isc_ratelimiter_t *restrict rl,
 /*
  * Dequeue a event off the ratelimiter queue. If the event has not already
  * been posted, it will be freed and '*rleventp' will be set to NULL.
+ *
+ * Requires:
+ *\li	'rl' is a valid ratelimiter.
+ *\li	'rleventp' is non NULL and '*rleventp' is non NULL.
  *
  * Returns:
  * \li	ISC_R_NOTFOUND if the event is no longer linked to the rate limiter.

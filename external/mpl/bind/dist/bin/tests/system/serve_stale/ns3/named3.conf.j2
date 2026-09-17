@@ -18,21 +18,16 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.3;
-	notify-source 10.53.0.3;
-	transfer-source 10.53.0.3;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation no;
-	recursion yes;
 	stale-answer-enable yes;
 	stale-cache-enable yes;
 	stale-answer-ttl 3;
 	stale-refresh-time 0;
 	max-stale-ttl 3600;
-	resolver-query-timeout 10000; # 10 seconds
+	# Client-timeout defaults to 'off', so the stale shortttl.cname.example
+	# checks block on this timeout when the auth is down; keep it short.
+	resolver-query-timeout 2000; # 2 seconds
 	prefetch 0;
 };
 

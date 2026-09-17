@@ -1,4 +1,4 @@
-/*	$NetBSD: skr_test.c,v 1.1.1.3 2026/01/29 18:19:57 christos Exp $	*/
+/*	$NetBSD: skr_test.c,v 1.1.1.4 2026/09/17 17:45:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -168,7 +168,6 @@ write_record(FILE *fp, dns_rdatatype_t rdtype, const char *rdatastr,
 
 	/* Create a lexer as one is required by dns_rdata_fromtext(). */
 	isc_lex_create(mctx, 64, &lex);
-	specials[0] = 1;
 	specials['('] = 1;
 	specials[')'] = 1;
 	specials['"'] = 1;

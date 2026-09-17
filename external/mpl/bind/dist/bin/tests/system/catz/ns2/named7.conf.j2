@@ -14,13 +14,7 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.2;
-	notify-source 10.53.0.2;
-	transfer-source 10.53.0.2;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.2; };
-	listen-on-v6 { fd92:7065:b8e:ffff::2; };
+	{% include_indented "_common/options-dual.conf.j2" %}
 	allow-transfer { any; };
 	notify no;
 	notify-delay 0;
@@ -35,20 +29,20 @@ view "default" {
 	# identical to named1.conf.in
 
 	zone "dom-existing.example" {
-	    type primary;
-	    file "dom-existing.example.db";
+		type primary;
+		file "dom-existing.example.db";
 	};
 
 	zone "dom-existing-forward.example" {
-	    type forward;
-	    forward only;
-	    forwarders { 10.53.0.1; };
+		type forward;
+		forward only;
+		forwarders { 10.53.0.1; };
 	};
 
 	zone "dom-existing-forward-off.example" {
-	    type forward;
-	    forward only;
-	    forwarders { };
+		type forward;
+		forward only;
+		forwarders { };
 	};
 
 	zone "catalog0.example" {

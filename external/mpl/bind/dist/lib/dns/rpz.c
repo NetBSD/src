@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.c,v 1.1.1.18 2026/08/29 14:32:12 christos Exp $	*/
+/*	$NetBSD: rpz.c,v 1.1.1.19 2026/09/17 17:45:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -724,7 +724,8 @@ new_node(dns_rpz_zones_t *rpzs, const dns_rpz_cidr_key_t *ip,
 }
 
 static void
-badname(int level, const dns_name_t *name, const char *str1, const char *str2) {
+log_badname(int level, const dns_name_t *name, const char *str1,
+	    const char *str2) {
 	/*
 	 * bin/tests/system/rpz/tests.sh looks for "invalid rpz".
 	 */
@@ -735,6 +736,22 @@ badname(int level, const dns_name_t *name, const char *str1, const char *str2) {
 			      DNS_LOGMODULE_RBTDB, level,
 			      "invalid rpz IP address \"%s\"%s%s", namebuf,
 			      str1, str2);
+	}
+}
+
+static void
+log_badowner(int level, const dns_name_t *name) {
+	/*
+	 * bin/tests/system/rpz/tests.sh looks for "invalid rpz".
+	 */
+	if (level < DNS_RPZ_DEBUG_QUIET && isc_log_wouldlog(dns_lctx, level)) {
+		char namebuf[DNS_NAME_FORMATSIZE];
+		dns_name_format(name, namebuf, sizeof(namebuf));
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RPZ,
+			      DNS_LOGMODULE_RBTDB, level,
+			      "invalid rpz owner name \"%s\"; "
+			      "not within the policy zone",
+			      namebuf);
 	}
 }
 
@@ -886,6 +903,14 @@ name2ipkey(int log_level, dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 	REQUIRE(rpz != NULL);
 	REQUIRE(rpz->rpzs != NULL && rpz->num < rpz->rpzs->p.num_zones);
 
+	/*
+	 * The IPv6 parsing loop below only writes as many words as the
+	 * name has labels, so a name with too few of them would otherwise
+	 * leave part of the key holding whatever was on the caller's
+	 * stack.
+	 */
+	*tgt_ip = (dns_rpz_cidr_key_t){ 0 };
+
 	make_addr_set(new_set, DNS_RPZ_ZBIT(rpz->num), rpz_type);
 
 	ip_labels = dns_name_countlabels(src_name);
@@ -895,7 +920,7 @@ name2ipkey(int log_level, dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 		ip_labels -= dns_name_countlabels(&rpz->nsdname);
 	}
 	if (ip_labels < 2) {
-		badname(log_level, src_name, "; too short", "");
+		log_badname(log_level, src_name, "; too short", "");
 		return ISC_R_FAILURE;
 	}
 	dns_name_init(&ip_name, ip_name_offsets);
@@ -910,15 +935,15 @@ name2ipkey(int log_level, dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 
 	prefix_num = strtoul(prefix_str, &cp2, 10);
 	if (*cp2 != '.') {
-		badname(log_level, src_name, "; invalid leading prefix length",
-			"");
+		log_badname(log_level, src_name,
+			    "; invalid leading prefix length", "");
 		return ISC_R_FAILURE;
 	}
 	prefix_end = cp2;
 	if (prefix_num < 1U || prefix_num > 128U) {
 		*prefix_end = '\0';
-		badname(log_level, src_name, "; invalid prefix length of ",
-			prefix_str);
+		log_badname(log_level, src_name, "; invalid prefix length of ",
+			    prefix_str);
 		return ISC_R_FAILURE;
 	}
 	cp = cp2 + 1;
@@ -930,8 +955,9 @@ name2ipkey(int log_level, dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 		 */
 		if (prefix_num > 32U) {
 			*prefix_end = '\0';
-			badname(log_level, src_name,
-				"; invalid IPv4 prefix length of ", prefix_str);
+			log_badname(log_level, src_name,
+				    "; invalid IPv4 prefix length of ",
+				    prefix_str);
 			return ISC_R_FAILURE;
 		}
 		prefix_num += 96;
@@ -946,8 +972,8 @@ name2ipkey(int log_level, dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 				if (*cp2 == '.') {
 					*cp2 = '\0';
 				}
-				badname(log_level, src_name,
-					"; invalid IPv4 octet ", cp);
+				log_badname(log_level, src_name,
+					    "; invalid IPv4 octet ", cp);
 				return ISC_R_FAILURE;
 			}
 			tgt_ip->w[3] |= l << i;
@@ -979,8 +1005,8 @@ name2ipkey(int log_level, dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 					if (*cp2 == '.') {
 						*cp2 = '\0';
 					}
-					badname(log_level, src_name,
-						"; invalid IPv6 word ", cp);
+					log_badname(log_level, src_name,
+						    "; invalid IPv6 word ", cp);
 					return ISC_R_FAILURE;
 				}
 				if ((i & 1) == 0) {
@@ -994,7 +1020,7 @@ name2ipkey(int log_level, dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 		}
 	}
 	if (cp != end) {
-		badname(log_level, src_name, "", "");
+		log_badname(log_level, src_name, "", "");
 		return ISC_R_FAILURE;
 	}
 
@@ -1009,8 +1035,9 @@ name2ipkey(int log_level, dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 		aword = tgt_ip->w[prefix / DNS_RPZ_CIDR_WORD_BITS];
 		if ((aword & ~DNS_RPZ_WORD_MASK(i)) != 0) {
 			*prefix_end = '\0';
-			badname(log_level, src_name,
-				"; too small prefix length of ", prefix_str);
+			log_badname(log_level, src_name,
+				    "; too small prefix length of ",
+				    prefix_str);
 			return ISC_R_FAILURE;
 		}
 		prefix -= i;
@@ -1033,8 +1060,8 @@ name2ipkey(int log_level, dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 					     NULL);
 		}
 		dns_name_format(ip_name2, ip2_str, sizeof(ip2_str));
-		badname(log_level, src_name, " is not in canonical form ",
-			ip2_str);
+		log_badname(log_level, src_name, " is not in canonical form ",
+			    ip2_str);
 		return ISC_R_FAILURE;
 	}
 
@@ -1045,23 +1072,48 @@ name2ipkey(int log_level, dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
  * Get trigger name and data bits for adding or deleting summary NSDNAME
  * or QNAME data.
  */
-static void
-name2data(dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
+static isc_result_t
+name2data(int log_level, dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 	  const dns_name_t *src_name, dns_name_t *trig_name,
 	  nmdata_t *new_data) {
 	dns_offsets_t tmp_name_offsets;
+	const dns_name_t *suffix = NULL;
 	dns_name_t tmp_name;
-	unsigned int prefix_len, n;
+	unsigned int prefix_len, nlabels;
 
 	REQUIRE(rpz != NULL);
 	REQUIRE(rpz->rpzs != NULL && rpz->num < rpz->rpzs->p.num_zones);
+
+	if (rpz_type == DNS_RPZ_TYPE_QNAME) {
+		suffix = &rpz->origin;
+	} else {
+		suffix = &rpz->nsdname;
+	}
+
+	/*
+	 * A zone transfer can carry records whose owner name lies outside the
+	 * zone, and a secondary keeps them when it reloads its own copy of the
+	 * zone.  We are about to strip 'suffix' off the owner name, so require
+	 * that it is really there, the way dns_catz_update_process() does
+	 * before splitting a catalog zone entry.
+	 */
+	if (!dns_name_issubdomain(src_name, suffix)) {
+		log_badowner(log_level, src_name);
+		return ISC_R_FAILURE;
+	}
+
+	nlabels = dns_name_countlabels(src_name) - dns_name_countlabels(suffix);
 
 	/*
 	 * Handle wildcards by putting only the parent into the
 	 * summary database.  The database only causes a check of the
 	 * real policy zone where wildcards will be handled.
+	 *
+	 * The "*" label is one of the labels we are keeping, so there has to
+	 * be one to spare; a policy zone whose own origin is a wildcard has
+	 * none at its apex.
 	 */
-	if (dns_name_iswildcard(src_name)) {
+	if (nlabels > 0 && dns_name_iswildcard(src_name)) {
 		prefix_len = 1;
 		memset(&new_data->set, 0, sizeof(new_data->set));
 		make_nm_set(&new_data->wild, rpz->num, rpz_type);
@@ -1072,15 +1124,11 @@ name2data(dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 	}
 
 	dns_name_init(&tmp_name, tmp_name_offsets);
-	n = dns_name_countlabels(src_name);
-	n -= prefix_len;
-	if (rpz_type == DNS_RPZ_TYPE_QNAME) {
-		n -= dns_name_countlabels(&rpz->origin);
-	} else {
-		n -= dns_name_countlabels(&rpz->nsdname);
-	}
-	dns_name_getlabelsequence(src_name, prefix_len, n, &tmp_name);
+	dns_name_getlabelsequence(src_name, prefix_len, nlabels - prefix_len,
+				  &tmp_name);
 	(void)dns_name_concatenate(&tmp_name, dns_rootname, trig_name, NULL);
+
+	return ISC_R_SUCCESS;
 }
 
 #ifndef HAVE_BUILTIN_CLZ
@@ -1473,7 +1521,14 @@ add_name(dns_rpz_zone_t *rpz, dns_qp_t *qp, dns_rpz_type_t rpz_type,
 	 */
 
 	trig_name = dns_fixedname_initname(&trig_namef);
-	name2data(rpz, rpz_type, src_name, trig_name, &new_data);
+	result = name2data(DNS_RPZ_ERROR_LEVEL, rpz, rpz_type, src_name,
+			   trig_name, &new_data);
+	/*
+	 * Log complaints about bad owner names but let the zone load.
+	 */
+	if (result != ISC_R_SUCCESS) {
+		return ISC_R_SUCCESS;
+	}
 
 	result = add_nm(rpz->rpzs, qp, trig_name, &new_data);
 
@@ -2367,7 +2422,15 @@ del_name(dns_rpz_zone_t *rpz, dns_qp_t *qp, dns_rpz_type_t rpz_type,
 	 */
 
 	trig_name = dns_fixedname_initname(&trig_namef);
-	name2data(rpz, rpz_type, src_name, trig_name, &del_data);
+	/*
+	 * Do not worry about invalid rpz owner names.  If we are here, then
+	 * something relevant was added and so was valid.
+	 */
+	result = name2data(DNS_RPZ_DEBUG_QUIET, rpz, rpz_type, src_name,
+			   trig_name, &del_data);
+	if (result != ISC_R_SUCCESS) {
+		return;
+	}
 
 	result = dns_qp_getname(qp, trig_name, (void **)&data, NULL);
 	if (result != ISC_R_SUCCESS) {

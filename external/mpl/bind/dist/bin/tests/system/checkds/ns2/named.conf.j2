@@ -14,13 +14,7 @@
 // NS2
 
 options {
-	query-source address 10.53.0.2;
-	notify-source 10.53.0.2;
-	transfer-source 10.53.0.2;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.2; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-transfer { any; };
 	recursion no;
 	dnssec-validation no;
@@ -28,15 +22,12 @@ options {
 
 {% include "_common/controls.conf.j2" %}
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "ns2" {
 	type primary;
 	allow-update { any; };
-	allow-transfer { 10.53.0.2; 10.53.0.4; 10.53.0.8; };
+	allow-transfer { @ns.ip@; 10.53.0.4; 10.53.0.8; };
 	also-notify { 10.53.0.4; 10.53.0.8; };
 	dnssec-policy default;
 	file "ns2.db";
@@ -45,7 +36,7 @@ zone "ns2" {
 zone "ns2-4" {
 	type primary;
 	allow-update { any; };
-	allow-transfer { 10.53.0.2; 10.53.0.4; 10.53.0.8; };
+	allow-transfer { @ns.ip@; 10.53.0.4; 10.53.0.8; };
 	also-notify { 10.53.0.4; 10.53.0.8; };
 	dnssec-policy default;
 	file "ns2-4.db";
@@ -54,7 +45,7 @@ zone "ns2-4" {
 zone "ns2-4-5" {
 	type primary;
 	allow-update { any; };
-	allow-transfer { 10.53.0.2; 10.53.0.4; 10.53.0.8; };
+	allow-transfer { @ns.ip@; 10.53.0.4; 10.53.0.8; };
 	also-notify { 10.53.0.4; 10.53.0.8; };
 	dnssec-policy default;
 	file "ns2-4-5.db";
@@ -63,7 +54,7 @@ zone "ns2-4-5" {
 zone "ns2-4-6" {
 	type primary;
 	allow-update { any; };
-	allow-transfer { 10.53.0.2; 10.53.0.4; 10.53.0.8; };
+	allow-transfer { @ns.ip@; 10.53.0.4; 10.53.0.8; };
 	also-notify { 10.53.0.4; 10.53.0.8; };
 	dnssec-policy default;
 	file "ns2-4-6.db";
@@ -72,7 +63,7 @@ zone "ns2-4-6" {
 zone "ns2-5-7" {
 	type primary;
 	allow-update { any; };
-	allow-transfer { 10.53.0.2; 10.53.0.4; 10.53.0.8; };
+	allow-transfer { @ns.ip@; 10.53.0.4; 10.53.0.8; };
 	also-notify { 10.53.0.4; 10.53.0.8; };
 	dnssec-policy default;
 	file "ns2-5-7.db";
@@ -81,7 +72,7 @@ zone "ns2-5-7" {
 zone "ns5" {
 	type primary;
 	allow-update { any; };
-	allow-transfer { 10.53.0.2; 10.53.0.4; 10.53.0.8; };
+	allow-transfer { @ns.ip@; 10.53.0.4; 10.53.0.8; };
 	also-notify { 10.53.0.4; 10.53.0.8; };
 	dnssec-policy default;
 	file "ns5.db";
@@ -90,7 +81,7 @@ zone "ns5" {
 zone "ns5-6-7" {
 	type primary;
 	allow-update { any; };
-	allow-transfer { 10.53.0.2; 10.53.0.4; 10.53.0.8; };
+	allow-transfer { @ns.ip@; 10.53.0.4; 10.53.0.8; };
 	also-notify { 10.53.0.4; 10.53.0.8; };
 	dnssec-policy default;
 	file "ns5-6-7.db";
@@ -99,7 +90,7 @@ zone "ns5-6-7" {
 zone "ns5-7" {
 	type primary;
 	allow-update { any; };
-	allow-transfer { 10.53.0.2; 10.53.0.4; 10.53.0.8; };
+	allow-transfer { @ns.ip@; 10.53.0.4; 10.53.0.8; };
 	also-notify { 10.53.0.4; 10.53.0.8; };
 	dnssec-policy default;
 	file "ns5-7.db";
@@ -108,7 +99,7 @@ zone "ns5-7" {
 zone "ns6" {
 	type primary;
 	allow-update { any; };
-	allow-transfer { 10.53.0.2; 10.53.0.4; 10.53.0.8; };
+	allow-transfer { @ns.ip@; 10.53.0.4; 10.53.0.8; };
 	also-notify { 10.53.0.4; 10.53.0.8; };
 	dnssec-policy default;
 	file "ns6.db";

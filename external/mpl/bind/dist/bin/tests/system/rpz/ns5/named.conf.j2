@@ -16,21 +16,13 @@
  */
 
 options {
-	query-source address 10.53.0.5;
-	notify-source 10.53.0.5;
-	transfer-source 10.53.0.5;
-	port @PORT@;
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	statistics-file "named.stats";
 	session-keyfile "session.key";
-	listen-on { 10.53.0.5; };
-	listen-on-v6 { none; };
 	allow-transfer { any; };
 	ixfr-from-differences yes;
 	notify-delay 0;
-	notify yes;
 	minimal-responses no;
-	recursion yes;
 	dnssec-validation yes;
 
 	# turn rpz on or off

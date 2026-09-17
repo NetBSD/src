@@ -1,0 +1,5 @@
+$TTL 300
+@ IN SOA ns.example.nil. hostmaster.example.nil. ( 1 300 300 604800 300 )
+  IN NS  ns.example.nil.
+ns IN A  10.53.0.1
+a  IN A  192.0.2.1

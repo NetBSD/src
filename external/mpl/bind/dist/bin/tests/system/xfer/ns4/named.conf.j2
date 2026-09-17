@@ -13,17 +13,10 @@
 
 {% set ns4_as_secondary_for_nil = ns4_as_secondary_for_nil | default(False) %}
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-transfer { any; };
 	recursion no;
 	dnssec-validation no;
-	notify yes;
 	blackhole { none; };
 };
 
@@ -46,8 +39,8 @@ zone "." {
 
 {% if ns4_as_secondary_for_nil %}
 zone "nil" {
-    type secondary;
-    file "nil.db";
-    primaries { 10.53.0.5 key tsig_key; };
+	type secondary;
+	file "nil.db";
+	primaries { 10.53.0.5 key tsig_key; };
 };
 {% endif %}

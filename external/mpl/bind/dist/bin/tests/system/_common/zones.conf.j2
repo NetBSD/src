@@ -4,7 +4,7 @@
 zone "@zone.name@" {
 	type @zone.type@;
 {% if zone.type == "static-stub" %}
-        server-addresses { @zone.ns.ip@; };
+	server-addresses { @zone.ns.ip@; };
 {% else %}
 	file "@zone.filepath@";
 {% endif %}

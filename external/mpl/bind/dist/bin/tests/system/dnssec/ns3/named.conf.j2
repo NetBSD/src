@@ -14,16 +14,9 @@
 // NS3
 
 options {
-	query-source address 10.53.0.3;
-	notify-source 10.53.0.3;
-	transfer-source 10.53.0.3;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-transfer { any; };
 	recursion no;
-	notify yes;
 	dnssec-validation yes;
 	session-keyfile "session.key";
 	minimal-responses no;
@@ -67,10 +60,7 @@ dnssec-policy "autonsec3" {
 	nsec3param iterations 0 optout no salt-length 0;
 };
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "example" {
 	type secondary;
@@ -100,6 +90,21 @@ zone "bogus.example" {
 	type primary;
 	file "bogus.example.db.signed";
 	allow-update { any; };
+};
+
+zone "keytrap.example" {
+	type primary;
+	file "keytrap.example.db.signed";
+};
+
+zone "keytrap2.example" {
+	type primary;
+	file "keytrap2.example.db.signed";
+};
+
+zone "keytrap3.example" {
+	type primary;
+	file "keytrap3.example.db.signed";
 };
 
 zone "badds.example" {

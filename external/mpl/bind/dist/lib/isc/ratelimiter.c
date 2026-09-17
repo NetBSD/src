@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimiter.c,v 1.1.1.10 2026/05/20 16:43:07 christos Exp $	*/
+/*	$NetBSD: ratelimiter.c,v 1.1.1.11 2026/09/17 17:45:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -204,7 +204,7 @@ isc_ratelimiter_dequeue(isc_ratelimiter_t *restrict rl, isc_rlevent_t **rlep) {
 	isc_result_t result = ISC_R_SUCCESS;
 
 	REQUIRE(rl != NULL);
-	REQUIRE(rlep != NULL);
+	REQUIRE(rlep != NULL && *rlep != NULL);
 
 	LOCK(&rl->lock);
 	if (ISC_LINK_LINKED(*rlep, link)) {

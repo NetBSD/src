@@ -28,7 +28,6 @@ import isctest
 pytestmark = pytest.mark.extra_artifacts(
     [
         "ans*/ans.run",
-        "ns*/named.run",
         "ns*/root.bk",
     ]
 )
@@ -41,20 +40,13 @@ NXDOMAIN_NAME = "longttl-nxdomain.example."
 
 def upstream_queries(ans2: AnsInstance, qname: str) -> int:
     """Number of TXT queries for `qname` which reached the authoritative server."""
-    return len(ans2.log.grep(f"request: {qname.rstrip('.')}/TXT"))
+    return len(ans2.log.grep(f"Received {qname.rstrip('.')}/IN/TXT "))
 
 
-def enable_ans2_responses(ans2: AnsInstance) -> None:
-    isctest.query.udp(dns.message.make_query("enable.", "TXT"), ans2.ip)
-
-
-@pytest.fixture(name="resolver")
-def resolver_fixture(servers: dict[str, NamedInstance]) -> NamedInstance:
-    ns3 = servers["ns3"]
-    enable_ans2_responses(servers["ans2"])
+@pytest.fixture(scope="module", autouse=True)
+def after_servers_start(ns3: NamedInstance) -> None:
     ns3.rndc("serve-stale on")
     ns3.rndc("flush")
-    return ns3
 
 
 @pytest.mark.parametrize(
@@ -66,7 +58,7 @@ def resolver_fixture(servers: dict[str, NamedInstance]) -> NamedInstance:
 )
 def test_fresh_ncache_entry_is_not_refreshed(
     servers: dict[str, NamedInstance],
-    resolver: NamedInstance,
+    ns3: NamedInstance,
     qname: str,
     expected_rcode: dns.rcode.Rcode,
 ) -> None:
@@ -75,7 +67,7 @@ def test_fresh_ncache_entry_is_not_refreshed(
 
     # Prime the cache; this is the one query the authoritative server is
     # allowed to see.
-    res = isctest.query.udp(msg, resolver.ip)
+    res = isctest.query.udp(msg, ns3.ip)
     isctest.check.rcode(res, expected_rcode)
     assert not res.answer
 
@@ -86,7 +78,7 @@ def test_fresh_ncache_entry_is_not_refreshed(
     # every one of these has to be a cache hit, and none of them may mark the
     # answer as stale.
     for _ in range(3):
-        res = isctest.query.udp(msg, resolver.ip)
+        res = isctest.query.udp(msg, ns3.ip)
         isctest.check.rcode(res, expected_rcode)
         isctest.check.noede(res)
 
@@ -102,4 +94,4 @@ def test_fresh_ncache_entry_is_not_refreshed(
         f"{qname.rstrip('.')} TXT stale answer used, "
         "an attempt to refresh the RRset will still be made"
     )
-    assert prohibited_log not in resolver.log
+    assert prohibited_log not in ns3.log

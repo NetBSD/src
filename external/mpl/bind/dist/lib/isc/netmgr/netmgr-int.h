@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr-int.h,v 1.1.1.11 2026/04/07 23:58:26 christos Exp $	*/
+/*	$NetBSD: netmgr-int.h,v 1.1.1.12 2026/09/17 17:45:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -105,7 +105,7 @@ STATIC_ASSERT(ISC_NETMGR_TCP_RECVBUF_SIZE <= ISC_NETMGR_RECVBUF_SIZE,
  * most in TCPDNS or TLSDNS connections, so there's no risk of overrun
  * when using a buffer this size.
  */
-#define NM_BIG_BUF ISC_NETMGR_TCP_RECVBUF_SIZE * 2
+#define NM_BIG_BUF (ISC_NETMGR_TCP_RECVBUF_SIZE * 2)
 
 /*%
  * Maximum segment size (MSS) of TCP socket on which the server responds to
@@ -1119,6 +1119,9 @@ isc__nm_httpsession_detach(isc_nm_http_session_t **sessionp);
 
 isc_nmhandle_t *
 isc__nm_httpsession_handle(isc_nm_http_session_t *session);
+
+bool
+isc__nm_httpsession_active(isc_nm_http_session_t *session);
 
 void
 isc__nm_http_set_tlsctx(isc_nmsocket_t *sock, isc_tlsctx_t *tlsctx);

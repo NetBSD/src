@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.1.1.3 2025/01/26 16:12:38 christos Exp $	*/
+/*	$NetBSD: dns.c,v 1.1.1.4 2026/09/17 17:45:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -370,7 +370,6 @@ dns_test_rdatafromstring(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	 * delimiters while reading the source string.  These should match
 	 * specials from lib/dns/master.c.
 	 */
-	specials[0] = 1;
 	specials['('] = 1;
 	specials[')'] = 1;
 	specials['"'] = 1;

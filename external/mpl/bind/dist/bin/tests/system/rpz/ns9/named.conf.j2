@@ -16,24 +16,16 @@
  */
 
 options {
-	query-source address 10.53.0.9;
-	notify-source 10.53.0.9;
-	transfer-source 10.53.0.9;
-	port @PORT@;
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	statistics-file	"named.stats";
 	session-keyfile "session.key";
-	listen-on { 10.53.0.9; };
-	listen-on-v6 { none; };
 	allow-transfer { any; };
-	notify yes;
 	minimal-responses no;
-	recursion yes;
 	dnssec-validation no;
 	dns64-server "example.localdomain.";
 	dns64 64:ff9b::/96 { };
 	response-policy {
-	    zone "rpz";
+		zone "rpz";
 	}
 	qname-wait-recurse no ;
 

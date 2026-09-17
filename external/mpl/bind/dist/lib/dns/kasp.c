@@ -1,4 +1,4 @@
-/*	$NetBSD: kasp.c,v 1.1.1.8 2026/01/29 18:19:52 christos Exp $	*/
+/*	$NetBSD: kasp.c,v 1.1.1.9 2026/09/17 17:45:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -535,7 +535,7 @@ dns_kasp_key_tagmin(dns_kasp_key_t *key) {
 uint16_t
 dns_kasp_key_tagmax(dns_kasp_key_t *key) {
 	REQUIRE(key != NULL);
-	return key->tag_min;
+	return key->tag_max;
 }
 
 bool

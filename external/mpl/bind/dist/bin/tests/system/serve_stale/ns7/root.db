@@ -15,6 +15,6 @@ ns.nil.		300	A	10.53.0.1
 example.	300	NS	ns.example.
 ns.example.	300	A	10.53.0.2
 slow.		300	NS	ns.slow.
-ns.slow.	300	A	10.53.0.2
+ns.slow.	300	A	10.53.0.9
 stale.		300	NS	ns.stale.
 ns.stale.	300	A	10.53.0.6

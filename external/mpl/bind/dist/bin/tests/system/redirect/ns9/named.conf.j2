@@ -2,9 +2,7 @@
 // (synth-from-dnssec path)
 
 options {
-	port @PORT@;
-	listen-on port @PORT@ { 10.53.0.9; };
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation no;
 	recursion no;
 };

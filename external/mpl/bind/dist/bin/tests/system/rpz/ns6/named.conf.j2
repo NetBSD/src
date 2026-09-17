@@ -12,26 +12,19 @@
  */
 
 options {
-	query-source address 10.53.0.6;
-	notify-source 10.53.0.6;
-	transfer-source 10.53.0.6;
-	port @PORT@;
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	statistics-file "named.stats";
 	session-keyfile "session.key";
-	listen-on { 10.53.0.6; };
-	listen-on-v6 { none; };
 	allow-transfer { any; };
 	forward only;
 	forwarders { 10.53.0.3; };
 	minimal-responses no;
-	recursion yes;
 	dnssec-validation yes;
 	qname-minimization disabled;
 
 	response-policy {
-	    zone "policy1" min-update-interval 0;
-	    zone "bl.tld2s" policy given;
+		zone "policy1" min-update-interval 0;
+		zone "bl.tld2s" policy given;
 	} qname-wait-recurse yes
 	// add-soa yes # leave add-soa as default for unset test
 	nsip-enable yes
@@ -56,6 +49,6 @@ zone "policy1" {
 };
 
 zone "bl.tld2s." {
-    type primary;
-    file "bl.tld2s.db";
+	type primary;
+	file "bl.tld2s.db";
 };

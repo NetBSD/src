@@ -1,4 +1,4 @@
-/*	$NetBSD: tkeyconf.c,v 1.1.1.7 2026/01/29 18:19:44 christos Exp $	*/
+/*	$NetBSD: tkeyconf.c,v 1.1.1.8 2026/09/17 17:45:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -52,22 +52,26 @@ named_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
 		return result;
 	}
 
-	result = cfg_map_get(options, "tkey-gssapi-credential", &obj);
-	if (result == ISC_R_SUCCESS) {
-		s = cfg_obj_asstring(obj);
+	if (options != NULL) {
+		result = cfg_map_get(options, "tkey-gssapi-credential", &obj);
+		if (result == ISC_R_SUCCESS) {
+			s = cfg_obj_asstring(obj);
 
-		isc_buffer_constinit(&b, s, strlen(s));
-		isc_buffer_add(&b, strlen(s));
-		name = dns_fixedname_initname(&fname);
-		CHECK(dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
-		CHECK(dst_gssapi_acquirecred(name, false, &tctx->gsscred));
-	}
+			isc_buffer_constinit(&b, s, strlen(s));
+			isc_buffer_add(&b, strlen(s));
+			name = dns_fixedname_initname(&fname);
+			CHECK(dns_name_fromtext(name, &b, dns_rootname, 0,
+						NULL));
+			CHECK(dst_gssapi_acquirecred(name, false,
+						     &tctx->gsscred));
+		}
 
-	obj = NULL;
-	result = cfg_map_get(options, "tkey-gssapi-keytab", &obj);
-	if (result == ISC_R_SUCCESS) {
-		s = cfg_obj_asstring(obj);
-		tctx->gssapi_keytab = isc_mem_strdup(mctx, s);
+		obj = NULL;
+		result = cfg_map_get(options, "tkey-gssapi-keytab", &obj);
+		if (result == ISC_R_SUCCESS) {
+			s = cfg_obj_asstring(obj);
+			tctx->gssapi_keytab = isc_mem_strdup(mctx, s);
+		}
 	}
 
 	*tctxp = tctx;

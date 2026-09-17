@@ -12,20 +12,16 @@
  */
 
 options {
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; 10.53.1.2; };
+	{% include_indented "_common/options/sources.conf.j2" %}
+	{% include_indented "_common/options/server.conf.j2" %}
+	listen-on { @ns.ip@; 10.53.1.2; };
 	listen-on-v6 { none; };
-	recursion yes;
 	allow-recursion { any; };
 	allow-query-cache { any; };
-	allow-query-cache-on { 10.53.0.3; }; # allow-recursion-on inherits
+	allow-query-cache-on { @ns.ip@; }; # allow-recursion-on inherits
 	dnssec-validation no;
 };
 
 {% include "_common/controls.conf.j2" %}
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}

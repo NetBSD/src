@@ -12,16 +12,9 @@
  */
 
 options {
-	query-source address 10.53.0.1;
-	notify-source 10.53.0.1;
-	transfer-source 10.53.0.1;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	recursion no;
 	dnssec-validation no;
-	notify yes;
 };
 
 {% include "_common/controls.conf.j2" %}
@@ -37,9 +30,9 @@ zone "nsec" { type primary; file "nsec.db.signed"; };
 zone "private.nsec" { type primary; file "private.nsec.db.signed"; };
 
 zone "nestedwild.test" {
-        type primary;
-        file "nestedwild.db";
-        check-names ignore;
+	type primary;
+	file "nestedwild.db";
+	check-names ignore;
 };
 
 /*
@@ -47,9 +40,9 @@ zone "nestedwild.test" {
  * also has a wildcard, used to abort named when served from RBTDB.
  */
 zone "entwild.test" {
-        type primary;
-        file "entwild.db.signed";
-        check-names ignore;
+	type primary;
+	file "entwild.db.signed";
+	check-names ignore;
 };
 
 /*

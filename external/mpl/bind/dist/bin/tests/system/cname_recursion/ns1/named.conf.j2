@@ -1,0 +1,44 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS1: root server, authoritative for the CNAME target zone, and
+// primary for the catalog zone and its member zone
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	recursion no;
+	dnssec-validation no;
+	allow-transfer { any; };
+};
+
+{% include "_common/controls.conf.j2" %}
+
+zone "." {
+	type primary;
+	file "root.db";
+};
+
+zone "external" {
+	type primary;
+	file "external.db";
+};
+
+zone "catalog" {
+	type primary;
+	file "catalog.db";
+};
+
+zone "member" {
+	type primary;
+	file "member.db";
+};

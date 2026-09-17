@@ -3,9 +3,7 @@
 // locally, then nxdomain-redirect+dns64 hit the same buggy path as ns7).
 
 options {
-	port @PORT@;
-	listen-on port @PORT@ { 10.53.0.10; };
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	nxdomain-redirect redirect;
 	dnssec-validation yes;
 	synth-from-dnssec yes;

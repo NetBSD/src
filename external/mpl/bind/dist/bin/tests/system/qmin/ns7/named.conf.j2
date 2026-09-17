@@ -14,14 +14,7 @@
 // NS7
 
 options {
-	query-source address 10.53.0.7;
-	notify-source 10.53.0.7;
-	transfer-source 10.53.0.7;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.7; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	qname-minimization relaxed;
 	querylog yes;
 	resolver-query-timeout 30000; # 30 seconds
@@ -31,10 +24,7 @@ options {
 
 {% include "_common/controls.conf.j2" %}
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "fwd." IN {
 	type forward;

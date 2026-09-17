@@ -14,15 +14,8 @@
 // NS1
 
 options {
-	query-source address 10.53.0.1;
-	notify-source 10.53.0.1;
-	transfer-source 10.53.0.1;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	recursion no;
-	notify yes;
 	dnssec-validation yes;
 };
 
@@ -30,7 +23,7 @@ options {
 
 {% if FEATURE_LIBXML2 == "1" or FEATURE_JSON_C == "1" %}
 statistics-channels {
-	inet 10.53.0.1 port @EXTRAPORT1@ allow { any; };
+	inet @ns.ip@ port @EXTRAPORT1@ allow { any; };
 };
 {% endif %}
 

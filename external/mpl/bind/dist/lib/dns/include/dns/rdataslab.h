@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.h,v 1.1.1.11 2026/08/29 14:32:13 christos Exp $	*/
+/*	$NetBSD: rdataslab.h,v 1.1.1.12 2026/09/17 17:45:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -101,7 +101,6 @@ struct dns_slabheader {
 	isc_refcount_t references;
 
 	dns_slabheader_proof_t *noqname;
-	dns_slabheader_proof_t *closest;
 	/*%<
 	 * We don't use the LIST macros, because the LIST structure has
 	 * both head and tail pointers, and is doubly linked.

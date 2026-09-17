@@ -1,0 +1,16 @@
+{% include "_common/controls.conf.j2" %}
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	recursion no;
+	dnssec-validation no;
+};
+
+zone "." {
+	type primary;
+	file "root.db";
+};
+
+zone "tree.example" {
+	type primary;
+	file "tree.db";
+};

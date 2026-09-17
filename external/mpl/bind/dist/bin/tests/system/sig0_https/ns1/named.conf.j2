@@ -1,0 +1,7 @@
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	https-port @HTTPSPORT@;
+	listen-on tls ephemeral http default { @ns.ip@; };
+};
+
+{% include "_common/controls.conf.j2" %}

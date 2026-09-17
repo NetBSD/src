@@ -1,24 +1,21 @@
 // validating resolver
 
 options {
-	query-source address 10.53.0.2;
-	notify-source 10.53.0.2;
-	transfer-source 10.53.0.2;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.2; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation yes;
 	minimal-responses no;
+	// Keep the DS insecurity proof deterministic: without this, a cached
+	// NSEC from an earlier forgery lets aggressive-NSEC synthesis answer the
+	// grandchild query before the DS fetch that drives is_insecure_referral().
+	synth-from-dnssec no;
+	// Pinned so the RRSIG-count cap in is_insecure_referral() is tested
+	// against a known number rather than the built-in default.
+	max-validations-per-fetch @MAX_VALIDATIONS@;
 };
 
 {% include "_common/controls.conf.j2" %}
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "p031.test" {
 	type static-stub;

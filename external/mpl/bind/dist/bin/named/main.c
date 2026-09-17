@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.22 2026/08/29 14:32:05 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.23 2026/09/17 17:45:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -847,7 +847,7 @@ parse_port(char *arg) {
 		value = arg + 6;
 		ptype = HTTPSPORT;
 	} else if (strncmp(arg, "http=", 5) == 0) {
-		value = arg + 6;
+		value = arg + 5;
 		ptype = HTTPPORT;
 	}
 

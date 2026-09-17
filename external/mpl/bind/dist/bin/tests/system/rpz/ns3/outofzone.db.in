@@ -1,0 +1,29 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+; A policy zone as a secondary would have written it out after a transfer
+; that carried a record from outside the zone.  The zone is a secondary so
+; that this file is loaded the way a secondary loads its own copy of a
+; transferred zone; the out-of-zone check in lib/dns/master.c only applies
+; to primaries.
+
+$TTL 300
+@			SOA	ns.tld3. hostmaster.ns.tld3. ( 1 3600 1200 2419200 60 )
+			NS	ns.tld3.
+
+; Two labels, fewer than the three of the origin, so stripping the origin
+; from it used to underflow an unsigned label count in name2data().
+com.			CNAME	.
+
+; An ordinary trigger, so the test can tell that the rest of the zone is
+; still loaded after the record above has been rejected.  It is never
+; queried, so it cannot disturb the other checks in this test.
+never-queried.example	CNAME	.

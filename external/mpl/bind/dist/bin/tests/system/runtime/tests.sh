@@ -223,6 +223,20 @@ if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
+echo_i "checking cyclic and repeated remote-servers lists (GL #6287) ($n)"
+ret=0
+testpid=$(run_named ns2 named$n.run -c named8.conf -D runtime-ns2-remote-servers-loop)
+test -n "$testpid" || ret=1
+retry_quiet 60 check_named_log "running$" ns2/named$n.run || ret=1
+retry_quiet 60 check_named_log \
+  "zone repeated-list-references/IN: soa_query: remote server current address index 0 count 2" \
+  ns2/named$n.run || ret=1
+kill_named ns2/named.pid || ret=1
+test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
 echo_i "verifying that named switches UID ($n)"
 if [ "$(id -u)" -eq 0 ]; then
   ret=0

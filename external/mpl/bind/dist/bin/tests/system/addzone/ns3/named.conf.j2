@@ -14,10 +14,7 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-query { any; };
 	allow-transfer { any; };
 	recursion no;

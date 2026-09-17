@@ -14,14 +14,7 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation no;
 	cookie-algorithm siphash24;
 	cookie-secret "569d36a6cc27d6bf55502183302ba352";

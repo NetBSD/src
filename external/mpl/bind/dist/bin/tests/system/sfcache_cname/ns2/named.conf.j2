@@ -1,10 +1,5 @@
 options {
-	query-source address @ns.ip@;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { @ns.ip@; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation no;
 	qname-minimization off;
 	servfail-ttl 5;

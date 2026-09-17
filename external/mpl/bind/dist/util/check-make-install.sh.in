@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
@@ -11,17 +11,30 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+set -euo pipefail
+
 abs_top_srcdir=@abs_top_srcdir@
 abs_builddir=@abs_builddir@
+# configure expands the directory variables below into references to
+# prefix, exec_prefix and datarootdir, which shellcheck cannot see.
+# shellcheck disable=SC2034
 prefix=@prefix@
+# shellcheck disable=SC2034
+exec_prefix=@exec_prefix@
+# shellcheck disable=SC2034
+datarootdir=@datarootdir@
 includedir=@includedir@
-install_dir="${DESTDIR}@prefix@"
+install_dir="${DESTDIR:-}@prefix@"
+bindir="${DESTDIR:-}@bindir@"
+libdir="${DESTDIR:-}@libdir@"
+mandir="${DESTDIR:-}@mandir@"
+sbindir="${DESTDIR:-}@sbindir@"
 
 headers_to_install() {
   find "${abs_top_srcdir}/lib" -name "*.h" -or -name "*.h.in" \
     | sed -n \
       -e "s|\.h\.in$|\.h|" \
-      -e "s|.*include/|${DESTDIR}${includedir}/|p" \
+      -e "s|.*include/|${DESTDIR:-}${includedir}/|p" \
     | sort -u
 }
 
@@ -34,19 +47,31 @@ for header in $(headers_to_install); do
   fi
 done
 
-named_binary_path="${install_dir}/sbin/named"
+named_binary_path="${sbindir}/named"
 if [ ! -x "${named_binary_path}" ]; then
   echo "ERROR: ${named_binary_path} does not exist or is not executable"
   status=1
 fi
 
-named_man_page_path="${install_dir}/share/man/man8/named.8"
+named_man_page_path="${mandir}/man8/named.8"
 if [ ! -f "${named_man_page_path}" ]; then
   echo "ERROR: ${named_man_page_path} does not exist"
   status=1
 fi
 
-if [ -n "${DESTDIR}" ]; then
+# Every installed program must have a manual page installed with it.
+shopt -s nullglob
+
+for program in "${bindir}"/* "${sbindir}"/* "${libdir}"/bind/*.so; do
+  name=$(basename "${program}" .so)
+  man_pages=("${mandir}"/man*/"${name}".?)
+  if [ ${#man_pages[@]} -eq 0 ]; then
+    echo "ERROR: no manual page was installed for ${name}"
+    status=1
+  fi
+done
+
+if [ -n "${DESTDIR:-}" ]; then
   for expected_subdir in bin include lib sbin share; do
     echo "${install_dir}/${expected_subdir}" >>"${abs_builddir}/expected_dirs"
   done
@@ -58,4 +83,4 @@ if [ -n "${DESTDIR}" ]; then
   rm -f "${abs_builddir}/expected_dirs" "${abs_builddir}/existing_dirs"
 fi
 
-exit $status
+exit "$status"

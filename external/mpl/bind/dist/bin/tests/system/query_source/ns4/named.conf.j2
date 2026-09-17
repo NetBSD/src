@@ -14,17 +14,11 @@
 {% include "_common/controls.conf.j2" %}
 
 options {
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on-v6 { fd92:7065:b8e:ffff::4; };
-	recursion yes;
+	{% include_indented "_common/options/server.conf.j2" %}
+	{% include_indented "_common/options/listen-dual.conf.j2" %}
 	dnssec-validation no;
 	query-source none;
-	query-source-v6 fd92:7065:b8e:ffff::4;
+	query-source-v6 @ns.ip6@;
 };
 
-zone "." {
-	type hint;
-	file "root.hint";
-};
+{% include "_common/root.hint.conf" %}

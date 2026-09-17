@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.1.1.11 2025/01/26 16:12:30 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.1.1.12 2026/09/17 17:45:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -552,6 +552,12 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 				lex->last_was_eol = false;
 				no_comments = true;
 				state = lexstate_qstring;
+			} else if (c == '\0') {
+				lex->last_was_eol = false;
+				tokenp->type = isc_tokentype_unknown;
+				tokenp->value.as_textregion.base = NULL;
+				tokenp->value.as_textregion.length = 0;
+				done = true;
 			} else if (lex->specials[c]) {
 				lex->last_was_eol = false;
 				if ((c == '(' || c == ')') &&
@@ -619,7 +625,8 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 		case lexstate_number:
 			if (c == EOF || !isdigit((unsigned char)c)) {
 				if (c == ' ' || c == '\t' || c == '\r' ||
-				    c == '\n' || c == EOF || lex->specials[c])
+				    c == '\n' || c == '\0' || c == EOF ||
+				    lex->specials[c])
 				{
 					int base;
 					if ((options & ISC_LEXOPT_OCTAL) != 0) {
@@ -719,8 +726,8 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 			 * as lex->specials[EOF] is not a good idea.
 			 */
 			if (c == '\r' || c == '\n' || c == EOF ||
-			    (!escaped &&
-			     (c == ' ' || c == '\t' || lex->specials[c])))
+			    (!escaped && (c == ' ' || c == '\t' || c == '\0' ||
+					  lex->specials[c])))
 			{
 				pushback(source, c);
 				if (source->result != ISC_R_SUCCESS) {
@@ -868,6 +875,13 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 			if (c == EOF) {
 				result = ISC_R_UNEXPECTEDEND;
 				goto done;
+			}
+			if (c == '\0') {
+				tokenp->type = isc_tokentype_unknown;
+				tokenp->value.as_textregion.base = NULL;
+				tokenp->value.as_textregion.length = 0;
+				done = true;
+				break;
 			}
 			if (c == '{') {
 				if (escaped) {

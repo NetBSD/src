@@ -1,4 +1,4 @@
-/*	$NetBSD: master_test.c,v 1.1.1.3 2026/04/07 23:58:38 christos Exp $	*/
+/*	$NetBSD: master_test.c,v 1.1.1.4 2026/09/17 17:45:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -178,6 +178,29 @@ ISC_RUN_TEST_IMPL(load) {
 	result = test_master(SRCDIR, TESTS_DIR "/testdata/master/master1.data",
 			     dns_masterformat_text, nullmsg, nullmsg);
 	assert_int_equal(result, ISC_R_SUCCESS);
+}
+
+/*
+ * Embedded NUL test:
+ * dns_master_loadbuffer() rejects a bare NUL byte with DNS_R_SYNTAX
+ * instead of acting on the partially-written unknown token
+ */
+ISC_RUN_TEST_IMPL(nulbyte) {
+	isc_result_t result;
+	isc_buffer_t source;
+	unsigned char data[] = "$INCLUDE \0\n";
+
+	UNUSED(state);
+
+	result = setup_master(nullmsg, nullmsg);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	isc_buffer_init(&source, data, sizeof(data) - 1);
+	isc_buffer_add(&source, sizeof(data) - 1);
+
+	result = dns_master_loadbuffer(&source, &dns_origin, &dns_origin,
+				       dns_rdataclass_in, 0, &callbacks, mctx);
+	assert_int_equal(result, DNS_R_SYNTAX);
 }
 
 /*
@@ -563,6 +586,7 @@ ISC_RUN_TEST_IMPL(neworigin) {
 
 ISC_TEST_LIST_START
 ISC_TEST_ENTRY(load)
+ISC_TEST_ENTRY(nulbyte)
 ISC_TEST_ENTRY(unexpected)
 ISC_TEST_ENTRY(noowner)
 ISC_TEST_ENTRY(nottl)

@@ -120,7 +120,7 @@ status=$((status + ret))
 
 echo_i "testing external update policy (CNAME) with auth sock ($n)"
 ret=0
-$PERL ./authsock.pl --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 >/dev/null 2>&1 &
+($PERL "${TOP_SRCDIR}/bin/tests/system/authsock.pl" --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 >/dev/null 2>&1 &) &
 sleep 1
 test_update $n testcname.example.nil. CNAME "86400 CNAME testdenied.example.nil" "testdenied" || ret=1
 n=$((n + 1))

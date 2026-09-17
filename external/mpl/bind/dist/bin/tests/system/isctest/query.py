@@ -169,28 +169,53 @@ def create(
     return msg
 
 
-def wait_for_serial(server_ip, zone, expected_serial, timeout=30):
-    """Wait until the server has the expected SOA serial for the zone.
+def get_soa_serial(server_ip, zone, timeout=10):
+    """
+    Get the current SOA serial of a zone from a server.
 
-    Queries the server repeatedly until the SOA serial matches or the
-    timeout expires.
-
-    'server_ip' is the IP address to query (string).
-    'zone' is the zone name (string, with or without trailing dot).
-    'expected_serial' is the expected SOA serial number (int).
-    'timeout' is the maximum time to wait in seconds (default 30).
+    Queries the server repeatedly until it responds with a well-formed
+    SOA answer or the timeout expires.
     """
     query = create(zone, "SOA", dnssec=False)
+    serial = None
 
     def check():
-        res = tcp(query, server_ip)
+        nonlocal serial
+        res = tcp(
+            query,
+            server_ip,
+            timeout=3,
+            attempts=1,
+            expected_rcode=dns.rcode.NOERROR,
+        )
         soa = res.get_rrset(
             res.answer,
             dns.name.from_text(zone),
             dns.rdataclass.IN,
             dns.rdatatype.SOA,
         )
-        return soa is not None and len(soa) == 1 and soa[0].serial == expected_serial
+        assert soa is not None and len(soa) == 1
+        serial = soa[0].serial
+        return True
+
+    isctest.run.retry_with_timeout(
+        check,
+        timeout=timeout,
+        msg=f"timed out getting SOA serial of {zone} from {server_ip}",
+    )
+    return serial
+
+
+def wait_for_serial(server_ip, zone, expected_serial, timeout=30):
+    """
+    Wait until the server has the expected SOA serial for the zone.
+
+    Queries the server repeatedly until the SOA serial matches or the
+    timeout expires.
+    """
+
+    def check():
+        return get_soa_serial(server_ip, zone) == expected_serial
 
     isctest.run.retry_with_timeout(
         check,

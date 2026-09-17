@@ -1,24 +1,14 @@
 // validating resolver
 
 options {
-	query-source address 10.53.0.3;
-	notify-source 10.53.0.3;
-	transfer-source 10.53.0.3;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.3; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation yes;
 	synth-from-dnssec yes;
 };
 
 {% include "_common/controls.conf.j2" %}
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "p22.hack" {
 	type static-stub;

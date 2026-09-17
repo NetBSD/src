@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.1.1.17 2026/06/19 19:52:05 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.1.1.18 2026/09/17 17:45:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -676,6 +676,15 @@ dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
 		};
 
 		dns_name_clone(DNS_TSIG_GSSAPI_NAME, &tkey.algorithm);
+
+		/*
+		 * 'tkeyname' gets destroyed by dns_message_reset(), create a
+		 * local copy of it for buildquery().
+		 */
+		dns_fixedname_t fixed;
+		dns_fixedname_init(&fixed);
+		dns_name_copy(tkeyname, dns_fixedname_name(&fixed));
+		tkeyname = dns_fixedname_name(&fixed);
 
 		dns_message_reset(qmsg, DNS_MESSAGE_INTENTRENDER);
 		CHECK(buildquery(qmsg, tkeyname, &tkey));

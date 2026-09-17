@@ -12,15 +12,8 @@
  */
 
 options {
-	query-source address 10.53.0.1;
-	notify-source 10.53.0.1;
-	transfer-source 10.53.0.1;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	recursion no;
-	notify yes;
 	ixfr-from-differences yes;
 	check-integrity no;
 	dnssec-validation no;
@@ -29,7 +22,7 @@ options {
 {% include "_common/controls.conf.j2" %}
 
 view compress {
-	match-clients { 10.53.0.1/32; };
+	match-clients { @ns.ip@/32; };
 	zone "example" {
 		type primary;
 		file "example.db";

@@ -12,17 +12,13 @@
  */
 
 options {
-	query-source address 10.53.0.1;
-	notify-source 10.53.0.1;
-	transfer-source 10.53.0.1;
-	port @PORT@;
-	pid-file "named.pid";
+	{% include_indented "_common/options/sources.conf.j2" %}
+	{% include_indented "_common/options/server.conf.j2" %}
 	session-keyfile "session.key";
-	listen-on { 10.53.0.1; 127.0.0.1; };
+	listen-on { @ns.ip@; 127.0.0.1; };
 	listen-on-v6 { none; };
-	allow-transfer { !10.53.0.1; any; };
+	allow-transfer { !@ns.ip@; any; };
 	recursion no;
-	notify yes;
 	dnssec-validation no;
 };
 
@@ -44,7 +40,7 @@ dlz "example three" {
 
 dlz "example four" {
 	// Long zone name to trigger ISC_R_NOSPACE in dns_sdlz_putrr.
-        database "dlopen ../driver/.libs/dlzexternal.so 123456789.123456789.123456789.123456789.123456789.example.foo";
+	database "dlopen ../driver/.libs/dlzexternal.so 123456789.123456789.123456789.123456789.123456789.example.foo";
 };
 
 dlz "unsearched1" {

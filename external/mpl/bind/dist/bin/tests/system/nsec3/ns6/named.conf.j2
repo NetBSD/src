@@ -14,13 +14,7 @@
 // NS6
 
 options {
-	query-source address 10.53.0.6;
-	notify-source 10.53.0.6;
-	transfer-source 10.53.0.6;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.6; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-transfer { any; };
 	recursion no;
 	dnssec-validation no;
@@ -29,6 +23,6 @@ options {
 {% include "_common/controls.conf.j2" %}
 
 zone "evil.test" {
-    type primary;
-    file "evil.test.db.signed";
+	type primary;
+	file "evil.test.db.signed";
 };

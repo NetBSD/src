@@ -15,31 +15,24 @@
 {% set family = family | default("v4") %}
 
 options {
-	query-source address 10.53.0.1;
-	notify-source 10.53.0.1;
-	transfer-source 10.53.0.1;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on-v6 { fd92:7065:b8e:ffff::1; };
+	{% include_indented "_common/options-dual.conf.j2" %}
 	recursion no;
 	dnssec-validation no;
-	notify yes;
 	minimal-responses no;
 };
 
 {% if family == "v6" %}
-        plugin query "../../../../plugins/.libs/filter-@filtertype@.so" {
-                filter-@filtertype@-on-v6 yes;
-                filter-@filtertype@ { fd92:7065:b8e:ffff::1; };
-        };
+plugin query "../../../../plugins/.libs/filter-@filtertype@.so" {
+	filter-@filtertype@-on-v6 yes;
+	filter-@filtertype@ { @ns.ip6@; };
+};
 {% else %}
-        acl filterees { 10.53.0.1; };
+acl filterees { @ns.ip@; };
 
-        plugin query "../../../../plugins/.libs/filter-@filtertype@.so" {
-                filter-@filtertype@-on-v4 yes;
-                filter-@filtertype@ { filterees; };
-        };
+plugin query "../../../../plugins/.libs/filter-@filtertype@.so" {
+	filter-@filtertype@-on-v4 yes;
+	filter-@filtertype@ { filterees; };
+};
 {% endif %}
 
 {% include "_common/controls.conf.j2" %}

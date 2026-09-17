@@ -1,0 +1,10 @@
+$TTL 300	; 5 minutes
+@		IN SOA	ns1.example.nil. hostmaster.example.nil. (
+				1	   ; serial
+				2000       ; refresh (2000 seconds)
+				2000       ; retry (2000 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+@		NS	ns1.example.nil.
+		NS	ns2.example.nil.

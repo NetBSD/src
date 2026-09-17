@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.1.1.16 2026/05/20 16:43:10 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.1.1.17 2026/09/17 17:45:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1294,7 +1294,7 @@ get_attached_and_locked_name(dns_adb_t *adb, const dns_name_t *name,
 	RWLOCK(&adb->names_lock, locktype);
 	last_update = adb->names_last_update;
 
-	if (last_update + ADB_STALE_MARGIN >= now || overmem) {
+	if (now - last_update > ADB_STALE_MARGIN || overmem) {
 		last_update = now;
 		UPGRADELOCK(&adb->names_lock, locktype);
 		if (overmem) {
@@ -1383,7 +1383,6 @@ get_attached_and_locked_entry(dns_adb_t *adb, isc_stdtime_t now,
 
 	if (now - last_update > ADB_STALE_MARGIN || overmem) {
 		last_update = now;
-
 		UPGRADELOCK(&adb->entries_lock, locktype);
 		if (overmem) {
 			purge_entries_overmem(adb, 2 * sizeof(*adbentry));

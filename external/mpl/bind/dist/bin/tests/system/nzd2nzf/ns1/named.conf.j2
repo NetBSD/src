@@ -12,10 +12,7 @@
  */
 
 options {
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-query { any; };
 	recursion no;
 	allow-new-zones yes;

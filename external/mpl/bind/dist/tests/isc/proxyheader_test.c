@@ -1,4 +1,4 @@
-/*	$NetBSD: proxyheader_test.c,v 1.1.1.2 2026/08/29 14:32:15 christos Exp $	*/
+/*	$NetBSD: proxyheader_test.c,v 1.1.1.3 2026/09/17 17:45:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1183,6 +1183,7 @@ ISC_RUN_TEST_IMPL(proxyheader_tlv_data_test) {
 	region.length = sizeof(zerodata);
 	result = isc_proxy2_append_tlv(&databuf, ISC_PROXY2_TLV_TYPE_NOOP,
 				       &region);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	isc_buffer_subtract(&databuf, region.length / 2);
 	isc_buffer_usedregion(&databuf, &region);
 	result = isc_proxy2_tlv_data_verify(&region);

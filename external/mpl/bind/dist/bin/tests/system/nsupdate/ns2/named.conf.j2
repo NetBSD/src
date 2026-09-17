@@ -12,15 +12,7 @@
  */
 
 options {
-	query-source address 10.53.0.2;
-	notify-source 10.53.0.2;
-	transfer-source 10.53.0.2;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.2; };
-	listen-on-v6 { none; };
-	recursion yes;
-	notify yes;
+	{% include_indented "_common/options.conf.j2" %}
 	serial-query-rate 1; // workaround for KB AA-01213
 	dnssec-validation no;
 };

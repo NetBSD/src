@@ -169,10 +169,10 @@ zone "nsec3-dynamic-update-inline.kasp" {
  * This zone will have an empty nonterminal node added and a node deleted.
  */
 zone "nsec3-xfr-inline.kasp" {
-       type secondary;
-       file "nsec3-xfr-inline.kasp.db";
-       dnssec-policy "nsec";
-       primaries { 10.53.0.2; };
+	type secondary;
+	file "nsec3-xfr-inline.kasp.db";
+	dnssec-policy "nsec";
+	primaries { 10.53.0.2; };
 };
 {% endif %}{# nsec3-xfr-inline.kasp #}
 

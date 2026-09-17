@@ -1,4 +1,4 @@
-/*	$NetBSD: wks_11.c,v 1.1.1.10 2026/01/29 18:19:54 christos Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.1.1.11 2026/09/17 17:45:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -195,8 +195,8 @@ totext_in_wks(ARGS_TOTEXT) {
 			for (j = 0; j < 8; j++) {
 				if ((sr.base[i] & (0x80 >> j)) != 0) {
 					{
-						snprintf(buf, sizeof(buf), "%u",
-							 i * 8 + j);
+						snprintf(buf, sizeof(buf),
+							 "%hu", i * 8 + j);
 						RETERR(str_totext(" ", target));
 						RETERR(str_totext(buf, target));
 					}

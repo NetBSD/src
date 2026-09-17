@@ -24,8 +24,11 @@ import dns.rdatatype
 import pytest
 
 import isctest
+import isctest.mark
 
 pytestmark = [
+    isctest.mark.with_libnghttp2,
+    isctest.mark.with_fips_dh,
     pytest.mark.extra_artifacts(
         [
             "*.out",
@@ -191,6 +194,12 @@ parental_agents_tests = [
     # Using a reference to parental-agents.
     CheckDSTest(
         zone="reference.explicit.dspublish.ns2",
+        logs_to_wait_for=("DS response from 10.53.0.8",),
+        expected_parent_state="DSPublish",
+    ),
+    # Using a TLS reference to parental-agents.
+    CheckDSTest(
+        zone="tls-reference.explicit.dspublish.ns2",
         logs_to_wait_for=("DS response from 10.53.0.8",),
         expected_parent_state="DSPublish",
     ),

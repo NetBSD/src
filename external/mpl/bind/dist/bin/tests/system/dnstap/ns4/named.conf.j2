@@ -12,16 +12,7 @@
  */
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port @PORT@;
-	directory ".";
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on-v6 { none; };
-	recursion yes;
-	notify yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnstap-identity "ns4";
 	dnstap-version "xxx";
 	dnstap-output unix "dnstap.out";
@@ -37,7 +28,4 @@ server 10.53.0.1 { tcp-only yes; };
 
 {% include "_common/controls.conf.j2" %}
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}

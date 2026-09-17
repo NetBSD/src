@@ -12,18 +12,11 @@
  */
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port @PORT@;
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	session-keyfile "session.key";
-	listen-on { 10.53.0.4; };
-	listen-on-v6 { none; };
 	allow-transfer { any; };
 	notify no;
 	minimal-responses no;
-	recursion yes;
 	dnssec-validation yes;
 };
 

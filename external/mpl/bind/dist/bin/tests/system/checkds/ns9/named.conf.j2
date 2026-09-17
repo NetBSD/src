@@ -16,28 +16,29 @@
 include "trusted.conf";
 
 options {
-	query-source address 10.53.0.9;
-	notify-source 10.53.0.9;
-	transfer-source 10.53.0.9;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.9; };
-	listen-on-v6 { none; };
+	{% include_indented "_common/options.conf.j2" %}
 	allow-transfer { any; };
 	recursion no;
 	dnssec-validation yes;
+
+{% if FEATURE_FIPS_DH == "1" %}
+	tls-port @TLSPORT@;
+	listen-on tls ephemeral { 10.53.0.9; };
+{% endif %}
 };
 
 {% include "_common/controls.conf.j2" %}
+
+tls tls-checkds {
+	remote-hostname "srv01.crt01.example.com"; // enable Strict TLS
+	ca-file "../CA/CA.pem";
+};
 
 remote-servers "ns8" port @PORT@ {
 	10.53.0.8;
 };
 
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 /*
  * 1.     Enabling DNSSEC
@@ -58,6 +59,16 @@ zone "reference.explicit.dspublish.ns2" {
 	dnssec-policy "default";
 	parental-agents { "ns8"; };
 };
+
+{% if FEATURE_FIPS_DH == "1" %}
+/* Same as above, but now with a TLS reference to parental-agents. */
+zone "tls-reference.explicit.dspublish.ns2" {
+	type primary;
+	file "tls-reference.explicit.dspublish.ns2.db";
+	dnssec-policy "default";
+	parental-agents { 10.53.0.8 tls tls-checkds; };
+};
+{% endif %}
 
 /* Same as above, but now with resolver parental agent configured. */
 zone "resolver.explicit.dspublish.ns2" {

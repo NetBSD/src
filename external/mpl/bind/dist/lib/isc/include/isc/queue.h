@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.1.1.8 2026/08/29 14:32:11 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.1.1.9 2026/09/17 17:45:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,6 +12,7 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
+#pragma once
 
 #include <isc/os.h>
 #include <isc/urcu.h>

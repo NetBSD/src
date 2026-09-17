@@ -12,18 +12,9 @@
  */
 
 options {
-	query-source address 10.53.0.1;
-	query-source-v6 address fd92:7065:b8e:ffff::1;
-	notify-source 10.53.0.1;
-	notify-source-v6 fd92:7065:b8e:ffff::1;
-	transfer-source 10.53.0.1;
-	transfer-source-v6 fd92:7065:b8e:ffff::1;
-	port @PORT@;
+	{% include_indented "_common/options-dual.conf.j2" %}
 	tls-port @TLSPORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.1; };
-	listen-on-v6 { fd92:7065:b8e:ffff::1; };
-	listen-on-v6 tls ephemeral { fd92:7065:b8e:ffff::1; };
+	listen-on-v6 tls ephemeral { @ns.ip6@; };
 	recursion no;
 	dnssec-validation no;
 	notify explicit;
@@ -31,7 +22,7 @@ options {
 	version none;  // make statistics independent of the version number
 };
 
-statistics-channels { inet 10.53.0.1 port @EXTRAPORT1@ allow { localhost; }; };
+statistics-channels { inet @ns.ip@ port @EXTRAPORT1@ allow { localhost; }; };
 
 {% include "_common/controls.conf.j2" %}
 

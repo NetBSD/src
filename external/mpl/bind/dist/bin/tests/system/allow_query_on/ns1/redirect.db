@@ -1,0 +1,12 @@
+$TTL 300
+.			IN SOA	. a.root.servers.nil. (
+				2000042100	; serial
+				600		; refresh
+				600		; retry
+				1200		; expire
+				600		; minimum
+)
+@ IN NS a.root-servers.nil.
+*. IN A 100.100.100.2
+*. IN AAAA 2001:ffff:ffff::100.100.100.2
+

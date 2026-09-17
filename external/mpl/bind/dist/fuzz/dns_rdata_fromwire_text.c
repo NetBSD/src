@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.1.1.8 2026/01/29 18:19:48 christos Exp $	*/
+/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.1.1.9 2026/09/17 17:45:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -51,7 +51,6 @@ LLVMFuzzerInitialize(int *argc ISC_ATTR_UNUSED, char ***argv ISC_ATTR_UNUSED) {
 	isc_lex_create(mctx, 64, &lex);
 
 	memset(specials, 0, sizeof(specials));
-	specials[0] = 1;
 	specials['('] = 1;
 	specials[')'] = 1;
 	specials['"'] = 1;

@@ -16,14 +16,7 @@ include "named-tls.conf";
 {% endif %}
 
 options {
-	query-source address 10.53.0.4;
-	notify-source 10.53.0.4;
-	transfer-source 10.53.0.4;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.4; };
-	listen-on-v6 { none; };
-	recursion yes;
+	{% include_indented "_common/options.conf.j2" %}
 	dnssec-validation no;
 	minimal-responses yes;
 
@@ -35,7 +28,7 @@ options {
 
 {% include "_common/controls.conf.j2" %}
 
-statistics-channels { inet 10.53.0.4 port @EXTRAPORT1@ allow { localhost; }; };
+statistics-channels { inet @ns.ip@ port @EXTRAPORT1@ allow { localhost; }; };
 
 zone "." {
 	type hint;

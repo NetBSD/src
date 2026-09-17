@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.1.1.20 2026/08/29 14:32:13 christos Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.1.1.21 2026/09/17 17:45:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2224,10 +2224,6 @@ dns__rbtdb_bindrdataset(dns_rbtdb_t *rbtdb, dns_rbtnode_t *node,
 	if (header->noqname != NULL) {
 		rdataset->attributes |= DNS_RDATASETATTR_NOQNAME;
 	}
-	rdataset->slab.closest = header->closest;
-	if (header->closest != NULL) {
-		rdataset->attributes |= DNS_RDATASETATTR_CLOSEST;
-	}
 
 	/*
 	 * Copy out re-signing information.
@@ -2905,12 +2901,6 @@ find_header:
 				header->noqname = newheader->noqname;
 				newheader->noqname = NULL;
 			}
-			if (header->closest == NULL &&
-			    newheader->closest != NULL)
-			{
-				header->closest = newheader->closest;
-				newheader->closest = NULL;
-			}
 			dns_slabheader_destroy(&newheader);
 			if (addedrdataset != NULL) {
 				dns__rbtdb_bindrdataset(
@@ -2968,12 +2958,6 @@ find_header:
 			{
 				header->noqname = newheader->noqname;
 				newheader->noqname = NULL;
-			}
-			if (header->closest == NULL &&
-			    newheader->closest != NULL)
-			{
-				header->closest = newheader->closest;
-				newheader->closest = NULL;
 			}
 			dns_slabheader_destroy(&newheader);
 			if (addedrdataset != NULL) {
@@ -3272,52 +3256,6 @@ cleanup:
 	return result;
 }
 
-static isc_result_t
-addclosest(isc_mem_t *mctx, dns_slabheader_t *newheader, uint32_t maxrrperset,
-	   dns_rdataset_t *rdataset) {
-	isc_result_t result;
-	dns_slabheader_proof_t *closest = NULL;
-	dns_name_t name = DNS_NAME_INITEMPTY;
-	dns_rdataset_t neg = DNS_RDATASET_INIT, negsig = DNS_RDATASET_INIT;
-	isc_region_t r1 = { .base = NULL }, r2 = { .base = NULL };
-
-	result = dns_rdataset_getclosest(rdataset, &name, &neg, &negsig);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
-
-	result = dns_rdataslab_fromrdataset(&neg, mctx, &r1, 0, maxrrperset);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-
-	result = dns_rdataslab_fromrdataset(&negsig, mctx, &r2, 0, maxrrperset);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-
-	closest = isc_mem_get(mctx, sizeof(*closest));
-	*closest = (dns_slabheader_proof_t){
-		.neg = r1.base,
-		.negsig = r2.base,
-		.name = DNS_NAME_INITEMPTY,
-		.type = neg.type,
-	};
-	dns_name_dup(&name, mctx, &closest->name);
-	newheader->closest = closest;
-
-cleanup:
-	if (result != ISC_R_SUCCESS) {
-		if (r1.base != NULL) {
-			isc_mem_put(mctx, r1.base, r1.length);
-		}
-		if (r2.base != NULL) {
-			isc_mem_put(mctx, r2.base, r2.length);
-		}
-	}
-	dns_rdataset_disassociate(&neg);
-	dns_rdataset_disassociate(&negsig);
-	return result;
-}
-
 static void
 expire_ttl_headers(dns_rbtdb_t *rbtdb, unsigned int locknum,
 		   isc_rwlocktype_t *tlocktypep, isc_stdtime_t now,
@@ -3438,14 +3376,6 @@ dns__rbtdb_addrdataset(dns_db_t *db, dns_dbnode_t *node,
 		}
 		if ((rdataset->attributes & DNS_RDATASETATTR_NOQNAME) != 0) {
 			result = addnoqname(rbtdb->common.mctx, newheader,
-					    rbtdb->maxrrperset, rdataset);
-			if (result != ISC_R_SUCCESS) {
-				dns_slabheader_destroy(&newheader);
-				return result;
-			}
-		}
-		if ((rdataset->attributes & DNS_RDATASETATTR_CLOSEST) != 0) {
-			result = addclosest(rbtdb->common.mctx, newheader,
 					    rbtdb->maxrrperset, rdataset);
 			if (result != ISC_R_SUCCESS) {
 				dns_slabheader_destroy(&newheader);
@@ -3611,7 +3541,6 @@ dns__rbtdb_subtractrdataset(dns_db_t *db, dns_dbnode_t *node,
 	newheader->serial = rbtversion->serial;
 	newheader->trust = 0;
 	newheader->noqname = NULL;
-	newheader->closest = NULL;
 	atomic_init(&newheader->count,
 		    atomic_fetch_add_relaxed(&init_count, 1));
 	newheader->last_used = 0;
@@ -5071,9 +5000,6 @@ dns__rbtdb_deletedata(dns_db_t *db ISC_ATTR_UNUSED,
 
 		if (header->noqname != NULL) {
 			dns_slabheader_freeproof(db->mctx, &header->noqname);
-		}
-		if (header->closest != NULL) {
-			dns_slabheader_freeproof(db->mctx, &header->closest);
 		}
 	}
 }

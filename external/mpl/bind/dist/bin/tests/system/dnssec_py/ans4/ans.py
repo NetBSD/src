@@ -17,7 +17,12 @@ AsyncDnsServer.  Keeping each domain's crafted-response logic in its own
 file bounds its scope as the server accrues unrelated domains.
 """
 
-from dnssec_py.ans4 import noqname_mismatch, rrsig_labels_signer_ans, sibling_ds_ans
+from dnssec_py.ans4 import (
+    delegationtrap_ans,
+    noqname_mismatch,
+    rrsig_labels_signer_ans,
+    sibling_ds_ans,
+)
 from isctest.asyncserver import AsyncDnsServer
 
 
@@ -29,6 +34,8 @@ def main() -> None:
         server.install_response_handlers(noqname_mismatch.RuntimeCheckHandler())
     if rrsig_labels_signer_ans.PEM_PATH.exists():
         server.install_response_handler(rrsig_labels_signer_ans.AttackerZoneHandler())
+    if delegationtrap_ans.PEM_PATH.exists():
+        server.install_response_handler(delegationtrap_ans.DelegationTrapHandler())
 
     server.run()
 

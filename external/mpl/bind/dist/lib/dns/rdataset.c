@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.c,v 1.1.1.12 2026/04/07 23:58:28 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.1.1.13 2026/09/17 17:45:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -550,13 +550,14 @@ dns_rdataset_additionaldata(dns_rdataset_t *rdataset,
 }
 
 isc_result_t
-dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name) {
+dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
+			dns_rdatatype_t type) {
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(rdataset->methods != NULL);
 	if (rdataset->methods->addnoqname == NULL) {
 		return ISC_R_NOTIMPLEMENTED;
 	}
-	return (rdataset->methods->addnoqname)(rdataset, name);
+	return (rdataset->methods->addnoqname)(rdataset, name, type);
 }
 
 isc_result_t
@@ -570,30 +571,6 @@ dns__rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
 		return ISC_R_NOTIMPLEMENTED;
 	}
 	return (rdataset->methods->getnoqname)(rdataset, name, neg,
-					       negsig DNS__DB_FLARG_PASS);
-}
-
-isc_result_t
-dns_rdataset_addclosest(dns_rdataset_t *rdataset, const dns_name_t *name) {
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-	if (rdataset->methods->addclosest == NULL) {
-		return ISC_R_NOTIMPLEMENTED;
-	}
-	return (rdataset->methods->addclosest)(rdataset, name);
-}
-
-isc_result_t
-dns__rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
-			 dns_rdataset_t *neg,
-			 dns_rdataset_t *negsig DNS__DB_FLARG) {
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-
-	if (rdataset->methods->getclosest == NULL) {
-		return ISC_R_NOTIMPLEMENTED;
-	}
-	return (rdataset->methods->getclosest)(rdataset, name, neg,
 					       negsig DNS__DB_FLARG_PASS);
 }
 

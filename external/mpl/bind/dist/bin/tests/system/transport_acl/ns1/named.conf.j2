@@ -19,15 +19,14 @@ tls self-signed {
 };
 
 options {
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	##
 	# generic test
-	listen-on port @PORT@ { 10.53.0.1; };
-	listen-on port @TLSPORT@ tls self-signed { 10.53.0.1; };
+	listen-on port @TLSPORT@ tls self-signed { @ns.ip@; };
 	# test #1
-	listen-on port @EXTRAPORT1@ { 10.53.0.1; };
+	listen-on port @EXTRAPORT1@ { @ns.ip@; };
 	listen-on port @EXTRAPORT1@ tls self-signed { 10.53.0.2; };
-	listen-on port @EXTRAPORT2@ { 10.53.0.1; };
+	listen-on port @EXTRAPORT2@ { @ns.ip@; };
 	listen-on port @EXTRAPORT2@ tls self-signed { 10.53.0.2; };
 	# test #2
 	listen-on port @EXTRAPORT1@ { 10.53.0.3; };
@@ -44,19 +43,18 @@ options {
 	listen-on port @EXTRAPORT2@ { 10.53.0.5; };
 	listen-on port @EXTRAPORT1@ tls self-signed { 10.53.0.6; };
 	# test #5
-	listen-on port @EXTRAPORT3@ tls self-signed { 10.53.0.1; };
-	listen-on port @EXTRAPORT4@ tls self-signed { 10.53.0.1; };
+	listen-on port @EXTRAPORT3@ tls self-signed { @ns.ip@; };
+	listen-on port @EXTRAPORT4@ tls self-signed { @ns.ip@; };
 	listen-on port @EXTRAPORT3@ { 10.53.0.2; };
 	# test #6
-	listen-on port @EXTRAPORT5@ { 10.53.0.1; };
+	listen-on port @EXTRAPORT5@ { @ns.ip@; };
 	# test #7
-	listen-on port @EXTRAPORT6@ tls self-signed  { 10.53.0.1; };
+	listen-on port @EXTRAPORT6@ tls self-signed  { @ns.ip@; };
 	# test #7
-	listen-on port @EXTRAPORT7@ tls self-signed  { 10.53.0.1; };
+	listen-on port @EXTRAPORT7@ tls self-signed  { @ns.ip@; };
 	# test #8
-	listen-on port @EXTRAPORT8@ { 10.53.0.1; };
+	listen-on port @EXTRAPORT8@ { @ns.ip@; };
 	##
-	listen-on-v6 { none; };
 	recursion no;
 	notify explicit;
 	statistics-file "named.stats";
@@ -115,7 +113,7 @@ zone "example7" {
 zone "example8" {
 	type primary;
 	file "example.db";
-	allow-transfer port @EXTRAPORT7@ transport tls { 10.53.0.1; 10.53.0.2; 10.53.0.3; };
+	allow-transfer port @EXTRAPORT7@ transport tls { @ns.ip@; 10.53.0.2; 10.53.0.3; };
 };
 
 zone "example9" {

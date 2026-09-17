@@ -1,0 +1,9 @@
+V	20520201171852Z		6BB3183CDEF52001	unknown	/CN=srv01.crt01.example.com
+V	20520201172143Z		6BB3183CDEF52002	unknown	/CN=srv01.crt02-no-san.example.com
+V	20520201175759Z		6BB3183CDEF52003	unknown	/CN=srv02.crt01.example.com
+V	20520201175815Z		6BB3183CDEF52004	unknown	/CN=srv03.crt01.example.com
+V	20520201175914Z		6BB3183CDEF52005	unknown	/CN=srv04.crt01.example.com
+V	120815090000Z		6BB3183CDEF52006	unknown	/CN=srv01.crt03-expired.example.com
+V	20520203174420Z		6BB3183CDEF52007	unknown	/CN=srv01.client01.example.com
+V	20520204132112Z		6BB3183CDEF52008	unknown	/CN=srv01.client02-ns2.example.com
+V	120814060000Z		6BB3183CDEF52009	unknown	/CN=srv01.client03-ns2-expired.example.com

@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.1.1.10 2025/01/26 16:12:31 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.1.1.11 2026/09/17 17:45:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -165,36 +165,4 @@ isc_stats_get_counter(isc_stats_t *stats, isc_statscounter_t counter) {
 	REQUIRE(counter < stats->ncounters);
 
 	return atomic_load_acquire(&stats->counters[counter]);
-}
-
-void
-isc_stats_resize(isc_stats_t **statsp, int ncounters) {
-	isc_stats_t *stats;
-	size_t counters_alloc_size;
-	isc_atomic_statscounter_t *newcounters;
-
-	REQUIRE(statsp != NULL && *statsp != NULL);
-	REQUIRE(ISC_STATS_VALID(*statsp));
-	REQUIRE(ncounters > 0);
-
-	stats = *statsp;
-	if (stats->ncounters >= ncounters) {
-		/* We already have enough counters. */
-		return;
-	}
-
-	/* Grow number of counters. */
-	counters_alloc_size = sizeof(isc_atomic_statscounter_t) * ncounters;
-	newcounters = isc_mem_get(stats->mctx, counters_alloc_size);
-	for (int i = 0; i < ncounters; i++) {
-		atomic_init(&newcounters[i], 0);
-	}
-	for (int i = 0; i < stats->ncounters; i++) {
-		uint32_t counter = atomic_load_acquire(&stats->counters[i]);
-		atomic_store_release(&newcounters[i], counter);
-	}
-	isc_mem_cput(stats->mctx, stats->counters, stats->ncounters,
-		     sizeof(isc_atomic_statscounter_t));
-	stats->counters = newcounters;
-	stats->ncounters = ncounters;
 }

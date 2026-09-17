@@ -1,4 +1,4 @@
-/*	$NetBSD: db_test.c,v 1.1.1.4 2026/01/29 18:19:56 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.1.1.5 2026/09/17 17:45:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -355,6 +355,7 @@ ISC_LOOP_TEST_IMPL(version) {
 
 	/* Now we create a node with an empty parent */
 	result = dns_db_newversion(db, &new);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	dns_test_namefromstring("long.ent.name.test.test.", &fname);
 	result = dns_db_findnode(db, name, true, &node);
 	assert_int_equal(result, ISC_R_SUCCESS);

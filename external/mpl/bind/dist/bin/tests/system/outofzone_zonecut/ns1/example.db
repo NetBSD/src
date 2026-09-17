@@ -1,0 +1,4 @@
+$TTL 300
+example.		IN SOA	ns.attacker. hostmaster.attacker. 1 3600 900 2419200 300
+example.		NS	ns.attacker.
+example.		DNAME	attacker.

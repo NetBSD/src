@@ -473,5 +473,19 @@ $RNDCCMD 10.53.0.2 status 2>&1 >rndc.out.ns2.test$n || ret=1
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status + ret))
 
+echo_i "reloading server"
+cp ns2/named13.conf ns2/named.conf
+$CHECKCONF ns2/named.conf | grep -v "'sortlist' is deprecated" | cat_i
+rndc_reload ns2 10.53.0.2
+sleep 3
+
+n=$((n + 1))
+echo_i "checking geoip single-element sortlist ($n)"
+ret=0
+$DIG $DIGOPTS -b 10.53.0.2 txt example >dig.out.ns2.test$n || ret=1
+$RNDCCMD 10.53.0.2 status 2>&1 >rndc.out.ns2.test$n || ret=1
+[ $ret -eq 0 ] || echo_i "failed"
+status=$((status + ret))
+
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1
