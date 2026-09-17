@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.412 2026/08/29 14:57:41 christos Exp $
+# $NetBSD: shl.mi,v 1.413 2026/09/17 14:29:44 christos Exp $
 #
 # Note: Like base/shl.mi, entries here for shared libraries should
 #       generally NOT be marked `obsolete' and instead should be
@@ -328,7 +328,7 @@
 ./usr/libdata/debug/usr/lib/libubsan.so.6.0.debug		comp-sys-debug	debug,compatfile,cxx,gcccmds,gcc=14
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug		comp-sys-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
-./usr/libdata/debug/usr/lib/libunbound.so.11.1.debug 		comp-net-debug	debug,compatfile,unbound
+./usr/libdata/debug/usr/lib/libunbound.so.11.2.debug 		comp-net-debug	debug,compatfile,unbound
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libutil.so.7.25.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libuutil.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
