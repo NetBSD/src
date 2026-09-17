@@ -43,6 +43,7 @@
 #include "iterator/iter_utils.h"
 #include "validator/val_nsec.h"
 #include "validator/val_utils.h"
+#include "iterator/iter_utils.h"
 #include "services/cache/dns.h"
 #include "services/cache/rrset.h"
 #include "util/data/msgparse.h"
@@ -277,6 +278,8 @@ find_closest_of_type(struct module_env* env, uint8_t* qname, size_t qnamelen,
 
 		/* snip off front label */
 		lablen = *qname;
+		if(lablen == 0)
+			break;
 		qname += lablen + 1;
 		qnamelen -= lablen + 1;
 	}
@@ -584,8 +587,12 @@ dns_cache_find_delegation(struct module_env* env, uint8_t* qname,
 			return NULL;
 		}
 	}
-	if(!delegpt_rrset_add_ns(dp, region, nskey, 0))
+	if(!delegpt_rrset_add_ns(dp, region, nskey, 0,
+		deleg_port_number(env))) {
+		lock_rw_unlock(&nskey->entry.lock);
 		log_err("find_delegation: addns out of memory");
+		return NULL;
+	}
 	lock_rw_unlock(&nskey->entry.lock); /* first unlock before next lookup*/
 	/* find and add DS/NSEC (if any) */
 	if(msg)
@@ -670,7 +677,7 @@ tomsg(struct module_env* env, struct query_info* q, struct reply_info* r,
 		rrset_array_unlock(r->ref, r->rrset_count);
 		return NULL;
 	}
-	if(r->security == sec_status_secure && !reply_all_rrsets_secure(r)) {
+	if(r->security == sec_status_secure && !reply_an_ns_rrsets_secure(r)) {
 		/* message rrsets have changed status, revalidate */
 		rrset_array_unlock(r->ref, r->rrset_count);
 		return NULL;
@@ -780,11 +787,16 @@ synth_dname_msg(struct ub_packed_rrset_key* rrset, struct regional* region,
 	uint8_t* newname, *dtarg = NULL;
 	size_t newlen, dtarglen;
 	time_t rr_ttl;
+	int graceperiod = 0;
 	if(TTL_IS_EXPIRED(d->ttl, now)) {
 		/* Allow TTL=0 DNAME from upstream within grace period */
 		if(!(rrset->rk.flags & PACKED_RRSET_UPSTREAM_0TTL))
 			return NULL;
 		rr_ttl = 0;
+		/* Since PACKED_RRSET_UPSTREAM_0TTL set the flag that
+		 * the grace period has been applied, this stops the rrset
+		 * from getting stored back into the cache with a bigger TTL.*/
+		graceperiod = 1;
 	} else {
 		rr_ttl = d->ttl - now;
 	}
@@ -812,6 +824,8 @@ synth_dname_msg(struct ub_packed_rrset_key* rrset, struct regional* region,
 	msg->rep->rrsets[0] = packed_rrset_copy_region(rrset, region, now);
 	if(!msg->rep->rrsets[0]) /* copy DNAME */
 		return NULL;
+	if(graceperiod)
+		msg->rep->rrsets[0]->rk.flags |= PACKED_RRSET_0TTL_GRACE;
 	/* synth CNAME rrset */
 	get_cname_target(rrset, &dtarg, &dtarglen);
 	if(!dtarg)
@@ -1065,7 +1079,7 @@ dns_cache_lookup(struct module_env* env,
 	if(env->cfg->harden_below_nxdomain) {
 		while(!dname_is_root(k.qname)) {
 			if(dpname && dpnamelen
-				&& !dname_subdomain_c(k.qname, dpname))
+				&& !dname_strict_subdomain_c(k.qname, dpname))
 				break; /* no synth nxdomain above the stub */
 			dname_remove_label(&k.qname, &k.qname_len);
 			h = query_info_hash(&k, flags);

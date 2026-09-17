@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg 
+ * $Id: sha512.c,v 1.1.1.6 2026/09/17 14:22:45 christos Exp $
  */
 #include "config.h"
 
