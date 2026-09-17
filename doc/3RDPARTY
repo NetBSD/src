@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2247 2026/09/12 19:44:43 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2248 2026/09/17 02:17:58 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -128,11 +128,11 @@ bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
 Version:	9.20.27/MPL
-Current Vers:	9.20.27/9.21.25/MPL
+Current Vers:	9.20.29/9.21.26/MPL
 Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	https://www.isc.org/software/bind/
-Date:		2026-08-29
+Date:		2026-09-16
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
 Responsible:	christos
@@ -172,11 +172,11 @@ Notes:
 
 Package:	unbound
 Version:	1.25.1
-Current Vers:	1.25.1
+Current Vers:	1.26.1
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2026-05-21
+Date:		2026-09-16
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
