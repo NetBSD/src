@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.14 2026/05/21 08:07:39 kbowling Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.15 2026/09/17 18:02:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -62,12 +62,37 @@ ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
  *		or absence of SYNC* instructions.
  *
  * The CN50XX HRM (CN50XX-HM-0.99E, July 2008) does not document this
- * guarantee explicitly, but Section 4.8 (p. 161) only describes
- * stores as reorderable, the cores are in-order with write-through L1,
- * and the Cavium SDK provides no read/acquire barrier either.
+ * guarantee explicitly, but Section 4.8 (p. 161) only describes stores
+ * as reorderable, the cores are in-order with write-through L1, and
+ * the Cavium SDK provides no read/acquire barrier either.
  * Experimentally, on an erlite3 (CN5020-500), store-before-store and
  * store-before-load reordering are easily detected, but no
  * load-before-load or load-before-store reordering has been observed.
+ * Linux uses an instruction barrier only for membar_acquire on all
+ * Cavium Octeon CPUs, from a change submitted by an engineer at Cavium
+ * in 2010 commenting that `Octeon does not do speculative reads':
+ *
+ * commit 6b07d38aaa520cee922fadfeaf90c97faf217045
+ * Author: David Daney <ddaney@caviumnetworks.com>
+ * Date:   Fri Jan 8 17:17:44 2010 -0800
+ *
+ *     MIPS: Octeon: Use optimized memory barrier primitives.
+ * ...
+ * 						    Since Octeon does not
+ *     do speculative reads, [...]
+ * ...
+ * -#define smp_mb()       __asm__ __volatile__("sync" : : :"memory")
+ * -#define smp_rmb()      __asm__ __volatile__("sync" : : :"memory")
+ * -#define smp_wmb()      __asm__ __volatile__("sync" : : :"memory")
+ * +# ifdef CONFIG_CPU_CAVIUM_OCTEON
+ * +#  define smp_mb()     __sync()
+ * +#  define smp_rmb()    barrier()
+ * +#  define smp_wmb()    __syncw()
+ * +# else
+ * +#  define smp_mb()     __asm__ __volatile__("sync" : : :"memory")
+ * +#  define smp_rmb()    __asm__ __volatile__("sync" : : :"memory")
+ * +#  define smp_wmb()    __asm__ __volatile__("sync" : : :"memory")
+ * +# endif
  *
  * On CN3xxx/CN5xxx (Octeon I/Plus), errata Core-401 can cause a
  * single syncw to fail to enforce store ordering under rare
