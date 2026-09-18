@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.30.2.3 2026/09/18 15:37:11 martin Exp $
+# $NetBSD: mi,v 1.30.2.4 2026/09/18 15:42:53 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1736,7 +1736,9 @@
 ./usr/share/man/html4/sparc64/envctrl.html	man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/fdc.html		man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/ffb.html		man-sys-htmlman		html
+./usr/share/man/html4/sparc64/fireiic.html	man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/intro.html	man-sys-htmlman		html
+./usr/share/man/html4/sparc64/jbusiic.html	man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/lom.html		man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/psycho.html	man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/pyro.html		man-sys-htmlman		html
