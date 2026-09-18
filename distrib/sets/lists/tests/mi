@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1429 2026/08/28 06:35:26 riastradh Exp $
+# $NetBSD: mi,v 1.1430 2026/09/18 13:32:55 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -4614,6 +4614,7 @@
 ./usr/tests/net/ipsec/t_ipsec_l2tp			tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_misc			tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_natt			tests-net-tests		atf,rump
+./usr/tests/net/ipsec/t_ipsec_policy			tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_sockopt			tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_spflags			tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_sysctl			tests-net-tests		atf,rump

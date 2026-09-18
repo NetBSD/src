@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2022/11/09 08:21:20 knakahara Exp $
+# $NetBSD: Makefile,v 1.13 2026/09/18 13:32:55 riastradh Exp $
 #
 
 .include <bsd.own.mk>
@@ -12,6 +12,8 @@ TESTS_SH+=		t_${name}
 TESTS_SH_SRC_t_${name}=	../net_common.sh ./common.sh ./algorithms.sh \
     t_${name}.sh
 .endfor
+
+TESTS_C+=		t_ipsec_policy
 
 PROGS=			natt_terminator
 MAN.natt_terminator=	# empty

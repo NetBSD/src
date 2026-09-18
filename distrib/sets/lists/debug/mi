@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.518 2026/08/28 06:35:26 riastradh Exp $
+# $NetBSD: mi,v 1.519 2026/09/18 13:32:55 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2529,6 +2529,7 @@
 ./usr/libdata/debug/usr/tests/net/inpcb/broadcast_bind.debug	tests-net-debug		debug,atf,rump,compattestfile
 ./usr/libdata/debug/usr/tests/net/inpcb/inpcb_bind.debug	tests-net-debug		debug,atf,rump,compattestfile
 ./usr/libdata/debug/usr/tests/net/ipsec/natt_terminator.debug	tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/ipsec/t_ipsec_policy.debug	tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/mcast/mcast.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/mcast/t_mcast.debug		tests-obsolete		debug,atf,rump,obsolete
 ./usr/libdata/debug/usr/tests/net/net/t_bind.debug		tests-net-debug		debug,atf,compattestfile
