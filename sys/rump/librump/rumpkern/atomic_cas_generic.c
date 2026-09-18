@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_generic.c,v 1.3 2021/03/14 22:56:39 christos Exp $	*/
+/*	$NetBSD: atomic_cas_generic.c,v 1.4 2026/09/18 14:26:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atomic_cas_generic.c,v 1.3 2021/03/14 22:56:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atomic_cas_generic.c,v 1.4 2026/09/18 14:26:12 riastradh Exp $");
 
 /*
  * This is basically common/lib/libc/atomic/atomic_init_testset.c
@@ -69,7 +69,7 @@ atomic_op_alias(atomic_cas_32,_atomic_cas_32)
 atomic_op_alias(atomic_cas_32_ni,_atomic_cas_32)
 __strong_alias(_atomic_cas_32_ni,_atomic_cas_32)
 
-#ifdef _LP64
+#ifdef __HAVE_ATOMIC64_OPS
 static __cpu_simple_lock_t atomic_locks64[128] = { I128 };
 
 uint64_t
