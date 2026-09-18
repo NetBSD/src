@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ipsec_policy.c,v 1.1 2026/09/18 13:32:55 riastradh Exp $	*/
+/*	$NetBSD: t_ipsec_policy.c,v 1.2 2026/09/18 13:33:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ipsec_policy.c,v 1.1 2026/09/18 13:32:55 riastradh Exp $");
+__RCSID("$NetBSD: t_ipsec_policy.c,v 1.2 2026/09/18 13:33:46 riastradh Exp $");
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -291,16 +291,16 @@ ATF_TC_BODY(pr60669, tc)
 		const char *xfail;
 	} C[] = {
 		[0] = { &v4[0].sa, &v4[1].sa, 0, NULL },
-		[1] = { &v4[0].sa, &v6[1].sa, 0, NULL },
+		[1] = { &v4[0].sa, &v6[1].sa, EINVAL, NULL },
 		[2] = { &v4[0].sa, &un[1].sa, EINVAL, NULL },
-		[3] = { &v4[0].sa, &sa[1], 0, NULL },
+		[3] = { &v4[0].sa, &sa[1], EINVAL, NULL },
 		[4] = { &v4[0].sa, &sa1[1], EINVAL, NULL },
 		[5] = { &v4[0].sa, &sa0[1], EINVAL, NULL },
 
-		[6] = { &v6[0].sa, &v4[1].sa, 0, NULL },
+		[6] = { &v6[0].sa, &v4[1].sa, EINVAL, NULL },
 		[7] = { &v6[0].sa, &v6[1].sa, 0, NULL },
 		[8] = { &v6[0].sa, &un[1].sa, EINVAL, NULL },
-		[9] = { &v6[0].sa, &sa[1], 0, NULL },
+		[9] = { &v6[0].sa, &sa[1], EINVAL, NULL },
 		[10] = { &v6[0].sa, &sa1[1], EINVAL, NULL },
 		[11] = { &v6[0].sa, &sa0[1], EINVAL, NULL },
 
@@ -311,10 +311,10 @@ ATF_TC_BODY(pr60669, tc)
 		[16] = { &un[0].sa, &sa1[1], EINVAL, NULL },
 		[17] = { &un[0].sa, &sa0[1], EINVAL, NULL },
 
-		[18] = { &sa[0], &v4[1].sa, 0, NULL },
-		[19] = { &sa[0], &v6[1].sa, 0, NULL },
+		[18] = { &sa[0], &v4[1].sa, EINVAL, NULL },
+		[19] = { &sa[0], &v6[1].sa, EINVAL, NULL },
 		[20] = { &sa[0], &un[1].sa, EINVAL, NULL },
-		[21] = { &sa[0], &sa[1], 0, NULL },
+		[21] = { &sa[0], &sa[1], EINVAL, NULL },
 		[22] = { &sa[0], &sa1[1], EINVAL, NULL },
 		[23] = { &sa[0], &sa0[1], EINVAL, NULL },
 

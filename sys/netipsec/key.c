@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.288 2026/09/18 13:30:09 riastradh Exp $	*/
+/*	$NetBSD: key.c,v 1.289 2026/09/18 13:33:46 riastradh Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.288 2026/09/18 13:30:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.289 2026/09/18 13:33:46 riastradh Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -2000,6 +2000,7 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 			size_t resid = xisr->sadb_x_ipsecrequest_len -
 			    sizeof(*xisr);
 			const struct sockaddr *paddr;
+			socklen_t addrlen;
 
 			if (sizeof(*paddr) > resid) {
 				IPSECLOG(LOG_DEBUG, "invalid request "
@@ -2013,8 +2014,31 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 			if (paddr->sa_len < sizeof(*paddr) ||
 			    paddr->sa_len > resid ||
 			    paddr->sa_len > sizeof((*p_isr)->saidx.src)) {
-				IPSECLOG(LOG_DEBUG, "invalid request "
+				IPSECLOG(LOG_DEBUG, "invalid request src "
 				    "address length.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
+			switch (paddr->sa_family) {
+#ifdef INET
+			case AF_INET:
+				addrlen = sizeof(struct sockaddr_in);
+				break;
+#endif
+#ifdef INET6
+			case AF_INET6:
+				addrlen = sizeof(struct sockaddr_in6);
+				break;
+#endif
+			default:
+				IPSECLOG(LOG_DEBUG, "invalid request src "
+				    "address family.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
+			if (addrlen != paddr->sa_len) {
+				IPSECLOG(LOG_DEBUG, "wrong reqeust src "
+				    "address length for family.\n");
 				*error = EINVAL;
 				goto free_exit;
 			}
@@ -2023,7 +2047,7 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 			resid -= paddr->sa_len;
 			if (sizeof(*paddr) > resid) {
 				IPSECLOG(LOG_DEBUG, "invalid request "
-				    "address length.\n");
+				    "address length after src.\n");
 				*error = EINVAL;
 				goto free_exit;
 			}
@@ -2034,8 +2058,21 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 			if (paddr->sa_len < sizeof(*paddr) ||
 			    paddr->sa_len > resid ||
 			    paddr->sa_len > sizeof((*p_isr)->saidx.dst)) {
-				IPSECLOG(LOG_DEBUG, "invalid request "
+				IPSECLOG(LOG_DEBUG, "invalid request dst "
 				    "address length.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
+			if (paddr->sa_family !=
+			    (*p_isr)->saidx.src.sa.sa_family) {
+				IPSECLOG(LOG_DEBUG, "mismatched src/dst "
+				    " address family.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
+			if (addrlen != paddr->sa_len) {
+				IPSECLOG(LOG_DEBUG, "wrong reqeust dst "
+				    "address length for family.\n");
 				*error = EINVAL;
 				goto free_exit;
 			}
