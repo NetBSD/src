@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.166.20.1 2026/09/13 10:39:46 martin Exp $
+#	$NetBSD: files.sparc64,v 1.166.20.2 2026/09/18 15:40:22 martin Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -49,6 +49,10 @@ file	dev/ofw/ofw_pci_subr.c			pci
 device jbusi2c: i2cexec, i2c_bitbang, i2cbus
 attach jbusi2c at mainbus
 file	arch/sparc64/dev/jbus-i2c.c		jbusi2c
+
+device firei2c: i2cexec, i2cbus
+attach firei2c at mainbus
+file	arch/sparc64/dev/fire_i2c.c		firei2c
 
 define  central {}
 device	central: central
