@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.69 2026/09/18 16:41:13 joe Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.70 2026/09/18 18:52:10 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -93,7 +93,10 @@ usage(void)
 	const char *progname = getprogname();
 
 	fprintf(stderr,
-	    "Usage:\t%s start | stop | flush | show | stats\n",
+	    "Usage:\t%s start | stop | flush | show\n",
+	    progname);
+	fprintf(stderr,
+	    "\t%s stats | stats { reset }\n",
 	    progname);
 	fprintf(stderr,
 	    "\t%s validate | reload [<rule-file>]\n",
