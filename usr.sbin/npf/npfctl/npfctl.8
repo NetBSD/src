@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfctl.8,v 1.26 2026/09/18 19:58:22 joe Exp $
+.\"	$NetBSD: npfctl.8,v 1.27 2026/09/18 23:50:46 gutteridge Exp $
 .\"
 .\" Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -175,7 +175,8 @@ Load the saved configuration file and the connections from the file.
 Note that any existing connections will be destroyed.
 Administrator may want to start packet inspection after the load.
 .It Ic stats ( reset )
-Print various statistics. if
+Print various statistics.
+If
 .Cm reset
 is specified, statistics counts will be set to zero.
 .It Ic debug ( Fl a | Fl b Ar binary-config | Fl c Ar config ) \
