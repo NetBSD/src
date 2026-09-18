@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk.c,v 1.12 2026/09/16 21:49:14 jakllsch Exp $	*/
+/*	$NetBSD: efidisk.c,v 1.13 2026/09/18 17:28:32 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -146,7 +146,7 @@ next:
 
 	if (efi_bootdp_type == BOOT_DEVICE_TYPE_CD) {
 		edi = TAILQ_FIRST(&efi_disklist);
-		if (edi != NULL && edi->bootdev) {
+		if (edi != NULL && edi->bootdev && edi->bio->Media->BlockSize == 2048) {
 			edi->type = BIOSDISK_TYPE_CD;
 			TAILQ_REMOVE(&efi_disklist, edi, list);
 			TAILQ_INSERT_TAIL(&efi_disklist, edi, list);
