@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.1 2026/09/18 16:35:14 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.2 2026/09/18 16:50:06 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -979,4 +979,9 @@ crypto/external/bsd/openssl/lib/libcrypto/man/x509v3_config.5	(apply patch)
 
 	Update OpenSSL to version 3.0.22
 	[manu, ticket #1341]
+
+sys/external/bsd/drm2/dist/drm/i915/display/intel_dp.c 1.8
+
+	i915: PR 59989:: make this build with -O0.
+	[hgutch, ticket #1342]
 
