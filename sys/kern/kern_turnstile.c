@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.56 2025/06/27 21:36:24 andvar Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.57 2026/09/18 12:38:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020, 2023
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.56 2025/06/27 21:36:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.57 2026/09/18 12:38:43 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -202,14 +202,16 @@ turnstile_exit(wchan_t obj)
  *
  *	If the current owner of the lock (l->l_wchan, set by sleepq_enqueue)
  *	has a priority lower than ours (lwp_eprio(l)), lend our priority to
- *	him to avoid priority inversions.
+ *	them to avoid priority inversions.  And if they're already waiting
+ *	for another lock too, lend the priority to whoever owns that one,
+ *	and so on transitively.
  */
-
 static void
 turnstile_lendpri(lwp_t *cur)
 {
 	lwp_t * l = cur;
 	pri_t prio;
+	bool restarted = false;
 
 	/*
 	 * NOTE: if you get a panic in this code block, it is likely that
@@ -254,7 +256,10 @@ turnstile_lendpri(lwp_t *cur)
 		if (l == owner || (dolock && !lwp_trylock(owner))) {
 			/*
 			 * The owner was changed behind us or trylock failed.
-			 * Restart from curlwp.
+			 * Restart from curlwp.  Priority inheritance is
+			 * idempotent, so there is no issue with restarting
+			 * from curlwp; the priorities we already updated will
+			 * simply get re-applied again.
 			 *
 			 * Note that there may be a livelock here:
 			 * the owner may try grabbing cur's lock (which is the
@@ -264,13 +269,23 @@ turnstile_lendpri(lwp_t *cur)
 			l = cur;
 			lwp_lock(l);
 			prio = lwp_eprio(l);
+			restarted = true;
 			continue;
 		}
 		/*
-		 * If the owner's priority is already higher than ours,
-		 * there's nothing to do anymore.
+		 * If, the first time around, the owner's priority is
+		 * already at least as high as ours, there's nothing to
+		 * do anymore: the owner should have already applied
+		 * that priority to whomever they're waiting for, so we
+		 * can safely stop here.
+		 *
+		 * If, however, we had to restart the loop because
+		 * lwp_trylock failed in a previous pass, we may have
+		 * already lent a higher priority to some but not all
+		 * of the chain of waiters.  In that case, we can't use
+		 * this optimization.
 		 */
-		if (prio <= lwp_eprio(owner)) {
+		if (!restarted && prio <= lwp_eprio(owner)) {
 			if (dolock)
 				lwp_unlock(owner);
 			break;
