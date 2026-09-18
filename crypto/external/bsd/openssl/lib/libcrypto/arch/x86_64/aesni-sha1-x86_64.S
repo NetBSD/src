@@ -1708,7 +1708,7 @@ aesni_cbc_sha1_enc_shaext:
 	.byte	0xf3,0xc3
 .cfi_endproc	
 .size	aesni_cbc_sha1_enc_shaext,.-aesni_cbc_sha1_enc_shaext
-	.section ".note.gnu.property", "a"
+	.section .note.gnu.property, "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f

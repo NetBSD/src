@@ -32,7 +32,7 @@
  * (*)	see bn_asm.sparc.v8plus.S for details
  */
 
-.section	".text",#alloc,#execinstr
+.section	".text","a","x"
 .file		"bn_asm.sparc.v8.S"
 
 .align	32

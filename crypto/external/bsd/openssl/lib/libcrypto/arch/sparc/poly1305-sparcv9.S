@@ -14,7 +14,7 @@
 #endif
 #define	LOCALS	(STACK_BIAS+STACK_FRAME)
 
-.section	".text",#alloc,#execinstr
+.section	".text","a","x"
 
 #ifdef __PIC__
 SPARC_PIC_THUNK(%g1)

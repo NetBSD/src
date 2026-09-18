@@ -5382,5 +5382,9 @@ OPENSSL_3.0.3 {
 OPENSSL_3.0.8 {
     global:
         OSSL_CMP_CTX_reset_geninfo_ITAVs;
-    local: *;
 } OPENSSL_3.0.3;
+OPENSSL_3.0.9 {
+    global:
+        OSSL_CMP_MSG_update_recipNonce;
+    local: *;
+} OPENSSL_3.0.8;

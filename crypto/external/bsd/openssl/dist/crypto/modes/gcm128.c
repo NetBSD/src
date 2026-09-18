@@ -611,98 +611,92 @@ static void gcm_gmult_1bit(u64 Xi[2], const u64 H[2])
         PUTU32(p + 8, v);
         v = (u32)(Z.lo);
         PUTU32(p + 12, v);
-# endif
+#endif
     } else {
         Xi[0] = Z.hi;
         Xi[1] = Z.lo;
     }
 }
 
-# define GCM_MUL(ctx)      gcm_gmult_1bit(ctx->Xi.u,ctx->H.u)
+#define GCM_MUL(ctx) gcm_gmult_1bit(ctx->Xi.u, ctx->H.u)
 
 #endif
 
-#if     TABLE_BITS==4 && (defined(GHASH_ASM) || defined(OPENSSL_CPUID_OBJ))
-# if    !defined(I386_ONLY) && \
-        (defined(__i386)        || defined(__i386__)    || \
-         defined(__x86_64)      || defined(__x86_64__)  || \
-         defined(_M_IX86)       || defined(_M_AMD64)    || defined(_M_X64))
-#  define GHASH_ASM_X86_OR_64
-#  define GCM_FUNCREF_4BIT
+#if TABLE_BITS == 4 && (defined(GHASH_ASM) || defined(OPENSSL_CPUID_OBJ))
+#if !defined(I386_ONLY) && (defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64))
+#define GHASH_ASM_X86_OR_64
+#define GCM_FUNCREF_4BIT
 
 void gcm_init_clmul(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_clmul(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_clmul(u64 Xi[2], const u128 Htable[16], const u8 *inp,
-                     size_t len);
+    size_t len);
 
-#  if defined(__i386) || defined(__i386__) || defined(_M_IX86)
-#   define gcm_init_avx   gcm_init_clmul
-#   define gcm_gmult_avx  gcm_gmult_clmul
-#   define gcm_ghash_avx  gcm_ghash_clmul
-#  else
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86)
+#define gcm_init_avx gcm_init_clmul
+#define gcm_gmult_avx gcm_gmult_clmul
+#define gcm_ghash_avx gcm_ghash_clmul
+#else
 void gcm_init_avx(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_avx(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_avx(u64 Xi[2], const u128 Htable[16], const u8 *inp,
-                   size_t len);
-#  endif
+    size_t len);
+#endif
 
-#  if   defined(__i386) || defined(__i386__) || defined(_M_IX86)
-#   define GHASH_ASM_X86
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86)
+#define GHASH_ASM_X86
 void gcm_gmult_4bit_mmx(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_4bit_mmx(u64 Xi[2], const u128 Htable[16], const u8 *inp,
-                        size_t len);
+    size_t len);
 
 void gcm_gmult_4bit_x86(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_4bit_x86(u64 Xi[2], const u128 Htable[16], const u8 *inp,
-                        size_t len);
-#  endif
-# elif (defined(__arm__) || defined(__arm) || defined(__aarch64__)) && defined(GHASH_ASM)
-#  include "arm_arch.h"
-#  if __ARM_MAX_ARCH__>=7
-#   define GHASH_ASM_ARM
-#   define GCM_FUNCREF_4BIT
-#   define PMULL_CAPABLE        (OPENSSL_armcap_P & ARMV8_PMULL)
-#   if defined(__arm__) || defined(__arm)
-#    define NEON_CAPABLE        (OPENSSL_armcap_P & ARMV7_NEON)
-#   endif
+    size_t len);
+#endif
+#elif defined(__arm__) || defined(__arm) || defined(__aarch64__)
+#include "arm_arch.h"
+#if __ARM_MAX_ARCH__ >= 7
+#define GHASH_ASM_ARM
+#define GCM_FUNCREF_4BIT
+#define PMULL_CAPABLE (OPENSSL_armcap_P & ARMV8_PMULL)
+#if defined(__arm__) || defined(__arm)
+#define NEON_CAPABLE (OPENSSL_armcap_P & ARMV7_NEON)
+#endif
 void gcm_init_neon(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_neon(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_neon(u64 Xi[2], const u128 Htable[16], const u8 *inp,
-                    size_t len);
+    size_t len);
 void gcm_init_v8(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_v8(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_v8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
-                  size_t len);
-#  endif
-# elif defined(__sparc__) || defined(__sparc)
-#  include "crypto/sparc_arch.h"
-#  if defined(__arch64__)
-#   define GHASH_ASM_SPARC
-#   define GCM_FUNCREF_4BIT
-extern unsigned int OPENSSL_sparcv9cap_P[];
+    size_t len);
+#endif
+#elif defined(__sparc__) || defined(__sparc)
+#include "crypto/sparc_arch.h"
+#define GHASH_ASM_SPARC
+#define GCM_FUNCREF_4BIT
 void gcm_init_vis3(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_vis3(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_vis3(u64 Xi[2], const u128 Htable[16], const u8 *inp,
-                    size_t len);
-#  endif /* __arch64__ */
-# elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
-#  include "crypto/ppc_arch.h"
-#  define GHASH_ASM_PPC
-#  define GCM_FUNCREF_4BIT
+    size_t len);
+#elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
+#include "crypto/ppc_arch.h"
+#define GHASH_ASM_PPC
+#define GCM_FUNCREF_4BIT
 void gcm_init_p8(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_p8(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_p8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
-                  size_t len);
-# endif
+    size_t len);
+#endif
 #endif
 
 #ifdef GCM_FUNCREF_4BIT
-# undef  GCM_MUL
-# define GCM_MUL(ctx)           (*gcm_gmult_p)(ctx->Xi.u,ctx->Htable)
-# ifdef GHASH
-#  undef  GHASH
-#  define GHASH(ctx,in,len)     (*gcm_ghash_p)(ctx->Xi.u,ctx->Htable,in,len)
-# endif
+#undef GCM_MUL
+#define GCM_MUL(ctx) (*gcm_gmult_p)(ctx->Xi.u, ctx->Htable)
+#ifdef GHASH
+#undef GHASH
+#define GHASH(ctx, in, len) (*gcm_ghash_p)(ctx->Xi.u, ctx->Htable, in, len)
+#endif
 #endif
 
 void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)

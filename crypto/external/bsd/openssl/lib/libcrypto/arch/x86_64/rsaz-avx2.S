@@ -24,7 +24,7 @@ rsaz_1024_gather5_avx2:
 .byte	0x0f,0x0b
 	.byte	0xf3,0xc3
 .size	rsaz_1024_sqr_avx2,.-rsaz_1024_sqr_avx2
-	.section ".note.gnu.property", "a"
+	.section .note.gnu.property, "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f

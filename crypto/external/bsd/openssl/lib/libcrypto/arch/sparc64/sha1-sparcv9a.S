@@ -1,4 +1,4 @@
-.section	".text",#alloc,#execinstr
+.section	".text","a","x"
 
 .align	64
 vis_const:

@@ -22,15 +22,15 @@
  * used is contained in *num;
  */
 void RC2_ofb64_encrypt(const unsigned char *in, unsigned char *out,
-                       long length, RC2_KEY *schedule, unsigned char *ivec,
-                       int *num)
+    long length, RC2_KEY *schedule, unsigned char *ivec,
+    int *num)
 {
-    register uint32_t v0, v1, t;
-    register int n = *num;
+    register unsigned long v0, v1, t;
+    register int n = *num & 0x07;
     register long l = length;
     unsigned char d[8];
     register char *dp;
-    uint32_t ti[2];
+    unsigned long ti[2];
     unsigned char *iv;
     int save = 0;
 
@@ -44,7 +44,7 @@ void RC2_ofb64_encrypt(const unsigned char *in, unsigned char *out,
     l2c(v1, dp);
     while (l--) {
         if (n == 0) {
-            RC2_encrypt(ti, schedule);
+            RC2_encrypt((unsigned long *)ti, schedule);
             dp = (char *)d;
             t = ti[0];
             l2c(t, dp);

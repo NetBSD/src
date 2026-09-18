@@ -40,71 +40,69 @@ static struct test_st {
     const char *digest;
 } test[8] = {
     {
-        "", 0, "More text test vectors to stuff up EBCDIC machines :-)", 54,
+        "",
+        0,
+        "More text test vectors to stuff up EBCDIC machines :-)",
+        54,
         "e9139d1e6ee064ef8cf514fc7dc83e86",
     },
     {
         "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b",
-        16, "Hi There", 8,
+        16,
+        "Hi There",
+        8,
         "9294727a3638bb1c13f48ef8158bfc9d",
     },
     {
-        "Jefe", 4, "what do ya want for nothing?", 28,
+        "Jefe",
+        4,
+        "what do ya want for nothing?",
+        28,
         "750c783e6ab0b503eaa86e310a5db738",
     },
     {
         "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
-        16, {
+        16,
+        { 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd,
             0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd,
             0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd,
             0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd,
-            0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd,
-            0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd
-        }, 50, "56be34521d144c88dbb8c733f0e8b3f6",
+            0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd },
+        50,
+        "56be34521d144c88dbb8c733f0e8b3f6",
     },
-    {
-        "", 0, "My test data", 12,
-        "61afdecb95429ef494d61fdee15990cabf0826fc"
-    },
-    {
-        "", 0, "My test data", 12,
-        "2274b195d90ce8e03406f4b526a47e0787a88a65479938f1a5baa3ce0f079776"
-    },
-    {
-        "123456", 6, "My test data", 12,
-        "bab53058ae861a7f191abe2d0145cbb123776a6369ee3f9d79ce455667e411dd"
-    },
-    {
-        "12345", 5, "My test data again", 18,
-        "a12396ceddd2a85f4c656bc1e0aa50c78cffde3e"
-    }
+    { "", 0, "My test data", 12,
+        "61afdecb95429ef494d61fdee15990cabf0826fc" },
+    { "", 0, "My test data", 12,
+        "2274b195d90ce8e03406f4b526a47e0787a88a65479938f1a5baa3ce0f079776" },
+    { "123456", 6, "My test data", 12,
+        "bab53058ae861a7f191abe2d0145cbb123776a6369ee3f9d79ce455667e411dd" },
+    { "12345", 5, "My test data again", 18,
+        "a12396ceddd2a85f4c656bc1e0aa50c78cffde3e" }
 };
-# endif
+#endif
 
 static char *pt(unsigned char *md, unsigned int len);
 
-#define UC(a)	((const unsigned char *)(a))
-
-
-# ifndef OPENSSL_NO_MD5
+#ifndef OPENSSL_NO_MD5
 static int test_hmac_md5(int idx)
 {
     char *p;
-#  ifdef CHARSET_EBCDIC
+#ifdef CHARSET_EBCDIC
     ebcdic2ascii(test[0].data, test[0].data, test[0].data_len);
     ebcdic2ascii(test[1].data, test[1].data, test[1].data_len);
     ebcdic2ascii(test[2].key, test[2].key, test[2].key_len);
     ebcdic2ascii(test[2].data, test[2].data, test[2].data_len);
-#  endif
+#endif
 
     p = pt(HMAC(EVP_md5(),
-                test[idx].key, test[idx].key_len,
-                UC(test[idx].data), test[idx].data_len, NULL, NULL),
-                MD5_DIGEST_LENGTH);
+               test[idx].key, test[idx].key_len,
+               test[idx].data, test[idx].data_len, NULL, NULL),
+        MD5_DIGEST_LENGTH);
 
     return TEST_ptr(p) && TEST_str_eq(p, test[idx].digest);
 }
-# endif
+#endif
 
 static int test_hmac_bad(void)
 {
@@ -115,9 +113,9 @@ static int test_hmac_bad(void)
     if (!TEST_ptr(ctx)
         || !TEST_ptr_null(HMAC_CTX_get_md(ctx))
         || !TEST_false(HMAC_Init_ex(ctx, NULL, 0, NULL, NULL))
-        || !TEST_false(HMAC_Update(ctx,  UC(test[4].data), test[4].data_len))
+        || !TEST_false(HMAC_Update(ctx, test[4].data, test[4].data_len))
         || !TEST_false(HMAC_Init_ex(ctx, NULL, 0, EVP_sha1(), NULL))
-        || !TEST_false(HMAC_Update(ctx, UC(test[4].data), test[4].data_len)))
+        || !TEST_false(HMAC_Update(ctx, test[4].data, test[4].data_len)))
         goto err;
 
     ret = 1;
@@ -141,12 +139,12 @@ static int test_hmac_run(void)
     if (!TEST_ptr(ctx)
         || !TEST_ptr_null(HMAC_CTX_get_md(ctx))
         || !TEST_false(HMAC_Init_ex(ctx, NULL, 0, NULL, NULL))
-        || !TEST_false(HMAC_Update(ctx, UC(test[4].data), test[4].data_len))
+        || !TEST_false(HMAC_Update(ctx, test[4].data, test[4].data_len))
         || !TEST_false(HMAC_Init_ex(ctx, test[4].key, -1, EVP_sha1(), NULL)))
         goto err;
 
     if (!TEST_true(HMAC_Init_ex(ctx, test[4].key, test[4].key_len, EVP_sha1(), NULL))
-        || !TEST_true(HMAC_Update(ctx, UC(test[4].data), test[4].data_len))
+        || !TEST_true(HMAC_Update(ctx, test[4].data, test[4].data_len))
         || !TEST_true(HMAC_Final(ctx, buf, &len)))
         goto err;
 
@@ -159,7 +157,7 @@ static int test_hmac_run(void)
 
     if (!TEST_true(HMAC_Init_ex(ctx, test[5].key, test[5].key_len, EVP_sha256(), NULL))
         || !TEST_ptr_eq(HMAC_CTX_get_md(ctx), EVP_sha256())
-        || !TEST_true(HMAC_Update(ctx, UC(test[5].data), test[5].data_len))
+        || !TEST_true(HMAC_Update(ctx, test[5].data, test[5].data_len))
         || !TEST_true(HMAC_Final(ctx, buf, &len)))
         goto err;
 
@@ -168,7 +166,7 @@ static int test_hmac_run(void)
         goto err;
 
     if (!TEST_true(HMAC_Init_ex(ctx, test[6].key, test[6].key_len, NULL, NULL))
-        || !TEST_true(HMAC_Update(ctx, UC(test[6].data), test[6].data_len))
+        || !TEST_true(HMAC_Update(ctx, test[6].data, test[6].data_len))
         || !TEST_true(HMAC_Final(ctx, buf, &len)))
         goto err;
     p = pt(buf, len);
@@ -177,7 +175,7 @@ static int test_hmac_run(void)
 
     /* Test reusing a key */
     if (!TEST_true(HMAC_Init_ex(ctx, NULL, 0, NULL, NULL))
-        || !TEST_true(HMAC_Update(ctx, UC(test[6].data), test[6].data_len))
+        || !TEST_true(HMAC_Update(ctx, test[6].data, test[6].data_len))
         || !TEST_true(HMAC_Final(ctx, buf, &len)))
         goto err;
     p = pt(buf, len);
@@ -189,7 +187,7 @@ static int test_hmac_run(void)
      * last time
      */
     if (!TEST_true(HMAC_Init_ex(ctx, NULL, 0, EVP_sha256(), NULL))
-        || !TEST_true(HMAC_Update(ctx, UC(test[6].data), test[6].data_len))
+        || !TEST_true(HMAC_Update(ctx, test[6].data, test[6].data_len))
         || !TEST_true(HMAC_Final(ctx, buf, &len)))
         goto err;
     p = pt(buf, len);
@@ -230,7 +228,7 @@ static int test_hmac_copy(void)
         goto err;
 
     if (!TEST_true(HMAC_Init_ex(ctx, test[7].key, test[7].key_len, EVP_sha1(), NULL))
-        || !TEST_true(HMAC_Update(ctx, UC(test[7].data), test[7].data_len))
+        || !TEST_true(HMAC_Update(ctx, test[7].data, test[7].data_len))
         || !TEST_true(HMAC_CTX_copy(ctx2, ctx))
         || !TEST_true(HMAC_Final(ctx2, buf, &len)))
         goto err;

@@ -144,48 +144,47 @@ static int test_engines(void)
     display_engine_list();
 
     if (!TEST_true(ENGINE_add(new_h1))
-            || !TEST_true(ENGINE_remove(new_h1)))
+        || !TEST_true(ENGINE_remove(new_h1)))
         goto end;
 
     TEST_info("About to beef up the engine-type list");
     for (loop = 0; loop < NUMTOADD; loop++) {
-        sprintf(buf, "id%d", loop);
+        BIO_snprintf(buf, sizeof(buf), "id%d", loop);
         eid[loop] = OPENSSL_strdup(buf);
-        sprintf(buf, "Fake engine type %d", loop);
+        BIO_snprintf(buf, sizeof(buf), "Fake engine type %d", loop);
         ename[loop] = OPENSSL_strdup(buf);
         if (!TEST_ptr(block[loop] = ENGINE_new())
-                || !TEST_true(ENGINE_set_id(block[loop], eid[loop]))
-                || !TEST_true(ENGINE_set_name(block[loop], ename[loop])))
+            || !TEST_true(ENGINE_set_id(block[loop], eid[loop]))
+            || !TEST_true(ENGINE_set_name(block[loop], ename[loop])))
             goto end;
     }
     for (loop = 0; loop < NUMTOADD; loop++) {
         if (!TEST_true(ENGINE_add(block[loop]))) {
             test_note("Adding stopped at %d, (%s,%s)",
-                      loop, ENGINE_get_id(block[loop]),
-                      ENGINE_get_name(block[loop]));
+                loop, ENGINE_get_id(block[loop]),
+                ENGINE_get_name(block[loop]));
             goto cleanup_loop;
         }
     }
- cleanup_loop:
+cleanup_loop:
     TEST_info("About to empty the engine-type list");
     while ((ptr = ENGINE_get_first()) != NULL) {
         if (!TEST_true(ENGINE_remove(ptr)))
             goto end;
         ENGINE_free(ptr);
     }
-    for (loop = 0; loop < NUMTOADD; loop++) {
-        OPENSSL_free((void *)(intptr_t)ENGINE_get_id(block[loop]));
-        OPENSSL_free((void *)(intptr_t)ENGINE_get_name(block[loop]));
-    }
     to_return = 1;
 
- end:
+end:
     ENGINE_free(new_h1);
     ENGINE_free(new_h2);
     ENGINE_free(new_h3);
     ENGINE_free(new_h4);
-    for (loop = 0; loop < NUMTOADD; loop++)
+    for (loop = 0; loop < NUMTOADD; loop++) {
+        OPENSSL_free(eid[loop]);
+        OPENSSL_free(ename[loop]);
         ENGINE_free(block[loop]);
+    }
     return to_return;
 }
 

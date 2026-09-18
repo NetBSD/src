@@ -1036,7 +1036,7 @@ padlock_ctr32_encrypt:
 .align	8
 .Lpadlock_saved_context:
 .quad	0
-	.section ".note.gnu.property", "a"
+	.section .note.gnu.property, "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f

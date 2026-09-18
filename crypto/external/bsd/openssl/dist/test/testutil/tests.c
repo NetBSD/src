@@ -67,16 +67,15 @@ void test_fail_message_prefix(const char *prefix, const char *file,
  *      FAIL oops: (int) value 3 is not 6\n
  */
 static void test_fail_message(const char *prefix, const char *file, int line,
-                              const char *type, const char *left,
-                              const char *right, const char *op,
-                              const char *fmt, ...)
-            PRINTF_FORMAT(8, 9);
+    const char *type, const char *left,
+    const char *right, const char *op,
+    const char *fmt, ...)
+    PRINTF_FORMAT(8, 9);
 
-PRINTF_FORMAT(8, 0)
 static void test_fail_message_va(const char *prefix, const char *file,
-                                 int line, const char *type,
-                                 const char *left, const char *right,
-                                 const char *op, const char *fmt, va_list ap)
+    int line, const char *type,
+    const char *left, const char *right,
+    const char *op, const char *fmt, va_list ap)
 {
     test_fail_message_prefix(prefix, file, line, type, left, right, op);
     if (fmt != NULL) {

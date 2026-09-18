@@ -12,7 +12,6 @@
  * use where we're using them to implement the higher level EVP interface, as is
  * the case here.
  */
-#include <inttypes.h>
 #include "internal/deprecated.h"
 
 #include <openssl/idea.h>
@@ -91,7 +90,7 @@ void IDEA_set_decrypt_key(IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk)
 /* taken directly from the 'paper' I'll have a look at it later */
 static IDEA_INT inverse(unsigned int xin)
 {
-    int32_t n1, n2, q, r, b1, b2, t;
+    long n1, n2, q, r, b1, b2, t;
 
     if (xin == 0)
         b2 = 0;

@@ -27,10 +27,10 @@ void IDEA_cfb64_encrypt(const unsigned char *in, unsigned char *out,
     long length, IDEA_KEY_SCHEDULE *schedule,
     unsigned char *ivec, int *num, int encrypt)
 {
-    register IDEA_INT v0, v1, t;
+    register unsigned long v0, v1, t;
     register int n = *num;
     register long l = length;
-    IDEA_INT ti[2];
+    unsigned long ti[2];
     unsigned char *iv, c, cc;
 
     if (n < 0) {
@@ -47,7 +47,7 @@ void IDEA_cfb64_encrypt(const unsigned char *in, unsigned char *out,
                 ti[0] = v0;
                 n2l(iv, v1);
                 ti[1] = v1;
-                IDEA_encrypt(ti, schedule);
+                IDEA_encrypt((unsigned long *)ti, schedule);
                 iv = (unsigned char *)ivec;
                 t = ti[0];
                 l2n(t, iv);
@@ -67,7 +67,7 @@ void IDEA_cfb64_encrypt(const unsigned char *in, unsigned char *out,
                 ti[0] = v0;
                 n2l(iv, v1);
                 ti[1] = v1;
-                IDEA_encrypt(ti, schedule);
+                IDEA_encrypt((unsigned long *)ti, schedule);
                 iv = (unsigned char *)ivec;
                 t = ti[0];
                 l2n(t, iv);

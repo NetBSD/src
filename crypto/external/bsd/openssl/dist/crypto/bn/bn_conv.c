@@ -89,7 +89,7 @@ char *BN_bn2dec(const BIGNUM *a)
         while (!BN_is_zero(t)) {
             if (lp - bn_data >= bn_data_num)
                 goto err;
-            *lp = BN_div_word(t, (BN_ULONG)BN_DEC_CONV);
+            *lp = BN_div_word(t, BN_DEC_CONV);
             if (*lp == (BN_ULONG)-1)
                 goto err;
             lp++;

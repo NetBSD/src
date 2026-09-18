@@ -14,7 +14,7 @@
 # define LOCALS64	STACK64_FRAME
 #endif
 
-.section	".text",#alloc,#execinstr
+.section	".text","a","x"
 .globl	ecp_nistz256_precomputed
 .align	4096
 ecp_nistz256_precomputed:

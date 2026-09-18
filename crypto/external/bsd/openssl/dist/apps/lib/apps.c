@@ -569,7 +569,7 @@ EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
     return load_keyparams_suppress(uri, format, maybe_stdin, keytype, desc, 0);
 }
 
-void app_bail_out(const char *fmt, ...)
+void app_bail_out(char *fmt, ...)
 {
     va_list args;
 
@@ -1642,8 +1642,14 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     }
 
     retdb->dbfname = OPENSSL_strdup(dbfile);
-    if (retdb->dbfname == NULL)
+    if (retdb->dbfname == NULL) {
+        TXT_DB_free(retdb->db);
+        retdb->db = NULL;
+        OPENSSL_free(retdb);
+        retdb = NULL;
+        ERR_raise_data(ERR_LIB_SYS, errno, "Out of memory while copying filename: %s", dbfile);
         goto err;
+    }
 
 #ifndef OPENSSL_NO_POSIX_IO
     retdb->dbst = dbst;

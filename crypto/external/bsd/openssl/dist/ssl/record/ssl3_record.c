@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -104,7 +104,7 @@ static int ssl3_record_app_data_waiting(SSL *s)
 
 int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send)
 {
-    uint32_t max_early_data;
+    uint64_t max_early_data;
     SSL_SESSION *sess = s->session;
 
     /*
@@ -1683,8 +1683,11 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
      *                        after use :-).
      */
 
-    /* we have pulled in a full packet so zero things */
-    RECORD_LAYER_reset_packet_length(&s->rlayer);
+    /*
+     * Leave s->rlayer.packet_length alone: ssl3_read_n() starts each new record
+     * by resetting it, and it must still describe this record's on-wire bytes
+     * for dtls1_buffer_record() should this record end up being buffered.
+     */
 
     /* Mark receipt of record. */
     dtls1_record_bitmap_update(s, bitmap);
@@ -1887,7 +1890,7 @@ again:
         if ((SSL_in_init(s) || ossl_statem_get_in_handshake(s))) {
             if (dtls1_buffer_record(s,
                     &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
-                    rr->seq_num)
+                    rr->seq_num, DTLS1_MAX_UNPROCESSED_RECORDS)
                 < 0) {
                 /* SSLfatal() already called */
                 return -1;
@@ -1930,7 +1933,8 @@ int dtls_buffer_listen_record(SSL *s, size_t len, unsigned char *seq, size_t off
     rr->data = s->rlayer.packet + DTLS1_RT_HEADER_LENGTH;
 
     if (dtls1_buffer_record(s, &(s->rlayer.d->processed_rcds),
-            SSL3_RECORD_get_seq_num(s->rlayer.rrec))
+            SSL3_RECORD_get_seq_num(s->rlayer.rrec),
+            DTLS1_MAX_BUFFERED_RECORDS)
         <= 0) {
         /* SSLfatal() already called */
         return 0;

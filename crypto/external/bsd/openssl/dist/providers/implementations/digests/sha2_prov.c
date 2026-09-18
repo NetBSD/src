@@ -65,33 +65,30 @@ IMPLEMENT_digest_functions_with_settable_ctx(
 
 /* ossl_sha224_functions */
 IMPLEMENT_digest_functions(sha224, SHA256_CTX,
-                           SHA256_CBLOCK, SHA224_DIGEST_LENGTH, SHA2_FLAGS,
-                           SHA224_Init, SHA224_Update, SHA224_Final)
+    SHA256_CBLOCK, SHA224_DIGEST_LENGTH, SHA2_FLAGS,
+    SHA224_Init, SHA224_Update, SHA224_Final)
 
 /* ossl_sha256_functions */
 IMPLEMENT_digest_functions(sha256, SHA256_CTX,
-                           SHA256_CBLOCK, SHA256_DIGEST_LENGTH, SHA2_FLAGS,
-                           SHA256_Init, SHA256_Update, SHA256_Final)
+    SHA256_CBLOCK, SHA256_DIGEST_LENGTH, SHA2_FLAGS,
+    SHA256_Init, SHA256_Update, SHA256_Final)
 
 /* ossl_sha384_functions */
 IMPLEMENT_digest_functions(sha384, SHA512_CTX,
-                           SHA512_CBLOCK, SHA384_DIGEST_LENGTH, SHA2_FLAGS,
-                           SHA384_Init, SHA384_Update, SHA384_Final)
+    SHA512_CBLOCK, SHA384_DIGEST_LENGTH, SHA2_FLAGS,
+    SHA384_Init, SHA384_Update, SHA384_Final)
 
 /* ossl_sha512_functions */
 IMPLEMENT_digest_functions(sha512, SHA512_CTX,
-                           SHA512_CBLOCK, SHA512_DIGEST_LENGTH, SHA2_FLAGS,
-                           SHA512_Init, SHA512_Update, SHA512_Final)
+    SHA512_CBLOCK, SHA512_DIGEST_LENGTH, SHA2_FLAGS,
+    SHA512_Init, SHA512_Update, SHA512_Final)
 
 /* ossl_sha512_224_functions */
 IMPLEMENT_digest_functions(sha512_224, SHA512_CTX,
-                           SHA512_CBLOCK, SHA224_DIGEST_LENGTH, SHA2_FLAGS,
-                           sha512_224_init, SHA512_Update,
-                           /* XXX NetBSD libc sha2 */sha512_224_final)
+    SHA512_CBLOCK, SHA224_DIGEST_LENGTH, SHA2_FLAGS,
+    sha512_224_init, SHA512_Update, SHA512_Final)
 
 /* ossl_sha512_256_functions */
 IMPLEMENT_digest_functions(sha512_256, SHA512_CTX,
-                           SHA512_CBLOCK, SHA256_DIGEST_LENGTH, SHA2_FLAGS,
-                           sha512_256_init, SHA512_Update,
-                           /* XXX NetBSD libc sha2 */sha512_256_final)
-
+    SHA512_CBLOCK, SHA256_DIGEST_LENGTH, SHA2_FLAGS,
+    sha512_256_init, SHA512_Update, SHA512_Final)

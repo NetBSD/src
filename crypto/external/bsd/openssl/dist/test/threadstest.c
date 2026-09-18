@@ -332,24 +332,24 @@ static void thread_general_worker(void)
     isfips = OSSL_PROVIDER_available(multi_libctx, "fips");
 
     if (!TEST_ptr(mdctx)
-            || !TEST_ptr(md)
-            || !TEST_ptr(cipherctx)
-            || !TEST_ptr(ciph))
+        || !TEST_ptr(md)
+        || !TEST_ptr(cipherctx)
+        || !TEST_ptr(ciph))
         goto err;
 
     /* Do some work */
     for (i = 0; i < 5; i++) {
         if (!TEST_true(EVP_DigestInit_ex(mdctx, md, NULL))
-                || !TEST_true(EVP_DigestUpdate(mdctx, message, messlen))
-                || !TEST_true(EVP_DigestFinal(mdctx, out, &mdoutl)))
+            || !TEST_true(EVP_DigestUpdate(mdctx, message, messlen))
+            || !TEST_true(EVP_DigestFinal(mdctx, out, &mdoutl)))
             goto err;
     }
     for (i = 0; i < 5; i++) {
         if (!TEST_true(EVP_EncryptInit_ex(cipherctx, ciph, NULL, key, iv))
-                || !TEST_true(EVP_EncryptUpdate(cipherctx, out, &ciphoutl,
-                                                (unsigned char *)(intptr_t)message,
-                                                messlen))
-                || !TEST_true(EVP_EncryptFinal(cipherctx, out, &ciphoutl)))
+            || !TEST_true(EVP_EncryptUpdate(cipherctx, out, &ciphoutl,
+                (unsigned char *)message,
+                messlen))
+            || !TEST_true(EVP_EncryptFinal(cipherctx, out, &ciphoutl)))
             goto err;
     }
 
@@ -387,7 +387,7 @@ static EVP_PKEY *shared_evp_pkey = NULL;
 
 static void thread_shared_evp_pkey(void)
 {
-    const char *msg = "Hello World";
+    char *msg = "Hello World";
     unsigned char ctbuf[256];
     unsigned char ptbuf[256];
     size_t ptlen, ctlen = sizeof(ctbuf);
@@ -399,15 +399,15 @@ static void thread_shared_evp_pkey(void)
         if (i > 0)
             EVP_PKEY_CTX_free(ctx);
         ctx = EVP_PKEY_CTX_new_from_pkey(multi_libctx, shared_evp_pkey,
-                                         i == 0 ? "provider=default"
-                                                : "provider=fips");
+            i == 0 ? "provider=default"
+                   : "provider=fips");
         if (!TEST_ptr(ctx))
             goto err;
 
         if (!TEST_int_ge(EVP_PKEY_encrypt_init(ctx), 0)
-                || !TEST_int_ge(EVP_PKEY_encrypt(ctx, ctbuf, &ctlen,
-                                                (unsigned char *)(intptr_t)msg, strlen(msg)),
-                                                0))
+            || !TEST_int_ge(EVP_PKEY_encrypt(ctx, ctbuf, &ctlen,
+                                (unsigned char *)msg, strlen(msg)),
+                0))
             goto err;
 
         EVP_PKEY_CTX_free(ctx);
@@ -562,7 +562,7 @@ err:
     return testresult;
 }
 
-static const char *multi_load_provider = "legacy";
+static char *multi_load_provider = "legacy";
 /*
  * This test attempts to load several providers at the same time, and if
  * run with a thread sanitizer, should crash if the core provider code

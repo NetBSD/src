@@ -5289,7 +5289,7 @@ ecp_nistz256_point_add_affine:
 	.byte	0xf3,0xc3
 .cfi_endproc	
 .size	ecp_nistz256_point_add_affine,.-ecp_nistz256_point_add_affine
-	.section ".note.gnu.property", "a"
+	.section .note.gnu.property, "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f

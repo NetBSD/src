@@ -3086,7 +3086,7 @@ sha256_block_data_order_ssse3:
 	.byte	0xf3,0xc3
 .cfi_endproc	
 .size	sha256_block_data_order_ssse3,.-sha256_block_data_order_ssse3
-	.section ".note.gnu.property", "a"
+	.section .note.gnu.property, "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f

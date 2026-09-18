@@ -8,7 +8,7 @@
 .register	%g3,#scratch
 #endif
 
-.section	".text",#alloc,#execinstr
+.section	".text","a","x"
 
 #ifdef	__PIC__
 SPARC_PIC_THUNK(%g1)

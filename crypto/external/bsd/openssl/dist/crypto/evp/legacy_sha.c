@@ -26,32 +26,32 @@
  * These only remain to support engines that can get these methods.
  * Hardware support for SHA3 has been removed from these legacy cases.
  */
-#define IMPLEMENT_LEGACY_EVP_MD_METH_SHA3(nm, fn, tag)                         \
-static int nm##_init(EVP_MD_CTX *ctx)                                          \
-{                                                                              \
-    return fn##_init(EVP_MD_CTX_get0_md_data(ctx), tag, ctx->digest->md_size * 8); \
-}                                                                              \
-static int nm##_update(EVP_MD_CTX *ctx, const void *data, size_t count)        \
-{                                                                              \
-    return fn##_update(EVP_MD_CTX_get0_md_data(ctx), data, count);             \
-}                                                                              \
-static int nm##_final(EVP_MD_CTX *ctx, unsigned char *md)                      \
-{                                                                              \
-    return fn##_final(md, EVP_MD_CTX_get0_md_data(ctx));                       \
-}
-#define IMPLEMENT_LEGACY_EVP_MD_METH_SHAKE(nm, fn, tag)                        \
-static int nm##_init(EVP_MD_CTX *ctx)                                          \
-{                                                                              \
-    return fn##_init(EVP_MD_CTX_get0_md_data(ctx), tag, ctx->digest->md_size * 8); \
-}                                                                              \
+#define IMPLEMENT_LEGACY_EVP_MD_METH_SHA3(nm, fn, tag)                                 \
+    static int nm##_init(EVP_MD_CTX *ctx)                                              \
+    {                                                                                  \
+        return fn##_init(EVP_MD_CTX_get0_md_data(ctx), tag, ctx->digest->md_size * 8); \
+    }                                                                                  \
+    static int nm##_update(EVP_MD_CTX *ctx, const void *data, size_t count)            \
+    {                                                                                  \
+        return fn##_update(EVP_MD_CTX_get0_md_data(ctx), data, count);                 \
+    }                                                                                  \
+    static int nm##_final(EVP_MD_CTX *ctx, unsigned char *md)                          \
+    {                                                                                  \
+        return fn##_final(md, EVP_MD_CTX_get0_md_data(ctx));                           \
+    }
+#define IMPLEMENT_LEGACY_EVP_MD_METH_SHAKE(nm, fn, tag)                                \
+    static int nm##_init(EVP_MD_CTX *ctx)                                              \
+    {                                                                                  \
+        return fn##_init(EVP_MD_CTX_get0_md_data(ctx), tag, ctx->digest->md_size * 8); \
+    }
 
-#define sha512_224_Init    sha512_224_init
-#define sha512_256_Init    sha512_256_init
+#define sha512_224_Init sha512_224_init
+#define sha512_256_Init sha512_256_init
 
-#define sha512_224_Update  SHA512_Update
-#define sha512_224_Final   sha512_224_final /* XXX NetBSD libc sha2 */
-#define sha512_256_Update  SHA512_Update
-#define sha512_256_Final   sha512_256_final /* XXX NetBSD libc sha2 */
+#define sha512_224_Update SHA512_Update
+#define sha512_224_Final SHA512_Final
+#define sha512_256_Update SHA512_Update
+#define sha512_256_Final SHA512_Final
 
 IMPLEMENT_LEGACY_EVP_MD_METH(sha1, SHA1)
 IMPLEMENT_LEGACY_EVP_MD_METH(sha224, SHA224)

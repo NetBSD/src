@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -85,7 +85,6 @@ typedef struct record_pqueue_st {
 typedef struct dtls1_record_data_st {
     unsigned char *packet;
     size_t packet_length;
-    SSL3_BUFFER rbuf;
     SSL3_RECORD rrec;
 #ifndef OPENSSL_NO_SCTP
     struct bio_dgram_sctp_rcvinfo recordinfo;

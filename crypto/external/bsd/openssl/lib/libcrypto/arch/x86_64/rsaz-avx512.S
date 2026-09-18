@@ -18,7 +18,7 @@ ossl_extract_multiplier_2x20_win5:
 .byte	0x0f,0x0b
 	.byte	0xf3,0xc3
 .size	ossl_rsaz_amm52x20_x1_256, .-ossl_rsaz_amm52x20_x1_256
-	.section ".note.gnu.property", "a"
+	.section .note.gnu.property, "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f

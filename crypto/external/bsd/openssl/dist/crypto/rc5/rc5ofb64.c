@@ -22,15 +22,15 @@
  * used is contained in *num;
  */
 void RC5_32_ofb64_encrypt(const unsigned char *in, unsigned char *out,
-                          long length, RC5_32_KEY *schedule,
-                          unsigned char *ivec, int *num)
+    long length, RC5_32_KEY *schedule,
+    unsigned char *ivec, int *num)
 {
-    register RC5_32_INT v0, v1, t;
-    register int n = *num;
+    register unsigned long v0, v1, t;
+    register int n = *num & 0x07;
     register long l = length;
     unsigned char d[8];
     register char *dp;
-    RC5_32_INT ti[2];
+    unsigned long ti[2];
     unsigned char *iv;
     int save = 0;
 
@@ -44,7 +44,7 @@ void RC5_32_ofb64_encrypt(const unsigned char *in, unsigned char *out,
     l2c(v1, dp);
     while (l--) {
         if (n == 0) {
-            RC5_32_encrypt(ti, schedule);
+            RC5_32_encrypt((unsigned long *)ti, schedule);
             dp = (char *)d;
             t = ti[0];
             l2c(t, dp);

@@ -26,7 +26,7 @@ const char *IDEA_options(void)
 void IDEA_ecb_encrypt(const unsigned char *in, unsigned char *out,
     IDEA_KEY_SCHEDULE *ks)
 {
-    IDEA_INT l0, l1, d[2];
+    unsigned long l0, l1, d[2];
 
     n2l(in, l0);
     d[0] = l0;

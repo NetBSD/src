@@ -21,10 +21,10 @@ void IDEA_cbc_encrypt(const unsigned char *in, unsigned char *out,
     long length, IDEA_KEY_SCHEDULE *ks, unsigned char *iv,
     int encrypt)
 {
-    register IDEA_INT tin0, tin1;
-    register IDEA_INT tout0, tout1, xor0, xor1;
+    register unsigned long tin0, tin1;
+    register unsigned long tout0, tout1, xor0, xor1;
     register long l = length;
-    IDEA_INT tin[2];
+    unsigned long tin[2];
 
     if (encrypt) {
         n2l(iv, tout0);
@@ -93,10 +93,10 @@ void IDEA_cbc_encrypt(const unsigned char *in, unsigned char *out,
     tin[0] = tin[1] = 0;
 }
 
-void IDEA_encrypt(unsigned int *d, IDEA_KEY_SCHEDULE *key)
+void IDEA_encrypt(unsigned long *d, IDEA_KEY_SCHEDULE *key)
 {
     register IDEA_INT *p;
-    register IDEA_INT x1, x2, x3, x4, t0, t1, ul;
+    register unsigned long x1, x2, x3, x4, t0, t1, ul;
 
     x2 = d[0];
     x1 = (x2 >> 16);

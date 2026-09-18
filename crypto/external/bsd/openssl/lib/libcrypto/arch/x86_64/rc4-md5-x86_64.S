@@ -1280,7 +1280,7 @@ rc4_md5_enc:
 	.byte	0xf3,0xc3
 .cfi_endproc	
 .size	rc4_md5_enc,.-rc4_md5_enc
-	.section ".note.gnu.property", "a"
+	.section .note.gnu.property, "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f
