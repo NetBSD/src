@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.c,v 1.13 2022/08/20 11:34:08 riastradh Exp $ */
+/* $NetBSD: fpu.c,v 1.13.12.1 2026/09/18 15:58:13 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.13 2022/08/20 11:34:08 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.13.12.1 2026/09/18 15:58:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -83,62 +83,14 @@ fpu_state_load(lwp_t *l, unsigned int flags)
 	KASSERT(l == curlwp);
 
 	if (__predict_false((flags & PCU_VALID) == 0)) {
-		uint64_t mvfr1 = reg_mvfr1_el1_read();
-		bool fp16 = false;
-		uint32_t fpcr = 0;
-
-		/*
-		 * Determine whether ARMv8.2-FP16 binary16
-		 * floating-point arithmetic is supported.
-		 */
-		switch (__SHIFTOUT(mvfr1, MVFR1_FPHP)) {
-		case MVFR1_FPHP_HALF_ARITH:
-			fp16 = true;
-			break;
-		}
-
-		/* Rounding mode: round to nearest, ties to even.  */
-		fpcr |= __SHIFTIN(FPCR_RN, FPCR_RMODE);
-
-		/* NaN propagation or default NaN.   */
-		switch (__SHIFTOUT(mvfr1, MVFR1_FPDNAN)) {
-		case MVFR1_FPDNAN_NAN:
-			/*
-			 * IEEE 754 NaN propagation supported.  Don't
-			 * enable default NaN mode.
-			 */
-			break;
-		default:
-			/*
-			 * IEEE 754 NaN propagation not supported, so
-			 * enable default NaN mode.
-			 */
-			fpcr |= FPCR_DN;
-		}
-
-		/* Subnormal arithmetic or flush-to-zero.  */
-		switch (__SHIFTOUT(mvfr1, MVFR1_FPFTZ)) {
-		case MVFR1_FPFTZ_DENORMAL:
-			/*
-			 * IEEE 754 subnormal arithmetic supported.
-			 * Don't enable flush-to-zero mode.
-			 */
-			break;
-		default:
-			/*
-			 * IEEE 754 subnormal arithmetic not supported,
-			 * so enable flush-to-zero mode.  If FP16 is
-			 * supported, also enable flush-to-zero for
-			 * binary16 arithmetic.
-			 */
-			fpcr |= FPCR_FZ;
-			if (fp16)
-				fpcr |= FPCR_FZ16;
-		}
-
 		/* initialize fpregs */
 		memset(&pcb->pcb_fpregs, 0, sizeof(pcb->pcb_fpregs));
-		pcb->pcb_fpregs.fpcr = fpcr;
+		/*
+		 * NaN operands propagate through to the output of the FP
+		 * operation, don't enable flush-to-zero mode, round to
+		 * nearest, disable exception traps.
+		 */
+		pcb->pcb_fpregs.fpcr = 0;
 
 		curcpu()->ci_vfp_use.ev_count++;
 	} else {
