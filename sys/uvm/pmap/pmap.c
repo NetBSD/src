@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80.4.2 2026/06/03 18:17:03 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80.4.3 2026/09/18 16:41:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80.4.2 2026/06/03 18:17:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80.4.3 2026/09/18 16:41:40 martin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -929,7 +929,7 @@ pmap_page_remove(struct vm_page_md *mdpg)
 
 	pv_entry_t npv;
 	pv_entry_t pvp = NULL;
-
+	u_long attrs = 0;
 	for (; pv != NULL; pv = npv) {
 		npv = pv->pv_next;
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
@@ -988,6 +988,11 @@ pmap_page_remove(struct vm_page_md *mdpg)
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
 
+		if (pte_modified_p(pte))
+			attrs |= VM_PAGEMD_MODIFIED;
+		if (pte_referenced_p(pte))
+			attrs |= VM_PAGEMD_REFERENCED;
+
 		pmap_tlb_miss_lock_enter();
 		const pt_entry_t npte = pte_nv_entry(is_kernel_pmap_p);
 		pte_set(ptep, npte);
@@ -1016,6 +1021,9 @@ pmap_page_remove(struct vm_page_md *mdpg)
 	pmap_pvlist_check(mdpg);
 	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 	kpreempt_enable();
+
+	if (attrs != 0)
+		pmap_page_set_attributes(mdpg, attrs);
 
 	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
 }
@@ -1099,7 +1107,7 @@ pmap_update(struct pmap *pmap)
 	kpreempt_enable();
 
 	UVMHIST_LOG(pmaphist, " <-- done (kernel=%jd)",
-		    (pmap == pmap_kernel() ? 1 : 0), 0, 0, 0);
+	    (pmap == pmap_kernel() ? 1 : 0), 0, 0, 0);
 }
 
 /*
@@ -1276,6 +1284,8 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pte_to_paddr(pte));
 		if (pg != NULL && pte_modified_p(pte)) {
 			struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
+
+			pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED);
 			if (VM_PAGEMD_EXECPAGE_P(mdpg)) {
 				KASSERT(!VM_PAGEMD_PVLIST_EMPTY_P(mdpg));
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
@@ -1570,7 +1580,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		KASSERT(prot & VM_PROT_WRITE);
 		PMAP_COUNT(exec_mappings);
 		pmap_page_syncicache(pg);
-		pmap_page_clear_attributes(mdpg, VM_PAGEMD_EXECPAGE);
+		pmap_page_set_attributes(mdpg, VM_PAGEMD_EXECPAGE);
 		UVMHIST_LOG(*histp,
 		    "va=%#jx pg %#jx: immediate syncicache (writeable)",
 		    va, (uintptr_t)pg, 0, 0);
@@ -1880,7 +1890,6 @@ pmap_clear_attribute(struct vm_page *pg,
 		return rv;
 	}
 
-	bool changed = false;
 	kpreempt_disable();
 	VM_PAGEMD_PVLIST_READLOCK(mdpg);
 	pmap_pvlist_check(mdpg);
@@ -1902,7 +1911,7 @@ pmap_clear_attribute(struct vm_page *pg,
 		if (npte == opte) {
 			continue;
 		}
-		changed = true;
+		rv = true;
 		KASSERT(pte_valid_p(npte));
 		const uintptr_t gen = VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 		pmap_tlb_miss_lock_enter();
@@ -1922,26 +1931,13 @@ pmap_clear_attribute(struct vm_page *pg,
 	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 	kpreempt_enable();
 
-	UVMHIST_LOG(pmaphist, " <-- %jx (and mappings changed)",
-	    ops->pcao_attribute, changed, 0, 0);
+	UVMHIST_LOG(pmaphist, " <-- %jx (ref=%jd mod=%jd)",
+	    rv,
+	    ops->pcao_attribute == VM_PAGEMD_REFERENCED,
+	    ops->pcao_attribute == VM_PAGEMD_MODIFIED,
+	    0);
 
-	return changed;
-}
-
-/*
- *	pmap_clear_reference:
- *
- *	Clear the reference bit on the specified physical page.
- */
-bool
-pmap_clear_reference(struct vm_page *pg)
-{
-	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "(pg=%#jx (pa %#jx))",
-	   (uintptr_t)pg, VM_PAGE_TO_PHYS(pg), 0,0);
-
-	PMAP_COUNT(clear_reference);
-	return pmap_clear_attribute(pg, &pmap_clear_reference_ops);
+	return rv;
 }
 
 struct pmap_is_attribute_ops {
@@ -2029,6 +2025,22 @@ pmap_is_attribute(struct vm_page *pg,
 }
 
 /*
+ *	pmap_clear_reference:
+ *
+ *	Clear the reference bit on the specified physical page.
+ */
+bool
+pmap_clear_reference(struct vm_page *pg)
+{
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pmaphist, "(pg=%#jx (pa %#jx))",
+	   (uintptr_t)pg, VM_PAGE_TO_PHYS(pg), 0,0);
+
+	PMAP_COUNT(clear_reference);
+	return pmap_clear_attribute(pg, &pmap_clear_reference_ops);
+}
+
+/*
  *	pmap_is_referenced:
  *
  *	Return whether or not the specified physical page is referenced
@@ -2040,6 +2052,12 @@ pmap_is_referenced(struct vm_page *pg)
 
 	return pmap_is_attribute(pg, &pmap_is_reference_ops);
 }
+
+/*
+ *	pmap_clear_modify:
+ *
+ *	Clear the modified bit on the specified physical page.
+ */
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
@@ -2067,7 +2085,12 @@ pmap_clear_modify(struct vm_page *pg)
 		}
 	}
 
-	return pmap_clear_attribute(pg, &pmap_clear_modify_ops);
+	bool rv = pmap_clear_attribute(pg, &pmap_clear_modify_ops);
+
+	UVMHIST_CALLARGS(pmaphist, " <--- done (pg=%#jx (%#jx) = %d)",
+	    (uintptr_t)pg, VM_PAGE_TO_PHYS(pg), rv, 0);
+
+	return rv;
 }
 
 /*
