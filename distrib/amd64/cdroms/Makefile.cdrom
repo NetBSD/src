@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.33 2026/01/06 09:51:08 nia Exp $
+# $NetBSD: Makefile.cdrom,v 1.34 2026/09/18 17:35:30 jakllsch Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -13,7 +13,7 @@ MAKEFS_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
 
 # Need multidot for the boot loader to read kernel modules as it doesn't
 # understand rockridge.
-CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot,bootimage=i386;${EFIBOOTIMG},platformid=efi,no-emul-boot
+CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot,bootimage=i386;${EFIBOOTIMG},platformid=efi,no-emul-boot,generic-bootimage=${DESTDIR}/usr/mdec/bootxx_hd9660
 CDINSTKERNEL=	../../instkernel
 .if ${KERNEL_DIR:Uno} == "yes"
 CDKERNELS=	netbsd-GENERIC.gz		netbsd/kernel
