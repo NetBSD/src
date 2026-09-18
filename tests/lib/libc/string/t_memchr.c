@@ -1,4 +1,4 @@
-/* $NetBSD: t_memchr.c,v 1.3 2012/04/06 07:53:10 jruoho Exp $ */
+/* $NetBSD: t_memchr.c,v 1.4 2026/09/18 22:32:24 nia Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -160,6 +160,22 @@ ATF_TC_BODY(memchr_simple, tc)
 	}
 }
 
+ATF_TC(memchr_abuse);
+ATF_TC_HEAD(memchr_abuse, tc)
+{
+        atf_tc_set_md_var(tc, "descr", "Test memchr(3) with unusual arguments");
+}
+
+ATF_TC_BODY(memchr_abuse, tc)
+{
+	const char *emptystring = "";
+
+	atf_tc_expect_fail("%s", "PR lib/60744");
+
+	ATF_CHECK(memchr(emptystring, 0, -1) == emptystring);
+	ATF_CHECK(memchr(emptystring, 0, SIZE_MAX) == emptystring);
+}
+
 ATF_TC(memrchr_simple);
 ATF_TC_HEAD(memrchr_simple, tc)
 {
@@ -188,6 +204,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, memchr_basic);
 	ATF_TP_ADD_TC(tp, memchr_simple);
+	ATF_TP_ADD_TC(tp, memchr_abuse);
 	ATF_TP_ADD_TC(tp, memrchr_simple);
 
 	return atf_no_error();

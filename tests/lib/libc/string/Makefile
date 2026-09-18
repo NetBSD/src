@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2023/08/08 06:27:32 mrg Exp $
+# $NetBSD: Makefile,v 1.16 2026/09/18 22:32:24 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -31,6 +31,7 @@ TESTS_C+=	t_swab
 WARNS=		4
 
 # Explicitly tries to test this case
+COPTS.t_memchr.c+=	${CC_WNO_STRINGOP_OVERREAD}
 COPTS.t_strlen.c+=	${CC_WNO_STRINGOP_OVERREAD}
 
 .include <bsd.test.mk>
