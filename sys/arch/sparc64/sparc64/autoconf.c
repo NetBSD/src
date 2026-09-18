@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.243.2.1 2026/09/13 10:43:06 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.243.2.2 2026/09/18 15:27:32 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.243.2.1 2026/09/13 10:43:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.243.2.2 2026/09/18 15:27:32 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -774,9 +774,46 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			portid = -1;
 		ma.ma_upaid = portid;
 
-		if (prom_getprop(node, "reg", sizeof(*ma.ma_reg), 
-				 &ma.ma_nreg, &ma.ma_reg) != 0)
-			continue;
+#define NREG32 3
+		if (prom_getproplen(node, "reg") == NREG32 * 4) {
+			/*
+			 * Fix up nodes where reg is encoded as a 64-bit and
+			 * a 32-bit value (e.g. 00000400 0fc62020 00000010),
+			 * but we want 2 * 64-bit values.
+			 * The length in this case is 3 * 4 (bytes).
+			 */
+			int n;
+			int32_t *reg32p = NULL;
+
+			if (prom_getprop(node, "reg", sizeof(int32_t),
+			    &n, &reg32p) != 0)
+				continue;
+			if (n != NREG32) {
+				free(reg32p, M_DEVBUF);
+				continue;
+			}
+			ma.ma_reg = malloc(sizeof(*ma.ma_reg), M_DEVBUF,
+			    M_NOWAIT);
+			if (ma.ma_reg == NULL) {
+				free(reg32p, M_DEVBUF);
+				continue;
+			}
+			ma.ma_reg->ur_paddr = reg32p[0];
+			ma.ma_reg->ur_paddr = ma.ma_reg->ur_paddr << 32;
+			ma.ma_reg->ur_paddr |= reg32p[1];
+			ma.ma_reg->ur_len = reg32p[2];
+			ma.ma_nreg = 1;
+			free(reg32p, M_DEVBUF);
+#ifdef DEBUG
+			if (autoconf_debug & ACDB_PROBE) {
+				printf(" fixed up 64/32 reg property\n");
+			}
+#endif
+		} else
+			/* reg is encoded as we expect */
+			if (prom_getprop(node, "reg", sizeof(*ma.ma_reg),
+			    &ma.ma_nreg, &ma.ma_reg) != 0)
+				continue;
 #ifdef DEBUG
 		if (autoconf_debug & ACDB_PROBE) {
 			if (ma.ma_nreg)
@@ -1131,7 +1168,8 @@ device_register(device_t dev, void *aux)
 			return;
 
 		ofnode = (int)ia->ia_cookie;
-		set_i2c_dev_props(dev, aux);    /* i2c device patches */
+		/* i2c device patches */
+		set_i2c_dev_props(dev, device_parent(busdev), aux);
 
 		return;
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
@@ -1166,7 +1204,11 @@ device_register(device_t dev, void *aux)
 		 */
 		busdev = device_parent(busdev);
 		devhandle = device_handle(busdev);
-		KASSERT(devhandle_type(devhandle) == DEVHANDLE_TYPE_OF);
+		if (devhandle_type(devhandle) != DEVHANDLE_TYPE_OF)
+{
+printf("Not OF: %d\n", devhandle_type(devhandle));
+			return;
+}
 		ofnode = devhandle_to_of(devhandle);
 
 		/*
@@ -1202,7 +1244,8 @@ device_register(device_t dev, void *aux)
 		 * e.g. "atabus".  Get the controller's devhandle.
 		 */
 		devhandle = device_handle(device_parent(busdev));
-		KASSERT(devhandle_type(devhandle) == DEVHANDLE_TYPE_OF);
+		if (devhandle_type(devhandle) != DEVHANDLE_TYPE_OF)
+			return;
 		ofnode = devhandle_to_of(devhandle);
 
 		dev_bi_unit_drive_match(dev, ofnode, adev->adev_channel*2+
@@ -1450,8 +1493,8 @@ device_register_post_config(device_t dev, void *aux)
 			 */
 			devhandle_t ctlr_devhandle = device_handle(
 			    device_parent(device_parent(dev)));
-			KASSERT(devhandle_type(ctlr_devhandle) ==
-			    DEVHANDLE_TYPE_OF);
+			if (devhandle_type(ctlr_devhandle) != DEVHANDLE_TYPE_OF)
+				return;
 			int ofnode = devhandle_to_of(ctlr_devhandle);
 
 			for (ofnode = OF_child(ofnode);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.h,v 1.4.28.1 2026/09/13 10:43:06 martin Exp $ */
+/*	$NetBSD: ofw_patch.h,v 1.4.28.2 2026/09/18 15:27:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ extern int autoconf_debug;
 #endif
 
 void set_i2c_bus_props(device_t, uint64_t);
-void set_i2c_dev_props(device_t, void *);
+void set_i2c_dev_props(device_t, device_t, void *);
 void add_drivebay_props(device_t, int, void *);
 void set_static_edid(prop_dictionary_t);
 
