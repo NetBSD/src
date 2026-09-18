@@ -218,6 +218,11 @@ include "MipsInstrInfo.td"
 include "MipsCallingConv.td"
 include "MipsRegisterBanks.td"
 
+foreach i = {1-31} in
+  def FeatureReserveGPR#i :
+      SubtargetFeature<"reserve-gpr"#i, "UserReservedGPR["#i#"]", "true",
+                       "Reserve MIPS GPR "#i>;
+
 // Avoid forward declaration issues.
 include "MipsScheduleP5600.td"
 include "MipsScheduleGeneric.td"

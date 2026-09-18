@@ -102,15 +102,16 @@ mips_fpu_state_save(lwp_t *l)
 	 * interrupts remain on.
 	 */
 	__asm volatile (
+		".set push"		"\n\t"
 		".set noreorder"	"\n\t"
 		".set noat"		"\n\t"
+		".set hardfloat"	"\n\t"
 		"mfc0	%0, $%3"	"\n\t"
 		"mtc0	%2, $%3"	"\n\t"
 		___STRING(COP0_HAZARD_FPUENABLE)
 		"cfc1	%1, $31"	"\n\t"
 		"cfc1	%1, $31"	"\n\t"
-		".set at"		"\n\t"
-		".set reorder"		"\n\t"
+		".set pop"		"\n\t"
 	    :	"=&r" (status), "=r"(fpcsr)
 	    :	"r"(tf->tf_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX|MIPS_SR_INT_IE)),
 		"n"(MIPS_COP_0_STATUS));
@@ -341,13 +342,14 @@ mips_fpu_state_load(lwp_t *l, u_int flags)
 	 */
 	fpcsr &= ~MIPS_FCSR_CAUSE;
 	__asm volatile(
+		".set push"		"\n\t"
 		".set noreorder"	"\n\t"
 		".set noat"		"\n\t"
+		".set hardfloat"	"\n\t"
 		"ctc1	%0, $31"	"\n\t"
 		"nop"			"\n\t"	/* XXX: Hack */
 		"mtc0	%1, $%2"	"\n\t"
-		".set at"		"\n\t"
-		".set reorder"		"\n\t"
+		".set pop"		"\n\t"
 	    ::	"r"(fpcsr), "r"(status),
 		"n"(MIPS_COP_0_STATUS));
 }
