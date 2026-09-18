@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.12 2026/09/13 13:58:42 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.13 2026/09/18 16:48:50 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -488,4 +488,79 @@ sys/arch/xen/xen/xbdback_xenbus.c		1.109
 	in a DIAGNOSTIC dom0 kernel and another possible state corruption by
 	a malicious guest.
 	[bouyer, ticket #464]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.248-1.252 (patch)
+sys/arch/sparc64/sparc64/ofw_patch.c		1.11 (patch)
+sys/arch/sparc64/sparc64/ofw_patch.h		1.6
+
+	sparc64: PR 60428: fix various OFW issues.
+	[jdc, ticket #465]
+
+sys/dev/i2c/adt7462.c				1.1
+sys/dev/i2c/adt7462reg.h			1.1
+sys/dev/i2c/files.i2c				1.138 (patch)
+sys/dev/i2c/lm95221.c				1.1
+sys/dev/i2c/lm95221reg.h			1.1
+sys/dev/i2c/nxp75a.c				1.1
+sys/dev/i2c/nxp75areg.h				1.1
+
+	Add a driver for the Texas Instruments LM95221 temperature sensor.
+	Add a driver for the NXP LM75A temperature sensor.
+	Add a driver for the On Semiconductor (Analog Devices) ADT7462
+	system monitor.
+	[jdc, ticket #466]
+
+distrib/sets/lists/man/mi			1.1832
+distrib/sets/lists/manhtml/mi			1.50
+share/man/man4/Makefile				1.752 (patch)
+share/man/man4/adm1026hm.4			1.5
+share/man/man4/adt7462sm.4			1.1,1.2
+share/man/man4/lm95221ts.4			1.1,1.2
+share/man/man4/nxp75a.4				1.1
+share/man/man4/pcagpio.4			1.1,1.2
+share/man/man4/pcf8574io.4			1.1,1.2
+
+	Add manual pages for various i2c sensor drivers.
+	[jdc, ticket #467]
+
+sys/arch/sparc64/conf/files.sparc64		1.170
+sys/arch/sparc64/dev/fire_i2c.c			1.1-1.4
+sys/arch/sparc64/dev/fire_i2creg.h		1.1
+
+	sparc64: add a driver for the Fire/MICV i2c controller found
+	in Pyro-based machines (e.g. U45, V245).
+	[jdc, ticket #468]
+
+distrib/sets/lists/man/mi			1.1833
+distrib/sets/lists/manhtml/mi			1.51
+share/man/man4/man4.sparc64/Makefile		1.11
+share/man/man4/man4.sparc64/fireiic.4		1.1
+share/man/man4/man4.sparc64/jbusiic.4		1.1
+sys/arch/sparc64/conf/GENERIC			1.248
+
+	sparc64: add man pages for devices found in the U45.
+	[jdc, ticket #469]
+
+sys/dev/acpi/acpi_bat.c				1.124
+
+	acpibat(4): PR 60709: add Surface Go 3 support.
+	[gutteridge, ticket #470]
+
+sys/arch/aarch64/aarch64/fpu.c			1.15
+
+	arm64: fix aarch64 FP defaults on 64-bit only CPUs.
+	[jmcneill, ticket #471]
+
+sys/uvm/pmap/pmap.c				1.87,1.98-1.101,1.108
+
+	MI pmap: PR 60522: fix two EXECness issues
+	- when creating a WX mapping via pmap_enter mark the page as EXEC
+	- when pmap_protect adds X then ensure that pmap_page_syncicache
+	  is called for the page.
+	[skrll, ticket #472]
+
+sys/external/bsd/drm2/dist/drm/i915/display/intel_dp.c 1.8
+
+	i915: PR 59989:: make this build with -O0.
+	[hgutch, ticket #473]
 
