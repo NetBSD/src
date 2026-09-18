@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.287 2026/09/01 20:12:18 andvar Exp $	*/
+/*	$NetBSD: key.c,v 1.288 2026/09/18 13:30:09 riastradh Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.287 2026/09/01 20:12:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.288 2026/09/18 13:30:09 riastradh Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -128,6 +128,8 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.287 2026/09/01 20:12:18 andvar Exp $");
 #ifndef SAVLUT_NHASH
 #define SAVLUT_NHASH		128
 #endif
+
+#define PFKEY_ALIGNED8(a) (((a) % 8) == 0)
 
 percpu_t *pfkeystat_percpu;
 
@@ -1829,6 +1831,7 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 	KASSERT(!cpu_softintr_p());
 	KASSERT(xpl0 != NULL);
 	KASSERT(len >= sizeof(*xpl0));
+	KASSERT(PFKEY_ALIGNED8((uintptr_t)xpl0));
 
 	if (len != PFKEY_EXTLEN(xpl0)) {
 		IPSECLOG(LOG_DEBUG, "Invalid msg length.\n");
@@ -1873,18 +1876,21 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 	struct ipsecrequest **p_isr = &newsp->req;
 
 	/* validity check */
-	if (PFKEY_EXTLEN(xpl0) < sizeof(*xpl0)) {
+	if (PFKEY_EXTLEN(xpl0) < sizeof(*xpl0) + sizeof(*xisr)) {
 		IPSECLOG(LOG_DEBUG, "Invalid msg length.\n");
 		*error = EINVAL;
 		goto free_exit;
 	}
 
 	tlen = PFKEY_EXTLEN(xpl0) - sizeof(*xpl0);
+	CTASSERT(PFKEY_ALIGNED8(sizeof(*xpl0)));
 	xisr = (const struct sadb_x_ipsecrequest *)(xpl0 + 1);
 
-	while (tlen > 0) {
+	while (tlen > sizeof(*xisr)) {
 		/* length check */
-		if (xisr->sadb_x_ipsecrequest_len < sizeof(*xisr)) {
+		if (xisr->sadb_x_ipsecrequest_len < sizeof(*xisr) ||
+		    xisr->sadb_x_ipsecrequest_len > tlen ||
+		    !PFKEY_ALIGNED8(xisr->sadb_x_ipsecrequest_len)) {
 			IPSECLOG(LOG_DEBUG, "invalid ipsecrequest length.\n");
 			*error = EINVAL;
 			goto free_exit;
@@ -1991,12 +1997,22 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 		 * This behavior is used by NAT-T enabled ipsecif(4).
 		 */
 		if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
+			size_t resid = xisr->sadb_x_ipsecrequest_len -
+			    sizeof(*xisr);
 			const struct sockaddr *paddr;
 
+			if (sizeof(*paddr) > resid) {
+				IPSECLOG(LOG_DEBUG, "invalid request "
+				    "address length.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
 			paddr = (const struct sockaddr *)(xisr + 1);
 
 			/* validity check */
-			if (paddr->sa_len > sizeof((*p_isr)->saidx.src)) {
+			if (paddr->sa_len < sizeof(*paddr) ||
+			    paddr->sa_len > resid ||
+			    paddr->sa_len > sizeof((*p_isr)->saidx.src)) {
 				IPSECLOG(LOG_DEBUG, "invalid request "
 				    "address length.\n");
 				*error = EINVAL;
@@ -2004,11 +2020,20 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 			}
 			memcpy(&(*p_isr)->saidx.src, paddr, paddr->sa_len);
 
+			resid -= paddr->sa_len;
+			if (sizeof(*paddr) > resid) {
+				IPSECLOG(LOG_DEBUG, "invalid request "
+				    "address length.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
 			paddr = (const struct sockaddr *)((const char *)paddr
 			    + paddr->sa_len);
 
 			/* validity check */
-			if (paddr->sa_len > sizeof((*p_isr)->saidx.dst)) {
+			if (paddr->sa_len < sizeof(*paddr) ||
+			    paddr->sa_len > resid ||
+			    paddr->sa_len > sizeof((*p_isr)->saidx.dst)) {
 				IPSECLOG(LOG_DEBUG, "invalid request "
 				    "address length.\n");
 				*error = EINVAL;
@@ -2023,12 +2048,7 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 		p_isr = &(*p_isr)->next;
 		tlen -= xisr->sadb_x_ipsecrequest_len;
 
-		/* validity check */
-		if (tlen < 0) {
-			IPSECLOG(LOG_DEBUG, "becoming tlen < 0.\n");
-			*error = EINVAL;
-			goto free_exit;
-		}
+		KASSERTMSG(tlen >= 0, "tlen=%d", tlen);
 
 		xisr = (const struct sadb_x_ipsecrequest *)((const char *)xisr +
 		    xisr->sadb_x_ipsecrequest_len);
@@ -2071,7 +2091,7 @@ key_sp2msg(const struct secpolicy *sp, int mflag)
 {
 	struct sadb_x_policy *xpl;
 	int tlen;
-	char *p;
+	char *p0, *p;
 	struct mbuf *m;
 
 	KASSERT(sp != NULL);
@@ -2086,6 +2106,9 @@ key_sp2msg(const struct secpolicy *sp, int mflag)
 
 	m->m_len = tlen;
 	m->m_next = NULL;
+	p0 = m->m_data;
+	KASSERT(sizeof(struct sadb_x_policy) <= tlen);
+	KASSERT((uintptr_t)p0 % _Alignof(struct sadb_x_policy) == 0);
 	xpl = mtod(m, struct sadb_x_policy *);
 	memset(xpl, 0, tlen);
 
@@ -2096,7 +2119,9 @@ key_sp2msg(const struct secpolicy *sp, int mflag)
 	xpl->sadb_x_policy_id = sp->id;
 	if (sp->origin == IPSEC_SPORIGIN_KERNEL)
 		xpl->sadb_x_policy_flags |= IPSEC_POLICY_FLAG_ORIGIN_KERNEL;
+	CTASSERT(PFKEY_ALIGNED8(sizeof(*xpl)));
 	p = (char *)xpl + sizeof(*xpl);
+	KASSERT(PFKEY_ALIGNED8(p - p0));
 
 	/* if is the policy for ipsec ? */
 	if (sp->policy == IPSEC_POLICY_IPSEC) {
@@ -2104,24 +2129,40 @@ key_sp2msg(const struct secpolicy *sp, int mflag)
 		struct ipsecrequest *isr;
 
 		for (isr = sp->req; isr != NULL; isr = isr->next) {
+			const unsigned len = sizeof(*xisr)
+			    + isr->saidx.src.sa.sa_len
+			    + isr->saidx.dst.sa.sa_len;
+			const unsigned pad = PFKEY_ALIGN8(len) - len;
 
+			KASSERT(PFKEY_ALIGNED8(p - p0));
+			KASSERT(PFKEY_ALIGN8(len) <= tlen - (p - p0));
+
+			KASSERT(sizeof(*xisr) <= tlen - (p - p0));
 			xisr = (struct sadb_x_ipsecrequest *)p;
 
 			xisr->sadb_x_ipsecrequest_proto = isr->saidx.proto;
 			xisr->sadb_x_ipsecrequest_mode = isr->saidx.mode;
 			xisr->sadb_x_ipsecrequest_level = isr->level;
 			xisr->sadb_x_ipsecrequest_reqid = isr->saidx.reqid;
-
 			p += sizeof(*xisr);
+
+			KASSERT(isr->saidx.src.sa.sa_len <= tlen - (p - p0));
 			memcpy(p, &isr->saidx.src, isr->saidx.src.sa.sa_len);
 			p += isr->saidx.src.sa.sa_len;
-			memcpy(p, &isr->saidx.dst, isr->saidx.dst.sa.sa_len);
-			p += isr->saidx.src.sa.sa_len;
 
-			xisr->sadb_x_ipsecrequest_len =
-			    PFKEY_ALIGN8(sizeof(*xisr)
-			    + isr->saidx.src.sa.sa_len
-			    + isr->saidx.dst.sa.sa_len);
+			KASSERT(isr->saidx.dst.sa.sa_len <= tlen - (p - p0));
+			memcpy(p, &isr->saidx.dst, isr->saidx.dst.sa.sa_len);
+			p += isr->saidx.dst.sa.sa_len;
+
+			KASSERT(pad <= tlen - (p - p0));
+			memset(p, 0, pad);
+			p += pad;
+
+			KASSERT(p == (char *)xisr + PFKEY_ALIGN8(len));
+			KASSERT(PFKEY_ALIGNED8(p - p0));
+			xisr->sadb_x_ipsecrequest_len = PFKEY_ALIGN8(len);
+			KASSERT(p == (char *)xisr +
+			    xisr->sadb_x_ipsecrequest_len);
 		}
 	}
 
