@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.104 2026/09/19 13:23:18 tls Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.105 2026/09/19 13:34:11 tls Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.104 2026/09/19 13:23:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.105 2026/09/19 13:34:11 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_ixl.h"
@@ -3840,10 +3840,8 @@ ixl_atq_done_locked(struct ixl_softc *sc)
 			break;
 
 		iatq = (struct ixl_atq *)((intptr_t)slot->iaq_cookie);
-		if (iatq != NULL) {
-			iatq->iatq_desc = *slot;
-			iatq->iatq_inuse = false;
-		}
+		iatq->iatq_desc = *slot;
+		iatq->iatq_inuse = false;
 
 		memset(slot, 0, sizeof(*slot));
 
