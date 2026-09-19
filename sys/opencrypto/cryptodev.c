@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.135 2026/07/05 15:34:13 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.136 2026/09/19 02:44:41 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.135 2026/07/05 15:34:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.136 2026/09/19 02:44:41 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -1148,13 +1148,13 @@ cryptodev_mop(struct fcrypt *fcr,
 		if (cse == NULL) {
 			DPRINTF("cse_find failed %#x\n", cnop[req].ses);
 			cnop[req].status = SET_ERROR(EINVAL);
-			continue;
+			goto bail;
 		}
 
 		if (cnop[req].len > 256*1024-4) {
 			DPRINTF("length failed\n");
 			cnop[req].status = SET_ERROR(EINVAL);
-			continue;
+			goto bail;
 		}
 		if (cse->txform) {
 			if (cnop[req].len < cse->txform->blocksize -
