@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.35 2026/01/09 08:44:57 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.36 2026/09/19 17:24:11 riastradh Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -84,7 +84,9 @@ typedef int			__register_t;
 #define	__SIMPLELOCK_UNLOCKED	{ { 1, 1, 1, 1 } }
 
 #define	__MACHINE_STACK_GROWS_UP	/* stack grows to higher addresses */
+#ifndef _KERNEL				/* 64-bit CAS requires FPU */
 #define	__HAVE_ATOMIC64_OPS
+#endif
 #define	__HAVE_BUS_SPACE_8
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE_CPU_LWP_SETPRIVATE
