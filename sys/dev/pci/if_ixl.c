@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.100.2.1 2026/09/19 16:22:48 martin Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.100.2.2 2026/09/19 16:39:17 martin Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.100.2.1 2026/09/19 16:22:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.100.2.2 2026/09/19 16:39:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_ixl.h"
@@ -3792,7 +3792,8 @@ ixl_atq_post_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
 	slot = &atq[prod];
 
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&sc->sc_atq),
-	    0, IXL_DMA_LEN(&sc->sc_atq), BUS_DMASYNC_POSTWRITE);
+	    0, IXL_DMA_LEN(&sc->sc_atq), BUS_DMASYNC_POSTREAD|
+					 BUS_DMASYNC_POSTWRITE);
 
 	*slot = iatq->iatq_desc;
 	slot->iaq_cookie = (uint64_t)((intptr_t)iatq);
@@ -3801,7 +3802,8 @@ ixl_atq_post_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
 		ixl_aq_dump(sc, slot, "atq command");
 
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&sc->sc_atq),
-	    0, IXL_DMA_LEN(&sc->sc_atq), BUS_DMASYNC_PREWRITE);
+	    0, IXL_DMA_LEN(&sc->sc_atq), BUS_DMASYNC_PREREAD|
+					 BUS_DMASYNC_PREWRITE);
 
 	sc->sc_atq_prod = prod_next;
 	ixl_wr(sc, sc->sc_aq_regs->atq_tail, sc->sc_atq_prod);
@@ -3838,10 +3840,8 @@ ixl_atq_done_locked(struct ixl_softc *sc)
 			break;
 
 		iatq = (struct ixl_atq *)((intptr_t)slot->iaq_cookie);
-		if (iatq != NULL) {
-			iatq->iatq_desc = *slot;
-			iatq->iatq_inuse = false;
-		}
+		iatq->iatq_desc = *slot;
+		iatq->iatq_inuse = false;
 
 		memset(slot, 0, sizeof(*slot));
 
