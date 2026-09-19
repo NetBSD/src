@@ -1,4 +1,4 @@
-/* $NetBSD: fire_i2c.c,v 1.4.2.2 2026/09/18 15:40:22 martin Exp $ */
+/* $NetBSD: fire_i2c.c,v 1.4.2.3 2026/09/19 15:49:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fire_i2c.c,v 1.4.2.2 2026/09/18 15:40:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fire_i2c.c,v 1.4.2.3 2026/09/19 15:49:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -109,6 +109,7 @@ firei2c_attach(device_t parent, device_t self, void *aux)
 {
 	struct firei2c_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
+	struct i2cbus_attach_args iba;
 	int  sysclk;
 
 	sc->sc_bustag = ma->ma_bustag;
@@ -171,7 +172,9 @@ firei2c_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_cv, "firei2c");
 
-	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
+	memset(&iba, 0, sizeof(iba));
+	iba.iba_tag = &sc->sc_i2c;
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
 	return;
 }
 
