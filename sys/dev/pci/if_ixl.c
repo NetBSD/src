@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.102 2026/09/19 06:21:40 tls Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.103 2026/09/19 06:44:47 tls Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.102 2026/09/19 06:21:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.103 2026/09/19 06:44:47 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_ixl.h"
@@ -717,11 +717,6 @@ do {							\
 #define IXL_QUEUE_NUM		0
 #endif
 
-enum ixl_link_flags {
-	IXL_LINK_NOFLAGS	= 0,
-	IXL_LINK_FLAG_WAITDONE	= __BIT(0),
-};
-
 static bool		 ixl_param_nomsix = false;
 static int		 ixl_param_stats_interval = IXL_STATS_INTERVAL_MSEC;
 static int		 ixl_param_nqps_limit = IXL_QUEUE_NUM;
@@ -767,7 +762,7 @@ static void	ixl_hmc_free(struct ixl_softc *);
 static int	ixl_get_vsi(struct ixl_softc *);
 static int	ixl_set_vsi(struct ixl_softc *);
 static void	ixl_set_filter_control(struct ixl_softc *);
-static int	ixl_get_link_status(struct ixl_softc *, enum ixl_link_flags);
+static int	ixl_get_link_status(struct ixl_softc *);
 static void	ixl_get_link_status_work(void *);
 static int	ixl_get_link_status_poll(struct ixl_softc *, int *);
 static void	ixl_get_link_status_done(struct ixl_softc *,
@@ -2105,7 +2100,7 @@ ixl_init(struct ifnet *ifp)
 	mutex_exit(&sc->sc_cfg_lock);
 
 	if (error == 0) {
-		(void)ixl_get_link_status(sc, IXL_LINK_NOFLAGS);
+		(void)ixl_get_link_status(sc);
 	}
 
 	return error;
@@ -3626,7 +3621,7 @@ ixl_get_link_status_done(struct ixl_softc *sc,
 }
 
 static int
-ixl_get_link_status(struct ixl_softc *sc, enum ixl_link_flags flags)
+ixl_get_link_status(struct ixl_softc *sc)
 {
 	struct ixl_atq *iatq;
 	struct ixl_aq_desc *iaq;
@@ -3647,25 +3642,11 @@ ixl_get_link_status(struct ixl_softc *sc, enum ixl_link_flags flags)
 
 		KASSERT(iatq->iatq_fn == ixl_get_link_status_done);
 		error = ixl_atq_post_locked(sc, iatq);
-		if (error != 0)
-			goto out;
 	} else {
 		/* the previous command is not completed */
 		error = EBUSY;
-		goto out;
 	}
 
-	if (ISSET(flags, IXL_LINK_FLAG_WAITDONE)) {
-		do {
-			error = cv_timedwait(&sc->sc_atq_cv, &sc->sc_atq_lock,
-			    IXL_ATQ_EXEC_TIMEOUT);
-			if (error == EWOULDBLOCK)
-				break;
-		} while (iatq->iatq_inuse ||
-		    ISSET(iaq->iaq_flags, htole16(IXL_AQ_DD)));
-	}
-
-out:
 	mutex_exit(&sc->sc_atq_lock);
 
 	return error;
@@ -3676,7 +3657,7 @@ ixl_get_link_status_work(void *xsc)
 {
 	struct ixl_softc *sc = xsc;
 
-	(void)ixl_get_link_status(sc, IXL_LINK_NOFLAGS);
+	(void)ixl_get_link_status(sc);
 }
 
 static void
@@ -3916,6 +3897,7 @@ ixl_atq_exec(struct ixl_softc *sc, struct ixl_atq *iatq)
 static int
 ixl_atq_exec_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
 {
+	const unsigned deadline = getticks() + IXL_ATQ_EXEC_TIMEOUT;
 	int error;
 
 	KASSERT(mutex_owned(&sc->sc_atq_lock));
@@ -3927,12 +3909,15 @@ ixl_atq_exec_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
 	if (error)
 		return error;
 
-	do {
-		error = cv_timedwait(&sc->sc_atq_cv, &sc->sc_atq_lock,
-		    IXL_ATQ_EXEC_TIMEOUT);
-		if (error == EWOULDBLOCK)
+	while (iatq->iatq_inuse) {
+		const int left = deadline - getticks();
+
+		if (left <= 0) {
+			error = EWOULDBLOCK;
 			break;
-	} while (iatq->iatq_inuse);
+		}
+		(void)cv_timedwait(&sc->sc_atq_cv, &sc->sc_atq_lock, left);
+	}
 
 	return error;
 }
