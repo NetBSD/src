@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.45 2026/09/09 22:15:02 perseant Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.46 2026/09/19 18:25:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.45 2026/09/09 22:15:02 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.46 2026/09/19 18:25:11 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -132,10 +132,10 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 
 	ASSERT_SEGLOCK(fs); /* XXX it doesn't, really */
 
-	KASSERT(ino > LFS_IFILE_INUM);
+	KASSERTMSG(ino > LFS_IFILE_INUM, "ino=%lld", (long long)ino);
 	if ((error = raise_maxino(fs, ino)) != 0)
 		return error;
-	
+
 	/*
 	 * First, just try a vget. If the version number is the one we want,
 	 * we don't have to do anything else.  If the version number is wrong,
@@ -243,8 +243,9 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 	SEGUSE *sup;
 	u_int64_t newsize, loff;
 
-	KASSERT(lbn >= 0);	/* no indirect blocks */
-	KASSERT(ino > LFS_IFILE_INUM);
+	KASSERTMSG(lbn >= 0, "lbn=%lld",	/* no indirect blocks */
+	    (long long)lbn);
+	KASSERTMSG(ino > LFS_IFILE_INUM, "ino=%lld", (long long)ino);
 
 	DLOG((DLOG_RF, "update_meta: ino %d lbn %d size %d at 0x%jx\n",
 	      (int)ino, (int)lbn, (int)size, (uintmax_t)ndaddr));

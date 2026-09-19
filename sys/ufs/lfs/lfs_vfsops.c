@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.403 2026/09/09 22:22:41 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.404 2026/09/19 18:25:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.403 2026/09/09 22:22:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.404 2026/09/19 18:25:11 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1797,7 +1797,7 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 			&lfs_lock);
 	mutex_exit(&lfs_lock);
 
-	KASSERT(ino >= LFS_IFILE_INUM);
+	KASSERTMSG(ino >= LFS_IFILE_INUM, "ino=%lld", (long long)ino);
 	/* LFS_ASSERT_MAXINO(fs, ino); */
 
 	/* Translate the inode number to a disk address. */
