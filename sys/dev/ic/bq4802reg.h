@@ -1,4 +1,4 @@
-/*	$NetBSD: bq4802reg.h,v 1.3.2.2 2026/09/13 10:39:46 martin Exp $	*/
+/*	$NetBSD: bq4802reg.h,v 1.3.2.3 2026/09/19 16:18:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
 #define	BQ4802_EN_AIE	0x08	/* Alarm interrupt enable */
 
 /* Flags */
-#define	BQ4802_FLG_BVF	0x01	/* Battery-valid flag */
+#define	BQ4802_FLG_BVF	0x01	/* Battery-valid flag (might not get unset) */
 #define	BQ4802_FLG_PWRF	0x02	/* Power-fail interrupt flag */
 #define	BQ4802_FLG_PF	0x04	/* Periodic interrupt flag */
 #define	BQ4802_FLG_AF	0x08	/* Alarm interrupt flag */
