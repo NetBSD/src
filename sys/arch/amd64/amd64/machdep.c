@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.380 2026/07/10 15:11:25 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.381 2026/09/19 15:18:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.380 2026/07/10 15:11:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.381 2026/09/19 15:18:30 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -586,6 +586,73 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	sigexit(curlwp, SIGILL);
 }
 
+/*
+ * sendsig_siginfo(ksi, mask)
+ *
+ *	Set up a stack frame and registers for signal delivery with the
+ *	given siginfo and signal mask.
+ *
+ *	The stack frame layout is as follows, with XSAVE parts omitted
+ *	(and _UC_XSAVE clear in uc_flags) if the process doesn't have
+ *	XSAVE state to restore:
+ *
+ *	        / +-----------------------+
+ *	       |  | (other XSAVE stuff)   |
+ *	       |  | --------------------- |
+ *	       |  | Hi16_ZMM              |
+ *	       |  | --------------------- |
+ *	 XSAVE <  | ZMM_Hi256             |
+ *	       |  | --------------------- |
+ *	       |  | YMM_Hi128             |
+ *	       |  *-----------------------* \
+ *	       |  | FXSAVE in ucontext_t  |  |
+ *	        \ *-----------------------*  > ucontext_t
+ *	          | rest of ucontext_t    |  |
+ *	          +-----------------------+ /
+ *	          | siginfo_t             |
+ *	          +-----------------------+ =0 (mod 16)
+ *	          | return address        |
+ *	          +-----------------------+ <--- rsp on signal handler entry
+ *
+ *	Additionally, when XSAVE is in use, there is a pointer to the
+ *	XSAVE area in some architecturally unused padding in the FXSAVE
+ *	area.  This is important because on i386, the XSAVE area
+ *	_cannot_ overlap the ucontext_t owing to past ABI constraints,
+ *	so applications running on both i386 and amd64 can use the same
+ *	code to get the XSAVE pointer (and for 11.0, but not any
+ *	earlier or later versions, the XSAVE pointer was also needed
+ *	for signal handlers to write registers back on amd64 because
+ *	the XSAVE area and the ucontext_t did not overlap).
+ *
+ *	The overlap of the FXSAVE section in the XSAVE area and the
+ *	FXSAVE section in ucontext_t is tricky but important: signal
+ *	handlers use it to read, and potentially write back, the x87
+ *	and xmm registers.  Consider an application with two parts
+ *	(e.g., a new library that uses an AVX512 optimization once it
+ *	is available, and an old part running unmodified existing code
+ *	predating NetBSD's AVX512 support):
+ *
+ *	1. Uses the high 16 zmm registers.
+ *	2. (a) Uses _only_ x87/xmm registers, and
+ *	   (b) has a signal handler that reads and writes them back.
+ *
+ *	After part (1), the system will consider XSAVE necessary to
+ *	save and restore the high 16 zmm registers, even if -- as is
+ *	customary when using the ymm or low 16 zmm registers -- the
+ *	application issues VZEROUPPER when part (1) is done.  For this
+ *	application to work without changing the signal handler in part
+ *	(2)(b) to teach it about the XSAVE pointer -- i.e., for
+ *	compatibility with existing code -- the XSAVE area and the
+ *	ucontext_t MUST overlap.  (11.0 would copy out the FXSAVE area
+ *	to both locations so that unmodified signal handlers could
+ *	_read_ the x87/xmm registers, but _writeback_ would be
+ *	ignored.)
+ *
+ *	For more background, see:
+ *
+ *	PR kern/60539: XSAVE changes break ucontext userspace API
+ *	https://gnats.NetBSD.org/60539
+ */
 void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
@@ -635,14 +702,23 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * FXSAVE area.
 	 */
 	if (process_xsave_needed_p(l)) {
+		enum {
+			overlap = (sizeof(struct sigframe_siginfo) -
+			    offsetof(struct sigframe_siginfo,
+				sf_uc.uc_mcontext.__fpregs)),
+		};
+
 		process_read_xsave(l, &xsavebuf, &xsavelen);
 		KASSERT(xsavebuf != NULL);
 		KASSERT(xsavelen <= XSAVE_MAX_BYTES);
+		CTASSERT(overlap <= XSAVE_MAX_BYTES);
 
 		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
 		KASSERT(!onstack ||
 		    sp - (char *)l->l_sigstk.ss_sp >= xsavelen);
-		sp -= xsavelen;
+		KASSERT(!onstack ||
+		    sp - (char *)l->l_sigstk.ss_sp >= overlap);
+		sp -= MAX(xsavelen, overlap);
 
 		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
 		KASSERT(!onstack ||
@@ -652,6 +728,12 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
 		KASSERT(((uintptr_t)sp & (XSAVE_ALIGN - 1)) == 0);
 		user_xsave = (void *)sp;
+
+		CTASSERT((overlap % XSAVE_ALIGN) == 0);
+		CTASSERT((overlap & STACK_ALIGNBYTES) == 0);
+		CTASSERT(((overlap - sizeof(struct sigframe_siginfo)) &
+			STACK_ALIGNBYTES) == (STACK_ALIGNBYTES + 1) - 8);
+		sp += overlap;
 	}
 
 	/*
@@ -667,10 +749,27 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    8 + STACK_ALIGNBYTES + sizeof(struct sigframe_siginfo));
 	sp -= sizeof(struct sigframe_siginfo);
 	/* Round down the stackpointer to a multiple of 16 for the ABI. */
-	fp = (struct sigframe_siginfo *)(((unsigned long)sp &
-		~STACK_ALIGNBYTES) - 8);
+	if (((uintptr_t)sp & STACK_ALIGNBYTES) ==
+	    (STACK_ALIGNBYTES + 1) - 8) {
+		fp = (struct sigframe_siginfo *)sp;
+	} else {
+		fp = (struct sigframe_siginfo *)(((uintptr_t)sp &
+			~STACK_ALIGNBYTES) - 8);
+	}
 	KASSERT(!onstack || (char *)fp >= (char *)l->l_sigstk.ss_sp);
-	KASSERT(((uintptr_t)fp & STACK_ALIGNBYTES) == 8);
+	KASSERT(((uintptr_t)fp & STACK_ALIGNBYTES) ==
+	    (STACK_ALIGNBYTES + 1) - 8);
+
+	/*
+	 * If we have to use XSAVE, the FXSAVE area of the ucontext_t
+	 * on the user's stack must line up with the FXSAVE subarea of
+	 * the XSAVE area on the user's stack.
+	 */
+	KASSERT(xsavebuf == 0 ||
+	    (((uintptr_t)&fp->sf_uc.uc_mcontext.__fpregs & (XSAVE_ALIGN - 1))
+		== 0));
+	KASSERT(xsavebuf == 0 || (uintptr_t)user_xsave ==
+	    (uintptr_t)&fp->sf_uc.uc_mcontext.__fpregs);
 
 	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (uint64_t)ps->sa_sigdesc[sig].sd_tramp;
@@ -686,10 +785,12 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 
 	/*
-	 * If we have to use XSAVE, copy out that area separately --
-	 * and be ready to bail if it failed.
+	 * If we have to use XSAVE, copy out the part of it past the
+	 * FXSAVE area separately -- and be ready to bail if it failed.
 	 */
 	if (xsavebuf) {
+		KASSERT((void *)&fp->sf_uc.uc_mcontext.__fpregs ==
+		    (void *)user_xsave);
 		error = cpu_getmcontext_xsave(l, &frame.sf_uc.uc_mcontext,
 		    &frame.sf_uc.uc_flags, xsavebuf, xsavelen, user_xsave);
 		if (error != 0)
@@ -2200,9 +2301,15 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 /*
  * cpu_getmcontext_xsave(l, mcp, flags, xsavebuf, xsavelen, user_xsave)
  *
- *	Copy out xsavebuf[0..xsavelen) to user_xsave, set mcp to point
- *	there, and set _UC_XSAVE in flags.  Caller must have already
- *	used cpu_getmcontext to initialize mcp's FXSAVE area.
+ *	Copy out xsavebuf[512..xsavelen) to user_xsave[512..xsavelen),
+ *	set mcp to point at it, and set _UC_XSAVE in *flags.  Caller:
+ *
+ *	- must have already initialized the FXSAVE area of mcontext_t,
+ *	- must have already set _UC_FPU in *flags,
+ *	- must have arranged user_xsave[0..512) to overlap with the
+ *	  FXSAVE area of mcontext_t, and
+ *	- must subsequently copy out the mcontext_t updated with a
+ *	  pointer/length to the XSAVE area.
  *
  *	May fail if the copyout fails.
  */
@@ -2211,14 +2318,20 @@ cpu_getmcontext_xsave(struct lwp *l, mcontext_t *mcp, unsigned int *flags,
     const struct xsave_header *xsavebuf, size_t xsavelen,
     struct xsave_header *user_xsave)
 {
+	enum { fxsavelen = sizeof(mcp->__fpregs.__fxsave) };
 	int error;
 
+	CTASSERT(fxsavelen == 512);
+
 	KASSERT(*flags & _UC_FPU);
+	KASSERT(fxsavelen <= xsavelen);
+	KDASSERT(memcmp(&mcp->__fpregs.__fxsave, xsavebuf, fxsavelen) == 0);
 
 	/*
-	 * Copy out the XSAVE area.
+	 * Copy out the part of the XSAVE area that doesn't overlap.
 	 */
-	error = copyout(xsavebuf, user_xsave, xsavelen);
+	error = copyout((const char *)xsavebuf + fxsavelen,
+	    (char *)user_xsave + fxsavelen, xsavelen - fxsavelen);
 	if (error != 0)
 		return error;
 
