@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.289 2026/09/18 13:33:46 riastradh Exp $	*/
+/*	$NetBSD: key.c,v 1.290 2026/09/19 16:49:28 riastradh Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.289 2026/09/18 13:33:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.290 2026/09/19 16:49:28 riastradh Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -1886,7 +1886,7 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 	CTASSERT(PFKEY_ALIGNED8(sizeof(*xpl0)));
 	xisr = (const struct sadb_x_ipsecrequest *)(xpl0 + 1);
 
-	while (tlen > sizeof(*xisr)) {
+	while (tlen >= sizeof(*xisr)) {
 		/* length check */
 		if (xisr->sadb_x_ipsecrequest_len < sizeof(*xisr) ||
 		    xisr->sadb_x_ipsecrequest_len > tlen ||
