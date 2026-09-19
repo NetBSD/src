@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.50 2026/09/19 02:14:44 riastradh Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.51 2026/09/19 02:15:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.50 2026/09/19 02:14:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.51 2026/09/19 02:15:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1301,8 +1301,9 @@ l2tp_set_cookie(struct l2tp_softc *sc, uint64_t my_cookie, u_int my_cookie_len,
 	if (my_cookie == 0 || peer_cookie == 0)
 		return EINVAL;
 
-	if (my_cookie_len != 4 && my_cookie_len != 8
-	    && peer_cookie_len != 4 && peer_cookie_len != 8)
+	if (my_cookie_len != 4 && my_cookie_len != 8)
+		return EINVAL;
+	if (peer_cookie_len != 4 && peer_cookie_len != 8)
 		return EINVAL;
 
 	nvar = kmem_alloc(sizeof(*nvar), KM_SLEEP);
