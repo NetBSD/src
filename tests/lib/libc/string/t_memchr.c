@@ -1,4 +1,4 @@
-/* $NetBSD: t_memchr.c,v 1.4 2026/09/18 22:32:24 nia Exp $ */
+/* $NetBSD: t_memchr.c,v 1.5 2026/09/19 09:40:55 nia Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -170,7 +170,9 @@ ATF_TC_BODY(memchr_abuse, tc)
 {
 	const char *emptystring = "";
 
+#if defined(__x86_64__)
 	atf_tc_expect_fail("%s", "PR lib/60744");
+#endif
 
 	ATF_CHECK(memchr(emptystring, 0, -1) == emptystring);
 	ATF_CHECK(memchr(emptystring, 0, SIZE_MAX) == emptystring);
