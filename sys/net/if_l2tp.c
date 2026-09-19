@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.49 2023/11/02 09:43:46 yamaguchi Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.50 2026/09/19 02:14:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.49 2023/11/02 09:43:46 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.50 2026/09/19 02:14:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -694,6 +694,7 @@ out:
 int
 l2tp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+	struct lwp *const l = curlwp;
 	struct l2tp_softc *sc = container_of(ifp, struct l2tp_softc,
 	    l2tp_ec.ec_if);
 	struct l2tp_variant *var, *var_tmp;
@@ -704,6 +705,25 @@ l2tp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	u_long mtu;
 	int bound;
 	struct psref psref;
+
+	/*
+	 * Verify permission for interface-specific ioctls.
+	 * Permissions for generic ioctls are checked by doifioctl.
+	 */
+	switch (cmd) {
+	case SIOCSL2TPSESSION:
+	case SIOCDL2TPSESSION:
+	case SIOCSL2TPCOOKIE:
+	case SIOCDL2TPCOOKIE:
+	case SIOCSL2TPSTATE:
+		error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
+		    KAUTH_ARG(cmd), NULL);
+		if (error)
+			return error;
+		break;
+	}
 
 	switch (cmd) {
 	case SIOCSIFADDR:
