@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.158 2025/06/28 18:47:36 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.159 2026/09/19 23:47:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.158 2025/06/28 18:47:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.159 2026/09/19 23:47:37 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -125,7 +125,7 @@ static int linux_get_sa(struct lwp *, int, struct sockaddr_big *,
 static int linux_sa_put(struct osockaddr *osa);
 static int linux_to_bsd_msg_flags(int);
 static int bsd_to_linux_msg_flags(int);
-static void linux_to_bsd_msghdr(const struct linux_msghdr *, struct msghdr *);
+static int linux_to_bsd_msghdr(const struct linux_msghdr *, struct msghdr *);
 static void bsd_to_linux_msghdr(const struct msghdr *, struct linux_msghdr *);
 
 static const int linux_to_bsd_domain_[LINUX_AF_MAX] = {
@@ -437,22 +437,60 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 	return do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
 }
 
-static void
+static int
 linux_to_bsd_msghdr(const struct linux_msghdr *lmsg, struct msghdr *bmsg)
 {
+
+	/*
+	 * Verify no integer truncation of the inputs.  For overly
+	 * large inputs, fail with the same error codes Linux uses.
+	 */
+	if (lmsg->msg_namelen < 0)
+		return EINVAL;
+	CTASSERT(!__type_is_signed(__typeof(lmsg->msg_iovlen)));
+	if (lmsg->msg_iovlen > UIO_MAXIOV)
+		return EMSGSIZE;
+	CTASSERT(!__type_is_signed(__typeof(lmsg->msg_controllen)));
+	if (lmsg->msg_controllen > __type_max(__typeof(bmsg->msg_controllen)))
+		return ENOBUFS;
+
 	memset(bmsg, 0, sizeof(*bmsg));
 	bmsg->msg_name = lmsg->msg_name;
-	bmsg->msg_namelen = lmsg->msg_namelen;
+	bmsg->msg_namelen = MIN(lmsg->msg_namelen,
+	    sizeof(struct sockaddr_storage));
 	bmsg->msg_iov = lmsg->msg_iov;
 	bmsg->msg_iovlen = lmsg->msg_iovlen;
 	bmsg->msg_control = lmsg->msg_control;
 	bmsg->msg_controllen = lmsg->msg_controllen;
 	bmsg->msg_flags = lmsg->msg_flags;
+
+	return 0;
 }
 
 static void
 bsd_to_linux_msghdr(const struct msghdr *bmsg, struct linux_msghdr *lmsg)
 {
+
+	/*
+	 * Assert no truncation on the way out.
+	 *
+	 * - msg_namelen should have been preserved or shortened by
+	 *   copyout_sockname.
+	 * - msg_iovlen should have been preserved and previously
+	 *   confirmed by linux_to_bsd_msghdr to lie in [0,UIO_MAXIOV].
+	 * - msg_controllen can always be faithfully converted from BSD
+	 *   struct msghdr to Linux struct msghdr without truncation.
+	 */
+	CTASSERT(__type_min(__typeof(bmsg->msg_namelen)) == 0);
+	KASSERT(bmsg->msg_namelen <= __type_max(__typeof(lmsg->msg_namelen)));
+	CTASSERT(__type_min(__typeof(lmsg->msg_iovlen)) <= 0);
+	KASSERT(lmsg->msg_iovlen >= 0);
+	KASSERT(lmsg->msg_iovlen <= UIO_MAXIOV);
+	CTASSERT(__type_min(__typeof(lmsg->msg_controllen)) <=
+	    __type_min(__typeof(bmsg->msg_controllen)));
+	CTASSERT(__type_max(__typeof(lmsg->msg_controllen)) >=
+	    __type_max(__typeof(bmsg->msg_controllen)));
+
 	memset(lmsg, 0, sizeof(*lmsg));
 	lmsg->msg_name = bmsg->msg_name;
 	lmsg->msg_namelen = bmsg->msg_namelen;
@@ -482,7 +520,9 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 	error = copyin(SCARG(uap, msg), &lmsg, sizeof(lmsg));
 	if (error)
 		return error;
-	linux_to_bsd_msghdr(&lmsg, &msg);
+	error = linux_to_bsd_msghdr(&lmsg, &msg);
+	if (error)
+		return error;
 
 	msg.msg_flags = MSG_IOVUSRSPACE;
 
@@ -782,8 +822,10 @@ linux_sys_recvmsg(struct lwp *l, const struct linux_sys_recvmsg_args *uap, regis
 
 	error = copyin(SCARG(uap, msg), &lmsg, sizeof(lmsg));
 	if (error)
-		return (error);
-	linux_to_bsd_msghdr(&lmsg, &msg);
+		return error;
+	error = linux_to_bsd_msghdr(&lmsg, &msg);
+	if (error)
+		return error;
 
 	msg.msg_flags = linux_to_bsd_msg_flags(SCARG(uap, flags));
 	if (msg.msg_flags < 0) {
@@ -1863,7 +1905,9 @@ linux_sys_sendmmsg(struct lwp *l, const struct linux_sys_sendmmsg_args *uap,
 		error = copyin(SCARG(uap, msgvec) + dg, &lmsg, sizeof(lmsg));
 		if (error)
 			break;
-		linux_to_bsd_msghdr(&lmsg.msg_hdr, &bmsg.msg_hdr);
+		error = linux_to_bsd_msghdr(&lmsg.msg_hdr, &bmsg.msg_hdr);
+		if (error)
+			break;
 
 		msg->msg_flags = flags;
 
@@ -1947,7 +1991,9 @@ linux_sys_recvmmsg(struct lwp *l, const struct linux_sys_recvmmsg_args *uap,
 		error = copyin(SCARG(uap, msgvec) + dg, &lmsg, sizeof(lmsg));
 		if (error)
 			break;
-		linux_to_bsd_msghdr(&lmsg.msg_hdr, &bmsg.msg_hdr);
+		error = linux_to_bsd_msghdr(&lmsg.msg_hdr, &bmsg.msg_hdr);
+		if (error)
+			break;
 		msg->msg_flags = flags & ~MSG_WAITFORONE;
 
 		if (from != NULL) {
