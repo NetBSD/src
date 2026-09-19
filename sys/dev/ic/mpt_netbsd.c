@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.40 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.40.4.1 2026/09/19 16:05:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.40 2024/02/09 22:08:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.40.4.1 2026/09/19 16:05:28 martin Exp $");
 
 #include "bio.h"
 
@@ -1481,6 +1481,173 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 		}
 		break;
 
+	case MPI_EVENT_INTEGRATED_RAID:
+	    {
+#define MSG_LEN 96
+#define MSG_SNPRINTF if (used < MSG_LEN - 1) used += snprintf
+		char raid_msg[MSG_LEN];
+		EVENT_DATA_RAID *data = (EVENT_DATA_RAID *) msg->Data;
+		uint32_t sstatus = le32toh(data->SettingsStatus);
+		uint8_t sflags = sstatus & 0xff;
+		uint8_t sstate = (sstatus >> 8) & 0xff;
+		size_t used = 0;
+
+		switch(data->ReasonCode) {
+		case MPI_EVENT_RAID_RC_VOLUME_CREATED:
+			snprintf(raid_msg, MSG_LEN,
+			    "volume %d created", data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_VOLUME_DELETED:
+			snprintf(raid_msg, MSG_LEN,
+			    "volume %d deleted", data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_VOLUME_SETTINGS_CHANGED:
+			snprintf(raid_msg, MSG_LEN,
+			    "volume %d settings changed",
+			    data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_VOLUME_STATUS_CHANGED:
+			used = snprintf(raid_msg, MSG_LEN,
+			    "volume %d status: ", data->VolumeID);
+			switch (sstate) {
+			case MPI_RAIDVOL0_STATUS_STATE_OPTIMAL:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "optimal");
+				break;
+			case MPI_RAIDVOL0_STATUS_STATE_DEGRADED:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "degraded");
+				break;
+			case MPI_RAIDVOL0_STATUS_STATE_FAILED:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "failed");
+				break;
+			case MPI_RAIDVOL0_STATUS_STATE_MISSING:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "missing");
+				break;
+			default:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "unknown: 0x%02x 0x%02x",
+				    sstate, sflags);
+				break;
+			}
+			if (sflags & MPI_RAIDVOL0_STATUS_FLAG_ENABLED)
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, ", enabled");
+			if (sflags & MPI_RAIDVOL0_STATUS_FLAG_QUIESCED)
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, ", quiesced");
+			if (sflags &
+			    MPI_RAIDVOL0_STATUS_FLAG_RESYNC_IN_PROGRESS)
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, ", resyncing");
+			if (sflags & MPI_RAIDVOL0_STATUS_FLAG_VOLUME_INACTIVE)
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, ", inactive");
+			if (used >= MSG_LEN)
+				snprintf(raid_msg, MSG_LEN,
+				    "volume %d msg overflow: 0x%02x 0x%02x",
+				    data->VolumeID, sstate, sflags);
+			break;
+		case MPI_EVENT_RAID_RC_VOLUME_PHYSDISK_CHANGED:
+			snprintf(raid_msg, MSG_LEN,
+			    "volume of physdisk %d (id %d) changed",
+			    data->PhysDiskNum, data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_PHYSDISK_CREATED:
+			snprintf(raid_msg, MSG_LEN,
+			    "physdisk %d (id %d) created",
+			    data->PhysDiskNum, data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_PHYSDISK_DELETED:
+			snprintf(raid_msg, MSG_LEN,
+			    "physdisk %d (id %d) deleted",
+			    data->PhysDiskNum, data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_PHYSDISK_SETTINGS_CHANGED:
+			snprintf(raid_msg, MSG_LEN,
+			    "physdisk %d (id %d) settings changed",
+			    data->PhysDiskNum, data->VolumeID);
+			break;
+		case MPI_EVENT_RAID_RC_PHYSDISK_STATUS_CHANGED:
+			used = snprintf(raid_msg, MSG_LEN,
+			    "physdisk %d (id %d) status: ",
+			    data->PhysDiskNum, data->VolumeID);
+			switch (sstate) {
+			case MPI_PHYSDISK0_STATUS_ONLINE:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "online");
+				break;
+			case MPI_PHYSDISK0_STATUS_MISSING:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "missing");
+				break;
+			case MPI_PHYSDISK0_STATUS_NOT_COMPATIBLE:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "not compatible");
+				break;
+			case MPI_PHYSDISK0_STATUS_FAILED:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "failed");
+				break;
+			case MPI_PHYSDISK0_STATUS_INITIALIZING:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "initializing");
+				break;
+			case MPI_PHYSDISK0_STATUS_OFFLINE_REQUESTED:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "offline requested");
+				break;
+			case MPI_PHYSDISK0_STATUS_FAILED_REQUESTED:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "failed requested");
+				break;
+			case MPI_PHYSDISK0_STATUS_OTHER_OFFLINE:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "offline");
+				break;
+			default:
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, "unknown: 0x%02x 0x%02x", sstate, sflags);
+				break;
+			}
+			if (sflags & MPI_PHYSDISK0_STATUS_FLAG_OUT_OF_SYNC)
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, ", out of sync");
+			if (sflags & MPI_PHYSDISK0_STATUS_FLAG_QUIESCED)
+				MSG_SNPRINTF(&raid_msg[used],
+				    MSG_LEN - used, ", quiesced");
+			if (used >= MSG_LEN)
+				snprintf(raid_msg, MSG_LEN,
+				    "physdisk %d msg overflow: 0x%02x 0x%02x",
+				    data->PhysDiskNum, sstate, sflags);
+			break;
+		case MPI_EVENT_RAID_RC_DOMAIN_VAL_NEEDED:
+			snprintf(raid_msg, MSG_LEN,
+			    "physdisk %d domain validation needed",
+			    data->PhysDiskNum);
+			break;
+		case MPI_EVENT_RAID_RC_SMART_DATA:
+			snprintf(raid_msg, MSG_LEN,
+			    "smart data ASC/ASCQ: 0x%02x/0x%02x",
+			    data->ASC, data->ASCQ);
+			break;
+		case MPI_EVENT_RAID_RC_REPLACE_ACTION_STARTED:
+			snprintf(raid_msg, MSG_LEN,
+			    "replace physdisk %d started", data->PhysDiskNum);
+			break;
+		default:
+			snprintf(raid_msg, MSG_LEN,
+			    "unknown reason code (0x%02x)", data->ReasonCode);
+			break;
+		}
+		mpt_prt(mpt, "Integrated RAID Event: %s", raid_msg);
+#undef MSG_LEN
+#undef MSG_SNPRINTF
+		break;
+	    }
+
 	case MPI_EVENT_SAS_DEVICE_STATUS_CHANGE:
 	case MPI_EVENT_SAS_DISCOVERY:
 		/* ignore these events for now */
@@ -1493,7 +1660,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 		break;
 
 	default:
-		mpt_prt(mpt, "Unknown async event: 0x%x", msg->Event);
+		mpt_prt(mpt, "Unknown async event: 0x%x", le32toh(msg->Event));
 		break;
 	}
 
