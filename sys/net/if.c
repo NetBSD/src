@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.538 2026/05/14 08:05:48 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.539 2026/09/19 02:18:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.538 2026/05/14 08:05:48 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.539 2026/09/19 02:18:12 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3523,6 +3523,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCS80211BSSID:
 	case SIOCS80211CHANNEL:
 	case SIOCSLINKSTR:
+	case SIOCSIFGENERIC:
 		if (l != NULL) {
 			error = kauth_authorize_network(l->l_cred,
 			    KAUTH_NETWORK_INTERFACE,
