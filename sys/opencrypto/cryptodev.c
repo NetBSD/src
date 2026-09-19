@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.136 2026/09/19 02:44:41 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.137 2026/09/19 02:45:04 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.136 2026/09/19 02:44:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.137 2026/09/19 02:45:04 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -103,6 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.136 2026/09/19 02:44:41 riastradh Ex
 #include <opencrypto/xform.h>
 
 #include "ioconf.h"
+
+#define	CRYPTOP_IOV_MAX	(256*1024 - 4) /* XXX ??? */
 
 static kmutex_t cryptodev_mtx;
 
@@ -231,6 +233,9 @@ static int	cryptodev_getstatus(struct fcrypt *, struct crypt_result *);
 static struct cryptop_data *
 cod_ctor(struct cryptop_data *cod, struct csession *cse, size_t iov_len)
 {
+
+	KASSERT(iov_len <= CRYPTOP_IOV_MAX);
+
 	memset(cod, 0, sizeof(*cod));
 	cod->cse = cse;
 	cod->iov_len = iov_len;
@@ -535,7 +540,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	int flags=0;
 	size_t dst_len;	/* copyout size */
 
-	if (cop->len > 256*1024-4)
+	if (cop->len > CRYPTOP_IOV_MAX || cop->dst_len > CRYPTOP_IOV_MAX)
 		return E2BIG;
 
 	if (cse->txform) {
@@ -1151,7 +1156,8 @@ cryptodev_mop(struct fcrypt *fcr,
 			goto bail;
 		}
 
-		if (cnop[req].len > 256*1024-4) {
+		if (cnop[req].len > CRYPTOP_IOV_MAX ||
+		    cnop[req].dst_len > CRYPTOP_IOV_MAX) {
 			DPRINTF("length failed\n");
 			cnop[req].status = SET_ERROR(EINVAL);
 			goto bail;
