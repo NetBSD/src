@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.159 2026/09/19 23:47:37 riastradh Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.160 2026/09/19 23:47:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.159 2026/09/19 23:47:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.160 2026/09/19 23:47:51 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -549,7 +549,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 	if (LINUX_CMSG_FIRSTHDR(&lmsg)) {
 		struct linux_cmsghdr l_cmsg, *l_cc;
 		struct cmsghdr *cmsg;
-		ssize_t resid = msg.msg_controllen;
+		socklen_t resid = msg.msg_controllen;
 		size_t clen, cidx = 0, cspace;
 
 		ctl_mbuf = m_get(M_WAIT, MT_CONTROL);
@@ -558,15 +558,34 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 
 		l_cc = LINUX_CMSG_FIRSTHDR(&lmsg);
 		do {
+			if (resid < sizeof(l_cmsg)) {
+				error = EINVAL;
+				goto done;
+			}
 			error = copyin(l_cc, &l_cmsg, sizeof(l_cmsg));
 			if (error)
 				goto done;
 
 			/*
 			 * Sanity check the control message length.
+			 * If either:
+			 *
+			 * 1. aligning it would overflow socklen_t, or
+			 * 2. aligning it exceeds msg_controllen, or
+			 * 3. adding the delta would overflow socklen_t, or
+			 * 4. it's not enough for a struct cmsghdr,
+			 *
+			 * then fail with EINVAL.
 			 */
-			if (l_cmsg.cmsg_len > resid
-			    || l_cmsg.cmsg_len < sizeof l_cmsg) {
+			CTASSERT(LINUX_CMSG_ALIGN(1) <=
+			    __type_max(__typeof(resid)));
+			if ((l_cmsg.cmsg_len >= __type_max(__typeof(resid)) -
+				LINUX_CMSG_ALIGN(1)) ||
+			    (LINUX_CMSG_ALIGN(l_cmsg.cmsg_len) > resid) ||
+			    (l_cmsg.cmsg_len >
+				__type_max(__typeof(cmsg->cmsg_len)) -
+				LINUX_CMSG_ALIGN_DELTA) ||
+			    (l_cmsg.cmsg_len < sizeof(l_cmsg))) {
 				error = EINVAL;
 				goto done;
 			}
@@ -742,6 +761,9 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 		 * 2. different alignment of CMSG_DATA on some archs
 		 */
 		memset(&linux_cmsg, 0, sizeof(linux_cmsg));
+		CTASSERT(LINUX_CMSG_ALIGN_DELTA >= 0);
+		KASSERTMSG(cmsg->cmsg_len >= LINUX_CMSG_ALIGN_DELTA,
+		    "cmsg->cmsg_len=%u", cmsg->cmsg_len);
 		linux_cmsg.cmsg_len = cmsg->cmsg_len - LINUX_CMSG_ALIGN_DELTA;
 		linux_cmsg.cmsg_level = cmsg->cmsg_level;
 		linux_cmsg.cmsg_type = cmsg->cmsg_type;
