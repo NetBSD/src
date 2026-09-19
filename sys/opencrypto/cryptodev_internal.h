@@ -1,4 +1,4 @@
-/* $NetBSD: cryptodev_internal.h,v 1.5 2026/05/19 19:00:00 riastradh Exp $ */
+/* $NetBSD: cryptodev_internal.h,v 1.6 2026/09/19 02:45:29 riastradh Exp $ */
 
 /* exported to compat code, not for consumers */
 
@@ -15,7 +15,7 @@ struct lwp;
 struct session_n_op;
 struct session_op;
 
-#define CRYPTODEV_OPS_MAX 1000000
+#define CRYPTODEV_OPS_MAX 65535
 
 int cryptodev_op(struct csession *, struct crypt_op *, struct lwp *);
 int cryptodev_mop(struct fcrypt *, struct crypt_n_op *, size_t, struct lwp *);
