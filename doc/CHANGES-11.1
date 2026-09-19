@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.13 2026/09/18 16:48:50 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.14 2026/09/19 16:40:36 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -563,4 +563,76 @@ sys/external/bsd/drm2/dist/drm/i915/display/intel_dp.c 1.8
 
 	i915: PR 59989:: make this build with -O0.
 	[hgutch, ticket #473]
+
+sys/arch/sparc64/dev/fire_i2c.c 		(apply patch)
+
+	Handle the iic attach differences between 11 and HEAD.
+	[jdc, ticket #474]		   
+
+sys/arch/sparc64/sparc64/ofw_patch.c		1.12-1.16
+
+	sparc64: v245, u45 and e250 OFW patches for sensors and gpio.
+	[jdc, ticket #475]
+
+sys/dev/pci/radeonfb.c				1.123
+
+	radeonfb(4): also display the total graphics memory if it's more
+	than 64MB.
+	[jdc, ticket #476]
+
+etc/etc.sparc64/MAKEDEV.conf			1.21
+share/man/man4/mpt.4				1.8
+sys/arch/sparc64/conf/GENERIC			1.249
+sys/dev/ic/mpt_mpilib.h				1.7
+sys/dev/ic/mpt_netbsd.c				1.41-1.45
+
+	mpt(4): improve handling of RAID status messages.
+	[jdc, ticket #477]
+
+sys/dev/i2c/adt7462.c				1.2,1.3
+sys/dev/i2c/adt7462reg.h			1.2,1.3
+
+	Fix fan and temperature sensors using the adt7462 chip.
+	[jdc, ticket #478]
+
+distrib/sets/lists/man/mi			1.1836
+distrib/sets/lists/manhtml/mi			1.54
+share/man/man4/Makefile				1.753 (patch)
+share/man/man4/bq4802rtc.4			1.1
+sys/arch/sparc64/conf/files.sparc64		1.171
+sys/arch/sparc64/dev/bq4802_ebus.c		1.3
+sys/dev/ic/bq4802reg.h				1.3
+
+	sparc64: add support for Texas Instruments bq4802Y/bq4802LY.
+	[jdc, ticket #479]
+
+sys/dev/i2c/dbcool.c				1.69,1.70
+sys/dev/i2c/dbcool_var.h			1.19
+
+	dbcool(4): add support for Sun Fire V245.
+	[jdc, ticket #480]
+
+sys/dev/pci/if_ixl.c				1.102,1.103
+
+	ixl(4): PR 60736: fix link state handling.
+	[tls, ticket #481]
+
+distrib/sets/lists/man/mi			1.1839
+distrib/sets/lists/manhtml/mi			1.57
+share/man/man4/man4.sparc64/Makefile		1.12
+share/man/man4/man4.sparc64/auxfan.4		1.1,1.2
+sys/arch/sparc64/conf/GENERIC			1.250
+sys/arch/sparc64/conf/files.sparc64		1.172
+sys/arch/sparc64/dev/auxfan.c			1.1
+sys/arch/sparc64/dev/auxfanreg.h		1.1
+
+	auxfan(4): add a driver for the SUNW,i2c-auxfan1 sensor
+	found on Sun Blade 2500 Silver machines.
+	[jdc, ticket #482]
+
+sys/dev/pci/if_ixl.c				1.104,1.105
+
+	ixl(4): be more conservative with DMA sync for the ATQ and
+	remove pointless and confusing check against NULL.
+	[tls, ticket #483]
 
