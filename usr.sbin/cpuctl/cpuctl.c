@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.35 2023/09/13 06:53:23 wiz Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.36 2026/09/19 08:46:09 kre Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012, 2015 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.35 2023/09/13 06:53:23 wiz Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.36 2026/09/19 08:46:09 kre Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -223,7 +223,8 @@ cpu_ucode(char **argv)
 		if (id != ULONG_MAX && *ep == '\0') {
 			uc.cpu_nr = id;
 			argv++;
-		}
+		} else if (strcmp(argv[0], "-1") == 0)
+			argv++;
 	}
 	if (argv[0] != NULL)
 		strlcpy(uc.fwname, argv[0], sizeof(uc.fwname));
