@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.137 2026/09/19 02:45:04 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.138 2026/09/19 02:45:19 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.137 2026/09/19 02:45:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.138 2026/09/19 02:45:19 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -1163,7 +1163,7 @@ cryptodev_mop(struct fcrypt *fcr,
 			goto bail;
 		}
 		if (cse->txform) {
-			if (cnop[req].len < cse->txform->blocksize -
+			if (cnop[req].len < cse->txform->blocksize +
 			    (cnop[req].iv ? 0 : cse->txform->ivsize) ||
 			    (cnop[req].len -
 			     (cnop[req].iv ? 0 : cse->txform->ivsize))
