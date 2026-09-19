@@ -1,4 +1,4 @@
-/* $NetBS$ */
+/* $NetBSD: qcompep.h,v 1.3 2026/09/19 20:55:15 andvar Exp $ */
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
