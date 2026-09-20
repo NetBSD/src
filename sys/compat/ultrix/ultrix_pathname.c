@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.40 2022/10/12 20:50:43 andvar Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.41 2026/09/20 13:46:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.40 2022/10/12 20:50:43 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.41 2026/09/20 13:46:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ ultrix_sys_creat(struct lwp *l, const struct ultrix_sys_creat_args *uap, registe
 {
 	struct sys_open_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	SCARG(&ap, mode) = SCARG(uap, mode);
@@ -123,6 +124,7 @@ ultrix_sys_execv(struct lwp *l, const struct ultrix_sys_execv_args *uap, registe
 	} */
 	struct sys_execve_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = NULL;
@@ -140,6 +142,7 @@ ultrix_sys_execve(struct lwp *l, const struct ultrix_sys_execve_args *uap, regis
 	} */
 	struct sys_execve_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = SCARG(uap, envp);
@@ -166,6 +169,7 @@ ultrix_sys_open(struct lwp *l, const struct ultrix_sys_open_args *uap, register_
 	r |=	((q & 0x0100) ? O_EXLOCK : 0);
 	r |=	((q & 0x2000) ? O_FSYNC : 0);
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, flags) = r;
 	SCARG(&ap, mode) = SCARG(uap, mode);

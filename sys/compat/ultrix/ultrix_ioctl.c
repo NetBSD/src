@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.40 2022/02/09 22:30:27 andvar Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.41 2026/09/20 13:46:26 riastradh Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.40 2022/02/09 22:30:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.41 2026/09/20 13:46:26 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -475,6 +475,7 @@ ultrix_sys_ioctl(struct lwp *l, const struct ultrix_sys_ioctl_args *uap,
 	struct sys_ioctl_args ap;
 	int error;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, fd) = SCARG(uap, fd);
 	SCARG(&ap, data) = SCARG(uap, data);
 	SCARG(&ap, com) = SCARG(uap, com);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.128 2026/02/01 13:15:54 andvar Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.129 2026/09/20 13:46:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.128 2026/02/01 13:15:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.129 2026/09/20 13:46:26 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -235,6 +235,7 @@ ultrix_sys_waitpid(struct lwp *l, const struct ultrix_sys_waitpid_args *uap, reg
 {
 	struct compat_50_sys_wait4_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, pid) = SCARG(uap, pid);
 	SCARG(&ap, status) = SCARG(uap, status);
 	SCARG(&ap, options) = SCARG(uap, options);
@@ -248,6 +249,7 @@ ultrix_sys_wait3(struct lwp *l, const struct ultrix_sys_wait3_args *uap, registe
 {
 	struct compat_50_sys_wait4_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, pid) = -1;
 	SCARG(&ap, status) = SCARG(uap, status);
 	SCARG(&ap, options) = SCARG(uap, options);
@@ -270,8 +272,9 @@ ultrix_sys_select(struct lwp *l, const struct ultrix_sys_select_args *uap, regis
 	int error;
 	struct compat_50_sys_select_args ap;
 
-	/* Limit number of FDs selected on to the native maximum */
+	memset(&ap, 0, sizeof(ap));
 
+	/* Limit number of FDs selected on to the native maximum */
 	if (SCARG(uap, nd) > FD_SETSIZE)
 		SCARG(&ap, nd) = FD_SETSIZE;
 	else
@@ -319,6 +322,7 @@ ultrix_sys_mmap(struct lwp *l, const struct ultrix_sys_mmap_args *uap, register_
 	if ((SCARG(uap, flags) & SUN__MAP_NEW) == 0)
 		return EINVAL;
 
+	memset(&ouap, 0, sizeof(ouap));
 	SCARG(&ouap, flags) = SCARG(uap, flags) & ~SUN__MAP_NEW;
 	SCARG(&ouap, addr) = SCARG(uap, addr);
 	SCARG(&ouap, len) = SCARG(uap, len);
@@ -337,6 +341,7 @@ ultrix_sys_setsockopt(struct lwp *l, const struct ultrix_sys_setsockopt_args *ua
 	int error;
 	struct sys_setsockopt_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, s) = SCARG(uap, s);
 	SCARG(&ap, level) = SCARG(uap, level);
 	SCARG(&ap, name) = SCARG(uap, name);
@@ -436,6 +441,7 @@ ultrix_sys_setpgrp(struct lwp *l, const struct ultrix_sys_setpgrp_args *uap, reg
 	struct proc *p = l->l_proc;
 	struct sys_setpgid_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, pid) = SCARG(uap, pid);
 	SCARG(&ap, pgid) = SCARG(uap, pgid);
 	/*
@@ -560,6 +566,7 @@ ultrix_sys_sigreturn(struct lwp *l, const struct ultrix_sys_sigreturn_args *uap,
 	/* struct sigcontext13 is close enough to Ultrix */
 	struct compat_13_sys_sigreturn_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, sigcntxp) = (void *)SCARG(uap, sigcntxp);
 
 	return compat_13_sys_sigreturn(l, &ap, retval);
@@ -572,6 +579,7 @@ ultrix_sys_sigcleanup(struct lwp *l, const struct ultrix_sys_sigcleanup_args *ua
 	/* struct sigcontext13 is close enough to Ultrix */
 	struct compat_13_sys_sigreturn_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, sigcntxp) = (void *)SCARG(uap, sigcntxp);
 
 	return compat_13_sys_sigreturn(l, &ap, retval);
@@ -654,22 +662,26 @@ ultrix_sys_shmsys(struct lwp *l, const struct ultrix_sys_shmsys_args *uap, regis
 
 	switch (SCARG(uap, shmop)) {
 	case 0:						/* Ultrix shmat() */
+		memset(&shmat_args, 0, sizeof(shmat_args));
 		SCARG(&shmat_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a3);
 		SCARG(&shmat_args, shmflg) = SCARG(uap, a4);
 		return sys_shmat(l, &shmat_args, retval);
 
 	case 1:						/* Ultrix shmctl() */
+		memset(&shmctl_args, 0, sizeof(shmctl_args));
 		SCARG(&shmctl_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmctl_args, cmd) = SCARG(uap, a3);
 		SCARG(&shmctl_args, buf) = (struct shmid_ds14 *)SCARG(uap, a4);
 		return compat_14_sys_shmctl(l, &shmctl_args, retval);
 
 	case 2:						/* Ultrix shmdt() */
+		memset(&shmdt_args, 0, sizeof(shmdt_args));
 		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a2);
 		return sys_shmdt(l, &shmdt_args, retval);
 
 	case 3:						/* Ultrix shmget() */
+		memset(&shmget_args, 0, sizeof(shmget_args));
 		SCARG(&shmget_args, key) = SCARG(uap, a2);
 		SCARG(&shmget_args, size) = SCARG(uap, a3);
 		SCARG(&shmget_args, shmflg) = SCARG(uap, a4)
