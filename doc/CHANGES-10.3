@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.2 2026/09/18 16:50:06 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.3 2026/09/20 09:59:52 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -984,4 +984,9 @@ sys/external/bsd/drm2/dist/drm/i915/display/intel_dp.c 1.8
 
 	i915: PR 59989:: make this build with -O0.
 	[hgutch, ticket #1342]
+
+sys/dev/pci/if_ixl.c				1.102-1.105
+
+	ixl(4): PR 60736: fix link state handling.
+	[tls, ticket #1343]
 
