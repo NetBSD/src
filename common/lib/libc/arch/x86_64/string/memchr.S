@@ -1,4 +1,4 @@
-/*	$NetBSD: memchr.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $	*/
+/*	$NetBSD: memchr.S,v 1.7 2026/09/20 17:39:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,8 +32,31 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memchr.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $")
+	RCSID("$NetBSD: memchr.S,v 1.7 2026/09/20 17:39:43 riastradh Exp $")
 #endif
+
+/*
+ * int memchr(void *buf@rdi, int byte@esi, size_t len@rdx)
+ *
+ * Register usage:
+ *
+ *	rax	temp
+ *	rbx	unused, preserved for caller
+ *	rcx	temp
+ *	rdx	length of haystack
+ *	rsp	unused, preserved for caller
+ *	rbp	unused, preserved for caller
+ *	rsi	byte to search for, replicated in each byte of a 64-bit word
+ *	rdi	current pointer into haystack
+ *	r8	0x0101010101010101 (byte 1, replicated in every byte of word)
+ *	r9	0x8080808080808080 (borrow bits)
+ *	r10	max address, MIN(buf + len, (vaddr_t)-1)
+ *	r11	temp
+ *	r12	unused, preserved for caller
+ *	r13	unused, preserved for caller
+ *	r14	unused, preserved for caller
+ *	r15	unused, preserved for caller
+ */
 
 /*
  * The instruction sequences used try to avoid data dependencies
@@ -47,47 +70,50 @@
 
 ENTRY(memchr)
 	movabsq	$0x0101010101010101,%r8
-	lea	(%rdi,%rdx),%r10	/* limit of buffer to scan */
+	movq	%rdx,%r10	/* limit of buffer to scan */
+	addq	%rdi,%r10
+	jc	.Laddroverflow	/* clamp to end of address space */
+.Lmaxaddressdetermined:
 	movzbq	%sil,%rsi	/* mask high bits! */
 
 	/* 'directpath' imuls can execute 3 at a time ... (amd) */
 	imul	%r8,%rsi	/* search byte replicated in word */
 	imul	$0x80,%r8,%r9	/* 0x8080808080808080 */
 	test	$7,%dil
-	jnz	20f		/* jump if misaligned */
-	jmp	1f		/* jump to avoid 4 nops (13 bytes) in gap */
+	jnz	.Lmisaligned	/* jump if misaligned */
+	jmp	.Lloop		/* jump to avoid 4 nops (13 bytes) in gap */
 
 	_ALIGN_TEXT		/* entire loop now in 32 aligned bytes */
-1:
+.Lloop:
 	cmpq	%r10,%rdi	/* end of buffer ? */
-	jae	30f		/* jump if so */
+	jae	.Lnotfound	/* jump if so */
 
 	movq	(%rdi),%rax	/* value to check */
 	addq	$8,%rdi
 	xorq	%rsi,%rax	/* now looking for zeros */
-2:
+.Lcheckforzerobytes:
 	mov	%rax,%rcx
 	subq	%r8,%rax	/* x - 0x01 */
 	not	%rcx
 	andq	%r9,%rax	/* (x - 0x01) & 0x80 */
 	andq	%rcx,%rax	/* ((x - 0x01) & 0x80) & ~x */
-	je	1b		/* jump if not found */
+	jz	.Lloop		/* jump if not found */
 
 /* Found byte in word, get its address */
 	bsf	%rax,%rax
 	shr	$3,%eax
 	lea	-8(%rax,%rdi),%rax
 	cmpq	%r10,%rax	/* need to check not beyond buffer */
-	jae	30f
+	jae	.Lnotfound
 	rep
 	ret			/* amd - no ret after jmp */
 
 /* Input misaligned, read aligned and make low bytes invalid */
-20:
+.Lmisaligned:
 	mov	%dil,%cl	/* misalignment amount 1..7 (+high bits )*/
 	and	$~7,%dil	/* %rdi now start of word */
 	test	%rdx,%rdx	/* zero length, don't read */
-	jz	30f
+	jz	.Lnotfound
 
 	neg	%cl		/* 7..1 (+high bits) */
 	mov	(%rdi),%rax	/* word containing first byte */
@@ -101,9 +127,22 @@ ENTRY(memchr)
 	/* Set low bytes non-zero */
 	shr	%cl,%r11	/* non-zero in unwanted bytes */
 	or	%r11,%rax	/* low bytes now set */
-	jmp	2b
+	jmp	.Lcheckforzerobytes
+
+.Laddroverflow:
+	/*
+	 * Load the maximum theoretically possible virtual address as
+         * the bound.  This could, in principle, cause memchr to fail
+	 * to find a byte in the very last position of the machine's
+	 * virtual address space, but that can only happen in the
+	 * kernel, and it is unlikely that anything will be found in
+	 * that page anyway (famous last words).
+	 */
+	movq	$-1,%r10
+	jmp	.Lmaxaddressdetermined
 
 /* Not found */
-30:	xorq	%rax,%rax
+.Lnotfound:
+	xorl	%eax,%eax
 	ret
 END(memchr)

@@ -1,4 +1,4 @@
-/* $NetBSD: t_memchr.c,v 1.6 2026/09/20 17:35:55 riastradh Exp $ */
+/* $NetBSD: t_memchr.c,v 1.7 2026/09/20 17:39:43 riastradh Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_memchr.c,v 1.6 2026/09/20 17:35:55 riastradh Exp $");
+__RCSID("$NetBSD: t_memchr.c,v 1.7 2026/09/20 17:39:43 riastradh Exp $");
 
 #include <atf-c.h>
 #include <limits.h>
@@ -175,10 +175,6 @@ ATF_TC_BODY(memchr_simple, tc)
 	}
 
 	ATF_CHECK(memchr(buf, '\0', SSIZE_MAX) == buf + 7);
-
-#ifdef __x86_64__
-	atf_tc_expect_fail("PR lib/60744: memchr(3) is busticated");
-#endif
 	ATF_CHECK(memchr(buf, '\0', SIZE_MAX) == buf + 7);
 	ATF_CHECK(memchr(buf, '\0', (size_t)-1) == buf + 7);
 }
@@ -192,10 +188,6 @@ ATF_TC_HEAD(memchr_abuse, tc)
 ATF_TC_BODY(memchr_abuse, tc)
 {
 	const char *emptystring = "";
-
-#if defined(__x86_64__)
-	atf_tc_expect_fail("%s", "PR lib/60744");
-#endif
 
 	ATF_CHECK(memchr(emptystring, 0, -1) == emptystring);
 	ATF_CHECK(memchr(emptystring, 0, SIZE_MAX) == emptystring);
