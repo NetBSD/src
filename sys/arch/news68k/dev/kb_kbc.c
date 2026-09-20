@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_kbc.c,v 1.12 2021/08/07 16:19:00 thorpej Exp $	*/
+/*	$NetBSD: kb_kbc.c,v 1.13 2026/09/20 10:29:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.12 2021/08/07 16:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.13 2026/09/20 10:29:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.12 2021/08/07 16:19:00 thorpej Exp $");
 #include <news68k/dev/kbvar.h>
 
 #include <news68k/news68k/isr.h>
+
+#define NEWS1700_KBC_BASE	((volatile uint8_t *)0xe0d00000)
 
 static int kb_kbc_match(device_t, cfdata_t, void *);
 static void kb_kbc_attach(device_t, device_t, void *);
@@ -132,6 +134,9 @@ int
 kb_kbc_cnattach(void)
 {
 
-	kb_kbc_conssc.cs_isconsole = 1;
+	kb_kbc_conssc.cs_data = NEWS1700_KBC_BASE + KBC_KBREG_DATA;
+	kb_kbc_conssc.cs_stat = NEWS1700_KBC_BASE + KBC_KBREG_STAT;
+	kb_kbc_conssc.cs_inte = NEWS1700_KBC_BASE + KBC_KBREG_INTE;
+
 	return kb_cnattach(&kb_kbc_conssc);
 }

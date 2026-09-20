@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.58 2026/07/06 16:21:47 thorpej Exp $
+#	$NetBSD: files.news68k,v 1.59 2026/09/20 10:29:11 tsutsui Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -65,7 +65,7 @@ device kb: wskbddev
 file arch/news68k/dev/kb.c			kb needs-flag
 file dev/news/newskeymap.c			kb
 attach kb at kbc with kb_kbc
-file arch/news68k/dev/kb_kbc.c			kb_kbc
+file arch/news68k/dev/kb_kbc.c			kb_kbc needs-flag
 attach kb at hb with kb_hb
 file arch/news68k/dev/kb_hb.c			kb_hb
 
@@ -86,9 +86,9 @@ device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-count
 
-#device cfb: wsemuldisplaydev, rasops8
-#attach cfb at hb
-#file arch/news68k/dev/cfb.c			cfb needs-flag
+device fbbm: wsemuldisplaydev
+attach fbbm at hb
+file arch/news68k/dev/fbbm.c			fbbm needs-flag
 
 # floppy; not yet
 device fdc {}

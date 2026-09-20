@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.143 2026/04/28 03:29:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.144 2026/09/20 10:29:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 2026/04/28 03:29:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2026/09/20 10:29:12 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -98,7 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 2026/04/28 03:29:10 thorpej Exp $"
 #include <news68k/news68k/isr.h>
 
 #include "le.h"
+#include "fbbm.h"
 #include "kb.h"
+#include "kb_kbc.h"
 #include "ms.h"
 #include "si.h"
 #include "ksyms.h"
@@ -493,6 +495,13 @@ intrhand_lev4(void)
 
 extern struct consdev consdev_rom, consdev_zs;
 
+#if NFBBM > 0
+int fbbm_cnattach(void);
+#endif
+#if NKB_KBC > 0
+int kb_kbc_cnattach(void);
+#endif
+
 int tty00_is_console = 0;
 
 void
@@ -505,7 +514,29 @@ consinit(void)
 	dipsw = ~dipsw;
 
 	switch (dipsw & SW_CONSOLE) {
-	default: /* XXX no real fb support yet */
+	case SW_NWB225:
+#if NFBBM > 0 && NKB_KBC > 0
+		if (systype == NEWS1700) {
+			if (fbbm_cnattach() == 0) {
+				(void)kb_kbc_cnattach();
+				break;
+			}
+
+			/*
+			 * Fixed framebuffer initialization is destructive.
+			 * If takeover fails, do not assume the PROM
+			 * framebuffer console remains usable.
+			 */
+			tty00_is_console = 1;
+			cn_tab = &consdev_zs;
+			(*cn_tab->cn_init)(cn_tab);
+			printf("fbbm console attach failed;"
+			    " using serial console\n");
+			break;
+		}
+#endif
+		/* FALLTHROUGH */
+	default:
 #if NROMCONS > 0
 		cn_tab = &consdev_rom;
 		(*cn_tab->cn_init)(cn_tab);

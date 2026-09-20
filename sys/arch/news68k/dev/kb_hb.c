@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.16 2026/04/26 12:49:38 thorpej Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.17 2026/09/20 10:29:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.16 2026/04/26 12:49:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.17 2026/09/20 10:29:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.16 2026/04/26 12:49:38 thorpej Exp $");
 
 #define KB_SIZE 0x10 /* XXX */
 #define KB_PRI 5
+
+#define NEWS1200_KB_BASE	((volatile uint8_t *)0xe1240000)
 
 static int kb_hb_match(device_t, cfdata_t, void *);
 static void kb_hb_attach(device_t, device_t, void *);
@@ -157,6 +159,9 @@ int
 kb_hb_cnattach(void)
 {
 
-	kb_hb_conssc.cs_isconsole = 1;
+	kb_hb_conssc.cs_data = NEWS1200_KB_BASE + KB_REG_DATA;
+	kb_hb_conssc.cs_stat = NEWS1200_KB_BASE + KB_REG_STAT;
+	kb_hb_conssc.cs_inte = NEWS1200_KB_BASE + KB_REG_INTE;
+
 	return kb_cnattach(&kb_hb_conssc);
 }

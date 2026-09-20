@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.67 2025/11/29 23:48:06 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.68 2026/09/20 10:29:11 tsutsui Exp $
 
 #	config for bootable floppy kernel
 #
@@ -69,6 +69,10 @@ options 	INET		# Internet protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 #options 	NFS_BOOT_BOOTPARAM
 
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_DEFAULTSCREENS=1
+#options 	WSDISPLAY_COMPAT_USL	# wsconscfg VT handling
+
 config	netbsd root on ? type ? dumps on none
 
 #
@@ -93,11 +97,16 @@ mkclock0 at hb1 addr 0xe1420000				# news1200
 le0	at hb0 addr 0xe0f00000 ipl 4			# news1700
 le0	at hb1 addr 0xe1a40000 ipl 4			# news1200
 
-# keyboard/mouse; not yet
-#kb0	at hb0 addr 0xe0d00000 ipl 5			# news1700
-#ms0	at hb0 addr 0xe0d00005 ipl 5			# news1700
-#kb0	at hb1 addr 0xe1240000 ipl 5			# news1200
+# keyboard/mouse
+kbc0	at hb0 addr 0xe0d00000 ipl 5			# news1700
+kb0	at kbc0						# news1700
+#ms0	at kbc0						# news1700
+
+kb0	at hb1 addr 0xe1240000 ipl 5			# news1200
 #ms0	at hb1 addr 0xe1280000 ipl 5			# news1200
+
+wskbd*	at kb?
+#wsmouse* at ms?
 
 # onboard z8530 SCC
 zsc0	at hb0 addr 0xe0d40000 ipl 5 vect 64 flags 0x0	# news1700
@@ -105,9 +114,10 @@ zsc0	at hb1 addr 0xe1780000 ipl 5 vect 64 flags 0x1	# news1200
 zstty0	at zsc0 channel 0
 zstty1	at zsc0 channel 1
 
-# Frame buffer devices; not yet
-#fb0	at hb0 addr 0xf0700000			# NWB225
-#fb1	at hb0 addr 0xf0f00000			# NWB512
+# Frame buffer devices
+fbbm0	at hb0 addr 0xf0700000			# NWB-225
+wsdisplay* at fbbm?
+#fb0	at hb0 addr 0xf0f00000			# NWB-512; not yet
 
 # onboard uPD72067 FDC; not yet
 #fdc0	at hb0 addr 0xe0c80000 ipl 3

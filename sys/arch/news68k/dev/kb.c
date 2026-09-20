@@ -1,4 +1,4 @@
-/*	$NetBSD: kb.c,v 1.9 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: kb.c,v 1.10 2026/09/20 10:29:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb.c,v 1.9 2008/05/14 13:29:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb.c,v 1.10 2026/09/20 10:29:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: kb.c,v 1.9 2008/05/14 13:29:28 tsutsui Exp $");
 #include <arch/news68k/dev/kbvar.h>
 
 /* #define KB_DEBUG */
+
+#define KB_CONS_STAT_RXRDY	0x80
+#define KB_CONS_DATA_RELEASE	0x80
 
 void	kb_cngetc(void *, u_int *, int *);
 void	kb_cnpollc(void *, int);
@@ -103,8 +106,6 @@ kb_intr(struct kb_softc *sc)
 	int key, val;
 	u_int type;
 
-	kb_conssc->cs_nkeyevents++;
-
 	key = bus_space_read_1(bt, bh, offset);
 	type = (key & 0x80) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	val = key & 0x7f;
@@ -112,11 +113,7 @@ kb_intr(struct kb_softc *sc)
 #ifdef KB_DEBUG
 	printf("kb_intr: key=%02x, type=%d, val=%02x\n", key, type, val);
 #endif
-	kb_conssc->cs_key = key;
-	kb_conssc->cs_type = type;
-	kb_conssc->cs_val = val;
-
-	if (!kb_conssc->cs_polling)
+	if (kb_conssc->cs_polling == 0)
 		wskbd_input(sc->sc_wskbddev, type, val);
 }
 
@@ -124,6 +121,8 @@ int
 kb_cnattach(struct console_softc *conssc_p)
 {
 
+	conssc_p->cs_isconsole = 1;
+	conssc_p->cs_polling = 0;
 	wskbd_cnattach(&kb_consops, conssc_p, &kb_keymapdata);
 	return 0;
 }
@@ -132,26 +131,32 @@ void
 kb_cngetc(void *v, u_int *type, int *data)
 {
 	struct console_softc *conssc = v;
-	u_int nkey;
+	int key;
 
-	/* set to polling mode */
-	conssc->cs_polling = 1;
-
-	/* wait until any keyevent occur */
-	nkey = conssc->cs_nkeyevents;
-	while (conssc->cs_nkeyevents == nkey)
+	while ((*conssc->cs_stat & KB_CONS_STAT_RXRDY) == 0)
 		;
 
-	/* get last keyevent */
-	*data = conssc->cs_val;
-	*type = conssc->cs_type;
-
-	conssc->cs_polling = 0;
+	key = *conssc->cs_data;
+	*data = key & 0x7f;
+	*type = (key & KB_CONS_DATA_RELEASE) != 0 ?
+	    WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 }
 
 void
 kb_cnpollc(void *v, int on)
 {
+	struct console_softc *conssc = v;
+
+	if (on != 0) {
+		if (conssc->cs_polling == 0) {
+			conssc->cs_saved_inte = *conssc->cs_inte;
+			*conssc->cs_inte = 0;
+			conssc->cs_polling = 1;
+		}
+	} else if (conssc->cs_polling != 0) {
+		*conssc->cs_inte = conssc->cs_saved_inte;
+		conssc->cs_polling = 0;
+	}
 }
 
 int
