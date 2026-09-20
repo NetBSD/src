@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.232 2026/03/15 12:00:58 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.233 2026/09/20 13:46:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.232 2026/03/15 12:00:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.233 2026/09/20 13:46:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1635,6 +1635,7 @@ sys___setitimer50(struct lwp *l, const struct sys___setitimer50_args *uap,
 	    (error = copyin(itvp, &aitv, sizeof(struct itimerval))) != 0)
 		return error;
 	if (SCARG(uap, oitv) != NULL) {
+		memset(&getargs, 0, sizeof(getargs));
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
 		if ((error = sys___getitimer50(l, &getargs, retval)) != 0)

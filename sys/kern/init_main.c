@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.553 2026/07/17 02:18:56 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.554 2026/09/20 13:46:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2023 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.553 2026/07/17 02:18:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.554 2026/09/20 13:46:48 riastradh Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -1115,6 +1115,7 @@ start_init(void *arg)
 		 */
 		ucp = (void *)STACK_ALIGN(ucp, STACK_ALIGNBYTES);
 		uap = (char **)STACK_ALLOC(ucp, sizeof(argv));
+		memset(&args, 0, sizeof(args));
 		SCARG(&args, path) = arg0;
 		SCARG(&args, argp) = uap;
 		SCARG(&args, envp) = NULL;

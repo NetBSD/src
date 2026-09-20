@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_epoll.c,v 1.4 2023/07/30 18:31:13 christos Exp $	*/
+/*	$NetBSD: sys_epoll.c,v 1.5 2026/09/20 13:46:48 riastradh Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_epoll.c,v 1.4 2023/07/30 18:31:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_epoll.c,v 1.5 2026/09/20 13:46:48 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -103,6 +103,7 @@ sys_epoll_create1(struct lwp *l, const struct sys_epoll_create1_args *uap,
 	if ((SCARG(uap, flags) & ~(EPOLL_CLOEXEC)) != 0)
 		return EINVAL;
 
+	memset(&kqa, 0, sizeof(kqa));
 	SCARG(&kqa, flags) = 0;
 	if (SCARG(uap, flags) & EPOLL_CLOEXEC)
 		SCARG(&kqa, flags) |= O_CLOEXEC;
