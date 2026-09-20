@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.120 2026/05/30 10:10:11 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.121 2026/09/20 17:38:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.120 2026/05/30 10:10:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.121 2026/09/20 17:38:56 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -651,7 +651,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 		 */
 		u_int tc = MMU51_TCR_BITS;
 		__asm volatile ("pflusha" : : );
-		__asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
+		__asm volatile ("pmove %0@,%%tc" : : "a" (&tc), "m" (tc));
 #endif /* M68030 */
 	}
 
