@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_inotify.c,v 1.10 2026/09/20 13:47:39 riastradh Exp $	*/
+/*	$NetBSD: linux_inotify.c,v 1.11 2026/09/20 13:48:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.10 2026/09/20 13:47:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.11 2026/09/20 13:48:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -874,7 +874,7 @@ get_inotify_dir_entries(int wd, bool needs_lock)
 		}
 
 		currdep = &de;
-		while ((char *)currdep < ((char *)&de) + done) {
+		while ((char *)currdep < ((char *)&de) + done && i < decount) {
 			size_t namlen = MIN(currdep->d_namlen,
 			    sizeof(idep->ide_entries[i].name) - 1);
 
