@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.35 2026/01/02 22:22:22 nia Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.36 2026/09/20 13:45:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.35 2026/01/02 22:22:22 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.36 2026/09/20 13:45:28 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -71,6 +71,7 @@ freebsd_sys_msync(struct lwp *l, const struct freebsd_sys_msync_args *uap, regis
 	 * FreeBSD-2.0.5-RELEASE's msync(2) has addtional argument `flags',
 	 * but syscall number is not changed. :-<
 	 */
+	memset(&bma, 0, sizeof(bma));
 	SCARG(&bma, addr) = SCARG(uap, addr);
 	SCARG(&bma, len) = SCARG(uap, len);
 	SCARG(&bma, flags) = SCARG(uap, flags);
@@ -117,6 +118,7 @@ freebsd_sys_mmap(struct lwp *l, const struct freebsd_sys_mmap_args *uap, registe
 		pos = 0;
 	}
 
+	memset(&bma, 0, sizeof(bma));
 	SCARG(&bma, addr) = SCARG(uap, addr);
 	SCARG(&bma, len) = SCARG(uap, len);
 	SCARG(&bma, prot) = prot;
