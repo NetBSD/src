@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.161 2026/09/20 13:40:22 riastradh Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.162 2026/09/20 13:40:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.161 2026/09/20 13:40:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.162 2026/09/20 13:40:50 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -826,12 +826,10 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 		/* There can be padding between the header and data... */
 		error = copyout(&linux_cmsg, q, sizeof linux_cmsg);
 		if (error != 0) {
-			error = copyout(CCMSG_DATA(cmsg), q + sizeof linux_cmsg,
-			    dlen);
+			break;
 		}
+		error = copyout(CCMSG_DATA(cmsg), q + sizeof linux_cmsg, dlen);
 		if (error != 0) {
-			/* We must free all the SCM_RIGHTS */
-			m = control;
 			break;
 		}
 		m = m->m_next;
@@ -843,6 +841,10 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 	}
 
   done:
+	if (error) {
+		/* We must free all the SCM_RIGHTS */
+		m = control;
+	}
 	free_control_mbuf(l, control, m);
 
 	mp->msg_controllen = q - (char *)mp->msg_control;
@@ -2001,6 +2003,7 @@ linux_sys_recvmmsg(struct lwp *l, const struct linux_sys_recvmmsg_args *uap,
 
 	if (SCARG(uap, timeout)) {
 		error = copyin(SCARG(uap, timeout), &lts, sizeof(lts));
+		if (error)
 			return error;
 		ts.tv_sec = lts.tv_sec;
 		ts.tv_nsec = lts.tv_nsec;
