@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.160 2026/09/19 23:47:51 riastradh Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.161 2026/09/20 13:40:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.160 2026/09/19 23:47:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.161 2026/09/20 13:40:22 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -734,7 +734,8 @@ linux_sys_recvfrom(struct lwp *l, const struct linux_sys_recvfrom_args *uap, reg
 static int
 linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
 {
-	int dlen, error = 0;
+	socklen_t dlen;
+	int error = 0;
 	struct cmsghdr *cmsg;
 	struct linux_cmsghdr linux_cmsg;
 	struct mbuf *m;
@@ -762,19 +763,23 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 		 */
 		memset(&linux_cmsg, 0, sizeof(linux_cmsg));
 		CTASSERT(LINUX_CMSG_ALIGN_DELTA >= 0);
-		KASSERTMSG(cmsg->cmsg_len >= LINUX_CMSG_ALIGN_DELTA,
+		CTASSERT(CMSG_LEN(0) ==
+		    sizeof(linux_cmsg) + LINUX_CMSG_ALIGN_DELTA);
+		KASSERTMSG(cmsg->cmsg_len >= CMSG_LEN(0),
 		    "cmsg->cmsg_len=%u", cmsg->cmsg_len);
 		linux_cmsg.cmsg_len = cmsg->cmsg_len - LINUX_CMSG_ALIGN_DELTA;
+		KASSERTMSG(linux_cmsg.cmsg_len >= sizeof(linux_cmsg),
+		    "linux_cmsg.cmsg_len=%zu", linux_cmsg.cmsg_len);
 		linux_cmsg.cmsg_level = cmsg->cmsg_level;
 		linux_cmsg.cmsg_type = cmsg->cmsg_type;
 
 		dlen = q_end - q;
 		if (linux_cmsg.cmsg_len > dlen) {
 			/* Not enough room for the parameter */
-			dlen -= sizeof linux_cmsg;
-			if (dlen <= 0)
+			if (dlen < sizeof linux_cmsg)
 				/* Discard if header wont fit */
 				break;
+			dlen -= sizeof linux_cmsg;
 			mp->msg_flags |= MSG_CTRUNC;
 			if (linux_cmsg.cmsg_level == SOL_SOCKET
 			    && linux_cmsg.cmsg_type == SCM_RIGHTS)
@@ -782,6 +787,21 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 				break;
 		} else
 			dlen = linux_cmsg.cmsg_len - sizeof linux_cmsg;
+
+		/*
+		 * NetBSD will not create a cmsg record whose header
+		 * length plus aligned content length would overflow
+		 * socklen_t.  This justifies computing
+		 * LINUX_CMSG_SPACE(dlen) (and LINUX_CMSG_LEN) below
+		 * without overflow.
+		 */
+		CTASSERT(LINUX_CMSG_SPACE(1) <= CMSG_SPACE(1));
+		CTASSERT(CMSG_SPACE(0) <=
+		    __type_max(__typeof(cmsg->cmsg_len)));
+		KASSERTMSG((dlen <= __type_max(__typeof(dlen)) -
+			CMSG_SPACE(0)),
+		    "dlen=%u", dlen);
+		CTASSERT(LINUX_CMSG_LEN(1) <= LINUX_CMSG_SPACE(1));
 
 		switch (linux_cmsg.cmsg_level) {
 		case SOL_SOCKET:
@@ -815,7 +835,7 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 			break;
 		}
 		m = m->m_next;
-		if (m == NULL || q + LINUX_CMSG_SPACE(dlen) > q_end) {
+		if (m == NULL || LINUX_CMSG_SPACE(dlen) > q_end - q) {
 			q += LINUX_CMSG_LEN(dlen);
 			break;
 		}
