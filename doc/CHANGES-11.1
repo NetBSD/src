@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.14 2026/09/19 16:40:36 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.15 2026/09/20 10:09:40 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -635,4 +635,33 @@ sys/dev/pci/if_ixl.c				1.104,1.105
 	ixl(4): be more conservative with DMA sync for the ATQ and
 	remove pointless and confusing check against NULL.
 	[tls, ticket #483]
+
+share/man/man4/mk48txx.4			1.17
+sys/conf/files					1.1324
+sys/dev/ic/mk48txx.c				1.30
+sys/dev/ic/mk48txxvar.h				1.8
+
+	mk48txx(4): add support for:
+	 - monitoring the battery low flag (via envstat)
+	 -  stopping/starting the clock oscillator (via sysmon)
+	[jdc, ticket #484]
+
+sys/dev/i2c/pcagpio.c				1.14-1.16
+sys/dev/i2c/pcf8574.c				1.11,1.12
+
+	pcagpio/pcf8574: add indicators/alerts support.
+	[jdc, ticket #485]
+
+distrib/sets/lists/man/mi			1.1844
+distrib/sets/lists/manhtml/mi			1.61
+share/man/man4/man4.sparc64/Makefile		1.13
+share/man/man4/man4.sparc64/envmon.4		1.1,1.2
+sys/arch/sparc64/conf/GENERIC			1.256
+sys/arch/sparc64/conf/files.sparc64		1.173
+sys/arch/sparc64/dev/envmon_ebus.c		1.1
+sys/arch/sparc64/dev/envmon_ebusreg.h		1.1
+
+	envmon(4): add a driver for the "env-monitor" sensor found on
+	Sun U25/U45 and V215/V245.
+	[jdc, ticket #486]
 
