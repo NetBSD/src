@@ -1,4 +1,4 @@
-/*	$NetBSD: memchr.S,v 1.7 2026/09/20 17:39:43 riastradh Exp $	*/
+/*	$NetBSD: memchr.S,v 1.8 2026/09/20 17:43:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memchr.S,v 1.7 2026/09/20 17:39:43 riastradh Exp $")
+	RCSID("$NetBSD: memchr.S,v 1.8 2026/09/20 17:43:13 riastradh Exp $")
 #endif
 
 /*
@@ -132,7 +132,7 @@ ENTRY(memchr)
 .Laddroverflow:
 	/*
 	 * Load the maximum theoretically possible virtual address as
-         * the bound.  This could, in principle, cause memchr to fail
+	 * the bound.  This could, in principle, cause memchr to fail
 	 * to find a byte in the very last position of the machine's
 	 * virtual address space, but that can only happen in the
 	 * kernel, and it is unlikely that anything will be found in
