@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.23 2021/01/14 02:51:52 simonb Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.24 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.23 2021/01/14 02:51:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.24 2026/09/20 13:45:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,6 +103,7 @@ netbsd32__lwp_wait(struct lwp *l, const struct netbsd32__lwp_wait_args *uap, reg
 	} */
 	struct sys__lwp_wait_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(wait_for);
 	NETBSD32TOP_UAP(departed, lwpid_t);
 	return sys__lwp_wait(l, &ua, retval);
@@ -116,6 +117,7 @@ netbsd32__lwp_suspend(struct lwp *l, const struct netbsd32__lwp_suspend_args *ua
 	} */
 	struct sys__lwp_suspend_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(target);
 	return sys__lwp_suspend(l, &ua, retval);
 }
@@ -128,6 +130,7 @@ netbsd32__lwp_continue(struct lwp *l, const struct netbsd32__lwp_continue_args *
 	} */
 	struct sys__lwp_continue_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(target);
 	return sys__lwp_continue(l, &ua, retval);
 }
@@ -140,6 +143,7 @@ netbsd32__lwp_wakeup(struct lwp *l, const struct netbsd32__lwp_wakeup_args *uap,
 	} */
 	struct sys__lwp_wakeup_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(target);
 	return sys__lwp_wakeup(l, &ua, retval);
 }
@@ -152,6 +156,7 @@ netbsd32__lwp_setprivate(struct lwp *l, const struct netbsd32__lwp_setprivate_ar
 	} */
 	struct sys__lwp_setprivate_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(ptr, void);
 	return sys__lwp_setprivate(l, &ua, retval);
 }
@@ -206,6 +211,7 @@ netbsd32__lwp_kill(struct lwp *l, const struct netbsd32__lwp_kill_args *uap, reg
 	} */
 	struct sys__lwp_kill_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(target);
 	NETBSD32TO64_UAP(signo);
 	return sys__lwp_kill(l, &ua, retval);
@@ -218,6 +224,7 @@ netbsd32__lwp_detach(struct lwp *l, const struct netbsd32__lwp_detach_args *uap,
 	} */
 	struct sys__lwp_detach_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(target);
 	return sys__lwp_detach(l, &ua, retval);
 }
@@ -231,6 +238,7 @@ netbsd32__lwp_unpark(struct lwp *l, const struct netbsd32__lwp_unpark_args *uap,
 	} */
 	struct sys__lwp_unpark_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(target);
 	NETBSD32TOP_UAP(hint, void);
 	return sys__lwp_unpark(l, &ua, retval);
@@ -246,6 +254,7 @@ netbsd32__lwp_unpark_all(struct lwp *l, const struct netbsd32__lwp_unpark_all_ar
 	} */
 	struct sys__lwp_unpark_all_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(targets, const lwpid_t);
 	NETBSD32TOX_UAP(ntargets, size_t);
 	NETBSD32TOP_UAP(hint, void);
@@ -261,6 +270,7 @@ netbsd32__lwp_setname(struct lwp *l, const struct netbsd32__lwp_setname_args *ua
 	} */
 	struct sys__lwp_setname_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(target);
 	NETBSD32TOP_UAP(name, char *);
 	return sys__lwp_setname(l, &ua, retval);
@@ -276,6 +286,7 @@ netbsd32__lwp_getname(struct lwp *l, const struct netbsd32__lwp_getname_args *ua
 	} */
 	struct sys__lwp_getname_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(target);
 	NETBSD32TOP_UAP(name, char *);
 	NETBSD32TOX_UAP(len, size_t);

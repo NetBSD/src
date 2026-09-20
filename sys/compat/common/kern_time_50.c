@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.38 2024/01/19 18:39:15 christos Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.39 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.38 2024/01/19 18:39:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.39 2026/09/20 13:45:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -331,6 +331,7 @@ compat_50_sys_setitimer(struct lwp *l,
 		return (error);
 	itimerval50_to_itimerval(&aitv50, &aitv);
 	if (SCARG(uap, oitv) != NULL) {
+		memset(&getargs, 0, sizeof(getargs));
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
 		if ((error = compat_50_sys_getitimer(l, &getargs, retval)) != 0)

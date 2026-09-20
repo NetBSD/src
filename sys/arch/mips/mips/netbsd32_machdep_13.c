@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_13.c,v 1.4 2024/06/17 20:25:20 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_13.c,v 1.5 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.4 2024/06/17 20:25:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.5 2026/09/20 13:45:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -74,6 +74,7 @@ compat_13_netbsd32_sigreturn(struct lwp *l,
 {
 	struct compat_13_sys_sigreturn_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(sigcntxp, struct sigcontext13 *);
 
 	return compat_13_sys_sigreturn(l, &ua, retval);

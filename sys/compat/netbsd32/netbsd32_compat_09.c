@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.20 2021/01/19 03:20:13 simonb Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.21 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.20 2021/01/19 03:20:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.21 2026/09/20 13:45:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ compat_09_netbsd32_uname(struct lwp *l, const struct compat_09_netbsd32_uname_ar
 	} */
 	struct compat_09_sys_uname_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(name, struct outsname);
 	return compat_09_sys_uname(l, &ua, retval);
 }

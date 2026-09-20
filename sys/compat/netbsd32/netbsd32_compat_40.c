@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_40.c,v 1.4 2019/01/28 18:53:52 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_compat_40.c,v 1.5 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_40.c,v 1.4 2019/01/28 18:53:52 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_40.c,v 1.5 2026/09/20 13:45:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ compat_40_netbsd32_mount(struct lwp *l,
 	} */
 	struct compat_40_sys_mount_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(type, const char);
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);

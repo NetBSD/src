@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.21 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.22 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.21 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.22 2026/09/20 13:45:00 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -59,6 +59,7 @@ compat_12_sys_swapon(struct lwp *l,
 	} */
 	struct sys_swapctl_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, cmd) = SWAP_ON;
 	/*XXXUNCONST*/
 	SCARG(&ua, arg) = __UNCONST(SCARG(uap, name));
@@ -76,6 +77,7 @@ compat_12_sys_msync(struct lwp *l,
 	} */
 	struct sys___msync13_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, addr) = SCARG(uap, addr);
 	SCARG(&ua, len) = SCARG(uap, len);
 	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;

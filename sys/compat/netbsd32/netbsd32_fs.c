@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.95 2022/04/23 17:46:23 reinoud Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.96 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.95 2022/04/23 17:46:23 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.96 2026/09/20 13:45:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1146,6 +1146,7 @@ netbsd32_linkat(struct lwp *l, const struct netbsd32_linkat_args *uap,
 	} */
 	struct sys_linkat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd1);
 	NETBSD32TOP_UAP(name1, const char);
 	NETBSD32TO64_UAP(fd2);
@@ -1167,6 +1168,7 @@ netbsd32_renameat(struct lwp *l, const struct netbsd32_renameat_args *uap,
 	} */
 	struct sys_renameat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fromfd);
 	NETBSD32TOP_UAP(from, const char);
 	NETBSD32TO64_UAP(tofd);
@@ -1186,6 +1188,7 @@ netbsd32_mkfifoat(struct lwp *l, const struct netbsd32_mkfifoat_args *uap,
 	} */
 	struct sys_mkfifoat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
@@ -1206,6 +1209,7 @@ netbsd32_mknodat(struct lwp *l, const struct netbsd32_mknodat_args *uap,
 	} */
 	struct sys_mknodat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
@@ -1226,6 +1230,7 @@ netbsd32_mkdirat(struct lwp *l, const struct netbsd32_mkdirat_args *uap,
 	} */
 	struct sys_mkdirat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
@@ -1245,6 +1250,7 @@ netbsd32_faccessat(struct lwp *l, const struct netbsd32_faccessat_args *uap,
 	} */
 	struct sys_faccessat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(amode);
@@ -1265,6 +1271,7 @@ netbsd32_fchmodat(struct lwp *l, const struct netbsd32_fchmodat_args *uap,
 	} */
 	struct sys_fchmodat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
@@ -1286,6 +1293,7 @@ netbsd32_fchownat(struct lwp *l, const struct netbsd32_fchownat_args *uap,
 	} */
 	struct sys_fchownat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(owner);
@@ -1356,6 +1364,7 @@ netbsd32_openat(struct lwp *l, const struct netbsd32_openat_args *uap,
 	} */
 	struct sys_openat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(oflags);
@@ -1376,6 +1385,7 @@ netbsd32_readlinkat(struct lwp *l, const struct netbsd32_readlinkat_args *uap,
 	} */
 	struct sys_readlinkat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(path, const char *);
 	NETBSD32TOP_UAP(buf, char *);
@@ -1395,6 +1405,7 @@ netbsd32_symlinkat(struct lwp *l, const struct netbsd32_symlinkat_args *uap,
 	} */
 	struct sys_symlinkat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(path1, const char *);
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(path2, const char *);
@@ -1413,6 +1424,7 @@ netbsd32_unlinkat(struct lwp *l, const struct netbsd32_unlinkat_args *uap,
 	} */
 	struct sys_unlinkat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(path, const char *);
 	NETBSD32TO64_UAP(flag);

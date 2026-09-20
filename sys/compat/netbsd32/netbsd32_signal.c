@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.55 2024/11/22 10:41:50 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.56 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.55 2024/11/22 10:41:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.56 2026/09/20 13:45:00 riastradh Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -614,6 +614,7 @@ netbsd32_____sigtimedwait50(struct lwp *l, const struct netbsd32_____sigtimedwai
 	} */
 	struct sys_____sigtimedwait50_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(set, const sigset_t);
 	NETBSD32TOP_UAP(info, siginfo_t);
 	NETBSD32TOP_UAP(timeout, struct timespec);

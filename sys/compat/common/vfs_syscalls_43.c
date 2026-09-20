@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.68 2021/09/07 11:43:02 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.69 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.68 2021/09/07 11:43:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.69 2026/09/20 13:45:00 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -233,6 +233,7 @@ compat_43_sys_ftruncate(struct lwp *l, const struct compat_43_sys_ftruncate_args
 		syscallarg(off_t) length;
 	} */ nuap;
 
+	memset(&nuap, 0, sizeof(nuap));
 	SCARG(&nuap, fd) = SCARG(uap, fd);
 	SCARG(&nuap, length) = SCARG(uap, length);
 	return sys_ftruncate(l, &nuap, retval);
@@ -255,6 +256,7 @@ compat_43_sys_truncate(struct lwp *l, const struct compat_43_sys_truncate_args *
 		syscallarg(off_t) length;
 	} */ nuap;
 
+	memset(&nuap, 0, sizeof(nuap));
 	SCARG(&nuap, path) = SCARG(uap, path);
 	SCARG(&nuap, length) = SCARG(uap, length);
 	return (sys_truncate(l, &nuap, retval));
@@ -281,6 +283,7 @@ compat_43_sys_lseek(struct lwp *l, const struct compat_43_sys_lseek_args *uap, r
 	off_t qret;
 	int error;
 
+	memset(&nuap, 0, sizeof(nuap));
 	SCARG(&nuap, fd) = SCARG(uap, fd);
 	SCARG(&nuap, offset) = SCARG(uap, offset);
 	SCARG(&nuap, whence) = SCARG(uap, whence);
@@ -306,6 +309,7 @@ compat_43_sys_creat(struct lwp *l, const struct compat_43_sys_creat_args *uap, r
 		syscallarg(int) mode;
 	} */ nuap;
 
+	memset(&nuap, 0, sizeof(nuap));
 	SCARG(&nuap, path) = SCARG(uap, path);
 	SCARG(&nuap, mode) = SCARG(uap, mode);
 	SCARG(&nuap, flags) = O_WRONLY | O_CREAT | O_TRUNC;

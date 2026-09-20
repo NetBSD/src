@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_vm.c,v 1.3 2021/01/19 01:47:58 simonb Exp $	*/
+/*	$NetBSD: netbsd32_vm.c,v 1.4 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_vm.c,v 1.3 2021/01/19 01:47:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_vm.c,v 1.4 2026/09/20 13:45:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *r
 	struct sys_mmap_args ua;
 	int error;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(addr, void);
 	NETBSD32TOX_UAP(len, size_t);
 	NETBSD32TO64_UAP(prot);

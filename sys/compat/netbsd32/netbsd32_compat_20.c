@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.42 2021/09/07 11:43:05 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.43 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.42 2021/09/07 11:43:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.43 2026/09/20 13:45:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,6 +215,7 @@ compat_20_netbsd32_fhstatfs(struct lwp *l, const struct compat_20_netbsd32_fhsta
 	} */
 	struct compat_30_sys_fhstatvfs1_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(fhp, const struct compat_30_fhandle);
 	NETBSD32TOP_UAP(buf, struct statvfs);
 #ifdef notyet

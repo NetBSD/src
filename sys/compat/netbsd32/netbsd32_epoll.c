@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_epoll.c,v 1.5 2023/09/02 21:11:54 mrg Exp $	*/
+/*	$NetBSD: netbsd32_epoll.c,v 1.6 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_epoll.c,v 1.5 2023/09/02 21:11:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_epoll.c,v 1.6 2026/09/20 13:45:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/epoll.h>
@@ -51,6 +51,7 @@ netbsd32_epoll_create1(struct lwp *l,
 	} */
 	struct sys_epoll_create1_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(flags);
 	return sys_epoll_create1(l, &ua, retval);
 }

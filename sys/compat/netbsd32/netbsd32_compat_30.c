@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.36 2021/01/19 03:20:13 simonb Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.37 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.36 2021/01/19 03:20:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.37 2026/09/20 13:45:00 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <opt_ntp.h>
@@ -240,6 +240,7 @@ compat_30_netbsd32_socket(struct lwp *l, const struct compat_30_netbsd32_socket_
 	} */
 	struct compat_30_sys_socket_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(domain);
 	NETBSD32TO64_UAP(type);
 	NETBSD32TO64_UAP(protocol);
@@ -255,6 +256,7 @@ compat_30_netbsd32_getfh(struct lwp *l, const struct compat_30_netbsd32_getfh_ar
 	} */
 	struct compat_30_sys_getfh_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(fname, const char);
 	NETBSD32TOP_UAP(fhp, struct compat_30_fhandle);
 	/* Lucky for us a fhandle_t doesn't change sizes */
@@ -297,6 +299,7 @@ compat_30_netbsd32_fhopen(struct lwp *l, const struct compat_30_netbsd32_fhopen_
 	} */
 	struct compat_30_sys_fhopen_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(fhp, struct compat_30_fhandle);
 	NETBSD32TO64_UAP(flags);
 	return compat_30_sys_fhopen(l, &ua, retval);

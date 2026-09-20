@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.58 2022/10/26 23:23:52 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.59 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.58 2022/10/26 23:23:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.59 2026/09/20 13:45:00 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -150,6 +150,7 @@ netbsd32___setitimer50(struct lwp *l, const struct netbsd32___setitimer50_args *
 		netbsd32_to_itimerval(&s32it, &aitv);
 	}
 	if (SCARG_P32(uap, oitv) != 0) {
+		memset(&getargs, 0, sizeof(getargs));
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
 		if ((error = netbsd32___getitimer50(l, &getargs, retval)) != 0)
@@ -449,6 +450,7 @@ netbsd32_timer_delete(struct lwp *l, const struct netbsd32_timer_delete_args *ua
 	} */
 	struct sys_timer_delete_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(timerid);
 	return sys_timer_delete(l, (void *)&ua, retval);
 }
@@ -517,6 +519,7 @@ netbsd32_timer_getoverrun(struct lwp *l, const struct netbsd32_timer_getoverrun_
 	} */
 	struct sys_timer_getoverrun_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(timerid);
 	return sys_timer_getoverrun(l, (void *)&ua, retval);
 }
@@ -531,6 +534,7 @@ netbsd32_timerfd_create(struct lwp *l,
 	} */
 	struct sys_timerfd_create_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(clock_id);
 	NETBSD32TO64_UAP(flags);
 	return sys_timerfd_create(l, (void *)&ua, retval);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.26 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.27 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.26 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.27 2026/09/20 13:45:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -108,12 +108,14 @@ compat_10_sys_semsys(struct lwp *l, const struct compat_10_sys_semsys_args *uap,
 #undef	semctl_arg
 
 	case 1:						/* semget() */
+		memset(&semget_args, 0, sizeof(semget_args));
 		SCARG(&semget_args, key) = SCARG(uap, a2);
 		SCARG(&semget_args, nsems) = SCARG(uap, a3);
 		SCARG(&semget_args, semflg) = SCARG(uap, a4);
 		return (sys_semget(l, &semget_args, retval));
 
 	case 2:						/* semop() */
+		memset(&semop_args, 0, sizeof(semop_args));
 		SCARG(&semop_args, semid) = SCARG(uap, a2);
 		SCARG(&semop_args, sops) =
 		    (struct sembuf *)(u_long)SCARG(uap, a3);
@@ -121,6 +123,7 @@ compat_10_sys_semsys(struct lwp *l, const struct compat_10_sys_semsys_args *uap,
 		return (sys_semop(l, &semop_args, retval));
 
 	case 3:						/* semconfig() */
+		memset(&semconfig_args, 0, sizeof(semconfig_args));
 		SCARG(&semconfig_args, flag) = SCARG(uap, a2);
 		return (sys_semconfig(l, &semconfig_args, retval));
 
@@ -161,6 +164,7 @@ compat_10_sys_shmsys(struct lwp *l, const struct compat_10_sys_shmsys_args *uap,
 
 	switch (SCARG(uap, which)) {
 	case 0:						/* shmat() */
+		memset(&shmat_args, 0, sizeof(shmat_args));
 		SCARG(&shmat_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmat_args, shmaddr) =
 		    (void *)(u_long)SCARG(uap, a3);
@@ -168,6 +172,7 @@ compat_10_sys_shmsys(struct lwp *l, const struct compat_10_sys_shmsys_args *uap,
 		return (sys_shmat(l, &shmat_args, retval));
 
 	case 1:						/* shmctl() */
+		memset(&shmctl_args, 0, sizeof(shmctl_args));
 		SCARG(&shmctl_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmctl_args, cmd) = SCARG(uap, a3);
 		SCARG(&shmctl_args, buf) =
@@ -175,11 +180,13 @@ compat_10_sys_shmsys(struct lwp *l, const struct compat_10_sys_shmsys_args *uap,
 		return (compat_14_sys_shmctl(l, &shmctl_args, retval));
 
 	case 2:						/* shmdt() */
+		memset(&shmdt_args, 0, sizeof(shmdt_args));
 		SCARG(&shmdt_args, shmaddr) =
 		    (void *)(u_long)SCARG(uap, a2);
 		return (sys_shmdt(l, &shmdt_args, retval));
 
 	case 3:						/* shmget() */
+		memset(&shmget_args, 0, sizeof(shmget_args));
 		SCARG(&shmget_args, key) = SCARG(uap, a2);
 		SCARG(&shmget_args, size) = SCARG(uap, a3);
 		SCARG(&shmget_args, shmflg) = SCARG(uap, a4);
@@ -228,6 +235,7 @@ compat_10_sys_msgsys(struct lwp *l, const struct compat_10_sys_msgsys_args *uap,
 
 	switch (SCARG(uap, which)) {
 	case 0:					/* msgctl()*/
+		memset(&msgctl_args, 0, sizeof(msgctl_args));
 		SCARG(&msgctl_args, msqid) = SCARG(uap, a2);
 		SCARG(&msgctl_args, cmd) = SCARG(uap, a3);
 		SCARG(&msgctl_args, buf) =
@@ -235,11 +243,13 @@ compat_10_sys_msgsys(struct lwp *l, const struct compat_10_sys_msgsys_args *uap,
 		return (compat_14_sys_msgctl(l, &msgctl_args, retval));
 
 	case 1:					/* msgget() */
+		memset(&msgget_args, 0, sizeof(msgget_args));
 		SCARG(&msgget_args, key) = SCARG(uap, a2);
 		SCARG(&msgget_args, msgflg) = SCARG(uap, a3);
 		return (sys_msgget(l, &msgget_args, retval));
 
 	case 2:					/* msgsnd() */
+		memset(&msgsnd_args, 0, sizeof(msgsnd_args));
 		SCARG(&msgsnd_args, msqid) = SCARG(uap, a2);
 		SCARG(&msgsnd_args, msgp) =
 		    (void *)(u_long)SCARG(uap, a3);
@@ -248,6 +258,7 @@ compat_10_sys_msgsys(struct lwp *l, const struct compat_10_sys_msgsys_args *uap,
 		return (sys_msgsnd(l, &msgsnd_args, retval));
 
 	case 3:					/* msgrcv() */
+		memset(&msgrcv_args, 0, sizeof(msgrcv_args));
 		SCARG(&msgrcv_args, msqid) = SCARG(uap, a2);
 		SCARG(&msgrcv_args, msgp) =
 		    (void *)(u_long)SCARG(uap, a3);

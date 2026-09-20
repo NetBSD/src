@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sem.c,v 1.12 2019/02/03 03:20:23 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_sem.c,v 1.13 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.12 2019/02/03 03:20:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.13 2026/09/20 13:45:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,6 +109,7 @@ netbsd32__ksem_unlink(struct lwp *l, const struct netbsd32__ksem_unlink_args *ua
 	} */
 	struct sys__ksem_unlink_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(name, const char);
 	return sys__ksem_unlink(l, &ua, retval);
 }
@@ -121,6 +122,7 @@ netbsd32__ksem_close(struct lwp *l, const struct netbsd32__ksem_close_args *uap,
 	} */
 	struct sys__ksem_close_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOX_UAP(id, intptr_t);
 	return sys__ksem_close(l, &ua, retval);
 }
@@ -133,6 +135,7 @@ netbsd32__ksem_post(struct lwp *l, const struct netbsd32__ksem_post_args *uap, r
 	} */
 	struct sys__ksem_post_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOX_UAP(id, intptr_t);
 	return sys__ksem_post(l, &ua, retval);
 }
@@ -194,6 +197,7 @@ netbsd32__ksem_destroy(struct lwp *l, const struct netbsd32__ksem_destroy_args *
 	} */
 	struct sys__ksem_destroy_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOX_UAP(id, intptr_t);
 	return sys__ksem_destroy(l, &ua, retval);
 }
@@ -207,6 +211,7 @@ netbsd32__ksem_getvalue(struct lwp *l, const struct netbsd32__ksem_getvalue_args
 	} */
 	struct sys__ksem_getvalue_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOX_UAP(id, intptr_t);
 	NETBSD32TOP_UAP(value, unsigned int);
 	return sys__ksem_getvalue(l, &ua, retval);

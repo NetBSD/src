@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.56 2023/07/29 13:40:51 rin Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.57 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.56 2023/07/29 13:40:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.57 2026/09/20 13:45:00 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -511,6 +511,7 @@ compat_50_netbsd32___sigtimedwait(struct lwp *l,
 	struct sys_____sigtimedwait50_args ua;
 	int res;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(set, const sigset_t);
 	NETBSD32TOP_UAP(info, siginfo_t);
 	NETBSD32TOP_UAP(timeout, struct timespec);
@@ -846,6 +847,7 @@ compat_50_netbsd32_setitimer(struct lwp *l,
 		netbsd32_to_itimerval50(&s32it, &aitv);
 	}
 	if (SCARG_P32(uap, oitv) != 0) {
+		memset(&getargs, 0, sizeof(getargs));
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
 		if ((error = compat_50_netbsd32_getitimer(l, &getargs, retval)) != 0)

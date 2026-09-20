@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_16.c,v 1.5 2020/06/20 07:10:36 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_16.c,v 1.6 2026/09/20 13:45:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -61,6 +61,7 @@ compat_16_netbsd32___sigreturn14(struct lwp *l,
 {
 	struct compat_16_sys___sigreturn14_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(sigcntxp, struct sigcontext *);
 
 	return compat_16_sys___sigreturn14(l, &ua, retval);

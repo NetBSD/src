@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.36 2021/09/07 11:43:05 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.37 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.36 2021/09/07 11:43:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.37 2026/09/20 13:45:00 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -94,6 +94,7 @@ compat_12_netbsd32_reboot(struct lwp *l, const struct compat_12_netbsd32_reboot_
 	} */
 	struct compat_12_sys_reboot_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(opt);
 	return compat_12_sys_reboot(l, &ua, retval);
 }
@@ -107,6 +108,7 @@ compat_12_netbsd32_msync(struct lwp *l, const struct compat_12_netbsd32_msync_ar
 	} */
 	struct sys___msync13_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(addr, void *);
 	NETBSD32TOX_UAP(len, size_t);
 	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
@@ -121,6 +123,7 @@ compat_12_netbsd32_oswapon(struct lwp *l, const struct compat_12_netbsd32_oswapo
 	} */
 	struct sys_swapctl_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, cmd) = SWAP_ON;
 	SCARG(&ua, arg) = SCARG_P32(uap, name);
 	SCARG(&ua, misc) = 0;	/* priority */
@@ -204,6 +207,7 @@ compat_12_netbsd32_getdirentries(struct lwp *l, const struct compat_12_netbsd32_
 	} */
 	struct compat_12_sys_getdirentries_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, char);
 	NETBSD32TO64_UAP(count);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.21 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.22 2026/09/20 13:45:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.21 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.22 2026/09/20 13:45:00 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -118,6 +118,7 @@ compat_43_sys_mmap(struct lwp *l, const struct compat_43_sys_mmap_args *uap, reg
 #define	OMAP_FIXED	0x0100
 #define	OMAP_INHERIT	0x0800
 
+	memset(&nargs, 0, sizeof(nargs));
 	SCARG(&nargs, addr) = SCARG(uap, addr);
 	SCARG(&nargs, len) = SCARG(uap, len);
 	/* Note: index using prot is sign-safe due to mask */
