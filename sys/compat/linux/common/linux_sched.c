@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.87 2025/11/10 15:41:38 christos Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.88 2026/09/20 13:41:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.87 2025/11/10 15:41:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.88 2026/09/20 13:41:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -800,16 +800,21 @@ linux_sys___prctl(struct lwp *l, const struct linux_sys___prctl_args *uap,
 	switch(c) {
 	case LINUX_PR_SET_NAME: {
 		struct sys__lwp_setname_args sls;
+
+		memset(&sls, 0, sizeof(sls));
+		SCARG(&sls, target) = 0;
 		SCARG(&sls, name) = (char *) SCARG(uap, args[0]);
 		return sys__lwp_setname(l, &sls, retval);
 	}
-
 	case LINUX_PR_GET_NAME: {
 		struct sys__lwp_getname_args slg;
+
+		memset(&slg, 0, sizeof(slg));
+		SCARG(&slg, target) = 0;
 		SCARG(&slg, name) = (char *) SCARG(uap, args[0]);
 		SCARG(&slg, len) = MAXCOMLEN;
 		return sys__lwp_getname(l, &slg, retval);
-		}
+	}
 	default:
 		printf("Unimplemented linux prctl code: (%d)", c);
 		return ENOSYS;
