@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uid16.c,v 1.4 2014/05/20 17:31:18 njoly Exp $	*/
+/*	$NetBSD: linux_uid16.c,v 1.5 2026/09/20 13:41:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uid16.c,v 1.4 2014/05/20 17:31:18 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uid16.c,v 1.5 2026/09/20 13:41:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -281,7 +281,8 @@ linux_sys_setgroups16(struct lwp *l, const struct linux_sys_setgroups16_args *ua
 
 	if (ngroups > COMPAT_NGROUPS16)
 		return EINVAL;
-	error = copyin(SCARG(uap, gidset), lset, ngroups);
+	CTASSERT(COMPAT_NGROUPS16 <= SIZE_MAX/sizeof(lset[0]));
+	error = copyin(SCARG(uap, gidset), lset, ngroups * sizeof(lset[0]));
 	if (error != 0)
 		return error;
 
