@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sched.c,v 1.9 2010/07/07 01:30:35 chs Exp $ */
+/*	$NetBSD: linux32_sched.c,v 1.10 2026/09/20 13:43:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sched.c,v 1.9 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sched.c,v 1.10 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,8 @@ linux32_sys_clone(struct lwp *l, const struct linux32_sys_clone_args *uap, regis
 		syscallarg(netbsd32_voidp) child_tidptr;
 	} */
 	struct linux_sys_clone_args ua;
-	
+
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TOP_UAP(stack, void *);
 	NETBSD32TOP_UAP(parent_tidptr, void *);
@@ -99,6 +100,7 @@ linux32_sys_sched_getscheduler(struct lwp *l, const struct linux32_sys_sched_get
 	} */
 	struct linux_sys_sched_getscheduler_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(pid);
 	return linux_sys_sched_getscheduler(l, &ua, retval);
 }
@@ -113,6 +115,7 @@ linux32_sys_sched_setscheduler(struct lwp *l, const struct linux32_sys_sched_set
 	} */
 	struct linux_sys_sched_setscheduler_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(pid);
 	NETBSD32TO64_UAP(policy);
 	NETBSD32TOP_UAP(sp, const struct linux_sched_param);
@@ -128,6 +131,7 @@ linux32_sys_sched_getparam(struct lwp *l, const struct linux32_sys_sched_getpara
 	} */
 	struct linux_sys_sched_getparam_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(pid);
 	NETBSD32TOP_UAP(sp, struct linux_sched_param);
 	return linux_sys_sched_getparam(l, &ua, retval);
@@ -142,6 +146,7 @@ linux32_sys_sched_setparam(struct lwp *l, const struct linux32_sys_sched_setpara
 	} */
 	struct linux_sys_sched_setparam_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(pid);
 	NETBSD32TOP_UAP(sp, const struct linux_sched_param);
 	return linux_sys_sched_setparam(l, &ua, retval);
@@ -155,6 +160,7 @@ linux32_sys_exit_group(struct lwp *l, const struct linux32_sys_exit_group_args *
 	} */
 	struct linux_sys_exit_group_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(error_code);
 	return linux_sys_exit_group(l, &ua, retval);
 }
@@ -168,6 +174,7 @@ linux32_sys_exit(struct lwp *l, const struct linux32_sys_exit_args *uap, registe
 	} */
 	struct linux_sys_exit_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(rval);
 	return linux_sys_exit(l, &ua, retval);
 }
@@ -181,6 +188,7 @@ linux32_sys_sched_get_priority_max(struct lwp *l, const struct linux32_sys_sched
 
 	struct linux_sys_sched_get_priority_max_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(policy);
 	return linux_sys_sched_get_priority_max(l, &ua, retval);
 }
@@ -194,6 +202,7 @@ linux32_sys_sched_get_priority_min(struct lwp *l, const struct linux32_sys_sched
 
 	struct linux_sys_sched_get_priority_min_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(policy);
 	return linux_sys_sched_get_priority_min(l, &ua, retval);
 }
@@ -207,6 +216,7 @@ linux32_sys_set_tid_address(struct lwp *l, const struct linux32_sys_set_tid_addr
 	} */
 	struct linux_sys_set_tid_address_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(tid, int);
 	return linux_sys_set_tid_address(l, &ua, retval);
 }
@@ -221,6 +231,7 @@ linux32_sys_sched_getaffinity(struct lwp *l, const struct linux32_sys_sched_geta
 	} */
 	struct linux_sys_sched_getaffinity_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(pid);
 	NETBSD32TO64_UAP(len);
 	NETBSD32TOP_UAP(mask, long);
@@ -237,6 +248,7 @@ linux32_sys_sched_setaffinity(struct lwp *l, const struct linux32_sys_sched_seta
 	} */
 	struct linux_sys_sched_setaffinity_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(pid);
 	NETBSD32TO64_UAP(len);
 	NETBSD32TOP_UAP(mask, long);
@@ -252,6 +264,7 @@ linux32_sys_tkill(struct lwp *l, const struct linux32_sys_tkill_args *uap, regis
 	} */
 	struct linux_sys_tkill_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(tid);
 	NETBSD32TO64_UAP(sig);
 	return linux_sys_tkill(l, &ua, retval);
@@ -267,6 +280,7 @@ linux32_sys_tgkill(struct lwp *l, const struct linux32_sys_tgkill_args *uap, reg
 	} */
 	struct linux_sys_tgkill_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(tgid);
 	NETBSD32TO64_UAP(tid);
 	NETBSD32TO64_UAP(sig);

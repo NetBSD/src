@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.115 2022/05/22 11:27:34 andvar Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.116 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.115 2022/05/22 11:27:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.116 2026/09/20 13:43:51 riastradh Exp $");
 
 /*
  * Note that we must NOT include "opt_compat_linux32.h" here,
@@ -133,6 +133,7 @@ linux_sys_nice(struct lwp *l, const struct linux_sys_nice_args *uap, register_t 
 	struct sys_setpriority_args bsa;
 	int error;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, which) = PRIO_PROCESS;
 	SCARG(&bsa, who) = 0;
 	SCARG(&bsa, prio) = p->p_nice - NZERO + SCARG(uap, incr);
@@ -164,6 +165,7 @@ linux_sys_readdir(struct lwp *l, const struct linux_sys_readdir_args *uap, regis
 	int error;
 	struct linux_sys_getdents_args da;
 
+	memset(&da, 0, sizeof(da));
 	SCARG(&da, fd) = SCARG(uap, fd);
 	SCARG(&da, dent) = SCARG(uap, dent);
 	SCARG(&da, count) = 1;
@@ -247,6 +249,7 @@ linux_sys_waitpid(struct lwp *l, const struct linux_sys_waitpid_args *uap, regis
 	} */
 	struct linux_sys_wait4_args linux_w4a;
 
+	memset(&linux_w4a, 0, sizeof(linux_w4a));
 	SCARG(&linux_w4a, pid) = SCARG(uap, pid);
 	SCARG(&linux_w4a, status) = SCARG(uap, status);
 	SCARG(&linux_w4a, options) = SCARG(uap, options);

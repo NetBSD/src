@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.20 2019/08/23 07:53:36 maxv Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.21 2026/09/20 13:43:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.20 2019/08/23 07:53:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.21 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -270,6 +270,7 @@ linux32_sys_getdents64(struct lwp *l, const struct linux32_sys_getdents64_args *
 	} */
 	struct linux_sys_getdents64_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(dent, struct linux_dirent64);
 	NETBSD32TO64_UAP(count);
@@ -288,6 +289,7 @@ linux32_sys_readdir(struct lwp *l, const struct linux32_sys_readdir_args *uap, r
 	int error;
 	struct linux32_sys_getdents_args da;
 
+	memset(&da, 0, sizeof(da));
 	SCARG(&da, fd) = SCARG(uap, fd);
 	SCARG(&da, dent) = SCARG(uap, dent);
 	SCARG(&da, count) = 1;

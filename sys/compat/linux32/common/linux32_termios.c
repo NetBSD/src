@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.16 2021/11/26 19:28:37 ryo Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.17 2026/09/20 13:43:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1995-2006, 2008  The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.16 2021/11/26 19:28:37 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.17 2026/09/20 13:43:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_linux32.h"
@@ -102,6 +102,8 @@ linux32_ioctl_termios(struct lwp *l, const struct linux32_sys_ioctl_args *uap, r
 	bsdioctl = fp->f_ops->fo_ioctl;
 	com = SCARG(uap, com);
 	retval[0] = 0;
+
+	memset(&ia, 0, sizeof(ia));
 
 	switch (com) {
 	case LINUX32_TCGETS:

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.267 2024/10/01 16:41:29 riastradh Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.268 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.267 2024/10/01 16:41:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.268 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,6 +370,7 @@ linux_sys_brk(struct lwp *l, const struct linux_sys_brk_args *uap, register_t *r
 	struct vmspace *vm = p->p_vmspace;
 	struct sys_obreak_args oba;
 
+	memset(&oba, 0, sizeof(oba));
 	SCARG(&oba, nsize) = SCARG(uap, nsize);
 
 	(void) sys_obreak(l, &oba, retval);
@@ -509,6 +510,7 @@ linux_mmap(struct lwp *l, const struct linux_sys_mmap_args *uap, register_t *ret
 	int error;
 	size_t mmoff=0;
 
+	memset(&cma, 0, sizeof(cma));
 	linux_to_bsd_mmap_args(&cma, uap);
 	SCARG(&cma, pos) = offset;
 
@@ -1287,6 +1289,7 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 		if (*ptr++ == request) {
 			struct sys_ptrace_args pta;
 
+			memset(&pta, 0, sizeof(pta));
 			SCARG(&pta, req) = *ptr;
 			SCARG(&pta, pid) = SCARG(uap, pid);
 			SCARG(&pta, addr) = (void *)SCARG(uap, addr);
@@ -1349,6 +1352,8 @@ linux_sys_reboot(struct lwp *l, const struct linux_sys_reboot_args *uap, registe
 	    SCARG(uap, magic2) != LINUX_REBOOT_MAGIC2B)
 		return(EINVAL);
 
+	memset(&sra, 0, sizeof(sra));
+
 	switch ((unsigned long)SCARG(uap, cmd)) {
 	case LINUX_REBOOT_CMD_RESTART:
 		SCARG(&sra, opt) = RB_AUTOBOOT;
@@ -1386,6 +1391,7 @@ linux_sys_swapon(struct lwp *l, const struct linux_sys_swapon_args *uap, registe
 	} */
 	struct sys_swapctl_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, cmd) = SWAP_ON;
 	SCARG(&ua, arg) = (void *)__UNCONST(SCARG(uap, name));
 	SCARG(&ua, misc) = 0;	/* priority */
@@ -1403,6 +1409,7 @@ linux_sys_swapoff(struct lwp *l, const struct linux_sys_swapoff_args *uap, regis
 	} */
 	struct sys_swapctl_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, cmd) = SWAP_OFF;
 	SCARG(&ua, arg) = __UNCONST(SCARG(uap, path)); /*XXXUNCONST*/
 	return (sys_swapctl(l, &ua, retval));
@@ -1600,6 +1607,7 @@ linux_sys_getpriority(struct lwp *l, const struct linux_sys_getpriority_args *ua
         struct sys_getpriority_args bsa;
         int error;
 
+	memset(&bsa, 0, sizeof(bsa));
         SCARG(&bsa, which) = SCARG(uap, which);
         SCARG(&bsa, who) = SCARG(uap, who);
 
@@ -1787,6 +1795,7 @@ linux_sys_epoll_create(struct lwp *l,
 	if (SCARG(uap, size) <= 0)
 		return EINVAL;
 
+	memset(&ca, 0, sizeof(ca));
 	SCARG(&ca, flags) = 0;
 	return sys_epoll_create1(l, &ca, retval);
 }
@@ -1807,6 +1816,7 @@ linux_sys_epoll_create1(struct lwp *l,
         if ((SCARG(uap, flags) & ~(LINUX_O_CLOEXEC)) != 0)
 		return EINVAL;
 
+	memset(&ca, 0, sizeof(ca));
 	SCARG(&ca, flags) = 0;
 	if ((SCARG(uap, flags) & LINUX_O_CLOEXEC) != 0)
 		SCARG(&ca, flags) |= EPOLL_CLOEXEC;
@@ -1870,6 +1880,7 @@ linux_sys_epoll_wait(struct lwp *l,
 	} */
 	struct linux_sys_epoll_pwait_args ea;
 
+	memset(&ea, 0, sizeof(ea));
 	SCARG(&ea, epfd) = SCARG(uap, epfd);
 	SCARG(&ea, events) = SCARG(uap, events);
 	SCARG(&ea, maxevents) = SCARG(uap, maxevents);
@@ -2056,6 +2067,7 @@ linux_sys_memfd_create(struct lwp *l,
 		    lflags & ~LINUX_MFD_KNOWN_FLAGS);
 	}
 
+	memset(&muap, 0, sizeof(muap));
 	SCARG(&muap, name) = SCARG(uap, name);
 	SCARG(&muap, flags) = lflags & LINUX_MFD_KNOWN_FLAGS;
 

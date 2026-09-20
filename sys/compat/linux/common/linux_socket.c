@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.162 2026/09/20 13:40:50 riastradh Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.163 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.162 2026/09/20 13:40:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.163 2026/09/20 13:43:51 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -323,7 +323,7 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 	struct sys___socket30_args bsa;
 	int error;
 
-
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
@@ -375,6 +375,7 @@ linux_sys_socketpair(struct lwp *l, const struct linux_sys_socketpair_args *uap,
 	} */
 	struct sys_socketpair_args bsa;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
@@ -715,6 +716,7 @@ linux_sys_recvfrom(struct lwp *l, const struct linux_sys_recvfrom_args *uap, reg
 	int		error;
 	struct sys_recvfrom_args bra;
 
+	memset(&bra, 0, sizeof(bra));
 	SCARG(&bra, s) = SCARG(uap, s);
 	SCARG(&bra, buf) = SCARG(uap, buf);
 	SCARG(&bra, len) = SCARG(uap, len);
@@ -1129,6 +1131,7 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 	struct sys_setsockopt_args bsa;
 	int name;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, s) = SCARG(uap, s);
 	SCARG(&bsa, level) = linux_to_bsd_sopt_level(SCARG(uap, level));
 	SCARG(&bsa, val) = SCARG(uap, optval);
@@ -1203,6 +1206,7 @@ linux_sys_getsockopt(struct lwp *l, const struct linux_sys_getsockopt_args *uap,
 	struct sys_getsockopt_args bga;
 	int name;
 
+	memset(&bga, 0, sizeof(bga));
 	SCARG(&bga, s) = SCARG(uap, s);
 	SCARG(&bga, level) = linux_to_bsd_sopt_level(SCARG(uap, level));
 	SCARG(&bga, val) = SCARG(uap, optval);
@@ -1533,6 +1537,8 @@ linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 	com = SCARG(uap, com);
 	retval[0] = 0;
 
+	memset(&ia, 0, sizeof(ia));
+
 	switch (com) {
 	case LINUX_SIOCGIFNAME:
 		error = linux_getifname(l, retval, SCARG(uap, data));
@@ -1822,7 +1828,7 @@ linux_sys_recv(struct lwp *l, const struct linux_sys_recv_args *uap, register_t 
 	} */
 	struct sys_recvfrom_args bra;
 
-
+	memset(&bra, 0, sizeof(bra));
 	SCARG(&bra, s) = SCARG(uap, s);
 	SCARG(&bra, buf) = SCARG(uap, buf);
 	SCARG(&bra, len) = (size_t) SCARG(uap, len);
@@ -1844,6 +1850,7 @@ linux_sys_send(struct lwp *l, const struct linux_sys_send_args *uap, register_t 
 	} */
 	struct sys_sendto_args bsa;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, s)		= SCARG(uap, s);
 	SCARG(&bsa, buf)	= SCARG(uap, buf);
 	SCARG(&bsa, len)	= SCARG(uap, len);
@@ -1866,6 +1873,7 @@ linux_sys_accept(struct lwp *l, const struct linux_sys_accept_args *uap, registe
 	int error;
 	struct sys_accept_args baa;
 
+	memset(&baa, 0, sizeof(baa));
 	SCARG(&baa, s)		= SCARG(uap, s);
 	SCARG(&baa, name)	= (struct sockaddr *) SCARG(uap, name);
 	SCARG(&baa, anamelen)	= (unsigned int *) SCARG(uap, anamelen);

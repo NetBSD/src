@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.68 2023/07/29 15:04:29 christos Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.69 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.68 2023/07/29 15:04:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.69 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,6 +353,7 @@ linux_sys_truncate64(struct lwp *l, const struct linux_sys_truncate64_args *uap,
 	struct sys_truncate_args ta;
 
 	/* Linux doesn't have the 'pad' pseudo-parameter */
+	memset(&ta, 0, sizeof(ta));
 	SCARG(&ta, path) = SCARG(uap, path);
 	SCARG(&ta, PAD) = 0;
 	SCARG(&ta, length) = SCARG(uap, length);
@@ -370,6 +371,7 @@ linux_sys_ftruncate64(struct lwp *l, const struct linux_sys_ftruncate64_args *ua
 	struct sys_ftruncate_args ta;
 
 	/* Linux doesn't have the 'pad' pseudo-parameter */
+	memset(&ta, 0, sizeof(ta));
 	SCARG(&ta, fd) = SCARG(uap, fd);
 	SCARG(&ta, PAD) = 0;
 	SCARG(&ta, length) = SCARG(uap, length);

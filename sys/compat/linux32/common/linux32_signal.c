@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.24 2021/11/26 13:32:38 christos Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.25 2026/09/20 13:43:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.24 2021/11/26 13:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.25 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -414,17 +414,18 @@ linux32_sys_kill(struct lwp *l, const struct linux32_sys_kill_args *uap, registe
 		syscallarg(int) pid;
 		syscallarg(int) signum;
 	} */
- 
+
 	struct sys_kill_args ka;
 	int sig;
- 
+
+	memset(&ka, 0, sizeof(ka));
 	SCARG(&ka, pid) = SCARG(uap, pid);
 	sig = SCARG(uap, signum);
 	if (sig < 0 || sig >= LINUX32__NSIG)
 		return (EINVAL);
 	SCARG(&ka, signum) = linux32_to_native_signo[sig];
 	return sys_kill(l, &ka, retval);
-}  
+}
 
 int
 linux32_sys_rt_sigsuspend(struct lwp *l, const struct linux32_sys_rt_sigsuspend_args *uap, register_t *retval)
@@ -503,6 +504,7 @@ linux32_sys_rt_sigtimedwait(struct lwp *l,
 	} */
 	struct sys_____sigtimedwait50_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, set) = SCARG_P32(uap, set);
 	SCARG(&ap, info) = SCARG_P32(uap, info);
 	SCARG(&ap, timeout) = SCARG_P32(uap, timeout);

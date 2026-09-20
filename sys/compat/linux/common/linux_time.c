@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.42 2021/09/19 23:51:37 thorpej Exp $ */
+/*	$NetBSD: linux_time.c,v 1.43 2026/09/20 13:43:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2001, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.42 2021/09/19 23:51:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.43 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -576,6 +576,7 @@ linux_ioctl_timerfd(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 	} */
 	struct sys_ioctl_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, fd) = SCARG(uap, fd);
 	SCARG(&ua, data) = SCARG(uap, data);
 

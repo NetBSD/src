@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.34 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.35 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.34 2021/11/25 03:08:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.35 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -182,6 +182,7 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 		if (*ptr++ == request) {
 			struct sys_ptrace_args pta;
 
+			memset(&pta, 0, sizeof(pta));
 			SCARG(&pta, req) = *ptr;
 			SCARG(&pta, pid) = SCARG(uap, pid);
 			SCARG(&pta, addr) = NETBSD32IPTR64(SCARG(uap, addr));
@@ -226,6 +227,7 @@ linux32_sys_personality(struct lwp *l, const struct linux32_sys_personality_args
 	} */
 	struct linux_sys_personality_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOX_UAP(per, long);
 	return linux_sys_personality(l, &ua, retval);
 }
@@ -280,6 +282,7 @@ linux32_sys_truncate64(struct lwp *l, const struct linux32_sys_truncate64_args *
 	struct sys_truncate_args ua;
 
 	/* Linux doesn't have the 'pad' pseudo-parameter */
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(path, const char *);
 	SCARG(&ua, PAD) = 0;
 	SCARG(&ua, length) = ((off_t)SCARG(uap, lenhi) << 32) + SCARG(uap, lenlo);
@@ -296,6 +299,7 @@ linux32_sys_ftruncate64(struct lwp *l, const struct linux32_sys_ftruncate64_args
 	struct sys_ftruncate_args ua;
 
 	/* Linux doesn't have the 'pad' pseudo-parameter */
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	SCARG(&ua, PAD) = 0;
 	SCARG(&ua, length) = ((off_t)SCARG(uap, lenhi) << 32) + SCARG(uap, lenlo);
@@ -311,6 +315,7 @@ linux32_sys_setdomainname(struct lwp *l, const struct linux32_sys_setdomainname_
 	} */
 	struct linux_sys_setdomainname_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(domainname, char);
 	NETBSD32TO64_UAP(len);
 	return linux_sys_setdomainname(l, &ua, retval);
@@ -361,6 +366,7 @@ linux32_sys_eventfd(struct lwp *l, const struct linux32_sys_eventfd_args *uap,
 	} */
 	struct linux_sys_eventfd_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(initval);
 
 	return linux_sys_eventfd(l, &ua, retval);
@@ -376,6 +382,7 @@ linux32_sys_eventfd2(struct lwp *l, const struct linux32_sys_eventfd2_args *uap,
 	} */
 	struct linux_sys_eventfd2_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(initval);
 	NETBSD32TO64_UAP(flags);
 
@@ -401,6 +408,7 @@ linux32_sys_preadv(struct lwp *l, const struct linux32_sys_preadv_args *uap,
 	} */
 	struct netbsd32_preadv_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, fd) = SCARG(uap, fd);
 	SCARG(&ua, iovp) = SCARG(uap, iovp);
 	SCARG(&ua, iovcnt) = SCARG(uap, iovcnt);
@@ -423,6 +431,7 @@ linux32_sys_pwritev(struct lwp *l, const struct linux32_sys_pwritev_args *uap,
 	} */
 	struct netbsd32_pwritev_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, fd) = SCARG(uap, fd);
 	SCARG(&ua, iovp) = SCARG(uap, iovp);
 	SCARG(&ua, iovcnt) = SCARG(uap, iovcnt);

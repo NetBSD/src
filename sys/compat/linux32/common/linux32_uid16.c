@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_uid16.c,v 1.2 2008/11/19 18:36:04 ad Exp $ */
+/* $NetBSD: linux32_uid16.c,v 1.3 2026/09/20 13:43:52 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_uid16.c,v 1.2 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_uid16.c,v 1.3 2026/09/20 13:43:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -72,6 +72,7 @@ linux32_sys_chown16(struct lwp *l, const struct linux32_sys_chown16_args *uap, r
 	} */
         struct sys___posix_chown_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, uid) = LINUX32TOBSD_UID(SCARG(uap, uid));
 	SCARG(&ua, gid) = LINUX32TOBSD_GID(SCARG(uap, gid));
@@ -89,6 +90,7 @@ linux32_sys_lchown16(struct lwp *l, const struct linux32_sys_lchown16_args *uap,
 	} */
 	struct sys___posix_lchown_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, uid) = LINUX32TOBSD_UID(SCARG(uap, uid));
 	SCARG(&ua, gid) = LINUX32TOBSD_GID(SCARG(uap, gid));
@@ -106,6 +108,7 @@ linux32_sys_fchown16(struct lwp *l, const struct linux32_sys_fchown16_args *uap,
 	} */
 	struct sys___posix_fchown_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, fd) = SCARG(uap, fd);
 	SCARG(&ua, uid) = LINUX32TOBSD_UID(SCARG(uap, uid));
 	SCARG(&ua, gid) = LINUX32TOBSD_GID(SCARG(uap, gid));
@@ -122,9 +125,10 @@ linux32_sys_getgroups16(struct lwp *l, const struct linux32_sys_getgroups16_args
 	} */
 	struct linux_sys_getgroups16_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(gidsetsize);
 	NETBSD32TOP_UAP(gidset, linux_gid16_t);
-	
+
 	return linux_sys_getgroups16(l, &ua, retval);
 }
 
@@ -137,9 +141,10 @@ linux32_sys_setgroups16(struct lwp *l, const struct linux32_sys_setgroups16_args
 	} */
 	struct linux_sys_setgroups16_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(gidsetsize);
 	NETBSD32TOP_UAP(gidset, linux_gid16_t);
-	
+
 	return linux_sys_setgroups16(l, &ua, retval);
 }
 
@@ -152,6 +157,7 @@ linux32_sys_setreuid16(struct lwp *l, const struct linux32_sys_setreuid16_args *
 	} */
 	struct sys_setreuid_args bsa;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, ruid) = LINUX32TOBSD_UID(SCARG(uap, ruid));
 	SCARG(&bsa, euid) = LINUX32TOBSD_UID(SCARG(uap, euid));
 
@@ -167,6 +173,7 @@ linux32_sys_setregid16(struct lwp *l, const struct linux32_sys_setregid16_args *
 	} */
 	struct sys_setregid_args bsa;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, rgid) = LINUX32TOBSD_GID(SCARG(uap, rgid));
 	SCARG(&bsa, egid) = LINUX32TOBSD_GID(SCARG(uap, egid));
 
@@ -183,6 +190,7 @@ linux32_sys_setresuid16(struct lwp *l, const struct linux32_sys_setresuid16_args
 	} */
 	struct linux32_sys_setresuid_args lsa;
 
+	memset(&lsa, 0, sizeof(lsa));
 	SCARG(&lsa, ruid) = LINUX32TOBSD_UID(SCARG(uap, ruid));
 	SCARG(&lsa, euid) = LINUX32TOBSD_UID(SCARG(uap, euid));
 	SCARG(&lsa, suid) = LINUX32TOBSD_UID(SCARG(uap, suid));
@@ -200,6 +208,7 @@ linux32_sys_setresgid16(struct lwp *l, const struct linux32_sys_setresgid16_args
 	} */
 	struct linux32_sys_setresgid_args lsa;
 
+	memset(&lsa, 0, sizeof(lsa));
 	SCARG(&lsa, rgid) = LINUX32TOBSD_GID(SCARG(uap, rgid));
 	SCARG(&lsa, egid) = LINUX32TOBSD_GID(SCARG(uap, egid));
 	SCARG(&lsa, sgid) = LINUX32TOBSD_GID(SCARG(uap, sgid));

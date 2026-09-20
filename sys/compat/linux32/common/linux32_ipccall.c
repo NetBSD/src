@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.12 2019/02/21 03:37:18 mrg Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.13 2026/09/20 13:43:51 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.12 2019/02/21 03:37:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.13 2026/09/20 13:43:51 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -262,6 +262,7 @@ linux32_semop(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 {
 	struct sys_semop_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, semid) = SCARG(uap, a1);
 	SCARG(&ua, sops) = SCARG_P32(uap, ptr);
 	SCARG(&ua, nsops) = SCARG(uap, a2);
@@ -275,6 +276,7 @@ linux32_semget(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 {
 	struct sys_semget_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, key) = SCARG(uap, a1);
 	SCARG(&ua, nsems) = SCARG(uap, a2);
 	SCARG(&ua, semflg) = SCARG(uap, a3);
@@ -381,6 +383,7 @@ linux32_msgsnd(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t
 {
 	struct netbsd32_msgsnd_args bma;
 
+	memset(&bma, 0, sizeof(bma));
 	SCARG(&bma, msqid) = SCARG(uap, a1);
 	SCARG(&bma, msgp) = SCARG(uap, ptr);
 	SCARG(&bma, msgsz) = SCARG(uap, a2);
@@ -408,6 +411,7 @@ linux32_msgrcv(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t
 	if ((error = copyin(SCARG_P32(uap, ptr), &kluge, sizeof kluge)))
 		return error;
 
+	memset(&bma, 0, sizeof(bma));
 	SCARG(&bma, msqid) = SCARG(uap, a1);
 	SCARG(&bma, msgp) = kluge.msg;
 	SCARG(&bma, msgsz) = SCARG(uap, a2);
@@ -422,6 +426,7 @@ linux32_msgget(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t
 {
 	struct sys_msgget_args bma;
 
+	memset(&bma, 0, sizeof(bma));
 	SCARG(&bma, key) = (key_t)(linux32_key_t)SCARG(uap, a1);
 	SCARG(&bma, msgflg) = SCARG(uap, a2);
 
@@ -615,6 +620,7 @@ linux32_shmat(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 	netbsd32_pointer_t addr32;
 	int error;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, shmid) = SCARG(uap, a1);
 	SCARG(&ua, shmaddr) = SCARG_P32(uap, ptr);
 	SCARG(&ua, shmflg) = SCARG(uap, a2);
@@ -637,6 +643,7 @@ linux32_shmdt(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 {
 	struct sys_shmdt_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, shmaddr) = SCARG_P32(uap, ptr);
 
 	return sys_shmdt(l, &ua, retval);
@@ -648,6 +655,7 @@ linux32_shmget(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 {
 	struct sys_shmget_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, key) = SCARG(uap, a1);
 	SCARG(&ua, size) = SCARG(uap, a2);
 	SCARG(&ua, shmflg) = SCARG(uap, a3) | _SHM_RMLINGER;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.15 2021/09/19 23:51:37 thorpej Exp $ */
+/*	$NetBSD: linux32_ioctl.c,v 1.16 2026/09/20 13:43:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.15 2021/09/19 23:51:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.16 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,6 +81,8 @@ linux32_sys_ioctl(struct lwp *l, const struct linux32_sys_ioctl_args *uap, regis
 	    SCARG(uap, com), (char)group, SCARG_P32(uap, data));
 #endif
 
+	memset(&ossuap, 0, sizeof(ossuap));
+
 	switch(group) {
 	case 'T':
 	    {
@@ -98,6 +100,8 @@ linux32_sys_ioctl(struct lwp *l, const struct linux32_sys_ioctl_args *uap, regis
 
 		if (fp->f_type == DTYPE_TIMERFD) {
 			struct linux_sys_ioctl_args ua;
+
+			memset(&ua, 0, sizeof(ua));
 			SCARG(&ua, fd) = SCARG(uap, fd);
 			SCARG(&ua, com) = SCARG(uap, com);
 			SCARG(&ua, data) = SCARG_P32(uap, data);
@@ -134,6 +138,9 @@ linux32_sys_ioctl(struct lwp *l, const struct linux32_sys_ioctl_args *uap, regis
 	{
 		struct sys_ioctl_args ua;
 		u_long com = 0;
+
+		memset(&ua, 0, sizeof(ua));
+
 		if (SCARG(uap, com) & IOC_IN)
 			com |= IOC_OUT;
 		if (SCARG(uap, com) & IOC_OUT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.136 2026/09/11 13:55:42 sborrill Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.137 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.136 2026/09/11 13:55:42 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.137 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -183,6 +183,7 @@ linux_sys_creat(struct lwp *l, const struct linux_sys_creat_args *uap,
 	} */
 	struct sys_open_args oa;
 
+	memset(&oa, 0, sizeof(oa));
 	SCARG(&oa, path) = SCARG(uap, path);
 	SCARG(&oa, flags) = O_CREAT | O_TRUNC | O_WRONLY;
 	SCARG(&oa, mode) = SCARG(uap, mode);
@@ -237,6 +238,7 @@ linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap,
 
 	fl = linux_to_bsd_ioflags(SCARG(uap, flags));
 
+	memset(&boa, 0, sizeof(boa));
 	SCARG(&boa, path) = SCARG(uap, path);
 	SCARG(&boa, flags) = fl;
 	SCARG(&boa, mode) = SCARG(uap, mode);
@@ -263,6 +265,7 @@ linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap,
 
 	fl = linux_to_bsd_ioflags(SCARG(uap, flags));
 
+	memset(&boa, 0, sizeof(boa));
 	SCARG(&boa, fd) = SCARG(uap, fd);
 	SCARG(&boa, path) = SCARG(uap, path);
 	SCARG(&boa, oflags) = fl;
@@ -305,6 +308,8 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap,
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
 	arg = SCARG(uap, arg);
+
+	memset(&fca, 0, sizeof(fca));
 
 	switch (cmd) {
 
@@ -665,6 +670,7 @@ linux_sys_unlinkat(struct lwp *l, const struct linux_sys_unlinkat_args *uap,
 	struct sys_unlinkat_args ua;
 	int error;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, fd) = SCARG(uap, fd);
 	SCARG(&ua, path) = SCARG(uap, path);
 	SCARG(&ua, flag) = linux_to_bsd_atflags(SCARG(uap, flag));
@@ -687,6 +693,7 @@ linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap,
 	} */
 	struct linux_sys_mknodat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, fd) = LINUX_AT_FDCWD;
 	SCARG(&ua, path) = SCARG(uap, path);
 	SCARG(&ua, mode) = SCARG(uap, mode);
@@ -712,6 +719,7 @@ linux_sys_mknodat(struct lwp *l, const struct linux_sys_mknodat_args *uap,
 	if (S_ISFIFO(SCARG(uap, mode))) {
 		struct sys_mkfifoat_args bma;
 
+		memset(&bma, 0, sizeof(bma));
 		SCARG(&bma, fd) = SCARG(uap, fd);
 		SCARG(&bma, path) = SCARG(uap, path);
 		SCARG(&bma, mode) = SCARG(uap, mode);
@@ -808,6 +816,7 @@ linux_sys_pread(struct lwp *l, const struct linux_sys_pread_args *uap,
 	} */
 	struct sys_pread_args pra;
 
+	memset(&pra, 0, sizeof(pra));
 	SCARG(&pra, fd) = SCARG(uap, fd);
 	SCARG(&pra, buf) = SCARG(uap, buf);
 	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
@@ -832,6 +841,7 @@ linux_sys_pwrite(struct lwp *l, const struct linux_sys_pwrite_args *uap,
 	} */
 	struct sys_pwrite_args pra;
 
+	memset(&pra, 0, sizeof(pra));
 	SCARG(&pra, fd) = SCARG(uap, fd);
 	SCARG(&pra, buf) = SCARG(uap, buf);
 	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
@@ -857,6 +867,7 @@ linux_sys_preadv(struct lwp *l, const struct linux_sys_preadv_args *uap,
 	} */
 	struct sys_preadv_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, fd) = SCARG(uap, fd);
 	SCARG(&ua, iovp) = SCARG(uap, iovp);
 	SCARG(&ua, iovcnt) = SCARG(uap, iovcnt);
@@ -882,6 +893,7 @@ linux_sys_pwritev(struct lwp *l, const struct linux_sys_pwritev_args *uap,
 	} */
 	struct sys_pwritev_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, fd) = SCARG(uap, fd);
 	SCARG(&ua, iovp) = (const void *)SCARG(uap, iovp);
 	SCARG(&ua, iovcnt) = SCARG(uap, iovcnt);
@@ -912,6 +924,7 @@ linux_sys_writev(struct lwp *l, const struct linux_sys_writev_args *uap, registe
 
 	struct sys_writev_args wra;
 
+	memset(&wra, 0, sizeof(wra));
 	SCARG(&wra, fd) = SCARG(uap, fd);
 	SCARG(&wra, iovp) = SCARG(uap, iovp);
 	SCARG(&wra, iovcnt) = iovcnt;
@@ -990,6 +1003,8 @@ linux_sys_sync_file_range(lwp_t *l,
 	    ((SCARG(uap, flags) & ~LINUX_SYNC_FILE_RANGE_ALL) != 0))
 		return EINVAL;
 
+	memset(&ua, 0, sizeof(ua));
+
 	/* Fill ua with uap */
 	SCARG(&ua, fd) = SCARG(uap, fd);
 	SCARG(&ua, flags) = SCARG(uap, flags);
@@ -1058,6 +1073,8 @@ linux_sys_renameat2(struct lwp *l, const struct linux_sys_renameat2_args *uap,
 	} */
 
 	struct sys_renameat_args ua;
+
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, fromfd) = SCARG(uap, fromfd);
 	SCARG(&ua, from) = SCARG(uap, from);
 	SCARG(&ua, tofd) = SCARG(uap, tofd);

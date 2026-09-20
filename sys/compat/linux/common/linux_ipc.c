@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.60 2025/10/26 19:32:56 christos Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.61 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.60 2025/10/26 19:32:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.61 2026/09/20 13:43:51 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -485,6 +485,7 @@ linux_sys_shmget(struct lwp *l, const struct linux_sys_shmget_args *uap, registe
 	} */
 	struct sys_shmget_args bsd_ua;
 
+	memset(&bsd_ua, 0, sizeof(bsd_ua));
 	SCARG(&bsd_ua, key) = SCARG(uap, key);
 	SCARG(&bsd_ua, size) = SCARG(uap, size);
 	SCARG(&bsd_ua, shmflg) = SCARG(uap, shmflg) | _SHM_RMLINGER;

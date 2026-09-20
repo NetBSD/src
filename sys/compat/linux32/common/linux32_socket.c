@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.32 2022/12/24 15:23:02 andvar Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.33 2026/09/20 13:43:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.32 2022/12/24 15:23:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.33 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,6 +106,7 @@ linux32_sys_socketpair(struct lwp *l, const struct linux32_sys_socketpair_args *
 	} */
 	struct linux_sys_socketpair_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(domain);
 	NETBSD32TO64_UAP(type);
 	NETBSD32TO64_UAP(protocol);
@@ -127,6 +128,7 @@ linux32_sys_sendto(struct lwp *l, const struct linux32_sys_sendto_args *uap, reg
 	} */
 	struct linux_sys_sendto_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(msg, void);
 	NETBSD32TO64_UAP(len);
@@ -151,6 +153,7 @@ linux32_sys_recvfrom(struct lwp *l, const struct linux32_sys_recvfrom_args *uap,
 	} */
 	struct linux_sys_recvfrom_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(buf, void);
 	NETBSD32TO64_UAP(len);
@@ -173,6 +176,7 @@ linux32_sys_setsockopt(struct lwp *l, const struct linux32_sys_setsockopt_args *
 	} */
 	struct linux_sys_setsockopt_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TO64_UAP(level);
 	NETBSD32TO64_UAP(optname);
@@ -195,6 +199,7 @@ linux32_sys_getsockopt(struct lwp *l, const struct linux32_sys_getsockopt_args *
 	} */
 	struct linux_sys_getsockopt_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TO64_UAP(level);
 	NETBSD32TO64_UAP(optname);
@@ -214,6 +219,7 @@ linux32_sys_socket(struct lwp *l, const struct linux32_sys_socket_args *uap, reg
 	} */
 	struct linux_sys_socket_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(domain);
 	NETBSD32TO64_UAP(type);
 	NETBSD32TO64_UAP(protocol);
@@ -231,6 +237,7 @@ linux32_sys_bind(struct lwp *l, const struct linux32_sys_bind_args *uap, registe
 	} */
 	struct linux_sys_bind_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(name, struct osockaddr);
 	NETBSD32TO64_UAP(namelen);
@@ -248,6 +255,7 @@ linux32_sys_connect(struct lwp *l, const struct linux32_sys_connect_args *uap, r
 	} */
 	struct linux_sys_connect_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(name, struct osockaddr);
 	NETBSD32TO64_UAP(namelen);
@@ -270,6 +278,7 @@ linux32_sys_accept(struct lwp *l, const struct linux32_sys_accept_args *uap, reg
 	} */
 	struct linux_sys_accept_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(name, struct osockaddr);
 	NETBSD32TOP_UAP(anamelen, int);
@@ -287,6 +296,7 @@ linux32_sys_getpeername(struct lwp *l, const struct linux32_sys_getpeername_args
 	} */
 	struct linux_sys_getpeername_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fdes);
 	NETBSD32TOP_UAP(asa, struct sockaddr);
 	NETBSD32TOP_UAP(alen, int);
@@ -304,6 +314,7 @@ linux32_sys_getsockname(struct lwp *l, const struct linux32_sys_getsockname_args
 	} */
 	struct linux_sys_getsockname_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fdec);
 	NETBSD32TOP_UAP(asa, char);
 	NETBSD32TOP_UAP(alen, int);
@@ -321,6 +332,7 @@ linux32_sys_sendmsg(struct lwp *l, const struct linux32_sys_sendmsg_args *uap, r
 	} */
 	struct linux_sys_sendmsg_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(msg, struct msghdr);
 	NETBSD32TO64_UAP(flags);
@@ -338,6 +350,7 @@ linux32_sys_recvmsg(struct lwp *l, const struct linux32_sys_recvmsg_args *uap, r
 	} */
 	struct linux_sys_recvmsg_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(msg, struct msghdr);
 	NETBSD32TO64_UAP(flags);
@@ -356,6 +369,7 @@ linux32_sys_send(struct lwp *l, const struct linux32_sys_send_args *uap, registe
 	} */
 	struct sys_sendto_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(buf, void);
 	NETBSD32TO64_UAP(len);
@@ -377,6 +391,7 @@ linux32_sys_recv(struct lwp *l, const struct linux32_sys_recv_args *uap, registe
 	} */
 	struct sys_recvfrom_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(buf, void);
 	NETBSD32TO64_UAP(len);
@@ -673,6 +688,8 @@ linux32_ioctl_socket(struct lwp *l, const struct linux32_sys_ioctl_args *uap, re
 
 	com = SCARG(uap, com);
 	retval[0] = 0;
+
+	memset(&ia, 0, sizeof(ia));
 
 	switch (com) {
 	case LINUX_SIOCGIFNAME:

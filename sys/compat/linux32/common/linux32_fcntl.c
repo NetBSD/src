@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_fcntl.c,v 1.11 2021/11/25 02:35:00 ryo Exp $ */
+/*	$NetBSD: linux32_fcntl.c,v 1.12 2026/09/20 13:43:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.11 2021/11/25 02:35:00 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.12 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,6 +92,7 @@ linux32_sys_open(struct lwp *l, const struct linux32_sys_open_args *uap, registe
 	} */
 	struct linux_sys_open_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TO64_UAP(mode);
@@ -140,6 +141,7 @@ linux32_sys_fcntl(struct lwp *l, const struct linux32_sys_fcntl_args *uap, regis
 		break;
 	}
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	SCARG(&ua, cmd) = cmd;
 	NETBSD32TOP_UAP(arg, void);

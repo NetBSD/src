@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.74 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.75 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.74 2021/11/25 03:08:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.75 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ linux_sys_old_mmap(struct lwp *l, const struct linux_sys_old_mmap_args *uap, reg
 		return EINVAL;
 	}
 
+	memset(&nlmap, 0, sizeof(nlmap));
 	SCARG(&nlmap,addr) = lmap.lm_addr;
 	SCARG(&nlmap,len) = lmap.lm_len;
 	SCARG(&nlmap,prot) = lmap.lm_prot;

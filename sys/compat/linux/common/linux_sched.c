@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.88 2026/09/20 13:41:52 riastradh Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.89 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.88 2026/09/20 13:41:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.89 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -231,6 +231,7 @@ linux_sys_clone3(struct lwp *l, const struct linux_sys_clone3_args *uap, registe
 	// XXX: what to do with tid_set and tid_set_size
 	// XXX: clone3 has stacksize, instead implement clone as a clone3
 	// wrapper.
+	memset(&clone_args, 0, sizeof(clone_args));
 	SCARG(&clone_args, flags) = flags;
 #ifdef __MACHINE_STACK_GROWS_UP
 	SCARG(&clone_args, stack) = (void *)(uintptr_t)cl_args.stack;
@@ -777,6 +778,7 @@ linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffin
 		lid = curlwp->l_lid;
 	}
 
+	memset(&ssa, 0, sizeof(ssa));
 	SCARG(&ssa, pid) = pid;
 	SCARG(&ssa, lid) = lid;
 	SCARG(&ssa, size) = size;

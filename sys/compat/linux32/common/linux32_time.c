@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.40 2021/09/19 23:51:37 thorpej Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.41 2026/09/20 13:43:52 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.40 2021/09/19 23:51:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.41 2026/09/20 13:43:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,6 +120,7 @@ linux32_sys_settimeofday(struct lwp *l, const struct linux32_sys_settimeofday_ar
 	} */
 	struct linux_sys_settimeofday_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(tp, struct timeval50);
 	NETBSD32TOP_UAP(tzp, struct timezone);
 

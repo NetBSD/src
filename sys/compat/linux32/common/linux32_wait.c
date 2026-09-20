@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_wait.c,v 1.13 2023/08/18 19:41:20 christos Exp $ */
+/*	$NetBSD: linux32_wait.c,v 1.14 2026/09/20 13:43:52 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.13 2023/08/18 19:41:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.14 2026/09/20 13:43:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,6 +82,7 @@ linux32_sys_waitpid(struct lwp *l, const struct linux32_sys_waitpid_args *uap, r
 	} */
 	struct linux32_sys_wait4_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, pid) = SCARG(uap, pid);
 	SCARG(&ua, status) = SCARG(uap, status);
 	SCARG(&ua, options) = SCARG(uap, options);

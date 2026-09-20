@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_inotify.c,v 1.8 2025/06/27 21:36:23 andvar Exp $	*/
+/*	$NetBSD: linux_inotify.c,v 1.9 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.8 2025/06/27 21:36:23 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.9 2026/09/20 13:43:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -292,6 +292,7 @@ do_inotify_init(struct lwp *l, register_t *retval, int flags)
 	ifd->ifd_wds = kmem_zalloc(ifd->ifd_nwds * sizeof(*ifd->ifd_wds),
 	KM_SLEEP);
 
+	memset(&kqa, 0, sizeof(kqa));
 	SCARG(&kqa, flags) = 0;
 	if (flags & LINUX_IN_NONBLOCK)
 		SCARG(&kqa, flags) |= O_NONBLOCK;
@@ -494,6 +495,7 @@ linux_sys_inotify_add_watch(struct lwp *l,
 		 * If we do not have a descriptor to wd's file, we
 		 * need to open the watch descriptor.
 		 */
+		memset(&oa, 0, sizeof(oa));
 		SCARG(&oa, path) = SCARG(uap, pathname);
 		SCARG(&oa, mode) = 0;
 		SCARG(&oa, flags) = O_RDONLY;

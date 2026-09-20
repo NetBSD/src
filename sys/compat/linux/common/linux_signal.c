@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.91 2026/09/11 13:39:55 sborrill Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.92 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.91 2026/09/11 13:39:55 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.92 2026/09/20 13:43:51 riastradh Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -676,6 +676,7 @@ linux_sys_kill(struct lwp *l, const struct linux_sys_kill_args *uap, register_t 
 	struct sys_kill_args ka;
 	int sig;
 
+	memset(&ka, 0, sizeof(ka));
 	SCARG(&ka, pid) = SCARG(uap, pid);
 	sig = SCARG(uap, signum);
 	if (sig < 0 || sig >= LINUX__NSIG)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.39 2021/11/23 17:54:08 pho Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.40 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.39 2021/11/23 17:54:08 pho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.40 2026/09/20 13:43:51 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -94,6 +94,8 @@ linux_ioctl_termios(struct lwp *l, const struct linux_sys_ioctl_args *uap, regis
 	bsdioctl = fp->f_ops->fo_ioctl;
 	com = SCARG(uap, com);
 	retval[0] = 0;
+
+	memset(&ia, 0, sizeof(ia));
 
 	switch (com) {
 	case LINUX_TCGETS:

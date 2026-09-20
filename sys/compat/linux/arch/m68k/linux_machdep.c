@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.45 2024/10/01 16:35:42 riastradh Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.46 2026/09/20 13:43:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.45 2024/10/01 16:35:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.46 2026/09/20 13:43:51 riastradh Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -894,6 +894,7 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 	struct sys_ioctl_args bia;
 	u_long com;
 
+	memset(&bia, 0, sizeof(bia));
 	SCARG(&bia, fd) = SCARG(uap, fd);
 	SCARG(&bia, data) = SCARG(uap, data);
 	com = SCARG(uap, com);
