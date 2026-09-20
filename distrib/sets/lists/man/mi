@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1808.2.6 2026/09/19 16:37:06 martin Exp $
+# $NetBSD: mi,v 1.1808.2.7 2026/09/20 10:08:25 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1922,6 +1922,7 @@
 ./usr/share/man/cat4/sparc/zx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/auxfan.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/envctrl.0		man-sys-catman		.cat
+./usr/share/man/cat4/sparc64/envmon.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/fdc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/ffb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/fireiic.0		man-sys-catman		.cat
@@ -5520,6 +5521,7 @@
 ./usr/share/man/man4/sparc/zx.4			man-sys-man		.man
 ./usr/share/man/man4/sparc64/auxfan.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/envctrl.4		man-sys-man		.man
+./usr/share/man/man4/sparc64/envmon.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/fdc.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/ffb.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/fireiic.4		man-sys-man		.man
