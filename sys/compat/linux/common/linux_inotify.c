@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_inotify.c,v 1.9 2026/09/20 13:43:51 riastradh Exp $	*/
+/*	$NetBSD: linux_inotify.c,v 1.10 2026/09/20 13:47:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.9 2026/09/20 13:43:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.10 2026/09/20 13:47:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -753,8 +753,8 @@ do_kevent_to_inotify(int32_t wd, uint32_t mask, uint32_t cookie,
 
 	if (name != NULL) {
 		buf->ie_event.len = strlen(name) + 1;
-		KASSERT(buf->ie_event.len < sizeof(buf->ie_name));
-		strcpy(buf->ie_name, name);
+		KASSERT(buf->ie_event.len <= sizeof(buf->ie_name));
+		strlcpy(buf->ie_name, name, sizeof(buf->ie_name));
 	}
 
 	++(*nbuf);
@@ -875,8 +875,13 @@ get_inotify_dir_entries(int wd, bool needs_lock)
 
 		currdep = &de;
 		while ((char *)currdep < ((char *)&de) + done) {
+			size_t namlen = MIN(currdep->d_namlen,
+			    sizeof(idep->ide_entries[i].name) - 1);
+
 			idep->ide_entries[i].fileno = currdep->d_fileno;
-			strcpy(idep->ide_entries[i].name, currdep->d_name);
+			memcpy(idep->ide_entries[i].name, currdep->d_name,
+			    namlen);
+			idep->ide_entries[i].name[namlen] = '\0';
 
 			currdep = _DIRENT_NEXT(currdep);
 			i++;
