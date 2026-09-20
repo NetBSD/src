@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.129 2026/09/20 13:46:26 riastradh Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.130 2026/09/20 13:47:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.129 2026/09/20 13:46:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.130 2026/09/20 13:47:18 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -656,7 +656,7 @@ ultrix_sys_shmsys(struct lwp *l, const struct ultrix_sys_shmsys_args *uap, regis
 	/* Ultrix SVSHM weirdness: */
 	struct sys_shmat_args shmat_args;
 	struct compat_14_sys_shmctl_args shmctl_args;
-	struct sys_shmdt_args shmdt_args = {0};
+	struct sys_shmdt_args shmdt_args;
 	struct sys_shmget_args shmget_args;
 
 
@@ -677,7 +677,7 @@ ultrix_sys_shmsys(struct lwp *l, const struct ultrix_sys_shmsys_args *uap, regis
 
 	case 2:						/* Ultrix shmdt() */
 		memset(&shmdt_args, 0, sizeof(shmdt_args));
-		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a2);
+		SCARG(&shmdt_args, shmaddr) = (void *)SCARG(uap, a2);
 		return sys_shmdt(l, &shmdt_args, retval);
 
 	case 3:						/* Ultrix shmget() */
