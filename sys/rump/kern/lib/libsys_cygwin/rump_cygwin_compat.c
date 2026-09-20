@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_cygwin_compat.c,v 1.3 2019/01/27 02:08:49 pgoyette Exp $	*/
+/*	$NetBSD: rump_cygwin_compat.c,v 1.4 2026/09/20 13:47:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_cygwin_compat.c,v 1.3 2019/01/27 02:08:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_cygwin_compat.c,v 1.4 2026/09/20 13:47:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -152,7 +152,8 @@ rump_cygwin_sys_open(struct lwp *l, const struct rump_cygwin_sys_open_args *uap,
 
 	sflags = SCARG(uap, flags);
 	flags = sflags & (3 | O_APPEND | O_ASYNC | O_CREAT | O_TRUNC | O_EXCL);
-	
+
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, path) = SCARG(uap, path);
 	SCARG(&ua, flags) = flags;
 	SCARG(&ua, mode) = SCARG(uap, mode);

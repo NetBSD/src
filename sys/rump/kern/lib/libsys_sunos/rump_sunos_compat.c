@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_sunos_compat.c,v 1.4 2019/01/27 02:08:49 pgoyette Exp $	*/
+/*	$NetBSD: rump_sunos_compat.c,v 1.5 2026/09/20 13:47:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_sunos_compat.c,v 1.4 2019/01/27 02:08:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_sunos_compat.c,v 1.5 2026/09/20 13:47:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -202,7 +202,8 @@ rump_sunos_sys_open(struct lwp *l, const struct rump_sunos_sys_open_args *uap,
 	flags |= (sflags & 0x200)	? O_TRUNC : 0;
 	flags |= (sflags & 0x400)	? O_EXCL : 0;
 	flags |= (sflags & 0x20000)	? O_NOFOLLOW : 0;
-	
+
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, path) = SCARG(uap, path);
 	SCARG(&ua, flags) = flags;
 	SCARG(&ua, mode) = SCARG(uap, mode);

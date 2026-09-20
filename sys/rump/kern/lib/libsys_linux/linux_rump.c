@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_rump.c,v 1.5 2019/01/27 09:19:37 rin Exp $	*/
+/*	$NetBSD: linux_rump.c,v 1.6 2026/09/20 13:47:03 riastradh Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rump.c,v 1.5 2019/01/27 09:19:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rump.c,v 1.6 2026/09/20 13:47:03 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -24,6 +24,7 @@ rump_linux_sys_mknodat(struct lwp *l,
 	} */
 	struct linux_sys_mknodat_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, fd) = SCARG(uap, fd);
 	SCARG(&ua, path) = SCARG(uap, path);
 	SCARG(&ua, mode) = SCARG(uap, mode);
