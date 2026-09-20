@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.71 2021/09/07 11:43:05 riastradh Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.72 2026/09/20 13:46:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.71 2021/09/07 11:43:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.72 2026/09/20 13:46:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -422,6 +422,7 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap,
 	}
 
 	error = EPASSTHROUGH;
+	memset(&pass_ua, 0, sizeof(pass_ua));
 	SCARG(&pass_ua, com) = SCARG(uap, com);
 	ctl = fp->f_ops->fo_ioctl;
 
@@ -1029,6 +1030,7 @@ sunos_sys_fcntl(struct lwp *l, const struct sunos_sys_fcntl_args *uap,
 	int n, ret;
 	struct sys_fcntl_args bsd_ua;
 
+	memset(&bsd_ua, 0, sizeof(bsd_ua));
 	SCARG(&bsd_ua, fd) = SCARG(uap, fd);
 	SCARG(&bsd_ua, cmd) = SCARG(uap, cmd);
 	SCARG(&bsd_ua, arg) = SCARG(uap, arg);

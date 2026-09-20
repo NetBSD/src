@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.36 2021/09/07 11:43:05 riastradh Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.37 2026/09/20 13:46:08 riastradh Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.36 2021/09/07 11:43:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.37 2026/09/20 13:46:08 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -471,6 +471,7 @@ sunos32_sys_ioctl(struct lwp *l, const struct sunos32_sys_ioctl_args *uap,
 	struct netbsd32_ioctl_args bsd_ua;
 	int error;
 
+	memset(&bsd_ua, 0, sizeof(bsd_ua));
 	SCARG(&bsd_ua, fd) = SCARG(uap, fd);
 	SCARG(&bsd_ua, com) = SCARG(uap, com);
 	SCARG(&bsd_ua, data) = SCARG(uap, data);
@@ -1060,6 +1061,7 @@ sunos32_sys_fcntl(struct lwp *l, const struct sunos32_sys_fcntl_args *uap,
 	uintptr_t flg;
 	int n, ret;
 
+	memset(&bsd_ua, 0, sizeof(bsd_ua));
 	SCARG(&bsd_ua, fd) = SCARG(uap, fd);
 	SCARG(&bsd_ua, cmd) = SCARG(uap, cmd);
 	SCARG(&bsd_ua, arg) = SCARG_P32(uap, arg);

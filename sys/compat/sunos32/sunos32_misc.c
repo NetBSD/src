@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.86 2023/06/20 15:21:55 riastradh Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.87 2026/09/20 13:46:08 riastradh Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.86 2023/06/20 15:21:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.87 2026/09/20 13:46:08 riastradh Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -198,6 +198,7 @@ sunos32_sys_wait4(struct lwp *l, const struct sunos32_sys_wait4_args *uap, regis
 
 	struct compat_50_netbsd32_wait4_args bsd_ua;
 
+	memset(&bsd_ua, 0, sizeof(bsd_ua));
 	SCARG(&bsd_ua, pid) = SCARG(uap, pid) == 0 ? WAIT_ANY : SCARG(uap, pid);
 	SCARG(&bsd_ua, status) = SCARG(uap, status);
 	SCARG(&bsd_ua, options) = SCARG(uap, options);
@@ -215,6 +216,7 @@ sunos32_sys_creat(struct lwp *l, const struct sunos32_sys_creat_args *uap, regis
 	} */
 	struct sys_open_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SUNOS32TOP_UAP(path, const char);
 	SCARG(&ua, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	SUNOS32TO64_UAP(mode);
@@ -231,6 +233,7 @@ sunos32_sys_access(struct lwp *l, const struct sunos32_sys_access_args *uap, reg
 	} */
 	struct sys_access_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SUNOS32TOP_UAP(path, const char);
 	SUNOS32TO64_UAP(flags);
 
@@ -365,6 +368,7 @@ sunos32_sys_omsync(struct lwp *l, const struct sunos32_sys_omsync_args *uap, reg
 	} */
 	struct netbsd32___msync13_args ouap;
 
+	memset(&ouap, 0, sizeof(ouap));
 	SCARG(&ouap, addr) = SCARG(uap, addr);
 	SCARG(&ouap, len) = SCARG(uap, len);
 	SCARG(&ouap, flags) = SCARG(uap, flags);
@@ -380,6 +384,7 @@ sunos32_sys_unmount(struct lwp *l, const struct sunos32_sys_unmount_args *uap, r
 	} */
 	struct sys_unmount_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SUNOS32TOP_UAP(path, const char);
 	SCARG(&ua, flags) = 0;
 
@@ -701,6 +706,7 @@ sunos32_sys_mmap(struct lwp *l, const struct sunos32_sys_mmap_args *uap, registe
 	if ((SCARG(uap, flags) & SUNOS32__MAP_NEW) == 0)
 		return (EINVAL);
 
+	memset(&ua, 0, sizeof(ua));
 	SUNOS32TOP_UAP(addr, void);
 	SUNOS32TOX_UAP(len, size_t);
 	SUNOS32TO64_UAP(prot);
@@ -932,6 +938,7 @@ sunos32_sys_open(struct lwp *l, const struct sunos32_sys_open_args *uap, registe
 	r |=	((lf & 0x0100) ? O_EXLOCK : 0);
 	r |=	((lf & 0x2000) ? O_FSYNC : 0);
 
+	memset(&ua, 0, sizeof(ua));
 	SUNOS32TOP_UAP(path, const char);
 	SCARG(&ua, flags) = r;
 	SUNOS32TO64_UAP(mode);
@@ -1152,6 +1159,7 @@ sunos32_sys_getrlimit(struct lwp *l, const struct sunos32_sys_getrlimit_args *ua
 	if (SCARG(uap, which) >= SUNOS_RLIM_NLIMITS)
 		return EINVAL;
 
+	memset(&ua_43, 0, sizeof(ua_43));
 	SCARG(&ua_43, which) = SCARG(uap, which) == SUNOS_RLIMIT_NOFILE ? RLIMIT_NOFILE : SCARG(uap, which);
 	SCARG(&ua_43, rlp) = SCARG(uap, rlp);
 
@@ -1170,6 +1178,7 @@ sunos32_sys_setrlimit(struct lwp *l, const struct sunos32_sys_setrlimit_args *ua
 	if (SCARG(uap, which) >= SUNOS_RLIM_NLIMITS)
 		return EINVAL;
 
+	memset(&ua_43, 0, sizeof(ua_43));
 	SCARG(&ua_43, which) = SCARG(uap, which) == SUNOS_RLIMIT_NOFILE ? RLIMIT_NOFILE : SCARG(uap, which);
 	SCARG(&ua_43, rlp) = SCARG(uap, rlp);
 
@@ -1217,6 +1226,7 @@ sunos32_sys_ptrace(struct lwp *l, const struct sunos32_sys_ptrace_args *uap, reg
 	if (req == -1)
 		return (EINVAL);
 
+	memset(&pa, 0, sizeof(pa));
 	SCARG(&pa, req) = req;
 	SCARG(&pa, pid) = (pid_t)SCARG(uap, pid);
 	SCARG(&pa, addr) = SCARG(uap, addr);
@@ -1289,6 +1299,7 @@ sunos32_sys_reboot(struct lwp *l, const struct sunos32_sys_reboot_args *uap, reg
 	else
 		bootstr = NULL;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, opt) = bsd_howto;
 	SCARG(&ua, bootstr) = bootstr;
 	return (sys_reboot(l, &ua, retval));

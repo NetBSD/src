@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.177 2021/09/07 11:43:05 riastradh Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.178 2026/09/20 13:46:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.177 2021/09/07 11:43:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.178 2026/09/20 13:46:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ sunos_sys_wait4(struct lwp *l, const struct sunos_sys_wait4_args *uap, register_
 {
 	struct compat_50_sys_wait4_args bsd_ua;
 
+	memset(&bsd_ua, 0, sizeof(bsd_ua));
 	SCARG(&bsd_ua, pid) = SCARG(uap, pid) == 0 ? WAIT_ANY : SCARG(uap, pid);
 	SCARG(&bsd_ua, status) = SCARG(uap, status);
 	SCARG(&bsd_ua, options) = SCARG(uap, options);
@@ -138,6 +139,7 @@ sunos_sys_creat(struct lwp *l, const struct sunos_sys_creat_args *uap, register_
 {
 	struct sys_open_args ouap;
 
+	memset(&ouap, 0, sizeof(ouap));
 	SCARG(&ouap, path) = SCARG(uap, path);
 	SCARG(&ouap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	SCARG(&ouap, mode) = SCARG(uap, mode);
@@ -154,6 +156,7 @@ sunos_sys_execv(struct lwp *l, const struct sunos_sys_execv_args *uap, register_
 	} */
 	struct sys_execve_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = NULL;
@@ -171,6 +174,7 @@ sunos_sys_execve(struct lwp *l, const struct sunos_sys_execve_args *uap, registe
 	} */
 	struct sys_execve_args ap;
 
+	memset(&ap, 0, sizeof(ap));
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = SCARG(uap, envp);
@@ -183,6 +187,7 @@ sunos_sys_omsync(struct lwp *l, const struct sunos_sys_omsync_args *uap, registe
 {
 	struct sys___msync13_args ouap;
 
+	memset(&ouap, 0, sizeof(ouap));
 	SCARG(&ouap, addr) = SCARG(uap, addr);
 	SCARG(&ouap, len) = SCARG(uap, len);
 	SCARG(&ouap, flags) = SCARG(uap, flags);
@@ -195,6 +200,7 @@ sunos_sys_unmount(struct lwp *l, const struct sunos_sys_unmount_args *uap, regis
 {
 	struct sys_unmount_args ouap;
 
+	memset(&ouap, 0, sizeof(ouap));
 	SCARG(&ouap, path) = SCARG(uap, path);
 	SCARG(&ouap, flags) = 0;
 
@@ -503,6 +509,7 @@ sunos_sys_mmap(struct lwp *l, const struct sunos_sys_mmap_args *uap, register_t 
 	if ((SCARG(uap, flags) & SUNOS__MAP_NEW) == 0)
 		return (EINVAL);
 
+	memset(&ouap, 0, sizeof(ouap));
 	SCARG(&ouap, flags) = SCARG(uap, flags) & ~SUNOS__MAP_NEW;
 	SCARG(&ouap, addr) = SCARG(uap, addr);
 	SCARG(&ouap, len) = SCARG(uap, len);
@@ -702,6 +709,7 @@ sunos_sys_open(struct lwp *l, const struct sunos_sys_open_args *uap, register_t 
 	nmode |= ((smode & 0x0100) ? O_EXLOCK : 0);
 	nmode |= ((smode & 0x2000) ? O_FSYNC : 0);
 
+	memset(&open_ua, 0, sizeof(open_ua));
 	SCARG(&open_ua, path) = SCARG(uap, path);
 	SCARG(&open_ua, flags) = nmode;
 	SCARG(&open_ua, mode) = SCARG(uap, mode);
@@ -848,6 +856,7 @@ sunos_sys_mknod(struct lwp *l, const struct sunos_sys_mknod_args *uap, register_
 	struct sys_mkfifo_args fifo_ua;
 
 	if (S_ISFIFO(SCARG(uap, mode))) {
+		memset(&fifo_ua, 0, sizeof(fifo_ua));
 		SCARG(&fifo_ua, path) = SCARG(uap, path);
 		SCARG(&fifo_ua, mode) = SCARG(uap, mode);
 		return sys_mkfifo(l, &fifo_ua, retval);
@@ -913,6 +922,7 @@ sunos_sys_getrlimit(struct lwp *l, const struct sunos_sys_getrlimit_args *uap, r
 {
 	struct compat_43_sys_getrlimit_args ua_43;
 
+	memset(&ua_43, 0, sizeof(ua_43));
 	SCARG(&ua_43, which) = SCARG(uap, which);
 	SCARG(&ua_43, rlp) = SCARG(uap, rlp);
 
@@ -930,6 +940,7 @@ sunos_sys_setrlimit(struct lwp *l, const struct sunos_sys_setrlimit_args *uap, r
 {
 	struct compat_43_sys_setrlimit_args ua_43;
 
+	memset(&ua_43, 0, sizeof(ua_43));
 	SCARG(&ua_43, which) = SCARG(uap, which);
 	SCARG(&ua_43, rlp) = SCARG(uap, rlp);
 
@@ -977,6 +988,7 @@ sunos_sys_ptrace(struct lwp *l, const struct sunos_sys_ptrace_args *uap, registe
 	if (req == -1)
 		return (EINVAL);
 
+	memset(&pa, 0, sizeof(pa));
 	SCARG(&pa, req) = req;
 	SCARG(&pa, pid) = (pid_t)SCARG(uap, pid);
 	SCARG(&pa, addr) = (void *)SCARG(uap, addr);
@@ -1051,6 +1063,7 @@ sunos_sys_reboot(struct lwp *l, const struct sunos_sys_reboot_args *uap, registe
 	} else
 		bootstr = NULL;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, opt) = bsd_howto;
 	SCARG(&ua, bootstr) = bootstr;
 	sys_reboot(l, &ua, retval);
