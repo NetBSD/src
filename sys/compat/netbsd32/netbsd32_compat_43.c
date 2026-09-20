@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.65 2024/12/20 16:12:31 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.66 2026/09/20 13:41:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.65 2024/12/20 16:12:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.66 2026/09/20 13:41:06 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -494,7 +494,9 @@ compat_43_netbsd32_orecvmsg(struct lwp *l, const struct compat_43_netbsd32_orecv
 		m_free(from);
 
 	if (error != 0)
-		 error = copyout(&omsg, SCARG_P32(uap, msg), sizeof(omsg));
+		goto out;
+
+	error = copyout(&omsg, SCARG_P32(uap, msg), sizeof(omsg));
 out:
 	if (iov != aiov) {
 		kmem_free(iov, omsg.msg_iovlen * sizeof(*iov));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.51 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.52 2026/09/20 13:41:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.51 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.52 2026/09/20 13:41:06 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -273,9 +273,8 @@ compat_43_sys_recvmsg(struct lwp *l, const struct compat_43_sys_recvmsg_args *ua
 		m_free(from);
 
 	if (error != 0)
-		 error = copyout(&omsg, SCARG(uap, msg), sizeof(omsg));
-
-	return error;
+		return error;
+	return copyout(&omsg, SCARG(uap, msg), sizeof(omsg));
 }
 
 int
