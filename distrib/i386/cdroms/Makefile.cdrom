@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.47 2026/01/05 20:25:24 nia Exp $
+# $NetBSD: Makefile.cdrom,v 1.48 2026/09/20 18:44:53 jakllsch Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRI
 
 # Need multidot for the boot loader to read kernel modules as it doesn't
 # understand rockridge.
-CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot
+CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot,generic-bootimage=${DESTDIR}/usr/mdec/bootxx_hd9660
 CDINSTKERNEL=	../../instkernel
 .if ${KERNEL_DIR:Uno} == "yes"
 CDKERNELS=	netbsd-GENERIC.gz		netbsd/kernel
