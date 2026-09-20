@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.13 2025/07/09 08:32:48 macallan Exp $ */
+/* $NetBSD: pcagpio.c,v 1.13.2.1 2026/09/20 10:05:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,13 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.13 2025/07/09 08:32:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.13.2.1 2026/09/20 10:05:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/bus.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/led.h>
@@ -65,19 +67,26 @@ struct pcagpio_led {
 	uint32_t mask, v_on, v_off;
 };
 
+struct pcagpio_pin {
+	int pin_sensor;
+	int pin_active;
+	int pin_default;
+	char pin_desc[ENVSYS_DESCLEN];
+};
+
 struct pcagpio_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
 
 	int		sc_is_16bit;
-	uint32_t	sc_state;
+	uint32_t	sc_state, sc_dir, sc_in;
 	struct pcagpio_led sc_leds[16];
+	struct pcagpio_pin sc_pins[16];
 	int		sc_nleds;
 
-#ifdef PCAGPIO_DEBUG
-	uint32_t	sc_dir, sc_in;
-#endif
+	struct sysmon_envsys *sc_sme;
+ 	envsys_data_t	sc_sensor[16];
 };
 
 
@@ -85,6 +94,9 @@ static void 	pcagpio_writereg(struct pcagpio_softc *, int, uint32_t);
 static uint32_t pcagpio_readreg(struct pcagpio_softc *, int);
 static void	pcagpio_attach_led(
 			struct pcagpio_softc *, char *, int, int, int);
+static int	pcagpio_attach_sysmon(
+			struct pcagpio_softc *, char *, int, int, int, int);
+void		pcagpio_refresh(struct sysmon_envsys *, envsys_data_t *);
 static int	pcagpio_get(void *);
 static void	pcagpio_set(void *, int);
 
@@ -141,11 +153,13 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t dict = device_properties(self);
 	prop_array_t pins;
 	prop_dictionary_t pin;
+	int envc = 0;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_nleds = 0;
+	sc->sc_sme = NULL;
 
 	aprint_naive("\n");
 	sc->sc_is_16bit = 0;
@@ -197,8 +211,46 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 				continue;
 			spptr += 1;
 			strncpy(name, spptr, 31);
+
+			
+			/* LED's with an optional default state to set. */
 			if (!strncmp(nptr, "LED ", 4))
 				pcagpio_attach_led(sc, name, num, act, def);
+
+			/* Indicator: status is either true, or false. */
+			if (!strncmp(nptr, "INDICATOR ", 10)) {
+				if (pcagpio_attach_sysmon(sc,
+				    name, envc, num, act, -1))
+					return;
+				envc++;
+			}
+
+			/*
+			 * Alert:
+			 *   - status is either true, or false
+			 *   - set envsys state to critical if a default is set
+			 *     and status != default 
+			 *   - display a message if the status changes
+			 */
+			if (!strncmp(nptr, "ALERT ", 6)) {
+				if (pcagpio_attach_sysmon(sc,
+				    name, envc, num, act, -1))
+					return;
+				envc++;
+			}
+		}
+	}
+
+	if (sc->sc_sme != NULL) {
+		sc->sc_sme->sme_name = device_xname(self);
+		sc->sc_sme->sme_cookie = sc;
+		sc->sc_sme->sme_refresh = pcagpio_refresh;
+		if (sysmon_envsys_register(sc->sc_sme)) {
+			aprint_error_dev(self,
+			    "unable to register with sysmon\n");
+			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
+			return;
 		}
 	}
 }
@@ -211,6 +263,11 @@ pcagpio_detach(device_t self, int flags)
 
 	for (i = 0; i < sc->sc_nleds; i++)
 		led_detach(sc->sc_leds[i].led);
+
+	if (sc->sc_sme != NULL) {
+		sysmon_envsys_unregister(sc->sc_sme);
+		sc->sc_sme = NULL;
+	}
 
 	return 0;
 }
@@ -276,6 +333,71 @@ pcagpio_attach_led(struct pcagpio_softc *sc, char *n, int pin, int act, int def)
 	DPRINTF("%s: %04x %04x %04x def %d\n",
 	    __func__, l->mask, l->v_on, l->v_off, def);
 	sc->sc_nleds++;
+}
+
+static int
+pcagpio_attach_sysmon(struct pcagpio_softc *sc, char *name, int envc, int pin,
+	int act, int def)
+{
+	int ret;
+
+	if (sc->sc_sme == NULL) {
+		sc->sc_sme = sysmon_envsys_create();
+		sc->sc_sme->sme_events_timeout = 0;
+	}
+
+	strlcpy(sc->sc_pins[pin].pin_desc, name,
+	    sizeof(sc->sc_pins[pin].pin_desc));
+	/* envsys sensor # to pin # mapping */
+	sc->sc_pins[envc].pin_sensor = pin;
+	sc->sc_sensor[envc].state = ENVSYS_SINVALID;
+	sc->sc_sensor[envc].units = ENVSYS_INDICATOR;
+	if (def == -1)
+		sc->sc_pins[envc].pin_default = def;
+	else {
+		sc->sc_pins[envc].pin_default = def << pin;
+		sc->sc_sensor[envc].flags = ENVSYS_FMONCRITICAL;
+	}
+	strlcpy(sc->sc_sensor[envc].desc, name,
+	    sizeof(sc->sc_sensor[envc].desc));
+	ret = sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[envc]);
+	if (ret) {
+		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
+		aprint_error_dev(sc->sc_dev,
+		    "unable to attach pin %d at sysmon\n", pin);
+		return ret;
+	}
+	DPRINTF("%s: added sysmon: pin %d sensor %d (%s)\n",
+	    device_xname(sc->sc_dev), pin, envc, name);
+	return 0;
+}
+
+void
+pcagpio_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	struct pcagpio_softc *sc = sme->sme_cookie;
+	int pin = sc->sc_pins[edata->sensor].pin_sensor;
+	int act = sc->sc_pins[edata->sensor].pin_active;
+	int def = sc->sc_pins[edata->sensor].pin_default;
+	u_int32_t prev_state = sc->sc_in;
+
+	sc->sc_in = pcagpio_readreg(sc, PCAGPIO_INPUT);
+	if (act)
+		edata->value_cur = sc->sc_in & 1 << pin ? TRUE : FALSE;
+	else
+		edata->value_cur = sc->sc_in & 1 << pin ? FALSE : TRUE;
+
+	/* Is this an alert pin with a default value? */
+	if (def != -1 && (sc->sc_in & (1 << pin)) != def)
+		edata->state = ENVSYS_SCRITICAL;
+	else
+		edata->state = ENVSYS_SVALID;
+
+	if (sc->sc_state != prev_state) {
+		DPRINTF("%s: (refresh) status change: 0x%02x > 0x%02x\n",
+                    device_xname(sc->sc_dev), prev_state, sc->sc_state);
+	}
 }
 
 static int
