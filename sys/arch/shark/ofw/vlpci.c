@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.13 2022/01/21 19:12:28 thorpej Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.14 2026/09/20 11:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.13 2022/01/21 19:12:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.14 2026/09/20 11:00:34 skrll Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -91,7 +91,7 @@ struct vlpci_softc {
 	kmutex_t			sc_lock;
 	bus_space_handle_t		sc_conf_ioh;
 	bus_space_handle_t		sc_reg_ioh;
-	struct arm32_pci_chipset	sc_pc;
+	struct md_pci_chipset	sc_pc;
 };
 
 CFATTACH_DECL_NEW(vlpci, sizeof(struct vlpci_softc),

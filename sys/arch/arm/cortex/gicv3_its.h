@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.h,v 1.11 2026/05/24 22:00:52 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.h,v 1.12 2026/09/20 11:00:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
 
 #include <dev/pci/pcivar.h>
 
-#include <arm/pci/pci_msi_machdep.h>
 #include <arm/cortex/gic_reg.h>
 #include <arm/cortex/gicv3.h>
 
@@ -49,7 +48,7 @@
 #define ITS_INVALID_EVENTID	UINT32_MAX
 
 /* The event ID needs to fit into the bits reserved inside pci_intr_handle_t */
-CTASSERT(__SHIFTOUT(ARM_PCI_INTR_MSI_VEC, ARM_PCI_INTR_MSI_VEC) >= ITS_MAX_EVENTS - 1);
+CTASSERT(__SHIFTOUT(MD_PCI_INTR_MSI_VEC, MD_PCI_INTR_MSI_VEC) >= ITS_MAX_EVENTS - 1);
 
 struct gicv3_its_device {
 	uint32_t		dev_id;
@@ -107,7 +106,7 @@ struct gicv3_its {
 
 	bool			its_cmd_flush;
 
-	struct arm_pci_msi	its_msi;
+	struct md_pci_msi	its_msi;
 
 	kmutex_t		*its_lock;
 };

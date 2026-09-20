@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.42 2026/05/24 22:00:52 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.43 2026/09/20 11:00:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.42 2026/05/24 22:00:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.43 2026/09/20 11:00:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -643,7 +643,7 @@ gicv3_its_msix_disable(struct gicv3_its *its, int lpi)
 }
 
 static pci_intr_handle_t *
-gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
+gicv3_its_msi_alloc(struct md_pci_msi *msi, int *count,
     const struct pci_attach_args *pa, bool exact)
 {
 	struct gicv3_its * const its = msi->msi_priv;
@@ -674,10 +674,10 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
 	for (n = 0; n < *count; n++) {
 		const int lpi = gicv3_its_msi_alloc_lpi(its, pa);
 		KASSERT(lpi >= 0);
-		vectors[n] = ARM_PCI_INTR_MSI |
-		    __SHIFTIN(lpi, ARM_PCI_INTR_IRQ) |
-		    __SHIFTIN(eventid + n, ARM_PCI_INTR_MSI_VEC) |
-		    __SHIFTIN(msi->msi_id, ARM_PCI_INTR_FRAME);
+		vectors[n] = MD_PCI_INTR_MSI |
+		    __SHIFTIN(lpi, MD_PCI_INTR_IRQ) |
+		    __SHIFTIN(eventid + n, MD_PCI_INTR_MSI_VEC) |
+		    __SHIFTIN(msi->msi_id, MD_PCI_INTR_FRAME);
 
 		if (n == 0)
 			gicv3_its_msi_enable(its, lpi, eventid + n, *count);
@@ -708,7 +708,7 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
 }
 
 static pci_intr_handle_t *
-gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
+gicv3_its_msix_alloc(struct md_pci_msi *msi, u_int *table_indexes, int *count,
     const struct pci_attach_args *pa, bool exact)
 {
 	struct gicv3_its * const its = msi->msi_priv;
@@ -760,10 +760,10 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 		const int lpi = gicv3_its_msi_alloc_lpi(its, pa);
 		KASSERT(lpi >= 0);
 		const int msix_vec = table_indexes ? table_indexes[n] : n;
-		vectors[msix_vec] = ARM_PCI_INTR_MSIX |
-		    __SHIFTIN(lpi, ARM_PCI_INTR_IRQ) |
-		    __SHIFTIN(eventid + n, ARM_PCI_INTR_MSI_VEC) |
-		    __SHIFTIN(msi->msi_id, ARM_PCI_INTR_FRAME);
+		vectors[msix_vec] = MD_PCI_INTR_MSIX |
+		    __SHIFTIN(lpi, MD_PCI_INTR_IRQ) |
+		    __SHIFTIN(eventid + n, MD_PCI_INTR_MSI_VEC) |
+		    __SHIFTIN(msi->msi_id, MD_PCI_INTR_FRAME);
 
 		gicv3_its_msix_enable(its, lpi, msix_vec, eventid + n, bst, bsh);
 
@@ -790,15 +790,15 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 }
 
 static void *
-gicv3_its_msi_intr_establish(struct arm_pci_msi *msi,
+gicv3_its_msi_intr_establish(struct md_pci_msi *msi,
     pci_intr_handle_t ih, int ipl, int (*func)(void *), void *arg, const char *xname)
 {
 	struct gicv3_its * const its = msi->msi_priv;
 	void *intrh;
 
-	const int lpi = __SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
-	const uint32_t eventid = __SHIFTOUT(ih, ARM_PCI_INTR_MSI_VEC);
-	const int mpsafe = (ih & ARM_PCI_INTR_MPSAFE) ? IST_MPSAFE : 0;
+	const int lpi = __SHIFTOUT(ih, MD_PCI_INTR_IRQ);
+	const uint32_t eventid = __SHIFTOUT(ih, MD_PCI_INTR_MSI_VEC);
+	const int mpsafe = (ih & MD_PCI_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
 	intrh = pic_establish_intr(its->its_pic, lpi - its->its_pic->pic_irqbase, ipl,
 	    IST_EDGE | mpsafe, func, arg, xname);
@@ -814,22 +814,22 @@ gicv3_its_msi_intr_establish(struct arm_pci_msi *msi,
 }
 
 static void
-gicv3_its_msi_intr_release(struct arm_pci_msi *msi, pci_intr_handle_t *pih,
+gicv3_its_msi_intr_release(struct md_pci_msi *msi, pci_intr_handle_t *pih,
     int count)
 {
 	struct gicv3_its * const its = msi->msi_priv;
 	int n;
 
 	for (n = 0; n < count; n++) {
-		const int lpi = __SHIFTOUT(pih[n], ARM_PCI_INTR_IRQ);
-		const uint32_t eventid = __SHIFTOUT(pih[n], ARM_PCI_INTR_MSI_VEC);
+		const int lpi = __SHIFTOUT(pih[n], MD_PCI_INTR_IRQ);
+		const uint32_t eventid = __SHIFTOUT(pih[n], MD_PCI_INTR_MSI_VEC);
 		KASSERT(lpi >= its->its_pic->pic_irqbase);
 		struct gicv3_its_device *dev =
 		    its->its_lpitodev[lpi - its->its_pic->pic_irqbase];
 		KASSERT(dev != NULL);
-		if (pih[n] & ARM_PCI_INTR_MSIX)
+		if (pih[n] & MD_PCI_INTR_MSIX)
 			gicv3_its_msix_disable(its, lpi);
-		if (pih[n] & ARM_PCI_INTR_MSI)
+		if (pih[n] & MD_PCI_INTR_MSI)
 			gicv3_its_msi_disable(its, lpi);
 		gicv3_its_free_eventid(dev, eventid);
 		gicv3_its_msi_free_lpi(its, lpi);
@@ -1159,7 +1159,7 @@ gicv3_its_init(struct gicv3_softc *sc, bus_space_handle_t bsh,
     uint64_t its_base, uint32_t its_id)
 {
 	struct gicv3_its *its;
-	struct arm_pci_msi *msi;
+	struct md_pci_msi *msi;
 
 	const uint64_t typer = bus_space_read_8(sc->sc_bst, bsh, GITS_TYPER);
 	if ((typer & GITS_TYPER_Physical) == 0)
@@ -1207,5 +1207,5 @@ gicv3_its_init(struct gicv3_softc *sc, bus_space_handle_t bsh,
 	msi->msi_intr_establish = gicv3_its_msi_intr_establish;
 	msi->msi_intr_release = gicv3_its_msi_intr_release;
 
-	return arm_pci_msi_add(msi);
+	return md_pci_msi_add(msi);
 }

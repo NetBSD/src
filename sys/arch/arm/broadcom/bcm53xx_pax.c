@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.24 2024/02/16 15:11:17 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.25 2026/09/20 11:00:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,7 +87,7 @@ struct bcmpax_softc {
 	bool sc_linkup;
 	int sc_pba_flags;
 	uint32_t sc_intrgen;
-	struct arm32_pci_chipset sc_pc;
+	struct md_pci_chipset sc_pc;
 	struct bcmpax_ihqh sc_intrs;
 	void *sc_ih[6];
 	int sc_port;

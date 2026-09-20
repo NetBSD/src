@@ -1,4 +1,4 @@
-/* $NetBSD: apple_pcie.c,v 1.6 2022/04/27 08:03:06 skrll Exp $ */
+/* $NetBSD: apple_pcie.c,v 1.7 2026/09/20 11:00:31 skrll Exp $ */
 /*	$OpenBSD: aplpcie.c,v 1.13 2022/04/06 18:59:26 naddy Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.6 2022/04/27 08:03:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.7 2026/09/20 11:00:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,9 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.6 2022/04/27 08:03:06 skrll Exp $")
 #include <dev/pci/pciconf.h>
 
 #include <dev/fdt/fdtvar.h>
-
-#include <arm/pci/pci_msi_machdep.h>
-#include <arm/fdt/pcihost_fdtvar.h>
+#include <dev/fdt/pcihost_fdtvar.h>
 
 #define PCIE_CORE_LANE_CONF(port)	(0x84000 + (port) * 0x4000)
 #define  PCIE_CORE_LANE_CONF_REFCLK0REQ	__BIT(0)
@@ -103,7 +101,7 @@ struct apple_pcie_softc {
 	bus_space_handle_t	sc_rc_bsh;
 
 	int			sc_phandle;
-	struct arm_pci_msi	sc_msi;
+	struct md_pci_msi	sc_msi;
 	u_int			sc_msi_start;
 	u_int			sc_nmsi;
 	struct pci_attach_args	**sc_msi_pa;
@@ -574,7 +572,7 @@ apple_pcie_msi_msix_disable(struct apple_pcie_softc *sc, int msi)
 }
 
 static pci_intr_handle_t *
-apple_pcie_msi_msi_alloc(struct arm_pci_msi *msi, int *count,
+apple_pcie_msi_msi_alloc(struct md_pci_msi *msi, int *count,
     const struct pci_attach_args *pa, bool exact)
 {
 	struct apple_pcie_softc * const sc = msi->msi_priv;
@@ -604,10 +602,10 @@ apple_pcie_msi_msi_alloc(struct arm_pci_msi *msi, int *count,
 	vectors = kmem_alloc(sizeof(*vectors) * *count, KM_SLEEP);
 	for (n = 0; n < *count; n++) {
 		const int msino = msi_base + n;
-		vectors[n] = ARM_PCI_INTR_MSI |
-		    __SHIFTIN(msino, ARM_PCI_INTR_IRQ) |
-		    __SHIFTIN(n, ARM_PCI_INTR_MSI_VEC) |
-		    __SHIFTIN(msi->msi_id, ARM_PCI_INTR_FRAME);
+		vectors[n] = MD_PCI_INTR_MSI |
+		    __SHIFTIN(msino, MD_PCI_INTR_IRQ) |
+		    __SHIFTIN(n, MD_PCI_INTR_MSI_VEC) |
+		    __SHIFTIN(msi->msi_id, MD_PCI_INTR_FRAME);
 	}
 
 	apple_pcie_msi_msi_enable(sc, msi_base, *count);
@@ -616,7 +614,7 @@ apple_pcie_msi_msi_alloc(struct arm_pci_msi *msi, int *count,
 }
 
 static pci_intr_handle_t *
-apple_pcie_msi_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes,
+apple_pcie_msi_msix_alloc(struct md_pci_msi *msi, u_int *table_indexes,
     int *count, const struct pci_attach_args *pa, bool exact)
 {
 	struct apple_pcie_softc * const sc = msi->msi_priv;
@@ -664,10 +662,10 @@ apple_pcie_msi_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes,
 	for (n = 0; n < *count; n++) {
 		const int msino = msi_base + n;
 		const int msix_vec = table_indexes ? table_indexes[n] : n;
-		vectors[msix_vec] = ARM_PCI_INTR_MSIX |
-		    __SHIFTIN(msino, ARM_PCI_INTR_IRQ) |
-		    __SHIFTIN(msix_vec, ARM_PCI_INTR_MSI_VEC) |
-		    __SHIFTIN(msi->msi_id, ARM_PCI_INTR_FRAME);
+		vectors[msix_vec] = MD_PCI_INTR_MSIX |
+		    __SHIFTIN(msino, MD_PCI_INTR_IRQ) |
+		    __SHIFTIN(msix_vec, MD_PCI_INTR_MSI_VEC) |
+		    __SHIFTIN(msi->msi_id, MD_PCI_INTR_FRAME);
 
 		apple_pcie_msi_msix_enable(sc, msino, msix_vec, bst, bsh);
 	}
@@ -678,13 +676,13 @@ apple_pcie_msi_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes,
 }
 
 static void *
-apple_pcie_msi_intr_establish(struct arm_pci_msi *msi,
+apple_pcie_msi_intr_establish(struct md_pci_msi *msi,
     pci_intr_handle_t ih, int ipl, int (*func)(void *), void *arg, const char *xname)
 {
 	struct apple_pcie_softc * const sc = msi->msi_priv;
 
-	const int msino = __SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
-	const int mpsafe = (ih & ARM_PCI_INTR_MPSAFE) ? FDT_INTR_MPSAFE : 0;
+	const int msino = __SHIFTOUT(ih, MD_PCI_INTR_IRQ);
+	const int mpsafe = (ih & MD_PCI_INTR_MPSAFE) ? FDT_INTR_MPSAFE : 0;
 
 	KASSERT(sc->sc_msi_ih[msino] == NULL);
 	sc->sc_msi_ih[msino] = intr_establish_xname(sc->sc_msi_start + msino,
@@ -694,17 +692,17 @@ apple_pcie_msi_intr_establish(struct arm_pci_msi *msi,
 }
 
 static void
-apple_pcie_msi_intr_release(struct arm_pci_msi *msi, pci_intr_handle_t *pih,
+apple_pcie_msi_intr_release(struct md_pci_msi *msi, pci_intr_handle_t *pih,
     int count)
 {
 	struct apple_pcie_softc * const sc = msi->msi_priv;
 	int n;
 
 	for (n = 0; n < count; n++) {
-		const int msino = __SHIFTOUT(pih[n], ARM_PCI_INTR_IRQ);
-		if (pih[n] & ARM_PCI_INTR_MSIX)
+		const int msino = __SHIFTOUT(pih[n], MD_PCI_INTR_IRQ);
+		if (pih[n] & MD_PCI_INTR_MSIX)
 			apple_pcie_msi_msix_disable(sc, msino);
-		if (pih[n] & ARM_PCI_INTR_MSI)
+		if (pih[n] & MD_PCI_INTR_MSI)
 			apple_pcie_msi_msi_disable(sc, msino);
 		apple_pcie_msi_free_msi(sc, msino);
 		if (sc->sc_msi_ih[msino] != NULL) {
@@ -717,7 +715,7 @@ apple_pcie_msi_intr_release(struct arm_pci_msi *msi, pci_intr_handle_t *pih,
 static int
 apple_pcie_msi_init(struct apple_pcie_softc *sc)
 {
-	struct arm_pci_msi *msi = &sc->sc_msi;
+	struct md_pci_msi *msi = &sc->sc_msi;
 	const int phandle = sc->sc_pcihost.sc_phandle;
 	int len;
 
@@ -754,5 +752,5 @@ apple_pcie_msi_init(struct apple_pcie_softc *sc)
 	msi->msi_intr_establish = apple_pcie_msi_intr_establish;
 	msi->msi_intr_release = apple_pcie_msi_intr_release;
 
-	return arm_pci_msi_add(msi);
+	return md_pci_msi_add(msi);
 }

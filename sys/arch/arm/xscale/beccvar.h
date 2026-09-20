@@ -1,4 +1,4 @@
-/*	$NetBSD: beccvar.h,v 1.4 2012/10/14 14:20:57 msaitoh Exp $	*/
+/*	$NetBSD: beccvar.h,v 1.5 2026/09/20 11:00:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -97,7 +97,7 @@ struct becc_softc {
 	struct bus_space sc_pci_iot;
 	struct bus_space sc_pci_memt;
 	struct arm32_bus_dma_tag sc_pci_dmat;
-	struct arm32_pci_chipset sc_pci_chipset;
+	struct md_pci_chipset sc_pci_chipset;
 
 	/* DMA window info for PCI DMA. */
 	struct arm32_dma_range sc_pci_dma_range[3];

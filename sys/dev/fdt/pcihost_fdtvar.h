@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdtvar.h,v 1.1 2025/01/01 17:53:07 skrll Exp $ */
+/* $NetBSD: pcihost_fdtvar.h,v 1.1 2026/09/20 11:00:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -25,6 +25,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <machine/pci_machdep.h>
 
 /* Physical address format bit definitions */
 #define	PHYS_HI_RELO			__BIT(31)
@@ -78,8 +80,7 @@ struct pcihost_softc {
 	u_int			sc_bus_min;
 	u_int			sc_bus_max;
 
-	struct riscv_pci_chipset
-				sc_pc;
+	struct md_pci_chipset	sc_pc;
 
 	struct pcih_bus_space	sc_io;
 	struct pcih_bus_space	sc_mem;

@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.33 2025/01/11 11:40:43 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.34 2026/09/20 11:00:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.33 2025/01/11 11:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.34 2026/09/20 11:00:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -189,8 +189,8 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 static void
 acpipchb_configure_bus(struct acpipchb_softc *sc, struct pcibus_attach_args *pba)
 {
-	struct arm32_pci_chipset *md_pc =
-	    (struct arm32_pci_chipset *)pba->pba_pc;
+	struct md_pci_chipset *md_pc =
+	    (struct md_pci_chipset *)pba->pba_pc;
 	struct acpi_pci_context *ap = md_pc->pc_conf_v;
 	const bool mapcfgspace = (ap->ap_flags & ACPI_PCI_FLAG_NO_MCFG) == 0;
 	int error, val;
@@ -328,8 +328,8 @@ acpipchb_setup_ranges(struct acpipchb_softc *sc, struct pcibus_attach_args *pba)
 static void
 acpipchb_setup_quirks(struct acpipchb_softc *sc, struct pcibus_attach_args *pba)
 {
-	struct arm32_pci_chipset *md_pc =
-	    (struct arm32_pci_chipset *)pba->pba_pc;
+	struct md_pci_chipset *md_pc =
+	    (struct md_pci_chipset *)pba->pba_pc;
 	struct acpi_pci_context *ap = md_pc->pc_conf_v;
 
 	pba->pba_flags &= ~ap->ap_pciflags_clear;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0var.h,v 1.11 2012/11/12 18:00:37 skrll Exp $ */
+/*	$NetBSD: ixp12x0var.h,v 1.12 2026/09/20 11:00:32 skrll Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -48,7 +48,7 @@ struct ixp12x0_softc {
 
 	/* DMA, and PCI chipset */
         struct arm32_bus_dma_tag ia_pci_dmat;
-        struct arm32_pci_chipset ia_pci_chipset;
+        struct md_pci_chipset ia_pci_chipset;
 
 	/* DMA window info for PCI DMA. */
 	struct arm32_dma_range ia_pci_dma_range;

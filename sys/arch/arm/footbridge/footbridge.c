@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.30 2022/09/27 06:36:41 skrll Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.31 2026/09/20 11:00:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.30 2022/09/27 06:36:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.31 2026/09/20 11:00:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ extern void footbridge_create_mem_bs_tag(bus_space_tag_t t, void *cookie);
 struct bus_space footbridge_csr_tag;
 struct bus_space footbridge_pci_io_bs_tag;
 struct bus_space footbridge_pci_mem_bs_tag;
-extern struct arm32_pci_chipset footbridge_pci_chipset;
+extern struct md_pci_chipset footbridge_pci_chipset;
 extern struct arm32_bus_dma_tag footbridge_pci_bus_dma_tag;
 extern struct arm32_dma_range footbridge_dma_ranges[1];
 

@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.82 2026/07/12 04:23:59 thorpej Exp $
+# $NetBSD: files.fdt,v 1.83 2026/09/20 11:00:34 skrll Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -151,6 +151,11 @@ file	dev/fdt/mmc_pwrseq_emmc.c		mmcpwrseq_emmc
 device	syscon: fdt, fdt_syscon
 attach	syscon at fdt
 file	dev/fdt/syscon.c			syscon
+
+# Generic PCI host controller
+device	pcihost: pcibus
+attach	pcihost at fdt with pcihost_fdt
+file	dev/fdt/pcihost_fdt.c			pcihost_fdt
 
 device	pinctrl: fdt_pinctrl
 attach	pinctrl at fdt with pinctrl_single

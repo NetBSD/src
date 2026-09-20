@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.34 2022/09/25 12:28:54 andvar Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.35 2026/09/20 11:00:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.34 2022/09/25 12:28:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.35 2026/09/20 11:00:32 skrll Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -195,7 +195,7 @@ CFATTACH_DECL_NEW(sspci, sizeof(struct sspci_softc), sspci_match, sspci_attach,
     NULL, NULL);
 
 
-struct arm32_pci_chipset sspci_chipset = {
+struct md_pci_chipset sspci_chipset = {
 	.pc_attach_hook = s3c2800_pci_attach_hook,
 	.pc_bus_maxdevs = s3c2800_pci_bus_maxdevs,
 	.pc_make_tag = s3c2800_pci_make_tag,

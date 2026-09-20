@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.40 2022/10/15 11:07:39 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.41 2026/09/20 11:00:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.40 2022/10/15 11:07:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.41 2026/09/20 11:00:32 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -88,7 +88,7 @@ struct tegra_pcie_softc {
 	int			sc_phandle;
 	enum tegra_pcie_type	sc_type;
 
-	struct arm32_pci_chipset sc_pc;
+	struct md_pci_chipset sc_pc;
 
 	void			*sc_ih;
 

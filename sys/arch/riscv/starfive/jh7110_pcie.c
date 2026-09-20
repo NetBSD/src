@@ -1,4 +1,4 @@
-/* $NetBSD: jh7110_pcie.c,v 1.2 2025/01/09 10:39:01 skrll Exp $ */
+/* $NetBSD: jh7110_pcie.c,v 1.3 2026/09/20 11:00:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,20 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7110_pcie.c,v 1.2 2025/01/09 10:39:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7110_pcie.c,v 1.3 2026/09/20 11:00:33 skrll Exp $");
 
 #include <sys/param.h>
 
 #include <sys/bitops.h>
 #include <sys/kmem.h>
 
-#include <dev/fdt/fdtvar.h>
-#include <dev/fdt/syscon.h>
-
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
-#include <riscv/fdt/pcihost_fdtvar.h>
+#include <dev/fdt/fdtvar.h>
+#include <dev/fdt/pcihost_fdtvar.h>
+#include <dev/fdt/syscon.h>
 
 struct jh7110_pcie_irq {
 	struct jh7110_pcie_softc *

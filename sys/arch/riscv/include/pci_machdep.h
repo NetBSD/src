@@ -1,11 +1,11 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 2026/05/06 06:55:15 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.3 2026/09/20 11:00:33 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2023 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018,2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nick Hudson
+ * by Jared McNeill <jmcneill@invisible.ca>, and Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,23 +70,28 @@
 #endif
 
 #include <sys/errno.h>
+#include <sys/queue.h>
+
+#define	MD_PCI_CACHELINE_SIZE	64 /* riscv_dcache_align */
+#define MD_PCI_CONFIG_MAP_FLAGS	0
+#define MD_PCI_IO_MAP_FLAGS	0
 
 /*
  * Types provided to machine-independent PCI code
  */
-typedef struct riscv_pci_chipset *pci_chipset_tag_t;
+typedef struct md_pci_chipset *pci_chipset_tag_t;
 typedef u_long pcitag_t;
 typedef uint64_t pci_intr_handle_t;
 
 /*
  * pci_intr_handle_t fields
  */
-#define	RISCV_PCI_INTR_MSI_VEC	__BITS(42, 32)
-#define	RISCV_PCI_INTR_MPSAFE	__BIT(31)
-#define	RISCV_PCI_INTR_MSIX	__BIT(30)
-#define	RISCV_PCI_INTR_MSI	__BIT(29)
-#define	RISCV_PCI_INTR_FRAME	__BITS(23, 16)
-#define	RISCV_PCI_INTR_IRQ	__BITS(15,  0)
+#define	MD_PCI_INTR_MSI_VEC	__BITS(42, 32)
+#define	MD_PCI_INTR_MPSAFE	__BIT(31)
+#define	MD_PCI_INTR_MSIX	__BIT(30)
+#define	MD_PCI_INTR_MSI		__BIT(29)
+#define	MD_PCI_INTR_FRAME	__BITS(23, 16)
+#define	MD_PCI_INTR_IRQ		__BITS(15,  0)
 
 #ifdef __HAVE_PCI_MSI_MSIX
 /*
@@ -109,7 +114,7 @@ struct pci_attach_args;
  * RISC-V specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
-struct riscv_pci_chipset {
+struct md_pci_chipset {
 	void		*pc_conf_v;
 	void		(*pc_attach_hook)(device_t, device_t,
 			    struct pcibus_attach_args *);
@@ -169,7 +174,6 @@ struct riscv_pci_chipset {
 /*
  * Functions provided to machine-independent PCI code.
  */
-//XXXNH static inlines..
 #define	pci_attach_hook(p, s, pba)					\
     (*(pba)->pba_pc->pc_attach_hook)((p), (s), (pba))
 #define	pci_bus_maxdevs(c, b)						\
@@ -238,6 +242,27 @@ int	pci_msix_alloc_exact(const struct pci_attach_args *,
 	    pci_intr_handle_t **, int);
 int	pci_msix_alloc_map(const struct pci_attach_args *, pci_intr_handle_t **,
 	    u_int *, int);
+
+struct md_pci_msi {
+	device_t		msi_dev;
+	uint8_t			msi_id;		/* software ID */
+
+	void *			msi_priv;
+
+	pci_intr_handle_t *	(*msi_alloc)(struct md_pci_msi *, int *, const struct pci_attach_args *, bool);
+	pci_intr_handle_t *	(*msix_alloc)(struct md_pci_msi *, u_int *, int *, const struct pci_attach_args *, bool);
+	void *			(*msi_intr_establish)(struct md_pci_msi *,
+				    pci_intr_handle_t, int, int (*)(void *), void *, const char *);
+	void			(*msi_intr_release)(struct md_pci_msi *,
+				    pci_intr_handle_t *, int);
+
+	SIMPLEQ_ENTRY(md_pci_msi) msi_link;
+};
+
+int	md_pci_msi_add(struct md_pci_msi *);
+void *	md_pci_msi_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
+	    int, int (*)(void *), void *, const char *);
+
 #endif	/* __HAVE_PCI_MSI_MSIX */
 
 #endif	/* _RISCV_PCI_MACHDEP_H_ */

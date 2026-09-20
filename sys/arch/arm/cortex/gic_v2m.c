@@ -1,4 +1,4 @@
-/* $NetBSD: gic_v2m.c,v 1.11 2021/03/14 08:09:20 skrll Exp $ */
+/* $NetBSD: gic_v2m.c,v 1.12 2026/09/20 11:00:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.11 2021/03/14 08:09:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.12 2026/09/20 11:00:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -226,7 +226,7 @@ gic_v2m_msix_disable(struct gic_v2m_frame *frame, int spi)
 }
 
 static pci_intr_handle_t *
-gic_v2m_msi_alloc(struct arm_pci_msi *msi, int *count,
+gic_v2m_msi_alloc(struct md_pci_msi *msi, int *count,
     const struct pci_attach_args *pa, bool exact)
 {
 	struct gic_v2m_frame * const frame = msi->msi_priv;
@@ -253,10 +253,10 @@ gic_v2m_msi_alloc(struct arm_pci_msi *msi, int *count,
 	vectors = kmem_alloc(sizeof(*vectors) * *count, KM_SLEEP);
 	for (n = 0; n < *count; n++) {
 		const int spi = spi_base + n;
-		vectors[n] = ARM_PCI_INTR_MSI |
-		    __SHIFTIN(spi, ARM_PCI_INTR_IRQ) |
-		    __SHIFTIN(n, ARM_PCI_INTR_MSI_VEC) |
-		    __SHIFTIN(msi->msi_id, ARM_PCI_INTR_FRAME);
+		vectors[n] = MD_PCI_INTR_MSI |
+		    __SHIFTIN(spi, MD_PCI_INTR_IRQ) |
+		    __SHIFTIN(n, MD_PCI_INTR_MSI_VEC) |
+		    __SHIFTIN(msi->msi_id, MD_PCI_INTR_FRAME);
 	}
 
 	gic_v2m_msi_enable(frame, spi_base, *count);
@@ -265,7 +265,7 @@ gic_v2m_msi_alloc(struct arm_pci_msi *msi, int *count,
 }
 
 static pci_intr_handle_t *
-gic_v2m_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
+gic_v2m_msix_alloc(struct md_pci_msi *msi, u_int *table_indexes, int *count,
     const struct pci_attach_args *pa, bool exact)
 {
 	struct gic_v2m_frame * const frame = msi->msi_priv;
@@ -314,10 +314,10 @@ gic_v2m_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 	for (n = 0; n < *count; n++) {
 		const int spi = spi_base + n;
 		const int msix_vec = table_indexes ? table_indexes[n] : n;
-		vectors[msix_vec] = ARM_PCI_INTR_MSIX |
-		    __SHIFTIN(spi, ARM_PCI_INTR_IRQ) |
-		    __SHIFTIN(msix_vec, ARM_PCI_INTR_MSI_VEC) |
-		    __SHIFTIN(msi->msi_id, ARM_PCI_INTR_FRAME);
+		vectors[msix_vec] = MD_PCI_INTR_MSIX |
+		    __SHIFTIN(spi, MD_PCI_INTR_IRQ) |
+		    __SHIFTIN(msix_vec, MD_PCI_INTR_MSI_VEC) |
+		    __SHIFTIN(msi->msi_id, MD_PCI_INTR_FRAME);
 
 		gic_v2m_msix_enable(frame, spi, msix_vec, bst, bsh);
 	}
@@ -328,30 +328,30 @@ gic_v2m_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 }
 
 static void *
-gic_v2m_msi_intr_establish(struct arm_pci_msi *msi,
+gic_v2m_msi_intr_establish(struct md_pci_msi *msi,
     pci_intr_handle_t ih, int ipl, int (*func)(void *), void *arg, const char *xname)
 {
 	struct gic_v2m_frame * const frame = msi->msi_priv;
 
-	const int spi = __SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
-	const int mpsafe = (ih & ARM_PCI_INTR_MPSAFE) ? IST_MPSAFE : 0;
+	const int spi = __SHIFTOUT(ih, MD_PCI_INTR_IRQ);
+	const int mpsafe = (ih & MD_PCI_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
 	return pic_establish_intr(frame->frame_pic, spi, ipl,
 	    IST_EDGE | mpsafe, func, arg, xname);
 }
 
 static void
-gic_v2m_msi_intr_release(struct arm_pci_msi *msi, pci_intr_handle_t *pih,
+gic_v2m_msi_intr_release(struct md_pci_msi *msi, pci_intr_handle_t *pih,
     int count)
 {
 	struct gic_v2m_frame * const frame = msi->msi_priv;
 	int n;
 
 	for (n = 0; n < count; n++) {
-		const int spi = __SHIFTOUT(pih[n], ARM_PCI_INTR_IRQ);
-		if (pih[n] & ARM_PCI_INTR_MSIX)
+		const int spi = __SHIFTOUT(pih[n], MD_PCI_INTR_IRQ);
+		if (pih[n] & MD_PCI_INTR_MSIX)
 			gic_v2m_msix_disable(frame, spi);
-		if (pih[n] & ARM_PCI_INTR_MSI)
+		if (pih[n] & MD_PCI_INTR_MSI)
 			gic_v2m_msi_disable(frame, spi);
 		gic_v2m_msi_free_spi(frame, spi);
 		struct intrsource * const is =
@@ -364,7 +364,7 @@ gic_v2m_msi_intr_release(struct arm_pci_msi *msi, pci_intr_handle_t *pih,
 int
 gic_v2m_init(struct gic_v2m_frame *frame, device_t dev, uint32_t frame_id)
 {
-	struct arm_pci_msi *msi = &frame->frame_msi;
+	struct md_pci_msi *msi = &frame->frame_msi;
 
 	msi->msi_dev = dev;
 	msi->msi_priv = frame;
@@ -373,5 +373,5 @@ gic_v2m_init(struct gic_v2m_frame *frame, device_t dev, uint32_t frame_id)
 	msi->msi_intr_establish = gic_v2m_msi_intr_establish;
 	msi->msi_intr_release = gic_v2m_msi_intr_release;
 
-	return arm_pci_msi_add(msi);
+	return md_pci_msi_add(msi);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.38 2023/04/20 08:28:05 skrll Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.39 2026/09/20 11:00:33 skrll Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.38 2023/04/20 08:28:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.39 2026/09/20 11:00:33 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -538,7 +538,7 @@ marvell_device_register(device_t dev, void *aux)
 	if (device_is_a(dev, "gtpci")) {
 		extern struct bus_space
 		    orion_pci_io_bs_tag, orion_pci_mem_bs_tag;
-		extern struct arm32_pci_chipset arm32_gtpci_chipset;
+		extern struct md_pci_chipset arm32_gtpci_chipset;
 
 		prop_data_t io_bs_tag, mem_bs_tag, pc;
 		prop_array_t int2gpp;
@@ -571,7 +571,7 @@ marvell_device_register(device_t dev, void *aux)
 		prop_object_release(mem_bs_tag);
 
 		pc = prop_data_create_data_nocopy(&arm32_gtpci_chipset,
-		    sizeof(struct arm32_pci_chipset));
+		    sizeof(struct md_pci_chipset));
 		KASSERT(pc != NULL);
 		prop_dictionary_set(dict, "pci-chipset", pc);
 		prop_object_release(pc);
@@ -639,12 +639,12 @@ marvell_device_register(device_t dev, void *aux)
 		    armadaxp_pex3_io_bs_tag, armadaxp_pex3_mem_bs_tag;
 		int i;
 #endif
-		extern struct arm32_pci_chipset
+		extern struct md_pci_chipset
 		    arm32_mvpex0_chipset, arm32_mvpex1_chipset;
 
 		struct marvell_attach_args *mva = aux;
 		struct bus_space *mvpex_io_bs_tag, *mvpex_mem_bs_tag;
-		struct arm32_pci_chipset *arm32_mvpex_chipset;
+		struct md_pci_chipset *arm32_mvpex_chipset;
 		prop_data_t io_bs_tag, mem_bs_tag, pc;
 		uint64_t start, end;
 		int iotag, memtag;
@@ -725,14 +725,14 @@ marvell_device_register(device_t dev, void *aux)
 		case MARVELL_ARMADA370_MV6710:
 		case MARVELL_ARMADA370_MV6W11:
 		  {
-			extern struct arm32_pci_chipset
+			extern struct md_pci_chipset
 			    arm32_mvpex2_chipset, arm32_mvpex3_chipset,
 			    arm32_mvpex4_chipset, arm32_mvpex5_chipset;
 			const struct {
 				bus_size_t offset;
 				struct bus_space *io_bs_tag;
 				struct bus_space *mem_bs_tag;
-				struct arm32_pci_chipset *chipset;
+				struct md_pci_chipset *chipset;
 				int iotag;
 				int memtag;
 			} mvpex_tags[] = {
@@ -816,7 +816,7 @@ marvell_device_register(device_t dev, void *aux)
 		prop_object_release(mem_bs_tag);
 
 		pc = prop_data_create_data_nocopy(arm32_mvpex_chipset,
-		    sizeof(struct arm32_pci_chipset));
+		    sizeof(struct md_pci_chipset));
 		KASSERT(pc != NULL);
 		prop_dictionary_set(dict, "pci-chipset", pc);
 		prop_object_release(pc);

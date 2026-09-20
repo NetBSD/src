@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.26 2023/12/20 13:55:17 thorpej Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.27 2026/09/20 11:00:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.26 2023/12/20 13:55:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.27 2026/09/20 11:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ void		*ifpga_pci_intr_establish (void *, pci_intr_handle_t, int,
 		    int (*)(void *), void *, const char *);
 void		ifpga_pci_intr_disestablish (void *, void *);
 
-struct arm32_pci_chipset ifpga_pci_chipset = {
+struct md_pci_chipset ifpga_pci_chipset = {
 	.pc_attach_hook = ifpga_pci_attach_hook,
 	.pc_bus_maxdevs = ifpga_pci_bus_maxdevs,
 	.pc_make_tag = ifpga_pci_make_tag,

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.34 2022/09/27 06:36:41 skrll Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.35 2026/09/20 11:00:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.34 2022/09/27 06:36:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.35 2026/09/20 11:00:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ void		*footbridge_pci_intr_establish(void *, pci_intr_handle_t,
 void		footbridge_pci_intr_disestablish(void *, void *);
 const struct evcnt *footbridge_pci_intr_evcnt(void *, pci_intr_handle_t);
 
-struct arm32_pci_chipset footbridge_pci_chipset = {
+struct md_pci_chipset footbridge_pci_chipset = {
 #ifdef netwinder
 	.pc_attach_hook = netwinder_pci_attach_hook,
 #else

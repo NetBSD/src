@@ -1,4 +1,4 @@
-/* $NetBSD: pci_msi_machdep.c,v 1.10 2024/06/30 09:38:07 jmcneill Exp $ */
+/* $NetBSD: pci_msi_machdep.c,v 1.11 2026/09/20 11:00:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.10 2024/06/30 09:38:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.11 2026/09/20 11:00:32 skrll Exp $");
 
 #include <sys/kernel.h>
 #include <sys/kmem.h>
@@ -40,29 +40,27 @@ __KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.10 2024/06/30 09:38:07 jmcneil
 
 #include <arm/pic/picvar.h>
 
-#include <arm/pci/pci_msi_machdep.h>
+static SIMPLEQ_HEAD(, md_pci_msi) md_pci_msi_list =
+    SIMPLEQ_HEAD_INITIALIZER(md_pci_msi_list);
 
-static SIMPLEQ_HEAD(, arm_pci_msi) arm_pci_msi_list =
-    SIMPLEQ_HEAD_INITIALIZER(arm_pci_msi_list);
-
-static struct arm_pci_msi *
-arm_pci_msi_find_frame(pci_intr_handle_t ih)
+static struct md_pci_msi *
+md_pci_msi_find_frame(pci_intr_handle_t ih)
 {
-	struct arm_pci_msi *msip;
+	struct md_pci_msi *msip;
 
-	const int id = __SHIFTOUT(ih, ARM_PCI_INTR_FRAME);
+	const int id = __SHIFTOUT(ih, MD_PCI_INTR_FRAME);
 
-	SIMPLEQ_FOREACH(msip, &arm_pci_msi_list, msi_link)
+	SIMPLEQ_FOREACH(msip, &md_pci_msi_list, msi_link)
 		if (id == msip->msi_id)
 			return msip;
 
 	return NULL;
 }
 
-static struct arm_pci_msi *
-arm_pci_msi_lookup(const struct pci_attach_args *pa)
+static struct md_pci_msi *
+md_pci_msi_lookup(const struct pci_attach_args *pa)
 {
-	struct arm_pci_msi *msip;
+	struct md_pci_msi *msip;
 	uint32_t rid, frameid;
 	int b, d, f;
 
@@ -71,7 +69,7 @@ arm_pci_msi_lookup(const struct pci_attach_args *pa)
 	rid = (b << 8) | (d << 3) | f;
 	frameid = pci_get_frameid(pa->pa_pc, rid);
 
-	SIMPLEQ_FOREACH(msip, &arm_pci_msi_list, msi_link)
+	SIMPLEQ_FOREACH(msip, &md_pci_msi_list, msi_link)
 		if (frameid == msip->msi_id)
 			return msip;
 
@@ -79,15 +77,15 @@ arm_pci_msi_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-arm_pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count, const struct pci_attach_args *pa, bool exact)
+md_pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count, const struct pci_attach_args *pa, bool exact)
 {
 	pci_intr_handle_t *vectors;
-	struct arm_pci_msi *msi;
+	struct md_pci_msi *msi;
 
 	if ((pa->pa_flags & PCI_FLAGS_MSI_OKAY) == 0)
 		return ENODEV;
 
-	msi = arm_pci_msi_lookup(pa);
+	msi = md_pci_msi_lookup(pa);
 	if (msi == NULL || msi->msi_alloc == NULL)
 		return EINVAL;
 
@@ -101,15 +99,15 @@ arm_pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count, const struct pci_
 }
 
 static int
-arm_pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes, int *count, const struct pci_attach_args *pa, bool exact)
+md_pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes, int *count, const struct pci_attach_args *pa, bool exact)
 {
 	pci_intr_handle_t *vectors;
-	struct arm_pci_msi *msi;
+	struct md_pci_msi *msi;
 
 	if ((pa->pa_flags & PCI_FLAGS_MSIX_OKAY) == 0)
 		return ENODEV;
 
-	msi = arm_pci_msi_lookup(pa);
+	msi = md_pci_msi_lookup(pa);
 	if (msi == NULL || msi->msix_alloc == NULL)
 		return EINVAL;
 
@@ -123,24 +121,24 @@ arm_pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes, int *c
 }
 
 /*
- * arm_pci_msi MD API
+ * md_pci_msi MD API
  */
 
 int
-arm_pci_msi_add(struct arm_pci_msi *msi)
+md_pci_msi_add(struct md_pci_msi *msi)
 {
-	SIMPLEQ_INSERT_TAIL(&arm_pci_msi_list, msi, msi_link);
+	SIMPLEQ_INSERT_TAIL(&md_pci_msi_list, msi, msi_link);
 
 	return 0;
 }
 
 void *
-arm_pci_msi_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t pih,
+md_pci_msi_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t pih,
     int ipl, int (*func)(void *), void *arg, const char *xname)
 {
-	struct arm_pci_msi *msi;
+	struct md_pci_msi *msi;
 
-	msi = arm_pci_msi_find_frame(pih);
+	msi = md_pci_msi_find_frame(pih);
 	if (msi == NULL)
 		return NULL;
 
@@ -154,31 +152,31 @@ arm_pci_msi_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t pih,
 int
 pci_msi_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *count)
 {
-	return arm_pci_msi_alloc_common(ihps, count, pa, false);
+	return md_pci_msi_alloc_common(ihps, count, pa, false);
 }
 
 int
 pci_msi_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int count)
 {
-	return arm_pci_msi_alloc_common(ihps, &count, pa, true);
+	return md_pci_msi_alloc_common(ihps, &count, pa, true);
 }
 
 int
 pci_msix_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *count)
 {
-	return arm_pci_msix_alloc_common(ihps, NULL, count, pa, false);
+	return md_pci_msix_alloc_common(ihps, NULL, count, pa, false);
 }
 
 int
 pci_msix_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int count)
 {
-	return arm_pci_msix_alloc_common(ihps, NULL, &count, pa, true);
+	return md_pci_msix_alloc_common(ihps, NULL, &count, pa, true);
 }
 
 int
 pci_msix_alloc_map(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, u_int *table_indexes, int count)
 {
-	return arm_pci_msix_alloc_common(ihps, table_indexes, &count, pa, true);
+	return md_pci_msix_alloc_common(ihps, table_indexes, &count, pa, true);
 }
 
 int
@@ -257,13 +255,13 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *
 void 
 pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih, int count)
 {
-	struct arm_pci_msi *msi = NULL;
+	struct md_pci_msi *msi = NULL;
 
 	if (pih == NULL || count == 0)
 		return;
 
-	if ((pih[0] & (ARM_PCI_INTR_MSIX|ARM_PCI_INTR_MSI)) != 0) {
-		msi = arm_pci_msi_find_frame(pih[0]);
+	if ((pih[0] & (MD_PCI_INTR_MSIX|MD_PCI_INTR_MSI)) != 0) {
+		msi = md_pci_msi_find_frame(pih[0]);
 		KASSERT(msi != NULL);
 		msi->msi_intr_release(msi, pih, count);
 	}
@@ -274,10 +272,10 @@ pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih, int count)
 pci_intr_type_t
 pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
-	if (ih & ARM_PCI_INTR_MSIX)
+	if (ih & MD_PCI_INTR_MSIX)
 		return PCI_INTR_TYPE_MSIX;
 
-	if (ih & ARM_PCI_INTR_MSI)
+	if (ih & MD_PCI_INTR_MSI)
 		return PCI_INTR_TYPE_MSI;
 
 	return PCI_INTR_TYPE_INTX;

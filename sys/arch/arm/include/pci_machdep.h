@@ -1,4 +1,33 @@
-/*	$NetBSD: pci_machdep.h,v 1.18 2020/02/13 00:02:21 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.19 2026/09/20 11:00:32 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jared McNeill <jmcneill@invisible.ca>.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Modified for arm32 by Mark Brinicombe
@@ -44,23 +73,32 @@
 #define __HAVE_PCI_GET_SEGMENT
 
 #include <sys/errno.h>
+#include <sys/queue.h>
+
+#include <arm/cpufunc.h>
+
+#define	MD_PCI_CACHELINE_SIZE	arm_dcache_align
+
+/* Force strongly ordered mapping for all config and I/O space */
+#define MD_PCI_CONFIG_MAP_FLAGS	BUS_SPACE_MAP_NONPOSTED
+#define MD_PCI_IO_MAP_FLAGS	BUS_SPACE_MAP_NONPOSTED
 
 /*
  * Types provided to machine-independent PCI code
  */
-typedef struct	arm32_pci_chipset	*pci_chipset_tag_t;
-typedef u_long	pcitag_t;
+typedef struct md_pci_chipset *pci_chipset_tag_t;
+typedef u_long pcitag_t;
 typedef uint64_t pci_intr_handle_t;
 
 /*
  * pci_intr_handle_t fields
  */
-#define	ARM_PCI_INTR_MSI_VEC	0x000007ff00000000ULL
-#define	ARM_PCI_INTR_MPSAFE	0x0000000080000000ULL
-#define	ARM_PCI_INTR_MSIX	0x0000000040000000ULL
-#define	ARM_PCI_INTR_MSI	0x0000000020000000ULL
-#define	ARM_PCI_INTR_FRAME	0x0000000000ff0000ULL
-#define	ARM_PCI_INTR_IRQ	0x000000000000ffffULL
+#define	MD_PCI_INTR_MSI_VEC	0x000007ff00000000ULL
+#define	MD_PCI_INTR_MPSAFE	0x0000000080000000ULL
+#define	MD_PCI_INTR_MSIX	0x0000000040000000ULL
+#define	MD_PCI_INTR_MSI		0x0000000020000000ULL
+#define	MD_PCI_INTR_FRAME	0x0000000000ff0000ULL
+#define	MD_PCI_INTR_IRQ		0x000000000000ffffULL
 
 #ifdef __HAVE_PCI_MSI_MSIX
 /*
@@ -80,10 +118,10 @@ typedef enum {
 struct pci_attach_args;
 
 /*
- * arm32-specific PCI structure and type definitions.
+ * arm-specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
-struct arm32_pci_chipset {
+struct md_pci_chipset {
 	void		*pc_conf_v;
 	void		(*pc_attach_hook)(device_t, device_t,
 			    struct pcibus_attach_args *);
@@ -207,6 +245,28 @@ int	pci_msix_alloc_exact(const struct pci_attach_args *,
 	    pci_intr_handle_t **, int);
 int	pci_msix_alloc_map(const struct pci_attach_args *, pci_intr_handle_t **,
 	    u_int *, int);
+
+struct md_pci_msi {
+	device_t		msi_dev;
+	uint8_t			msi_id;		/* software ID */
+
+	void *			msi_priv;
+
+	pci_intr_handle_t *	(*msi_alloc)(struct md_pci_msi *, int *, const struct pci_attach_args *, bool);
+	pci_intr_handle_t *	(*msix_alloc)(struct md_pci_msi *, u_int *, int *, const struct pci_attach_args *, bool);
+	void *			(*msi_intr_establish)(struct md_pci_msi *,
+				    pci_intr_handle_t, int, int (*)(void *), void *, const char *);
+	void			(*msi_intr_release)(struct md_pci_msi *,
+				    pci_intr_handle_t *, int);
+
+	SIMPLEQ_ENTRY(md_pci_msi) msi_link;
+};
+
+int	md_pci_msi_add(struct md_pci_msi *);
+void *	md_pci_msi_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
+	    int, int (*)(void *), void *, const char *);
+
+
 #endif	/* __HAVE_PCI_MSI_MSIX */
 
 #endif	/* _ARM_PCI_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.25 2025/12/11 08:03:33 skrll Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.26 2026/09/20 11:00:32 skrll Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.25 2025/12/11 08:03:33 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.26 2026/09/20 11:00:32 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -33,11 +33,11 @@ __KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.25 2025/12/11 08:03:33 skrll Exp $
 #include <dev/pci/pciconf.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/pcihost_fdtvar.h>
 #include <dev/fdt/syscon.h>
 
 #include <machine/intr.h>
 #include <arm/cpufunc.h>
-#include <arm/fdt/pcihost_fdtvar.h>
 
 #define SETREG(m, v)			((m)<<16|__SHIFTIN((v), (m)))
 #define GETREG(m, v)			(__SHIFTOUT((v), (m)))

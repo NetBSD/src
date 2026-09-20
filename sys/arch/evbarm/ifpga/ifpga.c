@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.31 2022/09/27 06:12:19 skrll Exp $ */
+/*	$NetBSD: ifpga.c,v 1.32 2026/09/20 11:00:33 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.31 2022/09/27 06:12:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.32 2026/09/20 11:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,7 +80,7 @@ int ifpga_uart_clk = IFPGA_UART_CLK;
 
 #if NPCI > 0
 /* PCI handles */
-extern struct arm32_pci_chipset ifpga_pci_chipset;
+extern struct md_pci_chipset ifpga_pci_chipset;
 extern struct arm32_bus_dma_tag ifpga_pci_bus_dma_tag;
 
 static struct bus_space ifpga_pci_io_tag;

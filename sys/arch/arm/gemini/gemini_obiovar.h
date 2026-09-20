@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_obiovar.h,v 1.4 2025/12/19 13:03:51 nia Exp $	*/
+/*	$NetBSD: gemini_obiovar.h,v 1.5 2026/09/20 11:00:31 skrll Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap2_obiovar.h,v 1.1 2008/08/27 11:03:10 matt Exp
@@ -57,7 +57,7 @@ typedef struct obio_softc {
 	/* Bus space, DMA, and PCI tags for the PCI bus. */
 	bus_space_handle_t	sc_pcicfg_ioh;
 	struct arm32_bus_dma_tag sc_pci_dmat;
-	struct arm32_pci_chipset sc_pci_chipset;
+	struct md_pci_chipset sc_pci_chipset;
 } obio_softc_t;
 
 extern void gemini_pci_init(pci_chipset_tag_t, void *);

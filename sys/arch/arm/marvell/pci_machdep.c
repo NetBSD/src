@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16 2020/05/14 08:34:20 msaitoh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.17 2026/09/20 11:00:32 skrll Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2020/05/14 08:34:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17 2026/09/20 11:00:32 skrll Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -76,7 +76,7 @@ static const struct evcnt *gtpci_gpp_intr_evcnt(void *, pci_intr_handle_t);
 static void *gtpci_gpp_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *), void *, const char *);
 static void gtpci_gpp_intr_disestablish(void *, void *);
 
-struct arm32_pci_chipset arm32_gtpci_chipset = {
+struct md_pci_chipset arm32_gtpci_chipset = {
 	.pc_attach_hook = gtpci_attach_hook,
 	.pc_bus_maxdevs = gtpci_bus_maxdevs,
 	.pc_make_tag = gtpci_make_tag,
@@ -105,7 +105,7 @@ struct arm32_pci_chipset arm32_gtpci_chipset = {
 static pcireg_t mvpex_mbus_conf_read(void *, pcitag_t, int);
 #endif
 
-struct arm32_pci_chipset arm32_mvpex0_chipset = {
+struct md_pci_chipset arm32_mvpex0_chipset = {
 	.pc_attach_hook = mvpex_attach_hook,
 	.pc_bus_maxdevs = mvpex_bus_maxdevs,
 	.pc_make_tag = mvpex_make_tag,
@@ -126,7 +126,7 @@ struct arm32_pci_chipset arm32_mvpex0_chipset = {
 #endif
 	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
-struct arm32_pci_chipset arm32_mvpex1_chipset = {
+struct md_pci_chipset arm32_mvpex1_chipset = {
 	.pc_attach_hook = mvpex_attach_hook,
 	.pc_bus_maxdevs = mvpex_bus_maxdevs,
 	.pc_make_tag = mvpex_make_tag,
@@ -147,7 +147,7 @@ struct arm32_pci_chipset arm32_mvpex1_chipset = {
 #endif
 	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
-struct arm32_pci_chipset arm32_mvpex2_chipset = {
+struct md_pci_chipset arm32_mvpex2_chipset = {
 	.pc_attach_hook = mvpex_attach_hook,
 	.pc_bus_maxdevs = mvpex_bus_maxdevs,
 	.pc_make_tag = mvpex_make_tag,
@@ -168,7 +168,7 @@ struct arm32_pci_chipset arm32_mvpex2_chipset = {
 #endif
 	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
-struct arm32_pci_chipset arm32_mvpex3_chipset = {
+struct md_pci_chipset arm32_mvpex3_chipset = {
 	.pc_attach_hook = mvpex_attach_hook,
 	.pc_bus_maxdevs = mvpex_bus_maxdevs,
 	.pc_make_tag = mvpex_make_tag,
@@ -189,7 +189,7 @@ struct arm32_pci_chipset arm32_mvpex3_chipset = {
 #endif
 	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
-struct arm32_pci_chipset arm32_mvpex4_chipset = {
+struct md_pci_chipset arm32_mvpex4_chipset = {
 	.pc_attach_hook = mvpex_attach_hook,
 	.pc_bus_maxdevs = mvpex_bus_maxdevs,
 	.pc_make_tag = mvpex_make_tag,
@@ -210,7 +210,7 @@ struct arm32_pci_chipset arm32_mvpex4_chipset = {
 #endif
 	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
-struct arm32_pci_chipset arm32_mvpex5_chipset = {
+struct md_pci_chipset arm32_mvpex5_chipset = {
 	.pc_attach_hook = mvpex_attach_hook,
 	.pc_bus_maxdevs = mvpex_bus_maxdevs,
 	.pc_make_tag = mvpex_make_tag,
@@ -231,7 +231,7 @@ struct arm32_pci_chipset arm32_mvpex5_chipset = {
 #endif
 	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
-struct arm32_pci_chipset arm32_mvpex6_chipset = {
+struct md_pci_chipset arm32_mvpex6_chipset = {
 	.pc_attach_hook = mvpex_attach_hook,
 	.pc_bus_maxdevs = mvpex_bus_maxdevs,
 	.pc_make_tag = mvpex_make_tag,

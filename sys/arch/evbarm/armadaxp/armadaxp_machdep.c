@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.19 2023/04/21 15:04:47 skrll Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.20 2026/09/20 11:00:33 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.19 2023/04/21 15:04:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.20 2026/09/20 11:00:33 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -499,7 +499,7 @@ axp_device_register(device_t dev, void *aux)
 	    armadaxp_pex10_io_bs_tag, armadaxp_pex10_mem_bs_tag,
 	    armadaxp_pex2_io_bs_tag, armadaxp_pex2_mem_bs_tag,
 	    armadaxp_pex3_io_bs_tag, armadaxp_pex3_mem_bs_tag;
-	extern struct arm32_pci_chipset arm32_mvpex0_chipset,
+	extern struct md_pci_chipset arm32_mvpex0_chipset,
 	    arm32_mvpex1_chipset, arm32_mvpex2_chipset,
 	    arm32_mvpex3_chipset, arm32_mvpex4_chipset,
 	    arm32_mvpex5_chipset, arm32_mvpex6_chipset;
@@ -508,7 +508,7 @@ axp_device_register(device_t dev, void *aux)
 
 	if (device_is_a(dev, "mvpex")) {
 		struct bus_space *mvpex_io_bs_tag, *mvpex_mem_bs_tag;
-		struct arm32_pci_chipset *arm32_mvpex_chipset;
+		struct md_pci_chipset *arm32_mvpex_chipset;
 		prop_data_t io_bs_tag, mem_bs_tag, pc;
 		uint64_t start, end;
 		int iotag, memtag;
@@ -572,7 +572,7 @@ axp_device_register(device_t dev, void *aux)
 		prop_object_release(mem_bs_tag);
 
 		pc = prop_data_create_data_nocopy(arm32_mvpex_chipset,
-		    sizeof(struct arm32_pci_chipset));
+		    sizeof(struct md_pci_chipset));
 		KASSERT(pc != NULL);
 		prop_dictionary_set(dict, "pci-chipset", pc);
 		prop_object_release(pc);

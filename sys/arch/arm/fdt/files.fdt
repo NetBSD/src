@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.37 2025/09/06 21:02:40 thorpej Exp $
+# $NetBSD: files.fdt,v 1.38 2026/09/20 11:00:31 skrll Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -64,11 +64,6 @@ file	arch/arm/fdt/plrtc_fdt.c		plrtc_fdt
 
 attach	psci at fdt with psci_fdt: fdt_power
 file	arch/arm/fdt/psci_fdt.c			psci_fdt	needs-flag
-
-# Generic PCI host controller
-device	pcihost: pcibus
-attach	pcihost at fdt with pcihost_fdt
-file	arch/arm/fdt/pcihost_fdt.c		pcihost_fdt
 
 device	armpmu: tprof
 attach	armpmu at fdt with pmu_fdt

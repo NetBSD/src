@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2838_pcie.c,v 1.10 2025/01/03 13:04:02 skrll Exp $ */
+/*	$NetBSD: bcm2838_pcie.c,v 1.11 2026/09/20 11:00:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.10 2025/01/03 13:04:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.11 2026/09/20 11:00:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,7 +84,7 @@ struct bcmstb_softc {
 	uint32_t		sc_bus_min;
 	uint32_t		sc_bus_max;
 
-	struct arm32_pci_chipset	sc_pc;
+	struct md_pci_chipset	sc_pc;
 
 	struct bcmstb_busspace	sc_io;
 	struct bcmstb_busspace	sc_mem;
@@ -232,7 +232,7 @@ bcm2838pcie_attach(device_t parent, device_t self, void *aux)
 static void
 bcmstb_attach(device_t self, struct bcmstb_softc *sc)
 {
-	struct arm32_pci_chipset *pc;
+	struct md_pci_chipset *pc;
 	struct pcibus_attach_args pba;
 	int error;
 
@@ -780,17 +780,17 @@ static const char *
 bcmstb_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
 	struct bcmstb_softc *sc = v;
-	const int irq = __SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
-	const int vec = __SHIFTOUT(ih, ARM_PCI_INTR_MSI_VEC);
+	const int irq = __SHIFTOUT(ih, MD_PCI_INTR_IRQ);
+	const int vec = __SHIFTOUT(ih, MD_PCI_INTR_MSI_VEC);
 	const u_int *specifier;
 	int ihandle;
 
-	if (ih & ARM_PCI_INTR_MSIX) {
+	if (ih & MD_PCI_INTR_MSIX) {
 		snprintf(buf, len, "irq %d (MSI-X vec %d)", irq, vec);
-	} else if (ih & ARM_PCI_INTR_MSI) {
+	} else if (ih & MD_PCI_INTR_MSI) {
 		snprintf(buf, len, "irq %d (MSI vec %d)", irq, vec);
 	} else {
-		specifier = bcmstb_find_intr(sc, ih & ARM_PCI_INTR_IRQ, &ihandle);
+		specifier = bcmstb_find_intr(sc, ih & MD_PCI_INTR_IRQ, &ihandle);
 		if (specifier == NULL)
 			return NULL;
 		if (!fdtbus_intr_str_raw(ihandle, specifier, buf, len))
@@ -820,18 +820,18 @@ bcmstb_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
     int (*callback)(void *), void *arg, const char *xname)
 {
 	struct bcmstb_softc *sc = v;
-	const int flags = (ih & ARM_PCI_INTR_MPSAFE) ? FDT_INTR_MPSAFE : 0;
+	const int flags = (ih & MD_PCI_INTR_MPSAFE) ? FDT_INTR_MPSAFE : 0;
 	const u_int *specifier;
 	int ihandle;
 
-	if ((ih & (ARM_PCI_INTR_MSI | ARM_PCI_INTR_MSIX)) != 0) {
-//		return arm_pci_msi_intr_establish(&sc->sc_pc, ih, ipl,
-//						  callback, arg, xname);
+	if ((ih & (MD_PCI_INTR_MSI | MD_PCI_INTR_MSIX)) != 0) {
+//		return md_pci_msi_intr_establish(&sc->sc_pc, ih, ipl,
+//						 callback, arg, xname);
 		return NULL;
 	}
 
 	/* should search for PCI device */
-	specifier = bcmstb_find_intr(sc, ih & ARM_PCI_INTR_IRQ, &ihandle);
+	specifier = bcmstb_find_intr(sc, ih & MD_PCI_INTR_IRQ, &ihandle);
 	if (specifier == NULL)
 		return NULL;
 

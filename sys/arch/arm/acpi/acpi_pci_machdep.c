@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.22 2022/08/13 20:07:13 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.23 2026/09/20 11:00:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.22 2022/08/13 20:07:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.23 2026/09/20 11:00:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,8 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.22 2022/08/13 20:07:13 jmcnei
 #ifdef PCI_SMCCC
 #include <arm/pci/pci_smccc.h>
 #endif
-
-#include <arm/pci/pci_msi_machdep.h>
 
 struct acpi_pci_prt {
 	u_int				prt_segment;
@@ -142,7 +140,7 @@ static void *	acpi_pci_md_intr_establish(void *, pci_intr_handle_t,
 					 const char *);
 static void	acpi_pci_md_intr_disestablish(void *, void *);
 
-struct arm32_pci_chipset arm_acpi_pci_chipset = {
+struct md_pci_chipset arm_acpi_pci_chipset = {
 	.pc_attach_hook = acpi_pci_md_attach_hook,
 	.pc_bus_maxdevs = acpi_pci_md_bus_maxdevs,
 	.pc_make_tag = acpi_pci_md_make_tag,
@@ -444,12 +442,12 @@ done:
 static const char *
 acpi_pci_md_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	const int irq = __SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
-	const int vec = __SHIFTOUT(ih, ARM_PCI_INTR_MSI_VEC);
+	const int irq = __SHIFTOUT(ih, MD_PCI_INTR_IRQ);
+	const int vec = __SHIFTOUT(ih, MD_PCI_INTR_MSI_VEC);
 
-	if (ih & ARM_PCI_INTR_MSIX)
+	if (ih & MD_PCI_INTR_MSIX)
 		snprintf(buf, len, "irq %d (MSI-X vec %d)", irq, vec);
-	else if (ih & ARM_PCI_INTR_MSI)
+	else if (ih & MD_PCI_INTR_MSI)
 		snprintf(buf, len, "irq %d (MSI vec %d)", irq, vec);
 	else
 		snprintf(buf, len, "irq %d", irq);
@@ -469,9 +467,9 @@ acpi_pci_md_intr_setattr(void *v, pci_intr_handle_t *ih, int attr, uint64_t data
 	switch (attr) {
 	case PCI_INTR_MPSAFE:
 		if (data)
-			*ih |= ARM_PCI_INTR_MPSAFE;
+			*ih |= MD_PCI_INTR_MPSAFE;
 		else
-			*ih &= ~ARM_PCI_INTR_MPSAFE;
+			*ih &= ~MD_PCI_INTR_MPSAFE;
 		return 0;
 	default:
 		return ENODEV;
@@ -543,11 +541,11 @@ acpi_pci_md_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
 	struct acpi_pci_intr *pi;
 	int slot;
 
-	if ((ih & (ARM_PCI_INTR_MSI | ARM_PCI_INTR_MSIX)) != 0)
-		return arm_pci_msi_intr_establish(&ap->ap_pc, ih, ipl, callback, arg, xname);
+	if ((ih & (MD_PCI_INTR_MSI | MD_PCI_INTR_MSIX)) != 0)
+		return md_pci_msi_intr_establish(&ap->ap_pc, ih, ipl, callback, arg, xname);
 
-	const int irq = (int)__SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
-	const int mpsafe = (ih & ARM_PCI_INTR_MPSAFE) ? IST_MPSAFE : 0;
+	const int irq = (int)__SHIFTOUT(ih, MD_PCI_INTR_IRQ);
+	const int mpsafe = (ih & MD_PCI_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
 	pi = acpi_pci_md_intr_lookup(irq);
 	if (pi == NULL) {

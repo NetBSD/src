@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.94 2025/12/22 07:45:47 skrll Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.95 2026/09/20 11:00:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.94 2025/12/22 07:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.95 2026/09/20 11:00:33 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -199,7 +199,7 @@ static void kcomcnputc(dev_t, int);
 #define IGS_PCI_MEM_VSIZE		0x01000000
 #define IGS_PCI_MEM_BASE		0x08000000
 
-extern struct arm32_pci_chipset footbridge_pci_chipset;
+extern struct md_pci_chipset footbridge_pci_chipset;
 extern struct bus_space footbridge_pci_io_bs_tag;
 extern struct bus_space footbridge_pci_mem_bs_tag;
 extern void footbridge_pci_bs_tag_init(void);

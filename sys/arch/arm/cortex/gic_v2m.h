@@ -1,4 +1,4 @@
-/* $NetBSD: gic_v2m.h,v 1.3 2020/05/07 16:20:40 jmcneill Exp $ */
+/* $NetBSD: gic_v2m.h,v 1.4 2026/09/20 11:00:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #ifndef _ARM_CORTEX_GIC_V2M_H
 #define _ARM_CORTEX_GIC_V2M_H
 
-#include <arm/pci/pci_msi_machdep.h>
 #include <arm/cortex/gic_reg.h>
 
 struct gic_v2m_frame {
@@ -45,7 +44,7 @@ struct gic_v2m_frame {
 
 	struct pci_attach_args *frame_pa[GICC_IAR_IRQ];
 
-	struct arm_pci_msi	frame_msi;
+	struct md_pci_msi	frame_msi;
 };
 
 int	gic_v2m_init(struct gic_v2m_frame *, device_t, uint32_t);
