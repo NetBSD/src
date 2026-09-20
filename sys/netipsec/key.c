@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.290 2026/09/19 16:49:28 riastradh Exp $	*/
+/*	$NetBSD: key.c,v 1.291 2026/09/20 14:39:05 riastradh Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.290 2026/09/19 16:49:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.291 2026/09/20 14:39:05 riastradh Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -1831,7 +1831,6 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 	KASSERT(!cpu_softintr_p());
 	KASSERT(xpl0 != NULL);
 	KASSERT(len >= sizeof(*xpl0));
-	KASSERT(PFKEY_ALIGNED8((uintptr_t)xpl0));
 
 	if (len != PFKEY_EXTLEN(xpl0)) {
 		IPSECLOG(LOG_DEBUG, "Invalid msg length.\n");
