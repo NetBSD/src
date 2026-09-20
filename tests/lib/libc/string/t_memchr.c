@@ -1,15 +1,19 @@
-/* $NetBSD: t_memchr.c,v 1.5 2026/09/19 09:40:55 nia Exp $ */
+/* $NetBSD: t_memchr.c,v 1.6 2026/09/20 17:35:55 riastradh Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
  * Public domain.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_memchr.c,v 1.6 2026/09/20 17:35:55 riastradh Exp $");
+
 #include <atf-c.h>
-#include <string.h>
-#include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 ATF_TC(memchr_basic);
 ATF_TC_HEAD(memchr_basic, tc)
@@ -158,6 +162,25 @@ ATF_TC_BODY(memchr_simple, tc)
 
 		i *= 2;
 	}
+
+	for (i = 0; i < 7; i++) {
+		ATF_CHECK_MSG(memchr(buf, '\0', i) == NULL, "i=%d", i);
+		ATF_CHECK_MSG(memchr(buf + i, '\0', 1) == NULL, "i=%d", i);
+	}
+	ATF_CHECK(memchr(buf, '\0', 7) == NULL);
+	ATF_CHECK(memchr(buf + 7, '\0', 1) == buf + 7);
+	for (i = 8; i < 32; i++) {
+		ATF_CHECK_MSG(memchr(buf, '\0', i) == buf + 7, "i=%d", i);
+		ATF_CHECK_MSG(memchr(buf + 7, '\0', i) == buf + 7, "i=%d", i);
+	}
+
+	ATF_CHECK(memchr(buf, '\0', SSIZE_MAX) == buf + 7);
+
+#ifdef __x86_64__
+	atf_tc_expect_fail("PR lib/60744: memchr(3) is busticated");
+#endif
+	ATF_CHECK(memchr(buf, '\0', SIZE_MAX) == buf + 7);
+	ATF_CHECK(memchr(buf, '\0', (size_t)-1) == buf + 7);
 }
 
 ATF_TC(memchr_abuse);
