@@ -1,3 +1,4 @@
-# $NetBSD: md.ofppc,v 1.3 2024/07/11 20:41:08 riastradh Exp $
+# $NetBSD: md.ofppc,v 1.4 2026/09/21 19:08:31 kre Exp $
 #
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug
