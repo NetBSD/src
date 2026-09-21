@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2026/04/19 09:04:44 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2026/09/21 23:23:36 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -14,6 +14,7 @@ buf_writer.c \
 cache_bin.c \
 ckh.c \
 ctl.c \
+conf.c \
 counter.c \
 decay.c \
 divide.c \
@@ -30,7 +31,9 @@ extent_mmap.c \
 fxp.c \
 hash.c \
 hpa.c \
+hpa_central.c \
 hpa_hooks.c \
+hpa_utils.c \
 hpdata.c \
 hook.c \
 inspect.c \
@@ -42,7 +45,6 @@ nstime.c \
 pa.c \
 pa_extra.c \
 pac.c \
-pai.c \
 pages.c \
 peak_event.c \
 prof.c \
@@ -60,8 +62,10 @@ sz.c \
 test_hooks.c \
 tcache.c \
 thread_event.c \
+thread_event_registry.c \
 ticker.c \
 tsd.c \
+util.c \
 witness.c
 
 .PATH: ${JEMALLOC}/dist/src ${JEMALLOC}/lib
@@ -81,8 +85,10 @@ LINTFLAGS.${i}+=	-X 231	# argument unused
 LINTFLAGS.${i}+=	-X 220	# fallthrough on case statement
 .endfor
 
+COPTS.arena.c+=-Wno-error=stack-protector
 COPTS.background_thread.c+=-Wno-error=stack-protector
 COPTS.ctl.c+=-Wno-error=stack-protector
+COPTS.hpa_utils.c+=-Wno-error=stack-protector
 COPTS.stats.c+=-Wno-error=stack-protector
 COPTS.tcache.c+=-Wno-error=stack-protector
 COPTS.tsd.c+=-Wno-error=missing-braces -Wno-missing-braces
@@ -106,11 +112,13 @@ LINTFLAGS.${i} += -X 298
 LINTFLAGS.arena.c += -X 298
 LINTFLAGS.ctl.c += -X 135,298
 LINTFLAGS.hpa.c += -X 135	# i386: alignment pai_s[4] -> hpa_shard_s[8]
-LINTFLAGS.jemalloc.c += -X 141	# a single unsigned overflow, acceptable.
+LINTFLAGS.jemalloc.c += -X 141	# i386: lint is right, overflow is on purpose.
 LINTFLAGS.pac.c += -X 135	# i386: alignment pai_s[4] -> hpa_shard_s[8]
 LINTFLAGS.pages.c += -X 298
+LINTFLAGS.prof_data.c += -X 236
 LINTFLAGS.prof_recent.c += -X 42
 LINTFLAGS.sc.c += -X 119
 LINTFLAGS.sec.c += -X 247
 LINTFLAGS.stats.c += -X 42,135,247
 LINTFLAGS.tcache.c += -X 309
+LINTFLAGS.thread_event.c += -X 348
