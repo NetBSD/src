@@ -1,4 +1,6 @@
+/*	$NetBSD: ssherr-nolibcrypto.c,v 1.2 2026/09/21 23:01:54 christos Exp $	*/
 /* $OpenBSD: ssherr-nolibcrypto.c,v 1.1 2026/02/06 23:31:29 dtucker Exp $ */
+
 /*
  * Copyright (c) 2026 Darren Tucker
  *
@@ -14,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: ssherr-nolibcrypto.c,v 1.2 2026/09/21 23:01:54 christos Exp $"):
 
 #include <stddef.h>
 

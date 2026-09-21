@@ -1,4 +1,6 @@
+/*	$NetBSD: ssh-sk.h,v 1.2 2026/09/21 23:01:54 christos Exp $	*/
 /* $OpenBSD: ssh-sk.h,v 1.11 2021/10/28 02:54:18 djm Exp $ */
+
 /*
  * Copyright (c) 2019 Google LLC
  *

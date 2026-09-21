@@ -1,4 +1,6 @@
+/*	$NetBSD: libcrux-mlkem-mldsa.c,v 1.2 2026/09/21 23:01:54 christos Exp $	*/
 /* $OpenBSD: libcrux-mlkem-mldsa.c,v 1.1 2026/06/14 03:59:34 djm Exp $ */
+
 /*
  * Copyright (c) 2026 Damien Miller <djm@mindrot.org>
  *
@@ -14,7 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#include "includes.h"
+__RCSID("$NetBSD: libcrux-mlkem-mldsa.c,v 1.2 2026/09/21 23:01:54 christos Exp $");
 
 #include <sys/types.h>
 #include <stdint.h>

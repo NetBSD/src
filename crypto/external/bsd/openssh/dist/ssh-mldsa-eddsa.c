@@ -1,4 +1,6 @@
+/*	$NetBSD: ssh-mldsa-eddsa.c,v 1.2 2026/09/21 23:01:54 christos Exp $	*/
 /* $OpenBSD: ssh-mldsa-eddsa.c,v 1.4 2026/07/30 07:40:48 brynet Exp $ */
+
 /*
  * Copyright (c) 2026 Damien Miller <djm@mindrot.org>
  *
@@ -16,6 +18,8 @@
  */
 
 /* draft-miller-sshm-mldsa44-ed25519-composite-sigs-00 */
+#include "includes.h"
+__RCSID("$NetBSD: ssh-mldsa-eddsa.c,v 1.2 2026/09/21 23:01:54 christos Exp $");
 
 #include <sys/types.h>
 #include <stdint.h>

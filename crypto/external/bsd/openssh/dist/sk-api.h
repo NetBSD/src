@@ -1,3 +1,4 @@
+/*	$NetBSD: sk-api.h,v 1.2 2026/09/21 23:01:54 christos Exp $	*/
 /* $OpenBSD: sk-api.h,v 1.15 2022/07/20 03:29:14 djm Exp $ */
 /*
  * Copyright (c) 2019 Google LLC

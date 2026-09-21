@@ -1,3 +1,4 @@
+/*	$NetBSD: addr.h,v 1.2 2026/09/21 23:01:54 christos Exp $	*/
 /*
  * Copyright (c) 2004,2005 Damien Miller <djm@mindrot.org>
  *

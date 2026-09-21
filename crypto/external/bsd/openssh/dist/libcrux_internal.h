@@ -1,3 +1,4 @@
+/*	$NetBSD: libcrux_internal.h,v 1.3 2026/09/21 23:01:54 christos Exp $	*/
 /*  $OpenBSD: libcrux_internal.h,v 1.1 2026/06/14 03:59:34 djm Exp $ */
 
 /* Extracted from libcrux revision c46481ce3cd1cc8315e90db114581d8c992c3d7d */

@@ -1,3 +1,4 @@
+/*	$NetBSD: libcrux_mlkem768_sha3.h,v 1.6 2026/09/21 23:01:54 christos Exp $	*/
 /*  $OpenBSD: libcrux_mlkem768_sha3.h,v 1.4 2025/11/13 05:13:06 djm Exp $ */
 
 /* Extracted from libcrux revision 026a87ab6d88ad3626b9fbbf3710d1e0483c1849 */

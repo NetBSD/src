@@ -1,4 +1,6 @@
+/*	$NetBSD: ed25519-openssl.c,v 1.2 2026/09/21 23:01:54 christos Exp $	*/
 /* $OpenBSD: ed25519-openssl.c,v 1.3 2026/06/29 02:08:55 djm Exp $ */
+
 /*
  * Copyright (c) 2025 OpenSSH
  *
@@ -19,6 +21,8 @@
  * OpenSSL-based implementation of Ed25519 crypto_sign API
  * Alternative to the internal SUPERCOP-based implementation in ed25519.c
  */
+#include "includes.h"
+__RCSID("$NetBSD: ed25519-openssl.c,v 1.2 2026/09/21 23:01:54 christos Exp $"):
 
 #include <sys/types.h>
 
