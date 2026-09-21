@@ -1,5 +1,5 @@
-/*	$NetBSD: myproposal.h,v 1.27 2026/04/08 18:58:41 christos Exp $	*/
-/* $OpenBSD: myproposal.h,v 1.78 2026/02/05 22:05:49 djm Exp $ */
+/*	$NetBSD: myproposal.h,v 1.28 2026/09/21 21:31:00 christos Exp $	*/
+/* $OpenBSD: myproposal.h,v 1.80 2026/08/10 23:27:04 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -59,7 +59,7 @@
 	"sk-ecdsa-sha2-nistp256@openssh.com," \
 	"webauthn-sk-ecdsa-sha2-nistp256@openssh.com," \
 	"rsa-sha2-512," \
-	"rsa-sha2-256"
+	"rsa-sha2-256" \
 
 #define	KEX_SERVER_ENCRYPT \
 	"chacha20-poly1305@openssh.com," \
@@ -92,7 +92,7 @@
 	"sk-ecdsa-sha2-nistp256@openssh.com," \
 	"webauthn-sk-ecdsa-sha2-nistp256@openssh.com," \
 	"rsa-sha2-512," \
-	"rsa-sha2-256"
+	"rsa-sha2-256" \
 
 #define KEX_CLIENT_ENCRYPT_INCLUDE_NONE KEX_CLIENT_ENCRYPT \
 	",none"

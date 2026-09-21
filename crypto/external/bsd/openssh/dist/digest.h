@@ -1,4 +1,4 @@
-/*	$NetBSD: digest.h,v 1.3 2021/03/05 17:47:16 christos Exp $	*/
+/*	$NetBSD: digest.h,v 1.4 2026/09/21 21:30:59 christos Exp $	*/
 /* $OpenBSD: digest.h,v 1.8 2017/05/08 22:57:38 djm Exp $ */
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>
@@ -49,22 +49,26 @@ size_t ssh_digest_blocksize(struct ssh_digest_ctx *ctx);
 int ssh_digest_copy_state(struct ssh_digest_ctx *from,
     struct ssh_digest_ctx *to);
 
+#ifdef __OpenBSD__
+# define __bounded(a, b) __attribute__((__bounded__(__buffer__, a, b)))
+#else
+# define __bounded(a, b)
+#endif
+
 /* One-shot API */
 int ssh_digest_memory(int alg, const void *m, size_t mlen,
-    u_char *d, size_t dlen)
-	__attribute__((__bounded__(__buffer__, 2, 3)))
-	__attribute__((__bounded__(__buffer__, 4, 5)));
+    u_char *d, size_t dlen) __bounded(2, 3) __bounded(4, 5);
 int ssh_digest_buffer(int alg, const struct sshbuf *b, u_char *d, size_t dlen)
-	__attribute__((__bounded__(__buffer__, 3, 4)));
+	__bounded(3, 4);
 
 /* Update API */
 struct ssh_digest_ctx *ssh_digest_start(int alg);
 int ssh_digest_update(struct ssh_digest_ctx *ctx, const void *m, size_t mlen)
-	__attribute__((__bounded__(__buffer__, 2, 3)));
+	__bounded(2, 3);
 int ssh_digest_update_buffer(struct ssh_digest_ctx *ctx,
     const struct sshbuf *b);
 int ssh_digest_final(struct ssh_digest_ctx *ctx, u_char *d, size_t dlen)
-	__attribute__((__bounded__(__buffer__, 2, 3)));
+	__bounded(2, 3);
 void ssh_digest_free(struct ssh_digest_ctx *ctx);
 
 #endif /* _DIGEST_H */

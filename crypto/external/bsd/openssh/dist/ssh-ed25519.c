@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-ed25519.c,v 1.22 2026/02/14 00:18:34 jsg Exp $ */
+/* $OpenBSD: ssh-ed25519.c,v 1.23 2026/07/30 03:39:39 djm Exp $ */
 /*
  * Copyright (c) 2013 Markus Friedl <markus@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ed25519.c,v 1.12 2026/04/08 18:58:41 christos Exp $");
+__RCSID("$NetBSD: ssh-ed25519.c,v 1.13 2026/09/21 21:31:00 christos Exp $");
 
 #include <sys/types.h>
 #include <limits.h>
@@ -83,7 +83,8 @@ ssh_ed25519_generate(struct sshkey *k, int bits)
 	if ((k->ed25519_pk = malloc(ED25519_PK_SZ)) == NULL ||
 	    (k->ed25519_sk = malloc(ED25519_SK_SZ)) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
-	crypto_sign_ed25519_keypair(k->ed25519_pk, k->ed25519_sk);
+	if (crypto_sign_ed25519_keypair(k->ed25519_pk, k->ed25519_sk) != 0)
+		return SSH_ERR_CRYPTO_ERROR;
 	return 0;
 }
 

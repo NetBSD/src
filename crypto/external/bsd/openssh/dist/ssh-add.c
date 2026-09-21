@@ -1,6 +1,6 @@
-/*	$NetBSD: ssh-add.c,v 1.34 2026/04/08 18:58:41 christos Exp $	*/
-/* $OpenBSD: ssh-add.c,v 1.186 2026/03/05 05:44:15 djm Exp $ */
-
+/*	$NetBSD: ssh-add.c,v 1.35 2026/09/21 21:31:00 christos Exp $	*/
+/* $OpenBSD: ssh-add.c,v 1.187 2026/06/29 02:13:05 djm Exp $ */
+/* $OpenBSD: ssh-add.c,v 1.188 2026/07/11 11:15:03 naddy Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.34 2026/04/08 18:58:41 christos Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.35 2026/09/21 21:31:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -84,6 +84,7 @@ static const char *default_files[] = {
 	_PATH_SSH_CLIENT_ID_ECDSA_SK,
 	_PATH_SSH_CLIENT_ID_ED25519,
 	_PATH_SSH_CLIENT_ID_ED25519_SK,
+	_PATH_SSH_CLIENT_ID_MLDSA44_ED25519,
 	NULL
 };
 
@@ -810,7 +811,7 @@ main(int argc, char **argv)
 {
 	extern char *optarg;
 	extern int optind;
-	int agent_fd;
+	int agent_fd = -1;
 	char *pkcs11provider = NULL;
 	const char *skprovider = NULL;
 	char **dest_constraint_strings = NULL, **hostkey_files = NULL;
@@ -829,19 +830,6 @@ main(int argc, char **argv)
 	log_init(__progname, log_level, log_facility, 1);
 
 	setvbuf(stdout, NULL, _IOLBF, 0);
-
-	/* First, get a connection to the authentication agent. */
-	switch (r = ssh_get_authentication_socket(&agent_fd)) {
-	case 0:
-		break;
-	case SSH_ERR_AGENT_NOT_PRESENT:
-		fprintf(stderr, "Could not open a connection to your "
-		    "authentication agent.\n");
-		exit(2);
-	default:
-		fprintf(stderr, "Error connecting to agent: %s\n", ssh_err(r));
-		exit(2);
-	}
 
 	skprovider = getenv("SSH_SK_PROVIDER");
 
@@ -938,7 +926,21 @@ main(int argc, char **argv)
 
 	if ((xflag != 0) + (lflag != 0) + (Dflag != 0) + (Qflag != 0) > 1)
 		fatal("Invalid combination of actions");
-	else if (xflag) {
+
+	/* First, get a connection to the authentication agent. */
+	switch (r = ssh_get_authentication_socket(&agent_fd)) {
+	case 0:
+		break;
+	case SSH_ERR_AGENT_NOT_PRESENT:
+		fprintf(stderr, "Could not open a connection to your "
+		    "authentication agent.\n");
+		exit(2);
+	default:
+		fprintf(stderr, "Error connecting to agent: %s\n", ssh_err(r));
+		exit(2);
+	}
+
+	if (xflag) {
 		if (lock_agent(agent_fd, xflag == 'x' ? 1 : 0) == -1)
 			ret = 1;
 		goto done;

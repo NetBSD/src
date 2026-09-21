@@ -1,6 +1,6 @@
-/*	$NetBSD: serverloop.c,v 1.40 2026/04/08 18:58:41 christos Exp $	*/
-/* $OpenBSD: serverloop.c,v 1.246 2026/03/03 09:57:25 dtucker Exp $ */
-
+/*	$NetBSD: serverloop.c,v 1.41 2026/09/21 21:31:00 christos Exp $	*/
+/* $OpenBSD: serverloop.c,v 1.247 2026/05/31 04:47:29 djm Exp $ */
+/* $OpenBSD: serverloop.c,v 1.248 2026/07/14 01:05:05 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.40 2026/04/08 18:58:41 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.41 2026/09/21 21:31:00 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -545,7 +545,8 @@ server_request_tun(struct ssh *ssh)
 		ssh_packet_send_debug(ssh, "Unsupported tunnel device mode.");
 		return NULL;
 	}
-	if ((options.permit_tun & mode) == 0) {
+	if ((options.permit_tun & mode) == 0 || options.disable_forwarding ||
+	    auth_opts->restricted) {
 		ssh_packet_send_debug(ssh, "Server has rejected tunnel device "
 		    "forwarding");
 		return NULL;

@@ -1,5 +1,6 @@
-/*	$NetBSD: sshbuf-io.c,v 1.2 2020/02/27 00:24:40 christos Exp $	*/
-/*	$OpenBSD: sshbuf-io.c,v 1.2 2020/01/25 23:28:06 djm Exp $ */
+/*	$NetBSD: sshbuf-io.c,v 1.3 2026/09/21 21:31:00 christos Exp $	*/
+/*	$OpenBSD: sshbuf-io.c,v 1.4 2026/07/05 00:16:21 djm Exp $ */
+
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -16,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf-io.c,v 1.2 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: sshbuf-io.c,v 1.3 2026/09/21 21:31:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -44,8 +45,7 @@ sshbuf_load_fd(int fd, struct sshbuf **blobp)
 
 	if (fstat(fd, &st) == -1)
 		return SSH_ERR_SYSTEM_ERROR;
-	if ((st.st_mode & (S_IFSOCK|S_IFCHR|S_IFIFO)) == 0 &&
-	    st.st_size > SSHBUF_SIZE_MAX)
+	if (S_ISREG(st.st_mode) && st.st_size > SSHBUF_SIZE_MAX)
 		return SSH_ERR_INVALID_FORMAT;
 	if ((blob = sshbuf_new()) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
@@ -63,7 +63,7 @@ sshbuf_load_fd(int fd, struct sshbuf **blobp)
 			goto out;
 		}
 	}
-	if ((st.st_mode & (S_IFSOCK|S_IFCHR|S_IFIFO)) == 0 &&
+	if (S_ISREG(st.st_mode) != 0 &&
 	    st.st_size != (off_t)sshbuf_len(blob)) {
 		r = SSH_ERR_FILE_CHANGED;
 		goto out;

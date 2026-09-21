@@ -1,5 +1,5 @@
-/*	$NetBSD: sshkey.h,v 1.26 2026/04/08 18:58:41 christos Exp $	*/
-/* $OpenBSD: sshkey.h,v 1.73 2026/03/03 09:57:26 dtucker Exp $ */
+/*	$NetBSD: sshkey.h,v 1.27 2026/09/21 21:31:00 christos Exp $	*/
+/* $OpenBSD: sshkey.h,v 1.74 2026/06/14 03:59:34 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -63,6 +63,8 @@ enum sshkey_types {
 	KEY_ECDSA_SK_CERT,
 	KEY_ED25519_SK,
 	KEY_ED25519_SK_CERT,
+	KEY_MLDSA44_ED25519,
+	KEY_MLDSA44_ED25519_CERT,
 	KEY_UNSPEC
 };
 
@@ -120,6 +122,9 @@ struct sshkey {
 	/* KEY_ED25519 and KEY_ED25519_SK */
 	u_char	*ed25519_sk;
 	u_char	*ed25519_pk;
+	/* KEY_MLDSA44_ED25519 */
+	u_char	*mldsa_ed25519_sk;
+	u_char	*mldsa_ed25519_pk;
 	/* KEY_ECDSA_SK and KEY_ED25519_SK */
 	char	*sk_application;
 	uint8_t	sk_flags;

@@ -1,5 +1,5 @@
-/*	$NetBSD: sk-usbhid.c,v 1.11 2025/10/11 15:45:07 christos Exp $	*/
-/* $OpenBSD: sk-usbhid.c,v 1.48 2025/05/12 05:41:20 tb Exp $ */
+/*	$NetBSD: sk-usbhid.c,v 1.12 2026/09/21 21:31:00 christos Exp $	*/
+/* $OpenBSD: sk-usbhid.c,v 1.49 2026/06/01 05:49:20 djm Exp $ */
 
 /*
  * Copyright (c) 2019 Markus Friedl
@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sk-usbhid.c,v 1.11 2025/10/11 15:45:07 christos Exp $");
+__RCSID("$NetBSD: sk-usbhid.c,v 1.12 2026/09/21 21:31:00 christos Exp $");
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -1124,6 +1124,7 @@ read_rks(struct sk_usbhid *sk, const char *pin,
     struct sk_resident_key ***rksp, size_t *nrksp)
 {
 	int ret = SSH_SK_ERR_GENERAL, r = -1, internal_uv;
+	uint32_t alg;
 	fido_credman_metadata_t *metadata = NULL;
 	fido_credman_rp_t *rp = NULL;
 	fido_credman_rk_t *rk = NULL;
@@ -1220,6 +1221,20 @@ read_rks(struct sk_usbhid *sk, const char *pin,
 			    user_id_len, j, fido_cred_type(cred),
 			    fido_cred_flags(cred), fido_cred_prot(cred));
 
+			/* Determine key algorithm */
+			switch (fido_cred_type(cred)) {
+			case COSE_ES256:
+				alg = SSH_SK_ECDSA;
+				break;
+			case COSE_EDDSA:
+				alg = SSH_SK_ED25519;
+				break;
+			default:
+				skdebug(__func__, "unsupported key type %d",
+				    fido_cred_type(cred));
+				continue;
+			}
+
 			/* build response entry */
 			if ((srk = calloc(1, sizeof(*srk))) == NULL ||
 			    (srk->key.key_handle = calloc(1,
@@ -1231,25 +1246,13 @@ read_rks(struct sk_usbhid *sk, const char *pin,
 				goto out;
 			}
 
+			srk->alg = alg;
 			srk->key.key_handle_len = fido_cred_id_len(cred);
 			memcpy(srk->key.key_handle, fido_cred_id_ptr(cred),
 			    srk->key.key_handle_len);
 			srk->user_id_len = user_id_len;
 			if (srk->user_id_len != 0)
 				memcpy(srk->user_id, user_id, srk->user_id_len);
-
-			switch (fido_cred_type(cred)) {
-			case COSE_ES256:
-				srk->alg = SSH_SK_ECDSA;
-				break;
-			case COSE_EDDSA:
-				srk->alg = SSH_SK_ED25519;
-				break;
-			default:
-				skdebug(__func__, "unsupported key type %d",
-				    fido_cred_type(cred));
-				goto out; /* XXX free rk and continue */
-			}
 
 			if (fido_cred_prot(cred) == FIDO_CRED_PROT_UV_REQUIRED
 			    && internal_uv == -1)

@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.29 2026/04/08 18:58:41 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.80 2026/03/19 02:36:28 djm Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.30 2026/09/21 21:31:00 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.81 2026/06/14 03:59:34 djm Exp $ */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.29 2026/04/08 18:58:41 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.30 2026/09/21 21:31:00 christos Exp $");
 #include <sys/types.h>
 
 #ifdef WITH_OPENSSL
@@ -206,6 +206,7 @@ main(int argc, char **argv)
 	key_fd[i++] = open(_PATH_HOST_ECDSA_KEY_FILE, O_RDONLY);
 	key_fd[i++] = open(_PATH_HOST_ED25519_KEY_FILE, O_RDONLY);
 	key_fd[i++] = open(_PATH_HOST_RSA_KEY_FILE, O_RDONLY);
+	key_fd[i++] = open(_PATH_HOST_MLDSA44_ED25519_KEY_FILE, O_RDONLY);
 
 	if ((pw = getpwuid(getuid())) == NULL)
 		fatal("getpwuid failed");

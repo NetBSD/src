@@ -1,6 +1,6 @@
-/*	$NetBSD: packet.c,v 1.57 2026/04/08 18:58:41 christos Exp $	*/
-/* $OpenBSD: packet.c,v 1.334 2026/03/03 09:57:25 dtucker Exp $ */
-
+/*	$NetBSD: packet.c,v 1.58 2026/09/21 21:31:00 christos Exp $	*/
+/* $OpenBSD: packet.c,v 1.339 2026/06/30 00:09:01 djm Exp $ */
+/* $OpenBSD: packet.c,v 1.341 2026/07/23 06:33:06 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.57 2026/04/08 18:58:41 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.58 2026/09/21 21:31:00 christos Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
@@ -152,6 +152,9 @@ struct session_state {
 
 	/* Flag indicating whether this module has been initialized. */
 	int initialized;
+
+	/* Monotonic clock timestamp when the connection was started. */
+	time_t start_time;
 
 	/* Set to true if the connection is interactive. */
 	int interactive_mode;
@@ -291,7 +294,7 @@ ssh_packet_set_connection(struct ssh *ssh, int fd_in, int fd_out)
 {
 	struct session_state *state;
 	const struct sshcipher *none = cipher_by_name("none");
-	int r;
+	int r, wasnull = ssh == NULL;
 
 	if (none == NULL) {
 		error_f("cannot load cipher 'none'");
@@ -304,6 +307,7 @@ ssh_packet_set_connection(struct ssh *ssh, int fd_in, int fd_out)
 		return NULL;
 	}
 	state = ssh->state;
+	state->start_time = monotime();
 	state->connection_in = fd_in;
 	state->connection_out = fd_out;
 	if ((r = cipher_init(&state->send_context, none,
@@ -311,7 +315,8 @@ ssh_packet_set_connection(struct ssh *ssh, int fd_in, int fd_out)
 	    (r = cipher_init(&state->receive_context, none,
 	    (const u_char *)"", 0, NULL, 0, CIPHER_DECRYPT)) != 0) {
 		error_fr(r, "cipher_init failed");
-		free(ssh); /* XXX need ssh_free_session_state? */
+		if (wasnull)
+			free(ssh); /* XXX need ssh_free_session_state? */
 		return NULL;
 	}
 	state->newkeys[MODE_IN] = state->newkeys[MODE_OUT] = NULL;
@@ -1567,7 +1572,7 @@ ssh_packet_read(struct ssh *ssh)
 	int r;
 
 	if ((r = ssh_packet_read_seqnr(ssh, &type, NULL)) != 0)
-		fatal_fr(r, "read");
+		sshpkt_fatal(ssh, r, "read");
 	return type;
 }
 
@@ -1938,6 +1943,13 @@ ssh_packet_read_poll_seqnr(struct ssh *ssh, u_char *typep, uint32_t *seqnr_p)
 			DBG(debug("Received SSH2_MSG_PONG len %zu", len));
 			break;
 		default:
+			if (ssh->kex != NULL &&
+			    (ssh->kex->flags & KEX_INIT_RECVD) != 0 &&
+			    !ssh_packet_type_is_kex(*typep)) {
+				error("non-transport message %u received "
+				    "from peer during key exchange", *typep);
+				return SSH_ERR_PROTOCOL_ERROR;
+			}
 			return 0;
 		}
 	}
@@ -2029,7 +2041,7 @@ ssh_packet_send_debug(struct ssh *ssh, const char *fmt,...)
 	    (r = sshpkt_put_cstring(ssh, "")) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0 ||
 	    (r = ssh_packet_write_wait(ssh)) < 0)
-		fatal_fr(r, "send DEBUG");
+		sshpkt_fatal(ssh, r, "send DEBUG");
 }
 
 void
@@ -2342,6 +2354,9 @@ ssh_packet_get_maxsize(struct ssh *ssh)
 void
 ssh_packet_set_rekey_limits(struct ssh *ssh, uint64_t bytes, uint32_t seconds)
 {
+	if (bytes == 0 && seconds == 0)
+		return;
+
 	debug3("rekey after %llu bytes, %u seconds", (unsigned long long)bytes,
 	    (unsigned int)seconds);
 	ssh->state->rekey_limit = bytes;
@@ -2528,7 +2543,14 @@ newkeys_from_blob(struct sshbuf *m, struct ssh *ssh, int mode)
 	    (r = sshbuf_get_string(b, &enc->key, &keylen)) != 0 ||
 	    (r = sshbuf_get_string(b, &enc->iv, &ivlen)) != 0)
 		goto out;
-	if ((enc->cipher = cipher_by_name(enc->name)) == NULL) {
+	if ((enc->cipher = cipher_by_name(enc->name)) == NULL ||
+	    enc->block_size != cipher_blocksize(enc->cipher) ||
+	    cipher_is_internal(enc->cipher)) {
+		r = SSH_ERR_INVALID_FORMAT;
+		goto out;
+	}
+	if (keylen != cipher_keylen(enc->cipher) ||
+	    ivlen != cipher_ivlen(enc->cipher)) {
 		r = SSH_ERR_INVALID_FORMAT;
 		goto out;
 	}
@@ -2540,7 +2562,7 @@ newkeys_from_blob(struct sshbuf *m, struct ssh *ssh, int mode)
 		if ((r = sshbuf_get_u32(b, (u_int *)&mac->enabled)) != 0 ||
 		    (r = sshbuf_get_string(b, &mac->key, &maclen)) != 0)
 			goto out;
-		if (maclen > mac->key_len) {
+		if (maclen != mac->key_len) {
 			r = SSH_ERR_INVALID_FORMAT;
 			goto out;
 		}
@@ -2586,6 +2608,10 @@ kex_from_blob(struct sshbuf *m, struct kex **kexp)
 	    (r = sshbuf_get_stringb(m, kex->session_id)) != 0 ||
 	    (r = sshbuf_get_u32(m, &kex->flags)) != 0)
 		goto out;
+	if (kex->we_need > 1024) {
+		r = SSH_ERR_INVALID_FORMAT;
+		goto out;
+	}
 	kex->server = 1;
 	kex->done = 1;
 	r = 0;
@@ -3080,6 +3106,7 @@ connection_info_message(struct ssh *ssh)
 
 	xasprintf(&ret, "Connection information for %s pid %lld\r\n"
 	    "%s"
+	    "  duration %s\r\n"
 	    "  kexalgorithm %s\r\n  hostkeyalgorithm %s\r\n"
 	    "  cipher %s\r\n  mac %s\r\n  compression %s\r\n"
 	    "  rekey %s %s\r\n"
@@ -3087,6 +3114,7 @@ connection_info_message(struct ssh *ssh)
 	    "%s",
 	    thishost, (long long)getpid(),
 	    tcp_info,
+	    fmt_timeframe(monotime() - state->start_time),
 	    kex->name, kex->hostkey_alg,
 	    cipher, mac, comp,
 	    rekey_volume, rekey_time,

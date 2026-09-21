@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.49 2026/04/08 18:58:41 christos Exp $
+.\"	$NetBSD: sshd_config.5,v 1.50 2026/09/21 21:31:00 christos Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,8 +34,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd_config.5,v 1.397 2026/03/28 05:07:12 djm Exp $
-.Dd March 28 2026
+.\" $OpenBSD: sshd_config.5,v 1.402 2026/08/08 07:27:54 djm Exp $
+.Dd June 24 2026
 .Dt SSHD_CONFIG 5
 .Os
 .Sh NAME
@@ -392,7 +392,8 @@ ssh-ed25519,ecdsa-sha2-nistp256,
 ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
 sk-ssh-ed25519@openssh.com,
 sk-ecdsa-sha2-nistp256@openssh.com,
-rsa-sha2-512,rsa-sha2-256
+rsa-sha2-512,rsa-sha2-256,
+ssh-mldsa44-ed25519@openssh.com
 .Ed
 .Pp
 If the specified list begins with a
@@ -634,6 +635,13 @@ or
 .Cm no .
 The default is
 .Cm yes .
+.Pp
+Compression applies to all traffic that flows over the SSH connection.
+If untrusted traffic (such as an open port-forward) is permitted over the
+connection alongside trusted traffic, then compression may leak information
+about session contents.
+For this reason, it is not recommended to enable compression for connections
+that share trusted and untrusted traffic.
 .It Cm DenyGroups
 This keyword can be followed by a list of group name patterns, separated
 by spaces.
@@ -770,6 +778,7 @@ machine's default store.
 This facility is provided to assist with operation on multi homed machines.
 The default is
 .Cm yes .
+This option may not be effective in Windows Active Directory environments.
 .It Cm HostbasedAcceptedAlgorithms
 Specifies the signature algorithms that will be accepted for hostbased
 authentication as a list of comma-separated patterns.
@@ -796,12 +805,14 @@ sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 webauthn-sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 rsa-sha2-512-cert-v01@openssh.com,
 rsa-sha2-256-cert-v01@openssh.com,
+ssh-mldsa44-ed25519-cert-v01@openssh.com,
 ssh-ed25519,
 ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
 sk-ssh-ed25519@openssh.com,
 sk-ecdsa-sha2-nistp256@openssh.com,
 webauthn-sk-ecdsa-sha2-nistp256@openssh.com,
-rsa-sha2-512,rsa-sha2-256
+rsa-sha2-512,rsa-sha2-256,
+ssh-mldsa44-ed25519@openssh.com
 .Ed
 .Pp
 The list of available signature algorithms may also be obtained using
@@ -843,7 +854,8 @@ Specifies a file containing a private host key
 used by SSH.
 The defaults are
 .Pa /etc/ssh/ssh_host_ecdsa_key ,
-.Pa /etc/ssh/ssh_host_ed25519_key
+.Pa /etc/ssh/ssh_host_ed25519_key ,
+.Pa /etc/ssh/ssh_host_mldsa44_ed25519_key
 and
 .Pa /etc/ssh/ssh_host_rsa_key .
 .Pp
@@ -882,12 +894,14 @@ sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 webauthn-sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 rsa-sha2-512-cert-v01@openssh.com,
 rsa-sha2-256-cert-v01@openssh.com,
+ssh-mldsa44-ed25519-cert-v01@openssh.com,
 ssh-ed25519,
 ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
 sk-ssh-ed25519@openssh.com,
 sk-ecdsa-sha2-nistp256@openssh.com,
 webauthn-sk-ecdsa-sha2-nistp256@openssh.com,
-rsa-sha2-512,rsa-sha2-256
+rsa-sha2-512,rsa-sha2-256,
+ssh-mldsa44-ed25519@openssh.com
 .Ed
 .Pp
 The list of available signature algorithms may also be obtained using
@@ -1069,6 +1083,8 @@ ecdh-sha2-nistp256
 ecdh-sha2-nistp384
 .It
 ecdh-sha2-nistp521
+.It
+mlkem768nistp256-sha256
 .It
 mlkem768x25519-sha256
 .It
@@ -1752,12 +1768,14 @@ sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 webauthn-sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 rsa-sha2-512-cert-v01@openssh.com,
 rsa-sha2-256-cert-v01@openssh.com,
+ssh-mldsa44-ed25519-cert-v01@openssh.com,
 ssh-ed25519,
 ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
 sk-ssh-ed25519@openssh.com,
 sk-ecdsa-sha2-nistp256@openssh.com,
 webauthn-sk-ecdsa-sha2-nistp256@openssh.com,
-rsa-sha2-512,rsa-sha2-256
+rsa-sha2-512,rsa-sha2-256,
+ssh-mldsa44-ed25519@openssh.com
 .Ed
 .Pp
 The list of available signature algorithms may also be obtained using

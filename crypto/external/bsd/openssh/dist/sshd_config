@@ -1,5 +1,5 @@
-#	$NetBSD: sshd_config,v 1.30 2026/06/30 04:13:47 riastradh Exp $
-#	$OpenBSD: sshd_config,v 1.105 2024/12/03 14:12:47 dtucker Exp $
+#	$NetBSD: sshd_config,v 1.31 2026/09/21 21:31:00 christos Exp $
+#	$OpenBSD: sshd_config,v 1.106 2026/07/10 17:21:19 naddy Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -17,6 +17,7 @@
 #HostKey /etc/ssh/ssh_host_rsa_key
 #HostKey /etc/ssh/ssh_host_ecdsa_key
 #HostKey /etc/ssh/ssh_host_ed25519_key
+#HostKey /etc/ssh/ssh_host_mldsa44_ed25519_key
 
 # Ciphers and keying
 #RekeyLimit default none

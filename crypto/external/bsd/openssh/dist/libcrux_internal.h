@@ -27330,3 +27330,6 @@ typedef Eurydice_arr_93 libcrux_mldsa87_signature;
 
 #define LIBCRUX_RESULT_OK	core_result_Ok
 
+#ifndef __OpenBSD__
+#define explicit_bzero(a, b) explicit_memset((a), 0, (b))
+#endif

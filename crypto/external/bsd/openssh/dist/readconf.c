@@ -1,6 +1,6 @@
-/*	$NetBSD: readconf.c,v 1.51 2026/04/08 18:58:41 christos Exp $	*/
-/* $OpenBSD: readconf.c,v 1.411 2026/03/30 07:18:24 djm Exp $ */
-
+/*	$NetBSD: readconf.c,v 1.52 2026/09/21 21:31:00 christos Exp $	*/
+/* $OpenBSD: readconf.c,v 1.413 2026/06/29 08:16:46 djm Exp $ */
+/* $OpenBSD: readconf.c,v 1.415 2026/07/21 05:21:29 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.51 2026/04/08 18:58:41 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.52 2026/09/21 21:31:00 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -1959,7 +1959,7 @@ parse_pubkey_algos:
 
 	case oMatch:
 		if (cmdline) {
-			error("Host directive not supported as a command-line "
+			error("Match directive not supported as a command-line "
 			    "option");
 			goto out;
 		}
@@ -2879,10 +2879,10 @@ initialize_options(Options * options)
 	options->ipv6_prefer_temporary = -1;
 	options->pkcs11_provider = NULL;
 	options->sk_provider = NULL;
-	options->enable_ssh_keysign = - 1;
-	options->no_host_authentication_for_localhost = - 1;
-	options->identities_only = - 1;
-	options->rekey_limit = - 1;
+	options->enable_ssh_keysign = -1;
+	options->no_host_authentication_for_localhost = -1;
+	options->identities_only = -1;
+	options->rekey_limit = -1;
 	options->rekey_interval = -1;
 	options->verify_host_key_dns = -1;
 	options->server_alive_interval = -1;
@@ -2967,7 +2967,7 @@ fill_default_options(Options * options)
 {
 	char *all_cipher, *all_mac, *all_kex, *all_key, *all_sig;
 	char *def_cipher, *def_mac, *def_kex, *def_key, *def_sig;
-	int ret = 0, r;
+	int ret = -1, r;
 
 	if (options->forward_agent == -1)
 		options->forward_agent = 0;
@@ -3054,6 +3054,8 @@ fill_default_options(Options * options)
 		    _PATH_SSH_CLIENT_ID_ED25519, 0);
 		add_identity_file(options, "~/",
 		    _PATH_SSH_CLIENT_ID_ED25519_SK, 0);
+		add_identity_file(options, "~/",
+		    _PATH_SSH_CLIENT_ID_MLDSA44_ED25519, 0);
 	}
 	if (options->escape_char == -1)
 		options->escape_char = '~';
@@ -3082,7 +3084,7 @@ fill_default_options(Options * options)
 		options->log_level = SYSLOG_LEVEL_INFO;
 	if (options->log_facility == SYSLOG_FACILITY_NOT_SET)
 		options->log_facility = SYSLOG_FACILITY_USER;
-	if (options->no_host_authentication_for_localhost == - 1)
+	if (options->no_host_authentication_for_localhost == -1)
 		options->no_host_authentication_for_localhost = 0;
 	if (options->identities_only == -1)
 		options->identities_only = 0;

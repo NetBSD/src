@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2026/04/29 13:41:38 riastradh Exp $
+#	$NetBSD: Makefile,v 1.50 2026/09/21 21:31:01 christos Exp $
 
 # libssh is not meant for applications to link against -- it's a
 # private library of the ssh/sshd/&c. executables we ship.  So don't
@@ -49,9 +49,11 @@ kex.c \
 kexc25519.c \
 kex-names.c \
 kexgen.c \
+kexmlkem768ecdh.c \
 kexmlkem768x25519.c \
 kexsntrup761x25519.c \
 krl.c \
+libcrux-mlkem-mldsa.c \
 log.c \
 mac.c \
 match.c \
@@ -68,6 +70,7 @@ smult_curve25519_ref.c \
 sntrup761.c \
 ssh-ed25519.c \
 ssh-ed25519-sk.c \
+ssh-mldsa-eddsa.c \
 ssh-pkcs11.c \
 ssh-sk-client.c \
 sshbuf-getput-basic.c \
@@ -129,6 +132,7 @@ COPTS.cipher.c+=	-Wno-error=deprecated-declarations
 COPTS.dh.c+=		-Wno-error=deprecated-declarations
 COPTS.digest-libc.c+=	-Wno-error=cast-function-type
 COPTS.kex.c+=		-Wno-error=deprecated-declarations
+COPTS.kexmlkem768ecdh.c+=	-Wno-error=deprecated-declarations
 COPTS.kexdh.c+=		-Wno-error=deprecated-declarations
 COPTS.kexecdh.c+=	-Wno-error=deprecated-declarations
 COPTS.kexgexc.c+=	-Wno-error=deprecated-declarations

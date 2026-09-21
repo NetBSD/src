@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.41 2026/04/08 18:58:40 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.213 2026/03/03 09:57:25 dtucker Exp $ */
+/*	$NetBSD: misc.c,v 1.42 2026/09/21 21:30:59 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.215 2026/06/21 19:23:56 tb Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -20,7 +20,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.41 2026/04/08 18:58:40 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.42 2026/09/21 21:30:59 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -2522,10 +2522,12 @@ parse_absolute_time(const char *s, uint64_t *tp)
 	if ((cp = strptime(buf, fmt, &tm)) == NULL || *cp != '\0')
 		return SSH_ERR_INVALID_FORMAT;
 	if (is_utc) {
-		if ((tt = timegm(&tm)) < 0)
+		tm.tm_wday = -1;	/* sentinel for error */
+		if ((tt = timegm(&tm)) == -1 && tm.tm_wday == -1)
 			return SSH_ERR_INVALID_FORMAT;
 	} else {
-		if ((tt = mktime(&tm)) < 0)
+		tm.tm_wday = -1;	/* sentinel for error */
+		if ((tt = mktime(&tm)) == -1 && tm.tm_wday == -1)
 			return SSH_ERR_INVALID_FORMAT;
 	}
 	/* success */

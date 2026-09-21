@@ -1,6 +1,6 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.26 2026/04/08 18:58:40 christos Exp $	*/
+/*	$NetBSD: auth2-hostbased.c,v 1.27 2026/09/21 21:30:59 christos Exp $	*/
 /* $OpenBSD: auth2-hostbased.c,v 1.57 2026/04/02 07:48:13 djm Exp $ */
-
+/* $OpenBSD: auth2-hostbased.c,v 1.58 2026/07/30 03:37:39 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.26 2026/04/08 18:58:40 christos Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.27 2026/09/21 21:30:59 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -90,6 +90,12 @@ userauth_hostbased(struct ssh *ssh, const char *method)
 		    pkalg);
 		goto done;
 	}
+	if (match_pattern_list(pkalg,
+	    options.hostbased_accepted_algos, 0) != 1) {
+		logit_f("signature algorithm %s not in "
+		    "HostbasedAcceptedAlgorithms", pkalg);
+		goto done;
+	}
 	if ((r = sshkey_from_blob(pkblob, blen, &key)) != 0) {
 		error_fr(r, "key_from_blob");
 		goto done;
@@ -102,11 +108,6 @@ userauth_hostbased(struct ssh *ssh, const char *method)
 	    sshkey_ecdsa_nid_from_name(pkalg) != key->ecdsa_nid)) {
 		error_f("key type mismatch for decoded key "
 		    "(received %s, expected %s)", sshkey_ssh_name(key), pkalg);
-		goto done;
-	}
-	if (match_pattern_list(pkalg, options.hostbased_accepted_algos, 0) != 1) {
-		logit_f("signature algorithm %s not in "
-		    "HostbasedAcceptedAlgorithms", pkalg);
 		goto done;
 	}
 	if ((r = sshkey_check_cert_sigtype(key,

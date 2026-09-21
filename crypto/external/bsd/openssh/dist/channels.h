@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.h,v 1.31 2026/04/08 18:58:40 christos Exp $	*/
-/* $OpenBSD: channels.h,v 1.164 2026/03/05 05:40:35 djm Exp $ */
+/*	$NetBSD: channels.h,v 1.32 2026/09/21 21:30:59 christos Exp $	*/
+/* $OpenBSD: channels.h,v 1.167 2026/06/24 06:53:11 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -85,7 +85,8 @@
 
 /* default pattern-lists used to classify channel types as bulk */
 #define CHANNEL_BULK_TTY	""
-#define CHANNEL_BULK_NOTTY	"direct-*,forwarded-*,tun-*,x11-*,session*"
+#define CHANNEL_BULK_NOTTY	"direct-*,forwarded-*,dynamic-*," \
+				"tun-*,x11-*,session*,stdio-forward"
 
 struct ssh;
 struct Channel;

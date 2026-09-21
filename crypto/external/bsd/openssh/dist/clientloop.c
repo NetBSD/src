@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.45 2026/04/08 18:58:40 christos Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.422 2026/03/05 05:40:35 djm Exp $ */
+/*	$NetBSD: clientloop.c,v 1.46 2026/09/21 21:30:59 christos Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.425 2026/07/01 01:08:51 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -62,7 +62,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.45 2026/04/08 18:58:40 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.46 2026/09/21 21:30:59 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -109,6 +109,8 @@ __RCSID("$NetBSD: clientloop.c,v 1.45 2026/04/08 18:58:40 christos Exp $");
 
 /* Uncertainty (in percent) of keystroke timing intervals */
 #define SSH_KEYSTROKE_TIMING_FUZZ 10
+
+extern char *__progname;
 
 /* import options */
 extern Options options;
@@ -1598,8 +1600,12 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 		if (sigprocmask(SIG_BLOCK, &bsigset, &osigset) == -1)
 			error_f("bsigset sigprocmask: %s", strerror(errno));
 		if (siginfo_received) {
+			char ident[256];
+
+			sshpkt_fmt_connection_id(ssh, ident, sizeof(ident));
+			logit("%s: connection to %s, up %.1f seconds",
+			    __progname, ident, monotime_double() - start_time);
 			siginfo_received = 0;
-			channel_report_open(ssh, SYSLOG_LEVEL_INFO);
 		}
 		if (quit_pending)
 			break;
@@ -2725,7 +2731,7 @@ client_session2_setup(struct ssh *ssh, int id, int want_tty, int want_subsystem,
 {
 	size_t i, j, len;
 	int matched, r;
-	char *name, *val;
+	char *type = NULL, *cmdstring = NULL, *name, *val;
 	Channel *c = NULL;
 
 	debug2_f("id %d", id);
@@ -2800,19 +2806,21 @@ client_session2_setup(struct ssh *ssh, int id, int want_tty, int want_subsystem,
 
 	len = sshbuf_len(cmd);
 	if (len > 0) {
+		if ((cmdstring = sshbuf_dup_string(cmd)) == NULL)
+			fatal_f("sshbuf_dup_string failed");
 		if (len > 900)
 			len = 900;
 		if (want_subsystem) {
-			debug("Sending subsystem: %.*s",
-			    (int)len, (const u_char*)sshbuf_ptr(cmd));
+			debug("Sending subsystem: %.*s", (int)len, cmdstring);
 			channel_request_start(ssh, id, "subsystem", 1);
 			client_expect_confirm(ssh, id, "subsystem",
 			    CONFIRM_CLOSE);
+			xasprintf(&type, "session:subsystem:%s", cmdstring);
 		} else {
-			debug("Sending command: %.*s",
-			    (int)len, (const u_char*)sshbuf_ptr(cmd));
+			debug("Sending command: %.*s", (int)len, cmdstring);
 			channel_request_start(ssh, id, "exec", 1);
 			client_expect_confirm(ssh, id, "exec", CONFIRM_CLOSE);
+			xasprintf(&type, "session:command");
 		}
 		if ((r = sshpkt_put_stringb(ssh, cmd)) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0)
@@ -2822,7 +2830,11 @@ client_session2_setup(struct ssh *ssh, int id, int want_tty, int want_subsystem,
 		client_expect_confirm(ssh, id, "shell", CONFIRM_CLOSE);
 		if ((r = sshpkt_send(ssh)) != 0)
 			fatal_fr(r, "send shell");
+		xasprintf(&type, "session:shell");
 	}
+	channel_set_xtype(ssh, id, type);
+	free(cmdstring);
+	free(type);
 
 	session_setup_complete = 1;
 	client_repledge();
