@@ -1,4 +1,4 @@
-/*	$NetBSD: settimeofday.c,v 1.14 2011/10/15 23:00:02 christos Exp $ */
+/*	$NetBSD: settimeofday.c,v 1.15 2026/09/21 12:50:46 gutteridge Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: settimeofday.c,v 1.14 2011/10/15 23:00:02 christos Exp $");
+__RCSID("$NetBSD: settimeofday.c,v 1.15 2026/09/21 12:50:46 gutteridge Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -62,7 +62,7 @@ settimeofday(const struct timeval *tv, const void *tzp)
 	int rv;
 
 	/*
-	 * try syscal first and attempt to switch to clockctl
+	 * try syscall first and attempt to switch to clockctl
 	 * if that fails with EPERM
 	 */
 	if (__clockctl_fd == -1) {
@@ -70,7 +70,7 @@ settimeofday(const struct timeval *tv, const void *tzp)
 	
 		/*
 		 * switch to clockctl if we fail with EPERM, this
-		 * may be cause by an attempt to set the time backwards
+		 * may be caused by an attempt to set the time backwards
 		 * but we should leave the access permission checking
 		 * entirely to the kernel
 		 */
