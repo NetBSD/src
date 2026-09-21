@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwelvereg.h,v 1.3 2016/04/21 18:24:02 macallan Exp $ */
+/*	$NetBSD: cgtwelvereg.h,v 1.4 2026/09/21 11:37:55 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -204,6 +204,7 @@
 #define CG12APU_DST_CTL		0x02c8
 #define CG12APU_MORIGIN		0x02cc
 #define CG12APU_VSG_CTL		0x02d0
+	#define CG12APU_VIDEO_ENABLE	0x10
 #define CG12APU_H_SYNC		0x02d4
 #define CG12APU_H_BLANK		0x02d8
 #define CG12APU_V_SYNC		0x02dc

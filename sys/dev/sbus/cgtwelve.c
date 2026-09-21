@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwelve.c,v 1.8 2021/08/07 16:19:15 thorpej Exp $ */
+/*	$NetBSD: cgtwelve.c,v 1.9 2026/09/21 11:37:55 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the Sun CG12 / Matrox SG3 graphics board */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.8 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.9 2026/09/21 11:37:55 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,10 @@ struct cgtwelve_softc {
 	int		sc_stride;
 	int		sc_fbsize;
 	int		sc_mode;
+	int		sc_video;
+	int		sc_depth;
+	/* colour map */
+	uint8_t		sc_r[256], sc_g[256], sc_b[256];
 	struct vcons_data vd;
 };
 
@@ -93,6 +97,9 @@ static void	cgtwelve_select_ovl(struct cgtwelve_softc *, int);
 #define CG12_SEL_WID	4
 static void	cgtwelve_write_dac(struct cgtwelve_softc *, int, int, int, int);
 static void	cgtwelve_setup(struct cgtwelve_softc *, int);
+static void	cgtwelve_set_video(struct cgtwelve_softc *, int);
+static int	cgtwelve_putcmap(struct cgtwelve_softc *, struct wsdisplay_cmap *);
+static int	cgtwelve_getcmap(struct cgtwelve_softc *, struct wsdisplay_cmap *);
 
 CFATTACH_DECL_NEW(cgtwelve, sizeof(struct cgtwelve_softc),
     cgtwelve_match, cgtwelve_attach, NULL, NULL);
@@ -183,7 +190,7 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 		}
 		sc->sc_fbaddr = bus_space_vaddr(sa->sa_bustag, bh);
 	}
-		
+
 	aprint_normal_dev(self, "%d x %d\n", sc->sc_width, sc->sc_height);
 
 	if (sbus_bus_map(sa->sa_bustag,
@@ -216,7 +223,8 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 		return;
 	}
 	sc->sc_int = bus_space_vaddr(sa->sa_bustag, bh);
-
+	sc->sc_video = WSDISPLAYIO_VIDEO_ON;
+	sc->sc_depth = 32;
 #ifdef CG12_COLOR
 	cgtwelve_setup(sc, 8);
 #else
@@ -362,6 +370,58 @@ cgtwelve_write_dac(struct cgtwelve_softc *sc, int idx, int r, int g, int b)
 	    b << 16 | g << 8 | r);
 }
 
+static int
+cgtwelve_putcmap(struct cgtwelve_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int i, error;
+
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
+		return EINVAL;
+	error = copyin(cm->red, &sc->sc_r[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &sc->sc_g[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &sc->sc_b[index], count);
+	if (error)
+		return error;
+
+	if (sc->sc_depth == 8) {
+		for (i = index; i < index + count; i++) {
+			cgtwelve_write_dac(sc, i, sc->sc_r[i], sc->sc_g[i], sc->sc_b[i]);
+		}
+	}
+	return 0;
+}
+
+static int
+cgtwelve_getcmap(struct cgtwelve_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	if (index >= 255 || count > 256 || index + count > 256)
+		return EINVAL;
+
+
+	error = copyout(&sc->sc_r[index],   cm->red,   count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_g[index], cm->green, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_b[index],  cm->blue,  count);
+	if (error)
+		return error;
+
+	return 0;
+}
+
 static void
 cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
 {
@@ -370,7 +430,7 @@ cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
 	/* first let's put some stuff into the WID table */
 	cgtwelve_write_wid(sc, 0, CG12_WID_8_BIT);
 	cgtwelve_write_wid(sc, 1, CG12_WID_24_BIT);
-	
+
 	/* a linear ramp for the gamma table */
 	for (i = 0; i < 256; i++)
 		cgtwelve_write_dac(sc, i + 0x100, i, i, i);
@@ -378,6 +438,9 @@ cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
 	j = 0;
 	/* rasops' ANSI colour map */
 	for (i = 0; i < 256; i++) {
+		sc->sc_r[i] = rasops_cmap[j];
+		sc->sc_g[i] = rasops_cmap[j + 1];
+		sc->sc_g[i] = rasops_cmap[j+ 2];
 		cgtwelve_write_dac(sc, i,
 		    rasops_cmap[j],
 		    rasops_cmap[j + 1],
@@ -454,6 +517,19 @@ cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
 }
 
 static void
+cgtwelve_set_video(struct cgtwelve_softc *sc, int on)
+{
+	uint32_t reg;
+	if (on == sc->sc_video) return;
+	on = on == 0 ? WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
+	reg = bus_space_read_4(sc->sc_tag, sc->sc_regh, CG12APU_VSG_CTL);
+	reg &= ~CG12APU_VIDEO_ENABLE;
+	if (on) reg |= CG12APU_VIDEO_ENABLE;
+	bus_space_write_4(sc->sc_tag, sc->sc_regh, CG12APU_VSG_CTL, reg);
+	sc->sc_video = on;
+}
+
+static void
 cgtwelve_init_screen(void *cookie, struct vcons_screen *scr,
     int existing, long *defattr)
 {
@@ -514,25 +590,35 @@ cgtwelve_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			wdf = (void *)data;
 			wdf->height = sc->sc_height;
 			wdf->width = sc->sc_width;
-			wdf->depth = 32;
+			wdf->depth = sc->sc_depth;
 			wdf->cmsize = 256;
 			return 0;
 
 		case FBIOGVIDEO:
 		case WSDISPLAYIO_GVIDEO:
-			*(int *)data = 1;
+			*(int *)data = sc->sc_video;
 			return 0;
 
 		case WSDISPLAYIO_SVIDEO:
 		case FBIOSVIDEO:
-			/* when we figure out how to do this... */
-			/*cgtwelve_set_video(sc, *(int *)data);*/
+			cgtwelve_set_video(sc, *(int *)data);
 			return 0;
+
+		case WSDISPLAYIO_GETCMAP:
+			return cgtwelve_getcmap(sc,
+			    (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_PUTCMAP:
+			return cgtwelve_putcmap(sc,
+			    (struct wsdisplay_cmap *)data);
 
 		case WSDISPLAYIO_LINEBYTES:
 			{
 				int *ret = (int *)data;
-				*ret = sc->sc_width << 2;
+				if (sc->sc_depth == 32) {
+					*ret = sc->sc_width << 2;
+				} else
+					*ret = sc->sc_width;
 			}
 			return 0;
 
@@ -551,10 +637,50 @@ cgtwelve_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 #endif
 						vcons_redraw_screen(ms);
 					} else {
-						cgtwelve_setup(sc, 32);
+						cgtwelve_setup(sc, sc->sc_depth);
 					}
 				}
 			}
+			return 0;
+
+		case WSDISPLAYIO_SET_DEPTH:
+			{
+				int new_depth = *(int*)data;
+
+				if ((new_depth == 8) || (new_depth == 32)) {
+					sc->sc_depth = new_depth;
+					return 0;
+				}
+				return EINVAL;
+			}
+
+		case WSDISPLAYIO_GET_FBINFO:
+		{
+			struct wsdisplayio_fbinfo *fbi = data;
+
+			if (sc->sc_depth == 8) {
+				fbi->fbi_stride = sc->sc_width;
+				fbi->fbi_fbsize = 1024 * 1024;
+				fbi->fbi_bitsperpixel = 8;
+				fbi->fbi_pixeltype = WSFB_CI;
+			} else {
+				fbi->fbi_stride = sc->sc_width * 4;
+				fbi->fbi_fbsize = 4 * 1024 * 1024;
+				fbi->fbi_bitsperpixel = 32;
+				fbi->fbi_pixeltype = WSFB_RGB;
+			}
+			fbi->fbi_width = sc->sc_width;
+			fbi->fbi_height = sc->sc_height;
+			fbi->fbi_subtype.fbi_rgbmasks.red_offset = 0;
+			fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 16;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.alpha_offset = 0;
+			fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
+			return 0;
+		}
 	}
 
 	return EPASSTHROUGH;
