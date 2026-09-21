@@ -1,4 +1,4 @@
-/*	$NetBSD: ophandlers.c,v 1.13 2013/07/02 11:59:46 joerg Exp $	*/
+/*	$NetBSD: ophandlers.c,v 1.14 2026/09/21 09:37:48 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@ extern	int verbose;
 static	char err_str[BUFSIZE];
 
 static	void op_notsupp (const struct extabent *, struct opiocdesc *, char *);
+static	void op_data(const struct extabent *, struct opiocdesc *, char *);
+static	void op_bitmap(const struct extabent *, struct opiocdesc *, char *);
 
 /*
  * There are several known fields that I either don't know how to
@@ -58,7 +60,8 @@ static	void op_notsupp (const struct extabent *, struct opiocdesc *, char *);
 static	const struct extabent opextab[] = {
 	{ "security-password",		op_notsupp },
 	{ "security-mode",		op_notsupp },
-	{ "oem-logo",			op_notsupp },
+	{ "hardware-revision",		op_data },
+	{ "oem-logo",			op_bitmap },
 	{ NULL,				op_notsupp },
 };
 
@@ -192,6 +195,41 @@ op_notsupp(const struct extabent *exent, struct opiocdesc *opiop, char *arg)
 {
 
 	warnx("property `%s' not yet supported", exent->ex_keyword);
+}
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+static void
+op_data(const struct extabent *exent, struct opiocdesc *opiop, char *arg)
+{
+	int i, j;
+
+	printf("%s:\n", exent->ex_keyword);
+	for (i = 0; i < opiop->op_buflen; i += 16) {
+		printf("%04x:", i);
+		for (j = 0; j < MIN(16, opiop->op_buflen - i); j++) {
+			printf(" %02x", opiop->op_buf[i + j] & 0xff);
+		}
+		printf("\n");
+	}
+}
+
+static void
+op_bitmap(const struct extabent *exent, struct opiocdesc *opiop, char *arg)
+{
+	int i, j, k, b;
+
+	printf("%s:\n", exent->ex_keyword);
+	for (i = 0; i < opiop->op_buflen; i += 8) {
+		for (j = 0; j < MIN(8, opiop->op_buflen - i); j++) {
+			b = opiop->op_buf[i + j];
+			for (k = 0; k < 8; k++) {
+				printf("%c", b & 0x80 ? '#' : ' ');
+				b <<= 1;
+			}
+		}
+		printf("\n");
+	}
 }
 
 /*
