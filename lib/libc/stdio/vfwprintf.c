@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.41 2024/01/20 14:52:49 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.42 2026/09/21 19:12:51 kre Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.41 2024/01/20 14:52:49 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.42 2026/09/21 19:12:51 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1727,6 +1727,7 @@ reswitch:	switch (ch) {
 		case 'e':
 		case 'E':
 		case 'f':
+		case 'F':
 		case 'g':
 		case 'G':
 			if (flags & LONGDBL)
