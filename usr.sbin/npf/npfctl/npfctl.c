@@ -1,3 +1,5 @@
+/*	$NetBSD: npfctl.c,v 1.71 2026/09/21 02:39:08 gutteridge Exp $	*/
+
 /*-
  * Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.70 2026/09/18 18:52:10 joe Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.71 2026/09/21 02:39:08 gutteridge Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -96,7 +98,7 @@ usage(void)
 	    "Usage:\t%s start | stop | flush | show\n",
 	    progname);
 	fprintf(stderr,
-	    "\t%s stats | stats { reset }\n",
+	    "\t%s stats [reset]\n",
 	    progname);
 	fprintf(stderr,
 	    "\t%s validate | reload [<rule-file>]\n",
