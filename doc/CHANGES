@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3296 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3297 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -425,3 +425,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	bind: Import version 9.20.29. [christos 20260917]
 	news68k: add wsdisplay(9) support for NWB-225 framebuffer console
 		[tsutsui 20260920]
+	ssh(1), sshd(8): Import OpenSSH 10.5. [christos 20260921]
