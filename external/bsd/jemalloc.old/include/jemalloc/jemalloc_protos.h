@@ -3,7 +3,12 @@
  * of namespace management, and should be omitted in application code unless
  * JEMALLOC_NO_DEMANGLE is defined (see jemalloc_mangle.h).
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern JEMALLOC_EXPORT const char	*je_malloc_conf;
+extern JEMALLOC_EXPORT const char	*je_malloc_conf_2_conf_harder;
 extern JEMALLOC_EXPORT void		(*je_malloc_message)(void *cbopaque,
     const char *s);
 
@@ -25,6 +30,9 @@ JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
     JEMALLOC_CXX_THROW JEMALLOC_ALLOC_SIZE(2);
 JEMALLOC_EXPORT void JEMALLOC_SYS_NOTHROW	je_free(void *ptr)
     JEMALLOC_CXX_THROW;
+JEMALLOC_EXPORT void JEMALLOC_NOTHROW	je_free_sized(void *ptr, size_t size);
+JEMALLOC_EXPORT void JEMALLOC_NOTHROW	je_free_aligned_sized(
+    void *ptr, size_t alignment, size_t size);
 
 JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
     void JEMALLOC_NOTHROW	*je_mallocx(size_t size, int flags)
@@ -68,4 +76,14 @@ JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
 JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
     void JEMALLOC_SYS_NOTHROW	*je_valloc(size_t size) JEMALLOC_CXX_THROW
     JEMALLOC_ATTR(malloc);
+#endif
+
+#ifdef JEMALLOC_OVERRIDE_PVALLOC
+JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
+    void JEMALLOC_SYS_NOTHROW	*je_pvalloc(size_t size) JEMALLOC_CXX_THROW
+    JEMALLOC_ATTR(malloc);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
