@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.121 2026/09/20 17:38:56 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.122 2026/09/21 03:43:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.121 2026/09/20 17:38:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.122 2026/09/21 03:43:49 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -597,10 +597,14 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	 */
 	pmap_bootstrap(vstart);
 
+#if defined(M68030)
 	/*
-	 * Prepare to enable the MMU.
-	 * Setup and load SRP (see pmap.h)
+	 * Prepare the SRP prototype before relocating the kernel.
+	 * The relocated copy must contain the root table address
+	 * when the MMU is enabled.
 	 */
+	protorp[1] = Sysseg_pa;
+#endif
 
 	cpu_init_kcorehdr(kbase, Sysseg_pa);
 
@@ -642,8 +646,9 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 #endif
 	{
 #if defined(M68030)
-		protorp[1] = Sysseg_pa;		/* + segtable address */
-		__asm volatile ("pmove %0@,%%srp" : : "a" (&protorp[0]));
+		__asm volatile ("pmove %0@,%%srp"
+		    :
+		    : "a" (&protorp[0]), "m" (protorp[0]), "m" (protorp[1]));
 		/*
 		 * setup and load TC register.
 		 * enable_cpr, enable_srp, pagesize=8k,
