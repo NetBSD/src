@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.669 2026/04/06 17:13:54 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.670 2026/09/21 04:10:03 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.669 2026/04/06 17:13:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.670 2026/09/21 04:10:03 sjg Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2195,7 +2195,7 @@ mkTempFile(const char *pattern, char *tfile, size_t tfile_sz)
 	int fd;
 
 	if (pattern == NULL)
-		pattern = "makeXXXXXX";
+		pattern = "makeXXXXXXXXXX";
 	if (tmpdir == NULL)
 		tmpdir = getTmpdir();
 	if (tfile == NULL) {
