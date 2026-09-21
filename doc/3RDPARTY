@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2251 2026/09/18 07:23:11 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2252 2026/09/21 21:36:28 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -655,8 +655,9 @@ Responsible:	christos
 License:	BSD
 Location:	external/bsd/jemalloc
 Notes:
-Jason Evans post-mortem for jemalloc; there will be no further development:
-https://jasone.github.io/2025/06/12/jemalloc-postmortem/
+Jason Evans post-mortem for jemalloc:
+    https://jasone.github.io/2025/06/12/jemalloc-postmortem/
+But there is further development
 There are two versions of this in-tree, the principal one tracking the
 modern upstream, and a much older one found directly at src/lib/libc/stdlib
 which is still in use and receiving local updates as well.
@@ -1114,7 +1115,7 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	10.3
+Version:	10.5
 Current Vers:	10.5 / portable 10.5p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
