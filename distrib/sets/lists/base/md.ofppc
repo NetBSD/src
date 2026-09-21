@@ -1,8 +1,9 @@
-# $NetBSD: md.ofppc,v 1.18 2024/07/11 20:41:06 riastradh Exp $
+# $NetBSD: md.ofppc,v 1.19 2026/09/21 08:02:08 macallan Exp $
 #
 ./usr/mdec/mkbootinfo				base-sysutil-bin
 ./usr/mdec/netbsd.chrp				base-sysutil-bin
 ./usr/mdec/ofwboot				base-sysutil-bin
+./usr/sbin/eeprom				base-sysutil-bin
 ./usr/sbin/ofctl				base-sysutil-bin
 ./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share
