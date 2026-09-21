@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1485 2026/08/01 20:48:03 thorpej Exp $
+#      $NetBSD: bsd.own.mk,v 1.1486 2026/09/21 23:24:49 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -288,9 +288,9 @@ HAVE_JEMALLOC?=		100
 HAVE_JEMALLOC?=		531
 .endif
 
-.if ${HAVE_JEMALLOC} == 531 || ${HAVE_JEMALLOC} == 100
+.if ${HAVE_JEMALLOC} == 540 || ${HAVE_JEMALLOC} == 100
 EXTERNAL_JEMALLOC_SUBDIR = jemalloc
-.elif ${HAVE_JEMALLOC} == 530
+.elif ${HAVE_JEMALLOC} == 531
 EXTERNAL_JEMALLOC_SUBDIR = jemalloc.old
 .else
 EXTERNAL_JEMALLOC_SUBDIR = /does/not/exist
