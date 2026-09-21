@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.308 2026/05/03 16:02:36 thorpej Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.309 2026/09/21 04:24:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.308 2026/05/03 16:02:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.309 2026/09/21 04:24:36 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_biohist.h"
@@ -1441,6 +1441,27 @@ start:
 		/* Wake anyone trying to lock the old identity. */
 		cv_broadcast(&bp->b_busy);
 	} else {
+ 		/*
+		 * If there is nothing to recycle, try one fresh allocation
+		 * before sleeping while the cache is below its high water mark.
+		 */
+		if (!from_bufq && bufmem < bufmem_hiwater) {
+			mutex_exit(&bufcache_lock);
+			bp = pool_cache_get(buf_cache, PR_NOWAIT);
+			if (bp != NULL) {
+				memset((char *)bp, 0, sizeof(*bp));
+				buf_init(bp);
+				SET(bp->b_cflags, BC_BUSY);
+				mutex_enter(&bufcache_lock);
+#if defined(DIAGNOSTIC)
+				bp->b_freelistindex = -1;
+#endif /* defined(DIAGNOSTIC) */
+				SDT_PROBE1(io, kernel, , getnewbuf__done,  bp);
+				return bp;
+			}
+			mutex_enter(&bufcache_lock);
+		}
+
 		/*
 		 * XXX: !from_bufq should be removed.
 		 */
