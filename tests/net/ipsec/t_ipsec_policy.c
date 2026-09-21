@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ipsec_policy.c,v 1.2 2026/09/18 13:33:46 riastradh Exp $	*/
+/*	$NetBSD: t_ipsec_policy.c,v 1.3 2026/09/21 10:52:42 kre Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ipsec_policy.c,v 1.2 2026/09/18 13:33:46 riastradh Exp $");
+__RCSID("$NetBSD: t_ipsec_policy.c,v 1.3 2026/09/21 10:52:42 kre Exp $");
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -154,7 +154,7 @@ test_ipsec_policy_roundtrip(int exp_error, uint8_t dir,
 	memset(append(&copybuf, &copylen, guardlen), guardbyte[0], guardlen);
 
 	xpl1_start = copylen;
-	(void *)append(&copybuf, &copylen, reqlen);
+	(void)append(&copybuf, &copylen, reqlen);
 
 	guard_start[1] = copylen;
 	memset(append(&copybuf, &copylen, guardlen), guardbyte[1], guardlen);
