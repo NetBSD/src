@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.490 2026/03/03 09:57:25 dtucker Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.493 2026/08/07 05:49:53 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -262,6 +262,10 @@ ask_filename(struct passwd *pw, const char *prompt)
 		case KEY_ED25519_SK:
 		case KEY_ED25519_SK_CERT:
 			name = _PATH_SSH_CLIENT_ID_ED25519_SK;
+			break;
+		case KEY_MLDSA44_ED25519:
+		case KEY_MLDSA44_ED25519_CERT:
+			name = _PATH_SSH_CLIENT_ID_MLDSA44_ED25519;
 			break;
 		default:
 			fatal("bad key type");
@@ -995,6 +999,8 @@ do_gen_all_hostkeys(struct passwd *pw)
 		{ "ecdsa", "ECDSA",_PATH_HOST_ECDSA_KEY_FILE },
 #endif /* WITH_OPENSSL */
 		{ "ed25519", "ED25519",_PATH_HOST_ED25519_KEY_FILE },
+		{ "mldsa44-ed25519", "MLDSA44-ED25519",
+		     _PATH_HOST_MLDSA44_ED25519_KEY_FILE },
 		{ NULL, NULL, NULL }
 	};
 
@@ -1338,13 +1344,14 @@ do_known_hosts(struct passwd *pw, const char *name, int find_host,
  * for the current user.
  */
 static void
-do_change_passphrase(struct passwd *pw)
+do_change_passphrase(struct passwd *pw, char * const *opts, size_t nopts)
 {
 	char *comment;
 	char *old_passphrase, *passphrase1, *passphrase2;
 	struct stat st;
 	struct sshkey *private;
 	int r;
+	size_t i;
 
 	if (!have_identity)
 		ask_filename(pw, "Enter file in which the key is");
@@ -1370,6 +1377,38 @@ do_change_passphrase(struct passwd *pw)
 	}
 	if (comment)
 		mprintf("Key has comment '%s'\n", comment);
+
+	/* All current -O options relate to FIDO keys only */
+	if (nopts != 0 && !sshkey_is_sk(private)) {
+		fatal("FIDO-specific option requested for non-FIDO key %s",
+		    identity_file);
+	}
+	if (sshkey_is_sk(private)) {
+		debug_f("%s: original FIDO key flags: "
+		    "%stouch-required %sverify-required", identity_file,
+		    (private->sk_flags & SSH_SK_USER_PRESENCE_REQD) ? "": "no-",
+		    (private->sk_flags & SSH_SK_USER_VERIFICATION_REQD) ? "" : "no-");
+	}
+	for (i = 0; i < nopts; i++) {
+		if (strcasecmp(opts[i], "touch-required") == 0)
+			private->sk_flags |= SSH_SK_USER_PRESENCE_REQD;
+		else if (strcasecmp(opts[i], "no-touch-required") == 0)
+			private->sk_flags &= ~SSH_SK_USER_PRESENCE_REQD;
+		else if (strcasecmp(opts[i], "verify-required") == 0)
+			private->sk_flags |= SSH_SK_USER_VERIFICATION_REQD;
+		else if (strcasecmp(opts[i], "no-verify-required") == 0)
+			private->sk_flags &= ~SSH_SK_USER_VERIFICATION_REQD;
+		else {
+			fatal("Option \"%s\" is unsupported for "
+			    "key passphrase change", opts[i]);
+		}
+	}
+	if (sshkey_is_sk(private) && nopts != 0) {
+		debug_f("%s: updated FIDO key flags: "
+		    "%stouch-required %sverify-required", identity_file,
+		    (private->sk_flags & SSH_SK_USER_PRESENCE_REQD) ? "": "no-",
+		    (private->sk_flags & SSH_SK_USER_VERIFICATION_REQD) ? "" : "no-");
+	}
 
 	/* Ask the new passphrase (twice). */
 	if (identity_new_passphrase) {
@@ -3219,7 +3258,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: ssh-keygen [-q] [-a rounds] [-b bits] [-C comment] [-f output_keyfile]\n"
 	    "                  [-m format] [-N new_passphrase] [-O option]\n"
-	    "                  [-t ecdsa | ecdsa-sk | ed25519 | ed25519-sk | rsa]\n"
+	    "                  [-t ecdsa|ecdsa-sk|ed25519|ed25519-sk|mldsa44-ed25519|rsa]\n"
 	    "                  [-w provider] [-Z cipher]\n"
 	    "       ssh-keygen -p [-a rounds] [-f keyfile] [-m format] [-N new_passphrase]\n"
 	    "                   [-P old_passphrase] [-Z cipher]\n"
@@ -3677,7 +3716,7 @@ main(int argc, char **argv)
 	if (print_fingerprint || print_bubblebabble)
 		do_fingerprint(pw);
 	if (change_passphrase)
-		do_change_passphrase(pw);
+		do_change_passphrase(pw, opts, nopts);
 	if (change_comment)
 		do_change_comment(pw, identity_comment);
 #ifdef WITH_OPENSSL

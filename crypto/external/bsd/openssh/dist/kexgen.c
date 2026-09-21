@@ -1,4 +1,4 @@
-/* $OpenBSD: kexgen.c,v 1.12 2026/03/03 09:57:25 dtucker Exp $ */
+/* $OpenBSD: kexgen.c,v 1.14 2026/07/30 07:29:09 dtucker Exp $ */
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
  *
@@ -111,6 +111,9 @@ kex_gen_client(struct ssh *ssh)
 	case KEX_ECDH_SHA2:
 		r = kex_ecdh_keypair(kex);
 		break;
+	case KEX_KEM_MLKEM768ECDH_SHA256:
+		r = kex_kem_mlkem768ecdh_keypair(kex);
+		break;
 #endif /* WITH_OPENSSL */
 	case KEX_C25519_SHA256:
 		r = kex_c25519_keypair(kex);
@@ -184,6 +187,10 @@ input_kex_gen_reply(int type, uint32_t seq, struct ssh *ssh)
 		break;
 	case KEX_ECDH_SHA2:
 		r = kex_ecdh_dec(kex, server_blob, &shared_secret);
+		break;
+	case KEX_KEM_MLKEM768ECDH_SHA256:
+		r = kex_kem_mlkem768ecdh_dec(kex, server_blob,
+		    &shared_secret);
 		break;
 #endif /* WITH_OPENSSL */
 	case KEX_C25519_SHA256:
@@ -307,6 +314,10 @@ input_kex_gen_init(int type, uint32_t seq, struct ssh *ssh)
 	case KEX_ECDH_SHA2:
 		r = kex_ecdh_enc(kex, client_pubkey, &server_pubkey,
 		    &shared_secret);
+		break;
+	case KEX_KEM_MLKEM768ECDH_SHA256:
+		r = kex_kem_mlkem768ecdh_enc(kex, client_pubkey,
+		    &server_pubkey, &shared_secret);
 		break;
 #endif /* WITH_OPENSSL */
 	case KEX_C25519_SHA256:
