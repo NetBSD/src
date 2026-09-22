@@ -16,6 +16,8 @@
 
 int sha512_224_init(SHA512_CTX *);
 int sha512_256_init(SHA512_CTX *);
+int sha512_224_final(unsigned char *, SHA512_CTX *); /* XXX NetBSD libc sha2 */
+int sha512_256_final(unsigned char *, SHA512_CTX *); /* XXX NetBSD libc sha2 */
 int ossl_sha1_ctrl(SHA_CTX *ctx, int cmd, int mslen, void *ms);
 unsigned char *ossl_sha1(const unsigned char *d, size_t n, unsigned char *md);
 

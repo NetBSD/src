@@ -878,7 +878,7 @@ whirlpool_block:
 .byte	228,39,65,139,167,125,149,216
 .byte	251,238,124,102,221,23,71,158
 .byte	202,45,191,7,173,90,131,51
-	.section .note.gnu.property, "a"
+	.section ".note.gnu.property", "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f

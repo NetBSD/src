@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2016 VMS Software, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -230,7 +230,6 @@ int TerminalSocket(int FunctionCode, int *ReturnSocket)
             LogMessage("TerminalSocket: SYS$QIO () - %08X", status);
             close(TerminalSocketPair[0]);
             close(TerminalSocketPair[1]);
-            sys$dassgn(TerminalDeviceChan);
             return TERM_SOCK_FAILURE;
         }
 
@@ -249,7 +248,6 @@ int TerminalSocket(int FunctionCode, int *ReturnSocket)
             LogMessage("TerminalSocket: SYS$CANCEL () - %08X", status);
             close(TerminalSocketPair[0]);
             close(TerminalSocketPair[1]);
-            sys$dassgn(TerminalDeviceChan);
             return TERM_SOCK_FAILURE;
         }
 

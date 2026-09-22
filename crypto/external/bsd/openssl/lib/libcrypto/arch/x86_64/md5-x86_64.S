@@ -682,7 +682,7 @@ ossl_md5_block_asm_data_order:
 	.byte	0xf3,0xc3
 .cfi_endproc	
 .size	ossl_md5_block_asm_data_order,.-ossl_md5_block_asm_data_order
-	.section .note.gnu.property, "a"
+	.section ".note.gnu.property", "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f

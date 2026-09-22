@@ -535,7 +535,7 @@ int PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md)
     }
 
     ERR_raise(ERR_LIB_PKCS7, PKCS7_R_WRONG_CONTENT_TYPE);
-    return 0;
+    return 1;
 }
 
 STACK_OF(PKCS7_SIGNER_INFO) *PKCS7_get_signer_info(PKCS7 *p7)
@@ -722,10 +722,6 @@ int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
         break;
 
     case NID_pkcs7_signedAndEnveloped:
-        if (p7->d.signed_and_enveloped == NULL || p7->d.signed_and_enveloped->enc_data == NULL) {
-            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
-            break;
-        }
         os = p7->d.signed_and_enveloped->enc_data->enc_data;
         if (os == NULL) {
             os = ASN1_OCTET_STRING_new();
@@ -734,10 +730,6 @@ int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
         break;
 
     case NID_pkcs7_enveloped:
-        if (p7->d.enveloped == NULL || p7->d.enveloped->enc_data == NULL) {
-            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
-            break;
-        }
         os = p7->d.enveloped->enc_data->enc_data;
         if (os == NULL) {
             os = ASN1_OCTET_STRING_new();
@@ -750,13 +742,7 @@ int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
             break;
         }
-
-        if (!PKCS7_type_is_data(p7->d.sign->contents)) {
-            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
-            break;
-        }
-
-        os = PKCS7_get_octet_string(p7->d.sign->contents);
+        os = p7->d.sign->contents->d.data;
         break;
 
     default:

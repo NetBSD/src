@@ -747,8 +747,8 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         OSSL_PARAM params[2];
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE,
-            (char *)expected->cts_mode,
-            0);
+                                                     (char *)(intptr_t)expected->cts_mode,
+                                                     0);
         params[1] = OSSL_PARAM_construct_end();
         if (!EVP_CIPHER_CTX_set_params(ctx_base, params)) {
             t->err = "INVALID_CTS_MODE";
@@ -1955,7 +1955,7 @@ static int pderive_test_parse(EVP_TEST *t,
         OSSL_PARAM params[2];
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_TYPE,
-            (char *)value, 0);
+                                                     (char *)(intptr_t)value, 0);
         params[1] = OSSL_PARAM_construct_end();
         if (EVP_PKEY_CTX_set_params(kdata->ctx, params) == 0)
             return -1;
@@ -1965,7 +1965,7 @@ static int pderive_test_parse(EVP_TEST *t,
         OSSL_PARAM params[2];
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST,
-            (char *)value, 0);
+                                                     (char *)(intptr_t)value, 0);
         params[1] = OSSL_PARAM_construct_end();
         if (EVP_PKEY_CTX_set_params(kdata->ctx, params) == 0)
             return -1;
@@ -1975,7 +1975,7 @@ static int pderive_test_parse(EVP_TEST *t,
         OSSL_PARAM params[2];
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
-            (char *)value, 0);
+                                                     (char *)(intptr_t)value, 0);
         params[1] = OSSL_PARAM_construct_end();
         if (EVP_PKEY_CTX_set_params(kdata->ctx, params) == 0)
             return -1;
@@ -2611,11 +2611,11 @@ static int rand_test_run(EVP_TEST *t)
     *p++ = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_USE_DF, &expected->use_df);
     if (expected->cipher != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
-            expected->cipher, 0);
+                                                expected->cipher, 0);
     if (expected->digest != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_DIGEST,
-            expected->digest, 0);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, "HMAC", 0);
+                                                expected->digest, 0);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, (char *)(intptr_t)"HMAC", 0);
     *p = OSSL_PARAM_construct_end();
     if (!TEST_true(EVP_RAND_CTX_set_params(expected->ctx, params)))
         goto err;
@@ -2625,71 +2625,78 @@ static int rand_test_run(EVP_TEST *t)
         item = expected->data + i;
 
         p = params;
-        z = item->entropy != NULL ? item->entropy : (unsigned char *)"";
+        z = item->entropy != NULL ? item->entropy : (unsigned char *)(intptr_t)"";
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-            z, item->entropy_len);
-        z = item->nonce != NULL ? item->nonce : (unsigned char *)"";
+                                                 z, item->entropy_len);
+        z = item->nonce != NULL ? item->nonce : (unsigned char *)(intptr_t)"";
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
-            z, item->nonce_len);
+                                                 z, item->nonce_len);
         *p = OSSL_PARAM_construct_end();
         if (!TEST_true(EVP_RAND_instantiate(expected->parent, strength,
-                0, NULL, 0, params)))
+                                            0, NULL, 0, params)))
             goto err;
 
-        z = item->pers != NULL ? item->pers : (unsigned char *)"";
-        if (!TEST_true(EVP_RAND_instantiate(expected->ctx, strength,
-                expected->prediction_resistance, z,
-                item->pers_len, NULL)))
+        z = item->pers != NULL ? item->pers : (unsigned char *)(intptr_t)"";
+        if (!TEST_true(EVP_RAND_instantiate
+                           (expected->ctx, strength,
+                            expected->prediction_resistance, z,
+                            item->pers_len, NULL)))
             goto err;
 
         if (item->reseed_entropy != NULL) {
-            params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY, item->reseed_entropy,
-                item->reseed_entropy_len);
+            params[0] = OSSL_PARAM_construct_octet_string
+                           (OSSL_RAND_PARAM_TEST_ENTROPY, item->reseed_entropy,
+                            item->reseed_entropy_len);
             params[1] = OSSL_PARAM_construct_end();
             if (!TEST_true(EVP_RAND_CTX_set_params(expected->parent, params)))
                 goto err;
 
-            if (!TEST_true(EVP_RAND_reseed(expected->ctx, expected->prediction_resistance,
-                    NULL, 0, item->reseed_addin,
-                    item->reseed_addin_len)))
+            if (!TEST_true(EVP_RAND_reseed
+                               (expected->ctx, expected->prediction_resistance,
+                                NULL, 0, item->reseed_addin,
+                                item->reseed_addin_len)))
                 goto err;
         }
         if (item->pr_entropyA != NULL) {
-            params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY, item->pr_entropyA,
-                item->pr_entropyA_len);
+            params[0] = OSSL_PARAM_construct_octet_string
+                           (OSSL_RAND_PARAM_TEST_ENTROPY, item->pr_entropyA,
+                            item->pr_entropyA_len);
             params[1] = OSSL_PARAM_construct_end();
             if (!TEST_true(EVP_RAND_CTX_set_params(expected->parent, params)))
                 goto err;
         }
-        if (!TEST_true(EVP_RAND_generate(expected->ctx, got, got_len,
-                strength, expected->prediction_resistance,
-                item->addinA, item->addinA_len)))
+        if (!TEST_true(EVP_RAND_generate
+                           (expected->ctx, got, got_len,
+                            strength, expected->prediction_resistance,
+                            item->addinA, item->addinA_len)))
             goto err;
 
         if (item->pr_entropyB != NULL) {
-            params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY, item->pr_entropyB,
-                item->pr_entropyB_len);
+            params[0] = OSSL_PARAM_construct_octet_string
+                           (OSSL_RAND_PARAM_TEST_ENTROPY, item->pr_entropyB,
+                            item->pr_entropyB_len);
             params[1] = OSSL_PARAM_construct_end();
             if (!TEST_true(EVP_RAND_CTX_set_params(expected->parent, params)))
                 goto err;
         }
-        if (!TEST_true(EVP_RAND_generate(expected->ctx, got, got_len,
-                strength, expected->prediction_resistance,
-                item->addinB, item->addinB_len)))
+        if (!TEST_true(EVP_RAND_generate
+                           (expected->ctx, got, got_len,
+                            strength, expected->prediction_resistance,
+                            item->addinB, item->addinB_len)))
             goto err;
         if (!TEST_mem_eq(got, got_len, item->output, item->output_len))
             goto err;
         if (!TEST_true(EVP_RAND_uninstantiate(expected->ctx))
-            || !TEST_true(EVP_RAND_uninstantiate(expected->parent))
-            || !TEST_true(EVP_RAND_verify_zeroization(expected->ctx))
-            || !TEST_int_eq(EVP_RAND_get_state(expected->ctx),
-                EVP_RAND_STATE_UNINITIALISED))
+                || !TEST_true(EVP_RAND_uninstantiate(expected->parent))
+                || !TEST_true(EVP_RAND_verify_zeroization(expected->ctx))
+                || !TEST_int_eq(EVP_RAND_get_state(expected->ctx),
+                                EVP_RAND_STATE_UNINITIALISED))
             goto err;
     }
     t->err = NULL;
     ret = 1;
 
-err:
+ err:
     if (ret == 0 && i >= 0)
         TEST_info("Error in test case %d of %d\n", i, expected->n + 1);
     OPENSSL_free(got);
@@ -3836,7 +3843,7 @@ start:
         pp++;
         goto start;
     } else if (strcmp(pp->key, "FIPSversion") == 0) {
-        if (prov_available("fips")) {
+        if (prov_available((char *)(intptr_t)"fips")) {
             j = fips_provider_version_match(libctx, pp->value);
             if (j < 0) {
                 TEST_info("Line %d: error matching FIPS versions\n", t->s.curr);

@@ -18,7 +18,7 @@ aesni_gcm_decrypt:
 	.byte	0xf3,0xc3
 .cfi_endproc	
 .size	aesni_gcm_decrypt,.-aesni_gcm_decrypt
-	.section .note.gnu.property, "a"
+	.section ".note.gnu.property", "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f

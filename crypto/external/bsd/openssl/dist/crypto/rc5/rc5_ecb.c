@@ -20,7 +20,7 @@
 void RC5_32_ecb_encrypt(const unsigned char *in, unsigned char *out,
     RC5_32_KEY *ks, int encrypt)
 {
-    unsigned long l, d[2];
+    RC5_32_INT l, d[2];
 
     c2l(in, l);
     d[0] = l;

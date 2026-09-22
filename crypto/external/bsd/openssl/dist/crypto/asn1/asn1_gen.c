@@ -425,11 +425,8 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf,
                 depth + 1, perr);
             if (!typ)
                 goto bad;
-
-            if (!sk_ASN1_TYPE_push(sk, typ)) {
-                ASN1_TYPE_free(typ);
+            if (!sk_ASN1_TYPE_push(sk, typ))
                 goto bad;
-            }
         }
     }
 

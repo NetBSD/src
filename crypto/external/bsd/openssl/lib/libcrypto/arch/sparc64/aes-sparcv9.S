@@ -7,7 +7,7 @@
 .register	%g2,#scratch
 .register	%g3,#scratch
 #endif
-.section	".text","a","x"
+.section	".text",#alloc,#execinstr
 
 .align	256
 AES_Te:

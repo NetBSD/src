@@ -1924,7 +1924,7 @@ Camellia_cbc_encrypt:
 .size	Camellia_cbc_encrypt,.-Camellia_cbc_encrypt
 
 .byte	67,97,109,101,108,108,105,97,32,102,111,114,32,120,56,54,95,54,52,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
-	.section .note.gnu.property, "a"
+	.section ".note.gnu.property", "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f

@@ -3,7 +3,7 @@
 #endif
 #include "crypto/sparc_arch.h"
 
-.section	".text","a","x"
+.section	".text",#alloc,#execinstr
 
 .global bn_mul_mont_fpu
 .align  32

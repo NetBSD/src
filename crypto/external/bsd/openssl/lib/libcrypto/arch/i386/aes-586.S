@@ -3,11 +3,6 @@
 .type	_x86_AES_encrypt_compact,@function
 .align	16
 _x86_AES_encrypt_compact:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	movl	%edi,20(%esp)
 	xorl	(%edi),%eax
 	xorl	4(%edi),%ebx
@@ -275,11 +270,6 @@ _x86_AES_encrypt_compact:
 .type	_sse_AES_encrypt_compact,@function
 .align	16
 _sse_AES_encrypt_compact:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	pxor	(%edi),%mm0
 	pxor	8(%edi),%mm4
 	movl	240(%edi),%esi
@@ -437,11 +427,6 @@ _sse_AES_encrypt_compact:
 .type	_x86_AES_encrypt,@function
 .align	16
 _x86_AES_encrypt:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	movl	%edi,20(%esp)
 	xorl	(%edi),%eax
 	xorl	4(%edi),%ebx
@@ -996,11 +981,6 @@ _x86_AES_encrypt:
 .align	16
 AES_encrypt:
 .L_AES_encrypt_begin:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -1064,11 +1044,6 @@ AES_encrypt:
 .type	_x86_AES_decrypt_compact,@function
 .align	16
 _x86_AES_decrypt_compact:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	movl	%edi,20(%esp)
 	xorl	(%edi),%eax
 	xorl	4(%edi),%ebx
@@ -1424,11 +1399,6 @@ _x86_AES_decrypt_compact:
 .type	_sse_AES_decrypt_compact,@function
 .align	16
 _sse_AES_decrypt_compact:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	pxor	(%edi),%mm0
 	pxor	8(%edi),%mm4
 	movl	240(%edi),%esi
@@ -1645,11 +1615,6 @@ _sse_AES_decrypt_compact:
 .type	_x86_AES_decrypt,@function
 .align	16
 _x86_AES_decrypt:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	movl	%edi,20(%esp)
 	xorl	(%edi),%eax
 	xorl	4(%edi),%ebx
@@ -2208,11 +2173,6 @@ _x86_AES_decrypt:
 .align	16
 AES_decrypt:
 .L_AES_decrypt_begin:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -2278,11 +2238,6 @@ AES_decrypt:
 .align	16
 AES_cbc_encrypt:
 .L_AES_cbc_encrypt_begin:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -2814,11 +2769,6 @@ AES_cbc_encrypt:
 .type	_x86_AES_set_encrypt_key,@function
 .align	16
 _x86_AES_set_encrypt_key:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -3051,11 +3001,6 @@ _x86_AES_set_encrypt_key:
 .align	16
 AES_set_encrypt_key:
 .L_AES_set_encrypt_key_begin:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	call	_x86_AES_set_encrypt_key
 	ret
 .size	AES_set_encrypt_key,.-.L_AES_set_encrypt_key_begin
@@ -3064,11 +3009,6 @@ AES_set_encrypt_key:
 .align	16
 AES_set_decrypt_key:
 .L_AES_set_decrypt_key_begin:
-	#ifdef __CET__
-
-.byte	243,15,30,251
-	#endif
-
 	call	_x86_AES_set_encrypt_key
 	cmpl	$0,%eax
 	je	.L054proceed
@@ -3302,20 +3242,3 @@ AES_set_decrypt_key:
 .byte	80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114
 .byte	111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
 .comm	OPENSSL_ia32cap_P,16,4
-
-	.section ".note.gnu.property", "a"
-	.p2align 2
-	.long 1f - 0f
-	.long 4f - 1f
-	.long 5
-0:
-	.asciz "GNU"
-1:
-	.p2align 2
-	.long 0xc0000002
-	.long 3f - 2f
-2:
-	.long 3
-3:
-	.p2align 2
-4:

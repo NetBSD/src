@@ -8,7 +8,7 @@
 .register	%g3,#scratch
 #endif
 
-.section	".text","a","x"
+.section	".text",#alloc,#execinstr
 
 .align	64
 rem_4bit:

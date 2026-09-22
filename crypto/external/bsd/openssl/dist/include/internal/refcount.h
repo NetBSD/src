@@ -7,28 +7,28 @@
  * https://www.openssl.org/source/license.html
  */
 #ifndef OSSL_INTERNAL_REFCOUNT_H
-#define OSSL_INTERNAL_REFCOUNT_H
-#pragma once
+# define OSSL_INTERNAL_REFCOUNT_H
+# pragma once
 
-#include <openssl/e_os2.h>
-#include <openssl/trace.h>
+# include <openssl/e_os2.h>
+# include <openssl/trace.h>
 
-#if defined(OPENSSL_THREADS) && !defined(OPENSSL_DEV_NO_ATOMICS)
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
-    && !defined(__STDC_NO_ATOMICS__)
-#include <stdatomic.h>
-#define HAVE_C11_ATOMICS
-#endif
+# if defined(OPENSSL_THREADS) && !defined(OPENSSL_DEV_NO_ATOMICS)
+#  if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
+      && !defined(__STDC_NO_ATOMICS__) && !defined(__lint__)
+#   include <stdatomic.h>
+#   define HAVE_C11_ATOMICS
+#  endif
 
-#if defined(HAVE_C11_ATOMICS) && defined(ATOMIC_INT_LOCK_FREE) \
-    && ATOMIC_INT_LOCK_FREE > 0
+#  if defined(HAVE_C11_ATOMICS) && defined(ATOMIC_INT_LOCK_FREE) \
+      && ATOMIC_INT_LOCK_FREE > 0
 
-#define HAVE_ATOMICS 1
+#   define HAVE_ATOMICS 1
 
 typedef _Atomic int CRYPTO_REF_COUNT;
 
 static inline int CRYPTO_UP_REF(_Atomic int *val, int *ret,
-    ossl_unused void *lock)
+                                ossl_unused void *lock)
 {
     *ret = atomic_fetch_add_explicit(val, 1, memory_order_relaxed) + 1;
     return 1;

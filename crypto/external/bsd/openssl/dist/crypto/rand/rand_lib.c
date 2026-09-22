@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -696,10 +696,7 @@ EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
             return NULL;
         rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
             SECONDARY_RESEED_TIME_INTERVAL);
-        if (!CRYPTO_THREAD_set_local(&dgbl->public, rand)) {
-            EVP_RAND_CTX_free(rand);
-            rand = NULL;
-        }
+        CRYPTO_THREAD_set_local(&dgbl->public, rand);
     }
     return rand;
 }
@@ -732,10 +729,7 @@ EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
             return NULL;
         rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
             SECONDARY_RESEED_TIME_INTERVAL);
-        if (!CRYPTO_THREAD_set_local(&dgbl->private, rand)) {
-            EVP_RAND_CTX_free(rand);
-            rand = NULL;
-        }
+        CRYPTO_THREAD_set_local(&dgbl->private, rand);
     }
     return rand;
 }

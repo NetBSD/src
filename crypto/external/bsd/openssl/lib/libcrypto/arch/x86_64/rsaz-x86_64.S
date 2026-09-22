@@ -1350,7 +1350,7 @@ rsaz_512_gather4:
 .Linc:
 .long	0,0, 1,1
 .long	2,2, 2,2
-	.section .note.gnu.property, "a"
+	.section ".note.gnu.property", "a"
 	.p2align 3
 	.long 1f - 0f
 	.long 4f - 1f

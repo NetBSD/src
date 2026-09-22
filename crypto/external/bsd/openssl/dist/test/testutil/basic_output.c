@@ -24,6 +24,7 @@ static BIO *tap_err = NULL;
 
 void test_open_streams(void)
 {
+    char prefix[] = "# ";
     tap_out = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
     tap_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 #ifdef __VMS
@@ -35,8 +36,8 @@ void test_open_streams(void)
 
     bio_out = BIO_push(BIO_new(BIO_f_prefix()), tap_out);
     bio_err = BIO_push(BIO_new(BIO_f_prefix()), tap_err);
-    BIO_set_prefix(bio_out, "# ");
-    BIO_set_prefix(bio_err, "# ");
+    BIO_set_prefix(bio_out, prefix);
+    BIO_set_prefix(bio_err, prefix);
 
     OPENSSL_assert(bio_out != NULL);
     OPENSSL_assert(bio_err != NULL);

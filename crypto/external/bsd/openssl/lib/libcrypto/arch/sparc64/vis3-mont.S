@@ -8,7 +8,7 @@
 .register	%g3,#scratch
 #endif
 
-.section	".text","a","x"
+.section	".text",#alloc,#execinstr
 .globl	bn_mul_mont_vis3
 .align	32
 bn_mul_mont_vis3:
