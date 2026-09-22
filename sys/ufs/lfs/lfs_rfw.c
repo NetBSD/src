@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.46 2026/09/19 18:25:11 riastradh Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.47 2026/09/22 23:22:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.46 2026/09/19 18:25:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.47 2026/09/22 23:22:21 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -840,7 +840,11 @@ lfs_parse_pseg(struct lfs *fs, daddr_t *offsetp, u_int64_t nextserial,
 		} else if (finfo_func != NULL) {
 			lffa.offsetp = &offset;
 			lffa.finfop = fip;
-			(*finfo_func)(&lffa);
+			error = (*finfo_func)(&lffa);
+			if (error == ESTALE)
+				error = 0;
+			if (error)
+				goto err;
 		} else {
 			int n = lfs_fi_getnblocks(fs, fip);
 			size = lfs_fi_getlastlength(fs, fip);
@@ -900,7 +904,7 @@ lfs_parse_pseg(struct lfs *fs, daddr_t *offsetp, u_int64_t nextserial,
 	free(buf, M_SEGMENT);
 	
 	*offsetp = offset;
-	return 0;
+	return error;
 }
 
 /*

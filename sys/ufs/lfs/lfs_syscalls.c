@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.181 2026/08/15 14:15:03 riastradh Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.182 2026/09/22 23:22:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.181 2026/08/15 14:15:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.182 2026/09/22 23:22:21 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -891,12 +891,21 @@ lfs_markclean(struct lfs *fs, unsigned long segnum, SEGUSE *sup,
 	extern int lfs_dostats;
 	struct buf *bp;
 	CLEANERINFO *cip;
+	int error;
 
 	ASSERT_SEGLOCK(fs);
 	
-#ifdef DEBUG
-	if (lfs_checkempty(fs, segnum, cred, l) == EEXIST)
+#ifndef DEBUG
+	error = 0;
+#else /* DEBUG */
+	error = lfs_checkempty(fs, segnum, cred, l);
+	if (error == EEXIST)
 		panic("Live data in cleaned segment %jd\n", (intmax_t)segnum);
+	if (error) {
+		sup->su_flags &= ~(SEGUSE_EMPTY | SEGUSE_READY);
+		sup->su_flags |= SEGUSE_ERROR;
+		return error;
+	}
 #endif /* DEBUG */
 
 	lfs_sb_addavail(fs, lfs_segtod(fs, 1));
@@ -931,7 +940,7 @@ lfs_markclean(struct lfs *fs, unsigned long segnum, SEGUSE *sup,
 	if (lfs_dostats)
 		++lfs_stats.segs_reclaimed;
 
-	return (0);
+	return error;
 }
 
 /*
