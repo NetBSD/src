@@ -33,7 +33,7 @@
 
  #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.10 2026/09/22 16:14:55 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.11 2026/09/22 16:29:11 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -309,7 +309,6 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi,
     int *decision)
 {
 	struct mbuf *m = nbuf_head_mbuf(npc->npc_nbuf);
-	struct mbuf *m0 = NULL;
 	const npf_ext_route_t *route = meta;
 	npf_t *npf = npf_getkernctx();
 	struct ifnet *ifp;
@@ -321,9 +320,9 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi,
 		struct sockaddr_in6 v6;
 	} dst;
 
-	stats = NPF_STAT_REROUTE;
-	rv = false;
 	consumed = false;
+	rv = true;
+	stats = NPF_STAT_NOREROUTE;
 
 	/* Skip, if already blocking.
 	 * also when routing is applied to a stateful rule, incoming packets
@@ -342,11 +341,6 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi,
 		goto bad;
 	}
 
-	/* duplicate packet and send our version */
-	if ((m0 = m_dup(m, 0, M_COPYALL, M_NOWAIT)) == NULL) {
-		goto bad;
-	}
-
 	if (npf_iscached(npc, NPC_IP6)) {
 #if defined(INET6)
 		struct ip6_hdr *ip6 = npc->npc_ip.v6;
@@ -359,26 +353,26 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi,
 			}
 		}
 
-		npf_validate_s6addr(m0, ifp, &sw_csum);
+		npf_validate_s6addr(m, ifp, &sw_csum);
 
 		if (m->m_pkthdr.len > ifp->if_mtu) {
 			/* router not allowed to fragment */
 			npf_stats_inc(npf, NPF_STAT_NOFRAGMENT);
 			goto bad;
 		}
+		consumed = true;
 		if (__predict_false(sw_csum & M_CSUM_TSOv6)) {
 			/*
 			 * TSO6 is required by a packet, but disabled for
 			 * the interface.
 			*/
-			error = ip6_tso_output(ifp, ifp, m0, &dst.v6, NULL);
+			error = ip6_tso_output(ifp, ifp, m, &dst.v6, NULL);
 		} else
-			error = ip6_if_output(ifp, ifp, m0, &dst.v6, NULL);
-			consumed = true;
+			error = ip6_if_output(ifp, ifp, m, &dst.v6, NULL);
+
 		if (error) {
 			goto bad;
 		}
-		goto done;
 #endif
 	} else if (npf_iscached(npc, NPC_IP4)) {
 		struct ip *ip = npc->npc_ip.v4;
@@ -393,10 +387,11 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi,
 		if (error)
 			goto bad;
 
+		consumed = true;
 		if (ntohs(ip->ip_len) > ifp->if_mtu)
 			goto fragment;
 
-		npf_chcksum(ifp, m0, ip, &sw_csum);
+		npf_chcksum(ifp, m, ip, &sw_csum);
 
 		/* Send it */
 		if (__predict_false(sw_csum & M_CSUM_TSOv4)) {
@@ -404,19 +399,19 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi,
 			 * TSO4 is required by a packet, but disabled for
 			 * the interface.
 			 */
-			error = ip_tso_output(ifp, m0, sintocsa(&dst.v4), NULL);
+			error = ip_tso_output(ifp, m, sintocsa(&dst.v4), NULL);
 		} else
-			error = ip_if_output(ifp, m0, sintocsa(&dst.v4), NULL);
-			consumed = true;
+			error = ip_if_output(ifp, m, sintocsa(&dst.v4), NULL);
+
 		if (error) {
 			goto bad;
 		}
 		goto done;
 
 fragment:
-		error = npf_fragment(npf, ifp, ip, &m0, &dst.v4);
-		if (!error) { /* goto bad on error */
-			goto done;
+		error = npf_fragment(npf, ifp, ip, &m, &dst.v4);
+		if (error) {
+			goto bad;
 		}
 	}
 
@@ -425,14 +420,13 @@ fragment:
  * because we need the kernel to stop processing the mbuf
  * after we leave the filtering context
  */
-bad:
-	if (!consumed)
-		m_freem(m0);
-
-	stats = NPF_STAT_NOREROUTE;
-	rv = true;
 done:
+	stats = NPF_STAT_REROUTE;
+	rv = false;
+bad:
 	npf_stats_inc(npf, stats);
+	if (consumed)
+		memset(npc->npc_nbuf, 0, sizeof(*npc->npc_nbuf));
 	KERNEL_UNLOCK_ONE(NULL);
 	return rv;
 }

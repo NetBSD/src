@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.540 2026/09/22 16:14:55 joe Exp $	*/
+/*	$NetBSD: if.c,v 1.541 2026/09/22 16:29:11 joe Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.540 2026/09/22 16:14:55 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.541 2026/09/22 16:29:11 joe Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1356,10 +1356,12 @@ if_detach(struct ifnet *ifp)
 	 * from pserialize read sections.  Note that we can't do
 	 * psref_target_destroy here.  See below.
 	 */
+	IFNET_GLOBAL_LOCK();
 	ifindex2ifnet[ifp->if_index] = NULL;
 	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
 	IFNET_WRITER_REMOVE(ifp);
 	pserialize_perform(ifnet_psz);
+	IFNET_GLOBAL_UNLOCK();
 
 	if (ifp->if_slowtimo != NULL) {
 		struct if_slowtimo_data *isd = ifp->if_slowtimo_data;
