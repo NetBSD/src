@@ -1,4 +1,4 @@
-/* $NetBSD: t_mkfifo.c,v 1.4 2026/04/13 18:12:04 andvar Exp $ */
+/* $NetBSD: t_mkfifo.c,v 1.5 2026/09/22 13:32:24 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,21 +29,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mkfifo.c,v 1.4 2026/04/13 18:12:04 andvar Exp $");
+__RCSID("$NetBSD: t_mkfifo.c,v 1.5 2026/09/22 13:32:24 riastradh Exp $");
 
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 
 #include <atf-c.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
+#include "h_macros.h"
+
 static const char	path[] = "fifo";
+static pid_t		child = -1;
 static void		support(void);
 
 static void
@@ -291,6 +298,298 @@ ATF_TC_CLEANUP(mknod_s_ififo, tc)
 	(void)unlink(path);
 }
 
+static int
+tryread(int fd, void *buf, size_t len)
+{
+	ssize_t nread;
+
+	while ((nread = read(fd, buf, len)) == -1) {
+		if (errno == EAGAIN)
+			return -1;
+		if (errno != EINTR)
+			atf_tc_fail_errno("read");
+	}
+	if (nread == 0)
+		atf_tc_fail("unexpected eof");
+	return 0;
+}
+
+static void
+cleanup_sigopen_race(void)
+{
+	if (child != -1) {
+		(void)kill(child, SIGKILL);
+		(void)waitpid(child, NULL, 0);
+	}
+	(void)unlink(path);
+}
+
+static void
+on_sigalrm(int signo)
+{
+}
+
+static void
+test_sigopen_race(int parent_flags, int child_flags)
+{
+	struct sigaction sa;
+	const struct timespec timeout = {2,0};
+	struct timespec starttime, deadline, now;
+	uint64_t nintr = 0;	/* 64-bit counter can't overflow */
+	uint64_t niter = 0;
+
+	support();
+
+	/*
+	 * Create a fifo to work with.
+	 */
+	RL(mkfifo(path, 0600));
+
+	/*
+	 * Set up a signal handler for SIGALRM to interrupt system
+	 * calls with EINTR.
+	 */
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = &on_sigalrm;
+	sa.sa_flags = 0;	/* no SA_RESTART -- want EINTR in open() */
+	RL(sigemptyset(&sa.sa_mask));
+	RL(sigaction(SIGALRM, &sa, NULL));
+
+	/*
+	 * Compute a deadline and keep rerunning the test until we've
+	 * passed the deadline.
+	 */
+	RL(clock_gettime(CLOCK_MONOTONIC, &starttime));
+	timespecadd(&starttime, &timeout, &deadline);
+	for (;; niter++) {
+		const struct itimerval timer = {
+			.it_interval = {0,1},
+			.it_value = {0,1},
+		};
+		const struct itimerval notimer = {
+			.it_interval = {0,0},
+			.it_value = {0,0},
+		};
+		int readyfd[2], donefd[2];
+		int flags, fd, status;
+		char ch = 0;
+
+		/*
+		 * Create a pair of pipes:
+		 *
+		 * - Parent writes to readyfd when it's ready to start
+		 *   the race; child reads to start the race.
+		 *
+		 * - Child writes to donefd when it has completed an
+		 *   open/close cycle; parent stops trying to race once
+		 *   it can read from donefd.
+		 */
+		RL(pipe(readyfd));
+		RL(pipe(donefd));
+
+		/*
+		 * Assume we didn't get fds 0/1/2, to keep it simple in
+		 * the child.
+		 */
+		ATF_REQUIRE(readyfd[1] > STDERR_FILENO);
+		ATF_REQUIRE(donefd[0] > STDERR_FILENO);
+
+		/*
+		 * Fork a child to open and close the fifo.  This
+		 * should match up with a single successful open of the
+		 * parent, but with the bug of PR kern/59578, the
+		 * child's open may succeed and close in quick
+		 * succession while the parent's open fails with EINTR
+		 * and never returns with success matching the child's
+		 * successful open.
+		 */
+		RL(child = fork());
+		if (child == 0) {
+			/*
+			 * Move the pipe endpoints we will be using to
+			 * stdin/stdout, and close everything else.
+			 */
+			if (dup2(readyfd[0], STDIN_FILENO) == -1) {
+				warn("dup2 to stdin");
+				_exit(1);
+			}
+			if (dup2(donefd[1], STDOUT_FILENO) == -1) {
+				warn("dup2 to stdin");
+				_exit(2);
+			}
+			if (closefrom(STDERR_FILENO + 1) == -1) {
+				warn("closefrom");
+				_exit(3);
+			}
+
+			/*
+			 * Wait until the parent has said it's ready.
+			 */
+			if (read(STDIN_FILENO, &ch, 1) == -1) {
+				warn("read");
+				_exit(4);
+			}
+
+			/*
+			 * Wait a smidge more for the parent to start
+			 * sleeping in open.  XXX Should really
+			 * busy-wait on the parent process's status.
+			 */
+			if (usleep(1) == -1) {
+				warn("usleep");
+				_exit(5);
+			}
+
+			/*
+			 * Make sure we give up within 1sec.
+			 */
+			if (alarm(1) == (unsigned)-1) {
+				warn("alarm");
+				_exit(6);
+			}
+
+			/*
+			 * Open and close the fifo in quick succession.
+			 * This should make open succeed in the parent,
+			 * but with the bug of PR kern/59578, if we do
+			 * this fast enough while the parent is
+			 * handling a signal, the parent might fail
+			 * with EINTR and restart even though the child
+			 * succeeded without a matching open on the
+			 * other side of the fifo.
+			 */
+			if ((fd = open(path, child_flags)) == -1) {
+				warn("open");
+				_exit(7);
+			}
+			if (close(fd) == -1) {
+				warn("close");
+				_exit(8);
+			}
+
+			/*
+			 * Notify the parent that we're done, so if it
+			 * lost the race, it will promptly notice the
+			 * fact and fail.
+			 */
+			if (write(STDOUT_FILENO, &ch, 1) == -1) {
+				warn("write");
+				_exit(9);
+			}
+			_exit(0);
+		}
+		RL(close(readyfd[0]));
+		RL(close(donefd[1]));
+
+		/*
+		 * Make donefd nonblocking so the parent can use it to
+		 * test, without blocking, whether the child is done.
+		 */
+		RL(flags = fcntl(donefd[0], F_GETFL));
+		RL(fcntl(donefd[0], F_SETFL, flags | O_NONBLOCK));
+
+		/*
+		 * Arrange to deliver SIGALRM as fast as we can while
+		 * we race with the child, and then notify the child
+		 * that it's ready to go.  We must be prepared to
+		 * handle EINTR for all blocking system calls while the
+		 * timer is set up.
+		 *
+		 * If the open was interrupted in the parent but the
+		 * child has already finished an open/close cycle,
+		 * fail.
+		 */
+		RL(setitimer(ITIMER_REAL, &timer, NULL));
+		while (write(readyfd[1], &ch, 1) == -1) {
+			if (errno != EINTR)
+				atf_tc_fail_errno("write");
+		}
+		for (;;) {
+			if ((fd = open(path, parent_flags)) != -1)
+				break;
+			if (errno != EINTR)
+				atf_tc_fail_errno("open");
+			nintr++;
+			if (tryread(donefd[0], &ch, 1) == 0)
+				atf_tc_fail("child opened without parent");
+		}
+		RL(setitimer(ITIMER_REAL, &notimer, NULL));
+		RL(close(fd));
+
+		/*
+		 * Parent and child successfully handed off a matching
+		 * pair of fifo opens.  Wait for the the child and make
+		 * sure it didn't crash.
+		 */
+		RL(waitpid(child, &status, 0));
+		child = -1;
+		ATF_REQUIRE_MSG(!WIFSIGNALED(status),
+		    "child terminated on signal %d (%s)",
+		    WTERMSIG(status), strsignal(WTERMSIG(status)));
+		ATF_REQUIRE_MSG(WIFEXITED(status),
+		    "child exited mysteriously, status=0x%x", status);
+		ATF_REQUIRE_MSG(WEXITSTATUS(status) == 0,
+		    "child exited with code %d", WEXITSTATUS(status));
+
+		/*
+		 * Close the pipes; we'll open fresh ones on the next
+		 * iteration.  (Could reuse them but in case they had
+		 * any state left over, let's just keep it simpler by
+		 * opening fresh ones.)
+		 */
+		RL(close(readyfd[1]));
+		RL(close(donefd[0]));
+
+		/*
+		 * If we've run long enough that we think the bug isn't
+		 * there, stop.
+		 */
+		RL(clock_gettime(CLOCK_MONOTONIC, &now));
+		if (timespeccmp(&deadline, &now, <=))
+			break;
+	}
+
+	/*
+	 * We are supposed to test interrupting open(2) in the parent.
+	 * If it never got interrupted, the test is broken.
+	 */
+	fprintf(stderr, "interrupted %"PRIu64" times"
+	    " in %"PRIu64" iterations\n", nintr, niter);
+	ATF_REQUIRE(nintr > 0);
+}
+
+ATF_TC_WITH_CLEANUP(mkfifo_sigopenreader_race);
+ATF_TC_HEAD(mkfifo_sigopenreader_race, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test interrupting open(fifo, O_RDONLY) by a signal");
+}
+ATF_TC_BODY(mkfifo_sigopenreader_race, tc)
+{
+	atf_tc_expect_fail("PR kern/59578");
+	test_sigopen_race(O_RDONLY, O_WRONLY);
+}
+ATF_TC_CLEANUP(mkfifo_sigopenreader_race, tc)
+{
+	cleanup_sigopen_race();
+}
+
+ATF_TC_WITH_CLEANUP(mkfifo_sigopenwriter_race);
+ATF_TC_HEAD(mkfifo_sigopenwriter_race, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test interrupting open(fifo, O_WRONLY) by a signal");
+}
+ATF_TC_BODY(mkfifo_sigopenwriter_race, tc)
+{
+	atf_tc_expect_fail("PR kern/59578");
+	test_sigopen_race(O_WRONLY, O_RDONLY);
+}
+ATF_TC_CLEANUP(mkfifo_sigopenwriter_race, tc)
+{
+	cleanup_sigopen_race();
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -298,6 +597,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, mkfifo_err);
 	ATF_TP_ADD_TC(tp, mkfifo_nonblock);
 	ATF_TP_ADD_TC(tp, mkfifo_perm);
+	ATF_TP_ADD_TC(tp, mkfifo_sigopenreader_race);
+	ATF_TP_ADD_TC(tp, mkfifo_sigopenwriter_race);
 	ATF_TP_ADD_TC(tp, mkfifo_stat);
 	ATF_TP_ADD_TC(tp, mknod_s_ififo);
 
