@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.15 2026/09/20 10:09:40 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.16 2026/09/22 10:47:11 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -664,4 +664,35 @@ sys/arch/sparc64/dev/envmon_ebusreg.h		1.1
 	envmon(4): add a driver for the "env-monitor" sensor found on
 	Sun U25/U45 and V215/V245.
 	[jdc, ticket #486]
+
+distrib/sets/lists/man/mi			1.1841,1.1842
+distrib/sets/lists/manhtml/mi			1.59
+share/man/man4/Makefile				1.756
+
+	pv(4): build and install the man page.
+	[andvar, ticket #487]
+
+distrib/sets/lists/comp/mi			1.2530
+lib/libcurses/Makefile				1.97
+
+	wgetscrreg(3): add man page.
+	[andvar, ticket #488]
+
+share/man/man4/virtio.4				1.12-1.14
+share/man/man4/virtio_mmio.4			delete
+
+	virtio(4): combine virtio and virtio_mmio man pages.
+	[andvar, ticket #489]
+
+sys/arch/atari/atari/bus.c			1.71
+
+	atari: make sure to pass an allocation strategy (VM_BESTFIT)
+	to vmem_alloc(9).
+	[tsutsui, ticket #490]
+
+sys/dev/ic/mk48txx.c				(apply patch)
+sys/dev/ic/mk48txxvar.h 			(apply patch)
+					 
+	mk48txx(4): handle TODR difference between current and 11
+	[jdc, ticket #491]
 
