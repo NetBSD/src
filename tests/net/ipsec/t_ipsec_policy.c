@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ipsec_policy.c,v 1.3 2026/09/21 10:52:42 kre Exp $	*/
+/*	$NetBSD: t_ipsec_policy.c,v 1.4 2026/09/22 15:04:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ipsec_policy.c,v 1.3 2026/09/21 10:52:42 kre Exp $");
+__RCSID("$NetBSD: t_ipsec_policy.c,v 1.4 2026/09/22 15:04:22 riastradh Exp $");
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -51,16 +51,16 @@ hexdump(const char *title, const void *buf, size_t len)
 	const uint8_t *p = buf;
 	size_t i;
 
-	printf("# %s (%zu bytes)\n", title, len);
+	fprintf(stderr, "# %s (%zu bytes)\n", title, len);
 	for (i = 0; i < len; i++) {
 		if ((i % 8) == 0)
-			printf(" ");
-		printf(" %02hhx", p[i]);
+			fprintf(stderr, " ");
+		fprintf(stderr, " %02hhx", p[i]);
 		if ((i % 16) == 15)
-			printf("\n");
+			fprintf(stderr, "\n");
 	}
 	if (i % 16)
-		printf("\n");
+		fprintf(stderr, "\n");
 }
 
 static void *
@@ -182,7 +182,7 @@ test_ipsec_policy_roundtrip(int exp_error, uint8_t dir,
 	if (reqlen != optlen || memcmp(xpl, xpl1, len) != 0) {
 		hexdump("before", xpl, reqlen);
 		hexdump("after", xpl1, optlen);
-		fflush(stdout);
+		fflush(stderr);
 		atf_tc_fail_nonfatal("mismatch");
 	}
 
@@ -196,7 +196,7 @@ test_ipsec_policy_roundtrip(int exp_error, uint8_t dir,
 
 				snprintf(title, sizeof(title), "guard %u", i);
 				hexdump(title, guard, guardlen);
-				fflush(stdout);
+				fflush(stderr);
 				atf_tc_fail_nonfatal("guard %u overwritten",
 				    i);
 				break;
@@ -350,8 +350,8 @@ ATF_TC_BODY(pr60669, tc)
 		unsigned j;
 
 		for (j = 0; j < 2; j++) {
-			printf("# case %u %s\n", i, dirname[j]);
-			fflush(stdout);
+			fprintf(stderr, "# case %u %s\n", i, dirname[j]);
+			fflush(stderr);
 			if (C[i].xfail)
 				atf_tc_expect_fail("%s", C[i].xfail);
 			test_ipsec_policy_roundtrip(C[i].expected_error,
