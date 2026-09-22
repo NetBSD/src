@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.14 2026/05/19 15:58:37 riastradh Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.15 2026/09/22 14:46:01 riastradh Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,6 +67,16 @@ common_cleanup() {
 	unset RUMPHIJACK
 	unset LD_PRELOAD
 	rump.halt
+	for core in *.core; do
+		test -s "$core" || continue
+		case $core in
+		h_*)	prog="$(atf_get_srcdir)/${core%.core}" || continue
+			;;
+		*)	prog="${core%.core}" || continue
+			;;
+		esac
+		gdb -batch -ex bt -ex 'info registers' "$prog" "$core"
+	done
 }
 
 atf_test_case arc4 cleanup
