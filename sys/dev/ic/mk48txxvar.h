@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxvar.h,v 1.7.100.1 2026/09/20 10:01:42 martin Exp $ */
+/*	$NetBSD: mk48txxvar.h,v 1.7.100.2 2026/09/22 10:45:26 martin Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -58,6 +58,8 @@ struct mk48txx_softc {
 
 	struct sysmon_envsys	*sc_sme;	/* envsys config. */
 	envsys_data_t	sc_sensor;
+
+	const char	*sc_name;
 
 	int		sc_osc_stp;	/* Oscillator stop (sysctl) */
 };

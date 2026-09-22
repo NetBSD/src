@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.28.34.1 2026/09/20 10:01:42 martin Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.28.34.2 2026/09/22 10:45:26 martin Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.28.34.1 2026/09/20 10:01:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.28.34.2 2026/09/22 10:45:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,7 @@ mk48txx_attach(struct mk48txx_softc *sc)
 	sc->sc_nvramsz = mk48txx_models[i].nvramsz;
 	sc->sc_clkoffset = mk48txx_models[i].clkoff;
 	sc->sc_flag |= mk48txx_models[i].flags;
+	sc->sc_name = "clock0";
 
 	handle = &sc->sc_handle;
 	handle->cookie = sc;
@@ -103,8 +104,7 @@ mk48txx_attach(struct mk48txx_softc *sc)
 	csr = (*sc->sc_nvrd)(sc, sc->sc_clkoffset + MK48TXX_ISEC);
 	if (csr & MK48TXX_SEC_STOP) {
 		aprint_normal("\n");
-		aprint_error_dev(sc->sc_dev,
-		    "WARNING: oscillator is stopped (0x%02x)", csr);
+		aprint_error("WARNING: oscillator is stopped (0x%02x)", csr);
 		sc->sc_osc_stp = 1;
 	} else
 		sc->sc_osc_stp = 0;
@@ -122,16 +122,15 @@ mk48txx_attach(struct mk48txx_softc *sc)
 		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
 			sysmon_envsys_destroy(sc->sc_sme);
 			sc->sc_sme = NULL;
-			aprint_error_dev(sc->sc_dev,
-			    "unable to attach sensor to sysmon\n");
+			aprint_error("unable to attach sensor to sysmon\n");
 		} else {
-			sc->sc_sme->sme_name = device_xname(sc->sc_dev);
+			sc->sc_sme->sme_name = sc->sc_name;
 			sc->sc_sme->sme_cookie = sc;
 			sc->sc_sme->sme_refresh = mk48txx_refresh;
 			if (sysmon_envsys_register(sc->sc_sme)) {
 				sysmon_envsys_destroy(sc->sc_sme);
 				sc->sc_sme = NULL;
-				aprint_error_dev(sc->sc_dev,
+				aprint_error(
 				    "unable to register with sysmon\n");
 				sysmon_envsys_destroy(sc->sc_sme);
 			}
@@ -141,7 +140,7 @@ mk48txx_attach(struct mk48txx_softc *sc)
 	/* Setup sysctl for the oscillator control */
 	sysctl_createv(NULL, 0, NULL, &me,
 	    CTLFLAG_READWRITE,
-	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
+	    CTLTYPE_NODE, sc->sc_name, NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_HW, CTL_CREATE, CTL_EOL);
  
