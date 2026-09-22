@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.91 2021/10/11 01:07:36 thorpej Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.92 2026/09/22 13:34:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.91 2021/10/11 01:07:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.92 2026/09/22 13:34:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,8 @@ struct fifoinfo {
 	int		fi_readers;
 	kcondvar_t	fi_wcv;
 	int		fi_writers;
+	uint64_t	fi_rgen;
+	uint64_t	fi_wgen;
 };
 
 /*
@@ -175,6 +177,8 @@ fifo_open(void *v)
 
 		fip->fi_readers = 0;
 		fip->fi_writers = 0;
+		fip->fi_rgen = 0;
+		fip->fi_wgen = 0;
 		wso->so_state |= SS_CANTRCVMORE;
 		rso->so_state |= SS_CANTSENDMORE;
 		cv_init(&fip->fi_rcv, "fiford");
@@ -201,17 +205,21 @@ fifo_open(void *v)
 	if (ap->a_mode & FREAD) {
 		if (ap->a_mode & O_NONBLOCK) {
 		} else {
-			while (!soreadable(rso) && fip->fi_writers == 0) {
+			uint64_t wgen = fip->fi_wgen;
+
+			while (!soreadable(rso) && fip->fi_writers == 0 &&
+			    wgen == fip->fi_wgen) {
 				VOP_UNLOCK(vp);
 				error = cv_wait_sig(&fip->fi_rcv,
 				    wso->so_lock);
 				sounlock(wso);
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-				if (error)
+				if (error && wgen == fip->fi_wgen)
 					goto bad;
 				solock(wso);
 			}
 		}
+		fip->fi_rgen++;
 	}
 	if (ap->a_mode & FWRITE) {
 		if (ap->a_mode & O_NONBLOCK) {
@@ -221,17 +229,20 @@ fifo_open(void *v)
 				goto bad;
 			}
 		} else {
-			while (fip->fi_readers == 0) {
+			const uint64_t rgen = fip->fi_rgen;
+
+			while (fip->fi_readers == 0 && rgen == fip->fi_rgen) {
 				VOP_UNLOCK(vp);
 				error = cv_wait_sig(&fip->fi_wcv,
 				    wso->so_lock);
 				sounlock(wso);
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-				if (error)
+				if (error && rgen == fip->fi_rgen)
 					goto bad;
 				solock(wso);
 			}
 		}
+		fip->fi_wgen++;
 	}
 	sounlock(wso);
 	return (0);

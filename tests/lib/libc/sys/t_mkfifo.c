@@ -1,4 +1,4 @@
-/* $NetBSD: t_mkfifo.c,v 1.5 2026/09/22 13:32:24 riastradh Exp $ */
+/* $NetBSD: t_mkfifo.c,v 1.6 2026/09/22 13:34:00 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mkfifo.c,v 1.5 2026/09/22 13:32:24 riastradh Exp $");
+__RCSID("$NetBSD: t_mkfifo.c,v 1.6 2026/09/22 13:34:00 riastradh Exp $");
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -566,7 +566,6 @@ ATF_TC_HEAD(mkfifo_sigopenreader_race, tc)
 }
 ATF_TC_BODY(mkfifo_sigopenreader_race, tc)
 {
-	atf_tc_expect_fail("PR kern/59578");
 	test_sigopen_race(O_RDONLY, O_WRONLY);
 }
 ATF_TC_CLEANUP(mkfifo_sigopenreader_race, tc)
@@ -582,7 +581,6 @@ ATF_TC_HEAD(mkfifo_sigopenwriter_race, tc)
 }
 ATF_TC_BODY(mkfifo_sigopenwriter_race, tc)
 {
-	atf_tc_expect_fail("PR kern/59578");
 	test_sigopen_race(O_WRONLY, O_RDONLY);
 }
 ATF_TC_CLEANUP(mkfifo_sigopenwriter_race, tc)
