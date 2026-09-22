@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.55 2026/04/08 00:33:07 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.56 2026/09/22 16:14:55 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -297,7 +297,12 @@ block:
 			if (is_rproc_route(rp))
 				return 0;
 		}
+
+		if (is_rproc_route(rp))
+			goto out;
+
 		npf_rproc_release(rp);
+
 		/* mbuf already freed */
 		return 0;
 	}
@@ -310,6 +315,9 @@ out:
 	if (con) {
 		npf_conn_release(con);
 	} else if (rp) {
+		if (is_rproc_route(rp))
+			error = EWOULDBLOCK;
+
 		npf_rproc_release(rp);
 	}
 

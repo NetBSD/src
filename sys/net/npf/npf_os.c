@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.26 2026/09/18 16:41:13 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.27 2026/09/22 16:14:55 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -52,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.26 2026/09/18 16:41:13 joe Exp $");
 #include <sys/module.h>
 #include <sys/pserialize.h>
 #include <sys/socketvar.h>
+#include <sys/sysctl.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
 #include <sys/uio.h>
 
 #include <netinet/in.h>
