@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ipsec_policy.c,v 1.4 2026/09/22 15:04:22 riastradh Exp $	*/
+/*	$NetBSD: t_ipsec_policy.c,v 1.5 2026/09/22 15:11:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ipsec_policy.c,v 1.4 2026/09/22 15:04:22 riastradh Exp $");
+__RCSID("$NetBSD: t_ipsec_policy.c,v 1.5 2026/09/22 15:11:43 riastradh Exp $");
 
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 #include <sys/types.h>
 #include <sys/un.h>
 
@@ -333,6 +334,13 @@ ATF_TC_BODY(pr60669, tc)
 		 */
 	};
 	unsigned i;
+	int ipsec_enabled;
+	size_t len = sizeof(ipsec_enabled);
+
+	RL(sysctlbyname("net.inet.ipsec.enabled", &ipsec_enabled, &len,
+		NULL, 0));
+	if (!ipsec_enabled)
+		atf_tc_skip("IPsec disabled, sysctl net.inet.ipsec.enabled=0");
 
 	RL(inet_pton(AF_INET, "192.0.2.42", &v4[0].sin.sin_addr));
 	RL(inet_pton(AF_INET, "192.51.100.54", &v4[1].sin.sin_addr));
