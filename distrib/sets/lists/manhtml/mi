@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.30.2.7 2026/09/20 10:08:25 martin Exp $
+# $NetBSD: mi,v 1.30.2.8 2026/09/22 10:36:39 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1582,6 +1582,7 @@
 ./usr/share/man/html4/puc.html			man-sys-htmlman		html
 ./usr/share/man/html4/pud.html			man-sys-htmlman		html
 ./usr/share/man/html4/puffs.html		man-sys-htmlman		html
+./usr/share/man/html4/pv.html			man-sys-htmlman		html
 ./usr/share/man/html4/pwdog.html		man-sys-htmlman		html
 ./usr/share/man/html4/px.html			man-sys-htmlman		html
 ./usr/share/man/html4/pxagpio.html		man-sys-htmlman		html
