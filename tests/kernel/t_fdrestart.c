@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdrestart.c,v 1.6 2026/09/23 18:26:07 riastradh Exp $	*/
+/*	$NetBSD: t_fdrestart.c,v 1.7 2026/09/23 18:26:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* ERESTART */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdrestart.c,v 1.6 2026/09/23 18:26:07 riastradh Exp $");
+__RCSID("$NetBSD: t_fdrestart.c,v 1.7 2026/09/23 18:26:22 riastradh Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: t_fdrestart.c,v 1.6 2026/09/23 18:26:07 riastradh Exp $");
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include <fs/ptyfs/ptyfs.h>
 #include <fs/tmpfs/tmpfs_args.h>
 
 #include <atf-c.h>
@@ -45,6 +46,7 @@ __RCSID("$NetBSD: t_fdrestart.c,v 1.6 2026/09/23 18:26:07 riastradh Exp $");
 #include <poll.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <termios.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
@@ -416,6 +418,36 @@ out:	/*
 	return fd;
 }
 
+static void
+ptysetup(int *hostfd, int *appfd)
+{
+	struct ptyfs_args args;
+	struct ptmget pm;
+	struct termios t;
+	char *pts;
+
+	(void)rump_sys_mkdir("/dev", 0777);
+	(void)rump_sys_mkdir("/dev/pts", 0777);
+
+	memset(&args, 0, sizeof(args));
+	args.version = PTYFS_ARGSVERSION;
+	args.mode = 0777;
+	RL(rump_sys_mount(MOUNT_PTYFS, "/dev/pts", 0, &args, sizeof(args)));
+
+	RL(*hostfd = rump_sys_open("/dev/ptmx", O_RDWR|O_NOCTTY));
+	RL(rump_sys_ioctl(*hostfd, TIOCGRANTPT, 0));
+	/* unlockpt -- noop */
+	RL(rump_sys_ioctl(*hostfd, TIOCPTSNAME, &pm));
+	pts = pm.sn;
+	RL(*appfd = rump_sys_open(pts, O_RDWR|O_NOCTTY));
+
+	RL(rump_sys_ioctl(*appfd, TIOCGETA, &t));
+	t.c_lflag &= ~ICANON;	/* block rather than drop input */
+	RL(rump_sys_ioctl(*appfd, TIOCSETA, &t));
+
+	fprintf(stderr, "hostfd=%d appfd=%d\n", *hostfd, *appfd);
+}
+
 ATF_TC(fifo_read);
 ATF_TC_HEAD(fifo_read, tc)
 {
@@ -655,6 +687,272 @@ ATF_TC_BODY(pipe_selectwrite, tc)
 	testfdrestart(F);
 }
 
+ATF_TC(ptyhost_read);
+ATF_TC_HEAD(ptyhost_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ptyhost read fails on close");
+}
+ATF_TC_BODY(ptyhost_read, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &doread;
+	F->fd = hostfd;
+	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty host side */
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
+	testfdrestart(F);
+}
+
+ATF_TC(ptyhost_pollread);
+ATF_TC_HEAD(ptyhost_pollread, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test poll waiting for ptyhost readability wakes on close");
+}
+ATF_TC_BODY(ptyhost_pollread, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &dopollread;
+	F->fd = hostfd;
+	testfdrestart(F);
+}
+
+ATF_TC(ptyhost_selectread);
+ATF_TC_HEAD(ptyhost_selectread, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test select waiting for ptyhost readability wakes on close");
+}
+ATF_TC_BODY(ptyhost_selectread, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &doselectread;
+	F->fd = hostfd;
+	testfdrestart(F);
+}
+
+ATF_TC(ptyhost_write);
+ATF_TC_HEAD(ptyhost_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ptyhost write fails on close");
+}
+ATF_TC_BODY(ptyhost_write, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &dowrite;
+	F->fd = hostfd;
+	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty host side */
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
+	testfdrestart(F);
+}
+
+ATF_TC(ptyhost_pollwrite);
+ATF_TC_HEAD(ptyhost_pollwrite, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test poll waiting for ptyhost writability wakes on close");
+}
+ATF_TC_BODY(ptyhost_pollwrite, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &dopollwrite;
+	F->fd = hostfd;
+	testfdrestart(F);
+}
+
+ATF_TC(ptyhost_selectwrite);
+ATF_TC_HEAD(ptyhost_selectwrite, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test select waiting for ptyhost writability wakes on close");
+}
+ATF_TC_BODY(ptyhost_selectwrite, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &doselectwrite;
+	F->fd = hostfd;
+	testfdrestart(F);
+}
+
+ATF_TC(ptyapp_read);
+ATF_TC_HEAD(ptyapp_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ptyapp read fails on close");
+}
+ATF_TC_BODY(ptyapp_read, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &doread;
+	F->fd = appfd;
+	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty app side */
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
+	testfdrestart(F);
+}
+
+ATF_TC(ptyapp_pollread);
+ATF_TC_HEAD(ptyapp_pollread, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test poll waiting for ptyapp readability wakes on close");
+}
+ATF_TC_BODY(ptyapp_pollread, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &dopollread;
+	F->fd = appfd;
+	testfdrestart(F);
+}
+
+ATF_TC(ptyapp_selectread);
+ATF_TC_HEAD(ptyapp_selectread, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test select waiting for ptyapp readability wakes on close");
+}
+ATF_TC_BODY(ptyapp_selectread, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &doselectread;
+	F->fd = appfd;
+	testfdrestart(F);
+}
+
+ATF_TC(ptyapp_write);
+ATF_TC_HEAD(ptyapp_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ptyapp write fails on close");
+}
+ATF_TC_BODY(ptyapp_write, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &dowrite;
+	F->fd = appfd;
+	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty app side */
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
+	testfdrestart(F);
+}
+
+ATF_TC(ptyapp_pollwrite);
+ATF_TC_HEAD(ptyapp_pollwrite, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test poll waiting for ptyapp writability wakes on close");
+}
+ATF_TC_BODY(ptyapp_pollwrite, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &dopollwrite;
+	F->fd = appfd;
+	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty app side */
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
+	testfdrestart(F);
+}
+
+ATF_TC(ptyapp_selectwrite);
+ATF_TC_HEAD(ptyapp_selectwrite, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test select waiting for ptyapp writability wakes on close");
+}
+ATF_TC_BODY(ptyapp_selectwrite, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int hostfd, appfd;
+
+	rump_init();
+
+	ptysetup(&hostfd, &appfd);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &doselectwrite;
+	F->fd = appfd;
+	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty app side */
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
+	testfdrestart(F);
+}
+
 ATF_TC(socketpair_read);
 ATF_TC_HEAD(socketpair_read, tc)
 {
@@ -794,6 +1092,18 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, pipe_selectread);
 	ATF_TP_ADD_TC(tp, pipe_selectwrite);
 	ATF_TP_ADD_TC(tp, pipe_write);
+	ATF_TP_ADD_TC(tp, ptyapp_pollread);
+	ATF_TP_ADD_TC(tp, ptyapp_pollwrite);
+	ATF_TP_ADD_TC(tp, ptyapp_read);
+	ATF_TP_ADD_TC(tp, ptyapp_selectread);
+	ATF_TP_ADD_TC(tp, ptyapp_selectwrite);
+	ATF_TP_ADD_TC(tp, ptyapp_write);
+	ATF_TP_ADD_TC(tp, ptyhost_pollread);
+	ATF_TP_ADD_TC(tp, ptyhost_pollwrite);
+	ATF_TP_ADD_TC(tp, ptyhost_read);
+	ATF_TP_ADD_TC(tp, ptyhost_selectread);
+	ATF_TP_ADD_TC(tp, ptyhost_selectwrite);
+	ATF_TP_ADD_TC(tp, ptyhost_write);
 	ATF_TP_ADD_TC(tp, socketpair_pollread);
 	ATF_TP_ADD_TC(tp, socketpair_pollwrite);
 	ATF_TP_ADD_TC(tp, socketpair_read);
