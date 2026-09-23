@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.15 2026/09/23 18:25:12 riastradh Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.16 2026/09/23 18:25:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -48,6 +48,53 @@
 #include <unistd.h>
 
 #include "h_macros.h"
+
+static void
+formatbit(char **bufp, size_t *lenp, bool *firstp, const char *name)
+{
+	int n;
+	size_t k;
+
+	n = snprintf(*bufp, *lenp, "%s%s", *firstp ? "" : ",", name);
+	*firstp = false;
+	k = ((unsigned)n >= *lenp ? *lenp : (unsigned)n);
+	*bufp += k;
+	*lenp -= k;
+}
+
+static char *
+formatpollevents(char *buf, size_t len, int events)
+{
+	char *start = buf;
+	bool first = true;
+	int n;
+
+	n = snprintf(buf, len, "0x%x<", events);
+	if ((unsigned)n >= len)
+		goto out;
+	buf += (unsigned)n;
+	len -= (unsigned)n;
+	if (events & POLLIN)
+		formatbit(&buf, &len, &first, "POLLIN");
+	if (events & POLLOUT)
+		formatbit(&buf, &len, &first, "POLLOUT");
+	if (events & POLLHUP)
+		formatbit(&buf, &len, &first, "POLLHUP");
+	if (events & POLLERR)
+		formatbit(&buf, &len, &first, "POLLERR");
+	if (events & POLLRDNORM)
+		formatbit(&buf, &len, &first, "POLLRDNORM");
+	if (events & POLLWRNORM)
+		formatbit(&buf, &len, &first, "POLLWRNORM");
+	if (events & POLLRDBAND)
+		formatbit(&buf, &len, &first, "POLLRDBAND");
+	if (events & POLLWRBAND)
+		formatbit(&buf, &len, &first, "POLLWRBAND");
+	if (events & POLLNVAL)
+		formatbit(&buf, &len, &first, "POLLNVAL");
+	snprintf(buf, len, ">");
+out:	return start;
+}
 
 static int desc;
 
@@ -166,6 +213,7 @@ ATF_TC_BODY(basic, tc)
 	struct pollfd pfds[2];
 	int ret;
 	ssize_t nwrit;
+	char eventbuf[128];
 
 	RL(pipe(fds));
 
@@ -182,26 +230,30 @@ ATF_TC_BODY(basic, tc)
 	pfds[1].revents = -1;
 	RL(ret = poll(&pfds[0], 1, 1));
 	ATF_REQUIRE_EQ_MSG(ret, 0, "got: %d", ret);
-	ATF_REQUIRE_EQ_MSG(pfds[0].revents, 0, "got: %d", pfds[0].revents);
-	ATF_REQUIRE_EQ_MSG(pfds[1].revents, -1, "got: %d", pfds[1].revents);
+	ATF_REQUIRE_EQ_MSG(pfds[0].revents, 0, "got: %s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfds[0].revents));
+	ATF_REQUIRE_EQ_MSG(pfds[1].revents, -1, "got: %s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfds[1].revents));
 
 	/* Check that the write end of the pipe as reported as ready. */
 	pfds[0].revents = -1;
 	pfds[1].revents = -1;
 	RL(ret = poll(&pfds[1], 1, 1));
 	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
-	ATF_REQUIRE_EQ_MSG(pfds[0].revents, -1, "got: %d", pfds[0].revents);
-	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",\
-	    pfds[1].revents);
+	ATF_REQUIRE_EQ_MSG(pfds[0].revents, -1, "got: %s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfds[0].revents));
+	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfds[1].revents));
 
 	/* Check that only the write end of the pipe as reported as ready. */
 	pfds[0].revents = -1;
 	pfds[1].revents = -1;
 	RL(ret = poll(pfds, 2, 1));
 	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
-	ATF_REQUIRE_EQ_MSG(pfds[0].revents, 0, "got: %d", pfds[0].revents);
-	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",
-	    pfds[1].revents);
+	ATF_REQUIRE_EQ_MSG(pfds[0].revents, 0, "got: %s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfds[0].revents));
+	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfds[1].revents));
 
 	/* Write data to our pipe. */
 	RL(nwrit = write(fds[1], "", 1));
@@ -212,10 +264,10 @@ ATF_TC_BODY(basic, tc)
 	pfds[1].revents = -1;
 	RL(ret = poll(pfds, 2, 1));
 	ATF_REQUIRE_EQ_MSG(ret, 2, "got: %d", ret);
-	ATF_REQUIRE_EQ_MSG(pfds[0].revents, POLLIN, "got: %d",
-	    pfds[0].revents);
-	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",
-	    pfds[1].revents);
+	ATF_REQUIRE_EQ_MSG(pfds[0].revents, POLLIN, "got: %s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfds[0].revents));
+	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfds[1].revents));
 
 	RL(close(fds[0]));
 	RL(close(fds[1]));
@@ -232,6 +284,7 @@ ATF_TC_BODY(err, tc)
 	struct pollfd pfd;
 	int fd = 0, invalidfd;
 	int nfds;
+	char actbuf[128], expbuf[128];
 
 	pfd.fd = fd;
 	pfd.events = POLLIN;
@@ -251,7 +304,9 @@ ATF_TC_BODY(err, tc)
 	ATF_CHECK_EQ_MSG(pfd.fd, invalidfd,
 	    "pfd.fd=%d fd=%d", pfd.fd, invalidfd);
 	ATF_CHECK_EQ_MSG(pfd.revents, POLLNVAL,
-	    "pfd.revents=0x%x expected=0x%x", pfd.revents, POLLNVAL);
+	    "pfd.revents=%s expected=%s",
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), POLLNVAL));
 }
 
 static const char	fifo_path[] = "pollhup_fifo";
@@ -288,6 +343,7 @@ ATF_TC_BODY(fifo_inout, tc)
 	long pipe_buf;
 	int ret;
 	ssize_t nwrit, nread;
+	char eventbuf[128];
 
 	fifo_support();
 
@@ -311,9 +367,11 @@ ATF_TC_BODY(fifo_inout, tc)
 	RL(ret = poll(pfd, 2, 0));
 	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfd[0].revents, 0,
-	    "pfd[0].revents=0x%x", pfd[0].revents);
+	    "pfd[0].revents=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd[0].revents));
 	ATF_REQUIRE_EQ_MSG(pfd[1].revents, POLLOUT|POLLWRNORM,
-	    "pfd[1].revents=0x%x", pfd[1].revents);
+	    "pfd[1].revents=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd[1].revents));
 
 	/* Write a single byte of data into the FIFO. */
 	RL(nwrit = write(wfd, buf, 1));
@@ -323,9 +381,11 @@ ATF_TC_BODY(fifo_inout, tc)
 	RL(ret = poll(pfd, 2, 0));
 	ATF_REQUIRE_EQ_MSG(ret, 2, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfd[0].revents, POLLIN|POLLRDNORM,
-	    "pfd[0].revents=0x%x", pfd[0].revents);
+	    "pfd[0].revents=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd[0].revents));
 	ATF_REQUIRE_EQ_MSG(pfd[1].revents, POLLOUT|POLLWRNORM,
-	    "pfd[1].revents=0x%x", pfd[1].revents);
+	    "pfd[1].revents=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd[1].revents));
 
 	/* Read that single byte back out. */
 	RL(nread = read(rfd, buf, 1));
@@ -345,9 +405,11 @@ ATF_TC_BODY(fifo_inout, tc)
 	RL(ret = poll(pfd, 2, 0));
 	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfd[0].revents, POLLIN|POLLRDNORM,
-	    "pfd[0].revents=0x%x", pfd[0].revents);
+	    "pfd[0].revents=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd[0].revents));
 	ATF_REQUIRE_EQ_MSG(pfd[1].revents, 0,
-	    "pfd[1].revents=0x%x", pfd[1].revents);
+	    "pfd[1].revents=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd[1].revents));
 
 	/* Read a single byte of data from the FIFO. */
 	RL(nread = read(rfd, buf, 1));
@@ -361,9 +423,11 @@ ATF_TC_BODY(fifo_inout, tc)
 	RL(ret = poll(pfd, 2, 0));
 	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfd[0].revents, POLLIN|POLLRDNORM,
-	    "pfd[0].revents=0x%x", pfd[0].revents);
+	    "pfd[0].revents=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd[0].revents));
 	ATF_REQUIRE_EQ_MSG(pfd[1].revents, 0,
-	    "pfd[1].revents=0x%x", pfd[1].revents);
+	    "pfd[1].revents=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd[1].revents));
 
 	/*
 	 * Now read enough so that exactly pipe_buf space should
@@ -376,7 +440,8 @@ ATF_TC_BODY(fifo_inout, tc)
 	RL(ret = poll(pfd, 2, 0));
 	ATF_REQUIRE_MSG(ret >= 1, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfd[1].revents, POLLOUT|POLLWRNORM,
-	    "pfd[1].revents=0x%x", pfd[1].revents);
+	    "pfd[1].revents=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd[1].revents));
 
 	/*
 	 * Now read all of the data out of the FIFO and ensure that
@@ -390,9 +455,11 @@ ATF_TC_BODY(fifo_inout, tc)
 	RL(ret = poll(pfd, 2, 0));
 	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfd[0].revents, 0,
-	    "pfd[0].revents=0x%x", pfd[0].revents);
+	    "pfd[0].revents=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd[0].revents));
 	ATF_REQUIRE_EQ_MSG(pfd[1].revents, POLLOUT|POLLWRNORM,
-	    "pfd[1].revents=0x%x", pfd[1].revents);
+	    "pfd[1].revents=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd[1].revents));
 
 	RL(close(wfd));
 	RL(close(rfd));
@@ -415,6 +482,7 @@ ATF_TC_BODY(fifo_hup1, tc)
 	struct pollfd pfd;
 	int rfd, wfd;
 	int ret;
+	char eventbuf[128];
 
 	fifo_support();
 
@@ -431,8 +499,9 @@ ATF_TC_BODY(fifo_hup1, tc)
 	RL(ret = poll(&pfd, 1, 0));
 	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG((pfd.revents & (POLLHUP|POLLOUT)), POLLHUP,
-	    "revents=0x%x expected POLLHUP=0x%x but not POLLOUT=0x%x",
-	    pfd.revents, POLLHUP, POLLOUT);
+	    "revents=%s expected POLLHUP=0x%x but not POLLOUT=0x%x",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd.revents),
+	    POLLHUP, POLLOUT);
 
 	/*
 	 * Check that POLLHUP is cleared when a writer re-connects.
@@ -467,6 +536,7 @@ ATF_TC_BODY(fifo_hup2, tc)
 	pid_t pid;
 	struct timespec ts1, ts2;
 	int ret;
+	char eventbuf[128];
 
 	fifo_support();
 
@@ -501,8 +571,9 @@ ATF_TC_BODY(fifo_hup2, tc)
 	    (long long)ts2.tv_sec, ts2.tv_nsec);
 
 	ATF_REQUIRE_EQ_MSG((pfd.revents & (POLLHUP|POLLOUT)), POLLHUP,
-	    "revents=0x%x expected POLLHUP=0x%x but not POLLOUT=0x%x",
-	    pfd.revents, POLLHUP, POLLOUT);
+	    "revents=%s expected POLLHUP=0x%x but not POLLOUT=0x%x",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd.revents),
+	    POLLHUP, POLLOUT);
 }
 
 ATF_TC_CLEANUP(fifo_hup2, tc)
@@ -568,6 +639,7 @@ check_pollclosedpeer_delayed_write(int writefd, int readfd,
 {
 	struct pollfd pfd = { .fd = writefd, .events = POLLOUT };
 	struct timespec start, end, delta;
+	char actbuf[128], expbuf[128];
 	int nfds;
 
 	/*
@@ -599,9 +671,11 @@ check_pollclosedpeer_delayed_write(int writefd, int readfd,
 	ATF_CHECK_EQ_MSG(pfd.fd, writefd, "pfd.fd=%d writefd=%d",
 	    pfd.fd, writefd);
 	ATF_CHECK_EQ_MSG((pfd.revents & (POLLHUP|POLLIN|POLLOUT)), expected,
-	    "revents=0x%x expected=0x%x"
+	    "revents=%s expected=%s"
 	    " POLLHUP=0x%x POLLIN=0x%x POLLOUT=0x%x",
-	    pfd.revents, expected, POLLOUT, POLLHUP, POLLIN);
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), expected),
+	    POLLHUP, POLLIN, POLLOUT);
 
 	/*
 	 * We should have slept at least 1sec.
@@ -625,9 +699,11 @@ check_pollclosedpeer_delayed_write(int writefd, int readfd,
 	ATF_CHECK_EQ_MSG(pfd.fd, writefd, "pfd.fd=%d writefd=%d",
 	    pfd.fd, writefd);
 	ATF_CHECK_EQ_MSG((pfd.revents & (POLLHUP|POLLIN|POLLOUT)), expected,
-	    "revents=0x%x expected=0x%x"
+	    "revents=%s expected=%s"
 	    " POLLHUP=0x%x POLLIN=0x%x POLLOUT=0x%x",
-	    pfd.revents, expected, POLLOUT, POLLHUP, POLLIN);
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), expected),
+	    POLLHUP, POLLIN, POLLOUT);
 }
 
 static void
@@ -650,6 +726,7 @@ check_pollclosedpeer_delayed_read(int readfd, int writefd, int pollhup)
 	struct pollfd pfd;
 	struct timespec start, end, delta;
 	int nfds;
+	char actbuf[128], expbuf[128];
 
 	/*
 	 * Don't let poll sleep for more than 3sec.  (The close delay
@@ -682,9 +759,11 @@ check_pollclosedpeer_delayed_read(int readfd, int writefd, int pollhup)
 	    pfd.fd, readfd, writefd);
 	ATF_CHECK_EQ_MSG((pfd.revents & (POLLHUP|POLLIN|POLLOUT)),
 	    pollhup|POLLIN,
-	    "revents=0x%x expected=0x%x"
+	    "revents=%s expected=%s"
 	    " POLLHUP=0x%x POLLIN=0x%x POLLOUT=0x%x",
-	    pfd.revents, pollhup|POLLIN, POLLHUP, POLLIN, POLLOUT);
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), pollhup|POLLIN),
+	    POLLHUP, POLLIN, POLLOUT);
 
 	/*
 	 * We should have slept at least 1sec.
@@ -710,9 +789,11 @@ check_pollclosedpeer_delayed_read(int readfd, int writefd, int pollhup)
 	    pfd.fd, readfd, writefd);
 	ATF_CHECK_EQ_MSG((pfd.revents & (POLLHUP|POLLIN|POLLOUT)),
 	    pollhup|POLLIN,
-	    "revents=0x%x expected=0x%x"
+	    "revents=%s expected=%s"
 	    " POLLHUP=0x%x POLLIN=0x%x POLLOUT=0x%x",
-	    pfd.revents, pollhup|POLLIN, POLLHUP, POLLIN, POLLOUT);
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), pollhup|POLLIN),
+	    POLLHUP, POLLIN, POLLOUT);
 }
 
 static void
@@ -807,6 +888,7 @@ check_pollclosedpeer_immediate_write(int writefd, int readfd, int expected,
 {
 	struct pollfd pfd = { .fd = writefd, .events = POLLOUT };
 	int nfds;
+	char actbuf[128], expbuf[128];
 
 	/*
 	 * Close the reader side immediately.
@@ -826,9 +908,11 @@ check_pollclosedpeer_immediate_write(int writefd, int readfd, int expected,
 	ATF_CHECK_EQ_MSG(pfd.fd, writefd, "pfd.fd=%d writefd=%d",
 	    pfd.fd, writefd);
 	ATF_CHECK_EQ_MSG((pfd.revents & (POLLHUP|POLLIN|POLLOUT)), expected,
-	    "revents=0x%x expected=0x%x"
+	    "revents=%s expected=%s"
 	    " POLLHUP=0x%x POLLIN=0x%x POLLOUT=0x%x",
-	    pfd.revents, expected, POLLOUT, POLLHUP, POLLIN);
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), expected),
+	    POLLHUP, POLLIN, POLLOUT);
 
 	/*
 	 * Write should fail with EPIPE/SIGPIPE now -- and continue to
@@ -843,6 +927,7 @@ check_pollclosedpeer_immediate_readnone(int readfd, int writefd, int pollhup)
 {
 	struct pollfd pfd = { .fd = readfd, .events = POLLIN };
 	int nfds;
+	char actbuf[128], expbuf[128];
 
 	/*
 	 * Close the writer side immediately.
@@ -861,9 +946,11 @@ check_pollclosedpeer_immediate_readnone(int readfd, int writefd, int pollhup)
 	ATF_CHECK_EQ_MSG(nfds, 1, "nfds=%d", nfds);
 	ATF_CHECK_EQ_MSG((pfd.revents & (POLLHUP|POLLIN|POLLOUT)),
 	    pollhup|POLLIN,
-	    "revents=0x%x expected=0x%x"
+	    "revents=%s expected=%s"
 	    " POLLHUP=0x%x POLLIN=0x%x POLLOUT=0x%x",
-	    pfd.revents, pollhup|POLLIN, POLLHUP, POLLIN, POLLOUT);
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), pollhup|POLLIN),
+	    POLLHUP, POLLIN, POLLOUT);
 
 	/*
 	 * Read should return EOF now -- and continue to do so.
@@ -879,6 +966,7 @@ check_pollclosedpeer_immediate_readsome(int readfd, int writefd, int pollhup)
 	char buf[BUFSIZ];
 	ssize_t nread;
 	int nfds;
+	char actbuf[128], expbuf[128];
 
 	/*
 	 * Close the writer side immediately.
@@ -898,9 +986,11 @@ check_pollclosedpeer_immediate_readsome(int readfd, int writefd, int pollhup)
 	ATF_CHECK_EQ_MSG(nfds, 1, "nfds=%d", nfds);
 	ATF_CHECK_EQ_MSG((pfd.revents & (POLLHUP|POLLIN|POLLOUT)),
 	    pollhup|POLLIN,
-	    "revents=0x%x expected=0x%x"
+	    "revents=%s expected=%s"
 	    " POLLHUP=0x%x POLLIN=0x%x POLLOUT=0x%x",
-	    pfd.revents, pollhup|POLLIN, POLLHUP, POLLIN, POLLOUT);
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), pollhup|POLLIN),
+	    POLLHUP, POLLIN, POLLOUT);
 
 	/*
 	 * Read all the data.  Each read should complete instantly --
@@ -925,9 +1015,11 @@ check_pollclosedpeer_immediate_readsome(int readfd, int writefd, int pollhup)
 	ATF_CHECK_EQ_MSG(nfds, 1, "nfds=%d", nfds);
 	ATF_CHECK_EQ_MSG((pfd.revents & (POLLHUP|POLLIN|POLLOUT)),
 	    pollhup|POLLIN,
-	    "revents=0x%x expected=0x%x"
+	    "revents=%s expected=%s"
 	    " POLLHUP=0x%x POLLIN=0x%x POLLOUT=0x%x",
-	    pfd.revents, pollhup|POLLIN, POLLHUP, POLLIN, POLLOUT);
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), pollhup|POLLIN),
+	    POLLHUP, POLLIN, POLLOUT);
 
 	/*
 	 * Read should return EOF now -- and continue to do so.
@@ -944,9 +1036,11 @@ check_pollclosedpeer_immediate_readsome(int readfd, int writefd, int pollhup)
 	ATF_CHECK_EQ_MSG(nfds, 1, "nfds=%d", nfds);
 	ATF_CHECK_EQ_MSG((pfd.revents & (POLLHUP|POLLIN|POLLOUT)),
 	    pollhup|POLLIN,
-	    "revents=0x%x expected=0x%x"
+	    "revents=%s expected=%s"
 	    " POLLHUP=0x%x POLLIN=0x%x POLLOUT=0x%x",
-	    pfd.revents, pollhup|POLLIN, POLLHUP, POLLIN, POLLOUT);
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), pollhup|POLLIN),
+	    POLLHUP, POLLIN, POLLOUT);
 }
 
 static void *
