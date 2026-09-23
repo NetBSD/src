@@ -1,4 +1,4 @@
-/* $NetBSD: t_crypt.c,v 1.6 2021/10/12 13:24:21 nia Exp $ */
+/* $NetBSD: t_crypt.c,v 1.7 2026/09/23 10:45:41 martin Exp $ */
 
 /*
  * This version is derived from the original implementation of FreeSec
@@ -61,7 +61,7 @@
  *	by now.	 The code requires a 32-bit integer type, though.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_crypt.c,v 1.6 2021/10/12 13:24:21 nia Exp $");
+__RCSID("$NetBSD: t_crypt.c,v 1.7 2026/09/23 10:45:41 martin Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
@@ -136,6 +136,7 @@ ATF_TC_HEAD(crypt_salts, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "crypt(3) salt consistency checks");
+	atf_tc_set_md_var(tc, "timeout", "3000");
 }
 
 ATF_TC_BODY(crypt_salts, tc)
