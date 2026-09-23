@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.183 2026/05/21 10:19:28 skrll Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.184 2026/09/23 19:15:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.183 2026/05/21 10:19:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.184 2026/09/23 19:15:25 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1680,8 +1680,9 @@ re_start_locked(struct rtk_softc *sc)
 	RE_ASSERT_LOCKED(sc);
 
 	ofree = sc->re_ldata.re_txq_free;
+	idx = sc->re_ldata.re_txq_prodidx;
 
-	for (idx = sc->re_ldata.re_txq_prodidx;; idx = RE_NEXT_TXQ(sc, idx)) {
+	for (;;) {
 
 		if (sc->re_ldata.re_txq_free == 0 ||
 		    sc->re_ldata.re_tx_free == 0) {
@@ -1881,6 +1882,8 @@ re_start_locked(struct rtk_softc *sc)
 		sc->re_ldata.re_txq_free--;
 		sc->re_ldata.re_tx_free -= nsegs;
 		sc->re_ldata.re_tx_nextfree = curdesc;
+
+		idx = RE_NEXT_TXQ(sc, idx);
 
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
