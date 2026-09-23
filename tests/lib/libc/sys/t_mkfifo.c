@@ -1,4 +1,4 @@
-/* $NetBSD: t_mkfifo.c,v 1.6 2026/09/22 13:34:00 riastradh Exp $ */
+/* $NetBSD: t_mkfifo.c,v 1.7 2026/09/23 19:19:40 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mkfifo.c,v 1.6 2026/09/22 13:34:00 riastradh Exp $");
+__RCSID("$NetBSD: t_mkfifo.c,v 1.7 2026/09/23 19:19:40 riastradh Exp $");
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -333,7 +333,7 @@ static void
 test_sigopen_race(int parent_flags, int child_flags)
 {
 	struct sigaction sa;
-	const struct timespec timeout = {2,0};
+	const struct timespec timeout = {5,0};
 	struct timespec starttime, deadline, now;
 	uint64_t nintr = 0;	/* 64-bit counter can't overflow */
 	uint64_t niter = 0;
@@ -433,12 +433,11 @@ test_sigopen_race(int parent_flags, int child_flags)
 			/*
 			 * Wait a smidge more for the parent to start
 			 * sleeping in open.  XXX Should really
-			 * busy-wait on the parent process's status.
+			 * busy-wait on the parent process's status,
+			 * and _then_ sleep a tick longer so the parent
+			 * gets an EINTR at least once to confirm.
 			 */
-			if (usleep(1) == -1) {
-				warn("usleep");
-				_exit(5);
-			}
+			sleep(1);
 
 			/*
 			 * Make sure we give up within 1sec.
