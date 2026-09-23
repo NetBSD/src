@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.16 2026/09/23 18:25:29 riastradh Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.17 2026/09/23 18:25:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -2205,6 +2205,601 @@ ATF_TC_BODY(pollclosedpeer_socketpair1_delayed_thread_read, tc)
 	    &check_pollclosedpeer_delayed_read_socket);
 }
 
+struct pollclosedself_thread_ctx {
+	pthread_barrier_t bar;
+	int fd;
+};
+
+static void *
+pollclosedself_thread(void *cookie)
+{
+	struct pollclosedself_thread_ctx *C = cookie;
+
+	fprintf(stderr, "[thread] wait for barrier\n");
+	(void)pthread_barrier_wait(&C->bar);
+	RL(usleep(1));
+	fprintf(stderr, "[thread] closing fd\n");
+	RL(close(C->fd));
+	fprintf(stderr, "[thread] closed fd\n");
+	return NULL;
+}
+
+static void
+check_pollclosedself_thread(int fd, int events)
+{
+	struct pollclosedself_thread_ctx ctx, *C = &ctx;
+	pthread_t t;
+	struct pollfd pfd;
+	int nfds;
+	char actbuf[128], expbuf[128];
+
+	C->fd = fd;
+	RZ(pthread_barrier_init(&C->bar, NULL, 2));
+	RZ(pthread_create(&t, NULL, &pollclosedself_thread, C));
+
+	REQUIRE_LIBC(alarm(3), (unsigned)-1);
+
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.fd = fd;
+	pfd.events = events;
+
+	fprintf(stderr, "wait for barrier and start first poll\n");
+	(void)pthread_barrier_wait(&C->bar);
+	RL(nfds = poll(&pfd, 1, -1));
+	fprintf(stderr, "first poll returned nfds=%d\n", nfds);
+	ATF_REQUIRE_EQ_MSG(nfds, 1, "nfds=%d", nfds);
+	fprintf(stderr, "first poll returned revents=%s\n",
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents));
+	ATF_CHECK_EQ_MSG((pfd.revents &
+		(POLLIN|POLLOUT|POLLHUP|POLLERR|POLLNVAL)),
+	    POLLNVAL,
+	    "revents=%s expected=%s",
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), POLLNVAL));
+
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.fd = fd;
+	pfd.events = events;
+	fprintf(stderr, "start second poll\n");
+	RL(nfds = poll(&pfd, 1, -1));
+	fprintf(stderr, "second poll returned nfds=%d\n", nfds);
+	ATF_REQUIRE_EQ_MSG(nfds, 1, "nfds=%d", nfds);
+	fprintf(stderr, "second poll returned revents=%s\n",
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents));
+	ATF_CHECK_EQ_MSG((pfd.revents &
+		(POLLIN|POLLOUT|POLLHUP|POLLERR|POLLNVAL)),
+	    POLLNVAL,
+	    "revents=%s expected=%s",
+	    formatpollevents(actbuf, sizeof(actbuf), pfd.revents),
+	    formatpollevents(expbuf, sizeof(expbuf), POLLNVAL));
+
+	ATF_CHECK_ERRNO(EBADF, fcntl(fd, F_GETFL) == -1);
+
+	RZ(pthread_join(t, NULL));
+}
+
+static void
+on_sigusr1_close(int signo, siginfo_t *si, void *ctx)
+{
+	int fd;
+
+	if (si->si_code != SI_QUEUE || si->si_pid != getpid()) {
+		fprintf(stderr, "[signal] spurious SIGUSR1,"
+		    " si_code=%d si_pid=%d si_user=%d\n",
+		    si->si_code, (int)si->si_pid, (int)si->si_uid);
+		return;
+	}
+	fd = si->si_value.sival_int;
+	fprintf(stderr, "[signal] closing fd on SIGUSR1\n");
+	RL(close(fd));
+	fprintf(stderr, "[signal] closed fd\n");
+}
+
+static void
+check_pollclosedself_signal(int fd, int events)
+{
+	struct sigaction sa = {
+		.sa_sigaction = &on_sigusr1_close,
+		.sa_flags = SA_SIGINFO|SA_RESTART,
+	};
+	sigset_t omask;
+	struct pollfd pfd;
+	int nfds;
+	char eventbuf[128];
+
+	RL(sigemptyset(&sa.sa_mask));
+	RL(sigaddset(&sa.sa_mask, SIGUSR1));
+	RL(sigprocmask(SIG_BLOCK, &sa.sa_mask, &omask));
+	RL(sigaction(SIGUSR1, &sa, NULL));
+	RL(sigqueue(getpid(), SIGUSR1, (union sigval){.sival_int = fd}));
+
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.fd = fd;
+	pfd.events = events;
+	ATF_CHECK_ERRNO(EINTR, ppoll(&pfd, 1, NULL, &omask) == -1);
+
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.fd = fd;
+	pfd.events = events;
+	RL(nfds = ppoll(&pfd, 1, NULL, &omask));
+	fprintf(stderr, "second poll returned nfds=%d\n", nfds);
+	ATF_REQUIRE_EQ_MSG(nfds, 1, "nfds=%d", nfds);
+	fprintf(stderr, "second poll returned revents=%s\n",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd.revents));
+	ATF_CHECK_EQ_MSG((pfd.revents &
+		(POLLIN|POLLOUT|POLLHUP|POLLERR|POLLNVAL)),
+	    POLLNVAL,
+	    "revents=%s expected=%s",
+	    formatpollevents(eventbuf, sizeof(eventbuf), pfd.revents),
+	    formatpollevents(eventbuf, sizeof(eventbuf), POLLNVAL));
+
+	ATF_CHECK_ERRNO(EBADF, fcntl(fd, F_GETFL) == -1);
+}
+
+/*
+ * Cartesian product of:
+ *
+ * 1. [fifo0] first fifo opener
+ * 2. [fifo1] second fifo opener
+ * 3. [pipe] pipe
+ * 4. [ptyhost] host side of pty
+ * 5. [ptyapp] application side of pty
+ * 6. [socketpair0] first side of socket pair
+ * 7. [socketpair1] second side of socket pair
+ *
+ * with
+ *
+ * 1. [thread] close fd with a concurrent thread
+ * 2. [signal] close fd in a signal handler interrupting ppoll
+ *
+ * with (where applicable)
+ *
+ * 1. [read] waiting for read
+ * 2. [write] waiting for write
+ */
+
+ATF_TC(pollclosedself_fifo0_thread_read);
+ATF_TC_HEAD(pollclosedself_fifo0_thread_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_fifo0_thread_read, tc)
+{
+	int writefd, readfd;
+
+	/*
+	 * Similar bug but for named fifos instead.
+	 */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
+	    " closing pipe writefd fails to wake concurrent write on"
+	    " same writefd");
+
+	pollclosed_fifo0_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_thread(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_fifo0_signal_read);
+ATF_TC_HEAD(pollclosedself_fifo0_signal_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_fifo0_signal_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_fifo0_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_signal(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_fifo0_thread_write);
+ATF_TC_HEAD(pollclosedself_fifo0_thread_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_fifo0_thread_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_fifo0_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_thread(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_fifo0_signal_write);
+ATF_TC_HEAD(pollclosedself_fifo0_signal_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_fifo0_signal_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_fifo0_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_signal(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_fifo1_thread_read);
+ATF_TC_HEAD(pollclosedself_fifo1_thread_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_fifo1_thread_read, tc)
+{
+	int writefd, readfd;
+
+	/*
+	 * Similar bug but for named fifos instead.
+	 */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
+	    " closing pipe writefd fails to wake concurrent write on"
+	    " same writefd");
+
+	pollclosed_fifo1_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_thread(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_fifo1_signal_read);
+ATF_TC_HEAD(pollclosedself_fifo1_signal_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_fifo1_signal_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_fifo1_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_signal(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_fifo1_thread_write);
+ATF_TC_HEAD(pollclosedself_fifo1_thread_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_fifo1_thread_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_fifo1_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_thread(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_fifo1_signal_write);
+ATF_TC_HEAD(pollclosedself_fifo1_signal_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_fifo1_signal_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_fifo1_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_signal(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_pipe_thread_read);
+ATF_TC_HEAD(pollclosedself_pipe_thread_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_pipe_thread_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_pipe_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_thread(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_pipe_signal_read);
+ATF_TC_HEAD(pollclosedself_pipe_signal_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_pipe_signal_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_pipe_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_signal(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_pipe_thread_write);
+ATF_TC_HEAD(pollclosedself_pipe_thread_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_pipe_thread_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_pipe_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_thread(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_pipe_signal_write);
+ATF_TC_HEAD(pollclosedself_pipe_signal_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_pipe_signal_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_pipe_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_signal(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_ptyhost_thread_read);
+ATF_TC_HEAD(pollclosedself_ptyhost_thread_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_ptyhost_thread_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_ptyhost_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_thread(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_ptyhost_signal_read);
+ATF_TC_HEAD(pollclosedself_ptyhost_signal_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_ptyhost_signal_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_ptyhost_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_signal(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_ptyhost_thread_write);
+ATF_TC_HEAD(pollclosedself_ptyhost_thread_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_ptyhost_thread_write, tc)
+{
+	int writefd, readfd;
+
+	/*
+	 * Similar bug but for the host side of a pty instead (but
+	 * curiously, not the application side of a pty!).
+	 */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
+	    " closing pipe writefd fails to wake concurrent write on"
+	    " same writefd");
+
+	pollclosed_ptyhost_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_thread(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_ptyhost_signal_write);
+ATF_TC_HEAD(pollclosedself_ptyhost_signal_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_ptyhost_signal_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_ptyhost_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_signal(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_ptyapp_thread_read);
+ATF_TC_HEAD(pollclosedself_ptyapp_thread_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_ptyapp_thread_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_ptyapp_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_thread(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_ptyapp_signal_read);
+ATF_TC_HEAD(pollclosedself_ptyapp_signal_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_ptyapp_signal_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_ptyapp_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_signal(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_ptyapp_thread_write);
+ATF_TC_HEAD(pollclosedself_ptyapp_thread_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_ptyapp_thread_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_ptyapp_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_thread(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_ptyapp_signal_write);
+ATF_TC_HEAD(pollclosedself_ptyapp_signal_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_ptyapp_signal_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_ptyapp_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_signal(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_socketpair0_thread_read);
+ATF_TC_HEAD(pollclosedself_socketpair0_thread_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_socketpair0_thread_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_socketpair0_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_thread(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_socketpair0_signal_read);
+ATF_TC_HEAD(pollclosedself_socketpair0_signal_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_socketpair0_signal_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_socketpair0_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_signal(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_socketpair0_thread_write);
+ATF_TC_HEAD(pollclosedself_socketpair0_thread_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_socketpair0_thread_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_socketpair0_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_thread(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_socketpair0_signal_write);
+ATF_TC_HEAD(pollclosedself_socketpair0_signal_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_socketpair0_signal_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_socketpair0_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_signal(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_socketpair1_thread_read);
+ATF_TC_HEAD(pollclosedself_socketpair1_thread_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_socketpair1_thread_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_socketpair1_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_thread(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_socketpair1_signal_read);
+ATF_TC_HEAD(pollclosedself_socketpair1_signal_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_socketpair1_signal_read, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_socketpair1_setup(&writefd, &readfd);
+	/* don't fill pipe buf */
+	check_pollclosedself_signal(readfd, POLLIN);
+}
+
+ATF_TC(pollclosedself_socketpair1_thread_write);
+ATF_TC_HEAD(pollclosedself_socketpair1_thread_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a thread");
+}
+ATF_TC_BODY(pollclosedself_socketpair1_thread_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_socketpair1_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_thread(writefd, POLLOUT);
+}
+
+ATF_TC(pollclosedself_socketpair1_signal_write);
+ATF_TC_HEAD(pollclosedself_socketpair1_signal_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks poll on an fd concurrently closed by a signal handler");
+}
+ATF_TC_BODY(pollclosedself_socketpair1_signal_write, tc)
+{
+	int writefd, readfd;
+
+	pollclosed_socketpair1_setup(&writefd, &readfd);
+	fillpipebuf(writefd);
+	check_pollclosedself_signal(writefd, POLLOUT);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -2279,6 +2874,41 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyhost_delayed_thread_read);
 	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair0_delayed_thread_read);
 	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair1_delayed_thread_read);
+
+	ATF_TP_ADD_TC(tp, pollclosedself_fifo0_signal_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_fifo0_signal_write);
+	ATF_TP_ADD_TC(tp, pollclosedself_fifo0_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_fifo0_thread_write);
+
+	ATF_TP_ADD_TC(tp, pollclosedself_fifo1_signal_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_fifo1_signal_write);
+	ATF_TP_ADD_TC(tp, pollclosedself_fifo1_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_fifo1_thread_write);
+
+	ATF_TP_ADD_TC(tp, pollclosedself_pipe_signal_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_pipe_signal_write);
+	ATF_TP_ADD_TC(tp, pollclosedself_pipe_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_pipe_thread_write);
+
+	ATF_TP_ADD_TC(tp, pollclosedself_ptyhost_signal_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_ptyhost_signal_write);
+	ATF_TP_ADD_TC(tp, pollclosedself_ptyhost_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_ptyhost_thread_write);
+
+	ATF_TP_ADD_TC(tp, pollclosedself_ptyapp_signal_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_ptyapp_signal_write);
+	ATF_TP_ADD_TC(tp, pollclosedself_ptyapp_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_ptyapp_thread_write);
+
+	ATF_TP_ADD_TC(tp, pollclosedself_socketpair0_signal_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_socketpair0_signal_write);
+	ATF_TP_ADD_TC(tp, pollclosedself_socketpair0_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_socketpair0_thread_write);
+
+	ATF_TP_ADD_TC(tp, pollclosedself_socketpair1_signal_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_socketpair1_signal_write);
+	ATF_TP_ADD_TC(tp, pollclosedself_socketpair1_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedself_socketpair1_thread_write);
 
 	return atf_no_error();
 }
