@@ -1,4 +1,3 @@
-#
 #                          __  __            _
 #                       ___\ \/ /_ __   __ _| |_
 #                      / _ \\  /| '_ \ / _` | __|
@@ -6,10 +5,7 @@
 #                      \___/_/\_\ .__/ \__,_|\__|
 #                               |_| XML parser
 #
-# Copyright (c) 2017-2026 Sebastian Pipping <sebastian@pipping.org>
-# Copyright (c) 2017-2022 Rhodri James <rhodri@wildebeest.org.uk>
-# Copyright (c) 2020      Jeffrey Walton <noloader@gmail.com>
-# Copyright (c) 2024      Dag-Erling Smørgrav <des@des.dev>
+# Copyright (c) 2026 Expat development team
 # Licensed under the MIT license:
 #
 # Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -31,53 +27,11 @@
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 # USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-SUBDIRS = . benchmark
+set(CMAKE_SYSTEM_NAME Windows)
 
-AM_CPPFLAGS = @AM_CPPFLAGS@ -I$(srcdir)/../lib -DXML_TESTING
+set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
+set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
+set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
 
-check_PROGRAMS = runtests
-TESTS = runtests
-
-# To support MinGW and Non-MinGW at the same time:
-LOG_DRIVER = $(srcdir)/../test-driver-wrapper.sh
-
-runtests_SOURCES = \
-    acc_tests.c \
-    alloc_tests.c \
-    basic_tests.c \
-    chardata.c \
-    common.c \
-    dummy.c \
-    handlers.c \
-    hash_tests.c \
-    memcheck.c \
-    minicheck.c \
-    misc_tests.c \
-    ns_tests.c \
-    nsalloc_tests.c \
-    runtests.c \
-    structdata.c
-
-runtests_LDADD = ../lib/libtestpat.la
-
-runtests_LDFLAGS = @AM_LDFLAGS@ @LIBM@
-
-EXTRA_DIST = \
-    acc_tests.h \
-    alloc_tests.h \
-    basic_tests.h \
-    chardata.h \
-    common.h \
-    dummy.h \
-    handlers.h \
-    hash_tests.h \
-    memcheck.h \
-    minicheck.h \
-    misc_tests.h \
-    ns_tests.h \
-    nsalloc_tests.h \
-    README.md \
-    structdata.h \
-    udiffer.py \
-    xmltest.log.expected \
-    xmltest.sh
+set(WIN32 ON)
+set(MINGW ON)
