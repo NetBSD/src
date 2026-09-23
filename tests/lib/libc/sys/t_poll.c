@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.13 2026/09/23 18:24:48 riastradh Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.14 2026/09/23 18:25:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -595,7 +595,6 @@ check_pollclosed_delayed_write(int writefd, int readfd,
 	 * exclusive with POLLOUT).  Except we _do_ return POLLHUP
 	 * instead of POLLOUT for terminals.
 	 */
-	RL(nfds = poll(&pfd, 1, 0));
 	ATF_CHECK_EQ_MSG(nfds, 1, "nfds=%d", nfds);
 	ATF_CHECK_EQ_MSG(pfd.fd, writefd, "pfd.fd=%d writefd=%d",
 	    pfd.fd, writefd);
@@ -617,6 +616,18 @@ check_pollclosed_delayed_write(int writefd, int readfd,
 	 */
 	check_write_fail(writefd, writeerror);
 	check_write_fail(writefd, writeerror);
+
+	/*
+	 * POLLHUP/POLLOUT state should be persistent.
+	 */
+	RL(nfds = poll(&pfd, 1, 0));
+	ATF_CHECK_EQ_MSG(nfds, 1, "nfds=%d", nfds);
+	ATF_CHECK_EQ_MSG(pfd.fd, writefd, "pfd.fd=%d writefd=%d",
+	    pfd.fd, writefd);
+	ATF_CHECK_EQ_MSG((pfd.revents & (POLLHUP|POLLIN|POLLOUT)), expected,
+	    "revents=0x%x expected=0x%x"
+	    " POLLHUP=0x%x POLLIN=0x%x POLLOUT=0x%x",
+	    pfd.revents, expected, POLLOUT, POLLHUP, POLLIN);
 }
 
 static void
