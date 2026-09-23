@@ -1,4 +1,4 @@
-/*
+/* Tests related to the hash tables used inside Expat
                             __  __            _
                          ___\ \/ /_ __   __ _| |_
                         / _ \\  /| '_ \ / _` | __|
@@ -6,7 +6,7 @@
                         \___/_/\_\ .__/ \__,_|\__|
                                  |_| XML parser
 
-   Copyright (c) 2026 Nick Begg <nick@stunttruck.net>
+   Copyright (c) 2026 Sebastian Pipping <sebastian@pipping.org>
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -31,21 +31,11 @@
    SPDX-License-Identifier: MIT
 */
 
-#ifndef FALLTHROUGH_H
-#  define FALLTHROUGH_H 1
+#ifndef XML_HASH_TESTS_H
+#define XML_HASH_TESTS_H
 
-// Explicit fallthrough in switch case to avoid warnings
-// with compiler flag -Wimplicit-fallthrough.
+#include "minicheck.h"
 
-#  define EXPAT_FALLTHROUGH                                                    \
-    do {                                                                       \
-    } while (0)
+extern void make_hash_test_case(Suite *s);
 
-#  if defined(__has_attribute)
-#    if __has_attribute(fallthrough)
-#      undef EXPAT_FALLTHROUGH
-#      define EXPAT_FALLTHROUGH __attribute__((fallthrough))
-#    endif
-#  endif
-
-#endif // FALLTHROUGH_H
+#endif /* XML_HASH_TESTS_H */

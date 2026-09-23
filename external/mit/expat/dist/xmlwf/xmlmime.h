@@ -8,7 +8,7 @@
 
    Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
    Copyright (c) 2002      Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
-   Copyright (c) 2016-2017 Sebastian Pipping <sebastian@pipping.org>
+   Copyright (c) 2016-2026 Sebastian Pipping <sebastian@pipping.org>
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -29,11 +29,9 @@
    DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+   SPDX-License-Identifier: MIT
+*/
 
 /* Registered charset names are at most 40 characters long. */
 
@@ -46,7 +44,3 @@ extern "C" {
 */
 
 void getXMLCharset(const char *buf, char *charset);
-
-#ifdef __cplusplus
-}
-#endif
