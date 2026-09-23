@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.404 2026/09/19 18:25:11 riastradh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.405 2026/09/23 17:47:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.404 2026/09/19 18:25:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.405 2026/09/23 17:47:52 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1399,7 +1399,7 @@ lfs_reset_avail(struct lfs *fs)
 					- lfs_sb_gets0addr(fs);
 		}
 
-		brelse(bp, 0);
+		LFS_RELEASESEGENTRY(sup, fs, sn, bp);
 	}
 
 	/* Also may be available bytes in current seg */
@@ -1810,8 +1810,8 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 			ts.tv_sec = lfs_if_getatime_sec(fs, ifp);
 			ts.tv_nsec = lfs_if_getatime_nsec(fs, ifp);
 		}
+		LFS_RELEASEIENTRY(ifp, fs, ino, bp);
 
-		brelse(bp, 0);
 		if (DADDR_IS_BAD(daddr))
 			return (ENOENT);
 	}
@@ -2550,7 +2550,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 			uint32_t bytes;
 			LFS_SEGENTRY(sup, fs, i, bp);
 			bytes = sup->su_nbytes;
-			brelse(bp, 0);
+			LFS_RELEASESEGENTRY(sup, fs, i, bp);
 			if (bytes > 0) {
 				if ((error = lfs_rewrite_segment(fs, i, NULL, NOCRED, curlwp)) != 0)
 					goto out;
@@ -2578,7 +2578,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 				csbbytes += LFS_SBPAD;
 		} else
 			dirtysums += sup->su_nsums;
-		brelse(bp, 0);
+		LFS_RELEASESEGENTRY(sup, fs, i, bp);
 		if (badnews) {
 			error = EBUSY;
 			goto out;

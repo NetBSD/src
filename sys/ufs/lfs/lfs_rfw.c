@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.47 2026/09/22 23:22:21 perseant Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.48 2026/09/23 17:47:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.47 2026/09/22 23:22:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.48 2026/09/23 17:47:52 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -470,7 +470,7 @@ update_inoblk(struct lfs_inofuncarg *lifa)
 		/* Check generation number */
 		LFS_IENTRY(ifp, fs, lfs_dino_getinumber(fs, dip), ibp);
 		gen = lfs_if_getversion(fs, ifp);
-		brelse(ibp, 0);
+		LFS_RELEASEIENTRY(ifp, fs, lfs_dino_getinumber(fs, dip), ibp);
 		if (lfs_dino_getgen(fs, dip) < gen) {
 			continue;
 		}
@@ -1019,7 +1019,7 @@ lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 				panic("lfs_mountfs: no clean segments");
 			LFS_SEGENTRY(sup, fs, sn, bp);
 			dirty = (sup->su_flags & SEGUSE_DIRTY);
-			brelse(bp, 0);
+			LFS_RELEASESEGENTRY(sup, fs, sn, bp);
 			if (!dirty)
 				break;
 		}

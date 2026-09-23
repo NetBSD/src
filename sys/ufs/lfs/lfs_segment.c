@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.314 2026/09/09 03:16:23 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.315 2026/09/23 17:47:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.314 2026/09/09 03:16:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.315 2026/09/23 17:47:52 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -987,9 +987,8 @@ lfs_update_iaddr(struct lfs *fs, struct inode *ip, daddr_t ndaddr)
 			   (intmax_t)newsn,
 			   (intmax_t)sup->su_nbytes + DINOSIZE(fs));
 		sup->su_nbytes += DINOSIZE(fs);
-		LFS_WRITESEGENTRY(sup, fs, oldsn, bp); /* Ifile */
+		LFS_WRITESEGENTRY(sup, fs, newsn, bp); /* Ifile */
 	}
-	
 }
 
 int
@@ -1806,7 +1805,7 @@ lfs_rewind(struct lfs *fs, int newsn)
 	for (sn = 0; sn < lfs_sb_getnseg(fs); ++sn) {
 		LFS_SEGENTRY(sup, fs, sn, bp);
 		isdirty = sup->su_flags & SEGUSE_DIRTY;
-		brelse(bp, 0);
+		LFS_RELEASESEGENTRY(sup, fs, sn, bp);
 
 		if (!isdirty)
 			break;
@@ -1862,7 +1861,7 @@ lfs_initseg(struct lfs *fs, uint16_t flags)
 			lfs_sb_addoffset(fs, lfs_btofsb(fs, LFS_SBPAD));
 			sp->seg_bytes_left -= LFS_SBPAD;
 		}
-		brelse(bp, 0);
+		LFS_RELEASESEGENTRY(sup, fs, sp->seg_number, bp);
 		/* Segment zero could also contain the labelpad */
 		if (lfs_sb_getversion(fs) > 1 && sp->seg_number == 0 &&
 		    lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD)) {
@@ -1948,7 +1947,7 @@ lfs_invalidate(struct lfs *fs, int sn)
 		return EBUSY;
 	}
 	sup->su_flags |= SEGUSE_INVAL;
-	VOP_BWRITE(bp->b_vp, bp);
+	LFS_WRITESEGENTRY(sup, fs, sn, bp);
 	return 0;
 }
 
@@ -2013,7 +2012,7 @@ lfs_newseg(struct lfs *fs)
 		}
 		LFS_SEGENTRY(sup, fs, sn, bp);
 		isdirty = sup->su_flags & (SEGUSE_DIRTY | (skip_inval ? SEGUSE_INVAL : 0));
-		brelse(bp, 0);
+		LFS_RELEASESEGENTRY(sup, fs, sn, bp);
 
 		if (!isdirty)
 			break;

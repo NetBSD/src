@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.182 2026/09/22 23:22:21 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.183 2026/09/23 17:47:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.182 2026/09/22 23:22:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.183 2026/09/23 17:47:52 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -384,7 +384,7 @@ lfs_markv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov,
 				if (lfs_if_getdaddr(fs, ifp) == blkp->bi_daddr) {
 					lfs_setclean(fs, vp);
 				}
-				brelse(bp, 0);
+				LFS_RELEASEIENTRY(ifp, fs, blkp->bi_inode, bp);
 			}
 			continue;
 		}
@@ -720,7 +720,7 @@ lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			else {
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
 				v_daddr = lfs_if_getdaddr(fs, ifp);
-				brelse(bp, 0);
+				LFS_RELEASEIENTRY(ifp, fs, blkp->bi_inode, bp);
 			}
 			if (v_daddr == LFS_UNUSED_DADDR) {
 				blkp->bi_daddr = LFS_UNUSED_DADDR;
@@ -862,19 +862,19 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum, kauth_cred_t cred, struct 
 	if (sup->su_nbytes) {
 		DLOG((DLOG_CLEAN, "lfs_segclean: not cleaning segment %lu:"
 		      " %d live bytes\n", segnum, sup->su_nbytes));
-		brelse(bp, 0);
+		LFS_RELEASESEGENTRY(sup, fs, segnum, bp);
 		return (EBUSY);
 	}
 	if (sup->su_flags & SEGUSE_ACTIVE) {
 		DLOG((DLOG_CLEAN, "lfs_segclean: not cleaning segment %lu:"
 		      " segment is active\n", segnum));
-		brelse(bp, 0);
+		LFS_RELEASESEGENTRY(sup, fs, segnum, bp);
 		return (EBUSY);
 	}
 	if (!(sup->su_flags & SEGUSE_DIRTY)) {
 		DLOG((DLOG_CLEAN, "lfs_segclean: not cleaning segment %lu:"
 		      " segment is already clean\n", segnum));
-		brelse(bp, 0);
+		LFS_RELEASESEGENTRY(sup, fs, segnum, bp);
 		return (EALREADY);
 	}
 

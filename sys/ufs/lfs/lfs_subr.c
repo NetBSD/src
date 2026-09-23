@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.110 2026/01/05 05:02:47 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.111 2026/09/23 17:47:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.110 2026/01/05 05:02:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.111 2026/09/23 17:47:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -923,7 +923,7 @@ lfs_seguse_clrflag_all(struct lfs *fs, uint32_t flag)
 			sup->su_flags &= ~flag;
 			LFS_WRITESEGENTRY(sup, fs, i, bp);
 		} else
-			brelse(bp, 0);
+			LFS_RELEASESEGENTRY(sup, fs, i, bp);
 	}
 }
 

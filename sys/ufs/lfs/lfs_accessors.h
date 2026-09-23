@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.57 2025/12/02 01:23:09 perseant Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.58 2026/09/23 17:47:52 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -698,6 +698,10 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 	LFS_BWRITE_LOG(BP);						\
 } while (0)
 
+#define LFS_RELEASESEGENTRY(SP, F, IN, BP) do {				\
+	brelse((BP), 0);						\
+} while (0)
+
 /*
  * FINFO (file info) entries.
  */
@@ -871,6 +875,9 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 	if (((BP)->b_flags & B_GATHERED) == 0)				\
 		(F)->lfs_flags |= LFS_IFDIRTY;				\
 	LFS_BWRITE_LOG(BP);						\
+} while (0)
+#define LFS_RELEASEIENTRY(IP, F, IN, BP) do {				\
+	brelse((BP), 0);						\
 } while (0)
 
 #define LFS_DEF_IF_ACCESSOR(type, type32, field) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.155 2026/08/27 14:33:13 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.156 2026/09/23 17:47:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.155 2026/08/27 14:33:13 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.156 2026/09/23 17:47:52 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -355,7 +355,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	 */
 	LFS_IENTRY(ifp, fs, ino, bp);
 	oldnext = lfs_if_getnextfree(fs, ifp);
-	brelse(bp, 0);
+	LFS_RELEASEIENTRY(ifp, fs, ino, bp);
 
 	/* Get fail of inode freelist */
 	LFS_GET_TAILFREE(fs, cip, cbp, &tailino);
@@ -385,7 +385,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 				break;
 			/* nope, keep going... */
 			thisino = nextfree;
-			brelse(bp, 0);
+			LFS_RELEASEIENTRY(ifp, fs, thisino, bp);
 			if (++count > maxino)
 				break;
 		}
@@ -462,6 +462,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	struct inode *ip;
 	struct lfs *fs;
 	struct segdelta *isd, *fsd, *tmp;
+	ino_t nextfree;
 
 	/* Get the inode number and file system. */
 	ip = VTOI(vp);
@@ -555,99 +556,13 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	/* bump the version */
 	lfs_if_setversion(fs, ifp, lfs_if_getversion(fs, ifp) + 1);
 
-#if 0
-	if (lfs_sb_getversion(fs) == 1) {
-#endif		
-		ino_t nextfree;
+	/* insert on freelist */
+	LFS_GET_HEADFREE(fs, cip, cbp, &nextfree);
+	lfs_if_setnextfree(fs, ifp, nextfree);
+	LFS_PUT_HEADFREE(fs, cip, cbp, ino);
 
-		/* insert on freelist */
-		LFS_GET_HEADFREE(fs, cip, cbp, &nextfree);
-		lfs_if_setnextfree(fs, ifp, nextfree);
-		LFS_PUT_HEADFREE(fs, cip, cbp, ino);
-
-		/* write the ifile block */
-		LFS_WRITEIENTRY(ifp, fs, ino, bp);
-#if 0
-	} else {
-		ino_t tino, onf, otail;
-
-		/*
-		 * Clear the freelist next pointer and write the ifile
-		 * block. XXX: why? I'm sure there must be a reason but
-		 * it seems both silly and dangerous.
-		 */
-		lfs_if_setnextfree(fs, ifp, LFS_UNUSED_INUM);
-		LFS_WRITEIENTRY(ifp, fs, ino, bp);
-
-		/*
-		 * Insert on freelist in order.
-		 */
-
-		/* Find the next lower (by number) free inode */
-		tino = lfs_freelist_prev(fs, ino);
-
-		if (tino == LFS_UNUSED_INUM) {
-			ino_t nextfree;
-
-			/*
-			 * There isn't one; put us on the freelist head.
-			 */
-
-			/* reload the ifile block */
-			LFS_IENTRY(ifp, fs, ino, bp);
-			/* update the list */
-			LFS_GET_HEADFREE(fs, cip, cbp, &nextfree);
-			lfs_if_setnextfree(fs, ifp, nextfree);
-			LFS_PUT_HEADFREE(fs, cip, cbp, ino);
-			DLOG((DLOG_ALLOC, "lfs_vfree: headfree %lld -> %lld\n",
-			     (long long)nextfree, (long long)ino));
-			/* write the ifile block */
-			LFS_WRITEIENTRY(ifp, fs, ino, bp);
-
-			/* If the list was empty, set tail too */
-			LFS_GET_TAILFREE(fs, cip, cbp, &otail);
-			if (otail == LFS_UNUSED_INUM) {
-				LFS_PUT_TAILFREE(fs, cip, cbp, ino);
-				DLOG((DLOG_ALLOC, "lfs_vfree: tailfree %lld "
-				      "-> %lld\n", (long long)otail,
-				      (long long)ino));
-			}
-		} else {
-			/*
-			 * Insert this inode into the list after tino.
-			 * We hold the segment lock so we don't have to
-			 * worry about blocks being written out of order.
-			 */
-
-			DLOG((DLOG_ALLOC, "lfs_vfree: insert ino %lld "
-			      " after %lld\n", ino, tino));
-
-			/* load the previous inode's ifile block */
-			LFS_IENTRY(ifp, fs, tino, bp);
-			/* update the list pointer */
-			onf = lfs_if_getnextfree(fs, ifp);
-			lfs_if_setnextfree(fs, ifp, ino);
-			/* write the block */
-			LFS_WRITEIENTRY(ifp, fs, tino, bp);
-
-			/* load this inode's ifile block */
-			LFS_IENTRY(ifp, fs, ino, bp);
-			/* update the list pointer */
-			lfs_if_setnextfree(fs, ifp, onf);
-			/* write the block */
-			LFS_WRITEIENTRY(ifp, fs, tino, bp);
-
-			/* If we're last, put us on the tail */
-			if (onf == LFS_UNUSED_INUM) {
-				LFS_GET_TAILFREE(fs, cip, cbp, &otail);
-				LFS_PUT_TAILFREE(fs, cip, cbp, ino);
-				DLOG((DLOG_ALLOC, "lfs_vfree: tailfree %lld "
-				      "-> %lld\n", (long long)otail,
-				      (long long)ino));
-			}
-		}
-	}
-#endif
+	/* write the ifile block */
+	LFS_WRITEIENTRY(ifp, fs, ino, bp);
 
 	/* Set superblock modified bit. */
 	mutex_enter(&lfs_lock);
@@ -729,7 +644,7 @@ lfs_free_orphans(struct lfs *fs)
 
 		/* If moving to the next ifile block, release the buffer. */
 		if ((ino + 1) % lfs_sb_getifpb(fs) == 0)
-			brelse(bp, 0);
+			LFS_RELEASEIENTRY(ifp, fs, ino, bp);
 	}
 
 	/* done */
@@ -811,7 +726,7 @@ lfs_orphan(struct lfs *fs, struct vnode *vp)
 	LFS_IENTRY(ifp, fs, ip->i_number, bp);
 	nextfree = lfs_if_getnextfree(fs, ifp);
 	if (nextfree == LFS_ORPHAN_NEXTFREE(fs)) {
-		brelse(bp, 0);
+		LFS_RELEASEIENTRY(ifp, fs, ip->i_number, bp);
 		lfs_fraglock_exit(fs);
 		return;
 	}
@@ -856,7 +771,7 @@ lfs_check_freelist(struct lfs *fs, const char *func, int line)
 			++nfree;
 			if (lfs_if_getnextfree(fs, ifp) == LFS_UNUSED_INUM
 			    && i != tailino) {
-				brelse(bp, 0);
+				LFS_RELEASEIENTRY(ifp, fs, i, bp);
 				dump_freelist(fs);
 				printf("At %s:%d:\n", func, line);
 				printf("tailino=%jd, but ino=%jd"
@@ -868,7 +783,7 @@ lfs_check_freelist(struct lfs *fs, const char *func, int line)
 		if (i == tailino
 		    || (!INUM_IS_BAD(fs, lfs_if_getnextfree(fs, ifp)))) {
 			if (lfs_if_getdaddr(fs, ifp) != LFS_UNUSED_DADDR) {
-				brelse(bp, 0);
+				LFS_RELEASEIENTRY(ifp, fs, i, bp);
 				dump_freelist(fs);
 				printf("At %s:%d:\n", func, line);
 				printf("with tailino=%jd, ino=%jd"
@@ -880,7 +795,7 @@ lfs_check_freelist(struct lfs *fs, const char *func, int line)
 				panic("In use inode on free list\n");
 			}
 		}
-		brelse(bp, 0);
+		LFS_RELEASEIENTRY(ifp, fs, i, bp);
 	}
 
 	/*
@@ -898,7 +813,7 @@ lfs_check_freelist(struct lfs *fs, const char *func, int line)
 		/* read this ifile entry */
 		LFS_IENTRY(ifp, fs, thisino, bp);
 		nextfree = lfs_if_getnextfree(fs, ifp);
-		brelse(bp, 0);
+		LFS_RELEASEIENTRY(ifp, fs, thisino, bp);
 		if (nextfree == LFS_UNUSED_INUM)
 			break;
 		thisino = nextfree;
@@ -957,7 +872,7 @@ dump_freelist(struct lfs *fs)
 				i = maxino; /* terminate loop */
 			}
 		}
-		brelse(bp, 0);
+		LFS_RELEASEIENTRY(ifp, fs, i, bp);
 	}
 }
 #endif /* DEBUG */

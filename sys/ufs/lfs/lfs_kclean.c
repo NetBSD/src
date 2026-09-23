@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_kclean.c,v 1.5 2026/09/22 23:22:21 perseant Exp $	*/
+/*	$NetBSD: lfs_kclean.c,v 1.6 2026/09/23 17:47:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_kclean.c,v 1.5 2026/09/22 23:22:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_kclean.c,v 1.6 2026/09/23 17:47:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ ino_func_setclean(struct lfs_inofuncarg *lifa)
 			/* Not ifile.  Check address against ifile. */
 			LFS_IENTRY(ifp, fs, ino, ibp);
 			true_addr = lfs_if_getdaddr(fs, ifp);
-			brelse(ibp, 0);
+			LFS_RELEASEIENTRY(ifp, fs, ino, ibp);
 		}
 		if (offset != true_addr)
 			continue;
@@ -189,7 +189,7 @@ ino_func_rewrite(struct lfs_inofuncarg *lifa)
 			/* Not ifile.  Check address against ifile. */
 			LFS_IENTRY(ifp, fs, ino, ibp);
 			true_addr = lfs_if_getdaddr(fs, ifp);
-			brelse(ibp, 0);
+			LFS_RELEASEIENTRY(ifp, fs, ino, ibp);
 		}
 		if (offset != true_addr)
 			continue;
@@ -537,7 +537,7 @@ lfs_rewrite_segments(struct lfs *fs, int *snn, int len, int *directp, int *offse
 		    || !(sup->su_flags & SEGUSE_DIRTY))
 			error = EINVAL;
 
-		brelse(bp, 0);
+		LFS_RELEASESEGENTRY(sup, fs, snn[i], bp);
 		if (error)
 			break;
 
@@ -565,7 +565,7 @@ lfs_rewrite_segments(struct lfs *fs, int *snn, int len, int *directp, int *offse
 		    || !(sup->su_flags & SEGUSE_DIRTY))
 			error = EINVAL;
 
-		brelse(bp, 0);
+		LFS_RELEASESEGENTRY(sup, fs, snn[i], bp);
 		if (error)
 			break;
 
@@ -633,7 +633,7 @@ ino_func_checkempty(struct lfs_inofuncarg *lifa)
 			/* Not ifile.  Check address against ifile. */
 			LFS_IENTRY(ifp, fs, ino, ibp);
 			true_addr = lfs_if_getdaddr(fs, ifp);
-			brelse(ibp, 0);
+			LFS_RELEASEIENTRY(ifp, fs, ino, ibp);
 		}
 		if (offset == true_addr) {
 			error = EEXIST;
@@ -979,7 +979,7 @@ clean(struct lfs *fs)
 			maxsn = sn;
 			segflags = sup->su_flags;
 		}
-		brelse(bp, 0);
+		LFS_RELEASESEGENTRY(sup, fs, sn, bp);
 	}
 	DLOG((DLOG_CLEAN, "%s clean=%d/%d zero=%d empty=%d ready=%d maxsn=%d maxprio=%ld/%ld segflags=0x%lx\n",
 	       (maxprio > thresh ? "YES" : "NO "),
