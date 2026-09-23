@@ -1,4 +1,4 @@
-/*	$NetBSD: fsl,imx93-power.h,v 1.1.1.1 2026/01/18 05:21:54 skrll Exp $	*/
+/*	$NetBSD: fsl,imx93-power.h,v 1.1.1.2 2026/09/23 05:22:42 skrll Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0 OR MIT) */
 /*
@@ -13,5 +13,6 @@
 #define IMX93_MEDIABLK_PD_PXP			2
 #define IMX93_MEDIABLK_PD_LCDIF			3
 #define IMX93_MEDIABLK_PD_ISI			4
+#define IMX93_MEDIABLK_PD_MIPI_PHY		5
 
 #endif
