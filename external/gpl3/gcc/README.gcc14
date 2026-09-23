@@ -1,4 +1,4 @@
-$NetBSD: README.gcc14,v 1.32 2026/04/19 02:11:18 mrg Exp $
+$NetBSD: README.gcc14,v 1.33 2026/09/23 12:03:37 rin Exp $
 
 arch/feature list.
 
@@ -75,8 +75,7 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       __glob13.c:800:1: internal compiler error: Illegal instruction
         800 | globextend(path, pglob, limit)
             | ^~~~~~~~~~
-[15]: most(?) nfs-related tests timedout. ipf tests fail with incorrect results.
-      some pic_profile variants of tests in usr.bin/c++ crash.
+[15]: some pic_profile variants of tests in usr.bin/c++ crash.
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
