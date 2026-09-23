@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdrestart.c,v 1.5 2026/09/23 18:25:56 riastradh Exp $	*/
+/*	$NetBSD: t_fdrestart.c,v 1.6 2026/09/23 18:26:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,15 +29,19 @@
 #define	_KMEMUSER		/* ERESTART */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdrestart.c,v 1.5 2026/09/23 18:25:56 riastradh Exp $");
+__RCSID("$NetBSD: t_fdrestart.c,v 1.6 2026/09/23 18:26:07 riastradh Exp $");
 
 #include <sys/ioctl.h>
+#include <sys/mount.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include <fs/tmpfs/tmpfs_args.h>
+
 #include <atf-c.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -356,6 +360,176 @@ testfdrestart(struct fdrestart *F)
 	(void)alarm(0);			/* clear the deadline */
 }
 
+static int
+fifo_setup(int flags)
+{
+	struct tmpfs_args args;
+	int rfd, wfd, fd;
+
+	/*
+	 * Mount a tmpfs so we can use fifos.  The rumpfs shim doesn't
+	 * support them, or at least doesn't support setting and
+	 * clearing O_NONBLOCK with fcntl on them.
+	 */
+	memset(&args, 0, sizeof(args));
+	args.ta_version = TMPFS_ARGS_VERSION;
+	args.ta_root_mode = 0777;
+	RL(rump_sys_mkdir("/mnt", 0777));
+	RL(rump_sys_mount(MOUNT_TMPFS, "/mnt", 0, &args, sizeof(args)));
+
+	/*
+	 * Create a fifo.
+	 */
+	RL(rump_sys_mkfifo("/mnt/fifo", 0600));
+
+	/*
+	 * Open the reader side first.  This is necessary because it is
+	 * allowed to succeed without blocking when there is no peer,
+	 * whereas opening the writer side either blocks or fails with
+	 * ENXIO when there is no peer.
+	 */
+	RL(rfd = rump_sys_open("/mnt/fifo", O_RDONLY|O_NONBLOCK));
+
+	/*
+	 * If the caller asked for the read side, return it.
+	 * Otherwise, open the write side (but leave the reader side
+	 * open so that write will block rather than fail with
+	 * EPIPE/SIGPIPE).
+	 */
+	switch (flags) {
+	case O_RDONLY:
+		fd = rfd;
+		goto out;
+	case O_WRONLY:
+		RL(wfd = rump_sys_open("/mnt/fifo", O_WRONLY|O_NONBLOCK));
+		fd = wfd;
+		goto out;
+	default:
+		atf_tc_fail("invalid fifo setup flags");
+	}
+
+out:	/*
+	 * Whichever side the caller wanted, make it blocking.
+	 */
+	RL(flags = rump_sys_fcntl(fd, F_GETFL));
+	RL(rump_sys_fcntl(fd, F_SETFL, flags & ~O_NONBLOCK));
+	return fd;
+}
+
+ATF_TC(fifo_read);
+ATF_TC_HEAD(fifo_read, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test named fifo read fails on close");
+}
+ATF_TC_BODY(fifo_read, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+
+	rump_init();
+
+	memset(F, 0, sizeof(*F));
+	F->op = &doread;
+	F->fd = fifo_setup(O_RDONLY);
+	atf_tc_expect_fail("PR kern/57659:" /* similar bug for fifos */
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
+	testfdrestart(F);
+}
+
+ATF_TC(fifo_pollread);
+ATF_TC_HEAD(fifo_pollread, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test poll waiting for named fifo readability fails on close");
+}
+ATF_TC_BODY(fifo_pollread, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+
+	rump_init();
+
+	memset(F, 0, sizeof(*F));
+	F->op = &dopollread;
+	F->fd = fifo_setup(O_RDONLY);
+	testfdrestart(F);
+}
+
+ATF_TC(fifo_selectread);
+ATF_TC_HEAD(fifo_selectread, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test select waiting for named fifo readability fails on close");
+}
+ATF_TC_BODY(fifo_selectread, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+
+	rump_init();
+
+	memset(F, 0, sizeof(*F));
+	F->op = &doselectread;
+	F->fd = fifo_setup(O_RDONLY);
+	testfdrestart(F);
+}
+
+ATF_TC(fifo_write);
+ATF_TC_HEAD(fifo_write, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test named fifo write fails on close");
+}
+ATF_TC_BODY(fifo_write, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+
+	rump_init();
+
+	memset(F, 0, sizeof(*F));
+	F->op = &dowrite;
+	F->fd = fifo_setup(O_WRONLY);
+	atf_tc_expect_fail("PR kern/57659:" /* similar bug for fifos */
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
+	testfdrestart(F);
+}
+
+ATF_TC(fifo_pollwrite);
+ATF_TC_HEAD(fifo_pollwrite, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test poll waiting for named fifo writability fails on close");
+}
+ATF_TC_BODY(fifo_pollwrite, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+
+	rump_init();
+
+	memset(F, 0, sizeof(*F));
+	F->op = &dopollwrite;
+	F->fd = fifo_setup(O_WRONLY);
+	testfdrestart(F);
+}
+
+ATF_TC(fifo_selectwrite);
+ATF_TC_HEAD(fifo_selectwrite, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test select waiting for named fifo writability fails on close");
+}
+ATF_TC_BODY(fifo_selectwrite, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+
+	rump_init();
+
+	memset(F, 0, sizeof(*F));
+	F->op = &doselectwrite;
+	F->fd = fifo_setup(O_WRONLY);
+	testfdrestart(F);
+}
+
 ATF_TC(pipe_read);
 ATF_TC_HEAD(pipe_read, tc)
 {
@@ -608,6 +782,12 @@ ATF_TC_BODY(socketpair_selectwrite, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, fifo_pollread);
+	ATF_TP_ADD_TC(tp, fifo_pollwrite);
+	ATF_TP_ADD_TC(tp, fifo_read);
+	ATF_TP_ADD_TC(tp, fifo_selectread);
+	ATF_TP_ADD_TC(tp, fifo_selectwrite);
+	ATF_TP_ADD_TC(tp, fifo_write);
 	ATF_TP_ADD_TC(tp, pipe_pollread);
 	ATF_TP_ADD_TC(tp, pipe_pollwrite);
 	ATF_TP_ADD_TC(tp, pipe_read);

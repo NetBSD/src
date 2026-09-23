@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.100 2026/08/28 11:59:16 riastradh Exp $
+# $NetBSD: Makefile,v 1.101 2026/09/23 18:26:07 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -73,6 +73,9 @@ SCRIPTSDIR=	${TESTSDIR}
 SCRIPTS=	h_interpreter.sh
 
 LDADD.t_fdrestart+=	-lpthread
+LDADD.t_fdrestart+=	-lrumpvfs
+LDADD.t_fdrestart+=	-lrumpvfs_fifofs
+LDADD.t_fdrestart+=	-lrumpfs_tmpfs
 LDADD.t_fdrestart+=	-lrumpnet_local
 LDADD.t_fdrestart+=	-lrumpnet_net
 LDADD.t_fdrestart+=	-lrumpnet_netinet
