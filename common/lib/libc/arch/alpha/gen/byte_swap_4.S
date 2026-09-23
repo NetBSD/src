@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap_4.S,v 1.3 2008/02/16 17:37:13 apb Exp $ */
+/* $NetBSD: byte_swap_4.S,v 1.4 2026/09/23 11:58:49 rin Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -51,5 +51,6 @@ XLEAF(ntohl, 1)
 	or	t3, t0, v0	/* v0 = 0x67    01 */
 	or	t1, t2, t1	/* t1 = 0x  4523   */
 	or	t1, v0, v0	/* v0 = 0x67452301 */
+	sextl	v0, v0
 	RET
 END(BSWAP32)
