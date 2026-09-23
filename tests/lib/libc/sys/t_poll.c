@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.14 2026/09/23 18:25:01 riastradh Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.15 2026/09/23 18:25:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -563,7 +563,7 @@ check_read_eof(int readfd)
 }
 
 static void
-check_pollclosed_delayed_write(int writefd, int readfd,
+check_pollclosedpeer_delayed_write(int writefd, int readfd,
     int expected, int writeerror)
 {
 	struct pollfd pfd = { .fd = writefd, .events = POLLOUT };
@@ -631,21 +631,21 @@ check_pollclosed_delayed_write(int writefd, int readfd,
 }
 
 static void
-check_pollclosed_delayed_write_fifopipesocket(int writefd, int readfd)
+check_pollclosedpeer_delayed_write_fifopipesocket(int writefd, int readfd)
 {
 
-	check_pollclosed_delayed_write(writefd, readfd, POLLOUT, EPIPE);
+	check_pollclosedpeer_delayed_write(writefd, readfd, POLLOUT, EPIPE);
 }
 
 static void
-check_pollclosed_delayed_write_terminal(int writefd, int readfd)
+check_pollclosedpeer_delayed_write_terminal(int writefd, int readfd)
 {
 
-	check_pollclosed_delayed_write(writefd, readfd, POLLHUP, EIO);
+	check_pollclosedpeer_delayed_write(writefd, readfd, POLLHUP, EIO);
 }
 
 static void
-check_pollclosed_delayed_read(int readfd, int writefd, int pollhup)
+check_pollclosedpeer_delayed_read(int readfd, int writefd, int pollhup)
 {
 	struct pollfd pfd;
 	struct timespec start, end, delta;
@@ -716,21 +716,21 @@ check_pollclosed_delayed_read(int readfd, int writefd, int pollhup)
 }
 
 static void
-check_pollclosed_delayed_read_devfifopipe(int readfd, int writefd)
+check_pollclosedpeer_delayed_read_devfifopipe(int readfd, int writefd)
 {
 
-	check_pollclosed_delayed_read(readfd, writefd, POLLHUP);
+	check_pollclosedpeer_delayed_read(readfd, writefd, POLLHUP);
 }
 
 static void
-check_pollclosed_delayed_read_socket(int readfd, int writefd)
+check_pollclosedpeer_delayed_read_socket(int readfd, int writefd)
 {
 
-	check_pollclosed_delayed_read(readfd, writefd, /*no POLLHUP*/0);
+	check_pollclosedpeer_delayed_read(readfd, writefd, /*no POLLHUP*/0);
 }
 
 static void
-check_pollclosed_delayed_process(int pollfd, int closefd,
+check_pollclosedpeer_delayed_process(int pollfd, int closefd,
     void (*check_pollhup)(int, int))
 {
 	pid_t pid;
@@ -768,7 +768,7 @@ check_pollclosed_delayed_process(int pollfd, int closefd,
 }
 
 static void *
-check_pollclosed_thread(void *cookie)
+check_pollclosedpeer_thread(void *cookie)
 {
 	int *closefdp = cookie;
 
@@ -779,7 +779,7 @@ check_pollclosed_thread(void *cookie)
 }
 
 static void
-check_pollclosed_delayed_thread(int pollfd, int closefd,
+check_pollclosedpeer_delayed_thread(int pollfd, int closefd,
     void (*check_pollhup)(int, int))
 {
 	pthread_t t;
@@ -788,7 +788,7 @@ check_pollclosed_delayed_thread(int pollfd, int closefd,
 	 * Create a thread to close closefd (in this process, not a
 	 * child) after a 2sec delay.
 	 */
-	RZ(pthread_create(&t, NULL, &check_pollclosed_thread, &closefd));
+	RZ(pthread_create(&t, NULL, &check_pollclosedpeer_thread, &closefd));
 
 	/*
 	 * Test poll(2).
@@ -802,7 +802,7 @@ check_pollclosed_delayed_thread(int pollfd, int closefd,
 }
 
 static void
-check_pollclosed_immediate_write(int writefd, int readfd, int expected,
+check_pollclosedpeer_immediate_write(int writefd, int readfd, int expected,
     int writeerror)
 {
 	struct pollfd pfd = { .fd = writefd, .events = POLLOUT };
@@ -839,7 +839,7 @@ check_pollclosed_immediate_write(int writefd, int readfd, int expected,
 }
 
 static void
-check_pollclosed_immediate_readnone(int readfd, int writefd, int pollhup)
+check_pollclosedpeer_immediate_readnone(int readfd, int writefd, int pollhup)
 {
 	struct pollfd pfd = { .fd = readfd, .events = POLLIN };
 	int nfds;
@@ -873,7 +873,7 @@ check_pollclosed_immediate_readnone(int readfd, int writefd, int pollhup)
 }
 
 static void
-check_pollclosed_immediate_readsome(int readfd, int writefd, int pollhup)
+check_pollclosedpeer_immediate_readsome(int readfd, int writefd, int pollhup)
 {
 	struct pollfd pfd;
 	char buf[BUFSIZ];
@@ -1107,43 +1107,43 @@ pollclosed_socketpair1_setup(int *writefdp, int *readfdp)
  * cases.
  */
 
-ATF_TC(pollclosed_fifo0_immediate_writefull);
-ATF_TC_HEAD(pollclosed_fifo0_immediate_writefull, tc)
+ATF_TC(pollclosedpeer_fifo0_immediate_writefull);
+ATF_TC_HEAD(pollclosedpeer_fifo0_immediate_writefull, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo0_immediate_writefull, tc)
+ATF_TC_BODY(pollclosedpeer_fifo0_immediate_writefull, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_fifo0_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_write(writefd, readfd, POLLOUT, EPIPE);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLOUT, EPIPE);
 }
 
-ATF_TC(pollclosed_fifo0_immediate_writeempty);
-ATF_TC_HEAD(pollclosed_fifo0_immediate_writeempty, tc)
+ATF_TC(pollclosedpeer_fifo0_immediate_writeempty);
+ATF_TC_HEAD(pollclosedpeer_fifo0_immediate_writeempty, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo0_immediate_writeempty, tc)
+ATF_TC_BODY(pollclosedpeer_fifo0_immediate_writeempty, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_fifo0_setup(&writefd, &readfd);
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_write(writefd, readfd, POLLOUT, EPIPE);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLOUT, EPIPE);
 }
 
-ATF_TC(pollclosed_fifo0_immediate_readsome);
-ATF_TC_HEAD(pollclosed_fifo0_immediate_readsome, tc)
+ATF_TC(pollclosedpeer_fifo0_immediate_readsome);
+ATF_TC_HEAD(pollclosedpeer_fifo0_immediate_readsome, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo0_immediate_readsome, tc)
+ATF_TC_BODY(pollclosedpeer_fifo0_immediate_readsome, tc)
 {
 	int writefd, readfd;
 
@@ -1155,47 +1155,47 @@ ATF_TC_BODY(pollclosed_fifo0_immediate_readsome, tc)
 
 	pollclosed_fifo1_setup(&writefd, &readfd); /* reverse r/w */
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_readsome(readfd, writefd, POLLHUP);
+	check_pollclosedpeer_immediate_readsome(readfd, writefd, POLLHUP);
 }
 
-ATF_TC(pollclosed_fifo0_immediate_readnone);
-ATF_TC_HEAD(pollclosed_fifo0_immediate_readnone, tc)
+ATF_TC(pollclosedpeer_fifo0_immediate_readnone);
+ATF_TC_HEAD(pollclosedpeer_fifo0_immediate_readnone, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo0_immediate_readnone, tc)
+ATF_TC_BODY(pollclosedpeer_fifo0_immediate_readnone, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_fifo1_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_readnone(readfd, writefd, POLLHUP);
+	check_pollclosedpeer_immediate_readnone(readfd, writefd, POLLHUP);
 }
 
-ATF_TC(pollclosed_fifo0_delayed_process_write);
-ATF_TC_HEAD(pollclosed_fifo0_delayed_process_write, tc)
+ATF_TC(pollclosedpeer_fifo0_delayed_process_write);
+ATF_TC_HEAD(pollclosedpeer_fifo0_delayed_process_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo0_delayed_process_write, tc)
+ATF_TC_BODY(pollclosedpeer_fifo0_delayed_process_write, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_fifo0_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_process(writefd, readfd,
-	    &check_pollclosed_delayed_write_fifopipesocket);
+	check_pollclosedpeer_delayed_process(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_fifopipesocket);
 }
 
-ATF_TC(pollclosed_fifo0_delayed_process_read);
-ATF_TC_HEAD(pollclosed_fifo0_delayed_process_read, tc)
+ATF_TC(pollclosedpeer_fifo0_delayed_process_read);
+ATF_TC_HEAD(pollclosedpeer_fifo0_delayed_process_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo0_delayed_process_read, tc)
+ATF_TC_BODY(pollclosedpeer_fifo0_delayed_process_read, tc)
 {
 	int writefd, readfd;
 
@@ -1208,33 +1208,33 @@ ATF_TC_BODY(pollclosed_fifo0_delayed_process_read, tc)
 
 	pollclosed_fifo1_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_process(readfd, writefd,
-	    &check_pollclosed_delayed_read_devfifopipe);
+	check_pollclosedpeer_delayed_process(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_devfifopipe);
 }
 
-ATF_TC(pollclosed_fifo0_delayed_thread_write);
-ATF_TC_HEAD(pollclosed_fifo0_delayed_thread_write, tc)
+ATF_TC(pollclosedpeer_fifo0_delayed_thread_write);
+ATF_TC_HEAD(pollclosedpeer_fifo0_delayed_thread_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo0_delayed_thread_write, tc)
+ATF_TC_BODY(pollclosedpeer_fifo0_delayed_thread_write, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_fifo0_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_thread(writefd, readfd,
-	    &check_pollclosed_delayed_write_fifopipesocket);
+	check_pollclosedpeer_delayed_thread(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_fifopipesocket);
 }
 
-ATF_TC(pollclosed_fifo0_delayed_thread_read);
-ATF_TC_HEAD(pollclosed_fifo0_delayed_thread_read, tc)
+ATF_TC(pollclosedpeer_fifo0_delayed_thread_read);
+ATF_TC_HEAD(pollclosedpeer_fifo0_delayed_thread_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo0_delayed_thread_read, tc)
+ATF_TC_BODY(pollclosedpeer_fifo0_delayed_thread_read, tc)
 {
 	int writefd, readfd;
 
@@ -1247,47 +1247,47 @@ ATF_TC_BODY(pollclosed_fifo0_delayed_thread_read, tc)
 
 	pollclosed_fifo1_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_thread(readfd, writefd,
-	    &check_pollclosed_delayed_read_devfifopipe);
+	check_pollclosedpeer_delayed_thread(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_devfifopipe);
 }
 
-ATF_TC(pollclosed_fifo1_immediate_writefull);
-ATF_TC_HEAD(pollclosed_fifo1_immediate_writefull, tc)
+ATF_TC(pollclosedpeer_fifo1_immediate_writefull);
+ATF_TC_HEAD(pollclosedpeer_fifo1_immediate_writefull, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo1_immediate_writefull, tc)
+ATF_TC_BODY(pollclosedpeer_fifo1_immediate_writefull, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_fifo1_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_write(writefd, readfd, POLLOUT, EPIPE);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLOUT, EPIPE);
 }
 
-ATF_TC(pollclosed_fifo1_immediate_writeempty);
-ATF_TC_HEAD(pollclosed_fifo1_immediate_writeempty, tc)
+ATF_TC(pollclosedpeer_fifo1_immediate_writeempty);
+ATF_TC_HEAD(pollclosedpeer_fifo1_immediate_writeempty, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo1_immediate_writeempty, tc)
+ATF_TC_BODY(pollclosedpeer_fifo1_immediate_writeempty, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_fifo1_setup(&writefd, &readfd);
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_write(writefd, readfd, POLLOUT, EPIPE);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLOUT, EPIPE);
 }
 
-ATF_TC(pollclosed_fifo1_immediate_readsome);
-ATF_TC_HEAD(pollclosed_fifo1_immediate_readsome, tc)
+ATF_TC(pollclosedpeer_fifo1_immediate_readsome);
+ATF_TC_HEAD(pollclosedpeer_fifo1_immediate_readsome, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo1_immediate_readsome, tc)
+ATF_TC_BODY(pollclosedpeer_fifo1_immediate_readsome, tc)
 {
 	int writefd, readfd;
 
@@ -1299,47 +1299,47 @@ ATF_TC_BODY(pollclosed_fifo1_immediate_readsome, tc)
 
 	pollclosed_fifo0_setup(&writefd, &readfd); /* reverse r/w */
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_readsome(readfd, writefd, POLLHUP);
+	check_pollclosedpeer_immediate_readsome(readfd, writefd, POLLHUP);
 }
 
-ATF_TC(pollclosed_fifo1_immediate_readnone);
-ATF_TC_HEAD(pollclosed_fifo1_immediate_readnone, tc)
+ATF_TC(pollclosedpeer_fifo1_immediate_readnone);
+ATF_TC_HEAD(pollclosedpeer_fifo1_immediate_readnone, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo1_immediate_readnone, tc)
+ATF_TC_BODY(pollclosedpeer_fifo1_immediate_readnone, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_fifo0_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_readnone(readfd, writefd, POLLHUP);
+	check_pollclosedpeer_immediate_readnone(readfd, writefd, POLLHUP);
 }
 
-ATF_TC(pollclosed_fifo1_delayed_process_write);
-ATF_TC_HEAD(pollclosed_fifo1_delayed_process_write, tc)
+ATF_TC(pollclosedpeer_fifo1_delayed_process_write);
+ATF_TC_HEAD(pollclosedpeer_fifo1_delayed_process_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo1_delayed_process_write, tc)
+ATF_TC_BODY(pollclosedpeer_fifo1_delayed_process_write, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_fifo1_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_process(writefd, readfd,
-	    &check_pollclosed_delayed_write_fifopipesocket);
+	check_pollclosedpeer_delayed_process(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_fifopipesocket);
 }
 
-ATF_TC(pollclosed_fifo1_delayed_process_read);
-ATF_TC_HEAD(pollclosed_fifo1_delayed_process_read, tc)
+ATF_TC(pollclosedpeer_fifo1_delayed_process_read);
+ATF_TC_HEAD(pollclosedpeer_fifo1_delayed_process_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo1_delayed_process_read, tc)
+ATF_TC_BODY(pollclosedpeer_fifo1_delayed_process_read, tc)
 {
 	int writefd, readfd;
 
@@ -1352,33 +1352,33 @@ ATF_TC_BODY(pollclosed_fifo1_delayed_process_read, tc)
 
 	pollclosed_fifo0_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_process(readfd, writefd,
-	    &check_pollclosed_delayed_read_devfifopipe);
+	check_pollclosedpeer_delayed_process(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_devfifopipe);
 }
 
-ATF_TC(pollclosed_fifo1_delayed_thread_write);
-ATF_TC_HEAD(pollclosed_fifo1_delayed_thread_write, tc)
+ATF_TC(pollclosedpeer_fifo1_delayed_thread_write);
+ATF_TC_HEAD(pollclosedpeer_fifo1_delayed_thread_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo1_delayed_thread_write, tc)
+ATF_TC_BODY(pollclosedpeer_fifo1_delayed_thread_write, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_fifo1_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_thread(writefd, readfd,
-	    &check_pollclosed_delayed_write_fifopipesocket);
+	check_pollclosedpeer_delayed_thread(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_fifopipesocket);
 }
 
-ATF_TC(pollclosed_fifo1_delayed_thread_read);
-ATF_TC_HEAD(pollclosed_fifo1_delayed_thread_read, tc)
+ATF_TC(pollclosedpeer_fifo1_delayed_thread_read);
+ATF_TC_HEAD(pollclosedpeer_fifo1_delayed_thread_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second opener of a named pipe");
 }
-ATF_TC_BODY(pollclosed_fifo1_delayed_thread_read, tc)
+ATF_TC_BODY(pollclosedpeer_fifo1_delayed_thread_read, tc)
 {
 	int writefd, readfd;
 
@@ -1391,17 +1391,17 @@ ATF_TC_BODY(pollclosed_fifo1_delayed_thread_read, tc)
 
 	pollclosed_fifo0_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_process(readfd, writefd,
-	    &check_pollclosed_delayed_read_devfifopipe);
+	check_pollclosedpeer_delayed_process(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_devfifopipe);
 }
 
-ATF_TC(pollclosed_pipe_immediate_writefull);
-ATF_TC_HEAD(pollclosed_pipe_immediate_writefull, tc)
+ATF_TC(pollclosedpeer_pipe_immediate_writefull);
+ATF_TC_HEAD(pollclosedpeer_pipe_immediate_writefull, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with a closed pipe");
 }
-ATF_TC_BODY(pollclosed_pipe_immediate_writefull, tc)
+ATF_TC_BODY(pollclosedpeer_pipe_immediate_writefull, tc)
 {
 	int writefd, readfd;
 
@@ -1415,16 +1415,16 @@ ATF_TC_BODY(pollclosed_pipe_immediate_writefull, tc)
 
 	pollclosed_pipe_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_write(writefd, readfd, POLLOUT, EPIPE);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLOUT, EPIPE);
 }
 
-ATF_TC(pollclosed_pipe_immediate_writeempty);
-ATF_TC_HEAD(pollclosed_pipe_immediate_writeempty, tc)
+ATF_TC(pollclosedpeer_pipe_immediate_writeempty);
+ATF_TC_HEAD(pollclosedpeer_pipe_immediate_writeempty, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with a closed pipe");
 }
-ATF_TC_BODY(pollclosed_pipe_immediate_writeempty, tc)
+ATF_TC_BODY(pollclosedpeer_pipe_immediate_writeempty, tc)
 {
 	int writefd, readfd;
 
@@ -1438,46 +1438,46 @@ ATF_TC_BODY(pollclosed_pipe_immediate_writeempty, tc)
 
 	pollclosed_pipe_setup(&writefd, &readfd);
 	/* don't fill pipe buf */
-	check_pollclosed_immediate_write(writefd, readfd, POLLOUT, EPIPE);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLOUT, EPIPE);
 }
 
-ATF_TC(pollclosed_pipe_immediate_readsome);
-ATF_TC_HEAD(pollclosed_pipe_immediate_readsome, tc)
+ATF_TC(pollclosedpeer_pipe_immediate_readsome);
+ATF_TC_HEAD(pollclosedpeer_pipe_immediate_readsome, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with a closed pipe");
 }
-ATF_TC_BODY(pollclosed_pipe_immediate_readsome, tc)
+ATF_TC_BODY(pollclosedpeer_pipe_immediate_readsome, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_pipe_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_readsome(readfd, writefd, POLLHUP);
+	check_pollclosedpeer_immediate_readsome(readfd, writefd, POLLHUP);
 }
 
-ATF_TC(pollclosed_pipe_immediate_readnone);
-ATF_TC_HEAD(pollclosed_pipe_immediate_readnone, tc)
+ATF_TC(pollclosedpeer_pipe_immediate_readnone);
+ATF_TC_HEAD(pollclosedpeer_pipe_immediate_readnone, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with a closed pipe");
 }
-ATF_TC_BODY(pollclosed_pipe_immediate_readnone, tc)
+ATF_TC_BODY(pollclosedpeer_pipe_immediate_readnone, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_pipe_setup(&writefd, &readfd);
 	/* don't fill pipe buf */
-	check_pollclosed_immediate_readnone(readfd, writefd, POLLHUP);
+	check_pollclosedpeer_immediate_readnone(readfd, writefd, POLLHUP);
 }
 
-ATF_TC(pollclosed_pipe_delayed_process_write);
-ATF_TC_HEAD(pollclosed_pipe_delayed_process_write, tc)
+ATF_TC(pollclosedpeer_pipe_delayed_process_write);
+ATF_TC_HEAD(pollclosedpeer_pipe_delayed_process_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with a closed pipe");
 }
-ATF_TC_BODY(pollclosed_pipe_delayed_process_write, tc)
+ATF_TC_BODY(pollclosedpeer_pipe_delayed_process_write, tc)
 {
 	int writefd, readfd;
 
@@ -1491,33 +1491,33 @@ ATF_TC_BODY(pollclosed_pipe_delayed_process_write, tc)
 
 	pollclosed_pipe_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_process(writefd, readfd,
-	    &check_pollclosed_delayed_write_fifopipesocket);
+	check_pollclosedpeer_delayed_process(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_fifopipesocket);
 }
 
-ATF_TC(pollclosed_pipe_delayed_process_read);
-ATF_TC_HEAD(pollclosed_pipe_delayed_process_read, tc)
+ATF_TC(pollclosedpeer_pipe_delayed_process_read);
+ATF_TC_HEAD(pollclosedpeer_pipe_delayed_process_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with a closed pipe");
 }
-ATF_TC_BODY(pollclosed_pipe_delayed_process_read, tc)
+ATF_TC_BODY(pollclosedpeer_pipe_delayed_process_read, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_pipe_setup(&writefd, &readfd);
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_process(readfd, writefd,
-	    &check_pollclosed_delayed_read_devfifopipe);
+	check_pollclosedpeer_delayed_process(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_devfifopipe);
 }
 
-ATF_TC(pollclosed_pipe_delayed_thread_write);
-ATF_TC_HEAD(pollclosed_pipe_delayed_thread_write, tc)
+ATF_TC(pollclosedpeer_pipe_delayed_thread_write);
+ATF_TC_HEAD(pollclosedpeer_pipe_delayed_thread_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with a closed pipe");
 }
-ATF_TC_BODY(pollclosed_pipe_delayed_thread_write, tc)
+ATF_TC_BODY(pollclosedpeer_pipe_delayed_thread_write, tc)
 {
 	int writefd, readfd;
 
@@ -1531,63 +1531,63 @@ ATF_TC_BODY(pollclosed_pipe_delayed_thread_write, tc)
 
 	pollclosed_pipe_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_thread(writefd, readfd,
-	    &check_pollclosed_delayed_write_fifopipesocket);
+	check_pollclosedpeer_delayed_thread(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_fifopipesocket);
 }
 
-ATF_TC(pollclosed_pipe_delayed_thread_read);
-ATF_TC_HEAD(pollclosed_pipe_delayed_thread_read, tc)
+ATF_TC(pollclosedpeer_pipe_delayed_thread_read);
+ATF_TC_HEAD(pollclosedpeer_pipe_delayed_thread_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with a closed pipe");
 }
-ATF_TC_BODY(pollclosed_pipe_delayed_thread_read, tc)
+ATF_TC_BODY(pollclosedpeer_pipe_delayed_thread_read, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_pipe_setup(&writefd, &readfd);
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_thread(readfd, writefd,
-	    &check_pollclosed_delayed_read_devfifopipe);
+	check_pollclosedpeer_delayed_thread(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_devfifopipe);
 }
 
-ATF_TC(pollclosed_ptyapp_immediate_writefull);
-ATF_TC_HEAD(pollclosed_ptyapp_immediate_writefull, tc)
+ATF_TC(pollclosedpeer_ptyapp_immediate_writefull);
+ATF_TC_HEAD(pollclosedpeer_ptyapp_immediate_writefull, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty application side");
 }
-ATF_TC_BODY(pollclosed_ptyapp_immediate_writefull, tc)
+ATF_TC_BODY(pollclosedpeer_ptyapp_immediate_writefull, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_ptyapp_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_write(writefd, readfd, POLLHUP, EIO);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLHUP, EIO);
 }
 
-ATF_TC(pollclosed_ptyapp_immediate_writeempty);
-ATF_TC_HEAD(pollclosed_ptyapp_immediate_writeempty, tc)
+ATF_TC(pollclosedpeer_ptyapp_immediate_writeempty);
+ATF_TC_HEAD(pollclosedpeer_ptyapp_immediate_writeempty, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty application side");
 }
-ATF_TC_BODY(pollclosed_ptyapp_immediate_writeempty, tc)
+ATF_TC_BODY(pollclosedpeer_ptyapp_immediate_writeempty, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_ptyapp_setup(&writefd, &readfd);
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_write(writefd, readfd, POLLHUP, EIO);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLHUP, EIO);
 }
 
-ATF_TC(pollclosed_ptyapp_immediate_readsome);
-ATF_TC_HEAD(pollclosed_ptyapp_immediate_readsome, tc)
+ATF_TC(pollclosedpeer_ptyapp_immediate_readsome);
+ATF_TC_HEAD(pollclosedpeer_ptyapp_immediate_readsome, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty application side");
 }
-ATF_TC_BODY(pollclosed_ptyapp_immediate_readsome, tc)
+ATF_TC_BODY(pollclosedpeer_ptyapp_immediate_readsome, tc)
 {
 	int writefd, readfd;
 
@@ -1599,16 +1599,16 @@ ATF_TC_BODY(pollclosed_ptyapp_immediate_readsome, tc)
 
 	pollclosed_ptyhost_setup(&writefd, &readfd); /* reverse r/w */
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_readsome(readfd, writefd, POLLHUP);
+	check_pollclosedpeer_immediate_readsome(readfd, writefd, POLLHUP);
 }
 
-ATF_TC(pollclosed_ptyapp_immediate_readnone);
-ATF_TC_HEAD(pollclosed_ptyapp_immediate_readnone, tc)
+ATF_TC(pollclosedpeer_ptyapp_immediate_readnone);
+ATF_TC_HEAD(pollclosedpeer_ptyapp_immediate_readnone, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty application side");
 }
-ATF_TC_BODY(pollclosed_ptyapp_immediate_readnone, tc)
+ATF_TC_BODY(pollclosedpeer_ptyapp_immediate_readnone, tc)
 {
 	int writefd, readfd;
 
@@ -1620,16 +1620,16 @@ ATF_TC_BODY(pollclosed_ptyapp_immediate_readnone, tc)
 
 	pollclosed_ptyhost_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_readnone(readfd, writefd, POLLHUP);
+	check_pollclosedpeer_immediate_readnone(readfd, writefd, POLLHUP);
 }
 
-ATF_TC(pollclosed_ptyapp_delayed_process_write);
-ATF_TC_HEAD(pollclosed_ptyapp_delayed_process_write, tc)
+ATF_TC(pollclosedpeer_ptyapp_delayed_process_write);
+ATF_TC_HEAD(pollclosedpeer_ptyapp_delayed_process_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty application side");
 }
-ATF_TC_BODY(pollclosed_ptyapp_delayed_process_write, tc)
+ATF_TC_BODY(pollclosedpeer_ptyapp_delayed_process_write, tc)
 {
 	int writefd, readfd;
 
@@ -1641,17 +1641,17 @@ ATF_TC_BODY(pollclosed_ptyapp_delayed_process_write, tc)
 
 	pollclosed_ptyapp_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_process(writefd, readfd,
-	    &check_pollclosed_delayed_write_terminal);
+	check_pollclosedpeer_delayed_process(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_terminal);
 }
 
-ATF_TC(pollclosed_ptyapp_delayed_process_read);
-ATF_TC_HEAD(pollclosed_ptyapp_delayed_process_read, tc)
+ATF_TC(pollclosedpeer_ptyapp_delayed_process_read);
+ATF_TC_HEAD(pollclosedpeer_ptyapp_delayed_process_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty application side");
 }
-ATF_TC_BODY(pollclosed_ptyapp_delayed_process_read, tc)
+ATF_TC_BODY(pollclosedpeer_ptyapp_delayed_process_read, tc)
 {
 	int writefd, readfd;
 
@@ -1663,17 +1663,17 @@ ATF_TC_BODY(pollclosed_ptyapp_delayed_process_read, tc)
 
 	pollclosed_ptyhost_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_process(readfd, writefd,
-	    &check_pollclosed_delayed_read_devfifopipe);
+	check_pollclosedpeer_delayed_process(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_devfifopipe);
 }
 
-ATF_TC(pollclosed_ptyapp_delayed_thread_write);
-ATF_TC_HEAD(pollclosed_ptyapp_delayed_thread_write, tc)
+ATF_TC(pollclosedpeer_ptyapp_delayed_thread_write);
+ATF_TC_HEAD(pollclosedpeer_ptyapp_delayed_thread_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty application side");
 }
-ATF_TC_BODY(pollclosed_ptyapp_delayed_thread_write, tc)
+ATF_TC_BODY(pollclosedpeer_ptyapp_delayed_thread_write, tc)
 {
 	int writefd, readfd;
 
@@ -1685,17 +1685,17 @@ ATF_TC_BODY(pollclosed_ptyapp_delayed_thread_write, tc)
 
 	pollclosed_ptyapp_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_thread(writefd, readfd,
-	    &check_pollclosed_delayed_write_terminal);
+	check_pollclosedpeer_delayed_thread(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_terminal);
 }
 
-ATF_TC(pollclosed_ptyapp_delayed_thread_read);
-ATF_TC_HEAD(pollclosed_ptyapp_delayed_thread_read, tc)
+ATF_TC(pollclosedpeer_ptyapp_delayed_thread_read);
+ATF_TC_HEAD(pollclosedpeer_ptyapp_delayed_thread_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty application side");
 }
-ATF_TC_BODY(pollclosed_ptyapp_delayed_thread_read, tc)
+ATF_TC_BODY(pollclosedpeer_ptyapp_delayed_thread_read, tc)
 {
 	int writefd, readfd;
 
@@ -1707,47 +1707,47 @@ ATF_TC_BODY(pollclosed_ptyapp_delayed_thread_read, tc)
 
 	pollclosed_ptyhost_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_process(readfd, writefd,
-	    &check_pollclosed_delayed_read_devfifopipe);
+	check_pollclosedpeer_delayed_process(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_devfifopipe);
 }
 
-ATF_TC(pollclosed_ptyhost_immediate_writefull);
-ATF_TC_HEAD(pollclosed_ptyhost_immediate_writefull, tc)
+ATF_TC(pollclosedpeer_ptyhost_immediate_writefull);
+ATF_TC_HEAD(pollclosedpeer_ptyhost_immediate_writefull, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty host side");
 }
-ATF_TC_BODY(pollclosed_ptyhost_immediate_writefull, tc)
+ATF_TC_BODY(pollclosedpeer_ptyhost_immediate_writefull, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_ptyhost_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_write(writefd, readfd, POLLHUP, EIO);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLHUP, EIO);
 }
 
-ATF_TC(pollclosed_ptyhost_immediate_writeempty);
-ATF_TC_HEAD(pollclosed_ptyhost_immediate_writeempty, tc)
+ATF_TC(pollclosedpeer_ptyhost_immediate_writeempty);
+ATF_TC_HEAD(pollclosedpeer_ptyhost_immediate_writeempty, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty host side");
 }
-ATF_TC_BODY(pollclosed_ptyhost_immediate_writeempty, tc)
+ATF_TC_BODY(pollclosedpeer_ptyhost_immediate_writeempty, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_ptyhost_setup(&writefd, &readfd);
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_write(writefd, readfd, POLLHUP, EIO);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLHUP, EIO);
 }
 
-ATF_TC(pollclosed_ptyhost_immediate_readsome);
-ATF_TC_HEAD(pollclosed_ptyhost_immediate_readsome, tc)
+ATF_TC(pollclosedpeer_ptyhost_immediate_readsome);
+ATF_TC_HEAD(pollclosedpeer_ptyhost_immediate_readsome, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty host side");
 }
-ATF_TC_BODY(pollclosed_ptyhost_immediate_readsome, tc)
+ATF_TC_BODY(pollclosedpeer_ptyhost_immediate_readsome, tc)
 {
 	int writefd, readfd;
 
@@ -1759,16 +1759,16 @@ ATF_TC_BODY(pollclosed_ptyhost_immediate_readsome, tc)
 
 	pollclosed_ptyapp_setup(&writefd, &readfd); /* reverse r/w */
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_readsome(readfd, writefd, POLLHUP);
+	check_pollclosedpeer_immediate_readsome(readfd, writefd, POLLHUP);
 }
 
-ATF_TC(pollclosed_ptyhost_immediate_readnone);
-ATF_TC_HEAD(pollclosed_ptyhost_immediate_readnone, tc)
+ATF_TC(pollclosedpeer_ptyhost_immediate_readnone);
+ATF_TC_HEAD(pollclosedpeer_ptyhost_immediate_readnone, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty host side");
 }
-ATF_TC_BODY(pollclosed_ptyhost_immediate_readnone, tc)
+ATF_TC_BODY(pollclosedpeer_ptyhost_immediate_readnone, tc)
 {
 	int writefd, readfd;
 
@@ -1780,32 +1780,32 @@ ATF_TC_BODY(pollclosed_ptyhost_immediate_readnone, tc)
 
 	pollclosed_ptyapp_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_readnone(readfd, writefd, POLLHUP);
+	check_pollclosedpeer_immediate_readnone(readfd, writefd, POLLHUP);
 }
 
-ATF_TC(pollclosed_ptyhost_delayed_process_write);
-ATF_TC_HEAD(pollclosed_ptyhost_delayed_process_write, tc)
+ATF_TC(pollclosedpeer_ptyhost_delayed_process_write);
+ATF_TC_HEAD(pollclosedpeer_ptyhost_delayed_process_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty host side");
 }
-ATF_TC_BODY(pollclosed_ptyhost_delayed_process_write, tc)
+ATF_TC_BODY(pollclosedpeer_ptyhost_delayed_process_write, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_ptyhost_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_process(writefd, readfd,
-	    &check_pollclosed_delayed_write_terminal);
+	check_pollclosedpeer_delayed_process(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_terminal);
 }
 
-ATF_TC(pollclosed_ptyhost_delayed_process_read);
-ATF_TC_HEAD(pollclosed_ptyhost_delayed_process_read, tc)
+ATF_TC(pollclosedpeer_ptyhost_delayed_process_read);
+ATF_TC_HEAD(pollclosedpeer_ptyhost_delayed_process_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty host side");
 }
-ATF_TC_BODY(pollclosed_ptyhost_delayed_process_read, tc)
+ATF_TC_BODY(pollclosedpeer_ptyhost_delayed_process_read, tc)
 {
 	int writefd, readfd;
 
@@ -1817,33 +1817,33 @@ ATF_TC_BODY(pollclosed_ptyhost_delayed_process_read, tc)
 
 	pollclosed_ptyapp_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_process(readfd, writefd,
-	    &check_pollclosed_delayed_read_devfifopipe);
+	check_pollclosedpeer_delayed_process(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_devfifopipe);
 }
 
-ATF_TC(pollclosed_ptyhost_delayed_thread_write);
-ATF_TC_HEAD(pollclosed_ptyhost_delayed_thread_write, tc)
+ATF_TC(pollclosedpeer_ptyhost_delayed_thread_write);
+ATF_TC_HEAD(pollclosedpeer_ptyhost_delayed_thread_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty host side");
 }
-ATF_TC_BODY(pollclosed_ptyhost_delayed_thread_write, tc)
+ATF_TC_BODY(pollclosedpeer_ptyhost_delayed_thread_write, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_ptyhost_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_thread(writefd, readfd,
-	    &check_pollclosed_delayed_write_terminal);
+	check_pollclosedpeer_delayed_thread(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_terminal);
 }
 
-ATF_TC(pollclosed_ptyhost_delayed_thread_read);
-ATF_TC_HEAD(pollclosed_ptyhost_delayed_thread_read, tc)
+ATF_TC(pollclosedpeer_ptyhost_delayed_thread_read);
+ATF_TC_HEAD(pollclosedpeer_ptyhost_delayed_thread_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the pty host side");
 }
-ATF_TC_BODY(pollclosed_ptyhost_delayed_thread_read, tc)
+ATF_TC_BODY(pollclosedpeer_ptyhost_delayed_thread_read, tc)
 {
 	int writefd, readfd;
 
@@ -1855,256 +1855,260 @@ ATF_TC_BODY(pollclosed_ptyhost_delayed_thread_read, tc)
 
 	pollclosed_ptyapp_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_thread(readfd, writefd,
-	    &check_pollclosed_delayed_read_devfifopipe);
+	check_pollclosedpeer_delayed_thread(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_devfifopipe);
 }
 
-ATF_TC(pollclosed_socketpair0_immediate_writefull);
-ATF_TC_HEAD(pollclosed_socketpair0_immediate_writefull, tc)
+ATF_TC(pollclosedpeer_socketpair0_immediate_writefull);
+ATF_TC_HEAD(pollclosedpeer_socketpair0_immediate_writefull, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair0_immediate_writefull, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair0_immediate_writefull, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair0_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_write(writefd, readfd, POLLOUT, EPIPE);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLOUT, EPIPE);
 }
 
-ATF_TC(pollclosed_socketpair0_immediate_writeempty);
-ATF_TC_HEAD(pollclosed_socketpair0_immediate_writeempty, tc)
+ATF_TC(pollclosedpeer_socketpair0_immediate_writeempty);
+ATF_TC_HEAD(pollclosedpeer_socketpair0_immediate_writeempty, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair0_immediate_writeempty, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair0_immediate_writeempty, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair0_setup(&writefd, &readfd);
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_write(writefd, readfd, POLLOUT, EPIPE);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLOUT, EPIPE);
 }
 
-ATF_TC(pollclosed_socketpair0_immediate_readsome);
-ATF_TC_HEAD(pollclosed_socketpair0_immediate_readsome, tc)
+ATF_TC(pollclosedpeer_socketpair0_immediate_readsome);
+ATF_TC_HEAD(pollclosedpeer_socketpair0_immediate_readsome, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair0_immediate_readsome, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair0_immediate_readsome, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair1_setup(&writefd, &readfd); /* reverse r/w */
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_readsome(readfd, writefd, /*no POLLHUP*/0);
+	check_pollclosedpeer_immediate_readsome(readfd, writefd,
+	    /*no POLLHUP*/0);
 }
 
-ATF_TC(pollclosed_socketpair0_immediate_readnone);
-ATF_TC_HEAD(pollclosed_socketpair0_immediate_readnone, tc)
+ATF_TC(pollclosedpeer_socketpair0_immediate_readnone);
+ATF_TC_HEAD(pollclosedpeer_socketpair0_immediate_readnone, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair0_immediate_readnone, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair0_immediate_readnone, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair1_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_readnone(readfd, writefd, /*no POLLHUP*/0);
+	check_pollclosedpeer_immediate_readnone(readfd, writefd,
+	    /*no POLLHUP*/0);
 }
 
-ATF_TC(pollclosed_socketpair0_delayed_process_write);
-ATF_TC_HEAD(pollclosed_socketpair0_delayed_process_write, tc)
+ATF_TC(pollclosedpeer_socketpair0_delayed_process_write);
+ATF_TC_HEAD(pollclosedpeer_socketpair0_delayed_process_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair0_delayed_process_write, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair0_delayed_process_write, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair0_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_process(writefd, readfd,
-	    &check_pollclosed_delayed_write_fifopipesocket);
+	check_pollclosedpeer_delayed_process(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_fifopipesocket);
 }
 
-ATF_TC(pollclosed_socketpair0_delayed_process_read);
-ATF_TC_HEAD(pollclosed_socketpair0_delayed_process_read, tc)
+ATF_TC(pollclosedpeer_socketpair0_delayed_process_read);
+ATF_TC_HEAD(pollclosedpeer_socketpair0_delayed_process_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair0_delayed_process_read, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair0_delayed_process_read, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair1_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_process(readfd, writefd,
-	    &check_pollclosed_delayed_read_socket);
+	check_pollclosedpeer_delayed_process(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_socket);
 }
 
-ATF_TC(pollclosed_socketpair0_delayed_thread_write);
-ATF_TC_HEAD(pollclosed_socketpair0_delayed_thread_write, tc)
+ATF_TC(pollclosedpeer_socketpair0_delayed_thread_write);
+ATF_TC_HEAD(pollclosedpeer_socketpair0_delayed_thread_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair0_delayed_thread_write, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair0_delayed_thread_write, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair0_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_thread(writefd, readfd,
-	    &check_pollclosed_delayed_write_fifopipesocket);
+	check_pollclosedpeer_delayed_thread(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_fifopipesocket);
 }
 
-ATF_TC(pollclosed_socketpair0_delayed_thread_read);
-ATF_TC_HEAD(pollclosed_socketpair0_delayed_thread_read, tc)
+ATF_TC(pollclosedpeer_socketpair0_delayed_thread_read);
+ATF_TC_HEAD(pollclosedpeer_socketpair0_delayed_thread_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the first half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair0_delayed_thread_read, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair0_delayed_thread_read, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair1_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_thread(readfd, writefd,
-	    &check_pollclosed_delayed_read_socket);
+	check_pollclosedpeer_delayed_thread(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_socket);
 }
 
-ATF_TC(pollclosed_socketpair1_immediate_writefull);
-ATF_TC_HEAD(pollclosed_socketpair1_immediate_writefull, tc)
+ATF_TC(pollclosedpeer_socketpair1_immediate_writefull);
+ATF_TC_HEAD(pollclosedpeer_socketpair1_immediate_writefull, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair1_immediate_writefull, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair1_immediate_writefull, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair1_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_write(writefd, readfd, POLLOUT, EPIPE);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLOUT, EPIPE);
 }
 
-ATF_TC(pollclosed_socketpair1_immediate_writeempty);
-ATF_TC_HEAD(pollclosed_socketpair1_immediate_writeempty, tc)
+ATF_TC(pollclosedpeer_socketpair1_immediate_writeempty);
+ATF_TC_HEAD(pollclosedpeer_socketpair1_immediate_writeempty, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair1_immediate_writeempty, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair1_immediate_writeempty, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair1_setup(&writefd, &readfd);
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_write(writefd, readfd, POLLOUT, EPIPE);
+	check_pollclosedpeer_immediate_write(writefd, readfd, POLLOUT, EPIPE);
 }
 
-ATF_TC(pollclosed_socketpair1_immediate_readsome);
-ATF_TC_HEAD(pollclosed_socketpair1_immediate_readsome, tc)
+ATF_TC(pollclosedpeer_socketpair1_immediate_readsome);
+ATF_TC_HEAD(pollclosedpeer_socketpair1_immediate_readsome, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair1_immediate_readsome, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair1_immediate_readsome, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair0_setup(&writefd, &readfd); /* reverse r/w */
 	fillpipebuf(writefd);
-	check_pollclosed_immediate_readsome(readfd, writefd, /*no POLLHUP*/0);
+	check_pollclosedpeer_immediate_readsome(readfd, writefd,
+	    /*no POLLHUP*/0);
 }
 
-ATF_TC(pollclosed_socketpair1_immediate_readnone);
-ATF_TC_HEAD(pollclosed_socketpair1_immediate_readnone, tc)
+ATF_TC(pollclosedpeer_socketpair1_immediate_readnone);
+ATF_TC_HEAD(pollclosedpeer_socketpair1_immediate_readnone, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair1_immediate_readnone, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair1_immediate_readnone, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair0_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill the pipe buf */
-	check_pollclosed_immediate_readnone(readfd, writefd, /*no POLLHUP*/0);
+	check_pollclosedpeer_immediate_readnone(readfd, writefd,
+	    /*no POLLHUP*/0);
 }
 
-ATF_TC(pollclosed_socketpair1_delayed_process_write);
-ATF_TC_HEAD(pollclosed_socketpair1_delayed_process_write, tc)
+ATF_TC(pollclosedpeer_socketpair1_delayed_process_write);
+ATF_TC_HEAD(pollclosedpeer_socketpair1_delayed_process_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair1_delayed_process_write, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair1_delayed_process_write, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair1_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_process(writefd, readfd,
-	    &check_pollclosed_delayed_write_fifopipesocket);
+	check_pollclosedpeer_delayed_process(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_fifopipesocket);
 }
 
-ATF_TC(pollclosed_socketpair1_delayed_process_read);
-ATF_TC_HEAD(pollclosed_socketpair1_delayed_process_read, tc)
+ATF_TC(pollclosedpeer_socketpair1_delayed_process_read);
+ATF_TC_HEAD(pollclosedpeer_socketpair1_delayed_process_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair1_delayed_process_read, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair1_delayed_process_read, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair0_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_process(readfd, writefd,
-	    &check_pollclosed_delayed_read_socket);
+	check_pollclosedpeer_delayed_process(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_socket);
 }
 
-ATF_TC(pollclosed_socketpair1_delayed_thread_write);
-ATF_TC_HEAD(pollclosed_socketpair1_delayed_thread_write, tc)
+ATF_TC(pollclosedpeer_socketpair1_delayed_thread_write);
+ATF_TC_HEAD(pollclosedpeer_socketpair1_delayed_thread_write, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair1_delayed_thread_write, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair1_delayed_thread_write, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair1_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
-	check_pollclosed_delayed_thread(writefd, readfd,
-	    &check_pollclosed_delayed_write_fifopipesocket);
+	check_pollclosedpeer_delayed_thread(writefd, readfd,
+	    &check_pollclosedpeer_delayed_write_fifopipesocket);
 }
 
-ATF_TC(pollclosed_socketpair1_delayed_thread_read);
-ATF_TC_HEAD(pollclosed_socketpair1_delayed_thread_read, tc)
+ATF_TC(pollclosedpeer_socketpair1_delayed_thread_read);
+ATF_TC_HEAD(pollclosedpeer_socketpair1_delayed_thread_read, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks POLLHUP with closing the second half of a socketpair");
 }
-ATF_TC_BODY(pollclosed_socketpair1_delayed_thread_read, tc)
+ATF_TC_BODY(pollclosedpeer_socketpair1_delayed_thread_read, tc)
 {
 	int writefd, readfd;
 
 	pollclosed_socketpair0_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
-	check_pollclosed_delayed_process(readfd, writefd,
-	    &check_pollclosed_delayed_read_socket);
+	check_pollclosedpeer_delayed_process(readfd, writefd,
+	    &check_pollclosedpeer_delayed_read_socket);
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -2118,69 +2122,69 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, fifo_hup1);
 	ATF_TP_ADD_TC(tp, fifo_hup2);
 
-	ATF_TP_ADD_TC(tp, pollclosed_fifo0_immediate_writefull);
-	ATF_TP_ADD_TC(tp, pollclosed_fifo1_immediate_writefull);
-	ATF_TP_ADD_TC(tp, pollclosed_pipe_immediate_writefull);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyapp_immediate_writefull);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyhost_immediate_writefull);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair0_immediate_writefull);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair1_immediate_writefull);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo0_immediate_writefull);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo1_immediate_writefull);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_pipe_immediate_writefull);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyapp_immediate_writefull);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyhost_immediate_writefull);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair0_immediate_writefull);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair1_immediate_writefull);
 
-	ATF_TP_ADD_TC(tp, pollclosed_fifo0_immediate_writeempty);
-	ATF_TP_ADD_TC(tp, pollclosed_fifo1_immediate_writeempty);
-	ATF_TP_ADD_TC(tp, pollclosed_pipe_immediate_writeempty);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyapp_immediate_writeempty);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyhost_immediate_writeempty);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair0_immediate_writeempty);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair1_immediate_writeempty);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo0_immediate_writeempty);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo1_immediate_writeempty);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_pipe_immediate_writeempty);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyapp_immediate_writeempty);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyhost_immediate_writeempty);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair0_immediate_writeempty);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair1_immediate_writeempty);
 
-	ATF_TP_ADD_TC(tp, pollclosed_fifo0_immediate_readsome);
-	ATF_TP_ADD_TC(tp, pollclosed_fifo1_immediate_readsome);
-	ATF_TP_ADD_TC(tp, pollclosed_pipe_immediate_readsome);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyapp_immediate_readsome);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyhost_immediate_readsome);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair0_immediate_readsome);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair1_immediate_readsome);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo0_immediate_readsome);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo1_immediate_readsome);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_pipe_immediate_readsome);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyapp_immediate_readsome);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyhost_immediate_readsome);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair0_immediate_readsome);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair1_immediate_readsome);
 
-	ATF_TP_ADD_TC(tp, pollclosed_fifo0_immediate_readnone);
-	ATF_TP_ADD_TC(tp, pollclosed_fifo1_immediate_readnone);
-	ATF_TP_ADD_TC(tp, pollclosed_pipe_immediate_readnone);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyapp_immediate_readnone);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyhost_immediate_readnone);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair0_immediate_readnone);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair1_immediate_readnone);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo0_immediate_readnone);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo1_immediate_readnone);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_pipe_immediate_readnone);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyapp_immediate_readnone);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyhost_immediate_readnone);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair0_immediate_readnone);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair1_immediate_readnone);
 
-	ATF_TP_ADD_TC(tp, pollclosed_fifo0_delayed_process_write);
-	ATF_TP_ADD_TC(tp, pollclosed_fifo1_delayed_process_write);
-	ATF_TP_ADD_TC(tp, pollclosed_pipe_delayed_process_write);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyapp_delayed_process_write);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyhost_delayed_process_write);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair0_delayed_process_write);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair1_delayed_process_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo0_delayed_process_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo1_delayed_process_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_pipe_delayed_process_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyapp_delayed_process_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyhost_delayed_process_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair0_delayed_process_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair1_delayed_process_write);
 
-	ATF_TP_ADD_TC(tp, pollclosed_fifo0_delayed_process_read);
-	ATF_TP_ADD_TC(tp, pollclosed_fifo1_delayed_process_read);
-	ATF_TP_ADD_TC(tp, pollclosed_pipe_delayed_process_read);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyapp_delayed_process_read);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyhost_delayed_process_read);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair0_delayed_process_read);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair1_delayed_process_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo0_delayed_process_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo1_delayed_process_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_pipe_delayed_process_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyapp_delayed_process_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyhost_delayed_process_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair0_delayed_process_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair1_delayed_process_read);
 
-	ATF_TP_ADD_TC(tp, pollclosed_fifo0_delayed_thread_write);
-	ATF_TP_ADD_TC(tp, pollclosed_fifo1_delayed_thread_write);
-	ATF_TP_ADD_TC(tp, pollclosed_pipe_delayed_thread_write);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyapp_delayed_thread_write);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyhost_delayed_thread_write);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair0_delayed_thread_write);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair1_delayed_thread_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo0_delayed_thread_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo1_delayed_thread_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_pipe_delayed_thread_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyapp_delayed_thread_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyhost_delayed_thread_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair0_delayed_thread_write);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair1_delayed_thread_write);
 
-	ATF_TP_ADD_TC(tp, pollclosed_fifo0_delayed_thread_read);
-	ATF_TP_ADD_TC(tp, pollclosed_fifo1_delayed_thread_read);
-	ATF_TP_ADD_TC(tp, pollclosed_pipe_delayed_thread_read);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyapp_delayed_thread_read);
-	ATF_TP_ADD_TC(tp, pollclosed_ptyhost_delayed_thread_read);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair0_delayed_thread_read);
-	ATF_TP_ADD_TC(tp, pollclosed_socketpair1_delayed_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo0_delayed_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_fifo1_delayed_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_pipe_delayed_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyapp_delayed_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_ptyhost_delayed_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair0_delayed_thread_read);
+	ATF_TP_ADD_TC(tp, pollclosedpeer_socketpair1_delayed_thread_read);
 
 	return atf_no_error();
 }
