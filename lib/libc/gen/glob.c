@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.39 2019/05/29 01:21:33 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.40 2026/09/23 06:56:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.39 2019/05/29 01:21:33 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.40 2026/09/23 06:56:14 tsutsui Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,9 +87,9 @@ __RCSID("$NetBSD: glob.c,v 1.39 2019/05/29 01:21:33 christos Exp $");
 #define NO_GETPW_R
 #endif
 
-#define	GLOB_LIMIT_STRING	524288	/* number of readdirs */
+#define	GLOB_LIMIT_STRING	524288	/* total buffer size of path strings */
 #define	GLOB_LIMIT_STAT		128	/* number of stat system calls */
-#define	GLOB_LIMIT_READDIR	65536	/* total buffer size of path strings */
+#define	GLOB_LIMIT_READDIR	65536	/* number of readdirs */
 #define	GLOB_LIMIT_PATH		1024	/* number of path elements */
 #define GLOB_LIMIT_BRACE	128	/* Number of brace calls */
 
