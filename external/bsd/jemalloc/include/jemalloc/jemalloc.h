@@ -12,7 +12,9 @@
 #define JEMALLOC_HAVE_ATTR_FORMAT_ARG
 
 /* Defined if format(gnu_printf, ...) attribute is supported. */
+#ifndef __clang__
 #define JEMALLOC_HAVE_ATTR_FORMAT_GNU_PRINTF
+#endif
 
 /* Defined if format(printf, ...) attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_FORMAT_PRINTF
@@ -74,7 +76,11 @@
 #endif
 
 /* sizeof(void *) == 2^LG_SIZEOF_PTR. */
+#ifdef _LP64
 #define LG_SIZEOF_PTR 3
+#else
+#define LG_SIZEOF_PTR 2
+#endif
 
 /*
  * Name mangling for public symbols is controlled by --with-mangling and
@@ -84,15 +90,24 @@
 #ifndef JEMALLOC_NO_RENAME
 #  define je_aligned_alloc aligned_alloc
 #  define je_calloc calloc
-#  define je_dallocx dallocx
 #  define je_free free
+#  define je_malloc malloc
+#  define je_posix_memalign posix_memalign
+#  define je_realloc realloc
+#  define je_valloc valloc
+
+# ifndef JEMALLOC_PROTECT_NOSTD
+#  define je_dallocx dallocx
 #  define je_free_sized free_sized
 #  define je_free_aligned_sized free_aligned_sized
 #  define je_mallctl mallctl
 #  define je_mallctlbymib mallctlbymib
 #  define je_mallctlnametomib mallctlnametomib
-#  define je_malloc malloc
 #  define je_malloc_conf malloc_conf
+#  define je_malloc_conf_get	malloc_conf_get
+#  define je_malloc_conf_set	malloc_conf_set
+#  define je_malloc_message_get	malloc_message_get
+#  define je_malloc_message_set	malloc_message_set
 #  define je_malloc_conf_2_conf_harder malloc_conf_2_conf_harder
 #  define je_malloc_message malloc_message
 #  define je_malloc_stats_print malloc_stats_print
@@ -100,13 +115,33 @@
 #  define je_mallocx mallocx
 #  define je_smallocx_7a34f18502e7b222724097cdcd499b437d189acc smallocx_7a34f18502e7b222724097cdcd499b437d189acc
 #  define je_nallocx nallocx
-#  define je_posix_memalign posix_memalign
-#  define je_rallocx rallocx
 #  define je_realloc realloc
 #  define je_sallocx sallocx
 #  define je_sdallocx sdallocx
 #  define je_xallocx xallocx
-#  define je_valloc valloc
+#else
+#  define je_dallocx		__je_dallocx
+#  define je_free_sized 	__je_free_sized
+#  define je_free_aligned_sized __je_free_aligned_sized
+#  define je_mallctl		__je_mallctl
+#  define je_mallctlbymib	__je_mallctlbymib
+#  define je_mallctlnametomib	__je_mallctlnametomib
+#  define je_malloc_conf	__je_malloc_conf
+#  define je_malloc_conf_get	__je_malloc_conf_get
+#  define je_malloc_conf_set	__je_malloc_conf_set
+#  define je_malloc_conf_2_conf_harder __je_malloc_conf_2_conf_harder
+#  define je_malloc_message	__je_malloc_message
+#  define je_malloc_message_get	__je_malloc_message_get
+#  define je_malloc_message_set	__je_malloc_message_set
+#  define je_malloc_stats_print	__je_malloc_stats_print
+#  define je_malloc_usable_size	__je_malloc_usable_size
+#  define je_mallocx		__je_mallocx
+#  define je_smallocx_7a34f18502e7b222724097cdcd499b437d189acc smallocx_7a34f18502e7b222724097cdcd499b437d189acc
+#  define je_nallocx		__je_nallocx
+#  define je_rallocx		__je_rallocx
+#  define je_sallocx		__je_sallocx
+#  define je_sdallocx		__je_sdallocx
+#  define je_xallocx		__je_xallocx
 #endif
 
 #include <stdlib.h>
@@ -508,6 +543,7 @@ struct extent_hooks_s {
 #  define sdallocx je_sdallocx
 #  define xallocx je_xallocx
 #  define valloc je_valloc
+# endif
 #endif
 
 /*
