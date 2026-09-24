@@ -2,12 +2,12 @@
 .\"     Title: JEMALLOC
 .\"    Author: Jason Evans
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 04/13/2026
+.\"      Date: 09/16/2026
 .\"    Manual: User Manual
-.\"    Source: jemalloc 5.3.1-0-g81034ce1f1373e37dc865038e1bc8eeecf559ce8
+.\"    Source: jemalloc 5.4.0-0-g7a34f18502e7b222724097cdcd499b437d189acc
 .\"  Language: English
 .\"
-.TH "JEMALLOC" "3" "04/13/2026" "jemalloc 5.3.1-0-g81034ce1f137" "User Manual"
+.TH "JEMALLOC" "3" "09/16/2026" "jemalloc 5.4.0-0-g7a34f18502e7" "User Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 jemalloc \- general purpose memory allocation functions
 .SH "LIBRARY"
 .PP
-This manual describes jemalloc 5\&.3\&.1\-0\-g81034ce1f1373e37dc865038e1bc8eeecf559ce8\&. More information can be found at the
+This manual describes jemalloc 5\&.4\&.0\-0\-g7a34f18502e7b222724097cdcd499b437d189acc\&. More information can be found at the
 \m[blue]\fBjemalloc website\fR\m[]\&\s-2\u[1]\d\s+2\&.
 .SH "SYNOPSIS"
 .sp
@@ -794,6 +794,12 @@ config\&.fill (\fBbool\fR) r\-
 was specified during build configuration\&.
 .RE
 .PP
+config\&.infallible_new (\fBbool\fR) r\-
+.RS 4
+\fB\-\-enable\-cxx\-infallible\-new\fR
+was specified during build configuration\&.
+.RE
+.PP
 config\&.lazy_lock (\fBbool\fR) r\-
 .RS 4
 \fB\-\-enable\-lazy\-lock\fR
@@ -1520,6 +1526,8 @@ Get or set the extent management hook functions for arena <i>\&. The functions m
 arenas\&.create
 such that all extents originate from an application\-supplied extent allocator (by specifying the custom extent hook functions during arena creation)\&. However, the API guarantees for the automatically created arenas may be relaxed \-\- hooks set there may be called in a "best effort" fashion; in addition there may be extents created prior to the application having an opportunity to take over extent allocation\&.
 .sp
+An extent must be operated on (dalloc, destroy, commit, decommit, purge, split, merge) by a hook capable of handling it, normally the hook that allocated it\&. Replacing hooks on a live arena is tricky and thus discouraged\&. If the hook is replaced anyway, the new hook should forward operations on extents it did not allocate to the previous hook (e\&.g\&., the new dalloc dispatches to the previous dalloc for an old\-hook\-allocated extent)\&. The new hook should also avoid merging extents allocated by different hooks\&.
+.sp
 .if n \{\
 .RS 4
 .\}
@@ -1592,6 +1600,12 @@ on success or
 on error\&. Committed memory may be committed in absolute terms as on a system that does not overcommit, or in implicit terms as on a system that overcommits and satisfies physical memory needs on demand via soft page faults\&. Note that replacing the default extent allocation function makes the arena\*(Aqs
 arena\&.<i>\&.dss
 setting irrelevant\&.
+.sp
+The alloc hook may bitwise\-OR
+\fBEXTENT_ALLOC_FLAG_PINNED\fR
+into the low bits of the returned pointer to indicate that the backing memory is non\-reclaimable (e\&.g\&. HugeTLB pages) and should be reused preferentially; in that case
+\fI*commit\fR
+must also be set to true\&. jemalloc strips the low byte before use\&. The pinned attribute is per\-extent rather than per\-hook: a single alloc hook may return pinned and non\-pinned extents in different calls\&. Pinned\-ness is set at allocation, inherited through splits, and never changes after that\&. Pinned and non\-pinned extents are never merged together\&.
 .HP \w'typedef\ bool\ (extent_dalloc_t)('u
 .BI "typedef bool (extent_dalloc_t)(extent_hooks_t\ *" "extent_hooks" ", void\ *" "addr" ", size_t\ " "size" ", bool\ " "committed" ", unsigned\ " "arena_ind" ");"
 .sp
@@ -1969,7 +1983,7 @@ opt\&.metadata_thp) for details\&.
 .PP
 stats\&.resident (\fBsize_t\fR) r\- [\fB\-\-enable\-stats\fR]
 .RS 4
-Maximum number of bytes in physically resident data pages mapped by the allocator, comprising all pages dedicated to allocator metadata, pages backing active allocations, and unused dirty pages\&. This is a maximum rather than precise because pages may not actually be physically resident if they correspond to demand\-zeroed virtual memory that has not yet been touched\&. This is a multiple of the page size, and is larger than
+Maximum number of bytes in physically resident data pages mapped by the allocator, comprising all pages dedicated to allocator metadata, pages backing active allocations, unused dirty pages, and pinned pages\&. This is a maximum rather than precise because pages may not actually be physically resident if they correspond to demand\-zeroed virtual memory that has not yet been touched\&. This is a multiple of the page size, and is larger than
 stats\&.active\&.
 .RE
 .PP
@@ -1987,6 +2001,13 @@ Total number of bytes in virtual memory mappings that were retained rather than 
 or similar\&. Retained virtual memory is typically untouched, decommitted, or purged, so it has no strongly associated physical memory (see
 extent hooks
 for details)\&. Retained memory is excluded from mapped memory statistics, e\&.g\&.
+stats\&.mapped\&.
+.RE
+.PP
+stats\&.pinned (\fBsize_t\fR) r\- [\fB\-\-enable\-stats\fR]
+.RS 4
+Total number of bytes in unused extents backed by non\-reclaimable memory\&. Pinned extents are tracked separately from dirty, muzzy, and retained extents because they are excluded from decay and purging; unlike
+stats\&.retained, pinned bytes are included in
 stats\&.mapped\&.
 .RE
 .PP
@@ -2169,6 +2190,13 @@ stats\&.retained
 for details\&.
 .RE
 .PP
+stats\&.arenas\&.<i>\&.pinned (\fBsize_t\fR) r\- [\fB\-\-enable\-stats\fR]
+.RS 4
+Number of pinned bytes\&. See
+stats\&.pinned
+for details\&.
+.RE
+.PP
 stats\&.arenas\&.<i>\&.extent_avail (\fBsize_t\fR) r\- [\fB\-\-enable\-stats\fR]
 .RS 4
 Number of allocated (but unused) extent structs in this arena\&.
@@ -2193,7 +2221,7 @@ for details\&.
 .PP
 stats\&.arenas\&.<i>\&.resident (\fBsize_t\fR) r\- [\fB\-\-enable\-stats\fR]
 .RS 4
-Maximum number of bytes in physically resident data pages mapped by the arena, comprising all pages dedicated to allocator metadata, pages backing active allocations, and unused dirty pages\&. This is a maximum rather than precise because pages may not actually be physically resident if they correspond to demand\-zeroed virtual memory that has not yet been touched\&. This is a multiple of the page size\&.
+Maximum number of bytes in physically resident data pages mapped by the arena, comprising all pages dedicated to allocator metadata, pages backing active allocations, unused dirty pages, and pinned pages\&. This is a maximum rather than precise because pages may not actually be physically resident if they correspond to demand\-zeroed virtual memory that has not yet been touched\&. This is a multiple of the page size\&.
 .RE
 .PP
 stats\&.arenas\&.<i>\&.dirty_npurge (\fBuint64_t\fR) r\- [\fB\-\-enable\-stats\fR]
@@ -2364,12 +2392,12 @@ mutex profiling counters\&.
 .PP
 stats\&.arenas\&.<i>\&.extents\&.<j>\&.n{extent_type} (\fBsize_t\fR) r\- [\fB\-\-enable\-stats\fR]
 .RS 4
-Number of extents of the given type in this arena in the bucket corresponding to page size index <j>\&. The extent type is one of dirty, muzzy, or retained\&.
+Number of extents of the given type in this arena in the bucket corresponding to page size index <j>\&. The extent type is one of dirty, muzzy, retained, or pinned\&.
 .RE
 .PP
 stats\&.arenas\&.<i>\&.extents\&.<j>\&.{extent_type}_bytes (\fBsize_t\fR) r\- [\fB\-\-enable\-stats\fR]
 .RS 4
-Sum of the bytes managed by extents of the given type in this arena in the bucket corresponding to page size index <j>\&. The extent type is one of dirty, muzzy, or retained\&.
+Sum of the bytes managed by extents of the given type in this arena in the bucket corresponding to page size index <j>\&. The extent type is one of dirty, muzzy, retained, or pinned\&.
 .RE
 .PP
 stats\&.arenas\&.<i>\&.lextents\&.<j>\&.nmalloc (\fBuint64_t\fR) r\- [\fB\-\-enable\-stats\fR]
@@ -2441,6 +2469,16 @@ stats\&.arenas\&.<i>\&.mutexes\&.extents_retained\&.{counter} (\fBcounter specif
 Statistics on
 \fIarena\&.<i>\&.extents_retained \fR
 mutex (arena scope; retained extents related)\&.
+{counter}
+is one of the counters in
+mutex profiling counters\&.
+.RE
+.PP
+stats\&.arenas\&.<i>\&.mutexes\&.extents_pinned\&.{counter} (\fBcounter specific type\fR) r\- [\fB\-\-enable\-stats\fR]
+.RS 4
+Statistics on
+\fIarena\&.<i>\&.extents_pinned \fR
+mutex (arena scope; pinned extents related)\&.
 {counter}
 is one of the counters in
 mutex profiling counters\&.
