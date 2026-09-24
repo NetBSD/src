@@ -8,6 +8,9 @@ __libc_cond_init
 __libc_cond_signal
 __libc_cond_timedwait
 __libc_cond_wait
+__libc_condattr_destroy
+__libc_condattr_init
+__libc_condattr_setclock
 __libc_mutex_destroy
 __libc_mutex_init
 __libc_mutex_lock

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.79 2026/05/06 09:03:49 yamt Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.80 2026/09/24 18:05:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.79 2026/05/06 09:03:49 yamt Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.80 2026/09/24 18:05:04 christos Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -53,6 +53,10 @@ int	_sys___nanosleep50(const struct timespec *, struct timespec *);
 int	_pthread_cond_has_waiters_np(pthread_cond_t *);
 
 __weak_alias(pthread_cond_has_waiters_np,_pthread_cond_has_waiters_np)
+
+__strong_alias(__libc_condattr_init,pthread_condattr_init)
+__strong_alias(__libc_condattr_destroy,pthread_condattr_destroy)
+__strong_alias(__libc_condattr_setclock,pthread_condattr_setclock)
 
 __strong_alias(__libc_cond_init,pthread_cond_init)
 __strong_alias(__libc_cond_signal,pthread_cond_signal)
