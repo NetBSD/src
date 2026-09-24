@@ -72,7 +72,7 @@ os_vm_reserve(void *hint, size_t size, size_t alignment, bool *commit) {
 		 * binaries across all machine architectures.
 		 */
 		if (alignment > os_page || PAGE > os_page) {
-			unsigned int a = ilog2(MAX(alignment, PAGE));
+			unsigned int a = ilog2((unsigned int)MAX(alignment, PAGE));
 			flags |= MAP_ALIGNED(a);
 		}
 #endif

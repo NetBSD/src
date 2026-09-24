@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.28 2026/04/19 22:41:10 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2026/09/24 18:34:46 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
 JEMALLOC_SRCS+= \
 jemalloc.c \
 arena.c \
+arenas_management.c \
 background_thread.c \
 base.c \
 bin.c \
@@ -35,11 +36,13 @@ hpa_central.c \
 hpa_hooks.c \
 hpa_utils.c \
 hpdata.c \
-hook.c \
 inspect.c \
+jemalloc_init.c \
+jemalloc_fork.c \
 large.c \
 log.c \
 malloc_io.c \
+malloc_dispatch.c \
 mutex.c \
 nstime.c \
 pa.c \
@@ -74,7 +77,7 @@ witness.c
 .for i in ${JEMALLOC_SRCS}
 # we need gnu11 for clang because of structure redefinitions.
 # this is a c11 feature, that is accepted by gcc and gnu99
-CPPFLAGS.${i}+=-I${JEMALLOC}/include -std=gnu11
+CPPFLAGS.${i}+=-I${JEMALLOC}/dist/include -I${JEMALLOC}/include -std=gnu11
 # helps in tracking bad malloc/pointer usage, but has a serious
 # performance penalty:
 #   CPPFLAGS.${i}+= -DDJEMALLOC_PROTECT_NOSTD -DJEMALLOC_DEBUG

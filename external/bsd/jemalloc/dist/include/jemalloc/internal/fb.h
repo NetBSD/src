@@ -163,7 +163,7 @@ fb_scount(const fb_group_t *fb, size_t nbits, size_t start, size_t cnt) {
 	 * so it takes a non-const fb.  fb_scount_visitor only reads, so the
 	 * cast is safe.
 	 */
-	fb_visit_impl((fb_group_t *)fb, nbits, &fb_scount_visitor, &scount,
+	fb_visit_impl((fb_group_t *)__UNCONST(fb), nbits, &fb_scount_visitor, &scount,
 	    start, cnt);
 	return scount;
 }

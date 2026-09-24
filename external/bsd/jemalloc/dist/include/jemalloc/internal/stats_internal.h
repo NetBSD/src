@@ -19,8 +19,8 @@
 
 #define CTL_GET(n, v, t)                                                       \
 	do {                                                                   \
-		size_t sz = sizeof(t);                                         \
-		xmallctl(n, (void *)v, &sz, NULL, 0);                          \
+		size_t _sz = sizeof(t);                                        \
+		xmallctl(n, (void *)v, &_sz, NULL, 0);                         \
 	} while (0)
 
 #define CTL_LEAF_PREPARE(mib, miblen, name)                                    \

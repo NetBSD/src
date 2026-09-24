@@ -12,9 +12,7 @@
 #define JEMALLOC_HAVE_ATTR_FORMAT_ARG
 
 /* Defined if format(gnu_printf, ...) attribute is supported. */
-#ifndef __clang__
 #define JEMALLOC_HAVE_ATTR_FORMAT_GNU_PRINTF
-#endif
 
 /* Defined if format(printf, ...) attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_FORMAT_PRINTF
@@ -58,6 +56,15 @@
 #define JEMALLOC_CONFIG_ENV
 #define JEMALLOC_CONFIG_FILE
 
+/*
+ * Whether throwing operator new aborts on OOM instead of throwing
+ * std::bad_alloc.  This is always defined to either 0 or 1.
+ */
+/* #undef JEMALLOC_INFALLIBLE_NEW */
+#ifndef JEMALLOC_INFALLIBLE_NEW
+#  define JEMALLOC_INFALLIBLE_NEW 0
+#endif
+
 #ifdef _MSC_VER
 #  ifdef _WIN64
 #    define LG_SIZEOF_PTR_WIN 3
@@ -67,11 +74,7 @@
 #endif
 
 /* sizeof(void *) == 2^LG_SIZEOF_PTR. */
-#ifdef _LP64
 #define LG_SIZEOF_PTR 3
-#else
-#define LG_SIZEOF_PTR 2
-#endif
 
 /*
  * Name mangling for public symbols is controlled by --with-mangling and
@@ -81,59 +84,29 @@
 #ifndef JEMALLOC_NO_RENAME
 #  define je_aligned_alloc aligned_alloc
 #  define je_calloc calloc
-#  define je_free free
-#  define je_malloc malloc
-#  define je_posix_memalign posix_memalign
-#  define je_realloc realloc
-#  define je_valloc valloc
-
-# ifndef JEMALLOC_PROTECT_NOSTD
 #  define je_dallocx dallocx
+#  define je_free free
 #  define je_free_sized free_sized
 #  define je_free_aligned_sized free_aligned_sized
 #  define je_mallctl mallctl
 #  define je_mallctlbymib mallctlbymib
 #  define je_mallctlnametomib mallctlnametomib
+#  define je_malloc malloc
 #  define je_malloc_conf malloc_conf
-#  define je_malloc_conf_get	malloc_conf_get
-#  define je_malloc_conf_set	malloc_conf_set
 #  define je_malloc_conf_2_conf_harder malloc_conf_2_conf_harder
 #  define je_malloc_message malloc_message
-#  define je_malloc_message_get	malloc_message_get
-#  define je_malloc_message_set	malloc_message_set
 #  define je_malloc_stats_print malloc_stats_print
 #  define je_malloc_usable_size malloc_usable_size
 #  define je_mallocx mallocx
-#  define je_smallocx_81034ce1f1373e37dc865038e1bc8eeecf559ce8 smallocx_81034ce1f1373e37dc865038e1bc8eeecf559ce8
+#  define je_smallocx_7a34f18502e7b222724097cdcd499b437d189acc smallocx_7a34f18502e7b222724097cdcd499b437d189acc
 #  define je_nallocx nallocx
+#  define je_posix_memalign posix_memalign
 #  define je_rallocx rallocx
+#  define je_realloc realloc
 #  define je_sallocx sallocx
 #  define je_sdallocx sdallocx
 #  define je_xallocx xallocx
-#else
-#  define je_dallocx		__je_dallocx
-#  define je_free_sized 	__je_free_sized
-#  define je_free_aligned_sized __je_free_aligned_sized
-#  define je_mallctl		__je_mallctl
-#  define je_mallctlbymib	__je_mallctlbymib
-#  define je_mallctlnametomib	__je_mallctlnametomib
-#  define je_malloc_conf	__je_malloc_conf
-#  define je_malloc_conf_get	__je_malloc_conf_get
-#  define je_malloc_conf_set	__je_malloc_conf_set
-#  define je_malloc_conf_2_conf_harder __je_malloc_conf_2_conf_harder
-#  define je_malloc_message	__je_malloc_message
-#  define je_malloc_message_get	__je_malloc_message_get
-#  define je_malloc_message_set	__je_malloc_message_set
-#  define je_malloc_stats_print	__je_malloc_stats_print
-#  define je_malloc_usable_size	__je_malloc_usable_size
-#  define je_mallocx		__je_mallocx
-#  define je_smallocx_81034ce1f1373e37dc865038e1bc8eeecf559ce8 __je_smallocx_81034ce1f1373e37dc865038e1bc8eeecf559ce8
-#  define je_nallocx		__je_nallocx
-#  define je_rallocx		__je_rallocx
-#  define je_sallocx		__je_sallocx
-#  define je_sdallocx		__je_sdallocx
-#  define je_xallocx		__je_xallocx
-#endif
+#  define je_valloc valloc
 #endif
 
 #include <stdlib.h>
@@ -142,13 +115,13 @@
 #include <limits.h>
 #include <strings.h>
 
-#define JEMALLOC_VERSION "5.3.1-0-g81034ce1f1373e37dc865038e1bc8eeecf559ce8"
+#define JEMALLOC_VERSION "5.4.0-0-g7a34f18502e7b222724097cdcd499b437d189acc"
 #define JEMALLOC_VERSION_MAJOR 5
-#define JEMALLOC_VERSION_MINOR 3
-#define JEMALLOC_VERSION_BUGFIX 1
+#define JEMALLOC_VERSION_MINOR 4
+#define JEMALLOC_VERSION_BUGFIX 0
 #define JEMALLOC_VERSION_NREV 0
-#define JEMALLOC_VERSION_GID "81034ce1f1373e37dc865038e1bc8eeecf559ce8"
-#define JEMALLOC_VERSION_GID_IDENT 81034ce1f1373e37dc865038e1bc8eeecf559ce8
+#define JEMALLOC_VERSION_GID "7a34f18502e7b222724097cdcd499b437d189acc"
+#define JEMALLOC_VERSION_GID_IDENT 7a34f18502e7b222724097cdcd499b437d189acc
 
 #define MALLOCX_LG_ALIGN(la)	((int)(la))
 #if LG_SIZEOF_PTR == 2
@@ -306,13 +279,6 @@ extern JEMALLOC_EXPORT const char	*je_malloc_conf;
 extern JEMALLOC_EXPORT const char	*je_malloc_conf_2_conf_harder;
 extern JEMALLOC_EXPORT void		(*je_malloc_message)(void *cbopaque,
     const char *s);
-extern JEMALLOC_EXPORT const char	*je_malloc_conf_get(void);
-extern JEMALLOC_EXPORT void		je_malloc_conf_set(const char *);
-extern JEMALLOC_EXPORT void		(*je_malloc_message_get(void))
-    (void *cbopaque, const char *s);
-extern JEMALLOC_EXPORT void		je_malloc_message_set(
-    void (*)(void *cbopaque, const char *s));
-
 
 JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
     void JEMALLOC_SYS_NOTHROW	*je_malloc(size_t size)
@@ -395,6 +361,36 @@ extern "C" {
 #endif
 
 typedef struct extent_hooks_s extent_hooks_t;
+
+/*
+ * Extent alloc flags.  A custom extent_alloc hook may OR these into the
+ * returned pointer; jemalloc strips the low bits before use.  Safe because
+ * returned addresses are at least page-aligned (PAGE >= 256).
+ *
+ * EXTENT_ALLOC_FLAG_PINNED: backing memory is non-reclaimable.
+ * Pinned extents are excluded from decay/purging and cached separately for
+ * preferential reuse.  A hook returning this flag must also set *commit to
+ * true: pinned memory bypasses jemalloc's commit/decommit machinery.
+ *
+ * The pinned attribute is per-extent: a single hook may return pinned and
+ * non-pinned extents in different calls.  Pinned and non-pinned extents are
+ * never merged together (the merge would change the reclamation policy of
+ * one half), so pinned-ness is set at allocation and inherited through
+ * splits, but never changes after that.
+ *
+ * Example (HugeTLB alloc hook):
+ *   void *my_alloc(extent_hooks_t *h, void *new_addr, size_t size,
+ *       size_t alignment, bool *zero, bool *commit, unsigned arena_ind) {
+ *       void *addr = mmap(NULL, size, PROT_READ|PROT_WRITE,
+ *           MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB, -1, 0);
+ *       if (addr == MAP_FAILED) return NULL;
+ *       *zero = true;
+ *       *commit = true;
+ *       return (void *)((uintptr_t)addr | EXTENT_ALLOC_FLAG_PINNED);
+ *   }
+ */
+#define EXTENT_ALLOC_FLAG_PINNED    0x1U
+#define EXTENT_ALLOC_FLAG_MASK      0xFFU
 
 /*
  * void *
@@ -503,7 +499,7 @@ struct extent_hooks_s {
 #  define malloc_stats_print je_malloc_stats_print
 #  define malloc_usable_size je_malloc_usable_size
 #  define mallocx je_mallocx
-#  define smallocx_81034ce1f1373e37dc865038e1bc8eeecf559ce8 je_smallocx_81034ce1f1373e37dc865038e1bc8eeecf559ce8
+#  define smallocx_7a34f18502e7b222724097cdcd499b437d189acc je_smallocx_7a34f18502e7b222724097cdcd499b437d189acc
 #  define nallocx je_nallocx
 #  define posix_memalign je_posix_memalign
 #  define rallocx je_rallocx
@@ -538,7 +534,7 @@ struct extent_hooks_s {
 #  undef je_malloc_stats_print
 #  undef je_malloc_usable_size
 #  undef je_mallocx
-#  undef je_smallocx_81034ce1f1373e37dc865038e1bc8eeecf559ce8
+#  undef je_smallocx_7a34f18502e7b222724097cdcd499b437d189acc
 #  undef je_nallocx
 #  undef je_posix_memalign
 #  undef je_rallocx

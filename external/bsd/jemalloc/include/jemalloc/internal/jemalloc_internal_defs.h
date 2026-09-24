@@ -38,6 +38,8 @@
  */
 #if defined(__x86_64__) || defined(__i386__)
 #define CPU_SPINWAIT __asm__ volatile("pause")
+/* 1 if CPU_SPINWAIT is defined, 0 otherwise. */
+#define HAVE_CPU_SPINWAIT 1
 #elif defined(__aarch64__)
 #define CPU_SPINWAIT __asm__ volatile("isb")
 /* 1 if CPU_SPINWAIT is defined, 0 otherwise. */
@@ -117,6 +119,9 @@
 /* Defined if pthread_get_name_np(3) is available. */
 /* #undef JEMALLOC_HAVE_PTHREAD_GET_NAME_NP */
 
+/* Defined if pthread_condattr_setclock(..., CLOCK_MONOTONIC) is available. */
+#define JEMALLOC_HAVE_PTHREAD_COND_TIMEDWAIT_MONOTONIC 
+
 /*
  * Defined if clock_gettime(CLOCK_MONOTONIC_COARSE, ...) is available.
  */
@@ -169,6 +174,14 @@
 #define JEMALLOC_TLS_MODEL __attribute__((tls_model("initial-exec")))
 
 /*
+ * Route TSD thread-local address computation through a noinline
+ * optimization-barrier accessor so the compiler cannot cache it across a
+ * user-space context switch (fibers migrating between OS threads).  See
+ * tsd_tls_addr.h.
+ */
+/* #undef JEMALLOC_EXPERIMENTAL_FIBER_SAFE_TLS */
+
+/*
  * JEMALLOC_DEBUG enables assertions and other sanity checks, and disables
  * inline functions.
  */
@@ -191,9 +204,6 @@
 
 /* Use gcc intrinsics for profile backtracing if defined. */
 /* #undef JEMALLOC_PROF_GCC */
-
-/* Use frame pointer for profile backtracing if defined. Linux only. */
-/* #undef JEMALLOC_PROF_FRAME_POINTER */
 
 /* JEMALLOC_PAGEID enabled page id */
 /* #undef JEMALLOC_PAGEID */
@@ -237,7 +247,6 @@
 #else
 #error "PAGE_SHIFT is not defined"
 #endif
-
 
 /* Maximum number of regions in a slab. */
 /* #undef CONFIG_LG_SLAB_MAXREGS */
@@ -317,15 +326,6 @@
  * Darwin (OS X) uses zones to work around Mach-O symbol override shortcomings.
  */
 /* #undef JEMALLOC_ZONE */
-
-/*
- * Methods for determining whether the OS overcommits.
- * JEMALLOC_PROC_SYS_VM_OVERCOMMIT_MEMORY: Linux's
- *                                         /proc/sys/vm.overcommit_memory file.
- * JEMALLOC_SYSCTL_VM_OVERCOMMIT: FreeBSD's vm.overcommit sysctl.
- */
-/* #undef JEMALLOC_SYSCTL_VM_OVERCOMMIT */
-/* #undef JEMALLOC_PROC_SYS_VM_OVERCOMMIT_MEMORY */
 
 /* Defined if madvise(2) is available. */
 #define JEMALLOC_HAVE_MADVISE 
@@ -500,6 +500,16 @@
 /* Is C++ support being built? */
 #define JEMALLOC_ENABLE_CXX 
 
+/* Are C++ exceptions enabled? */
+#define JEMALLOC_HAVE_CXX_EXCEPTIONS 
+
+/*
+ * If defined, throwing operator new aborts on OOM (with size logged) instead
+ * of throwing std::bad_alloc. Nothrow new still returns null. With LTO this
+ * lets the compiler prove operator new is no-throw and elide exception cleanup.
+ */
+/* #undef JEMALLOC_INFALLIBLE_NEW */
+
 /* Performs additional size checks when defined. */
 /* #undef JEMALLOC_OPT_SIZE_CHECKS */
 
@@ -523,9 +533,9 @@
 #define JEMALLOC_HAVE_RDTSCP 
 #endif
 
+/* If defined, use __int128 for optimization. */
 #ifndef __lint__
 #if __SIZEOF_INT128__
-/* If defined, use __int128 for optimization. */
 #define JEMALLOC_HAVE_INT128 
 #endif
 #endif
