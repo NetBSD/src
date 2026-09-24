@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.29 2026/09/24 14:20:38 skrll Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.30 2026/09/24 15:44:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.29 2026/09/24 14:20:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.30 2026/09/24 15:44:26 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips3_wired.h"
@@ -546,19 +546,20 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 
 #define	__stub		__section(".stub")
 
-void	mips_cpu_switch_resume(struct lwp *)		__stub;
-tlb_asid_t
-	tlb_get_asid(void)				__stub;
-void	tlb_set_asid(uint32_t, struct pmap *)		__stub;
-void	tlb_invalidate_all(void)			__stub;
-void	tlb_invalidate_globals(void)			__stub;
-void	tlb_invalidate_asids(uint32_t, uint32_t)	__stub;
-void	tlb_invalidate_addr(vaddr_t, tlb_asid_t)	__stub;
-u_int	tlb_record_asids(u_long *, uint32_t)		__stub;
-bool	tlb_update_addr(vaddr_t, tlb_asid_t, pt_entry_t, bool)
-							__stub;
-void	tlb_read_entry(size_t, struct tlbmask *)	__stub;
-void	tlb_write_entry(size_t, const struct tlbmask *) __stub;
+void __noubsan
+		 mips_cpu_switch_resume(struct lwp *)		__stub;
+tlb_asid_t __noubsan
+		tlb_get_asid(void)				__stub;
+void __noubsan	tlb_set_asid(uint32_t, struct pmap *)		__stub;
+void __noubsan	tlb_invalidate_all(void)			__stub;
+void __noubsan	tlb_invalidate_globals(void)			__stub;
+void __noubsan	tlb_invalidate_asids(uint32_t, uint32_t)	__stub;
+void __noubsan	tlb_invalidate_addr(vaddr_t, tlb_asid_t)	__stub;
+u_int __noubsan	tlb_record_asids(u_long *, uint32_t)		__stub;
+bool __noubsan	tlb_update_addr(vaddr_t, tlb_asid_t, pt_entry_t, bool)
+								__stub;
+void __noubsan	tlb_read_entry(size_t, struct tlbmask *)	__stub;
+void __noubsan	tlb_write_entry(size_t, const struct tlbmask *) __stub;
 
 /*
  * wbflush isn't a stub since it gets overridden quite late
@@ -641,10 +642,10 @@ wbflush(void)
 }
 
 #ifndef LOCKDEBUG
-void mutex_enter(kmutex_t *mtx)				__stub;
-void mutex_exit(kmutex_t *mtx)				__stub;
-void mutex_spin_enter(kmutex_t *mtx)			__stub;
-void mutex_spin_exit(kmutex_t *mtx)			__stub;
+void __noubsan mutex_enter(kmutex_t *mtx)			__stub;
+void __noubsan mutex_exit(kmutex_t *mtx)			__stub;
+void __noubsan mutex_spin_enter(kmutex_t *mtx)			__stub;
+void __noubsan mutex_spin_exit(kmutex_t *mtx)			__stub;
 
 void
 mutex_enter(kmutex_t *mtx)
@@ -675,8 +676,8 @@ mutex_spin_exit(kmutex_t *mtx)
 }
 #endif	/* !LOCKDEBUG */
 
-u_int _atomic_cas_uint(volatile u_int *, u_int, u_int)		__stub;
-u_long _atomic_cas_ulong(volatile u_long *, u_long, u_long)	__stub;
+u_int __noubsan _atomic_cas_uint(volatile u_int *, u_int, u_int)		__stub;
+u_long __noubsan _atomic_cas_ulong(volatile u_long *, u_long, u_long)	__stub;
 
 u_int
 _atomic_cas_uint(volatile u_int *ptr, u_int old, u_int new)
@@ -709,7 +710,7 @@ __strong_alias(_atomic_cas_64, _atomic_cas_ulong)
 __strong_alias(_atomic_cas_64_ni, _atomic_cas_ulong)
 #endif
 
-int	__ucas_32(volatile uint32_t *, uint32_t, uint32_t, uint32_t *) __stub;
+int	__noubsan __ucas_32(volatile uint32_t *, uint32_t, uint32_t, uint32_t *) __stub;
 int
 __ucas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new, uint32_t *retp)
 {
@@ -719,7 +720,7 @@ __ucas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new, uint32_t *retp)
 __strong_alias(_ucas_32,__ucas_32);
 
 #ifdef _LP64
-int	__ucas_64(volatile uint64_t *, uint64_t, uint64_t, uint64_t *) __stub;
+int	__noubsan __ucas_64(volatile uint64_t *, uint64_t, uint64_t, uint64_t *) __stub;
 int
 __ucas_64(volatile uint64_t *ptr, uint64_t old, uint64_t new, uint64_t *retp)
 {
