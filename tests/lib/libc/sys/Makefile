@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.80 2025/10/10 15:53:55 christos Exp $
+# $NetBSD: Makefile,v 1.81 2026/09/24 22:10:22 riastradh Exp $
 
 MKMAN=	no
 
@@ -80,6 +80,7 @@ TESTS_C+=		t_setrlimit
 TESTS_C+=		t_setuid
 TESTS_C+=		t_sigaction
 TESTS_C+=		t_sigaltstack
+TESTS_C+=		t_sigio
 TESTS_C+=		t_sigqueue
 TESTS_C+=		t_sigtimedwait
 TESTS_C+=		t_socketpair
@@ -110,6 +111,7 @@ LDADD.t_getpid+=	-lpthread
 LDADD.t_mmap+=		-lpthread
 LDADD.t_poll+=		-lpthread
 LDADD.t_ptrace_kill+=	-lpthread
+LDADD.t_sigio+=		-lpthread
 LDADD.t_timerfd+=	-lpthread
 
 LDADD.t_ptrace_sigchld+=	-pthread -lm

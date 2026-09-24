@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.519 2026/09/18 13:32:55 riastradh Exp $
+# $NetBSD: mi,v 1.520 2026/09/24 22:10:22 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2312,6 +2312,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setuid.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigaction.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigaltstack.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigio.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigtimedwait.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigtimedwait_pr_47625.debug	tests-obsolete		obsolete,compattestfile
