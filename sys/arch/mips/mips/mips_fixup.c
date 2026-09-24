@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.26 2026/09/08 06:53:29 skrll Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.27 2026/09/24 06:08:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.26 2026/09/08 06:53:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.27 2026/09/24 06:08:36 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips3_wired.h"
@@ -478,7 +478,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 
 	KASSERT(MIPS_KSEG0_P(start));
 	KASSERT(MIPS_KSEG0_P(end));
-	KASSERT(MIPS_KSEG0_START == (((intptr_t)start >> 28) << 28));
+	KASSERT(MIPS_KSEG0_START == ((intptr_t)start & ~__MASK(28)));
 
 	if (end > __stub_start)
 		end = __stub_start;
@@ -488,7 +488,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 		uint32_t offset = insn & 0x03ffffff;
 		uint32_t opcode = insn >> 26;
 		const uint32_t * const stubp =
-		    &((uint32_t *)(((intptr_t)insnp >> 28) << 28))[offset];
+		    &((uint32_t *)((intptr_t)insnp & ~__MASK(28)))[offset];
 
 		/*
 		 * First we check to see if this is a jump and whether it is
@@ -510,7 +510,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 		 * Verify the real destination is in the same 256MB
 		 * as the location of the jump instruction.
 		 */
-		KASSERT((real_addr >> 28) == ((intptr_t)insnp >> 28));
+		KASSERT((real_addr & ~__MASK(28)) == ((intptr_t)insnp & ~__MASK(28)));
 
 		/*
 		 * Now fix it up.  Replace the old displacement to the stub
