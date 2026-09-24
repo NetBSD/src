@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.390 2025/11/25 13:23:28 brad Exp $ */
+/* $NetBSD: com.c,v 1.391 2026/09/24 17:11:18 palle Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.390 2025/11/25 13:23:28 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.391 2026/09/24 17:11:18 palle Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2971,7 +2971,11 @@ com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
 {
 	struct com_regs regs;
 
-	com_init_regs(&regs, iot, (bus_space_handle_t)0/*XXX*/, iobase);
+	/*XXX*/
+	bus_space_handle_t dummy_bsh;
+	memset(&dummy_bsh, 0, sizeof(dummy_bsh));
+	
+	com_init_regs(&regs, iot, dummy_bsh/*XXX*/, iobase);
 
 	return com_kgdb_attach1(&regs, rate, frequency, type, cflag);
 }
