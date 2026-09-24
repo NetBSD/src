@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.15 2011/05/23 18:38:51 rmind Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.16 2026/09/24 18:32:13 palle Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.15 2011/05/23 18:38:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.16 2026/09/24 18:32:13 palle Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -380,20 +380,21 @@ kgdb_acc(vaddr_t va, size_t len)
 {
 	int64_t data;
 	vaddr_t eva;
+	extern struct pmap kernel_pmap_;
 	struct pmap *pm = &kernel_pmap_;
 
 	eva = round_page(va + len);
 	va = trunc_page(va);
 
-	mutex_enter(&pm->pm_lock);
+	//mutex_enter(&pm->pm_lock);
 	for (; va < eva; va += PAGE_SIZE) {
 		data = pseg_get(pm, va);
 		if ((data & TLB_V) == 0) {
-			mutex_exit(&pm->pm_lock);
+			//mutex_exit(&pm->pm_lock);
 			return 0;
 		}
 	}
-	mutex_exit(&pm->pm_lock);
+	//mutex_exit(&pm->pm_lock);
 
 	return (1);
 }
