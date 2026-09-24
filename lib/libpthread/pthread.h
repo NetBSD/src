@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.47 2026/09/24 18:05:04 christos Exp $	*/
+/*	$NetBSD: pthread.h,v 1.48 2026/09/24 18:38:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -134,8 +134,11 @@ int	pthread_cond_timedwait(pthread_cond_t * __restrict,
 #endif
 int	pthread_cond_signal(pthread_cond_t *);
 int	pthread_cond_broadcast(pthread_cond_t *);
+int	pthread_condattr_init(pthread_condattr_t *);
+int     pthread_condattr_setclock(pthread_condattr_t *, clockid_t);
 int	pthread_condattr_getclock(const pthread_condattr_t * __restrict,
 	    clockid_t * __restrict);
+int	pthread_condattr_destroy(pthread_condattr_t *);
 #ifdef _PTHREAD_PSHARED
 int	pthread_condattr_getpshared(const pthread_condattr_t * __restrict,
 	    int * __restrict);
