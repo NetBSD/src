@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.36 2025/10/27 16:30:53 christos Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.37 2026/09/24 18:05:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.36 2025/10/27 16:30:53 christos Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.37 2026/09/24 18:05:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -186,6 +186,40 @@ __libc_mutexattr_catchall_stub(mutexattr_t *ma)
 {
 	/* LINTED deliberate lack of effect */
 	(void)ma;
+
+	CHECK_NOT_THREADED();
+
+	return (0);
+}
+
+/* condition attribute variables */
+
+int __libc_condattr_catchall_stub(condattr_t *);
+int __libc_condattr_setclock_stub(condattr_t *, clockid_t);
+
+__weak_alias(__libc_condattr_init,__libc_condattr_catchall_stub)
+__weak_alias(__libc_condattr_destroy,__libc_condattr_catchall_stub)
+__weak_alias(__libc_condattr_setclock,__libc_condattr_setclock_stub)
+
+int
+__libc_condattr_catchall_stub(condattr_t *a)
+{
+	/* LINTED deliberate lack of effect */
+	(void)a;
+
+	CHECK_NOT_THREADED();
+
+	return (0);
+}
+
+int
+__libc_condattr_setclock_stub(condattr_t *a, clockid_t b)
+{
+	/* LINTED deliberate lack of effect */
+	(void)a;
+
+	/* LINTED deliberate lack of effect */
+	(void)b;
 
 	CHECK_NOT_THREADED();
 
