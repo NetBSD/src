@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.28 2026/09/24 08:10:15 skrll Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.29 2026/09/24 14:20:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.28 2026/09/24 08:10:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.29 2026/09/24 14:20:38 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips3_wired.h"
@@ -488,7 +488,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 		uint32_t offset = insn & 0x03ffffff;
 		uint32_t opcode = insn >> 26;
 		const uint32_t * const stubp =
-		    &((uint32_t *)((intptr_t)insnp & ~__MASK(28)))[offset];
+		    &((uint32_t *)MIPS_KSEG0_START)[offset];
 
 		/*
 		 * First we check to see if this is a jump and whether it is
