@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.156 2026/09/23 17:47:52 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.157 2026/09/24 03:40:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.156 2026/09/23 17:47:52 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.157 2026/09/24 03:40:36 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -664,7 +664,7 @@ lfs_free_orphans(struct lfs *fs)
 			}
 			vput(vp);
 		}
-		kmem_free(orphan, sizeof(orphan[0]) * norphan);
+		kmem_free(orphan, sizeof(orphan[0]) * norphan_alloc);
 	}
 
 	DEBUG_CHECK_FREELIST(fs);
