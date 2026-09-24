@@ -1,4 +1,4 @@
-/*	$NetBSD: t___sync_compare_and_swap.c,v 1.5 2026/05/03 13:46:08 skrll Exp $	*/
+/*	$NetBSD: t___sync_compare_and_swap.c,v 1.6 2026/09/24 12:07:53 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t___sync_compare_and_swap.c,v 1.5 2026/05/03 13:46:08 skrll Exp $");
+__RCSID("$NetBSD: t___sync_compare_and_swap.c,v 1.6 2026/09/24 12:07:53 riastradh Exp $");
 
 #include <atf-c.h>
 #include <inttypes.h>
@@ -47,13 +47,13 @@ __RCSID("$NetBSD: t___sync_compare_and_swap.c,v 1.5 2026/05/03 13:46:08 skrll Ex
 #define OLDVAL (0x1122334455667788UL)
 #define NEWVAL (0x8090a0b0c0d0e0f0UL)
 
-#define atf_sync_bool(NAME, TYPE, FMT, XFAIL) \
-ATF_TC(NAME); \
-ATF_TC_HEAD(NAME, tc) \
+#define atf_sync_bool(NAME, U_S, TYPE, FMT, XFAIL) \
+ATF_TC(NAME##_##U_S); \
+ATF_TC_HEAD(NAME##_##U_S, tc) \
 { \
 	atf_tc_set_md_var(tc, "descr", #NAME); \
 } \
-ATF_TC_BODY(NAME, tc) \
+ATF_TC_BODY(NAME##_##U_S, tc) \
 { \
 	volatile TYPE val; \
 	TYPE oldval; \
@@ -86,11 +86,15 @@ ATF_TC_BODY(NAME, tc) \
 	    "failure case: res expects %d but %d", expres, res); \
 }
 
-atf_sync_bool(__sync_bool_compare_and_swap_1, uint8_t,  PRIx8, __nothing);
-atf_sync_bool(__sync_bool_compare_and_swap_2, uint16_t, PRIx16, __nothing);
-atf_sync_bool(__sync_bool_compare_and_swap_4, uint32_t, PRIx32, __nothing);
+atf_sync_bool(__sync_bool_compare_and_swap_1, u, uint8_t,  PRIx8, __nothing);
+atf_sync_bool(__sync_bool_compare_and_swap_1, s, int8_t,  PRIx8, __nothing);
+atf_sync_bool(__sync_bool_compare_and_swap_2, u, uint16_t, PRIx16, __nothing);
+atf_sync_bool(__sync_bool_compare_and_swap_2, s, int16_t, PRIx16, __nothing);
+atf_sync_bool(__sync_bool_compare_and_swap_4, u, uint32_t, PRIx32, __nothing);
+atf_sync_bool(__sync_bool_compare_and_swap_4, s, int32_t, PRIx32, __nothing);
 #ifdef __HAVE_ATOMIC64_OPS
-atf_sync_bool(__sync_bool_compare_and_swap_8, uint64_t, PRIx64, __nothing);
+atf_sync_bool(__sync_bool_compare_and_swap_8, u, uint64_t, PRIx64, __nothing);
+atf_sync_bool(__sync_bool_compare_and_swap_8, s, int64_t, PRIx64, __nothing);
 #endif
 
 #if _BYTE_ORDER == _LITTLE_ENDIAN
@@ -103,13 +107,13 @@ atf_sync_bool(__sync_bool_compare_and_swap_8, uint64_t, PRIx64, __nothing);
 #  error Unknown byte order!
 #endif
 
-#define atf_sync_bool_subword(NAME, SUBWIDTH, SUBTYPE, TYPE, SUBFMT, FMT, XFAIL) \
-ATF_TC(NAME##_subword); \
-ATF_TC_HEAD(NAME##_subword, tc) \
+#define atf_sync_bool_subword(NAME, U_S, SUBWIDTH, SUBTYPE, TYPE, SUBFMT, FMT, XFAIL) \
+ATF_TC(NAME##_##U_S##_subword); \
+ATF_TC_HEAD(NAME##_##U_S##_subword, tc) \
 { \
 	atf_tc_set_md_var(tc, "descr", "subword " #NAME); \
 } \
-ATF_TC_BODY(NAME##_subword, tc) \
+ATF_TC_BODY(NAME##_##U_S##_subword, tc) \
 { \
 	volatile union { \
 		TYPE word; \
@@ -125,7 +129,7 @@ ATF_TC_BODY(NAME##_subword, tc) \
 	ATF_CHECK_EQ_MSG(val.subword[MSB], 123, \
 	    "val.subword[MSB] = 0x%" SUBFMT, val.subword[MSB]); \
 	ATF_CHECK_EQ_MSG(val.word, \
-	    ((TYPE)123 << (SUBWIDTH)) | (TYPE)(SUBTYPE)-2, \
+	    ((TYPE)123 << (SUBWIDTH)) | (TYPE)((SUBTYPE)-2 & __BITS(0,SUBWIDTH-1)), \
 	    "val.word = 0x%" FMT, val.word); \
 	/* If failed */ \
 	val.subword[LSB] = -3; \
@@ -136,24 +140,30 @@ ATF_TC_BODY(NAME##_subword, tc) \
 	ATF_CHECK_EQ_MSG(val.subword[MSB], 45, \
 	    "val.subword[MSB] = 0x%" SUBFMT, val.subword[MSB]); \
 	ATF_CHECK_EQ_MSG(val.word, \
-	    ((TYPE)45 << (SUBWIDTH)) | (TYPE)(SUBTYPE)-3, \
+	    ((TYPE)45 << (SUBWIDTH)) | (TYPE)((SUBTYPE)-3 & __BITS(0,SUBWIDTH-1)), \
 	    "val.word = 0x%" FMT, val.word); \
 }
 
-atf_sync_bool_subword(__sync_bool_compare_and_swap_1, 8, uint8_t, uint16_t,
+atf_sync_bool_subword(__sync_bool_compare_and_swap_1, u, 8, uint8_t, uint16_t,
     PRIx8, PRIx16, __nothing);
-atf_sync_bool_subword(__sync_bool_compare_and_swap_2, 16, uint16_t, uint32_t,
+atf_sync_bool_subword(__sync_bool_compare_and_swap_1, s, 8, int8_t, int16_t,
+    PRIx8, PRIx16, __nothing);
+atf_sync_bool_subword(__sync_bool_compare_and_swap_2, u, 16, uint16_t, uint32_t,
     PRIx16, PRIx32, __nothing);
-atf_sync_bool_subword(__sync_bool_compare_and_swap_4, 32, uint32_t, uint64_t,
+atf_sync_bool_subword(__sync_bool_compare_and_swap_2, s, 16, int16_t, int32_t,
+    PRIx16, PRIx32, __nothing);
+atf_sync_bool_subword(__sync_bool_compare_and_swap_4, u, 32, uint32_t, uint64_t,
+    PRIx32, PRIx64, __nothing);
+atf_sync_bool_subword(__sync_bool_compare_and_swap_4, s, 32, int32_t, int64_t,
     PRIx32, PRIx64, __nothing);
 
-#define atf_sync_val(NAME, TYPE, FMT, XFAIL) \
-ATF_TC(NAME); \
-ATF_TC_HEAD(NAME, tc) \
+#define atf_sync_val(NAME, U_S, TYPE, FMT, XFAIL) \
+ATF_TC(NAME##_##U_S); \
+ATF_TC_HEAD(NAME##_##U_S, tc) \
 { \
 	atf_tc_set_md_var(tc, "descr", #NAME); \
 } \
-ATF_TC_BODY(NAME, tc) \
+ATF_TC_BODY(NAME##_##U_S, tc) \
 { \
 	volatile TYPE val; \
 	TYPE oldval; \
@@ -186,20 +196,24 @@ ATF_TC_BODY(NAME, tc) \
 	    "failure case: res expects 0x%" FMT " but 0x%" FMT, expres, res); \
 }
 
-atf_sync_val(__sync_val_compare_and_swap_1, uint8_t,  PRIx8, __nothing);
-atf_sync_val(__sync_val_compare_and_swap_2, uint16_t, PRIx16, __nothing);
-atf_sync_val(__sync_val_compare_and_swap_4, uint32_t, PRIx32, __nothing);
+atf_sync_val(__sync_val_compare_and_swap_1, u, uint8_t,  PRIx8, __nothing);
+atf_sync_val(__sync_val_compare_and_swap_1, s, int8_t,  PRIx8, __nothing);
+atf_sync_val(__sync_val_compare_and_swap_2, u, uint16_t, PRIx16, __nothing);
+atf_sync_val(__sync_val_compare_and_swap_2, s, int16_t, PRIx16, __nothing);
+atf_sync_val(__sync_val_compare_and_swap_4, u, uint32_t, PRIx32, __nothing);
+atf_sync_val(__sync_val_compare_and_swap_4, s, int32_t, PRIx32, __nothing);
 #ifdef __HAVE_ATOMIC64_OPS
-atf_sync_val(__sync_val_compare_and_swap_8, uint64_t, PRIx64, __nothing);
+atf_sync_val(__sync_val_compare_and_swap_8, u, uint64_t, PRIx64, __nothing);
+atf_sync_val(__sync_val_compare_and_swap_8, s, int64_t, PRIx64, __nothing);
 #endif
 
-#define atf_sync_val_subword(NAME, SUBWIDTH, SUBTYPE, TYPE, SUBFMT, FMT, XFAIL) \
-ATF_TC(NAME##_subword); \
-ATF_TC_HEAD(NAME##_subword, tc) \
+#define atf_sync_val_subword(NAME, U_S, SUBWIDTH, SUBTYPE, TYPE, SUBFMT, FMT, XFAIL) \
+ATF_TC(NAME##_##U_S##_subword); \
+ATF_TC_HEAD(NAME##_##U_S##_subword, tc) \
 { \
 	atf_tc_set_md_var(tc, "descr", "subword " #NAME); \
 } \
-ATF_TC_BODY(NAME##_subword, tc) \
+ATF_TC_BODY(NAME##_##U_S##_subword, tc) \
 { \
 	volatile union { \
 		TYPE word; \
@@ -219,7 +233,7 @@ ATF_TC_BODY(NAME##_subword, tc) \
 	ATF_CHECK_EQ_MSG(val.subword[MSB], 123, \
 	    "val.subword[MSB] = 0x%" SUBFMT, val.subword[MSB]); \
 	ATF_CHECK_EQ_MSG(val.word, \
-	    ((TYPE)123 << (SUBWIDTH)) | (TYPE)(SUBTYPE)-2, \
+	    ((TYPE)123 << (SUBWIDTH)) | (TYPE)((SUBTYPE)-2 & __BITS(0,SUBWIDTH-1)), \
 	    "val.word = 0x%" FMT, val.word); \
 	/* If failed */ \
 	val.subword[LSB] = -3; \
@@ -233,40 +247,60 @@ ATF_TC_BODY(NAME##_subword, tc) \
 	ATF_CHECK_EQ_MSG(val.subword[MSB], 45, \
 	    "val.subword[MSB] = 0x%" SUBFMT, val.subword[MSB]); \
 	ATF_CHECK_EQ_MSG(val.word, \
-	    ((TYPE)45 << (SUBWIDTH)) | (TYPE)(SUBTYPE)-3, \
+	    ((TYPE)45 << (SUBWIDTH)) | (TYPE)((SUBTYPE)-3 & __BITS(0,SUBWIDTH-1)), \
 	    "val.word = 0x%" FMT, val.word); \
 }
 
-atf_sync_val_subword(__sync_val_compare_and_swap_1, 8, uint8_t, uint16_t,
+atf_sync_val_subword(__sync_val_compare_and_swap_1, u, 8, uint8_t, uint16_t,
     PRIx8, PRIx16, __nothing);
-atf_sync_val_subword(__sync_val_compare_and_swap_2, 16, uint16_t, uint32_t,
+atf_sync_val_subword(__sync_val_compare_and_swap_1, s, 8, int8_t, int16_t,
+    PRIx8, PRIx16, __nothing);
+atf_sync_val_subword(__sync_val_compare_and_swap_2, u, 16, uint16_t, uint32_t,
     PRIx16, PRIx32, __nothing);
-atf_sync_val_subword(__sync_val_compare_and_swap_4, 32, uint32_t, uint64_t,
+atf_sync_val_subword(__sync_val_compare_and_swap_2, s, 16, int16_t, int32_t,
+    PRIx16, PRIx32, __nothing);
+atf_sync_val_subword(__sync_val_compare_and_swap_4, u, 32, uint32_t, uint64_t,
+    PRIx32, PRIx64, __nothing);
+atf_sync_val_subword(__sync_val_compare_and_swap_4, s, 32, int32_t, int64_t,
     PRIx32, PRIx64, __nothing);
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_1);
-	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_2);
-	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_4);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_1_u);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_1_s);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_2_u);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_2_s);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_4_u);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_4_s);
 #ifdef __HAVE_ATOMIC64_OPS
-	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_8);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_8_u);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_8_s);
 #endif
 
-	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_1_subword);
-	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_2_subword);
-	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_4_subword);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_1_u_subword);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_1_s_subword);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_2_u_subword);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_2_s_subword);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_4_u_subword);
+	ATF_TP_ADD_TC(tp, __sync_bool_compare_and_swap_4_s_subword);
 
-	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_1);
-	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_2);
-	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_4);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_1_u);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_1_s);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_2_u);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_2_s);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_4_u);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_4_s);
 #ifdef __HAVE_ATOMIC64_OPS
-	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_8);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_8_u);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_8_s);
 #endif
 
-	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_1_subword);
-	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_2_subword);
-	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_4_subword);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_1_u_subword);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_1_s_subword);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_2_u_subword);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_2_s_subword);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_4_u_subword);
+	ATF_TP_ADD_TC(tp, __sync_val_compare_and_swap_4_s_subword);
 
 	return atf_no_error();
 }
