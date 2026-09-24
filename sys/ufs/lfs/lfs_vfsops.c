@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.405 2026/09/23 17:47:52 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.406 2026/09/24 00:08:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.405 2026/09/23 17:47:52 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.406 2026/09/24 00:08:46 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1247,7 +1247,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		if (changed)
 			LFS_WRITESEGENTRY(sup, fs, i, bp);
 		else
-			brelse(bp, 0);
+			LFS_RELEASESEGENTRY(sup, fs, i, bp);
 	}
 	/* Set lastcleaned to an invalid value */
 	fs->lfs_lastcleaned = (uint32_t)-1;
