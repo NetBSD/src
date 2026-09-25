@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.215 2025/07/16 19:14:13 kre Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.216 2026/09/25 01:10:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define MBUFTYPES
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.215 2025/07/16 19:14:13 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.216 2026/09/25 01:10:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -380,7 +380,9 @@ do_sys_connect(struct lwp *l, int fd, struct sockaddr *nam)
 		error = SET_ERROR(EINPROGRESS);
 		goto out;
 	}
-	while ((so->so_state & SS_ISCONNECTING) != 0 && so->so_error == 0) {
+	while (((so->so_state & (SS_ISCONNECTING|SS_RESTARTSYS)) ==
+		SS_ISCONNECTING) &&
+	    so->so_error == 0) {
 		error = sowait(so, true, 0);
 		if (__predict_false((so->so_state & SS_ISABORTING) != 0)) {
 			error = SET_ERROR(EPIPE);
@@ -393,9 +395,17 @@ do_sys_connect(struct lwp *l, int fd, struct sockaddr *nam)
 			break;
 		}
 	}
-	if (error == 0) {
+	if (error)
+		goto bad;
+	if (so->so_error) {
 		error = SET_ERROR(so->so_error);
 		so->so_error = 0;
+		goto bad;
+	}
+	if (so->so_state & SS_RESTARTSYS) {
+		so->so_state &= ~SS_ISCONNECTING;
+		error = ERESTART;
+		goto out;
 	}
  bad:
 	if (!interrupted)

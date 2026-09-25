@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdrestart.c,v 1.8 2026/09/25 01:10:26 riastradh Exp $	*/
+/*	$NetBSD: t_fdrestart.c,v 1.9 2026/09/25 01:10:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* ERESTART */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdrestart.c,v 1.8 2026/09/25 01:10:26 riastradh Exp $");
+__RCSID("$NetBSD: t_fdrestart.c,v 1.9 2026/09/25 01:10:45 riastradh Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -1058,9 +1058,6 @@ ATF_TC_BODY(socket_connect, tc)
 	F->fd = clientfd;
 	F->sa = &sun.sa;
 	F->salen = socklen;
-	atf_tc_expect_fail("PR kern/57659:"
-	    " closing pipe writefd fails to wake concurrent write"
-	    " on same writefd");
 	testfdrestart(F);
 }
 
