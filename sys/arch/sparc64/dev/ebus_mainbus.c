@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.23 2022/05/24 20:50:19 andvar Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.24 2026/09/25 07:17:17 jdc Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.23 2022/05/24 20:50:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.24 2026/09/25 07:17:17 jdc Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
@@ -272,10 +272,8 @@ static void *
 ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
 {
-	struct intrhand *ih = NULL;
-	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
-	u_int64_t *imap, *iclr;
-	int ino;
+	struct pyro_softc *psc = NULL;
+	int i;
 
 #if 0
 XXX
@@ -329,11 +327,6 @@ XXX
 	}
 #endif
 
-	ino = INTINO(ihandle);
-
-	struct pyro_softc *psc = NULL;
-	int i;
-
 	for (i = 0; i < pyro_cd.cd_ndevs; i++) {
 		device_t dt = device_lookup(&pyro_cd, i);
 		psc = device_private(dt);
@@ -341,42 +334,13 @@ XXX
 			break;
 		}
 	}
-	if (psc == NULL)
+	if (psc == NULL) {
+		aprint_error(": failed to match pyro leaf\n");
 		return (NULL);
-	
-	imap = (uint64_t *)((uintptr_t)bus_space_vaddr(psc->sc_bustag, psc->sc_csrh) + 0x1000);
-	iclr = (uint64_t *)((uintptr_t)bus_space_vaddr(psc->sc_bustag, psc->sc_csrh) + 0x1400);
-	intrmapptr = &imap[ino];
-	intrclrptr = &iclr[ino];
-	ino |= INTVEC(ihandle);
-
-	ih = intrhand_alloc();
-
-	/* Register the map and clear intr registers */
-	ih->ih_map = intrmapptr;
-	ih->ih_clr = intrclrptr;
-
-	ih->ih_ivec = ihandle;
-	ih->ih_fun = handler;
-	ih->ih_arg = arg;
-	ih->ih_pil = level;
-	ih->ih_number = ino;
-	ih->ih_pending = 0;
-
-	intr_establish(ih->ih_pil, level != IPL_VM, ih);
-
-	if (intrmapptr != NULL) {
-		u_int64_t imapval;
-
-		imapval = *intrmapptr;
-		imapval |= (1LL << 6);
-		imapval |= INTMAP_V;
-		*intrmapptr = imapval;
-		imapval = *intrmapptr;
-		ih->ih_number |= imapval & INTMAP_INR;
 	}
-
-	return (ih);
+	
+	return (psc->intr_establish_sc(psc,
+	    ihandle, level, handler, arg, NULL));
 }
 
 #ifdef SUN4V
