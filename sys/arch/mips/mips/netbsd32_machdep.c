@@ -95,7 +95,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct sigframe_siginfo32 *sfp = getframe(l, sig, &onstack,
-	    sizeof(*sfp), _Alignof(*sfp));
+	    sizeof(*sfp), _Alignof(struct sigframe_siginfo32));
 	struct sigframe_siginfo32 sf;
 	struct trapframe * const tf = l->l_md.md_utf;
 	size_t sfsz;
@@ -325,5 +325,4 @@ netbsd32_machdep_md_fini(void)
 
 	MODULE_HOOK_UNSET(netbsd32_machine32_hook);
 }
-
 

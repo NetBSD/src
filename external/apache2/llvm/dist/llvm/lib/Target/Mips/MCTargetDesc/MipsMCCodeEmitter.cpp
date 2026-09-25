@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsMCCodeEmitter.h"
+#include "MCTargetDesc/MipsBaseInfo.h"
 #include "MCTargetDesc/MipsFixupKinds.h"
 #include "MCTargetDesc/MipsMCExpr.h"
 #include "MCTargetDesc/MipsMCTargetDesc.h"
@@ -743,9 +744,29 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   } else if (MO.isDFPImm()) {
     return static_cast<unsigned>(bit_cast<double>(MO.getDFPImm()));
   }
-  // MO must be an Expr.
+  // TODO: Set EncoderMethod to "getImmOpValue" for immediate operands so
+  // getMachineOpValue will not be called for expression code paths.
   assert(MO.isExpr());
-  return getExprOpValue(MO.getExpr(),Fixups, STI);
+  return getImmOpValue(MI, MO, Fixups, STI);
+}
+
+unsigned MipsMCCodeEmitter::getImmOpValue(
+    const MCInst &MI, const MCOperand &MO,
+    SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const {
+  if (MO.isImm())
+    return MO.getImm();
+  assert(MO.isExpr() && "getImmOpValue expects an expression or immediate");
+  const MCExpr *Expr = MO.getExpr();
+  int64_t Res;
+  if (Expr->evaluateAsAbsolute(Res))
+    return Res;
+  unsigned Form = MipsII::getFormat(MCII.get(MI.getOpcode()).TSFlags);
+  if (!isa<MCTargetExpr>(Expr) && Form == MipsII::FrmI) {
+    Fixups.push_back(MCFixup::create(
+        0, Expr, MCFixupKind(Mips::fixup_Mips_AnyImm16)));
+    return 0;
+  }
+  return getExprOpValue(Expr, Fixups, STI);
 }
 
 /// Return binary encoding of memory related operand.

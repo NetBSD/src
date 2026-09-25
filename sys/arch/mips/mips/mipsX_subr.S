@@ -679,7 +679,8 @@ _VECTOR_END(MIPSX(intr))
  *
  *----------------------------------------------------------------------------
  */
-	.org	((. + 31) & ~31) + 12
+	.balign	32
+	.space	12
 MIPSX(slowfault):
 	.set	noat
 	mfc0	k0, MIPS_COP_0_STATUS
@@ -2990,6 +2991,7 @@ END(MIPSX(pagezero))
 #endif /* USE_64BIT_INSTRUCTIONS */
 
 	.rdata
+	.p2align PTR_SCALESHIFT
 
 	.globl _C_LABEL(MIPSX(locore_vec))
 _C_LABEL(MIPSX(locore_vec)):
