@@ -1,3 +1,7 @@
+#ifdef __NetBSD__
+#include "extern.h"
+#endif
+
 #include "jemalloc/internal/jemalloc_preamble.h"
 
 #include "jemalloc/internal/arena.h"
@@ -31,7 +35,7 @@
 static pid_t jemalloc_prefork_pid;
 #endif
 
-#ifndef JEMALLOC_MUTEX_INIT_CB
+#if !defined(JEMALLOC_MUTEX_INIT_CB) && !defined(__NetBSD__)
 void
 jemalloc_prefork(void)
 #else
@@ -113,7 +117,7 @@ _malloc_prefork(void)
 	stats_prefork(tsd_tsdn(tsd));
 }
 
-#ifndef JEMALLOC_MUTEX_INIT_CB
+#if !defined(JEMALLOC_MUTEX_INIT_CB) && !defined(__NetBSD__)
 void
 jemalloc_postfork_parent(void)
 #else
@@ -156,8 +160,14 @@ _malloc_postfork(void)
 	ctl_postfork_parent(tsd_tsdn(tsd));
 }
 
+#if !defined(__NetBSD__)
 void
-jemalloc_postfork_child(void) {
+jemalloc_postfork_child(void)
+#else
+JEMALLOC_EXPORT void
+_malloc_postfork_child(void)
+#endif
+{
 	tsd_t   *tsd;
 	unsigned i, narenas;
 

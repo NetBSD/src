@@ -31,7 +31,8 @@ JEMALLOC_ALWAYS_INLINE bool
 os_process_register_atfork(void (*prepare)(void), void (*parent)(void),
     void (*child)(void)) {
 #if defined(JEMALLOC_HAVE_PTHREAD_ATFORK) && !defined(JEMALLOC_MUTEX_INIT_CB) \
-    && !defined(JEMALLOC_ZONE) && !defined(__native_client__)
+    && !defined(JEMALLOC_ZONE) && !defined(__native_client__) \
+    && !defined(__NetBSD__)
 	return pthread_atfork(prepare, parent, child) != 0;
 #else
 	(void)prepare;

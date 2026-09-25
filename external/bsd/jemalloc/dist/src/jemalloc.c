@@ -1,9 +1,5 @@
 #include <sys/cdefs.h>
 
-#ifdef __NetBSD__
-#include "extern.h"
-#endif
-
 #include "jemalloc/internal/jemalloc_preamble.h"
 
 #include "jemalloc/internal/arena.h"
