@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.171 2025/04/07 21:02:19 andvar Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.172 2026/09/25 01:10:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@ struct socket {
 #define	SS_CANTSENDMORE		0x010	/* can't send more data to peer */
 #define	SS_CANTRCVMORE		0x020	/* can't receive more data from peer */
 #define	SS_RCVATMARK		0x040	/* at mark on input */
-#define	SS_ISABORTING		0x080	/* aborting fd references - close() */
+/* unused			0x080 */
 #define	SS_RESTARTSYS		0x100	/* restart blocked system calls */
 #define	SS_POLLRDBAND		0x200	/* poll should return POLLRDBAND */
 #define	SS_MORETOCOME		0x400	/*

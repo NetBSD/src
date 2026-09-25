@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.216 2026/09/25 01:10:45 riastradh Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.217 2026/09/25 01:10:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define MBUFTYPES
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.216 2026/09/25 01:10:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.217 2026/09/25 01:10:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -384,11 +384,6 @@ do_sys_connect(struct lwp *l, int fd, struct sockaddr *nam)
 		SS_ISCONNECTING) &&
 	    so->so_error == 0) {
 		error = sowait(so, true, 0);
-		if (__predict_false((so->so_state & SS_ISABORTING) != 0)) {
-			error = SET_ERROR(EPIPE);
-			interrupted = 1;
-			break;
-		}
 		if (error) {
 			if (error == EINTR || error == ERESTART)
 				interrupted = 1;
