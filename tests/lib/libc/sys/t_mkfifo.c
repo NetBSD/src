@@ -1,4 +1,4 @@
-/* $NetBSD: t_mkfifo.c,v 1.7 2026/09/23 19:19:40 riastradh Exp $ */
+/* $NetBSD: t_mkfifo.c,v 1.8 2026/09/25 15:57:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mkfifo.c,v 1.7 2026/09/23 19:19:40 riastradh Exp $");
+__RCSID("$NetBSD: t_mkfifo.c,v 1.8 2026/09/25 15:57:31 riastradh Exp $");
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -587,6 +587,173 @@ ATF_TC_CLEANUP(mkfifo_sigopenwriter_race, tc)
 	cleanup_sigopen_race();
 }
 
+ATF_TC_WITH_CLEANUP(mkfifo_readeof_block);
+ATF_TC_HEAD(mkfifo_readeof_block, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test read with no writers returns EOF instead of blocking");
+}
+ATF_TC_BODY(mkfifo_readeof_block, tc)
+{
+	int rd, wr, flags;
+	char ch;
+	ssize_t nread, nwrit;
+
+	support();
+
+	RL(mkfifo(path, 0600));
+
+	atf_tc_expect_fail("PR kern/60789:"
+	    " read on fifo without writer may block");
+
+	/*
+	 * Open nonblocking so we open immediately, but then switch to
+	 * blocking to test the blocking path.
+	 */
+	fprintf(stderr, "1. open reader\n");
+	RL(rd = open(path, O_RDONLY|O_NONBLOCK));
+	RL(flags = fcntl(rd, F_GETFL));
+	RL(fcntl(rd, F_SETFL, flags & ~O_NONBLOCK));
+
+	/*
+	 * No data and writers, so read should return EOF.
+	 */
+	fprintf(stderr, "2. read expect eof\n");
+	alarm(1);
+	RL(nread = read(rd, &ch, 1));
+	alarm(0);
+	ATF_CHECK_EQ_MSG(nread, 0, "nread=%zd", nread);
+
+	fprintf(stderr, "3. read expect eof\n");
+	alarm(1);
+	RL(nread = read(rd, &ch, 1));
+	alarm(0);
+	ATF_CHECK_EQ_MSG(nread, 0, "nread=%zd", nread);
+
+	/*
+	 * Reader is open, so writer should be able to write a byte.
+	 */
+	fprintf(stderr, "4. open writer\n");
+	alarm(1);
+	RL(wr = open(path, O_WRONLY));
+	alarm(0);
+
+	fprintf(stderr, "5. write byte\n");
+	ch = 123;
+	alarm(1);
+	RL(nwrit = write(wr, &ch, 1));
+	alarm(0);
+	ATF_CHECK_EQ_MSG(nwrit, 1, "nwrit=%zd", nwrit);
+
+	fprintf(stderr, "6. close writer\n");
+	alarm(1);
+	RL(close(wr));
+	alarm(0);
+
+	/*
+	 * No writers but data available, so read should return data.
+	 */
+	fprintf(stderr, "7. read expect byte\n");
+	alarm(1);
+	RL(nread = read(rd, &ch, 1));
+	alarm(0);
+	ATF_CHECK_EQ_MSG(ch, 123, "ch=%d", ch);
+
+	/*
+	 * No data and writers, so read should return EOF again.
+	 */
+	fprintf(stderr, "8. read expect eof\n");
+	alarm(1);
+	RL(nread = read(rd, &ch, 1));
+	alarm(0);
+	ATF_CHECK_EQ_MSG(nread, 0, "nread=%zd", nread);
+
+	fprintf(stderr, "9. read expect eof\n");
+	alarm(1);
+	RL(nread = read(rd, &ch, 1));
+	alarm(0);
+	ATF_CHECK_EQ_MSG(nread, 0, "nread=%zd", nread);
+
+	fprintf(stderr, "10. tada\n");
+}
+ATF_TC_CLEANUP(mkfifo_readeof_block, tc)
+{
+	(void)unlink(path);
+}
+
+ATF_TC_WITH_CLEANUP(mkfifo_readeof_nonblock);
+ATF_TC_HEAD(mkfifo_readeof_nonblock, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test read with no writers returns EOF instead of EAGAIN");
+}
+ATF_TC_BODY(mkfifo_readeof_nonblock, tc)
+{
+	int rd, wr;
+	char ch;
+	ssize_t nread, nwrit;
+
+	support();
+
+	RL(mkfifo(path, 0600));
+
+	/*
+	 * Open reader nonblocking.
+	 */
+	fprintf(stderr, "1. open reader\n");
+	RL(rd = open(path, O_RDONLY|O_NONBLOCK));
+
+	/*
+	 * No data and writers, so read should return EOF.
+	 */
+	fprintf(stderr, "2. read expect eof\n");
+	RL(nread = read(rd, &ch, 1));
+	ATF_CHECK_EQ_MSG(nread, 0, "nread=%zd", nread);
+
+	fprintf(stderr, "3. read expect eof\n");
+	RL(nread = read(rd, &ch, 1));
+	ATF_CHECK_EQ_MSG(nread, 0, "nread=%zd", nread);
+
+	/*
+	 * Reader is open, so writer should be able to write a byte.
+	 */
+	fprintf(stderr, "4. open writer\n");
+	RL(wr = open(path, O_WRONLY|O_NONBLOCK));
+
+	fprintf(stderr, "5. write byte\n");
+	ch = 123;
+	RL(nwrit = write(wr, &ch, 1));
+	ATF_CHECK_EQ_MSG(nwrit, 1, "nwrit=%zd", nwrit);
+
+	fprintf(stderr, "6. close writer\n");
+	RL(close(wr));
+
+	/*
+	 * No writers but data available, so read should return data.
+	 */
+	fprintf(stderr, "7. read expect byte\n");
+	RL(nread = read(rd, &ch, 1));
+	ATF_CHECK_EQ_MSG(ch, 123, "ch=%d", ch);
+
+	/*
+	 * No data and writers, so read should return EOF again.
+	 */
+	fprintf(stderr, "8. read expect eof\n");
+	RL(nread = read(rd, &ch, 1));
+
+	ATF_CHECK_EQ_MSG(nread, 0, "nread=%zd", nread);
+
+	fprintf(stderr, "9. read expect eof\n");
+	RL(nread = read(rd, &ch, 1));
+	ATF_CHECK_EQ_MSG(nread, 0, "nread=%zd", nread);
+
+	fprintf(stderr, "10. tada\n");
+}
+ATF_TC_CLEANUP(mkfifo_readeof_nonblock, tc)
+{
+	(void)unlink(path);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -594,6 +761,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, mkfifo_err);
 	ATF_TP_ADD_TC(tp, mkfifo_nonblock);
 	ATF_TP_ADD_TC(tp, mkfifo_perm);
+	ATF_TP_ADD_TC(tp, mkfifo_readeof_block);
+	ATF_TP_ADD_TC(tp, mkfifo_readeof_nonblock);
 	ATF_TP_ADD_TC(tp, mkfifo_sigopenreader_race);
 	ATF_TP_ADD_TC(tp, mkfifo_sigopenwriter_race);
 	ATF_TP_ADD_TC(tp, mkfifo_stat);
