@@ -314,6 +314,12 @@ extern JEMALLOC_EXPORT const char	*je_malloc_conf;
 extern JEMALLOC_EXPORT const char	*je_malloc_conf_2_conf_harder;
 extern JEMALLOC_EXPORT void		(*je_malloc_message)(void *cbopaque,
     const char *s);
+extern JEMALLOC_EXPORT const char	*je_malloc_conf_get(void);
+extern JEMALLOC_EXPORT void		je_malloc_conf_set(const char *);
+extern JEMALLOC_EXPORT void		(*je_malloc_message_get(void))
+    (void *cbopaque, const char *s);
+extern JEMALLOC_EXPORT void		je_malloc_message_set(
+    void (*)(void *cbopaque, const char *s));
 
 JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
     void JEMALLOC_SYS_NOTHROW	*je_malloc(size_t size)

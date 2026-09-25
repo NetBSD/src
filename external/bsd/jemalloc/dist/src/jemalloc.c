@@ -44,11 +44,11 @@ __weak_alias(mallctl, __je_mallctl)
 __weak_alias(mallctlnametomib, __je_mallctlnametomib)
 __weak_alias(mallctlbymib, __je_mallctlbymib)
 
-__weak_alias(malloc_stats_print, __je_malloc_stats_print)
-__weak_alias(malloc_usable_size, __je_malloc_usable_size)
+__weak_alias(je_malloc_stats_print, __je_malloc_stats_print)
+__weak_alias(je_malloc_usable_size, __je_malloc_usable_size)
 
-__weak_alias(malloc_message, __je_malloc_message)
-__weak_alias(malloc_conf, __je_malloc_conf)
+__weak_alias(je_malloc_message, __je_malloc_message)
+__weak_alias(je_malloc_conf, __je_malloc_conf)
 
 #endif
 /******************************************************************************/
@@ -2144,4 +2144,29 @@ je_malloc_size(const void *ptr) {
 /*
  * End non-standard functions.
  */
+/******************************************************************************/
+void (*
+je_malloc_message_get(void))(void *, const char *)
+{
+	return je_malloc_message;
+}
+
+void
+je_malloc_message_set(void (*m)(void *, const char *))
+{
+	je_malloc_message = m;
+}
+
+const char *
+je_malloc_conf_get(void)
+{
+	return je_malloc_conf;
+}
+
+void
+je_malloc_conf_set(const char *m)
+{
+	je_malloc_conf = m;
+}
+
 /******************************************************************************/
