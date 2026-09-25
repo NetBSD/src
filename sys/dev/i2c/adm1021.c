@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.32 2025/10/03 14:03:10 thorpej Exp $ */
+/*	$NetBSD: adm1021.c,v 1.33 2026/09/25 18:58:35 jdc Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.32 2025/10/03 14:03:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.33 2026/09/25 18:58:35 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,7 @@ struct admtemp_softc {
 	uint8_t sc_lowlim[ADMTEMP_NUM_SENSORS];
 	uint8_t sc_highlim2, sc_lowlim2;
 	uint8_t sc_thermlim[ADMTEMP_NUM_SENSORS];
+	int sc_temp_off[ADMTEMP_NUM_SENSORS];
 };
 
 int	admtemp_match(device_t, cfdata_t, void *);
@@ -333,7 +334,9 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 {
 	struct admtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
+	prop_dictionary_t props = device_properties(self);
 	uint8_t cmd, data, stat, comp, rev;
+	uint16_t temp_off;
 	char name[ADMTEMP_NAMELEN];
 	char ename[64] = "external", iname[64] = "internal";
 
@@ -394,6 +397,16 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_normal("\n");
 	aprint_naive(": Temperature sensor\n");
+
+	/* Property override for temperature offsets */
+	if (prop_dictionary_get_uint16(props, "temp_off", &temp_off) == 0) {
+		/* no offsets */
+		sc->sc_temp_off[ADMTEMP_INT] = 0;
+		sc->sc_temp_off[ADMTEMP_EXT] = 0;
+	} else {
+		sc->sc_temp_off[ADMTEMP_INT] = (temp_off & 0xff) * 1000000;
+		sc->sc_temp_off[ADMTEMP_EXT] = (temp_off >> 8 & 0xff) * 1000000;
+	}
 
 	/* Initialize sensor data. */
 	sc->sc_sensor[ADMTEMP_INT].state = ENVSYS_SINVALID;
@@ -461,20 +474,25 @@ admtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct admtemp_softc *sc = sme->sme_cookie;
 	uint8_t cmd, xdata;
 	int8_t sdata;
+	int temp_off;
 
 	if (iic_acquire_bus(sc->sc_tag, 0) != 0)
 		return;
 
-	if (edata->sensor == ADMTEMP_INT)
+	if (edata->sensor == ADMTEMP_INT) {
 		cmd = ADM1021_INT_TEMP;
-	else
+		temp_off = sc->sc_temp_off[ADMTEMP_INT];
+	} else {
 		cmd = ADM1021_EXT_TEMP;
+		temp_off = sc->sc_temp_off[ADMTEMP_EXT];
+	}
 
 	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &sdata) == 0) {
 		if (sdata == ADM1021_STATUS_INVAL) {
 			edata->state = ENVSYS_SINVALID;
 		} else {
-			edata->value_cur = 273150000 + 1000000 * sdata;
+			edata->value_cur = (273150000 + 1000000 * sdata) +
+			    temp_off;
 			edata->state = ENVSYS_SVALID;
 		}
 	}
@@ -495,20 +513,24 @@ admtemp_getlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 	struct admtemp_softc *sc = sme->sme_cookie;
 	uint8_t cmd;
 	int8_t hdata = 0x7f, ldata = 0xc9;
+	int temp_off;
 
 	*props &= ~(PROP_CRITMAX | PROP_CRITMIN);
 
 	if (iic_acquire_bus(sc->sc_tag, 0))
 		return;
 
-	if (edata->sensor == ADMTEMP_INT)
+	if (edata->sensor == ADMTEMP_INT) {
 		cmd = ADM1021_INT_HIGH_READ;
-	else
+		temp_off = sc->sc_temp_off[ADMTEMP_INT];
+	} else {
 		cmd = ADM1021_EXT_HIGH_READ;
+		temp_off = sc->sc_temp_off[ADMTEMP_EXT];
+	}
 
 	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &hdata) == 0 &&
 	    hdata != ADMTEMP_LIM_INVAL) {
-		limits->sel_critmax = 273150000 + 1000000 * hdata;
+		limits->sel_critmax = (273150000 + 1000000 * hdata) + temp_off;
 		*props |= PROP_CRITMAX;
 	}
 
@@ -523,7 +545,7 @@ admtemp_getlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &ldata) == 0 &&
 	    ldata != ADMTEMP_LIM_INVAL) {
-		limits->sel_critmin = 273150000 + 1000000 * ldata;
+		limits->sel_critmin = (273150000 + 1000000 * ldata) + temp_off;
 		*props |= PROP_CRITMIN;
 	}
 
@@ -545,20 +567,24 @@ admtemp_getlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 	struct admtemp_softc *sc = sme->sme_cookie;
 	uint8_t cmd, xhdata = 0, xldata = 0;
 	int8_t hdata = 0x7f, ldata = 0xc9;
+	int temp_off;
 
 	*props &= ~(PROP_CRITMAX | PROP_CRITMIN);
 
 	if (iic_acquire_bus(sc->sc_tag, 0))
 		return;
 
-	if (edata->sensor == ADMTEMP_INT)
+	if (edata->sensor == ADMTEMP_INT) {
 		cmd = ADM1021_INT_HIGH_READ;
-	else
+		temp_off = sc->sc_temp_off[ADMTEMP_INT];
+	} else {
 		cmd = ADM1021_EXT_HIGH_READ;
+		temp_off = sc->sc_temp_off[ADMTEMP_EXT];
+	}
 
 	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &hdata) == 0 &&
 	    hdata != ADMTEMP_LIM_INVAL) {
-		limits->sel_critmax = 273150000 + 1000000 * hdata;
+		limits->sel_critmax = (273150000 + 1000000 * hdata) + temp_off;
 		*props |= PROP_CRITMAX;
 	}
 
@@ -577,7 +603,7 @@ admtemp_getlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &ldata) == 0 &&
 	    ldata != ADMTEMP_LIM_INVAL) {
-		limits->sel_critmin = 273150000 + 1000000 * ldata;
+		limits->sel_critmin = (273150000 + 1000000 * ldata) + temp_off;
 		*props |= PROP_CRITMIN;
 	}
 
@@ -610,20 +636,24 @@ admtemp_getlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 	struct admtemp_softc *sc = sme->sme_cookie;
 	uint8_t cmd, xhdata = 0, xldata = 0;
 	int8_t tdata = 0x55, hdata = 0x55, ldata = 0;
+	int temp_off;
 
 	*props &= ~(PROP_WARNMAX | PROP_CRITMAX | PROP_WARNMIN);
 
 	if (iic_acquire_bus(sc->sc_tag, 0))
 		return;
 
-	if (edata->sensor == ADMTEMP_INT)
+	if (edata->sensor == ADMTEMP_INT) {
 		cmd = ADM1032_INT_THERM;
-	else
+		temp_off = sc->sc_temp_off[ADMTEMP_INT];
+	} else {
 		cmd = ADM1032_EXT_THERM;
+		temp_off = sc->sc_temp_off[ADMTEMP_EXT];
+	}
 
 	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &tdata) == 0 &&
 	    tdata != ADMTEMP_LIM_INVAL) {
-		limits->sel_critmax = 273150000 + 1000000 * tdata;
+		limits->sel_critmax = (273150000 + 1000000 * tdata) + temp_off;
 		*props |= PROP_CRITMAX;
 	}
 
@@ -634,7 +664,7 @@ admtemp_getlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &hdata) == 0 &&
 	    hdata != ADMTEMP_LIM_INVAL) {
-		limits->sel_warnmax = 273150000 + 1000000 * hdata;
+		limits->sel_warnmax = (273150000 + 1000000 * hdata) + temp_off;
 		*props |= PROP_WARNMAX;
 	}
 
@@ -653,7 +683,7 @@ admtemp_getlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &ldata) == 0 &&
 	    ldata != ADMTEMP_LIM_INVAL) {
-		limits->sel_warnmin = 273150000 + 1000000 * ldata;
+		limits->sel_warnmin = (273150000 + 1000000 * ldata) + temp_off;
 		*props |= PROP_WARNMIN;
 	}
 
@@ -688,9 +718,15 @@ admtemp_setlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 	uint8_t cmd;
 	int tmp;
 	int8_t sdata;
+	int temp_off;
 
 	if (iic_acquire_bus(sc->sc_tag, 0))
 		return;
+
+	if (edata->sensor == ADMTEMP_INT)
+		temp_off = sc->sc_temp_off[ADMTEMP_INT];
+	else
+		temp_off = sc->sc_temp_off[ADMTEMP_EXT];
 
 	if (*props & PROP_CRITMAX) {
 		if (edata->sensor == ADMTEMP_INT)
@@ -701,7 +737,8 @@ admtemp_setlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 		if (limits == NULL)	/* Restore defaults */
 			sdata = sc->sc_highlim[edata->sensor];
 		else {
-			tmp = (limits->sel_critmax - 273150000) / 1000000;
+			tmp = (limits->sel_critmax - temp_off - 273150000)
+			    / 1000000;
 			if (tmp > ADMTEMP_MAX_POS)
 				sdata = ADMTEMP_MAX_POS;
 			else if (tmp < 0 && sc->sc_noneg)
@@ -722,7 +759,8 @@ admtemp_setlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 		if (limits == NULL)
 			sdata = sc->sc_lowlim[edata->sensor];
 		else {
-			tmp = (limits->sel_critmin - 273150000) / 1000000;
+			tmp = (limits->sel_critmin - temp_off - 273150000)
+			    / 1000000;
 			if (tmp > ADMTEMP_MAX_POS)
 				sdata = ADMTEMP_MAX_POS;
 			else if (tmp < 0 && sc->sc_noneg)
@@ -770,11 +808,15 @@ admtemp_setlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 	int ext11;
 	uint8_t cmd, xdata;
 	int8_t sdata;
+	int temp_off;
 
-	if (edata->sensor == ADMTEMP_INT)
+	if (edata->sensor == ADMTEMP_INT) {
 		ext11 = 0;
-	else
+		temp_off = sc->sc_temp_off[ADMTEMP_INT];
+	} else {
 		ext11 = 1;
+		temp_off = sc->sc_temp_off[ADMTEMP_EXT];
+	}
 
 	if (iic_acquire_bus(sc->sc_tag, 0))
 		return;
@@ -789,8 +831,8 @@ admtemp_setlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 			sdata = sc->sc_highlim[edata->sensor];
 			xdata = sc->sc_highlim2;
 		} else
-			admtemp_encode_temp(limits->sel_critmax, &sdata,
-			    &xdata, ext11);
+			admtemp_encode_temp(limits->sel_critmax - temp_off,
+			    &sdata, &xdata, ext11);
 
 		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 		if (ext11) {
@@ -808,8 +850,8 @@ admtemp_setlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 			sdata = sc->sc_lowlim[edata->sensor];
 			xdata = sc->sc_lowlim2;
 		} else
-			admtemp_encode_temp(limits->sel_critmax, &sdata,
-			    &xdata, ext11);
+			admtemp_encode_temp(limits->sel_critmax - temp_off,
+			    &sdata, &xdata, ext11);
 		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 		if (ext11) {
 			cmd = ADM1023_EXT_LOW2;
@@ -828,11 +870,15 @@ admtemp_setlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 	int ext11;
 	uint8_t cmd, xdata;
 	int8_t sdata;
+	int temp_off;
 
-	if (edata->sensor == ADMTEMP_INT)
+	if (edata->sensor == ADMTEMP_INT) {
 		ext11 = 0;
-	else
+		temp_off = sc->sc_temp_off[ADMTEMP_INT];
+	} else {
 		ext11 = 1;
+		temp_off = sc->sc_temp_off[ADMTEMP_EXT];
+	}
 
 	if (iic_acquire_bus(sc->sc_tag, 0))
 		return;
@@ -845,8 +891,8 @@ admtemp_setlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 		if (limits == NULL)	/* Restore default */
 			sdata = sc->sc_thermlim[edata->sensor];
 		else
-			admtemp_encode_temp(limits->sel_critmax, &sdata,
-			    &xdata, 0);
+			admtemp_encode_temp(limits->sel_critmax - temp_off,
+			    &sdata, &xdata, 0);
 		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 	}
 
@@ -860,8 +906,8 @@ admtemp_setlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 			sdata = sc->sc_highlim[edata->sensor];
 			xdata = sc->sc_highlim2;
 		} else
-			admtemp_encode_temp(limits->sel_warnmax, &sdata,
-			    &xdata, ext11);
+			admtemp_encode_temp(limits->sel_warnmax - temp_off,
+			    &sdata, &xdata, ext11);
 		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 
 		if (ext11) {
@@ -879,8 +925,8 @@ admtemp_setlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 			sdata = sc->sc_lowlim[edata->sensor];
 			xdata = sc->sc_lowlim2;
 		} else
-			admtemp_encode_temp(limits->sel_warnmin, &sdata,
-			    &xdata, ext11);
+			admtemp_encode_temp(limits->sel_warnmin - temp_off,
+			    &sdata, &xdata, ext11);
 		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 
 		if (ext11) {
