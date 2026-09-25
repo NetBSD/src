@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigio.c,v 1.1 2026/09/24 22:10:22 riastradh Exp $	*/
+/*	$NetBSD: t_sigio.c,v 1.2 2026/09/25 01:09:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigio.c,v 1.1 2026/09/24 22:10:22 riastradh Exp $");
+__RCSID("$NetBSD: t_sigio.c,v 1.2 2026/09/25 01:09:57 riastradh Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -435,6 +435,7 @@ setup(sigset_t *omask)
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_sigaction = &on_sigio;
+	sa.sa_flags = SA_SIGINFO|SA_RESTART;
 	RL(sigemptyset(&sa.sa_mask));
 	RL(sigaddset(&sa.sa_mask, SIGIO));
 	RL(pthread_sigmask(SIG_BLOCK, &sa.sa_mask, omask));
