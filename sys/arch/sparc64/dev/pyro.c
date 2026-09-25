@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.26 2022/01/21 19:14:14 thorpej Exp $	*/
+/*	$NetBSD: pyro.c,v 1.27 2026/09/25 07:14:03 jdc Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.26 2022/01/21 19:14:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.27 2026/09/25 07:14:03 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -118,6 +118,8 @@ paddr_t pyro_bus_mmap(bus_space_tag_t, bus_addr_t, off_t,
     int, int);
 void *pyro_intr_establish(bus_space_tag_t, int, int,
     int (*)(void *), void *, void (*)(void));
+void *pyro_intr_establish_sc(struct pyro_softc *, int, int,
+    int (*)(void *), void *, void (*)(void));
 
 int pyro_dmamap_create(bus_dma_tag_t, bus_size_t, int,
     bus_size_t, bus_size_t, int, bus_dmamap_t *);
@@ -154,6 +156,7 @@ pyro_attach(device_t parent, device_t self, void *aux)
 	sc->sc_csr = ma->ma_reg[0].ur_paddr;
 	sc->sc_xbc = ma->ma_reg[1].ur_paddr;
 	sc->sc_ign = INTIGN(ma->ma_upaid << INTMAP_IGN_SHIFT);
+	sc->intr_establish_sc = pyro_intr_establish_sc;
 
 	if ((ma->ma_reg[0].ur_paddr & 0x00700000) == 0x00600000)
 		busa = 1;
@@ -550,12 +553,26 @@ pyro_bus_mmap(bus_space_tag_t t, bus_addr_t paddr,
 	return (-1);
 }
 
+/*
+ * We split pyro_intr_establish() and pyro_intr_establish_sc() so that other
+ * callers that are not OFW children of pyro (e.g. ebus_mainbus and fire_i2c)
+ * can also establish pyro interrupts.  They find us via our cnode.
+ */
 void *
 pyro_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
 {
 	struct pyro_pbm *pbm = t->cookie;
 	struct pyro_softc *sc = pbm->pp_sc;
+
+	return pyro_intr_establish_sc(sc,
+	    ihandle, level, handler, arg, fastvec);
+}
+
+void *
+pyro_intr_establish_sc(struct pyro_softc *sc, int ihandle, int level,
+	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
+{
 	struct intrhand *ih = NULL;
 	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
 	u_int64_t *imapbase, *iclrbase;
