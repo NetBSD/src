@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.118 2026/06/27 07:44:56 kbowling Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.119 2026/09/25 16:30:31 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.118 2026/06/27 07:44:56 kbowling Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.119 2026/09/25 16:30:31 skrll Exp $")
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1320,32 +1320,63 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 	 nop
 
 	/*
-	 * Get exception PC and fetch the instruction.  We know we can do
-	 * this since the instruction actually got read.
+	 * Get exception PC and fetch the instruction.
+	 *
+	 * Probe the page with TLBP first, and take the slow path if the
+	 * entry isn't there.  A nested miss on the inline read below would
+	 * otherwise land in user_gen_exception and clobber this routine's
+	 * own v0, since the exception PC isn't saved again while EXL is set.
 	 */
 	_MFC0	v0, MIPS_COP_0_EXC_PC
 	MFC0_HAZARD
+
+	/* Need v1 and a0 too */
+	REG_S	v1, CALLFRAME_SIZ+TF_REG_V1(k0)
+	REG_S	a0, CALLFRAME_SIZ+TF_REG_A0(k0)
+
+	_MFC0	v1, MIPS_COP_0_TLB_HI		# grab current ASID
+	MFC0_HAZARD
+	andi	a0, v1, MIPS3_PG_ASID
+	move	AT, v0
+#ifdef MIPSNNR2
+	_INS	AT, a0, 0, V_MIPS3_PG_HVPN
+#else
+	_SRA	AT, V_MIPS3_PG_HVPN		# clear bottom bits of VA
+	_SLL	AT, V_MIPS3_PG_HVPN		# clear bottom bits of VA
+	or	AT, AT, a0
+#endif
+	_MTC0	AT, MIPS_COP_0_TLB_HI		# look for the vaddr & ASID
+	COP0_SYNC
+	tlbp					# probe the entry in question
+	COP0_SYNC
+	mfc0	AT, MIPS_COP_0_TLB_INDEX	# see what we got
+	MFC0_HAZARD
+	_MTC0	v1, MIPS_COP_0_TLB_HI		# restore HI
+	COP0_SYNC
+	bltz	AT, MIPSX(user_gen_exception_common2) # index < 0 => !found
+	 nop
+
+	// Load instruction
 	INT_L	AT, 0(v0)
 
 	/*
 	 * Was this rdhwr $3,$29?
 	 */
-	lui	v0, %hi(0x7c03e83b)	# 0x7c03e83b => rdhwr $3,$29
-	addiu	v0, %lo(0x7c03e83b)	#        or ... rdhwr v1,ulr
-	bne	AT, v0, MIPSX(user_gen_exception_common)
+	lui	v1, %hi(0x7c03e83b)	# 0x7c03e83b => rdhwr $3,$29
+	addiu	v1, %lo(0x7c03e83b)	#        or ... rdhwr v1,ulr
+	bne	AT, v1, MIPSX(user_gen_exception_common2)
 	 nop
 
 	/*
 	 * Advance the PC (don't want to restart at the rdhwr).
 	 */
-	_MFC0	v0, MIPS_COP_0_EXC_PC
-	MFC0_HAZARD
 	PTR_ADDIU v0, 4
 	_MTC0	v0, MIPS_COP_0_EXC_PC
 	COP0_SYNC
 
 	PTR_L	v1, L_PRIVATE(k1)		# rdhwr $3,$29 updates v1
 
+	REG_L	a0, CALLFRAME_SIZ+TF_REG_A0(k0) # restore reg
 	REG_L	AT, CALLFRAME_SIZ+TF_REG_AST(k0)# restore reg
 	REG_L	v0, CALLFRAME_SIZ+TF_REG_V0(k0) # restore reg
 	eret
@@ -1374,34 +1405,35 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
 	REG_S	v0, CALLFRAME_SIZ+TF_REG_V0(k0)
 MIPSX(user_gen_exception_common):
 	REG_S	v1, CALLFRAME_SIZ+TF_REG_V1(k0)
-	mflo	v0
 	REG_S	a0, CALLFRAME_SIZ+TF_REG_A0(k0)
+MIPSX(user_gen_exception_common2):
 	REG_S	a1, CALLFRAME_SIZ+TF_REG_A1(k0)
+	mflo	v0
 	REG_S	a2, CALLFRAME_SIZ+TF_REG_A2(k0)
 	REG_S	a3, CALLFRAME_SIZ+TF_REG_A3(k0)
-	mfhi	v1
 	REG_S	t0, CALLFRAME_SIZ+TF_REG_T0(k0)
 	REG_S	t1, CALLFRAME_SIZ+TF_REG_T1(k0)
+	mfhi	v1
 	REG_S	t2, CALLFRAME_SIZ+TF_REG_T2(k0)
 	REG_S	t3, CALLFRAME_SIZ+TF_REG_T3(k0)
-	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
 	REG_S	ta0, CALLFRAME_SIZ+TF_REG_TA0(k0)
 	REG_S	ta1, CALLFRAME_SIZ+TF_REG_TA1(k0)
+	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
 	REG_S	ta2, CALLFRAME_SIZ+TF_REG_TA2(k0)
 	REG_S	ta3, CALLFRAME_SIZ+TF_REG_TA3(k0)
-	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
 	REG_S	s0, CALLFRAME_SIZ+TF_REG_S0(k0)
 	REG_S	s1, CALLFRAME_SIZ+TF_REG_S1(k0)
+	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
 	REG_S	s2, CALLFRAME_SIZ+TF_REG_S2(k0)
 	REG_S	s3, CALLFRAME_SIZ+TF_REG_S3(k0)
-	_MFC0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
 	REG_S	s4, CALLFRAME_SIZ+TF_REG_S4(k0)
 	REG_S	s5, CALLFRAME_SIZ+TF_REG_S5(k0)
+	_MFC0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
 	REG_S	s6, CALLFRAME_SIZ+TF_REG_S6(k0)
 	REG_S	s7, CALLFRAME_SIZ+TF_REG_S7(k0)
-	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
 	REG_S	t8, CALLFRAME_SIZ+TF_REG_T8(k0)	# will be MIPS_CURLWP
 	REG_S	t9, CALLFRAME_SIZ+TF_REG_T9(k0)
+	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
 	REG_S	v0, CALLFRAME_SIZ+TF_REG_MULLO(k0)
 	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
 	REG_S	gp, CALLFRAME_SIZ+TF_REG_GP(k0)
