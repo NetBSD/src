@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_condattr.3,v 1.13 2025/02/10 20:40:55 riastradh Exp $
+.\" $NetBSD: pthread_condattr.3,v 1.14 2026/09/25 23:43:03 christos Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_condattr.3,v 1.10 2002/09/16 19:29:28 mini Exp $
-.Dd March 28, 2017
+.Dd September 25, 2026
 .Dt PTHREAD_CONDATTR 3
 .Os
 .Sh NAME
@@ -87,6 +87,7 @@ function initializes a condition attribute object with the default attributes
 and the
 .Fn pthread_condattr_destroy
 function destroys a condition attribute object.
+The default value of the clock attribute shall refer to the system clock.
 The
 .Fn pthread_condattr_getclock
 function shall obtain the value of the
@@ -131,8 +132,6 @@ is invalid.
 .El
 .Pp
 The
-.Fn pthread_condattr_getclock
-and
 .Fn pthread_condattr_setclock
 may fail if:
 .Bl -tag -width Er
