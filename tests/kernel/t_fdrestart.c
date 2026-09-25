@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdrestart.c,v 1.7 2026/09/23 18:26:22 riastradh Exp $	*/
+/*	$NetBSD: t_fdrestart.c,v 1.8 2026/09/25 01:10:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* ERESTART */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdrestart.c,v 1.7 2026/09/23 18:26:22 riastradh Exp $");
+__RCSID("$NetBSD: t_fdrestart.c,v 1.8 2026/09/25 01:10:26 riastradh Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -57,6 +57,8 @@ struct fdrestart {
 	void			(*op)(struct fdrestart *);
 	int			fd;
 	pthread_barrier_t	barrier;
+	struct sockaddr		*sa;
+	socklen_t		salen;
 };
 
 static void
@@ -328,6 +330,37 @@ doselectwrite(struct fdrestart *F)
 	ATF_CHECK_ERRNO(EBADF, nfds == -1);
 }
 
+static void
+doconnect(struct fdrestart *F)
+{
+
+	/*
+	 * Wait for the other thread to be ready.
+	 */
+	waitforbarrier(F, "connector");
+
+	/*
+	 * Wait for a socket connection to be accepted.
+	 */
+	ATF_CHECK_ERRNO(ERESTART,
+	    rump_sys_connect(F->fd, F->sa, F->salen) == -1);
+}
+
+static void
+doaccept(struct fdrestart *F)
+{
+
+	/*
+	 * Wait for the other thread to be ready.
+	 */
+	waitforbarrier(F, "acceptor");
+
+	/*
+	 * Wait to accept a socket connection.
+	 */
+	ATF_CHECK_ERRNO(ERESTART, rump_sys_accept(F->fd, NULL, NULL) == -1);
+}
+
 static void *
 doit(void *cookie)
 {
@@ -446,6 +479,26 @@ ptysetup(int *hostfd, int *appfd)
 	RL(rump_sys_ioctl(*appfd, TIOCSETA, &t));
 
 	fprintf(stderr, "hostfd=%d appfd=%d\n", *hostfd, *appfd);
+}
+
+union sockaddr_union {
+	struct sockaddr		sa;
+	struct sockaddr_un	sun;
+};
+
+static void
+socksetup(int *serverfd, union sockaddr_union *sun, socklen_t *sunlenp)
+{
+
+	ATF_REQUIRE(sizeof(sun->sun) <= *sunlenp);
+	memset(sun, 0, sizeof(*sun));
+	sun->sun.sun_family = AF_LOCAL;
+	strlcpy(sun->sun.sun_path, "sock", sizeof(sun->sun.sun_path));
+	*sunlenp = SUN_LEN(&sun->sun);
+
+	RL(*serverfd = rump_sys_socket(AF_LOCAL, SOCK_STREAM, 0));
+	RL(rump_sys_bind(*serverfd, &sun->sa, *sunlenp));
+	RL(rump_sys_listen(*serverfd, 1));
 }
 
 ATF_TC(fifo_read);
@@ -953,6 +1006,64 @@ ATF_TC_BODY(ptyapp_selectwrite, tc)
 	testfdrestart(F);
 }
 
+ATF_TC(socket_accept);
+ATF_TC_HEAD(socket_accept, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test socket accept fails on close");
+}
+ATF_TC_BODY(socket_accept, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int serverfd;
+	union sockaddr_union sun;
+	socklen_t socklen = sizeof(sun);
+
+	rump_init();
+
+	socksetup(&serverfd, &sun, &socklen);
+
+	memset(F, 0, sizeof(*F));
+	F->op = &doaccept;
+	F->fd = serverfd;
+	F->sa = &sun.sa;
+	F->salen = socklen;
+	testfdrestart(F);
+}
+
+ATF_TC(socket_connect);
+ATF_TC_HEAD(socket_connect, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test socket connect fails on close");
+}
+ATF_TC_BODY(socket_connect, tc)
+{
+	struct fdrestart fdrestart, *F = &fdrestart;
+	int serverfd;
+	union sockaddr_union sun;
+	socklen_t socklen = sizeof(sun);
+	int clientfd;
+	int connwait = 1;
+
+	rump_init();
+
+
+	socksetup(&serverfd, &sun, &socklen);
+	RL(clientfd = rump_sys_socket(AF_LOCAL, SOCK_STREAM, 0));
+
+	RL(rump_sys_setsockopt(clientfd, SOL_LOCAL, LOCAL_CONNWAIT, &connwait,
+		    sizeof(connwait)));
+
+	memset(F, 0, sizeof(*F));
+	F->op = &doconnect;
+	F->fd = clientfd;
+	F->sa = &sun.sa;
+	F->salen = socklen;
+	atf_tc_expect_fail("PR kern/57659:"
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
+	testfdrestart(F);
+}
+
 ATF_TC(socketpair_read);
 ATF_TC_HEAD(socketpair_read, tc)
 {
@@ -1104,6 +1215,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, ptyhost_selectread);
 	ATF_TP_ADD_TC(tp, ptyhost_selectwrite);
 	ATF_TP_ADD_TC(tp, ptyhost_write);
+	ATF_TP_ADD_TC(tp, socket_accept);
+	ATF_TP_ADD_TC(tp, socket_connect);
 	ATF_TP_ADD_TC(tp, socketpair_pollread);
 	ATF_TP_ADD_TC(tp, socketpair_pollwrite);
 	ATF_TP_ADD_TC(tp, socketpair_read);
