@@ -1,4 +1,4 @@
-/* $NetBSD: t_cond.c,v 1.8 2020/06/10 21:46:50 ad Exp $ */
+/* $NetBSD: t_cond.c,v 1.9 2026/09/25 23:41:11 christos Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_cond.c,v 1.8 2020/06/10 21:46:50 ad Exp $");
+__RCSID("$NetBSD: t_cond.c,v 1.9 2026/09/25 23:41:11 christos Exp $");
 
 #include <sys/time.h>
 
@@ -558,6 +558,9 @@ ATF_TC_BODY(condattr, tc)
 	clockid_t clockid;
 
 	PTHREAD_REQUIRE(pthread_condattr_init(&condattr));
+	PTHREAD_REQUIRE(pthread_condattr_getclock(&condattr, &clockid));
+	ATF_REQUIRE_EQ(clockid, CLOCK_REALTIME);
+
 	PTHREAD_REQUIRE(pthread_condattr_setclock(&condattr, CLOCK_REALTIME));
 	PTHREAD_REQUIRE(pthread_condattr_getclock(&condattr, &clockid));
 	ATF_REQUIRE_EQ(clockid, CLOCK_REALTIME);
@@ -565,6 +568,9 @@ ATF_TC_BODY(condattr, tc)
 	PTHREAD_REQUIRE(pthread_condattr_setclock(&condattr, CLOCK_MONOTONIC));
 	PTHREAD_REQUIRE(pthread_condattr_getclock(&condattr, &clockid));	
  	ATF_REQUIRE_EQ(clockid, CLOCK_MONOTONIC);
+
+	PTHREAD_REQUIRE_STATUS(
+	    pthread_condattr_setclock(&condattr, CLOCK_VIRTUAL), EINVAL);
 }
 
 ATF_TP_ADD_TCS(tp)
