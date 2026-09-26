@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.69 2022/07/31 13:08:18 mlelstv Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.70 2026/09/26 15:41:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.69 2022/07/31 13:08:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.70 2026/09/26 15:41:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -394,8 +394,9 @@ sysvbfs_setattr(void *arg)
 	}
 
 	if ((vap->va_atime.tv_sec != VNOVAL) ||
-	    (vap->va_mtime.tv_sec != VNOVAL) ||
-	    (vap->va_ctime.tv_sec != VNOVAL)) {
+	    (vap->va_mtime.tv_sec != VNOVAL)) {
+		struct timespec ctime;
+
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
 		    NULL, genfs_can_chtimes(vp, cred, attr->uid,
 			vap->va_vaflags));
@@ -406,8 +407,8 @@ sysvbfs_setattr(void *arg)
 			attr->atime = vap->va_atime.tv_sec;
 		if (vap->va_mtime.tv_sec != VNOVAL)
 			attr->mtime = vap->va_mtime.tv_sec;
-		if (vap->va_ctime.tv_sec != VNOVAL)
-			attr->ctime = vap->va_ctime.tv_sec;
+		vfs_timestamp(&ctime);
+		attr->ctime = ctime.tv_sec;
 	}
 
 	bfs_inode_set_attr(bfs, inode, attr);
