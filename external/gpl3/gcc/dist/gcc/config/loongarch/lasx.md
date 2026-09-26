@@ -983,59 +983,6 @@
   [(set_attr "type" "simd_div")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "xor<mode>3"
-  [(set (match_operand:LASX 0 "register_operand" "=f,f,f")
-	(xor:LASX
-	  (match_operand:LASX 1 "register_operand" "f,f,f")
-	  (match_operand:LASX 2 "reg_or_vector_same_val_operand" "f,YC,Urv8")))]
-  "ISA_HAS_LASX"
-  "@
-   xvxor.v\t%u0,%u1,%u2
-   xvbitrevi.%v0\t%u0,%u1,%V2
-   xvxori.b\t%u0,%u1,%B2"
-  [(set_attr "type" "simd_logic,simd_bit,simd_logic")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "ior<mode>3"
-  [(set (match_operand:LASX 0 "register_operand" "=f,f,f")
-	(ior:LASX
-	  (match_operand:LASX 1 "register_operand" "f,f,f")
-	  (match_operand:LASX 2 "reg_or_vector_same_val_operand" "f,YC,Urv8")))]
-  "ISA_HAS_LASX"
-  "@
-   xvor.v\t%u0,%u1,%u2
-   xvbitseti.%v0\t%u0,%u1,%V2
-   xvori.b\t%u0,%u1,%B2"
-  [(set_attr "type" "simd_logic,simd_bit,simd_logic")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "and<mode>3"
-  [(set (match_operand:LASX 0 "register_operand" "=f,f,f")
-	(and:LASX
-	  (match_operand:LASX 1 "register_operand" "f,f,f")
-	  (match_operand:LASX 2 "reg_or_vector_same_val_operand" "f,YZ,Urv8")))]
-  "ISA_HAS_LASX"
-{
-  switch (which_alternative)
-    {
-    case 0:
-      return "xvand.v\t%u0,%u1,%u2";
-    case 1:
-      {
-	rtx elt0 = CONST_VECTOR_ELT (operands[2], 0);
-	unsigned HOST_WIDE_INT val = ~UINTVAL (elt0);
-	operands[2] = loongarch_gen_const_int_vector (<MODE>mode, val & (-val));
-	return "xvbitclri.%v0\t%u0,%u1,%V2";
-      }
-    case 2:
-      return "xvandi.b\t%u0,%u1,%B2";
-    default:
-      gcc_unreachable ();
-    }
-}
-  [(set_attr "type" "simd_logic,simd_bit,simd_logic")
-   (set_attr "mode" "<MODE>")])
-
 (define_insn "one_cmpl<mode>2"
   [(set (match_operand:ILASX 0 "register_operand" "=f")
 	(not:ILASX (match_operand:ILASX 1 "register_operand" "f")))]
@@ -1145,16 +1092,6 @@
 		   (match_operand:FLASX 3 "register_operand" "f")))]
   "ISA_HAS_LASX"
   "xvfmadd.<flasxfmt>\t%u0,%u1,%u2,%u3"
-  [(set_attr "type" "simd_fmadd")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "fnma<mode>4"
-  [(set (match_operand:FLASX 0 "register_operand" "=f")
-	(fma:FLASX (neg:FLASX (match_operand:FLASX 1 "register_operand" "f"))
-		   (match_operand:FLASX 2 "register_operand" "f")
-		   (match_operand:FLASX 3 "register_operand" "0")))]
-  "ISA_HAS_LASX"
-  "xvfnmsub.<flasxfmt>\t%u0,%u1,%u2,%u0"
   [(set_attr "type" "simd_fmadd")
    (set_attr "mode" "<MODE>")])
 
@@ -2337,9 +2274,9 @@
   [(set_attr "type" "simd_int_arith")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "lasx_xvshuf_<lasxfmt_f>"
+(define_insn "@lasx_xvshuf_<lasxfmt_f>"
   [(set (match_operand:LASX_DWH 0 "register_operand" "=f")
-	(unspec:LASX_DWH [(match_operand:LASX_DWH 1 "register_operand" "0")
+	(unspec:LASX_DWH [(match_operand:<VIMODE> 1 "register_operand" "0")
 			  (match_operand:LASX_DWH 2 "register_operand" "f")
 			  (match_operand:LASX_DWH 3 "register_operand" "f")]
 			UNSPEC_LASX_XVSHUF))]
@@ -2942,59 +2879,6 @@
   "xvsigncov.<lasxfmt>\t%u0,%u1,%u2"
   [(set_attr "type" "simd_int_arith")
    (set_attr "mode" "<MODE>")])
-
-(define_expand "copysign<mode>3"
-  [(set (match_dup 4)
-	(and:FLASX
-	  (not:FLASX (match_dup 3))
-	  (match_operand:FLASX 1 "register_operand")))
-   (set (match_dup 5)
-	(and:FLASX (match_dup 3)
-		   (match_operand:FLASX 2 "reg_or_vector_same_val_operand")))
-   (set (match_operand:FLASX 0 "register_operand")
-	(ior:FLASX (match_dup 4) (match_dup 5)))]
-  "ISA_HAS_LASX"
-{
-  /* copysign (x, -1) should instead be expanded as setting the sign
-     bit.  */
-  if (!REG_P (operands[2]))
-    {
-      rtx op2_elt = unwrap_const_vec_duplicate (operands[2]);
-      if (GET_CODE (op2_elt) == CONST_DOUBLE
-	  && real_isneg (CONST_DOUBLE_REAL_VALUE (op2_elt)))
-	{
-	  rtx n = GEN_INT (8 * GET_MODE_SIZE (<UNITMODE>mode) - 1);
-	  operands[0] = lowpart_subreg (<VIMODE256>mode, operands[0],
-					<MODE>mode);
-	  operands[1] = lowpart_subreg (<VIMODE256>mode, operands[1],
-					<MODE>mode);
-	  emit_insn (gen_lasx_xvbitseti_<lasxfmt> (operands[0],
-						   operands[1], n));
-	  DONE;
-	}
-    }
-
-  operands[2] = force_reg (<MODE>mode, operands[2]);
-  operands[3] = loongarch_build_signbit_mask (<MODE>mode, 1, 0);
-
-  operands[4] = gen_reg_rtx (<MODE>mode);
-  operands[5] = gen_reg_rtx (<MODE>mode);
-})
-
-(define_expand "xorsign<mode>3"
-  [(set (match_dup 4)
-    (and:FLASX (match_dup 3)
-        (match_operand:FLASX 2 "register_operand")))
-   (set (match_operand:FLASX 0 "register_operand")
-    (xor:FLASX (match_dup 4)
-         (match_operand:FLASX 1 "register_operand")))]
-  "ISA_HAS_LASX"
-{
-  operands[3] = loongarch_build_signbit_mask (<MODE>mode, 1, 0);
-
-  operands[4] = gen_reg_rtx (<MODE>mode);
-})
-
 
 (define_insn "absv4df2"
   [(set (match_operand:V4DF 0 "register_operand" "=f")
@@ -4598,7 +4482,7 @@
   [(set (match_operand:FLASX 0 "register_operand" "=f")
     (vec_merge:FLASX
       (vec_duplicate:FLASX
-        (match_operand:<UNITMODE> 1 "register_operand" "f"))
+        (match_operand:<UNITMODE> 1 "reg_or_0_operand" "f"))
       (match_operand:FLASX 2 "register_operand" "0")
       (match_operand 3 "const_<bitmask256>_operand" "")))]
   "ISA_HAS_LASX"

@@ -519,15 +519,20 @@
 				     VNx4HI VNx2HI
 				     VNx2SI])
 
+;; All SVE integer vector modes.
+(define_mode_iterator SVE_I [VNx16QI VNx8QI VNx4QI VNx2QI
+			     VNx8HI VNx4HI VNx2HI
+			     VNx4SI VNx2SI
+			     VNx2DI])
+
+;; All SVE floating-point vector modes.
+(define_mode_iterator SVE_F [VNx8HF VNx4HF VNx2HF
+			     VNx8BF VNx4BF VNx2BF
+			     VNx4SF VNx2SF
+			     VNx2DF])
+
 ;; All SVE vector modes.
-(define_mode_iterator SVE_ALL [VNx16QI VNx8QI VNx4QI VNx2QI
-			       VNx8HI VNx4HI VNx2HI
-			       VNx8HF VNx4HF VNx2HF
-			       VNx8BF VNx4BF VNx2BF
-			       VNx4SI VNx2SI
-			       VNx4SF VNx2SF
-			       VNx2DI
-			       VNx2DF])
+(define_mode_iterator SVE_ALL [SVE_I SVE_F])
 
 ;; All SVE 2-vector modes.
 (define_mode_iterator SVE_FULLx2 [VNx32QI VNx16HI VNx8SI VNx4DI
@@ -548,12 +553,6 @@
 
 ;; All SVE vector and structure modes.
 (define_mode_iterator SVE_ALL_STRUCT [SVE_ALL SVE_STRUCT])
-
-;; All SVE integer vector modes.
-(define_mode_iterator SVE_I [VNx16QI VNx8QI VNx4QI VNx2QI
-			     VNx8HI VNx4HI VNx2HI
-			     VNx4SI VNx2SI
-			     VNx2DI])
 
 ;; All SVE integer vector modes and Advanced SIMD 64-bit vector
 ;; element modes
@@ -824,7 +823,6 @@
     UNSPEC_UZP2Q	; Used in aarch64-sve.md.
     UNSPEC_ZIP1Q	; Used in aarch64-sve.md.
     UNSPEC_ZIP2Q	; Used in aarch64-sve.md.
-    UNSPEC_TRN1_CONV	; Used in aarch64-sve.md.
     UNSPEC_COND_CMPEQ_WIDE ; Used in aarch64-sve.md.
     UNSPEC_COND_CMPGE_WIDE ; Used in aarch64-sve.md.
     UNSPEC_COND_CMPGT_WIDE ; Used in aarch64-sve.md.
@@ -1053,6 +1051,9 @@
     UNSPEC_BFCVTN2     ; Used in aarch64-simd.md.
     UNSPEC_BFCVT       ; Used in aarch64-simd.md.
     UNSPEC_FCVTXN	; Used in aarch64-simd.md.
+
+    ;; All used in aarch64-sve.md
+    UNSPEC_PERMUTE_PRED
 
     ;; All used in aarch64-sve2.md
     UNSPEC_FCVTN
@@ -1940,7 +1941,8 @@
 			   (SI   "si")])
 
 ;; Like ve_mode but for the half-width modes.
-(define_mode_attr vn_mode [(V8HI  "qi") (V4SI  "hi") (V2DI  "si")])
+(define_mode_attr vn_mode [(V8HI  "qi") (V4SI  "hi") (V2DI  "si") (DI "si")
+			   (SI "hi") (HI "qi")])
 
 ;; Vm for lane instructions is restricted to FP_LO_REGS.
 (define_mode_attr vwx [(V4HI "x") (V8HI "x") (HI "x")

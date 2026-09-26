@@ -49,6 +49,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "omp-general.h"
 #include "attr-fnspec.h"
 #include "tree-iterator.h"
+#include "dependency.h"
 
 #define MAX_LABEL_VALUE 99999
 
@@ -644,12 +645,25 @@ gfc_finish_var_decl (tree decl, gfc_symbol * sym)
 	  && (sym->ns->proc_name->backend_decl == current_function_decl
 	      || sym->result == sym))
 	gfc_add_decl_to_function (decl);
+      else if (sym->ns->omp_affinity_iterators)
+	{
+	  /* Iterator variables are block-local; other variables in the
+	     iterator namespace (e.g. implicitly typed host-associated
+	     ones used in locator expressions) belong in the enclosing
+	     function.  */
+	  gfc_symbol *iter;
+	  for (iter = sym->ns->omp_affinity_iterators; iter;
+	       iter = iter->tlink)
+	    if (iter == sym)
+	      break;
+	  if (iter)
+	    add_decl_as_local (decl);
+	  else
+	    gfc_add_decl_to_function (decl);
+	}
       else if (sym->ns->proc_name
 	       && sym->ns->proc_name->attr.flavor == FL_LABEL)
 	/* This is a BLOCK construct.  */
-	add_decl_as_local (decl);
-      else if (sym->ns->omp_affinity_iterators)
-	/* This is a block-local iterator.  */
 	add_decl_as_local (decl);
       else
 	gfc_add_decl_to_parent_function (decl);
@@ -832,6 +846,19 @@ gfc_allocate_lang_decl (tree decl)
     DECL_LANG_SPECIFIC (decl) = ggc_cleared_alloc<struct lang_decl> ();
 }
 
+
+/* Determine order of two symbol declarations.  */
+
+static bool
+decl_order (gfc_symbol *sym1, gfc_symbol *sym2)
+{
+  if (sym1->decl_order > sym2->decl_order)
+    return true;
+  else
+    return false;
+}
+
+
 /* Remember a symbol to generate initialization/cleanup code at function
    entry/exit.  */
 
@@ -849,18 +876,34 @@ gfc_defer_symbol_init (gfc_symbol * sym)
   last = head = sym->ns->proc_name;
   p = last->tlink;
 
+  gfc_function_dependency (sym, head);
+
   /* Make sure that setup code for dummy variables which are used in the
      setup of other variables is generated first.  */
   if (sym->attr.dummy)
     {
       /* Find the first dummy arg seen after us, or the first non-dummy arg.
-         This is a circular list, so don't go past the head.  */
+	 This is a circular list, so don't go past the head.  */
       while (p != head
-             && (!p->attr.dummy || p->dummy_order > sym->dummy_order))
-        {
-          last = p;
-          p = p->tlink;
-        }
+	     && (!p->attr.dummy || decl_order (p, sym)))
+	{
+	  last = p;
+	  p = p->tlink;
+	}
+    }
+  else if (sym->fn_result_dep)
+    {
+      /* In the case of non-dummy symbols with dependencies on an old-fashioned
+     function result (ie. proc_name = proc_name->result), make sure that the
+     order in the tlink chain is such that the code appears in declaration
+     order. This ensures that mutual dependencies between these symbols are
+     respected.  */
+      while (p != head
+	     && (!p->attr.result || decl_order (sym, p)))
+	{
+	  last = p;
+	  p = p->tlink;
+	}
     }
   /* Insert in between last and p.  */
   last->tlink = sym;
@@ -1627,6 +1670,21 @@ gfc_get_symbol_decl (gfc_symbol * sym)
 	     argument.  */
 	  if (sym->ns->proc_name->attr.entry_master)
 	    sym->backend_decl = DECL_CHAIN (sym->backend_decl);
+	}
+
+      /* Automatic array indices in module procedures need the backend_decl
+	 to be extracted from the procedure formal arglist.  */
+      if (sym->attr.dummy && !sym->backend_decl)
+	{
+	  gfc_formal_arglist *f;
+	  for (f = sym->ns->proc_name->formal; f; f = f->next)
+	    {
+	      gfc_symbol *fsym = f->sym;
+	      if (strcmp (sym->name, fsym->name))
+		continue;
+	      sym->backend_decl = fsym->backend_decl;
+	      break;
+	     }
 	}
 
       /* Dummy variables should already have been created.  */
@@ -2990,14 +3048,59 @@ build_entry_thunks (gfc_namespace * ns, bool global)
       tmp = build_int_cst (gfc_array_index_type, el->id);
       vec_safe_push (args, tmp);
 
-      if (thunk_sym->attr.function)
+      /* When the master returns by reference, pass the result reference
+	 and (for CHARACTER) the string length to the master call.  If the
+	 thunk itself also returns by reference these are forwarded from
+	 its own argument list; otherwise (bind(c) CHARACTER entry) we
+	 create local temporaries and load the value after the call.  */
+      tree result_ref = NULL_TREE;
+      if (thunk_sym->attr.function
+	  && gfc_return_by_reference (ns->proc_name))
 	{
-	  if (gfc_return_by_reference (ns->proc_name))
+	  if (gfc_return_by_reference (thunk_sym))
 	    {
 	      tree ref = DECL_ARGUMENTS (current_function_decl);
 	      vec_safe_push (args, ref);
 	      if (ns->proc_name->ts.type == BT_CHARACTER)
 		vec_safe_push (args, DECL_CHAIN (ref));
+	    }
+	  else
+	    {
+	      /* The thunk is bind(c) and returns CHARACTER by value, but
+		 the master returns by reference.  Create a local buffer
+		 and length to pass to the master call.  */
+	      tree chartype = gfc_get_char_type (thunk_sym->ts.kind);
+	      tree len;
+
+	      if (thunk_sym->ts.u.cl && thunk_sym->ts.u.cl->length)
+		{
+		  gfc_se se;
+		  gfc_init_se (&se, NULL);
+		  gfc_conv_expr (&se, thunk_sym->ts.u.cl->length);
+		  gfc_add_block_to_block (&body, &se.pre);
+		  len = se.expr;
+		  gfc_add_block_to_block (&body, &se.post);
+		}
+	      else
+		len = build_int_cst (gfc_charlen_type_node, 1);
+
+	      result_ref = build_decl (input_location, VAR_DECL,
+				       get_identifier ("__entry_result"),
+				       build_array_type (chartype,
+					 build_range_type (gfc_array_index_type,
+					   gfc_index_one_node,
+					   fold_convert (gfc_array_index_type,
+							 len))));
+	      DECL_ARTIFICIAL (result_ref) = 1;
+	      TREE_USED (result_ref) = 1;
+	      DECL_CONTEXT (result_ref) = current_function_decl;
+	      layout_decl (result_ref, 0);
+	      pushdecl (result_ref);
+
+	      vec_safe_push (args,
+			     build_fold_addr_expr_loc (input_location,
+						       result_ref));
+	      vec_safe_push (args, len);
 	    }
 	}
 
@@ -3045,7 +3148,24 @@ build_entry_thunks (gfc_namespace * ns, bool global)
       vec_safe_splice (args, string_args);
       tmp = ns->proc_name->backend_decl;
       tmp = build_call_expr_loc_vec (input_location, tmp, args);
-      if (ns->proc_name->attr.mixed_entry_master)
+      if (result_ref != NULL_TREE)
+	{
+	  /* The master returns by reference (void) but the bind(c) thunk
+	     returns CHARACTER by value.  Execute the master call, then
+	     load the first character from the local buffer.  */
+	  gfc_add_expr_to_block (&body, tmp);
+	  tmp = build4_loc (input_location, ARRAY_REF,
+			    TREE_TYPE (TREE_TYPE (result_ref)),
+			    result_ref, gfc_index_one_node,
+			    NULL_TREE, NULL_TREE);
+	  tmp = fold_convert (TREE_TYPE (DECL_RESULT (current_function_decl)),
+			      tmp);
+	  tmp = fold_build2_loc (input_location, MODIFY_EXPR,
+			     TREE_TYPE (DECL_RESULT (current_function_decl)),
+			     DECL_RESULT (current_function_decl), tmp);
+	  tmp = build1_v (RETURN_EXPR, tmp);
+	}
+      else if (ns->proc_name->attr.mixed_entry_master)
 	{
 	  tree union_decl, field;
 	  tree master_type = TREE_TYPE (ns->proc_name->backend_decl);
@@ -4174,11 +4294,18 @@ gfc_trans_auto_character_variable (gfc_symbol * sym, gfc_wrapped_block * block)
   stmtblock_t init;
   tree decl;
   tree tmp;
+  bool back;
 
   gcc_assert (sym->backend_decl);
   gcc_assert (sym->ts.u.cl && sym->ts.u.cl->length);
 
   gfc_init_block (&init);
+
+  /* In the case of non-dummy symbols with dependencies on an old-fashioned
+     function result (ie. proc_name = proc_name->result), gfc_add_init_cleanup
+     must be called with the last, optional argument false so that the process
+     ing of the character length occurs after the processing of the result.  */
+  back = sym->fn_result_dep;
 
   /* Evaluate the string length expression.  */
   gfc_conv_string_length (sym->ts.u.cl, NULL, &init);
@@ -4192,7 +4319,7 @@ gfc_trans_auto_character_variable (gfc_symbol * sym, gfc_wrapped_block * block)
   tmp = fold_build1_loc (input_location, DECL_EXPR, TREE_TYPE (decl), decl);
   gfc_add_expr_to_block (&init, tmp);
 
-  gfc_add_init_cleanup (block, gfc_finish_block (&init), NULL_TREE);
+  gfc_add_init_cleanup (block, gfc_finish_block (&init), NULL_TREE, back);
 }
 
 /* Set the initial value of ASSIGN statement auxiliary variable explicitly.  */
@@ -4364,7 +4491,6 @@ init_intent_out_dt (gfc_symbol * proc_sym, gfc_wrapped_block * block)
   tree tmp;
   tree present;
   gfc_symbol *s;
-  bool dealloc_with_value = false;
 
   gfc_init_block (&init);
   for (f = gfc_sym_get_dummy_args (proc_sym); f; f = f->next)
@@ -4395,12 +4521,9 @@ init_intent_out_dt (gfc_symbol * proc_sym, gfc_wrapped_block * block)
 	   by the caller.  */
 	if (tmp == NULL_TREE && !s->attr.allocatable
 	    && s->ts.u.derived->attr.alloc_comp)
-	  {
-	    tmp = gfc_deallocate_alloc_comp (s->ts.u.derived,
-					     s->backend_decl,
-					     s->as ? s->as->rank : 0);
-	    dealloc_with_value = s->value;
-	  }
+	  tmp = gfc_deallocate_alloc_comp (s->ts.u.derived,
+					   s->backend_decl,
+					   s->as ? s->as->rank : 0);
 
 	if (tmp != NULL_TREE && (s->attr.optional
 				 || s->ns->proc_name->attr.entry_master))
@@ -4410,14 +4533,9 @@ init_intent_out_dt (gfc_symbol * proc_sym, gfc_wrapped_block * block)
 			      present, tmp, build_empty_stmt (input_location));
 	  }
 
-	if (tmp != NULL_TREE && !dealloc_with_value)
-	  gfc_add_expr_to_block (&init, tmp);
-	else if (s->value && !s->attr.allocatable)
-	  {
-	    gfc_add_expr_to_block (&init, tmp);
-	    gfc_init_default_dt (s, &init, false);
-	    dealloc_with_value = false;
-	  }
+	gfc_add_expr_to_block (&init, tmp);
+	if (s->value && !s->attr.allocatable)
+	  gfc_init_default_dt (s, &init, false);
       }
     else if (f->sym && f->sym->attr.intent == INTENT_OUT
 	     && f->sym->ts.type == BT_CLASS
@@ -4877,6 +4995,11 @@ gfc_trans_deferred_vars (gfc_symbol * proc_sym, gfc_wrapped_block * block)
 					    &tmpblock, sym);
 		  gfc_add_init_cleanup (block, gfc_finish_block (&tmpblock),
 					NULL_TREE);
+		  continue;
+		}
+	      else if (sym->attr.codimension && !sym->attr.dimension)
+		{
+		  /* Scalar coarrays do not need array allocation.  */
 		  continue;
 		}
 	      else

@@ -97,6 +97,7 @@
 #define f7_acos __f7_acos
 #define f7_atan __f7_atan
 #define f7_atan2 __f7_atan2
+#define f7_fdim __f7_fdim
 #define f7_mul_noround __f7_mul_noround
 #define f7_sqrt16_round __f7_sqrt16_round
 #define f7_sqrt16_floor __f7_sqrt16_floor
@@ -158,8 +159,6 @@
 #define f7_min __f7_min
 #define f7_max __f7_max
 #define f7_exp10 __f7_exp10
-#define f7_floatunsidf __f7_floatunsidf
-#define f7_floatsidf __f7_floatsidf
 #define f7_extendsfdf2 __f7_extendsfdf2
 #define f7_fixdfsi __f7_fixdfsi
 #define f7_fixdfdi __f7_fixdfdi
@@ -223,6 +222,9 @@
 #define f7_sqrt16_floor_asm __f7_sqrt16_floor_asm
 #define f7_lshrdi3_asm __f7_lshrdi3_asm
 #define f7_ashldi3_asm __f7_ashldi3_asm
+#define f7_d_to_fx64_asm __f7_d_to_fx64_asm
+#define f7_ufx64_to_d_asm __f7_ufx64_to_d_asm
+#define f7_sfx64_to_d_asm __f7_sfx64_to_d_asm
 #define f7_class_D_asm __f7_class_D_asm
 #define f7_call_ddd_asm __f7_call_ddd_asm
 #define f7_call_xdd_asm __f7_call_xdd_asm

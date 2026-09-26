@@ -588,6 +588,14 @@
  (ior (match_operand 0 "register_operand")
       (match_operand 0 "symbolic_off64_operand")))
 
+;; Currently stack canary must be the global symbol __stack_chk_guard.
+(define_predicate "ssp_operand" (match_code "symbol_ref"))
+
+;; If the stack canary is within the normal/medium code model.
+(define_predicate "ssp_normal_operand"
+  (and (match_operand 0 "ssp_operand")
+       (not (match_operand 0 "symbolic_off64_operand"))))
+
 (define_predicate "equality_operator"
   (match_code "eq,ne"))
 
@@ -642,6 +650,18 @@
   return loongarch_const_vector_same_int_p (op, mode, 0, 63);
 })
 
+(define_predicate "const_vector_neg_fp_operand"
+  (match_code "const_vector")
+{
+  machine_mode imode = related_int_vector_mode (mode).require ();
+  rtx mask = loongarch_build_signbit_mask (imode, 1, 0);
+
+  op = gen_lowpart (imode, op);
+  return rtx_equal_p (mask,
+		      simplify_const_binary_operation (AND, imode, mask,
+						       op));
+})
+
 (define_predicate "par_const_vector_shf_set_operand"
   (match_code "parallel")
 {
@@ -667,3 +687,7 @@
 (define_predicate "reg_or_vector_same_uimm6_operand"
   (ior (match_operand 0 "register_operand")
        (match_operand 0 "const_vector_same_uimm6_operand")))
+
+(define_predicate "reg_or_vector_neg_fp_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_operand 0 "const_vector_neg_fp_operand")))

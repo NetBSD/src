@@ -2887,12 +2887,14 @@ gfc_variable_attr (gfc_expr *expr, gfc_typespec *ts)
 
 	if (comp->ts.type == BT_CLASS)
 	  {
+	    dimension = CLASS_DATA (comp)->attr.dimension;
 	    codimension = CLASS_DATA (comp)->attr.codimension;
 	    pointer = CLASS_DATA (comp)->attr.class_pointer;
 	    allocatable = CLASS_DATA (comp)->attr.allocatable;
 	  }
 	else
 	  {
+	    dimension = comp->attr.dimension;
 	    codimension = comp->attr.codimension;
 	    if (expr->ts.type == BT_CLASS && strcmp (comp->name, "_data") == 0)
 	      pointer = comp->attr.class_pointer;
@@ -3367,6 +3369,7 @@ gfc_convert_to_structure_constructor (gfc_expr *e, gfc_symbol *sym, gfc_expr **c
 	  && this_comp->ts.u.cl && this_comp->ts.u.cl->length
 	  && this_comp->ts.u.cl->length->expr_type == EXPR_CONSTANT
 	  && this_comp->ts.u.cl->length->ts.type == BT_INTEGER
+	  && actual->expr
 	  && actual->expr->ts.type == BT_CHARACTER
 	  && actual->expr->expr_type == EXPR_CONSTANT)
 	{
@@ -3431,27 +3434,27 @@ gfc_convert_to_structure_constructor (gfc_expr *e, gfc_symbol *sym, gfc_expr **c
 	  goto cleanup;
 	}
 
-          /* If not explicitly a parent constructor, gather up the components
-             and build one.  */
-          if (comp && comp == sym->components
-                && sym->attr.extension
-		&& comp_tail->val
-                && (!gfc_bt_struct (comp_tail->val->ts.type)
-                      ||
-                    comp_tail->val->ts.u.derived != this_comp->ts.u.derived))
-            {
-              bool m;
+	  /* If not explicitly a parent constructor, gather up the components
+	     and build one.  */
+	  if (comp && comp == sym->components
+	      && sym->attr.extension
+	      && comp_tail->val
+	      && (!gfc_bt_struct (comp_tail->val->ts.type)
+		  || comp_tail->val->ts.u.derived != this_comp->ts.u.derived))
+	    {
+	      bool m;
 	      gfc_actual_arglist *arg_null = NULL;
 
 	      actual->expr = comp_tail->val;
 	      comp_tail->val = NULL;
+#define shorter gfc_convert_to_structure_constructor
+	      m = shorter (NULL, comp->ts.u.derived, &comp_tail->val,
+			   comp->ts.u.derived->attr.zero_comp ? &arg_null :
+								&actual, true);
+#undef shorter
 
-              m = gfc_convert_to_structure_constructor (NULL,
-					comp->ts.u.derived, &comp_tail->val,
-					comp->ts.u.derived->attr.zero_comp
-					  ? &arg_null : &actual, true);
-              if (!m)
-                goto cleanup;
+	      if (!m)
+		goto cleanup;
 
 	      if (comp->ts.u.derived->attr.zero_comp)
 		{

@@ -1,3 +1,33 @@
+2026-06-26  Release Manager
+
+	* GCC 14.4.0 released.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-13  Jakub Jelinek  <jakub@redhat.com>
+
+	PR preprocessor/105412
+	* files.cc (_cpp_stack_file): Call deps_add_dep even on
+	empty file path.
+	* mkdeps.cc (class mkdeps): Add first_phony_dep member.
+	(mkdeps::mkdeps ()): Initialize it to 1.
+	(deps_add_dep): When called first with "" argument, decrease
+	d->first_phony_dep to 0.
+	(make_write): For -MP iterate from d->first_phony_dep
+	rather than 1.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-01-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR preprocessor/123273
+	* lex.cc (cpp_directive_only_process): Only go to done_comment
+	for '/' if star is true and esc is false.  When seeing '\\' with
+	esc set to true, clear esc as well as star instead of keeping esc
+	set.
+
 2025-05-23  Release Manager
 
 	* GCC 14.3.0 released.

@@ -182,10 +182,10 @@ initialize_ao_ref_for_dse (gimple *stmt, ao_ref *write, bool may_def_ok = false)
 	       can provide a may-def variant.  */
 	    if (may_def_ok)
 	      {
-		ao_ref_init_from_ptr_and_size (
-		  write, gimple_call_arg (stmt, 0),
-		  TYPE_SIZE_UNIT (
-		    TREE_TYPE (gimple_call_arg (stmt, stored_value_index))));
+		ao_ref_init_from_ptr_and_range (
+		  write, gimple_call_arg (stmt, 0), true, 0, -1,
+		  tree_to_poly_int64 (TYPE_SIZE (
+		    TREE_TYPE (gimple_call_arg (stmt, stored_value_index)))));
 		return true;
 	      }
 	    break;
@@ -424,8 +424,10 @@ compute_trims (ao_ref *ref, sbitmap live, int *trim_head, int *trim_tail,
      the bitmap extends through ref->max_size, so we know that in the original
      bitmap bits 0 .. ref->max_size were true.  But we need to check that this
      covers the bytes of REF exactly.  */
-  const unsigned int align = known_alignment (ref->offset);
-  if ((align > 0 && align < BITS_PER_UNIT)
+  const unsigned int offset_align = known_alignment (ref->offset);
+  const unsigned int size_align = known_alignment (ref->size);
+  if ((offset_align > 0 && offset_align < BITS_PER_UNIT)
+      || (size_align > 0 && size_align < BITS_PER_UNIT)
       || !known_eq (ref->size, ref->max_size))
     return;
 

@@ -4368,7 +4368,8 @@ avr_load_libgcc_p (rtx op)
 
   return (n_bytes > 2
 	  && !AVR_HAVE_LPMX
-	  && avr_mem_flash_p (op));
+	  && avr_mem_flash_p (op)
+	  && MEM_ADDR_SPACE (op) == ADDR_SPACE_FLASH);
 }
 
 /* Return true if a value of mode MODE is read by __xload_* function.  */
@@ -4493,6 +4494,46 @@ avr_out_lpm_no_lpmx (rtx_insn *insn, rtx *xop, int *plen)
 	    avr_asm_len ("sbiw %2,1", xop, plen, 1);
 
 	  break; /* 2 */
+
+	/* cases 3 and 4 are only needed with ELPM but no ELPMx.  */
+
+	case 3:
+	  if (REGNO (dest) == REG_Z - 2
+	      && !reg_unused_after (insn, all_regs_rtx[REG_31]))
+	    avr_asm_len ("push r31", xop, plen, 1);
+
+	  avr_asm_len ("%4lpm $ mov %A0,%3 $ adiw %2,1", xop, plen, 3);
+	  avr_asm_len ("%4lpm $ mov %B0,%3 $ adiw %2,1", xop, plen, 3);
+	  avr_asm_len ("%4lpm $ mov %C0,%3", xop, plen, 2);
+
+	  if (REGNO (dest) == REG_Z - 2)
+	    {
+	      if (!reg_unused_after (insn, all_regs_rtx[REG_31]))
+		avr_asm_len ("pop r31", xop, plen, 1);
+	    }
+	  else if (!reg_unused_after (insn, addr))
+	    avr_asm_len ("sbiw %2,2", xop, plen, 1);
+
+	  break; /* 3 */
+
+	case 4:
+	  avr_asm_len ("%4lpm $ mov %A0,%3 $ adiw %2,1", xop, plen, 3);
+	  avr_asm_len ("%4lpm $ mov %B0,%3 $ adiw %2,1", xop, plen, 3);
+	  if (REGNO (dest) != REG_Z - 2)
+	    {
+	      avr_asm_len ("%4lpm $ mov %C0,%3 $ adiw %2,1", xop, plen, 3);
+	      avr_asm_len ("%4lpm $ mov %D0,%3", xop, plen, 2);
+	      if (!reg_unused_after (insn, addr))
+		avr_asm_len ("sbiw %2,3", xop, plen, 1);
+	    }
+	  else
+	    {
+	      avr_asm_len ("%4lpm $ push %3 $ adiw %2,1", xop, plen, 3);
+	      avr_asm_len ("%4lpm $ mov %D0,%3", xop, plen, 2);
+	      avr_asm_len ("pop $C0", xop, plen, 1);
+	    }
+
+	  break; /* 4 */
 	}
 
       break; /* REG */
@@ -10093,16 +10134,17 @@ avr_out_insv (rtx_insn *insn, rtx xop[], int *plen)
 }
 
 
-/* Output instructions to extract a bit to 8-bit register XOP[0].
-   The input XOP[1] is a register or an 8-bit MEM in the lower I/O range.
-   XOP[2] is the const_int bit position.  Return "".
+/* Output instructions to extract a bit to 8-bit register OP[0].
+   The input OP[1] is a register or an 8-bit MEM in the lower I/O range.
+   OP[2] is the const_int bit position.  Return "".
 
    PLEN != 0: Set *PLEN to the code length in words.  Don't output anything.
    PLEN == 0: Output instructions.  */
 
 const char *
-avr_out_extr (rtx_insn *insn, rtx xop[], int *plen)
+avr_out_extr (rtx_insn *insn, rtx op[], int *plen)
 {
+  rtx xop[] = { op[0], op[1], op[2] };
   rtx dest = xop[0];
   rtx src = xop[1];
   int bit = INTVAL (xop[2]);
@@ -10160,16 +10202,17 @@ avr_out_extr (rtx_insn *insn, rtx xop[], int *plen)
 }
 
 
-/* Output instructions to extract a negated bit to 8-bit register XOP[0].
-   The input XOP[1] is an 8-bit register or MEM in the lower I/O range.
-   XOP[2] is the const_int bit position.  Return "".
+/* Output instructions to extract a negated bit to 8-bit register OP[0].
+   The input OP[1] is an 8-bit register or MEM in the lower I/O range.
+   OP[2] is the const_int bit position.  Return "".
 
    PLEN != 0: Set *PLEN to the code length in words.  Don't output anything.
    PLEN == 0: Output instructions.  */
 
 const char *
-avr_out_extr_not (rtx_insn * /* insn */, rtx xop[], int *plen)
+avr_out_extr_not (rtx_insn * /* insn */, rtx op[], int *plen)
 {
+  rtx xop[] = { op[0], op[1], op[2] };
   rtx dest = xop[0];
   rtx src = xop[1];
   int bit = INTVAL (xop[2]);
@@ -10377,7 +10420,7 @@ avr_out_fract (rtx_insn *insn, rtx operands[], bool intsigned, int *plen)
 	{
 	  avr_asm_len ("clr __tmp_reg__" CR_TAB
 		       "sbrc %1,0"       CR_TAB
-		       "dec __tmp_reg__", xop, plen, 1);
+		       "dec __tmp_reg__", xop, plen, 3);
 	  sn = src.regno;
 	  if (sn < s0)
 	    {
@@ -10392,7 +10435,7 @@ avr_out_fract (rtx_insn *insn, rtx operands[], bool intsigned, int *plen)
 	    avr_asm_len ("clt"                CR_TAB
 			 "bld __tmp_reg__,7"  CR_TAB
 			 "adc %0,__tmp_reg__",
-			 &all_regs_rtx[s0], plen, 1);
+			 &all_regs_rtx[s0], plen, 3);
 	  else
 	    avr_asm_len ("lsr __tmp_reg" CR_TAB
 			 "add %0,__tmp_reg__",
@@ -10591,8 +10634,8 @@ avr_out_fract (rtx_insn *insn, rtx operands[], bool intsigned, int *plen)
 	  xop[2] = all_regs_rtx[s0];
 	  if (!lsb_in_tmp_reg && !MAY_CLOBBER (s0))
 	    avr_asm_len ("mov __tmp_reg__,%2", xop, plen, 1);
-	  avr_asm_len ("tst %0" CR_TAB "brpl 0f",
-		       &all_regs_rtx[src.regno_msb], plen, 2);
+	  avr_asm_len ("tst %0" CR_TAB
+		       "brpl 0f", &all_regs_rtx[src.regno_msb], plen, 2);
 	  if (!lsb_in_tmp_reg)
 	    {
 	      unsigned sn = src.regno;
@@ -14285,6 +14328,16 @@ avr_output_addr_vec (rtx_insn *labl, rtx table)
 
   app_disable();
 
+  // AVR-SD: On functional safety devices, each executed instruction must
+  // be followed by a valid opcode.  This is because instruction validation
+  // runs at fetch and decode for the next instruction and while the 2-stage
+  // pipeline is executing the current one.  There is no multilib option for
+  // these devices, so take all multilib variants that contain AVR-SD.
+  const bool maybe_sd = (AVR_HAVE_JMP_CALL
+			 && (avr_arch_index == ARCH_AVRXMEGA2
+			     || avr_arch_index == ARCH_AVRXMEGA3));
+  bool uses_subsection = false;
+
   // Switch to appropriate (sub)section.
 
   if (DECL_SECTION_NAME (current_function_decl)
@@ -14296,6 +14349,7 @@ avr_output_addr_vec (rtx_insn *labl, rtx table)
 
       switch_to_section (current_function_section ());
       fprintf (stream, "\t.subsection\t1\n");
+      uses_subsection = true;
     }
   else
     {
@@ -14318,9 +14372,21 @@ avr_output_addr_vec (rtx_insn *labl, rtx table)
 	       AVR_HAVE_JMP_CALL ? "a" : "ax");
     }
 
-  // Output the label that preceeds the table.
-
   ASM_OUTPUT_ALIGN (stream, 1);
+
+  if (maybe_sd && uses_subsection)
+    {
+      // Insert a valid opcode prior to the first gs() label.
+      // Any valid opcode will do.  Use CLH since it disassembles
+      // more nicely than NOP = 0x0000.  This is all GCC can do.
+      // Other cases, like inserting CLH after the vector table and
+      // after the last instruction, are handled by other parts of
+      // the toolchain.
+      fprintf (stream, "\tclh\n");
+    }
+
+  // Output the label that precedes the table.
+
   targetm.asm_out.internal_label (stream, "L", CODE_LABEL_NUMBER (labl));
 
   // Output the table's content.

@@ -846,6 +846,7 @@ create_var (gfc_expr * e, const char *vname)
   symbol->attr.referenced = 1;
   symbol->attr.dimension = e->rank > 0;
   symbol->attr.fe_temp = 1;
+  symbol->attr.automatic = 1;
   gfc_commit_symbol (symbol);
 
   result = gfc_get_expr ();
@@ -2784,6 +2785,66 @@ insert_index (gfc_expr *e, gfc_symbol *sym, mpz_t val, mpz_t ret)
 
 }
 
+static bool
+evaluate_loop_bound (gfc_expr *e, gfc_symbol *sym, mpz_t val, mpz_t ret)
+{
+  if (e->expr_type == EXPR_CONSTANT)
+    {
+      mpz_init_set (ret, e->value.integer);
+      return true;
+    }
+
+  return insert_index (e, sym, val, ret);
+}
+
+/* Return true if any loop nested inside LOOP_INDEX is not provably entered
+   after substituting OUTER_VAL for OUTER_SYM.  In that case the guarded array
+   reference may never be evaluated, so do not warn from the outer loop alone.  */
+
+static bool
+inner_loop_may_be_skipped (int loop_index, gfc_symbol *outer_sym, mpz_t outer_val)
+{
+  int k;
+  do_t *lp;
+
+  FOR_EACH_VEC_ELT_FROM (doloop_list, k, lp, loop_index + 1)
+    {
+      gfc_code *loop = lp->c;
+      int sgn, cmp;
+      mpz_t do_start, do_end, do_step;
+
+      if (loop == NULL || loop->ext.iterator == NULL || loop->ext.iterator->var == NULL)
+	return true;
+
+      if (!evaluate_loop_bound (loop->ext.iterator->step, outer_sym, outer_val, do_step))
+	return true;
+
+      sgn = mpz_cmp_ui (do_step, 0);
+      if (sgn == 0)
+	{
+	  mpz_clear (do_step);
+	  return true;
+	}
+
+      if (!evaluate_loop_bound (loop->ext.iterator->start, outer_sym, outer_val, do_start)
+	  || !evaluate_loop_bound (loop->ext.iterator->end, outer_sym, outer_val, do_end))
+	{
+	  mpz_clear (do_step);
+	  return true;
+	}
+
+      cmp = mpz_cmp (do_end, do_start);
+      mpz_clear (do_start);
+      mpz_clear (do_end);
+      mpz_clear (do_step);
+
+      if ((sgn > 0 && cmp < 0) || (sgn < 0 && cmp > 0))
+	return true;
+    }
+
+  return false;
+}
+
 /* Check array subscripts for possible out-of-bounds accesses in DO
    loops with constant bounds.  */
 
@@ -2918,10 +2979,15 @@ do_subscript (gfc_expr **e)
 		  mpz_clear (rem);
 		}
 
+	      bool skip_start = have_do_start
+				&& inner_loop_may_be_skipped (j, do_sym, do_start);
+	      bool skip_end = have_do_end
+			      && inner_loop_may_be_skipped (j, do_sym, do_end);
+
 	      for (i = 0; i< ar->dimen; i++)
 		{
 		  mpz_t val;
-		  if (ar->dimen_type[i] == DIMEN_ELEMENT && have_do_start
+		  if (ar->dimen_type[i] == DIMEN_ELEMENT && have_do_start && !skip_start
 		      && insert_index (ar->start[i], do_sym, do_start, val))
 		    {
 		      if (ar->as->lower[i]
@@ -2947,7 +3013,7 @@ do_subscript (gfc_expr **e)
 		      mpz_clear (val);
 		    }
 
-		  if (ar->dimen_type[i] == DIMEN_ELEMENT && have_do_end
+		  if (ar->dimen_type[i] == DIMEN_ELEMENT && have_do_end && !skip_end
 		      && insert_index (ar->start[i], do_sym, do_end, val))
 		    {
 		      if (ar->as->lower[i]
@@ -3781,6 +3847,7 @@ create_do_loop (gfc_expr *start, gfc_expr *end, gfc_expr *step, locus *where,
   symbol->attr.referenced = 1;
   symbol->attr.dimension = 0;
   symbol->attr.fe_temp = 1;
+  symbol->attr.automatic = 1;
   gfc_commit_symbol (symbol);
 
   i = gfc_get_expr ();
