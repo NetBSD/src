@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.38 2022/07/31 13:08:19 mlelstv Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.39 2026/09/26 15:41:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.38 2022/07/31 13:08:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.39 2026/09/26 15:41:26 riastradh Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -545,8 +545,7 @@ v7fs_setattr(void *v)
 		v7fs_inode_chmod(inode, mode);
 	}
 	if ((vap->va_atime.tv_sec != VNOVAL) ||
-	    (vap->va_mtime.tv_sec != VNOVAL) ||
-	    (vap->va_ctime.tv_sec != VNOVAL)) {
+	    (vap->va_mtime.tv_sec != VNOVAL)) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
 		    NULL, genfs_can_chtimes(vp, cred, inode->uid,
 		    vap->va_vaflags));
@@ -560,9 +559,7 @@ v7fs_setattr(void *v)
 			mod = &vap->va_mtime;
 			v7node->update_mtime = true;
 		}
-		if (vap->va_ctime.tv_sec != VNOVAL) {
-			v7node->update_ctime = true;
-		}
+		v7node->update_ctime = true;
 	}
 
 	v7node->update_atime = true;
