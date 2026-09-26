@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hw.h,v 1.4 2016/02/14 10:53:30 skrll Exp $	*/
+/*	$NetBSD: dwc2_hw.h,v 1.5 2026/09/26 22:21:16 riastradh Exp $	*/
 
 /*
  * hw.h - DesignWare HS OTG Controller hardware definitions
@@ -118,7 +118,7 @@
 #define GUSBCFG_TOUTCAL(_x)		((_x) << 0)
 
 #define GRSTCTL				HSOTG_REG(0x010)
-#define GRSTCTL_AHBIDLE			(1 << 31)
+#define GRSTCTL_AHBIDLE			(1u << 31)
 #define GRSTCTL_DMAREQ			(1 << 30)
 #define GRSTCTL_TXFNUM_MASK		(0x1f << 6)
 #define GRSTCTL_TXFNUM_SHIFT		6
@@ -133,7 +133,7 @@
 
 #define GINTSTS				HSOTG_REG(0x014)
 #define GINTMSK				HSOTG_REG(0x018)
-#define GINTSTS_WKUPINT			(1 << 31)
+#define GINTSTS_WKUPINT			(1u << 31)
 #define GINTSTS_SESSREQINT		(1 << 30)
 #define GINTSTS_DISCONNINT		(1 << 29)
 #define GINTSTS_CONIDSTSCHNG		(1 << 28)
@@ -209,7 +209,7 @@
 #define GNPTXSTS_NP_TXF_SPC_AVAIL_GET(_v)	(((_v) >> 0) & 0xffff)
 
 #define GI2CCTL				HSOTG_REG(0x0030)
-#define GI2CCTL_BSYDNE			(1 << 31)
+#define GI2CCTL_BSYDNE			(1u << 31)
 #define GI2CCTL_RW			(1 << 30)
 #define GI2CCTL_I2CDATSE0		(1 << 28)
 #define GI2CCTL_I2CDEVADDR_MASK		(0x3 << 26)
@@ -231,7 +231,7 @@
 #define GHWCFG1				HSOTG_REG(0x0044)
 
 #define GHWCFG2				HSOTG_REG(0x0048)
-#define GHWCFG2_OTG_ENABLE_IC_USB		(1 << 31)
+#define GHWCFG2_OTG_ENABLE_IC_USB		(1u << 31)
 #define GHWCFG2_DEV_TOKEN_Q_DEPTH_MASK		(0x1f << 26)
 #define GHWCFG2_DEV_TOKEN_Q_DEPTH_SHIFT		26
 #define GHWCFG2_HOST_PERIO_TX_Q_DEPTH_MASK	(0x3 << 24)
@@ -292,7 +292,7 @@
 #define GHWCFG3_XFER_SIZE_CNTR_WIDTH_SHIFT	0
 
 #define GHWCFG4				HSOTG_REG(0x0050)
-#define GHWCFG4_DESC_DMA_DYN			(1 << 31)
+#define GHWCFG4_DESC_DMA_DYN			(1u << 31)
 #define GHWCFG4_DESC_DMA			(1 << 30)
 #define GHWCFG4_NUM_IN_EPS_MASK			(0xf << 26)
 #define GHWCFG4_NUM_IN_EPS_SHIFT		26
@@ -318,7 +318,7 @@
 #define GHWCFG4_NUM_DEV_PERIO_IN_EP_SHIFT	0
 
 #define GLPMCFG				HSOTG_REG(0x0054)
-#define GLPMCFG_INV_SEL_HSIC		(1 << 31)
+#define GLPMCFG_INV_SEL_HSIC		(1u << 31)
 #define GLPMCFG_HSIC_CONNECT		(1 << 30)
 #define GLPMCFG_RETRY_COUNT_STS_MASK	(0x7 << 25)
 #define GLPMCFG_RETRY_COUNT_STS_SHIFT	25
@@ -510,7 +510,7 @@
 #define D0EPCTL_MPS_16			2
 #define D0EPCTL_MPS_8			3
 
-#define DXEPCTL_EPENA			(1 << 31)
+#define DXEPCTL_EPENA			(1u << 31)
 #define DXEPCTL_EPDIS			(1 << 30)
 #define DXEPCTL_SETD1PID		(1 << 29)
 #define DXEPCTL_SETODDFR		(1 << 29)
@@ -599,7 +599,7 @@
 #define DTXFSTS(_a)			HSOTG_REG(0x918 + ((_a) * 0x20))
 
 #define PCGCTL				HSOTG_REG(0x0e00)
-#define PCGCTL_IF_DEV_MODE		(1 << 31)
+#define PCGCTL_IF_DEV_MODE		(1u << 31)
 #define PCGCTL_P2HD_PRT_SPD_MASK	(0x3 << 29)
 #define PCGCTL_P2HD_PRT_SPD_SHIFT	29
 #define PCGCTL_P2HD_DEV_ENUM_SPD_MASK	(0x3 << 27)
@@ -631,7 +631,7 @@
 /* Host Mode Registers */
 
 #define HCFG				HSOTG_REG(0x0400)
-#define HCFG_MODECHTIMEN		(1 << 31)
+#define HCFG_MODECHTIMEN		(1u << 31)
 #define HCFG_PERSCHEDENA		(1 << 26)
 #define HCFG_FRLISTEN_MASK		(0x3 << 24)
 #define HCFG_FRLISTEN_SHIFT		24
@@ -667,7 +667,7 @@
 #define HFNUM_MAX_FRNUM			0x3fff
 
 #define HPTXSTS				HSOTG_REG(0x0410)
-#define TXSTS_QTOP_ODD			(1 << 31)
+#define TXSTS_QTOP_ODD			(1u << 31)
 #define TXSTS_QTOP_CHNEP_MASK		(0xf << 27)
 #define TXSTS_QTOP_CHNEP_SHIFT		27
 #define TXSTS_QTOP_TOKEN_MASK		(0x3 << 25)
@@ -704,7 +704,7 @@
 #define HPRT0_CONNSTS			(1 << 0)
 
 #define HCCHAR(_ch)			HSOTG_REG(0x0500 + 0x20 * (_ch))
-#define HCCHAR_CHENA			(1 << 31)
+#define HCCHAR_CHENA			(1u << 31)
 #define HCCHAR_CHDIS			(1 << 30)
 #define HCCHAR_ODDFRM			(1 << 29)
 #define HCCHAR_DEVADDR_MASK		(0x7f << 22)
@@ -721,7 +721,7 @@
 #define HCCHAR_MPS_SHIFT		0
 
 #define HCSPLT(_ch)			HSOTG_REG(0x0504 + 0x20 * (_ch))
-#define HCSPLT_SPLTENA			(1 << 31)
+#define HCSPLT_SPLTENA			(1u << 31)
 #define HCSPLT_COMPSPLT			(1 << 16)
 #define HCSPLT_XACTPOS_MASK		(0x3 << 14)
 #define HCSPLT_XACTPOS_SHIFT		14
@@ -753,7 +753,7 @@
 #define HCINTMSK_XFERCOMPL		(1 << 0)
 
 #define HCTSIZ(_ch)			HSOTG_REG(0x0510 + 0x20 * (_ch))
-#define TSIZ_DOPNG			(1 << 31)
+#define TSIZ_DOPNG			(1u << 31)
 #define TSIZ_SC_MC_PID_MASK		(0x3 << 29)
 #define TSIZ_SC_MC_PID_SHIFT		29
 #define TSIZ_SC_MC_PID_DATA0		0
@@ -790,7 +790,7 @@ struct dwc2_hcd_dma_desc {
 	u32 buf;
 };
 
-#define HOST_DMA_A			(1 << 31)
+#define HOST_DMA_A			(1u << 31)
 #define HOST_DMA_STS_MASK		(0x3 << 28)
 #define HOST_DMA_STS_SHIFT		28
 #define HOST_DMA_STS_PKTERR		(1 << 28)
