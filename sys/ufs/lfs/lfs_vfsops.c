@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.406 2026/09/24 00:08:46 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.407 2026/09/26 04:32:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.406 2026/09/24 00:08:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.407 2026/09/26 04:32:00 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2597,7 +2597,6 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	 * is holding Ifile buffers, so we get each one, to drain them.
 	 * (XXX this could be done better.)
 	 */
-	rw_enter(&fs->lfs_iflock, RW_WRITER);
 	for (i = 0; i < ilast; i++) {
 		/* XXX what to do if bread fails? */
 		bread(ivp, i, lfs_sb_getbsize(fs), 0, &bp);
@@ -2720,9 +2719,6 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	lfs_ci_setclean(fs, cip, lfs_sb_getnclean(fs));
 	lfs_ci_setdirty(fs, cip, lfs_sb_getnseg(fs) - lfs_sb_getnclean(fs));
 	VOP_BWRITE(bp->b_vp, bp);
-
-	/* Let Ifile accesses proceed */
-	rw_exit(&fs->lfs_iflock);
 
     out:
 	lfs_segunlock(fs);

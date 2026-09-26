@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.58 2026/09/23 17:47:52 perseant Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.59 2026/09/26 04:32:00 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -663,11 +663,15 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 #ifdef _KERNEL
 # define SHARE_IFLOCK(F) 						\
   do {									\
-	rw_enter(&(F)->lfs_iflock, RW_READER);				\
+	if (!rw_write_held(&(F)->lfs_iflock)) {				\
+		rw_enter(&(F)->lfs_iflock, RW_READER);			\
+	}								\
   } while(0)
 # define UNSHARE_IFLOCK(F)						\
   do {									\
-	rw_exit(&(F)->lfs_iflock);					\
+	if (!rw_write_held(&(F)->lfs_iflock)) {				\
+		rw_exit(&(F)->lfs_iflock);				\
+	}								\
   } while(0)
 #else /* ! _KERNEL */
 # define SHARE_IFLOCK(F)
@@ -689,17 +693,18 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 			((IN) & (lfs_sb_getsepb(F) - 1)));		\
 	else								\
 		(SP) = (SEGUSE *)(BP)->b_data + ((IN) % lfs_sb_getsepb(F)); \
-	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 #define LFS_WRITESEGENTRY(SP, F, IN, BP) do {				\
 	if (((BP)->b_flags & B_GATHERED) == 0)			 	\
 		(F)->lfs_flags |= LFS_IFDIRTY;				\
 	LFS_BWRITE_LOG(BP);						\
+	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 #define LFS_RELEASESEGENTRY(SP, F, IN, BP) do {				\
 	brelse((BP), 0);						\
+	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 /*
@@ -860,7 +865,6 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 	lfs_sb_getbsize(F), 0, &(BP))) != 0)				\
 		panic("lfs: ifile ino %d read %d", (int)(IN), _e);	\
 	LFS_IENTRY_INBLOCK(IP, F, IN, BP);				\
-	UNSHARE_IFLOCK(F);						\
 } while (0)
 #define LFS_IENTRY_NEXT(IP, F) do { \
 	if ((F)->lfs_is64) {						\
@@ -875,9 +879,11 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 	if (((BP)->b_flags & B_GATHERED) == 0)				\
 		(F)->lfs_flags |= LFS_IFDIRTY;				\
 	LFS_BWRITE_LOG(BP);						\
+	UNSHARE_IFLOCK(F);						\
 } while (0)
 #define LFS_RELEASEIENTRY(IP, F, IN, BP) do {				\
 	brelse((BP), 0);						\
+	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 #define LFS_DEF_IF_ACCESSOR(type, type32, field) \

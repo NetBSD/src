@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.315 2026/09/23 17:47:52 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.316 2026/09/26 04:32:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.315 2026/09/23 17:47:52 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.316 2026/09/26 04:32:00 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1034,14 +1034,6 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		mutex_enter(vp->v_interlock);
 		LIST_FOREACH(bp, &fs->lfs_ivnode->v_dirtyblkhd, b_vnbufs) {
 			if (!(bp->b_flags & B_GATHERED)) {
-				DLOG((DLOG_SU, "ifile dirty lbn 0x%lx"
-					" flags 0x%x"
-					" cflags 0x%x"
-					" oflags 0x%x\n",
-					(long)bp->b_lblkno,
-					bp->b_flags,
-					bp->b_cflags,
-					bp->b_oflags));
 				redo = 1;
 				break;
 			}
@@ -1058,24 +1050,30 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			lfs_sb_setidaddr(fs, 0x0);
 		}
 		++count;
-		if (count > 2) {
-			/*
-			 * XXX This is a kludge.  We are waiting on a
-			 * busy buffer.  We need to wait for whoever
-			 * has it to unbusy it; maybe for it to be
-			 * read from disk.  A one clock tick wait
-			 * should suffice.  Better would be to protect
-			 * Ifile reads with the segment lock, but the
-			 * segment lock would require some
-			 * modification to work well for that.
-			 */
-			kpause("lfsinow", false, 1, NULL);
+		/*
+		 * We might need to gather another block for each
+		 * of the Ifile's segment blocks, if each of the
+		 * Ifile blocks we're overwriting was in a different
+		 * segment before.  More than segtabsz retries, though,
+		 * and we likely will never finish.
+		 */
+		if (count > lfs_sb_getsegtabsz(fs)) {
 #ifdef DEBUG
-			log(LOG_NOTICE, "lfs_writeinode: looping count=%d\n", count);
+			LIST_FOREACH(bp, &fs->lfs_ivnode->v_dirtyblkhd, b_vnbufs) {
+				if (!(bp->b_flags & B_GATHERED)) {
+					printf("ifile dirty lbn 0x%lx"
+						" flags 0x%x"
+						" cflags 0x%x"
+						" oflags 0x%x\n",
+						(long)bp->b_lblkno,
+						bp->b_flags,
+						bp->b_cflags,
+						bp->b_oflags);
+				}
+			}
 #endif /* DEBUG */
-		}
-		if (count > 10)
 			panic("lfs_writeinode: looping");
+		}
 		/* Write the file again, to gather the blocks */
 		lfs_writefile(fs, sp, fs->lfs_ivnode);
 	}
