@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.113 2024/09/11 00:27:54 perseant Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.114 2026/09/26 22:04:55 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.113 2024/09/11 00:27:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.114 2026/09/26 22:04:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,11 +293,13 @@ msdosfs_getattr(void *v)
 		msdosfs_dos2unixtime(dep->de_ADate, 0, 0, pmp->pm_gmtoff,
 		    &vap->va_atime);
 		msdosfs_dos2unixtime(dep->de_CDate, dep->de_CTime, dep->de_CHun,
-		    pmp->pm_gmtoff, &vap->va_ctime);
+		    pmp->pm_gmtoff, &vap->va_birthtime);
 	} else {
 		vap->va_atime = vap->va_mtime;
-		vap->va_ctime = vap->va_mtime;
+		vap->va_birthtime = vap->va_mtime;
 	}
+	/* msdos has no separate attribute change timestamps. */
+	vap->va_ctime = vap->va_mtime;
 	vap->va_flags = 0;
 	if ((dep->de_Attributes & ATTR_ARCHIVE) == 0) {
 		vap->va_flags |= SF_ARCHIVED;
@@ -382,6 +384,9 @@ msdosfs_setattr(void *v)
 		if (vap->va_mtime.tv_sec != VNOVAL)
 			msdosfs_unix2dostime(&vap->va_mtime, pmp->pm_gmtoff,
 			    &dep->de_MDate, &dep->de_MTime, NULL);
+		if (vap->va_birthtime.tv_sec != VNOVAL)
+			msdosfs_unix2dostime(&vap->va_mtime, pmp->pm_gmtoff,
+			    &dep->de_CDate, &dep->de_CTime, &dep->de_CHun);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 		dep->de_flag |= DE_MODIFIED;
 		de_changed = 1;
