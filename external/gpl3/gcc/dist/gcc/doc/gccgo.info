@@ -1,6 +1,6 @@
-This is gccgo.info, produced by makeinfo version 6.5 from gccgo.texi.
+This is gccgo.info, produced by makeinfo version 7.2 from gccgo.texi.
 
-Copyright (C) 2010-2024 Free Software Foundation, Inc.
+Copyright © 2010-2024 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -23,8 +23,7 @@ START-INFO-DIR-ENTRY
 * Gccgo: (gccgo).           A GCC-based compiler for the Go language
 END-INFO-DIR-ENTRY
 
-
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright © 2010-2024 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -49,8 +48,8 @@ File: gccgo.info,  Node: Top,  Next: Copying,  Up: (dir)
 Introduction
 ************
 
-This manual describes how to use 'gccgo', the GNU compiler for the Go
-programming language.  This manual is specifically about 'gccgo'.  For
+This manual describes how to use ‘gccgo’, the GNU compiler for the Go
+programming language.  This manual is specifically about ‘gccgo’.  For
 more information about the Go programming language in general, including
 language specifications and standard package documentation, see
 <https://golang.org/>.
@@ -74,7 +73,7 @@ GNU General Public License
 
                         Version 3, 29 June 2007
 
-     Copyright (C) 2007 Free Software Foundation, Inc. <https://www.fsf.org>
+     Copyright © 2007 Free Software Foundation, Inc. <https://www.fsf.org>
 
      Everyone is permitted to copy and distribute verbatim copies of this
      license document, but changing it is not allowed.
@@ -761,11 +760,11 @@ mail.
 notice like this when it starts in an interactive mode:
 
      PROGRAM Copyright (C) YEAR NAME OF AUTHOR
-     This program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.
+     This program comes with ABSOLUTELY NO WARRANTY; for details type ‘show w’.
      This is free software, and you are welcome to redistribute it
-     under certain conditions; type 'show c' for details.
+     under certain conditions; type ‘show c’ for details.
 
-   The hypothetical commands 'show w' and 'show c' should show the
+   The hypothetical commands ‘show w’ and ‘show c’ should show the
 appropriate parts of the General Public License.  Of course, your
 program's commands might be different; for a GUI interface, you would
 use an "about box".
@@ -790,7 +789,7 @@ GNU Free Documentation License
 
                      Version 1.3, 3 November 2008
 
-     Copyright (C) 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
+     Copyright © 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
      <https://www.fsf.org>
 
      Everyone is permitted to copy and distribute verbatim copies
@@ -799,7 +798,7 @@ GNU Free Documentation License
   0. PREAMBLE
 
      The purpose of this License is to make a manual, textbook, or other
-     functional and useful document "free" in the sense of freedom: to
+     functional and useful document “free” in the sense of freedom: to
      assure everyone the effective freedom to copy and redistribute it,
      with or without modifying it, either commercially or
      noncommercially.  Secondarily, this License preserves for the
@@ -1270,142 +1269,142 @@ File: gccgo.info,  Node: Invoking gccgo,  Next: Import and Export,  Prev: GNU Fr
 1 Invoking gccgo
 ****************
 
-The 'gccgo' command is a frontend to 'gcc' and supports many of the same
+The ‘gccgo’ command is a frontend to ‘gcc’ and supports many of the same
 options.  *Note Option Summary: (gcc)Option Summary.  This manual only
-documents the options specific to 'gccgo'.
+documents the options specific to ‘gccgo’.
 
-   The 'gccgo' command may be used to compile Go source code into an
+   The ‘gccgo’ command may be used to compile Go source code into an
 object file, link a collection of object files together, or do both in
 sequence.
 
    Go source code is compiled as packages.  A package consists of one or
 more Go source files.  All the files in a single package must be
-compiled together, by passing all the files as arguments to 'gccgo'.  A
-single invocation of 'gccgo' may only compile a single package.
+compiled together, by passing all the files as arguments to ‘gccgo’.  A
+single invocation of ‘gccgo’ may only compile a single package.
 
-   One Go package may 'import' a different Go package.  The imported
-package must have already been compiled; 'gccgo' will read the import
+   One Go package may ‘import’ a different Go package.  The imported
+package must have already been compiled; ‘gccgo’ will read the import
 data directly from the compiled package.  When this package is later
 linked, the compiled form of the package must be included in the link
 command.
 
    Go programs must generally be compiled with debugging information,
-and '-g1' is the default as described below.  Stripping a Go program
+and ‘-g1’ is the default as described below.  Stripping a Go program
 will generally cause it to misbehave or fail.
 
-'-IDIR'
+‘-IDIR’
      Specify a directory to use when searching for an import package at
      compile time.
 
-'-LDIR'
-     When linking, specify a library search directory, as with 'gcc'.
+‘-LDIR’
+     When linking, specify a library search directory, as with ‘gcc’.
 
-'-fgo-pkgpath=STRING'
+‘-fgo-pkgpath=STRING’
      Set the package path to use.  This sets the value returned by the
      PkgPath method of reflect.Type objects.  It is also used for the
      names of globally visible symbols.  The argument to this option
      should normally be the string that will be used to import this
      package after it has been installed; in other words, a pathname
-     within the directories specified by the '-I' option.
+     within the directories specified by the ‘-I’ option.
 
-'-fgo-prefix=STRING'
-     An alternative to '-fgo-pkgpath'.  The argument will be combined
+‘-fgo-prefix=STRING’
+     An alternative to ‘-fgo-pkgpath’.  The argument will be combined
      with the package name from the source file to produce the package
-     path.  If '-fgo-pkgpath' is used, '-fgo-prefix' will be ignored.
+     path.  If ‘-fgo-pkgpath’ is used, ‘-fgo-prefix’ will be ignored.
 
      Go permits a single program to include more than one package with
-     the same name in the 'package' clause in the source file, though
+     the same name in the ‘package’ clause in the source file, though
      obviously the two packages must be imported using different
-     pathnames.  In order for this to work with 'gccgo', either
-     '-fgo-pkgpath' or '-fgo-prefix' must be specified when compiling a
+     pathnames.  In order for this to work with ‘gccgo’, either
+     ‘-fgo-pkgpath’ or ‘-fgo-prefix’ must be specified when compiling a
      package.
 
-     Using either '-fgo-pkgpath' or '-fgo-prefix' disables the special
-     treatment of the 'main' package and permits that package to be
+     Using either ‘-fgo-pkgpath’ or ‘-fgo-prefix’ disables the special
+     treatment of the ‘main’ package and permits that package to be
      imported like any other.
 
-'-fgo-relative-import-path=DIR'
-     A relative import is an import that starts with './' or '../'.  If
-     this option is used, 'gccgo' will use DIR as a prefix for the
+‘-fgo-relative-import-path=DIR’
+     A relative import is an import that starts with ‘./’ or ‘../’.  If
+     this option is used, ‘gccgo’ will use DIR as a prefix for the
      relative import when searching for it.
 
-'-frequire-return-statement'
-'-fno-require-return-statement'
-     By default 'gccgo' will warn about functions which have one or more
-     return parameters but lack an explicit 'return' statement.  This
-     warning may be disabled using '-fno-require-return-statement'.
+‘-frequire-return-statement’
+‘-fno-require-return-statement’
+     By default ‘gccgo’ will warn about functions which have one or more
+     return parameters but lack an explicit ‘return’ statement.  This
+     warning may be disabled using ‘-fno-require-return-statement’.
 
-'-fgo-check-divide-zero'
+‘-fgo-check-divide-zero’
      Add explicit checks for division by zero.  In Go a division (or
      modulos) by zero causes a panic.  On Unix systems this is detected
-     in the runtime by catching the 'SIGFPE' signal.  Some processors,
+     in the runtime by catching the ‘SIGFPE’ signal.  Some processors,
      such as PowerPC, do not generate a SIGFPE on division by zero.
      Some runtimes do not generate a signal that can be caught.  On
      those systems, this option may be used.  Or the checks may be
-     removed via '-fno-go-check-divide-zero'.  This option is currently
+     removed via ‘-fno-go-check-divide-zero’.  This option is currently
      on by default, but in the future may be off by default on systems
      that do not require it.
 
-'-fgo-check-divide-overflow'
+‘-fgo-check-divide-overflow’
      Add explicit checks for division overflow.  For example, division
-     overflow occurs when computing 'INT_MIN / -1'.  In Go this should
-     be wrapped, to produce 'INT_MIN'.  Some processors, such as x86,
+     overflow occurs when computing ‘INT_MIN / -1’.  In Go this should
+     be wrapped, to produce ‘INT_MIN’.  Some processors, such as x86,
      generate a trap on division overflow.  On those systems, this
      option may be used.  Or the checks may be removed via
-     '-fno-go-check-divide-overflow'.  This option is currently on by
+     ‘-fno-go-check-divide-overflow’.  This option is currently on by
      default, but in the future may be off by default on systems that do
      not require it.
 
-'-fno-go-optimize-allocs'
+‘-fno-go-optimize-allocs’
      Disable escape analysis, which tries to allocate objects on the
      stack rather than the heap.
 
-'-fgo-debug-escapeN'
+‘-fgo-debug-escapeN’
      Output escape analysis debugging information.  Larger values of N
      generate more information.
 
-'-fgo-debug-escape-hash=N'
+‘-fgo-debug-escape-hash=N’
      A hash value to debug escape analysis.  N is a binary string.  This
      runs escape analysis only on functions whose names hash to values
      that match the given suffix N.  This can be used to binary search
      across functions to uncover escape analysis bugs.
 
-'-fgo-debug-optimization'
+‘-fgo-debug-optimization’
      Output optimization diagnostics.
 
-'-fgo-c-header=FILE'
+‘-fgo-c-header=FILE’
      Write top-level named Go struct definitions to FILE as C code.
      This is used when compiling the runtime package.
 
-'-fgo-compiling-runtime'
+‘-fgo-compiling-runtime’
      Apply special rules for compiling the runtime package.  Implicit
      memory allocation is forbidden.  Some additional compiler
      directives are supported.
 
-'-fgo-embedcfg=FILE'
+‘-fgo-embedcfg=FILE’
      Identify a JSON file used to map patterns used with special
-     '//go:embed' comments to the files named by the patterns.  The JSON
-     file should have two components: 'Patterns' maps each pattern to a
-     list of file names, and 'Files' maps each file name to a full path
-     to the file.  This option is intended for use by the 'go' command
-     to implement '//go:embed'.
+     ‘//go:embed’ comments to the files named by the patterns.  The JSON
+     file should have two components: ‘Patterns’ maps each pattern to a
+     list of file names, and ‘Files’ maps each file name to a full path
+     to the file.  This option is intended for use by the ‘go’ command
+     to implement ‘//go:embed’.
 
-'-fgo-importcfg=FILE'
+‘-fgo-importcfg=FILE’
      Identify a file that provides mappings for import package paths
      found in the Go source files.  The file can contain two commands:
-     'importpath' to rename import paths for vendoring and 'packagefile'
+     ‘importpath’ to rename import paths for vendoring and ‘packagefile’
      to map from package path to files containing export data.  This
-     option is intended for use by the 'go' command.
+     option is intended for use by the ‘go’ command.
 
-'-g'
-     This is the standard 'gcc' option (*note Debugging Options:
+‘-g’
+     This is the standard ‘gcc’ option (*note Debugging Options:
      (gcc)Debugging Options.).  It is mentioned here because by default
-     'gccgo' turns on debugging information generation with the
-     equivalent of the standard option '-g1'.  This is because Go
+     ‘gccgo’ turns on debugging information generation with the
+     equivalent of the standard option ‘-g1’.  This is because Go
      programs require debugging information to be available in order to
-     get backtrace information.  An explicit '-g0' may be used to
+     get backtrace information.  An explicit ‘-g0’ may be used to
      disable the generation of debugging information, in which case
-     certain standard library functions, such as 'runtime.Callers', will
+     certain standard library functions, such as ‘runtime.Callers’, will
      not operate correctly.
 
 
@@ -1414,38 +1413,38 @@ File: gccgo.info,  Node: Import and Export,  Next: Compiler Directives,  Prev: I
 2 Import and Export
 *******************
 
-When 'gccgo' compiles a package which exports anything, the export
+When ‘gccgo’ compiles a package which exports anything, the export
 information will be stored directly in the object file.  When a package
-is imported, 'gccgo' must be able to find the file.
+is imported, ‘gccgo’ must be able to find the file.
 
-   When Go code imports the package 'GOPACKAGE', 'gccgo' will look for
+   When Go code imports the package ‘GOPACKAGE’, ‘gccgo’ will look for
 the import data using the following filenames, using the first one that
 it finds.
 
-'GOPACKAGE.gox'
-'libGOPACKAGE.so'
-'libGOPACKAGE.a'
-'GOPACKAGE.o'
+‘GOPACKAGE.gox’
+‘libGOPACKAGE.so’
+‘libGOPACKAGE.a’
+‘GOPACKAGE.o’
 
    The compiler will search for these files in the directories named by
-any '-I' options, in order in which the directories appear on the
+any ‘-I’ options, in order in which the directories appear on the
 command line.  The compiler will then search several standard system
 directories.  Finally the compiler will search the current directory (to
-search the current directory earlier, use '-I.').
+search the current directory earlier, use ‘-I.’).
 
    The compiler will extract the export information directly from the
-compiled object file.  The file 'GOPACKAGE.gox' will typically contain
-nothing but export data.  This can be generated from 'GOPACKAGE.o' via
+compiled object file.  The file ‘GOPACKAGE.gox’ will typically contain
+nothing but export data.  This can be generated from ‘GOPACKAGE.o’ via
 
      objcopy -j .go_export GOPACKAGE.o GOPACKAGE.gox
 
    For example, it may be desirable to extract the export information
-from several different packages into their independent 'GOPACKAGE.gox'
+from several different packages into their independent ‘GOPACKAGE.gox’
 files, and then to combine the different package object files together
 into a single shared library or archive.
 
-   At link time you must explicitly tell 'gccgo' which files to link
-together into the executable, as is usual with 'gcc'.  This is different
+   At link time you must explicitly tell ‘gccgo’ which files to link
+together into the executable, as is usual with ‘gcc’.  This is different
 from the behavior of other Go compilers.
 
 
@@ -1455,27 +1454,27 @@ File: gccgo.info,  Node: Compiler Directives,  Next: C Interoperability,  Prev: 
 *********************
 
 The Go compiler supports a few compiler directives.  A compiler
-directive uses a '//' comment at the start of a line.  There must be no
-space between the '//' and the name of the directive.
+directive uses a ‘//’ comment at the start of a line.  There must be no
+space between the ‘//’ and the name of the directive.
 
-'//line FILE:LINE'
-     The '//line' directive specifies that the source line that follows
+‘//line FILE:LINE’
+     The ‘//line’ directive specifies that the source line that follows
      should be recorded as having come from the given file path and line
      number.  Successive lines are recorded using increasing line
      numbers, until the next directive.  This directive typically
      appears in machine-generated code, so that compilers and debuggers
      will show lines in the original input to the generator.
 
-'//extern EXTERN_NAME'
-     The 'extern' directive sets the externally visible name of the next
+‘//extern EXTERN_NAME’
+     The ‘extern’ directive sets the externally visible name of the next
      function declaration.  See *note Function Names::.
 
-'//go:compile GO_NAME EXTERN_NAME'
-     The 'go:compile' directives sets the externally visible name of a
+‘//go:compile GO_NAME EXTERN_NAME’
+     The ‘go:compile’ directives sets the externally visible name of a
      function definition or declaration.  See *note Function Names::.
 
-'//go:noescape'
-     The '//go:noescape' directive specifies that the next declaration
+‘//go:noescape’
+     The ‘//go:noescape’ directive specifies that the next declaration
      in the file, which must be a func without a body (meaning that it
      has an implementation not written in Go) does not allow any of the
      pointers passed as arguments to escape into the heap or into the
@@ -1483,14 +1482,14 @@ space between the '//' and the name of the directive.
      during the compiler's escape analysis of Go code calling the
      function.
 
-'//go:nosplit'
-     The '//go:nosplit' directive specifies that the next function
+‘//go:nosplit’
+     The ‘//go:nosplit’ directive specifies that the next function
      declared in the file must not include a stack overflow check.  This
      is most commonly used by low-level runtime sources invoked at times
      when it is unsafe for the calling goroutine to be preempted.
 
-'//go:noinline'
-     The '//go:noinline' directive specifies that the next function
+‘//go:noinline’
+     The ‘//go:noinline’ directive specifies that the next function
      defined in the file may not be inlined.
 
 
@@ -1499,12 +1498,12 @@ File: gccgo.info,  Node: C Interoperability,  Next: Index,  Prev: Compiler Direc
 4 C Interoperability
 ********************
 
-When using 'gccgo' there is limited interoperability with C, or with C++
-code compiled using 'extern "C"'.
+When using ‘gccgo’ there is limited interoperability with C, or with C++
+code compiled using ‘extern "C"’.
 
    This information is provided largely for documentation purposes.  For
 ordinary use it is best to build programs with the go tool and then use
-'import "C"', as described at <https://golang.org/cmd/cgo>.
+‘import "C"’, as described at <https://golang.org/cmd/cgo>.
 
 * Menu:
 
@@ -1517,12 +1516,12 @@ File: gccgo.info,  Node: C Type Interoperability,  Next: Function Names,  Up: C 
 4.1 C Type Interoperability
 ===========================
 
-Basic types map directly: an 'int' in Go is an 'int' in C, etc.  Go
-'byte' is equivalent to C 'unsigned char'.  Pointers in Go are pointers
-in C. A Go 'struct' is the same as C 'struct' with the same field names
+Basic types map directly: an ‘int’ in Go is an ‘int’ in C, etc.  Go
+‘byte’ is equivalent to C ‘unsigned char’.  Pointers in Go are pointers
+in C. A Go ‘struct’ is the same as C ‘struct’ with the same field names
 and types.
 
-   The Go 'string' type is currently defined as a two-element structure:
+   The Go ‘string’ type is currently defined as a two-element structure:
 
      struct __go_string {
        const unsigned char *__data;
@@ -1531,7 +1530,7 @@ and types.
 
    You can't pass arrays between C and Go.  However, a pointer to an
 array in Go is equivalent to a C pointer to the equivalent of the
-element type.  For example, Go '*[10]int' is equivalent to C 'int*',
+element type.  For example, Go ‘*[10]int’ is equivalent to C ‘int*’,
 assuming that the C pointer does point to 10 elements.
 
    A slice in Go is a structure.  The current definition is:
@@ -1553,13 +1552,13 @@ example, these functions have equivalent types:
    A pointer to a Go function is equivalent to a pointer to a C function
 when the functions have equivalent types.
 
-   Go 'interface', 'channel', and 'map' types have no corresponding C
-type ('interface' is a two-element struct and 'channel' and 'map' are
+   Go ‘interface’, ‘channel’, and ‘map’ types have no corresponding C
+type (‘interface’ is a two-element struct and ‘channel’ and ‘map’ are
 pointers to structs in C, but the structs are deliberately
-undocumented).  C 'enum' types correspond to some integer type, but
+undocumented).  C ‘enum’ types correspond to some integer type, but
 precisely which one is difficult to predict in general; use a cast.  C
-'union' types have no corresponding Go type.  C 'struct' types
-containing bitfields have no corresponding Go type.  C++ 'class' types
+‘union’ types have no corresponding Go type.  C ‘struct’ types
+containing bitfields have no corresponding Go type.  C++ ‘class’ types
 have no corresponding Go type.
 
    Memory allocation is completely different between C and Go, as Go
@@ -1579,43 +1578,43 @@ File: gccgo.info,  Node: Function Names,  Prev: C Type Interoperability,  Up: C 
 4.2 Function Names
 ==================
 
-Go code can call C functions directly using the '//extern' or
-'//go:linkname' compiler directives.  An '//extern' directive must be at
-the beginning of the line and must start with '//extern'.  This must be
+Go code can call C functions directly using the ‘//extern’ or
+‘//go:linkname’ compiler directives.  An ‘//extern’ directive must be at
+the beginning of the line and must start with ‘//extern’.  This must be
 followed by a space and then the external name of the function.  The
 function declaration must be on the line immediately after the comment.
-For example, here is how the C function 'open' can be declared in Go:
+For example, here is how the C function ‘open’ can be declared in Go:
 
      //extern open
      func c_open(name *byte, mode int, perm int) int
 
-   You can do the same thing using the '//go:linkname' compiler
-directive.  The '//go:linkname' directive must be at the start of the
+   You can do the same thing using the ‘//go:linkname’ compiler
+directive.  The ‘//go:linkname’ directive must be at the start of the
 line.  It is followed by whitespace, the name of the Go function, more
-whitespace, and the external name of the function.  Unlike '//extern',
-'//go:linkname' does not need to appear immediately adjacent to the
+whitespace, and the external name of the function.  Unlike ‘//extern’,
+‘//go:linkname’ does not need to appear immediately adjacent to the
 function definition or declaration.
 
      //go:linkname c_open open
      func c_open(name *byte, mode int, perm int) int
 
    The C function naturally expects a nul terminated string, which in Go
-is equivalent to a pointer to an array (not a slice!)  of 'byte' with a
+is equivalent to a pointer to an array (not a slice!)  of ‘byte’ with a
 terminating zero byte.  So a sample call from Go would look like (after
-importing the 'os' package):
+importing the ‘os’ package):
 
      var name = [4]byte{'f', 'o', 'o', 0};
      i := c_open(&name[0], os.O_RDONLY, 0);
 
    Note that this serves as an example only.  To open a file in Go
-please use Go's 'os.Open' function instead.
+please use Go's ‘os.Open’ function instead.
 
    The name of Go functions accessed from C is subject to change.  At
 present the name of a Go function that does not have a receiver is
-'pkgpath.Functionname'.  The PKGPATH is set by the '-fgo-pkgpath' option
+‘pkgpath.Functionname’.  The PKGPATH is set by the ‘-fgo-pkgpath’ option
 used when the package is compiled; if the option is not used, the
-default is 'go.PACKAGENAME'.  To call the function from C you must set
-the name using the 'gcc' '__asm__' extension.
+default is ‘go.PACKAGENAME’.  To call the function from C you must set
+the name using the ‘gcc’ ‘__asm__’ extension.
 
      extern int go_function(int) __asm__ ("mypkgpath.Function");
 
@@ -1659,18 +1658,22 @@ Index
 * string in C:                           C Type Interoperability.
                                                               (line  11)
 
-
 
 Tag Table:
-Node: Top1688
-Node: Copying2548
-Node: GNU Free Documentation License40087
-Node: Invoking gccgo65220
-Node: Import and Export71758
-Node: Compiler Directives73354
-Node: C Interoperability75338
-Node: C Type Interoperability75925
-Node: Function Names78484
-Node: Index80488
+Node: Top1685
+Node: Copying2553
+Node: GNU Free Documentation License40107
+Node: Invoking gccgo65243
+Node: Import and Export72033
+Node: Compiler Directives73689
+Node: C Interoperability75729
+Node: C Type Interoperability76328
+Node: Function Names78963
+Node: Index81035
 
 End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:

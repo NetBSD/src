@@ -421,9 +421,9 @@ force_expand_binop (machine_mode mode, optab binoptab,
   return true;
 }
 
-/* Create a new vector value in VMODE with all elements set to OP.  The
-   mode of OP must be the element mode of VMODE.  If OP is a constant,
-   then the return value will be a constant.  */
+/* Create a new vector value in VMODE with all elements set to OP.  If OP
+   is not a constant, the mode of it must be the element mode of VMODE.
+   If OP is a constant, then the return value will be a constant.  */
 
 rtx
 expand_vector_broadcast (machine_mode vmode, rtx op)
@@ -1368,8 +1368,7 @@ avoid_expensive_constant (machine_mode mode, optab binoptab,
 static rtx
 expand_binop_directly (enum insn_code icode, machine_mode mode, optab binoptab,
 		       rtx op0, rtx op1,
-		       rtx target, int unsignedp, enum optab_methods methods,
-		       rtx_insn *last)
+		       rtx target, int unsignedp, enum optab_methods methods)
 {
   machine_mode xmode0 = insn_data[(int) icode].operand[1].mode;
   machine_mode xmode1 = insn_data[(int) icode].operand[2].mode;
@@ -1379,6 +1378,7 @@ expand_binop_directly (enum insn_code icode, machine_mode mode, optab binoptab,
   rtx_insn *pat;
   rtx xop0 = op0, xop1 = op1;
   bool canonicalize_op1 = false;
+  rtx_insn *last = get_last_insn ();
 
   /* If it is a commutative operator and the modes would match
      if we would swap the operands, we can save the conversions.  */
@@ -1443,10 +1443,7 @@ expand_binop_directly (enum insn_code icode, machine_mode mode, optab binoptab,
       tmp_mode = insn_data[(int) icode].operand[0].mode;
       if (VECTOR_MODE_P (mode)
 	  && maybe_ne (GET_MODE_NUNITS (tmp_mode), 2 * GET_MODE_NUNITS (mode)))
-	{
-	  delete_insns_since (last);
-	  return NULL_RTX;
-	}
+	return NULL_RTX;
     }
   else
     tmp_mode = mode;
@@ -1466,14 +1463,14 @@ expand_binop_directly (enum insn_code icode, machine_mode mode, optab binoptab,
 			       ops[1].value, ops[2].value, mode0))
 	{
 	  delete_insns_since (last);
-	  return expand_binop (mode, binoptab, op0, op1, NULL_RTX,
-			       unsignedp, methods);
+	  return expand_binop_directly (icode, mode, binoptab, op0, op1,
+					NULL_RTX, unsignedp, methods);
 	}
 
       emit_insn (pat);
       return ops[0].value;
     }
-  delete_insns_since (last);
+
   return NULL_RTX;
 }
 
@@ -1542,9 +1539,10 @@ expand_binop (machine_mode mode, optab binoptab, rtx op0, rtx op1,
       if (icode != CODE_FOR_nothing)
 	{
 	  temp = expand_binop_directly (icode, mode, binoptab, op0, op1,
-					target, unsignedp, methods, last);
+					target, unsignedp, methods);
 	  if (temp)
 	    return temp;
+	  delete_insns_since (last);
 	}
     }
 
@@ -1570,9 +1568,10 @@ expand_binop (machine_mode mode, optab binoptab, rtx op0, rtx op1,
 			       NULL_RTX, unsignedp, OPTAB_DIRECT);
 
       temp = expand_binop_directly (icode, int_mode, otheroptab, op0, newop1,
-				    target, unsignedp, methods, last);
+				    target, unsignedp, methods);
       if (temp)
 	return temp;
+      delete_insns_since (last);
     }
 
   /* If this is a multiply, see if we can do a widening operation that
@@ -1623,22 +1622,33 @@ expand_binop (machine_mode mode, optab binoptab, rtx op0, rtx op1,
       if (otheroptab
 	  && (icode = optab_handler (otheroptab, mode)) != CODE_FOR_nothing)
 	{
-	  /* The scalar may have been extended to be too wide.  Truncate
-	     it back to the proper size to fit in the broadcast vector.  */
+	  /* The scalar may be wider or narrower than the vector element.
+	     Truncate or extend it to the proper size to fit in the
+	     broadcast vector.  */
 	  scalar_mode inner_mode = GET_MODE_INNER (mode);
-	  if (!CONST_INT_P (op1)
-	      && (GET_MODE_BITSIZE (as_a <scalar_int_mode> (GET_MODE (op1)))
-		  > GET_MODE_BITSIZE (inner_mode)))
-	    op1 = force_reg (inner_mode,
-			     simplify_gen_unary (TRUNCATE, inner_mode, op1,
-						 GET_MODE (op1)));
+	  if (!CONST_INT_P (op1))
+	    {
+	      auto mode1 = as_a <scalar_int_mode> (GET_MODE (op1));
+	      int size1 = GET_MODE_BITSIZE (mode1);
+	      int inner_size = GET_MODE_BITSIZE (inner_mode);
+
+	      if (size1 != inner_size)
+		{
+		  auto unary = size1 > inner_size ? TRUNCATE : ZERO_EXTEND;
+		  op1 = force_reg (inner_mode,
+				   simplify_gen_unary (unary, inner_mode,
+						       op1, mode1));
+		}
+	    }
+
 	  rtx vop1 = expand_vector_broadcast (mode, op1);
 	  if (vop1)
 	    {
 	      temp = expand_binop_directly (icode, mode, otheroptab, op0, vop1,
-					    target, unsignedp, methods, last);
+					    target, unsignedp, methods);
 	      if (temp)
 		return temp;
+	      delete_insns_since (last);
 	    }
 	}
     }

@@ -14270,6 +14270,8 @@ lower_omp_regimplify_operands_p (tree *tp, int *walk_subtrees,
       lower_omp_regimplify_operands_data *ldata
 	= (lower_omp_regimplify_operands_data *) wi->info;
       tree o = maybe_lookup_decl (t, ldata->ctx);
+      if (o == NULL_TREE)
+	o = maybe_lookup_decl_in_outer_ctx (t, ldata->ctx);
       if (o != t)
 	{
 	  ldata->decls->safe_push (DECL_VALUE_EXPR (*tp));
@@ -14927,6 +14929,19 @@ diagnose_sb_2 (gimple_stmt_iterator *gsi_p, bool *handled_ops_p,
 	for (i = 0; i < gimple_switch_num_labels (switch_stmt); ++i)
 	  {
 	    tree lab = CASE_LABEL (gimple_switch_label (switch_stmt, i));
+	    n = splay_tree_lookup (all_labels, (splay_tree_key) lab);
+	    if (n && diagnose_sb_0 (gsi_p, context, (gimple *) n->value))
+	      break;
+	  }
+      }
+      break;
+
+    case GIMPLE_ASM:
+      {
+	gasm *asm_stmt = as_a <gasm *> (stmt);
+	for (unsigned i = 0; i < gimple_asm_nlabels (asm_stmt); ++i)
+	  {
+	    tree lab = TREE_VALUE (gimple_asm_label_op (asm_stmt, i));
 	    n = splay_tree_lookup (all_labels, (splay_tree_key) lab);
 	    if (n && diagnose_sb_0 (gsi_p, context, (gimple *) n->value))
 	      break;

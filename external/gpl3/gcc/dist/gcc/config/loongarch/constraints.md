@@ -365,3 +365,12 @@
    and offset that is suitable for use in instructions with the same
    addressing mode as @code{preld}."
    (match_test "loongarch_12bit_offset_address_p (op, mode)"))
+
+(define_constraint "ZE"
+  "A symbolic suitable as stack canary in the normal/medium code model."
+  (match_operand 0 "ssp_normal_operand"))
+
+(define_constraint "ZF"
+  "A symbolic suitable as stack canary, but in the extreme code model."
+  (and (match_operand 0 "ssp_operand")
+       (not (match_operand 0 "ssp_normal_operand"))))

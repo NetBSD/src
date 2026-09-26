@@ -235,13 +235,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       atomic& operator=(const atomic&) = delete;
       atomic& operator=(const atomic&) volatile = delete;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++14-extensions" // constexpr ctor body
       constexpr atomic(_Tp __i) noexcept : _M_i(__i)
       {
-#if __cplusplus >= 201402L && __has_builtin(__builtin_clear_padding)
+#if __has_builtin(__builtin_clear_padding)
 	if _GLIBCXX17_CONSTEXPR (__atomic_impl::__maybe_has_padding<_Tp>())
-	  __builtin_clear_padding(std::__addressof(_M_i));
+	  if (!std::__is_constant_evaluated())
+	    __builtin_clear_padding(std::__addressof(_M_i));
 #endif
       }
+#pragma GCC diagnostic pop
 
       operator _Tp() const noexcept
       { return load(); }
@@ -395,21 +399,20 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       void
       wait(_Tp __old, memory_order __m = memory_order_seq_cst) const noexcept
       {
-	std::__atomic_wait_address_v(&_M_i, __old,
-			   [__m, this] { return this->load(__m); });
+	std::__atomic_wait_address_v(std::addressof(_M_i), __old,
+				     [__m, this] { return this->load(__m); });
       }
 
       // TODO add const volatile overload
 
       void
       notify_one() noexcept
-      { std::__atomic_notify_address(&_M_i, false); }
+      { std::__atomic_notify_address(std::addressof(_M_i), false); }
 
       void
       notify_all() noexcept
-      { std::__atomic_notify_address(&_M_i, true); }
+      { std::__atomic_notify_address(std::addressof(_M_i), true); }
 #endif // __cpp_lib_atomic_wait
-
     };
 #undef _GLIBCXX20_INIT
 
@@ -450,7 +453,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator++(int) noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b++;
       }
@@ -459,7 +462,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator++(int) volatile noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b++;
       }
@@ -468,7 +471,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator--(int) noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b--;
       }
@@ -477,7 +480,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator--(int) volatile noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b--;
       }
@@ -486,7 +489,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator++() noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return ++_M_b;
       }
@@ -495,7 +498,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator++() volatile noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return ++_M_b;
       }
@@ -504,7 +507,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator--() noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return --_M_b;
       }
@@ -513,7 +516,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator--() volatile noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return --_M_b;
       }
@@ -522,7 +525,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator+=(ptrdiff_t __d) noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b.operator+=(__d);
       }
@@ -531,7 +534,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator+=(ptrdiff_t __d) volatile noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b.operator+=(__d);
       }
@@ -540,7 +543,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator-=(ptrdiff_t __d) noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b.operator-=(__d);
       }
@@ -549,7 +552,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator-=(ptrdiff_t __d) volatile noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b.operator-=(__d);
       }
@@ -670,7 +673,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		memory_order __m = memory_order_seq_cst) noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b.fetch_add(__d, __m);
       }
@@ -680,7 +683,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		memory_order __m = memory_order_seq_cst) volatile noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b.fetch_add(__d, __m);
       }
@@ -690,7 +693,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		memory_order __m = memory_order_seq_cst) noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b.fetch_sub(__d, __m);
       }
@@ -700,7 +703,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		memory_order __m = memory_order_seq_cst) volatile noexcept
       {
 #if __cplusplus >= 201703L
-	static_assert( is_object<_Tp>::value, "pointer to object type" );
+	static_assert( is_object_v<_Tp>, "pointer to object type" );
 #endif
 	return _M_b.fetch_sub(__d, __m);
       }

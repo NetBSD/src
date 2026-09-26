@@ -850,7 +850,7 @@ get_string_length (strinfo *si)
      attempt to compute the length from the call statement.  */
   if (si->stmt)
     {
-      gimple *stmt = si->stmt, *lenstmt;
+      gimple *stmt = si->stmt, *lenstmt = NULL, *g;
       tree callee, lhs, fn, tem;
       location_t loc;
       gimple_stmt_iterator gsi;
@@ -885,11 +885,11 @@ get_string_length (strinfo *si)
               lhs = force_gimple_operand_gsi (&gsi, lhs, true, NULL_TREE,
                                               true, GSI_SAME_STMT);
             }
-	  lenstmt = gimple_build_assign
+	  g = gimple_build_assign
 			(make_ssa_name (TREE_TYPE (gimple_call_arg (stmt, 0))),
 			 POINTER_PLUS_EXPR,tem, lhs);
-	  gsi_insert_before (&gsi, lenstmt, GSI_SAME_STMT);
-	  gimple_call_set_arg (stmt, 0, gimple_assign_lhs (lenstmt));
+	  gsi_insert_before (&gsi, g, GSI_SAME_STMT);
+	  gimple_call_set_arg (stmt, 0, gimple_assign_lhs (g));
 	  lhs = NULL_TREE;
 	  /* FALLTHRU */
 	case BUILT_IN_STRCPY:
@@ -908,6 +908,17 @@ get_string_length (strinfo *si)
 	  gimple_call_set_fndecl (stmt, fn);
 	  lhs = make_ssa_name (TREE_TYPE (TREE_TYPE (fn)), stmt);
 	  gimple_call_set_lhs (stmt, lhs);
+	  if (DECL_FUNCTION_CODE (callee) == BUILT_IN_STRCAT_CHK)
+	    {
+	      tree objsz = gimple_call_lhs (lenstmt);
+	      gimple *g
+		= gimple_build_assign (make_ssa_name (TREE_TYPE (objsz)),
+				       MINUS_EXPR, gimple_call_arg (stmt, 2),
+				       objsz);
+	      gimple_set_location (g, gimple_location (stmt));
+	      gsi_insert_before (&gsi, g, GSI_SAME_STMT);
+	      gimple_call_set_arg (stmt, 2, gimple_assign_lhs (g));
+	    }
 	  update_stmt (stmt);
 	  if (dump_file && (dump_flags & TDF_DETAILS) != 0)
 	    {
@@ -4011,8 +4022,16 @@ strlen_pass::handle_builtin_memcmp ()
 	  tree ptrtype = build_pointer_type_for_mode (char_type_node,
 						      ptr_mode, true);
 	  off = build_int_cst (ptrtype, 0);
-	  arg1 = build2_loc (loc, MEM_REF, type, arg1, off);
-	  arg2 = build2_loc (loc, MEM_REF, type, arg2, off);
+
+	  /* Create unaligned types if needed. */
+	  tree type1 = type, type2 = type;
+	  if (TYPE_ALIGN (type1) > align1)
+	    type1 = build_aligned_type (type1, align1);
+	  if (TYPE_ALIGN (type2) > align2)
+	    type2 = build_aligned_type (type2, align2);
+
+	  arg1 = build2_loc (loc, MEM_REF, type1, arg1, off);
+	  arg2 = build2_loc (loc, MEM_REF, type2, arg2, off);
 	  tree tem1 = fold_const_aggregate_ref (arg1);
 	  if (tem1)
 	    arg1 = tem1;

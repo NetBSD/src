@@ -1,7 +1,7 @@
-This is libquadmath.info, produced by makeinfo version 6.5 from
+This is libquadmath.info, produced by makeinfo version 7.2 from
 libquadmath.texi.
 
-Copyright (C) 2010-2024 Free Software Foundation, Inc.
+Copyright © 2010-2024 Free Software Foundation, Inc.
 
      Permission is granted to copy, distribute and/or modify this
      document under the terms of the GNU Free Documentation License,
@@ -23,7 +23,7 @@ END-INFO-DIR-ENTRY
    Published by the Free Software Foundation 51 Franklin Street, Fifth
 Floor Boston, MA 02110-1301 USA
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright © 2010-2024 Free Software Foundation, Inc.
 
      Permission is granted to copy, distribute and/or modify this
      document under the terms of the GNU Free Documentation License,
@@ -62,41 +62,41 @@ File: libquadmath.info,  Node: Typedef and constants,  Next: Math Library Routin
 1 Typedef and constants
 ***********************
 
-The following data type has been defined via 'typedef'.
+The following data type has been defined via ‘typedef’.
 
-'__complex128': '__float128'-based complex number
+‘__complex128’: ‘__float128’-based complex number
 
    The following macros are defined, which give the numeric limits of
-the '__float128' data type.
+the ‘__float128’ data type.
 
-'FLT128_MAX': largest finite number
-'FLT128_MIN': smallest positive number with full precision
-'FLT128_EPSILON': difference between 1 and the next larger
+‘FLT128_MAX’: largest finite number
+‘FLT128_MIN’: smallest positive number with full precision
+‘FLT128_EPSILON’: difference between 1 and the next larger
      representable number
-'FLT128_DENORM_MIN': smallest positive denormalized number
-'FLT128_MANT_DIG': number of digits in the mantissa (bit precision)
-'FLT128_MIN_EXP': maximal negative exponent
-'FLT128_MAX_EXP': maximal positive exponent
-'FLT128_DIG': number of decimal digits in the mantissa
-'FLT128_MIN_10_EXP': maximal negative decimal exponent
-'FLT128_MAX_10_EXP': maximal positive decimal exponent
+‘FLT128_DENORM_MIN’: smallest positive denormalized number
+‘FLT128_MANT_DIG’: number of digits in the mantissa (bit precision)
+‘FLT128_MIN_EXP’: maximal negative exponent
+‘FLT128_MAX_EXP’: maximal positive exponent
+‘FLT128_DIG’: number of decimal digits in the mantissa
+‘FLT128_MIN_10_EXP’: maximal negative decimal exponent
+‘FLT128_MAX_10_EXP’: maximal positive decimal exponent
 
-   The following mathematical constants of type '__float128' are
+   The following mathematical constants of type ‘__float128’ are
 defined.
 
-'M_Eq': the constant e (Euler's number)
-'M_LOG2Eq': binary logarithm of 2
-'M_LOG10Eq': common, decimal logarithm of 2
-'M_LN2q': natural logarithm of 2
-'M_LN10q': natural logarithm of 10
-'M_PIq': pi
-'M_PI_2q': pi divided by two
-'M_PI_4q': pi divided by four
-'M_1_PIq': one over pi
-'M_2_PIq': one over two pi
-'M_2_SQRTPIq': two over square root of pi
-'M_SQRT2q': square root of 2
-'M_SQRT1_2q': one over square root of 2
+‘M_Eq’: the constant e (Euler's number)
+‘M_LOG2Eq’: binary logarithm of 2
+‘M_LOG10Eq’: common, decimal logarithm of 2
+‘M_LN2q’: natural logarithm of 2
+‘M_LN10q’: natural logarithm of 10
+‘M_PIq’: pi
+‘M_PI_2q’: pi divided by two
+‘M_PI_4q’: pi divided by four
+‘M_1_PIq’: one over pi
+‘M_2_PIq’: one over two pi
+‘M_2_SQRTPIq’: two over square root of pi
+‘M_SQRT2q’: square root of 2
+‘M_SQRT1_2q’: one over square root of 2
 
 
 File: libquadmath.info,  Node: Math Library Routines,  Next: I/O Library Routines,  Prev: Typedef and constants,  Up: Top
@@ -106,99 +106,99 @@ File: libquadmath.info,  Node: Math Library Routines,  Next: I/O Library Routine
 
 The following mathematical functions are available:
 
-'acosq': arc cosine function
-'acoshq': inverse hyperbolic cosine function
-'asinq': arc sine function
-'asinhq': inverse hyperbolic sine function
-'atanq': arc tangent function
-'atanhq': inverse hyperbolic tangent function
-'atan2q': arc tangent function
-'cbrtq': cube root function
-'ceilq': ceiling value function
-'copysignq': copy sign of a number
-'coshq': hyperbolic cosine function
-'cosq': cosine function
-'erfq': error function
-'erfcq': complementary error function
-'exp2q': base 2 exponential function
-'expq': exponential function
-'expm1q': exponential minus 1 function
-'fabsq': absolute value function
-'fdimq': positive difference function
-'finiteq': check finiteness of value
-'floorq': floor value function
-'fmaq': fused multiply and add
-'fmaxq': determine maximum of two values
-'fminq': determine minimum of two values
-'fmodq': remainder value function
-'frexpq': extract mantissa and exponent
-'hypotq': Eucledian distance function
-'ilogbq': get exponent of the value
-'isinfq': check for infinity
-'isnanq': check for not a number
-'issignalingq': check for signaling not a number
-'j0q': Bessel function of the first kind, first order
-'j1q': Bessel function of the first kind, second order
-'jnq': Bessel function of the first kind, N-th order
-'ldexpq': load exponent of the value
-'lgammaq': logarithmic gamma function
-'llrintq': round to nearest integer value
-'llroundq': round to nearest integer value away from zero
-'logbq': get exponent of the value
-'logq': natural logarithm function
-'log10q': base 10 logarithm function
-'log1pq': compute natural logarithm of the value plus one
-'log2q': base 2 logarithm function
-'lrintq': round to nearest integer value
-'lroundq': round to nearest integer value away from zero
-'modfq': decompose the floating-point number
-'nanq': return quiet NaN
-'nearbyintq': round to nearest integer
-'nextafterq': next representable floating-point number
-'powq': power function
-'remainderq': remainder function
-'remquoq': remainder and part of quotient
-'rintq': round-to-nearest integral value
-'roundq': round-to-nearest integral value, return '__float128'
-'scalblnq': compute exponent using 'FLT_RADIX'
-'scalbnq': compute exponent using 'FLT_RADIX'
-'signbitq': return sign bit
-'sincosq': calculate sine and cosine simultaneously
-'sinhq': hyperbolic sine function
-'sinq': sine function
-'sqrtq': square root function
-'tanq': tangent function
-'tanhq': hyperbolic tangent function
-'tgammaq': true gamma function
-'truncq': round to integer, towards zero
-'y0q': Bessel function of the second kind, first order
-'y1q': Bessel function of the second kind, second order
-'ynq': Bessel function of the second kind, N-th order
-'cabsq' complex absolute value function
-'cargq': calculate the argument
-'cimagq' imaginary part of complex number
-'crealq': real part of complex number
-'cacoshq': complex arc hyperbolic cosine function
-'cacosq': complex arc cosine function
-'casinhq': complex arc hyperbolic sine function
-'casinq': complex arc sine function
-'catanhq': complex arc hyperbolic tangent function
-'catanq': complex arc tangent function
-'ccosq' complex cosine function:
-'ccoshq': complex hyperbolic cosine function
-'cexpq': complex exponential function
-'cexpiq': computes the exponential function of "i" times a
+‘acosq’: arc cosine function
+‘acoshq’: inverse hyperbolic cosine function
+‘asinq’: arc sine function
+‘asinhq’: inverse hyperbolic sine function
+‘atanq’: arc tangent function
+‘atanhq’: inverse hyperbolic tangent function
+‘atan2q’: arc tangent function
+‘cbrtq’: cube root function
+‘ceilq’: ceiling value function
+‘copysignq’: copy sign of a number
+‘coshq’: hyperbolic cosine function
+‘cosq’: cosine function
+‘erfq’: error function
+‘erfcq’: complementary error function
+‘exp2q’: base 2 exponential function
+‘expq’: exponential function
+‘expm1q’: exponential minus 1 function
+‘fabsq’: absolute value function
+‘fdimq’: positive difference function
+‘finiteq’: check finiteness of value
+‘floorq’: floor value function
+‘fmaq’: fused multiply and add
+‘fmaxq’: determine maximum of two values
+‘fminq’: determine minimum of two values
+‘fmodq’: remainder value function
+‘frexpq’: extract mantissa and exponent
+‘hypotq’: Eucledian distance function
+‘ilogbq’: get exponent of the value
+‘isinfq’: check for infinity
+‘isnanq’: check for not a number
+‘issignalingq’: check for signaling not a number
+‘j0q’: Bessel function of the first kind, first order
+‘j1q’: Bessel function of the first kind, second order
+‘jnq’: Bessel function of the first kind, N-th order
+‘ldexpq’: load exponent of the value
+‘lgammaq’: logarithmic gamma function
+‘llrintq’: round to nearest integer value
+‘llroundq’: round to nearest integer value away from zero
+‘logbq’: get exponent of the value
+‘logq’: natural logarithm function
+‘log10q’: base 10 logarithm function
+‘log1pq’: compute natural logarithm of the value plus one
+‘log2q’: base 2 logarithm function
+‘lrintq’: round to nearest integer value
+‘lroundq’: round to nearest integer value away from zero
+‘modfq’: decompose the floating-point number
+‘nanq’: return quiet NaN
+‘nearbyintq’: round to nearest integer
+‘nextafterq’: next representable floating-point number
+‘powq’: power function
+‘remainderq’: remainder function
+‘remquoq’: remainder and part of quotient
+‘rintq’: round-to-nearest integral value
+‘roundq’: round-to-nearest integral value, return ‘__float128’
+‘scalblnq’: compute exponent using ‘FLT_RADIX’
+‘scalbnq’: compute exponent using ‘FLT_RADIX’
+‘signbitq’: return sign bit
+‘sincosq’: calculate sine and cosine simultaneously
+‘sinhq’: hyperbolic sine function
+‘sinq’: sine function
+‘sqrtq’: square root function
+‘tanq’: tangent function
+‘tanhq’: hyperbolic tangent function
+‘tgammaq’: true gamma function
+‘truncq’: round to integer, towards zero
+‘y0q’: Bessel function of the second kind, first order
+‘y1q’: Bessel function of the second kind, second order
+‘ynq’: Bessel function of the second kind, N-th order
+‘cabsq’ complex absolute value function
+‘cargq’: calculate the argument
+‘cimagq’ imaginary part of complex number
+‘crealq’: real part of complex number
+‘cacoshq’: complex arc hyperbolic cosine function
+‘cacosq’: complex arc cosine function
+‘casinhq’: complex arc hyperbolic sine function
+‘casinq’: complex arc sine function
+‘catanhq’: complex arc hyperbolic tangent function
+‘catanq’: complex arc tangent function
+‘ccosq’ complex cosine function:
+‘ccoshq’: complex hyperbolic cosine function
+‘cexpq’: complex exponential function
+‘cexpiq’: computes the exponential function of "i" times a
      real value
-'clogq': complex natural logarithm
-'clog10q': complex base 10 logarithm
-'conjq': complex conjugate function
-'cpowq': complex power function
-'cprojq': project into Riemann Sphere
-'csinq': complex sine function
-'csinhq': complex hyperbolic sine function
-'csqrtq': complex square root
-'ctanq': complex tangent function
-'ctanhq': complex hyperbolic tangent function
+‘clogq’: complex natural logarithm
+‘clog10q’: complex base 10 logarithm
+‘conjq’: complex conjugate function
+‘cpowq’: complex power function
+‘cprojq’: project into Riemann Sphere
+‘csinq’: complex sine function
+‘csinhq’: complex hyperbolic sine function
+‘csqrtq’: complex square root
+‘ctanq’: complex tangent function
+‘ctanhq’: complex hyperbolic tangent function
 
 
 File: libquadmath.info,  Node: I/O Library Routines,  Next: GNU Free Documentation License,  Prev: Math Library Routines,  Up: Top
@@ -208,25 +208,25 @@ File: libquadmath.info,  Node: I/O Library Routines,  Next: GNU Free Documentati
 
 * Menu:
 
-* 'strtoflt128':          strtoflt128,          Convert from string
-* 'quadmath_snprintf':    quadmath_snprintf,    Convert to string
+* ‘strtoflt128’:          strtoflt128,          Convert from string
+* ‘quadmath_snprintf’:    quadmath_snprintf,    Convert to string
 
 
 File: libquadmath.info,  Node: strtoflt128,  Next: quadmath_snprintf,  Up: I/O Library Routines
 
-3.1 'strtoflt128' -- Convert from string
+3.1 ‘strtoflt128’ -- Convert from string
 ========================================
 
-The function 'strtoflt128' converts a string into a '__float128' number.
+The function ‘strtoflt128’ converts a string into a ‘__float128’ number.
 
 Syntax
-     '__float128 strtoflt128 (const char *s, char **sp)'
+     ‘__float128 strtoflt128 (const char *s, char **sp)’
 
 _Arguments_:
      S           input string
      SP          the address of the next character in the string
 
-     The argument SP contains, if not 'NULL', the address of the next
+     The argument SP contains, if not ‘NULL’, the address of the next
      character following the parts of the string, which have been read.
 
 Example
@@ -244,19 +244,19 @@ Example
 
 File: libquadmath.info,  Node: quadmath_snprintf,  Prev: strtoflt128,  Up: I/O Library Routines
 
-3.2 'quadmath_snprintf' -- Convert to string
+3.2 ‘quadmath_snprintf’ -- Convert to string
 ============================================
 
-The function 'quadmath_snprintf' converts a '__float128' floating-point
-number into a string.  It is a specialized alternative to 'snprintf',
+The function ‘quadmath_snprintf’ converts a ‘__float128’ floating-point
+number into a string.  It is a specialized alternative to ‘snprintf’,
 where the format string is restricted to a single conversion specifier
-with 'Q' modifier and conversion specifier 'e', 'E', 'f', 'F', 'g', 'G',
-'a' or 'A', with no extra characters before or after the conversion
-specifier.  The '%m$' or '*m$' style must not be used in the format.
+with ‘Q’ modifier and conversion specifier ‘e’, ‘E’, ‘f’, ‘F’, ‘g’, ‘G’,
+‘a’ or ‘A’, with no extra characters before or after the conversion
+specifier.  The ‘%m$’ or ‘*m$’ style must not be used in the format.
 
 Syntax
-     'int quadmath_snprintf (char *s, size_t size, const char *format,
-     ...)'
+     ‘int quadmath_snprintf (char *s, size_t size, const char *format,
+     ...)’
 
 _Arguments_:
      S           output string
@@ -265,7 +265,7 @@ _Arguments_:
 
 Note
      On some targets when supported by the C library hooks are installed
-     for 'printf' family of functions, so that 'printf ("%Qe", 1.2Q);'
+     for ‘printf’ family of functions, so that ‘printf ("%Qe", 1.2Q);’
      etc. works too.
 
 Example
@@ -313,7 +313,7 @@ GNU Free Documentation License
 
                      Version 1.3, 3 November 2008
 
-     Copyright (C) 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
+     Copyright © 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
      <https://www.fsf.org>
 
      Everyone is permitted to copy and distribute verbatim copies
@@ -322,7 +322,7 @@ GNU Free Documentation License
   0. PREAMBLE
 
      The purpose of this License is to make a manual, textbook, or other
-     functional and useful document "free" in the sense of freedom: to
+     functional and useful document “free” in the sense of freedom: to
      assure everyone the effective freedom to copy and redistribute it,
      with or without modifying it, either commercially or
      noncommercially.  Secondarily, this License preserves for the
@@ -796,16 +796,20 @@ File: libquadmath.info,  Node: Reporting Bugs,  Prev: GNU Free Documentation Lic
 Bugs in the GCC Quad-Precision Math Library implementation should be
 reported via <https://gcc.gnu.org/bugs/>.
 
-
 
 Tag Table:
-Node: Top1633
-Node: Typedef and constants2367
-Node: Math Library Routines3786
-Node: I/O Library Routines7623
-Node: strtoflt1287948
-Node: quadmath_snprintf8708
-Node: GNU Free Documentation License10919
-Node: Reporting Bugs36071
+Node: Top1631
+Node: Typedef and constants2365
+Node: Math Library Routines3896
+Node: I/O Library Routines8113
+Node: strtoflt1288446
+Node: quadmath_snprintf9226
+Node: GNU Free Documentation License11509
+Node: Reporting Bugs36664
 
 End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:

@@ -273,8 +273,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
       {
 	if (char_type* __hi = _M_high_mark())
 	  {
-	    // Set length to end of character sequence and add null terminator.
-	    _M_string._M_set_length(_M_high_mark() - this->pbase());
+	    if (_M_string.data() == this->pbase()) [[likely]]
+	      // Set length to end of sequence and add null terminator.
+	      _M_string._M_set_length(__hi - this->pbase());
+	    else
+	      _M_string.assign(this->pbase(), __hi);
 	  }
 	auto __str = std::move(_M_string);
 	_M_string.clear();

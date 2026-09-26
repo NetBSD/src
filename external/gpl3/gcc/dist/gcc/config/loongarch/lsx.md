@@ -689,9 +689,9 @@
   DONE;
 })
 
-(define_insn "lsx_vshuf_<lsxfmt_f>"
+(define_insn "@lsx_vshuf_<lsxfmt_f>"
   [(set (match_operand:LSX_DWH 0 "register_operand" "=f")
-	(unspec:LSX_DWH [(match_operand:LSX_DWH 1 "register_operand" "0")
+	(unspec:LSX_DWH [(match_operand:<VIMODE> 1 "register_operand" "0")
 			 (match_operand:LSX_DWH 2 "register_operand" "f")
 			 (match_operand:LSX_DWH 3 "register_operand" "f")]
 			UNSPEC_LSX_VSHUF))]
@@ -844,59 +844,6 @@
   [(set_attr "type" "simd_div")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "xor<mode>3"
-  [(set (match_operand:LSX 0 "register_operand" "=f,f,f")
-	(xor:LSX
-	  (match_operand:LSX 1 "register_operand" "f,f,f")
-	  (match_operand:LSX 2 "reg_or_vector_same_val_operand" "f,YC,Urv8")))]
-  "ISA_HAS_LSX"
-  "@
-   vxor.v\t%w0,%w1,%w2
-   vbitrevi.%v0\t%w0,%w1,%V2
-   vxori.b\t%w0,%w1,%B2"
-  [(set_attr "type" "simd_logic,simd_bit,simd_logic")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "ior<mode>3"
-  [(set (match_operand:LSX 0 "register_operand" "=f,f,f")
-	(ior:LSX
-	  (match_operand:LSX 1 "register_operand" "f,f,f")
-	  (match_operand:LSX 2 "reg_or_vector_same_val_operand" "f,YC,Urv8")))]
-  "ISA_HAS_LSX"
-  "@
-   vor.v\t%w0,%w1,%w2
-   vbitseti.%v0\t%w0,%w1,%V2
-   vori.b\t%w0,%w1,%B2"
-  [(set_attr "type" "simd_logic,simd_bit,simd_logic")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "and<mode>3"
-  [(set (match_operand:LSX 0 "register_operand" "=f,f,f")
-	(and:LSX
-	  (match_operand:LSX 1 "register_operand" "f,f,f")
-	  (match_operand:LSX 2 "reg_or_vector_same_val_operand" "f,YZ,Urv8")))]
-  "ISA_HAS_LSX"
-{
-  switch (which_alternative)
-    {
-    case 0:
-      return "vand.v\t%w0,%w1,%w2";
-    case 1:
-      {
-	rtx elt0 = CONST_VECTOR_ELT (operands[2], 0);
-	unsigned HOST_WIDE_INT val = ~UINTVAL (elt0);
-	operands[2] = loongarch_gen_const_int_vector (<MODE>mode, val & (-val));
-	return "vbitclri.%v0\t%w0,%w1,%V2";
-      }
-    case 2:
-      return "vandi.b\t%w0,%w1,%B2";
-    default:
-      gcc_unreachable ();
-    }
-}
-  [(set_attr "type" "simd_logic,simd_bit,simd_logic")
-   (set_attr "mode" "<MODE>")])
-
 (define_insn "one_cmpl<mode>2"
   [(set (match_operand:ILSX 0 "register_operand" "=f")
 	(not:ILSX (match_operand:ILSX 1 "register_operand" "f")))]
@@ -1003,16 +950,6 @@
 		  (match_operand:FLSX 3 "register_operand" "f")))]
   "ISA_HAS_LSX"
   "vfmadd.<flsxfmt>\t%w0,%w1,%w2,%w3"
-  [(set_attr "type" "simd_fmadd")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "fnma<mode>4"
-  [(set (match_operand:FLSX 0 "register_operand" "=f")
-	(fma:FLSX (neg:FLSX (match_operand:FLSX 1 "register_operand" "f"))
-		  (match_operand:FLSX 2 "register_operand" "f")
-		  (match_operand:FLSX 3 "register_operand" "0")))]
-  "ISA_HAS_LSX"
-  "vfnmsub.<flsxfmt>\t%w0,%w1,%w2,%w0"
   [(set_attr "type" "simd_fmadd")
    (set_attr "mode" "<MODE>")])
 
@@ -2620,59 +2557,6 @@
   "vsigncov.<lsxfmt>\t%w0,%w1,%w2"
   [(set_attr "type" "simd_int_arith")
    (set_attr "mode" "<MODE>")])
-
-(define_expand "copysign<mode>3"
-  [(set (match_dup 4)
-	(and:FLSX
-	  (not:FLSX (match_dup 3))
-	  (match_operand:FLSX 1 "register_operand")))
-   (set (match_dup 5)
-	(and:FLSX (match_dup 3)
-		  (match_operand:FLSX 2 "reg_or_vector_same_val_operand")))
-   (set (match_operand:FLSX 0 "register_operand")
-	(ior:FLSX (match_dup 4) (match_dup 5)))]
-  "ISA_HAS_LSX"
-{
-  /* copysign (x, -1) should instead be expanded as setting the sign
-     bit.  */
-  if (!REG_P (operands[2]))
-    {
-      rtx op2_elt = unwrap_const_vec_duplicate (operands[2]);
-      if (GET_CODE (op2_elt) == CONST_DOUBLE
-	  && real_isneg (CONST_DOUBLE_REAL_VALUE (op2_elt)))
-	{
-	  rtx n = GEN_INT (8 * GET_MODE_SIZE (<UNITMODE>mode) - 1);
-	  operands[0] = lowpart_subreg (<VIMODE>mode, operands[0],
-					<MODE>mode);
-	  operands[1] = lowpart_subreg (<VIMODE>mode, operands[1],
-					<MODE>mode);
-	  emit_insn (gen_lsx_vbitseti_<lsxfmt> (operands[0], operands[1],
-						n));
-	  DONE;
-	}
-    }
-
-  operands[2] = force_reg (<MODE>mode, operands[2]);
-  operands[3] = loongarch_build_signbit_mask (<MODE>mode, 1, 0);
-
-  operands[4] = gen_reg_rtx (<MODE>mode);
-  operands[5] = gen_reg_rtx (<MODE>mode);
-})
-
-(define_expand "@xorsign<mode>3"
-  [(set (match_dup 4)
-    (and:FLSX (match_dup 3)
-        (match_operand:FLSX 2 "register_operand")))
-   (set (match_operand:FLSX 0 "register_operand")
-    (xor:FLSX (match_dup 4)
-         (match_operand:FLSX 1 "register_operand")))]
-  "ISA_HAS_LSX"
-{
-  operands[3] = loongarch_build_signbit_mask (<MODE>mode, 1, 0);
-
-  operands[4] = gen_reg_rtx (<MODE>mode);
-})
-
 
 (define_insn "absv2df2"
   [(set (match_operand:V2DF 0 "register_operand" "=f")

@@ -1887,9 +1887,8 @@ typedef struct gfc_symbol
      points to C and B's is NULL.  */
   struct gfc_common_head* common_head;
 
-  /* Make sure setup code for dummy arguments is generated in the correct
-     order.  */
-  int dummy_order;
+  /* Make sure initialization code is generated in the correct order.  */
+  int decl_order;
 
   gfc_namelist *namelist, *namelist_tail;
 
@@ -1929,6 +1928,8 @@ typedef struct gfc_symbol
   unsigned forall_index:1;
   /* Set if the symbol is used in a function result specification .  */
   unsigned fn_result_spec:1;
+  /* Set if the symbol spec. depends on an old-style function result.  */
+  unsigned fn_result_dep:1;
   /* Used to avoid multiple resolutions of a single symbol.  */
   /* = 2 if this has already been resolved as an intrinsic,
        in gfc_resolve_intrinsic,
@@ -3543,6 +3544,7 @@ bool gfc_missing_attr (symbol_attribute *, locus *);
 bool gfc_copy_attr (symbol_attribute *, symbol_attribute *, locus *);
 int gfc_copy_dummy_sym (gfc_symbol **, gfc_symbol *, int);
 bool gfc_add_component (gfc_symbol *, const char *, gfc_component **);
+void gfc_free_component (gfc_component *);
 gfc_symbol *gfc_use_derived (gfc_symbol *);
 gfc_component *gfc_find_component (gfc_symbol *, const char *, bool, bool,
                                    gfc_ref **);
@@ -3556,6 +3558,7 @@ bool gfc_reference_st_label (gfc_st_label *, gfc_sl_type);
 
 gfc_namespace *gfc_get_namespace (gfc_namespace *, int);
 gfc_symtree *gfc_new_symtree (gfc_symtree **, const char *);
+void gfc_delete_symtree (gfc_symtree **, const char *);
 gfc_symtree *gfc_find_symtree (gfc_symtree *, const char *);
 gfc_symtree *gfc_get_unique_symtree (gfc_namespace *);
 gfc_user_op *gfc_get_uop (const char *);

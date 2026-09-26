@@ -35,6 +35,9 @@
 ;; All FP modes available
 (define_mode_iterator FVEC    [(FLSX "ISA_HAS_LSX") (FLASX "ISA_HAS_LASX")])
 
+;; All vector modes available
+(define_mode_iterator ALLVEC  [IVEC FVEC])
+
 ;; Mnemonic prefix, "x" for LASX modes.
 (define_mode_attr x [(V2DI "") (V4SI "") (V8HI "") (V16QI "")
 		     (V2DF "") (V4SF "")
@@ -327,6 +330,17 @@
   [(set_attr "type" "simd_int_arith")
    (set_attr "mode" "<MODE>")])
 
+;; <x>vfnmsub.{s/d}
+(define_insn "fnma<mode>4"
+  [(set (match_operand:FVEC 0 "register_operand" "=f")
+	(fma:FVEC (neg:FVEC (match_operand:FVEC 1 "register_operand" "f"))
+		  (match_operand:FVEC 2 "register_operand" "f")
+		  (match_operand:FVEC 3 "register_operand" "f")))]
+  "!HONOR_SIGNED_ZEROS (<MODE>mode)"
+  "<x>vfnmsub.<simdfmt>\t%<wu>0,%<wu>1,%<wu>2,%<wu>3"
+  [(set_attr "type" "simd_fmadd")
+   (set_attr "mode" "<MODE>")])
+
 ;; <x>vfcmp.*.{s/d} with defined RTX code
 ;; There are no fcmp.{sugt/suge/cgt/cge}.{s/d} menmonics in GAS, so we have
 ;; to reverse the operands ourselves :(.
@@ -484,6 +498,105 @@
   "<x>vbitrevi.<simdfmt_as_i>\t%<wu>0,%<wu>1,<elmsgnbit>"
   [(set_attr "type" "simd_logic")
    (set_attr "mode" "<MODE>")])
+
+(define_insn "xor<mode>3"
+  [(set (match_operand:IVEC 0 "register_operand" "=f,f,f")
+	(xor:IVEC
+	  (match_operand:IVEC 1 "register_operand" "f,f,f")
+	  (match_operand:IVEC 2 "reg_or_vector_same_val_operand" "f,YC,Urv8")))]
+  ""
+  "@
+   <x>vxor.v\t%<wu>0,%<wu>1,%<wu>2
+   <x>vbitrevi.%v0\t%<wu>0,%<wu>1,%V2
+   <x>vxori.b\t%<wu>0,%<wu>1,%B2"
+  [(set_attr "type" "simd_logic,simd_bit,simd_logic")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "ior<mode>3"
+  [(set (match_operand:IVEC 0 "register_operand" "=f,f,f")
+	(ior:IVEC
+	  (match_operand:IVEC 1 "register_operand" "f,f,f")
+	  (match_operand:IVEC 2 "reg_or_vector_same_val_operand" "f,YC,Urv8")))]
+  ""
+  "@
+   <x>vor.v\t%<wu>0,%<wu>1,%<wu>2
+   <x>vbitseti.%v0\t%<wu>0,%<wu>1,%V2
+   <x>vori.b\t%<wu>0,%<wu>1,%B2"
+  [(set_attr "type" "simd_logic,simd_bit,simd_logic")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "and<mode>3"
+  [(set (match_operand:IVEC 0 "register_operand" "=f,f,f")
+	(and:IVEC
+	  (match_operand:IVEC 1 "register_operand" "f,f,f")
+	  (match_operand:IVEC 2 "reg_or_vector_same_val_operand" "f,YZ,Urv8")))]
+  ""
+{
+  switch (which_alternative)
+    {
+    case 0:
+      return "<x>vand.v\t%<wu>0,%<wu>1,%<wu>2";
+    case 1:
+      {
+	operands[2] = simplify_const_unary_operation (NOT, <MODE>mode,
+						      operands[2],
+						      <MODE>mode);
+	return "<x>vbitclri.%v0\t%<wu>0,%<wu>1,%V2";
+      }
+    case 2:
+      return "<x>vandi.b\t%<wu>0,%<wu>1,%B2";
+    default:
+      gcc_unreachable ();
+    }
+}
+  [(set_attr "type" "simd_logic,simd_bit,simd_logic")
+   (set_attr "mode" "<MODE>")])
+
+(define_expand "copysign<mode>3"
+  [(match_operand:FVEC 0 "register_operand")
+   (match_operand:FVEC 1 "register_operand")
+   (match_operand:FVEC 2 "reg_or_vector_neg_fp_operand")]
+  ""
+{
+  machine_mode imode = <VIMODE>mode;
+  rtx op[3], mask = loongarch_build_signbit_mask (imode, 1, 0);
+
+  /* Pun the operation into fixed-point bitwise operations.  */
+  for (int i = 0; i < 3; i++)
+    op[i] = lowpart_subreg (imode, operands[i], <MODE>mode);
+
+  /* Copysign from a positive const should have been already simplified
+     to abs, ignore the case here.  Copysign from a negative const is
+     a simple vbitset which is an alternative of ior (see above).  */
+  if (const_vector_neg_fp_operand (operands[2], <MODE>mode))
+    emit_insn (gen_ior<vimode>3 (op[0], op[1], mask));
+  else
+    {
+      mask = force_reg (imode, mask);
+      emit_insn (gen_<simd_isa>_<x>vbitsel_<simdfmt_as_i> (op[0], op[1],
+							   op[2], mask));
+    }
+
+  DONE;
+})
+
+(define_expand "@xorsign<mode>3"
+  [(match_operand:FVEC 0 "register_operand")
+   (match_operand:FVEC 1 "register_operand")
+   (match_operand:FVEC 2 "register_operand")]
+  ""
+{
+  machine_mode imode = <VIMODE>mode;
+  rtx op[3];
+
+  for (int i = 0; i < 3; i++)
+    op[i] = lowpart_subreg (imode, operands[i], <MODE>mode);
+
+  rtx t = loongarch_build_signbit_mask (imode, 1, 0);
+  t = force_reg (imode, simplify_gen_binary (AND, imode, op[2], t));
+  emit_move_insn (op[0], simplify_gen_binary (XOR, imode, op[1], t));
+  DONE;
+})
 
 ; The LoongArch SX Instructions.
 (include "lsx.md")

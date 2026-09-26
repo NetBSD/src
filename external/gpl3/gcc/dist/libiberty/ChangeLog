@@ -1,3 +1,16 @@
+2026-06-26  Release Manager
+
+	* GCC 14.4.0 released.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-03-05  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/124365
+	* simple-object.c (handle_lto_debug_sections): Also copy over
+	.ARM.attributes section.
+
 2025-05-23  Release Manager
 
 	* GCC 14.3.0 released.

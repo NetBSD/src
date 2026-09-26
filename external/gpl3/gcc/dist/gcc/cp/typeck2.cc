@@ -2469,9 +2469,12 @@ build_functional_cast_1 (location_t loc, tree exp, tree parms,
 	      return error_mark_node;
 	    }
 	  else if (cxx_dialect < cxx23)
-	    pedwarn (loc, OPT_Wc__23_extensions,
-		     "%<auto(x)%> only available with "
-		     "%<-std=c++2b%> or %<-std=gnu++2b%>");
+	    {
+	      if ((complain & tf_warning_or_error) != 0)
+		pedwarn (loc, OPT_Wc__23_extensions,
+			 "%<auto(x)%> only available with "
+			 "%<-std=c++2b%> or %<-std=gnu++2b%>");
+	    }
 	}
       else
 	{

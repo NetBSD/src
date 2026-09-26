@@ -1191,7 +1191,7 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 1 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 /* -*- indented-text -*- */
 /* Process source files and output type information.
    Copyright (C) 2002-2024 Free Software Foundation, Inc.
@@ -1212,7 +1212,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 #define YY_NO_INPUT 1
-#line 24 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 24 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 #ifdef HOST_GENERATOR_FILE
 #include "config.h"
 #define GENERATOR_FILE 1
@@ -1241,7 +1241,7 @@ update_lineno (const char *l, size_t len)
 }
 
 #line 1238 "gengtype-lex.cc"
-#line 59 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 59 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
     /* Include '::' in identifiers to capture C++ scope qualifiers.  */
 
 #line 1242 "gengtype-lex.cc"
@@ -1465,7 +1465,7 @@ YY_DECL
 		}
 
 	{
-#line 67 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 67 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 
   /* Do this on entry to yylex():  */
   *yylval = 0;
@@ -1537,7 +1537,7 @@ YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 78 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 78 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return TYPEDEF;
@@ -1550,7 +1550,7 @@ YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 82 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 82 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return STRUCT;
@@ -1563,7 +1563,7 @@ YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 86 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 86 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return UNION;
@@ -1576,7 +1576,7 @@ YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 90 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 90 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return STRUCT;
@@ -1589,7 +1589,7 @@ YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 94 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 94 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return EXTERN;
@@ -1602,7 +1602,7 @@ YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 98 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 98 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   BEGIN(in_struct);
   return STATIC;
@@ -1613,25 +1613,25 @@ YY_RULE_SETUP
 
 case 7:
 YY_RULE_SETUP
-#line 106 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 106 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { BEGIN(in_struct_comment); }
 	YY_BREAK
 case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
-#line 107 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 107 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { lexer_line.line++; }
 	YY_BREAK
 case 9:
 /* rule 9 can match eol */
 YY_RULE_SETUP
-#line 109 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 109 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { update_lineno (yytext, yyleng); }
 	YY_BREAK
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 110 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 110 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { lexer_line.line++; }
 	YY_BREAK
 case 11:
@@ -1641,7 +1641,7 @@ YY_LINENO_REWIND_TO(yy_bp + 5);
 (yy_c_buf_p) = yy_cp = yy_bp + 5;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 112 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 112 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 /* don't care */
 	YY_BREAK
 case 12:
@@ -1650,17 +1650,17 @@ case 12:
 YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
-#line 114 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 114 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 case 13:
 /* rule 13 can match eol */
-#line 115 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 115 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 case 14:
 /* rule 14 can match eol */
-#line 116 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 116 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 case 15:
 /* rule 15 can match eol */
 YY_RULE_SETUP
-#line 116 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 116 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
     *yylval = XDUPVAR (const char, yytext, yyleng, yyleng + 1);
     return IGNORABLE_CXX_KEYWORD;
@@ -1673,7 +1673,7 @@ YY_LINENO_REWIND_TO(yy_bp + 3);
 (yy_c_buf_p) = yy_cp = yy_bp + 3;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 120 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 120 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { return GTY_TOKEN; }
 	YY_BREAK
 case 17:
@@ -1683,7 +1683,7 @@ YY_LINENO_REWIND_TO(yy_bp + 5);
 (yy_c_buf_p) = yy_cp = yy_bp + 5;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 121 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 121 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { return UNION; }
 	YY_BREAK
 case 18:
@@ -1693,7 +1693,7 @@ YY_LINENO_REWIND_TO(yy_bp + 6);
 (yy_c_buf_p) = yy_cp = yy_bp + 6;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 122 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 122 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { return STRUCT; }
 	YY_BREAK
 case 19:
@@ -1703,7 +1703,7 @@ YY_LINENO_REWIND_TO(yy_bp + 5);
 (yy_c_buf_p) = yy_cp = yy_bp + 5;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 123 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 123 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { return STRUCT; }
 	YY_BREAK
 case 20:
@@ -1713,7 +1713,7 @@ YY_LINENO_REWIND_TO(yy_bp + 7);
 (yy_c_buf_p) = yy_cp = yy_bp + 7;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 124 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 124 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { return TYPEDEF; }
 	YY_BREAK
 case 21:
@@ -1723,7 +1723,7 @@ YY_LINENO_REWIND_TO(yy_bp + 4);
 (yy_c_buf_p) = yy_cp = yy_bp + 4;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 125 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 125 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { return ENUM; }
 	YY_BREAK
 case 22:
@@ -1733,7 +1733,7 @@ YY_LINENO_REWIND_TO(yy_bp + 9);
 (yy_c_buf_p) = yy_cp = yy_bp + 9;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 126 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 126 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { return PTR_ALIAS; }
 	YY_BREAK
 case 23:
@@ -1743,7 +1743,7 @@ YY_LINENO_REWIND_TO(yy_bp + 10);
 (yy_c_buf_p) = yy_cp = yy_bp + 10;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 127 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 127 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { return NESTED_PTR; }
 	YY_BREAK
 case 24:
@@ -1753,12 +1753,12 @@ YY_LINENO_REWIND_TO(yy_bp + 4);
 (yy_c_buf_p) = yy_cp = yy_bp + 4;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 128 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 128 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { return USER_GTY; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 129 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 129 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   *yylval = XDUPVAR (const char, yytext, yyleng, yyleng+1);
   return NUM;
@@ -1770,11 +1770,11 @@ case 26:
 YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
-#line 135 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 135 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 case 27:
 /* rule 27 can match eol */
 YY_RULE_SETUP
-#line 135 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 135 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   size_t len;
 
@@ -1793,7 +1793,7 @@ YY_LINENO_REWIND_TO(yy_cp - 1);
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 146 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 146 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   *yylval = XDUPVAR (const char, yytext, yyleng, yyleng+1);
   return ID;
@@ -1802,7 +1802,7 @@ YY_RULE_SETUP
 case 29:
 /* rule 29 can match eol */
 YY_RULE_SETUP
-#line 151 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 151 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   *yylval = XDUPVAR (const char, yytext+1, yyleng-2, yyleng-1);
   return STRING;
@@ -1812,7 +1812,7 @@ YY_RULE_SETUP
 case 30:
 /* rule 30 can match eol */
 YY_RULE_SETUP
-#line 156 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 156 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   *yylval = XDUPVAR (const char, yytext+1, yyleng-2, yyleng-1);
   return ARRAY;
@@ -1821,7 +1821,7 @@ YY_RULE_SETUP
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 160 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 160 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   *yylval = XDUPVAR (const char, yytext+1, yyleng-2, yyleng);
   return CHAR;
@@ -1829,19 +1829,19 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 165 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 165 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { return ELLIPSIS; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 166 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 166 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { return yytext[0]; }
 	YY_BREAK
 /* ignore pp-directives */
 case 34:
 /* rule 34 can match eol */
 YY_RULE_SETUP
-#line 169 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 169 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   update_lineno (yytext, yyleng);
 }
@@ -1849,12 +1849,12 @@ YY_RULE_SETUP
 case 35:
 /* rule 35 can match eol */
 YY_RULE_SETUP
-#line 172 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 172 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {lexer_line.line++;}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 174 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 174 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   error_at_line (&lexer_line, "unexpected character `%s'", yytext);
 }
@@ -1862,36 +1862,36 @@ YY_RULE_SETUP
 
 case 37:
 YY_RULE_SETUP
-#line 179 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 179 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { BEGIN(in_comment); }
 	YY_BREAK
 case 38:
 /* rule 38 can match eol */
 YY_RULE_SETUP
-#line 180 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 180 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { lexer_line.line++; }
 	YY_BREAK
 case 39:
 /* rule 39 can match eol */
 YY_RULE_SETUP
-#line 181 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 181 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { lexer_line.line++; }
 	YY_BREAK
 case 40:
-#line 183 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 183 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 case 41:
 /* rule 41 can match eol */
-#line 184 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 184 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 case 42:
 /* rule 42 can match eol */
 YY_RULE_SETUP
-#line 184 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 184 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 /* do nothing */
 	YY_BREAK
 case 43:
 /* rule 43 can match eol */
 YY_RULE_SETUP
-#line 185 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 185 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { update_lineno (yytext, yyleng); }
 	YY_BREAK
 case 44:
@@ -1901,21 +1901,21 @@ YY_LINENO_REWIND_TO(yy_bp + 1);
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 186 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 186 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 /* do nothing */
 	YY_BREAK
 
 case 45:
 /* rule 45 can match eol */
 YY_RULE_SETUP
-#line 189 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 189 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { lexer_line.line++; }
 	YY_BREAK
 case 46:
-#line 191 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 191 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 case 47:
 YY_RULE_SETUP
-#line 191 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 191 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 /* do nothing */
 	YY_BREAK
 case 48:
@@ -1925,25 +1925,25 @@ YY_LINENO_REWIND_TO(yy_bp + 1);
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 192 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 192 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 /* do nothing */
 	YY_BREAK
 
 case 49:
 YY_RULE_SETUP
-#line 195 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 195 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { BEGIN(INITIAL); } 
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 196 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 196 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 { BEGIN(in_struct); }
 	YY_BREAK
 case 51:
-#line 199 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 199 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 case 52:
 YY_RULE_SETUP
-#line 199 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 199 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 {
   error_at_line (&lexer_line, 
 		 "unterminated comment or string; unexpected EOF");
@@ -1952,12 +1952,12 @@ YY_RULE_SETUP
 case 53:
 /* rule 53 can match eol */
 YY_RULE_SETUP
-#line 204 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 204 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 /* do nothing */
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 206 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 206 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
 #line 1958 "gengtype-lex.cc"
@@ -2935,7 +2935,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 206 "/home/rguenther/src/releases/gcc-14.3.0/gcc-14.3.0/gcc/gengtype-lex.l"
+#line 206 "/d/gcc-14.4.0/gcc-14.4.0/gcc/gengtype-lex.l"
 
 
 void

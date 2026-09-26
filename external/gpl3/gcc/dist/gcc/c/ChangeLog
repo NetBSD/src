@@ -1,3 +1,24 @@
+2026-06-26  Release Manager
+
+	* GCC 14.4.0 released.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2026-02-18  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/123365
+	* c-decl.cc (build_compound_literal): Call relayout_decl
+	after completing the type.
+
+2026-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2025-12-09  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/123018
+	* c-decl.cc (finish_struct): Diagnose bit-fields with vector type.
+
 2025-05-23  Release Manager
 
 	* GCC 14.3.0 released.

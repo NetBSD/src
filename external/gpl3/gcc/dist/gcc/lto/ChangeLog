@@ -1,3 +1,35 @@
+2026-06-26  Release Manager
+
+	* GCC 14.4.0 released.
+
+2026-02-26  Michal Jires  <mjires@suse.cz>
+
+	Backported from master:
+	2026-01-11  Michal Jires  <mjires@suse.cz>
+
+	PR lto/121588
+	* lto-symtab.cc (lto_symtab_merge_symbols): Set body_removed
+	for symbols resolved outside of IR.
+
+2025-12-03  Siddhesh Poyarekar  <siddhesh@gotplt.org>
+
+	Backported from master:
+	2025-11-25  Siddhesh Poyarekar  <siddhesh@gotplt.org>
+
+	PR lto/122515
+	* lto-common.cc (lto_read_section_data): Avoid using SSIZE_MAX.
+
+2025-11-18  Siddhesh Poyarekar  <siddhesh@gotplt.org>
+
+	Backported from master:
+	2025-11-04  Siddhesh Poyarekar  <siddhesh@gotplt.org>
+
+	PR lto/122515
+	* lto.h (lto_section_slot): Set type of START to off_t.
+	* lto-common.cc (lto_read_section_data): Adjust.
+	* lto-object.cc (lto_obj_file_open): Set type of OFFSET to
+	int64_t.
+
 2025-05-23  Release Manager
 
 	* GCC 14.3.0 released.

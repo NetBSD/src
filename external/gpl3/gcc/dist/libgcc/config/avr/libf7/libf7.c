@@ -140,6 +140,58 @@ f7_double_t __floatdidf (int64_t x)
 #endif // F7MOD_floatdidf_
 
 
+extern uint64_t d_to_ufx (f7_double_t, int8_t) F7ASM(f7_d_to_fx64_asm);
+extern int64_t  d_to_sfx (f7_double_t, int8_t) F7ASM(f7_d_to_fx64_asm);
+
+#ifdef F7MOD_fractdfda_
+F7_WEAK
+int64_t __fractdfda (f7_double_t d)
+{
+  return d_to_sfx (d, -__DA_FBIT__);
+}
+#endif // F7MOD_fractdfda_
+
+#ifdef F7MOD_fractdfuda_
+F7_WEAK
+uint64_t __fractdfuda (f7_double_t d)
+{
+  return d_to_ufx (d, __UDA_FBIT__);
+}
+#endif // F7MOD_fractdfuda_
+
+#ifdef F7MOD_fractdfta_
+F7_WEAK
+int64_t __fractdfta (f7_double_t d)
+{
+  return d_to_sfx (d, -__TA_FBIT__);
+}
+#endif // F7MOD_fractdfta_
+
+#ifdef F7MOD_fractdfuta_
+F7_WEAK
+uint64_t __fractdfuta (f7_double_t d)
+{
+  return d_to_ufx (d, __UTA_FBIT__);
+}
+#endif // F7MOD_fractdfuta_
+
+#ifdef F7MOD_fractdfdq_
+F7_WEAK
+int64_t __fractdfdq (f7_double_t d)
+{
+  return d_to_sfx (d, -__DQ_FBIT__);
+}
+#endif // F7MOD_fractdfdq_
+
+#ifdef F7MOD_fractdfudq_
+F7_WEAK
+uint64_t __fractdfudq (f7_double_t d)
+{
+  return d_to_ufx (d, __UDQ_FBIT__);
+}
+#endif // F7MOD_fractdfudq_
+
+
 #ifdef F7MOD_init_
 f7_t* f7_init_impl (uint64_t mant, uint8_t flags, f7_t *cc, int16_t expo)
 {
@@ -207,7 +259,6 @@ f7_t* f7_set_s32 (f7_t *cc, int32_t i32)
   cc->flags = flags;
   return cc;
 }
-ALIAS (f7_set_s32, f7_floatsidf)
 #endif // F7MOD_set_s32_
 
 
@@ -219,7 +270,6 @@ f7_t* f7_set_u32 (f7_t *cc, uint32_t u32)
   cc->expo = 31;
   return f7_normalize_asm (cc);
 }
-ALIAS (f7_set_u32, f7_floatunsidf)
 #endif // F7MOD_set_u32_
 
 
@@ -916,6 +966,21 @@ void f7_sub (f7_t *cc, const f7_t *aa, const f7_t *bb)
   f7_addsub (cc, aa, bb, true);
 }
 #endif // F7MOD_sub_
+
+
+#ifdef F7MOD_fdim_
+F7_WEAK
+void f7_fdim (f7_t *cc, const f7_t *aa, const f7_t *bb)
+{
+  int8_t cmp = f7_cmp_unordered (aa, bb, true /*with_sign*/);
+  if (cmp == INT8_MIN)
+    return f7_set_nan (cc);
+  if (cmp < 0)
+    return f7_clr (cc);
+
+  f7_sub (cc, aa, bb);
+}
+#endif // F7MOD_fdim_
 
 
 #ifdef F7MOD_addsub_
@@ -1639,10 +1704,10 @@ void f7_exp (f7_t *cc, const f7_t *aa)
     return f7_set_nan (cc);
 
   /* The maximal exponent of 2 for a double is 1023, hence we may limit
-     to  |A| < 1023 * ln2 ~ 709.  We limit to  1024 ~ 1.99 * 2^9  */
+     to  |A| < 1023 * ln2 ~ 709.  We limit to  1024 = 2^10  */
 
   if (f7_class_inf (a_class)
-      || (f7_class_nonzero (a_class) && aa->expo >= 9))
+      || (f7_class_nonzero (a_class) && aa->expo >= 10))
     {
       if (f7_class_sign (a_class))
 	return f7_clr (cc);

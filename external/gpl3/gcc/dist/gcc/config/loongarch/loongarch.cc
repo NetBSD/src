@@ -1718,14 +1718,15 @@ loongarch_symbol_binds_local_p (const_rtx x)
 bool
 loongarch_const_vector_bitimm_set_p (rtx op, machine_mode mode)
 {
-  if (GET_CODE (op) == CONST_VECTOR && op != CONST0_RTX (mode))
+  if (GET_CODE (op) == CONST_VECTOR
+      && (GET_MODE_CLASS (mode) == MODE_VECTOR_FLOAT
+	  || GET_MODE_CLASS (mode) == MODE_VECTOR_INT))
     {
       unsigned HOST_WIDE_INT val = UINTVAL (CONST_VECTOR_ELT (op, 0));
       int vlog2 = exact_log2 (val & GET_MODE_MASK (GET_MODE_INNER (mode)));
 
       if (vlog2 != -1)
 	{
-	  gcc_assert (GET_MODE_CLASS (mode) == MODE_VECTOR_INT);
 	  gcc_assert (vlog2 >= 0 && vlog2 <= GET_MODE_UNIT_BITSIZE (mode) - 1);
 	  return loongarch_const_vector_same_val_p (op, mode);
 	}
@@ -1740,14 +1741,35 @@ loongarch_const_vector_bitimm_set_p (rtx op, machine_mode mode)
 bool
 loongarch_const_vector_bitimm_clr_p (rtx op, machine_mode mode)
 {
-  if (GET_CODE (op) == CONST_VECTOR && op != CONSTM1_RTX (mode))
+  if (GET_CODE (op) == CONST_VECTOR
+      && (GET_MODE_CLASS (mode) == MODE_VECTOR_FLOAT
+	  || GET_MODE_CLASS (mode) == MODE_VECTOR_INT))
     {
-      unsigned HOST_WIDE_INT val = ~UINTVAL (CONST_VECTOR_ELT (op, 0));
+      unsigned HOST_WIDE_INT val;
+      if (GET_MODE_CLASS (mode) == MODE_VECTOR_FLOAT)
+	{
+	  rtx val_s = CONST_VECTOR_ELT (op, 0);
+	  const REAL_VALUE_TYPE *x = CONST_DOUBLE_REAL_VALUE (val_s);
+	  if (GET_MODE (val_s) == DFmode)
+	    {
+	      long tmp[2];
+	      REAL_VALUE_TO_TARGET_DOUBLE (*x, tmp);
+	      val = ~((unsigned HOST_WIDE_INT) tmp[1] << 32 | tmp[0]);
+	    }
+	  else
+	    {
+	      long tmp;
+	      REAL_VALUE_TO_TARGET_SINGLE (*x, tmp);
+	      val = ~((unsigned HOST_WIDE_INT) tmp);
+	    }
+	}
+      else
+	val = ~UINTVAL (CONST_VECTOR_ELT (op, 0));
+
       int vlog2 = exact_log2 (val & GET_MODE_MASK (GET_MODE_INNER (mode)));
 
       if (vlog2 != -1)
 	{
-	  gcc_assert (GET_MODE_CLASS (mode) == MODE_VECTOR_INT);
 	  gcc_assert (vlog2 >= 0 && vlog2 <= GET_MODE_UNIT_BITSIZE (mode) - 1);
 	  return loongarch_const_vector_same_val_p (op, mode);
 	}
@@ -4280,6 +4302,7 @@ loongarch_vector_costs::add_stmt_cost (int count, vect_cost_for_stmt kind,
 	    break;
 	  }
       else if (TARGET_RECIP_VEC_DIV
+	       && vectype
 	       && gimple_code (stmt_info->stmt) == GIMPLE_ASSIGN)
 	{
 	  machine_mode mode = TYPE_MODE (vectype);
@@ -6259,15 +6282,19 @@ loongarch_print_operand (FILE *file, rtx op, int letter)
       if (CONST_VECTOR_P (op))
 	{
 	  machine_mode mode = GET_MODE_INNER (GET_MODE (op));
-	  unsigned HOST_WIDE_INT val = UINTVAL (CONST_VECTOR_ELT (op, 0));
-	  int vlog2 = exact_log2 (val & GET_MODE_MASK (mode));
-	  if (vlog2 != -1)
-	    fprintf (file, "%d", vlog2);
-	  else
-	    output_operand_lossage ("invalid use of '%%%c'", letter);
+	  rtx val_s = CONST_VECTOR_ELT (op, 0);
+	  if (CONST_INT_P (val_s))
+	    {
+	      unsigned HOST_WIDE_INT val = UINTVAL (val_s);
+	      int vlog2 = exact_log2 (val & GET_MODE_MASK (mode));
+	      if (vlog2 != -1)
+		{
+		  fprintf (file, "%d", vlog2);
+		  break;
+		}
+	    }
 	}
-      else
-	output_operand_lossage ("invalid use of '%%%c'", letter);
+      output_operand_lossage ("invalid use of '%%%c'", letter);
       break;
 
     case 'W':
@@ -6345,12 +6372,14 @@ loongarch_print_operand (FILE *file, rtx op, int letter)
 	case E_V4SFmode:
 	case E_V8SImode:
 	case E_V8SFmode:
+	case E_SImode:
 	  fprintf (file, "w");
 	  break;
 	case E_V2DImode:
 	case E_V2DFmode:
 	case E_V4DImode:
 	case E_V4DFmode:
+	case E_DImode:
 	  fprintf (file, "d");
 	  break;
 	default:
@@ -8199,7 +8228,7 @@ static bool
 loongarch_try_expand_lsx_vshuf_const (struct expand_vec_perm_d *d)
 {
   int i;
-  rtx target, op0, op1, sel, tmp;
+  rtx target, op0, op1;
   rtx rperm[MAX_VECT_LEN];
 
   if (GET_MODE_SIZE (d->vmode) == 16)
@@ -8218,47 +8247,23 @@ loongarch_try_expand_lsx_vshuf_const (struct expand_vec_perm_d *d)
       for (i = 0; i < d->nelt; i += 1)
 	  rperm[i] = GEN_INT (d->perm[i]);
 
-      if (d->vmode == E_V2DFmode)
-	{
-	  sel = gen_rtx_CONST_VECTOR (E_V2DImode, gen_rtvec_v (d->nelt, rperm));
-	  tmp = simplify_gen_subreg (E_V2DImode, d->target, d->vmode, 0);
-	  emit_move_insn (tmp, sel);
-	}
-      else if (d->vmode == E_V4SFmode)
-	{
-	  sel = gen_rtx_CONST_VECTOR (E_V4SImode, gen_rtvec_v (d->nelt, rperm));
-	  tmp = simplify_gen_subreg (E_V4SImode, d->target, d->vmode, 0);
-	  emit_move_insn (tmp, sel);
-	}
-      else
-	{
-	  sel = gen_rtx_CONST_VECTOR (d->vmode, gen_rtvec_v (d->nelt, rperm));
-	  emit_move_insn (d->target, sel);
-	}
+      machine_mode sel_mode = related_int_vector_mode (d->vmode)
+	.require ();
+      rtvec sel_v = gen_rtvec_v (d->nelt, rperm);
 
-      switch (d->vmode)
-	{
-	case E_V2DFmode:
-	  emit_insn (gen_lsx_vshuf_d_f (target, target, op1, op0));
-	  break;
-	case E_V2DImode:
-	  emit_insn (gen_lsx_vshuf_d (target, target, op1, op0));
-	  break;
-	case E_V4SFmode:
-	  emit_insn (gen_lsx_vshuf_w_f (target, target, op1, op0));
-	  break;
-	case E_V4SImode:
-	  emit_insn (gen_lsx_vshuf_w (target, target, op1, op0));
-	  break;
-	case E_V8HImode:
-	  emit_insn (gen_lsx_vshuf_h (target, target, op1, op0));
-	  break;
-	case E_V16QImode:
-	  emit_insn (gen_lsx_vshuf_b (target, op1, op0, target));
-	  break;
-	default:
-	  break;
-	}
+      /* Despite vshuf.* (except vshuf.b) needs sel == target, we cannot
+	 load sel into target right now: here we are dealing with
+	 pseudo regs, and target may be the same pseudo as one of op0
+	 or op1.  Then we'd clobber the input.  Instead, we use a new
+	 pseudo reg here.  The reload pass will look at the constraint
+	 of vshuf.* and move sel into target first if needed.  */
+      rtx sel = force_reg (sel_mode,
+			   gen_rtx_CONST_VECTOR (sel_mode, sel_v));
+
+      if (d->vmode == E_V16QImode)
+	emit_insn (gen_lsx_vshuf_b (target, op1, op0, sel));
+      else
+	emit_insn (gen_lsx_vshuf (d->vmode, target, sel, op1, op0));
 
       return true;
     }
@@ -8724,57 +8729,13 @@ loongarch_expand_vec_perm_1 (rtx operands[])
   /* Number of elements in the vector.  */
   w = GET_MODE_NUNITS (mode);
 
-  rtx round_data[MAX_VECT_LEN];
-  rtx round_reg, round_data_rtx;
-
-  if (mode != E_V32QImode)
+  /* If we are using xvshuf.*, clamp the selector to avoid unpredictable
+     output.  */
+  if (maskmode != V8SImode && maskmode != V4DImode)
     {
-      for (int i = 0; i < w; i += 1)
-	{
-	  round_data[i] = GEN_INT (0x1f);
-	}
-
-      if (mode == E_V4DFmode)
-	{
-	  round_data_rtx = gen_rtx_CONST_VECTOR (E_V4DImode,
-						 gen_rtvec_v (w, round_data));
-	  round_reg = gen_reg_rtx (E_V4DImode);
-	}
-      else if (mode == E_V8SFmode)
-	{
-
-	  round_data_rtx = gen_rtx_CONST_VECTOR (E_V8SImode,
-						 gen_rtvec_v (w, round_data));
-	  round_reg = gen_reg_rtx (E_V8SImode);
-	}
-      else
-	{
-	  round_data_rtx = gen_rtx_CONST_VECTOR (mode,
-						 gen_rtvec_v (w, round_data));
-	  round_reg = gen_reg_rtx (mode);
-	}
-
-      emit_move_insn (round_reg, round_data_rtx);
-      switch (mode)
-	{
-	case E_V32QImode:
-	  emit_insn (gen_andv32qi3 (mask, mask, round_reg));
-	  break;
-	case E_V16HImode:
-	  emit_insn (gen_andv16hi3 (mask, mask, round_reg));
-	  break;
-	case E_V8SImode:
-	case E_V8SFmode:
-	  emit_insn (gen_andv8si3 (mask, mask, round_reg));
-	  break;
-	case E_V4DImode:
-	case E_V4DFmode:
-	  emit_insn (gen_andv4di3 (mask, mask, round_reg));
-	  break;
-	default:
-	  gcc_unreachable ();
-	  break;
-	}
+      rtx t = gen_const_vec_duplicate (maskmode, GEN_INT (0x1f));
+      mask = expand_binop (maskmode, and_optab, mask, t, NULL_RTX, false,
+			   OPTAB_DIRECT);
     }
 
   if (mode == V4DImode || mode == V4DFmode)
@@ -9254,7 +9215,7 @@ loongarch_expand_vec_perm_const (struct expand_vec_perm_d *d)
   bool flag = false;
   unsigned int i;
   unsigned char idx;
-  rtx target, op0, op1, sel, tmp;
+  rtx target, op0, op1;
   rtx rperm[MAX_VECT_LEN];
   unsigned int remapped[MAX_VECT_LEN];
   unsigned char perm2[MAX_VECT_LEN];
@@ -9434,63 +9395,23 @@ loongarch_expand_vec_perm_const (struct expand_vec_perm_d *d)
 expand_perm_const_end:
       if (flag)
 	{
-	  /* Copy selector vector from memory to vector register for later insn
-	     gen function.
-	     If vector's element in floating point value, we cannot fit
-	     selector argument into insn gen function directly, because of the
-	     insn template definition.  As a solution, generate a integral mode
-	     subreg of target, then copy selector vector (that is in integral
-	     mode) to this subreg.  */
-	  switch (d->vmode)
-	    {
-	    case E_V4DFmode:
-	      sel = gen_rtx_CONST_VECTOR (E_V4DImode, gen_rtvec_v (d->nelt,
-								   rperm));
-	      tmp = simplify_gen_subreg (E_V4DImode, d->target, d->vmode, 0);
-	      emit_move_insn (tmp, sel);
-	      break;
-	    case E_V8SFmode:
-	      sel = gen_rtx_CONST_VECTOR (E_V8SImode, gen_rtvec_v (d->nelt,
-								   rperm));
-	      tmp = simplify_gen_subreg (E_V8SImode, d->target, d->vmode, 0);
-	      emit_move_insn (tmp, sel);
-	      break;
-	    default:
-	      sel = gen_rtx_CONST_VECTOR (d->vmode, gen_rtvec_v (d->nelt,
-								 rperm));
-	      emit_move_insn (d->target, sel);
-	      break;
-	    }
-
 	  target = d->target;
 	  op0 = d->op0;
 	  op1 = d->one_vector_p ? d->op0 : d->op1;
 
-	  /* We FINALLY can generate xvshuf.* insn.  */
-	  switch (d->vmode)
-	    {
-	    case E_V4DFmode:
-	      emit_insn (gen_lasx_xvshuf_d_f (target, target, op1, op0));
-	      break;
-	    case E_V4DImode:
-	      emit_insn (gen_lasx_xvshuf_d (target, target, op1, op0));
-	      break;
-	    case E_V8SFmode:
-	      emit_insn (gen_lasx_xvshuf_w_f (target, target, op1, op0));
-	      break;
-	    case E_V8SImode:
-	      emit_insn (gen_lasx_xvshuf_w (target, target, op1, op0));
-	      break;
-	    case E_V16HImode:
-	      emit_insn (gen_lasx_xvshuf_h (target, target, op1, op0));
-	      break;
-	    case E_V32QImode:
-	      emit_insn (gen_lasx_xvshuf_b (target, op1, op0, target));
-	      break;
-	    default:
-	      gcc_unreachable ();
-	      break;
-	    }
+	  machine_mode sel_mode = related_int_vector_mode (d->vmode)
+	    .require ();
+	  rtvec sel_v = gen_rtvec_v (d->nelt, rperm);
+
+	  /* See the comment in loongarch_expand_lsx_shuffle for why
+	     we don't simply use a SUBREG to pun target.  */
+	  rtx sel = force_reg (sel_mode,
+			       gen_rtx_CONST_VECTOR (sel_mode, sel_v));
+
+	  if (d->vmode == E_V32QImode)
+	    emit_insn (gen_lasx_xvshuf_b (target, op1, op0, sel));
+	  else
+	    emit_insn (gen_lasx_xvshuf (d->vmode, target, sel, op1, op0));
 
 	  return true;
 	}
@@ -10044,32 +9965,7 @@ loongarch_expand_vector_init_same (rtx target, rtx vals, unsigned nvar)
 	}
     }
 
-  if (imode == GET_MODE (same))
-    temp = same;
-  else if (GET_MODE_SIZE (imode) >= UNITS_PER_WORD)
-    {
-      if (GET_CODE (same) == MEM)
-	{
-	  rtx reg_tmp = gen_reg_rtx (GET_MODE (same));
-	  loongarch_emit_move (reg_tmp, same);
-	  temp = simplify_gen_subreg (imode, reg_tmp, GET_MODE (reg_tmp), 0);
-	}
-      else
-	temp = simplify_gen_subreg (imode, same, GET_MODE (same), 0);
-    }
-  else
-    {
-      if (GET_CODE (same) == MEM)
-	{
-	  rtx reg_tmp = gen_reg_rtx (GET_MODE (same));
-	  loongarch_emit_move (reg_tmp, same);
-	  temp = lowpart_subreg (imode, reg_tmp, GET_MODE (reg_tmp));
-	}
-      else
-	temp = lowpart_subreg (imode, same, GET_MODE (same));
-    }
-
-  temp = force_reg (imode, temp);
+  temp = force_reg (imode, same);
 
   switch (vmode)
     {
@@ -10806,7 +10702,7 @@ loongarch_build_signbit_mask (machine_mode mode, bool vect, bool invert)
     return force_reg (inner_mode, mask);
 
   v = loongarch_build_const_vector (vec_mode, vect, mask);
-  return force_reg (vec_mode, v);
+  return v;
 }
 
 /* Use rsqrte instruction and Newton-Rhapson to compute the approximation of
@@ -10855,10 +10751,11 @@ void loongarch_emit_swrsqrtsf (rtx res, rtx a, machine_mode mode, bool recip)
       if (VECTOR_MODE_P (mode))
 	{
 	  machine_mode imode = related_int_vector_mode (mode).require ();
-	  rtx mask = gen_reg_rtx (imode);
-	  emit_insn (gen_rtx_SET (mask, gen_rtx_NE (imode, a, zero)));
-	  emit_insn (gen_rtx_SET (x0, gen_rtx_AND (mode, x0,
-						   gen_lowpart (mode, mask))));
+	  rtx mask = force_reg (imode, gen_rtx_NE (imode, a, zero));
+	  emit_move_insn (gen_lowpart (imode, x0),
+			  gen_rtx_AND (imode,
+				       gen_lowpart (imode, x0),
+				       mask));
 	}
       else
 	{
@@ -11012,6 +10909,67 @@ loongarch_c_mode_for_suffix (char suffix)
     return TFmode;
 
   return VOIDmode;
+}
+
+/* Implement TARGET_COMPUTE_PRESSURE_CLASSES.  */
+
+static int
+loongarch_compute_pressure_classes (reg_class *classes)
+{
+  int i = 0;
+  classes[i++] = GENERAL_REGS;
+  classes[i++] = FP_REGS;
+  classes[i++] = FCC_REGS;
+  return i;
+}
+
+/* Output assembly to materialize the address of the stack canary value
+   into reg.  The third argument, tmp, should be and should only be
+   non-NULL if the extreme code model is effective for the canary.  If
+   the fourth arugment, load, is true, the canary value is loaded into
+   the register.
+
+   The assembly cannot be splitted due to security reason.  */
+void
+loongarch_output_asm_load_canary (rtx reg, rtx canary, rtx tmp)
+{
+  gcc_checking_assert (ssp_operand (canary, VOIDmode));
+  gcc_checking_assert ((!tmp) == ssp_normal_operand (canary, VOIDmode));
+  gcc_checking_assert (register_operand (reg, Pmode));
+
+  rtx op[] = {reg, canary, tmp};
+  bool got = (loongarch_classify_symbol (canary) == SYMBOL_GOT_DISP);
+  bool need_ld = false;
+
+  if (la_opt_explicit_relocs != EXPLICIT_RELOCS_ALWAYS)
+    {
+      if (got)
+	output_asm_insn (tmp ? "la.global\t%0,%2,%1" : "la.global\t%0,%1",
+			 op);
+      else
+	output_asm_insn (tmp ? "la.local\t%0,%2,%1" : "la.local\t%0,%1",
+			 op);
+
+      need_ld = true;
+    }
+  else
+    {
+      output_asm_insn ("pcalau12i\t%0,%r1", op);
+      if (!tmp)
+	output_asm_insn ("ld.%v0\t%0,%0,%L1", op);
+      else
+	{
+	  output_asm_insn ("addi.d\t%2,$r0,%L1", op);
+	  output_asm_insn ("lu32i.d\t%2,%R1", op);
+	  output_asm_insn ("lu52i.d\t%2,%2,%H1", op);
+	  output_asm_insn ("ldx.d\t%0,%0,%2", op);
+	}
+
+      need_ld = got;
+    }
+
+  if (need_ld)
+    output_asm_insn ("ld.%v0\t%0,%0,0", op);
 }
 
 /* Initialize the GCC target structure.  */
@@ -11275,6 +11233,9 @@ loongarch_c_mode_for_suffix (char suffix)
 
 #undef TARGET_C_MODE_FOR_SUFFIX
 #define TARGET_C_MODE_FOR_SUFFIX loongarch_c_mode_for_suffix
+
+#undef TARGET_COMPUTE_PRESSURE_CLASSES
+#define TARGET_COMPUTE_PRESSURE_CLASSES loongarch_compute_pressure_classes
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

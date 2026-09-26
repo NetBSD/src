@@ -222,6 +222,15 @@ extern int fprintf_unlocked (FILE *, const char *, ...);
 #ifdef INCLUDE_FUNCTIONAL
 # include <functional>
 #endif
+#ifdef INCLUDE_SSTREAM
+# include <sstream>
+#endif
+/* Some of the headers included by <memory> can use "abort" within a
+   namespace, e.g. "_VSTD::abort();", which fails after we use the
+   preprocessor to redefine "abort" as "fancy_abort" below.  */
+#ifdef INCLUDE_MEMORY
+# include <memory>
+#endif
 # include <cstring>
 # include <initializer_list>
 # include <new>
@@ -758,20 +767,8 @@ private:
 #define LIKELY(x) (__builtin_expect ((x), 1))
 #define UNLIKELY(x) (__builtin_expect ((x), 0))
 
-/* Some of the headers included by <memory> can use "abort" within a
-   namespace, e.g. "_VSTD::abort();", which fails after we use the
-   preprocessor to redefine "abort" as "fancy_abort" below.  */
-
-#ifdef INCLUDE_MEMORY
-# include <memory>
-#endif
-
 #ifdef INCLUDE_MUTEX
 # include <mutex>
-#endif
-
-#ifdef INCLUDE_SSTREAM
-# include <sstream>
 #endif
 
 #ifdef INCLUDE_MALLOC_H

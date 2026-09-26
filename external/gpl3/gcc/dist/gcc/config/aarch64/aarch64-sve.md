@@ -1458,18 +1458,18 @@
 	  UNSPEC_LD1_GATHER))]
   "TARGET_SVE && TARGET_NON_STREAMING"
   {@ [cons: =0, 1, 2, 3, 4, 5  ]
-     [&w, Z,   w, Ui1, Ui1, Upl] ld1<Vesize>\t%0.s, %5/z, [%2.s]
-     [?w, Z,   0, Ui1, Ui1, Upl] ^
-     [&w, vgw, w, Ui1, Ui1, Upl] ld1<Vesize>\t%0.s, %5/z, [%2.s, #%1]
-     [?w, vgw, 0, Ui1, Ui1, Upl] ^
-     [&w, rk,  w, Z,   Ui1, Upl] ld1<Vesize>\t%0.s, %5/z, [%1, %2.s, sxtw]
-     [?w, rk,  0, Z,   Ui1, Upl] ^
-     [&w, rk,  w, Ui1, Ui1, Upl] ld1<Vesize>\t%0.s, %5/z, [%1, %2.s, uxtw]
-     [?w, rk,  0, Ui1, Ui1, Upl] ^
-     [&w, rk,  w, Z,   i,   Upl] ld1<Vesize>\t%0.s, %5/z, [%1, %2.s, sxtw %p4]
-     [?w, rk,  0, Z,   i,   Upl] ^
-     [&w, rk,  w, Ui1, i,   Upl] ld1<Vesize>\t%0.s, %5/z, [%1, %2.s, uxtw %p4]
-     [?w, rk,  0, Ui1, i,   Upl] ^
+     [&w, Z,          w, Ui1, Ui1, Upl] ld1<Vesize>\t%0.s, %5/z, [%2.s]
+     [?w, Z,          0, Ui1, Ui1, Upl] ^
+     [&w, vg<Vesize>, w, Ui1, Ui1, Upl] ld1<Vesize>\t%0.s, %5/z, [%2.s, #%1]
+     [?w, vg<Vesize>, 0, Ui1, Ui1, Upl] ^
+     [&w, rk,         w, Z,   Ui1, Upl] ld1<Vesize>\t%0.s, %5/z, [%1, %2.s, sxtw]
+     [?w, rk,         0, Z,   Ui1, Upl] ^
+     [&w, rk,         w, Ui1, Ui1, Upl] ld1<Vesize>\t%0.s, %5/z, [%1, %2.s, uxtw]
+     [?w, rk,         0, Ui1, Ui1, Upl] ^
+     [&w, rk,         w, Z,   i,   Upl] ld1<Vesize>\t%0.s, %5/z, [%1, %2.s, sxtw %p4]
+     [?w, rk,         0, Z,   i,   Upl] ^
+     [&w, rk,         w, Ui1, i,   Upl] ld1<Vesize>\t%0.s, %5/z, [%1, %2.s, uxtw %p4]
+     [?w, rk,         0, Ui1, i,   Upl] ^
   }
 )
 
@@ -1487,14 +1487,14 @@
 	  UNSPEC_LD1_GATHER))]
   "TARGET_SVE && TARGET_NON_STREAMING"
   {@ [cons: =0, 1, 2, 3, 4, 5]
-     [&w, Z,   w, i, Ui1, Upl] ld1<Vesize>\t%0.d, %5/z, [%2.d]
-     [?w, Z,   0, i, Ui1, Upl] ^
-     [&w, vgd, w, i, Ui1, Upl] ld1<Vesize>\t%0.d, %5/z, [%2.d, #%1]
-     [?w, vgd, 0, i, Ui1, Upl] ^
-     [&w, rk,  w, i, Ui1, Upl] ld1<Vesize>\t%0.d, %5/z, [%1, %2.d]
-     [?w, rk,  0, i, Ui1, Upl] ^
-     [&w, rk,  w, i, i,   Upl] ld1<Vesize>\t%0.d, %5/z, [%1, %2.d, lsl %p4]
-     [?w, rk,  0, i, i,   Upl] ^
+     [&w, Z,          w, i, Ui1, Upl] ld1<Vesize>\t%0.d, %5/z, [%2.d]
+     [?w, Z,          0, i, Ui1, Upl] ^
+     [&w, vg<Vesize>, w, i, Ui1, Upl] ld1<Vesize>\t%0.d, %5/z, [%2.d, #%1]
+     [?w, vg<Vesize>, 0, i, Ui1, Upl] ^
+     [&w, rk,         w, i, Ui1, Upl] ld1<Vesize>\t%0.d, %5/z, [%1, %2.d]
+     [?w, rk,         0, i, Ui1, Upl] ^
+     [&w, rk,         w, i, i,   Upl] ld1<Vesize>\t%0.d, %5/z, [%1, %2.d, lsl %p4]
+     [?w, rk,         0, i, i,   Upl] ^
   }
 )
 
@@ -2378,13 +2378,13 @@
 	   (match_operand:SVE_4 4 "register_operand")]
 	  UNSPEC_ST1_SCATTER))]
   "TARGET_SVE && TARGET_NON_STREAMING"
-  {@ [ cons: 0 , 1 , 2   , 3   , 4 , 5    ]
-     [ Z       , w , Ui1 , Ui1 , w , Upl  ] st1<Vesize>\t%4.s, %5, [%1.s]
-     [ vgw     , w , Ui1 , Ui1 , w , Upl  ] st1<Vesize>\t%4.s, %5, [%1.s, #%0]
-     [ rk      , w , Z   , Ui1 , w , Upl  ] st1<Vesize>\t%4.s, %5, [%0, %1.s, sxtw]
-     [ rk      , w , Ui1 , Ui1 , w , Upl  ] st1<Vesize>\t%4.s, %5, [%0, %1.s, uxtw]
-     [ rk      , w , Z   , i   , w , Upl  ] st1<Vesize>\t%4.s, %5, [%0, %1.s, sxtw %p3]
-     [ rk      , w , Ui1 , i   , w , Upl  ] st1<Vesize>\t%4.s, %5, [%0, %1.s, uxtw %p3]
+  {@ [ cons: 0    , 1 , 2   , 3   , 4 , 5    ]
+     [ Z          , w , Ui1 , Ui1 , w , Upl  ] st1<Vesize>\t%4.s, %5, [%1.s]
+     [ vg<Vesize> , w , Ui1 , Ui1 , w , Upl  ] st1<Vesize>\t%4.s, %5, [%1.s, #%0]
+     [ rk         , w , Z   , Ui1 , w , Upl  ] st1<Vesize>\t%4.s, %5, [%0, %1.s, sxtw]
+     [ rk         , w , Ui1 , Ui1 , w , Upl  ] st1<Vesize>\t%4.s, %5, [%0, %1.s, uxtw]
+     [ rk         , w , Z   , i   , w , Upl  ] st1<Vesize>\t%4.s, %5, [%0, %1.s, sxtw %p3]
+     [ rk         , w , Ui1 , i   , w , Upl  ] st1<Vesize>\t%4.s, %5, [%0, %1.s, uxtw %p3]
   }
 )
 
@@ -2401,11 +2401,11 @@
 	   (match_operand:SVE_2 4 "register_operand")]
 	  UNSPEC_ST1_SCATTER))]
   "TARGET_SVE && TARGET_NON_STREAMING"
-  {@ [ cons: 0 , 1 , 3   , 4 , 5    ]
-     [ Z       , w , Ui1 , w , Upl  ] st1<Vesize>\t%4.d, %5, [%1.d]
-     [ vgd     , w , Ui1 , w , Upl  ] st1<Vesize>\t%4.d, %5, [%1.d, #%0]
-     [ rk      , w , Ui1 , w , Upl  ] st1<Vesize>\t%4.d, %5, [%0, %1.d]
-     [ rk      , w , i   , w , Upl  ] st1<Vesize>\t%4.d, %5, [%0, %1.d, lsl %p3]
+  {@ [ cons: 0    , 1 , 3   , 4 , 5    ]
+     [ Z          , w , Ui1 , w , Upl  ] st1<Vesize>\t%4.d, %5, [%1.d]
+     [ vg<Vesize> , w , Ui1 , w , Upl  ] st1<Vesize>\t%4.d, %5, [%1.d, #%0]
+     [ rk         , w , Ui1 , w , Upl  ] st1<Vesize>\t%4.d, %5, [%0, %1.d]
+     [ rk         , w , i   , w , Upl  ] st1<Vesize>\t%4.d, %5, [%0, %1.d, lsl %p3]
   }
 )
 
@@ -6422,10 +6422,10 @@
 ;; by providing this, but we need to use UNSPECs since rtx logical ops
 ;; aren't defined for floating-point modes.
 (define_insn "*<optab><mode>3"
-  [(set (match_operand:SVE_FULL_F 0 "register_operand" "=w")
-	(unspec:SVE_FULL_F
-	  [(match_operand:SVE_FULL_F 1 "register_operand" "w")
-	   (match_operand:SVE_FULL_F 2 "register_operand" "w")]
+  [(set (match_operand:SVE_F 0 "register_operand" "=w")
+	(unspec:SVE_F
+	  [(match_operand:SVE_F 1 "register_operand" "w")
+	   (match_operand:SVE_F 2 "register_operand" "w")]
 	  LOGICALF))]
   "TARGET_SVE"
   "<logicalf_op>\t%0.d, %1.d, %2.d"
@@ -9123,7 +9123,30 @@
 	(unspec:PRED_ALL [(match_operand:PRED_ALL 1 "register_operand" "Upa")]
 			 UNSPEC_REV))]
   "TARGET_SVE"
-  "rev\t%0.<Vetype>, %1.<Vetype>")
+  "rev\t%0.<Vetype>, %1.<Vetype>"
+)
+
+(define_expand "@aarch64_sve_rev<mode>_acle"
+  [(set (match_operand:VNx16BI 0 "register_operand")
+	(unspec:VNx16BI
+	  [(match_operand:VNx16BI 1 "register_operand")
+	   (match_dup:PRED_ALL 2)]
+	  UNSPEC_REV_PRED))]
+  "TARGET_SVE"
+  {
+    operands[2] = CONST0_RTX (<MODE>mode);
+  }
+)
+
+(define_insn "*aarch64_sve_rev<mode>_acle"
+  [(set (match_operand:VNx16BI 0 "register_operand" "=Upa")
+	(unspec:VNx16BI
+	  [(match_operand:VNx16BI 1 "register_operand" "Upa")
+	   (match_operand:PRED_ALL 2 "aarch64_simd_imm_zero")]
+	  UNSPEC_REV_PRED))]
+  "TARGET_SVE"
+  "rev\t%0.<Vetype>, %1.<Vetype>"
+)
 
 ;; -------------------------------------------------------------------------
 ;; ---- [PRED] Special-purpose binary permutes
@@ -9148,18 +9171,39 @@
   "<perm_insn>\t%0.<Vetype>, %1.<Vetype>, %2.<Vetype>"
 )
 
-;; Special purpose permute used by the predicate generation instructions.
-;; Unlike the normal permute patterns, these instructions operate on VNx16BI
-;; regardless of the element size, so that all input and output bits are
-;; well-defined.  Operand 3 then indicates the size of the permute.
-(define_insn "@aarch64_sve_trn1_conv<mode>"
+;; Special-purpose permutes used by the ACLE intrinsics and predicate
+;; generation instructions.  Unlike the normal permute patterns, these
+;; instructions operate on VNx16BI regardless of the element size, so that
+;; all input and output bits are well-defined.  Operand 3 then indicates
+;; the size of the permute.
+;;
+;; To make generation easier, this pattern embeds the permute type as the
+;; fourth operand to the unspec.  On the one hand, this avoids overloading
+;; unspecs like UNSPEC_ZIP1 to represent two different operations.  On the
+;; other hand, it avoids having a separate unspec for each variant, and
+;; having to map from one kind of unspec to the other.
+(define_expand "@aarch64_sve_<perm_insn><mode>_acle"
+  [(set (match_operand:VNx16BI 0 "register_operand")
+	(unspec:VNx16BI [(match_operand:VNx16BI 1 "register_operand")
+			 (match_operand:VNx16BI 2 "register_operand")
+			 (match_dup:PRED_ALL 3)
+			 (const_int PERMUTE)]
+			UNSPEC_PERMUTE_PRED))]
+  "TARGET_SVE"
+  {
+    operands[3] = CONST0_RTX (<MODE>mode);
+  }
+)
+
+(define_insn "*aarch64_sve_<perm_insn><mode>_acle"
   [(set (match_operand:VNx16BI 0 "register_operand" "=Upa")
 	(unspec:VNx16BI [(match_operand:VNx16BI 1 "register_operand" "Upa")
 			 (match_operand:VNx16BI 2 "register_operand" "Upa")
-			 (match_operand:PRED_ALL 3 "aarch64_simd_imm_zero")]
-			UNSPEC_TRN1_CONV))]
+			 (match_operand:PRED_ALL 3 "aarch64_simd_imm_zero")
+			 (const_int PERMUTE)]
+			UNSPEC_PERMUTE_PRED))]
   "TARGET_SVE"
-  "trn1\t%0.<PRED_ALL:Vetype>, %1.<PRED_ALL:Vetype>, %2.<PRED_ALL:Vetype>"
+  "<perm_insn>\t%0.<PRED_ALL:Vetype>, %1.<PRED_ALL:Vetype>, %2.<PRED_ALL:Vetype>"
 )
 
 ;; =========================================================================
@@ -10989,16 +11033,12 @@
 
 (define_insn "@aarch64_sve_set_neonq_<mode>"
   [(set (match_operand:SVE_FULL 0 "register_operand" "=w")
-      (unspec:SVE_FULL
-	[(match_operand:SVE_FULL 1 "register_operand" "w")
-	(match_operand:<V128> 2 "register_operand" "w")
-	(match_operand:<VPRED> 3 "register_operand" "Upl")]
-	UNSPEC_SET_NEONQ))]
+	(unspec:SVE_FULL
+	  [(match_operand:SVE_FULL 1 "register_operand" "w")
+	   (match_operand:<V128> 2 "register_operand" "w")
+	   (match_operand:<VPRED> 3 "register_operand" "Upl")]
+	  UNSPEC_SET_NEONQ))]
   "TARGET_SVE
    && BYTES_BIG_ENDIAN"
-  {
-    operands[2] = lowpart_subreg (<MODE>mode, operands[2],
-                                  GET_MODE (operands[2]));
-    return "sel\t%0.<Vetype>, %3, %2.<Vetype>, %1.<Vetype>";
-  }
+  "sel\t%0.<Vetype>, %3, %Z2.<Vetype>, %1.<Vetype>"
 )

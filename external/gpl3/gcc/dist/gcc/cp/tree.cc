@@ -424,6 +424,83 @@ non_mergeable_glvalue_p (const_tree ref)
 	  && !(kind & (clk_class|clk_mergeable)));
 }
 
+/* C++-specific version of stabilize_reference for bit-fields and
+   DECL_PACKED fields.  We can't bind a reference to those.  */
+
+static tree
+cp_stabilize_bitfield_reference (tree ref)
+{
+  tree op1, op2, op3;
+  STRIP_ANY_LOCATION_WRAPPER (ref);
+  switch (TREE_CODE (ref))
+    {
+    case VAR_DECL:
+    case PARM_DECL:
+    case RESULT_DECL:
+    CASE_CONVERT:
+    case FLOAT_EXPR:
+    case FIX_TRUNC_EXPR:
+    case INDIRECT_REF:
+    case COMPONENT_REF:
+    case BIT_FIELD_REF:
+    case ARRAY_REF:
+    case ARRAY_RANGE_REF:
+    case ERROR_MARK:
+    case REALPART_EXPR:
+    case IMAGPART_EXPR:
+    default:
+      break;
+    case COMPOUND_EXPR:
+      op2 = cp_stabilize_bitfield_reference (TREE_OPERAND (ref, 1));
+      if (op2 == TREE_OPERAND (ref, 1))
+	return ref;
+      op1 = TREE_OPERAND (ref, 0);
+      if (TREE_SIDE_EFFECTS (op1))
+	{
+	  if (VOID_TYPE_P (TREE_TYPE (op1)))
+	    op1 = save_expr (op1);
+	  else
+	    {
+	      op1 = build2 (COMPOUND_EXPR, void_type_node, op1,
+			    void_node);
+	      op1 = save_expr (op1);
+	    }
+	}
+      return build2 (COMPOUND_EXPR, TREE_TYPE (op2), op1, op2);
+    case COND_EXPR:
+      op1 = TREE_OPERAND (ref, 0);
+      op2 = TREE_OPERAND (ref, 1);
+      op3 = TREE_OPERAND (ref, 2);
+      if (op2 && TREE_CODE (op2) != THROW_EXPR)
+	op2 = cp_stabilize_bitfield_reference (op2);
+      if (TREE_CODE (op3) != THROW_EXPR)
+	op3 = cp_stabilize_bitfield_reference (op3);
+      if (op2 == NULL_TREE)
+	op1 = cp_stabilize_bitfield_reference (op1);
+      if (op1 == TREE_OPERAND (ref, 0)
+	  && op2 == TREE_OPERAND (ref, 1)
+	  && op3 == TREE_OPERAND (ref, 2))
+	return ref;
+      if (op2 != NULL_TREE && TREE_SIDE_EFFECTS (op1))
+	op1 = save_expr (op1);
+      return build3 (COND_EXPR, TREE_TYPE (ref), op1, op2, op3);
+    case PREINCREMENT_EXPR:
+    case PREDECREMENT_EXPR:
+      op1 = cp_stabilize_bitfield_reference (TREE_OPERAND (ref, 0));
+      if (op1 == TREE_OPERAND (ref, 0))
+	return ref;
+      return build2 (COMPOUND_EXPR, TREE_TYPE (ref),
+		     build2 (TREE_CODE (ref), TREE_TYPE (ref), op1,
+			     TREE_OPERAND (ref, 0)), op1);
+    case PAREN_EXPR:
+      op1 = cp_stabilize_bitfield_reference (TREE_OPERAND (ref, 0));
+      if (op1 == TREE_OPERAND (ref, 0))
+	return ref;
+      return build1 (PAREN_EXPR, TREE_TYPE (ref), op1);
+    }
+  return stabilize_reference (ref);
+}
+
 /* C++-specific version of stabilize_reference.  */
 
 tree
@@ -455,6 +532,8 @@ cp_stabilize_reference (tree ref)
       cp_lvalue_kind kind = lvalue_kind (ref);
       if ((kind & ~clk_class) != clk_none)
 	{
+	  if (kind & (clk_bitfield | clk_packed))
+	    return cp_stabilize_bitfield_reference (ref);
 	  tree type = unlowered_expr_type (ref);
 	  bool rval = !!(kind & clk_rvalueref);
 	  type = cp_build_reference_type (type, rval);
@@ -2717,6 +2796,15 @@ cxx_printable_name_internal (tree decl, int v, bool translate)
       /* yes, so return it.  */
       return print_ring[i];
 
+  const char *ret = lang_decl_name (decl, v, translate);
+
+  /* The lang_decl_name call could have called this function recursively,
+     so check again.  */
+  for (i = 0; i < PRINT_RING_SIZE; i++)
+    if (uid_ring[i] == DECL_UID (decl) && translate == trans_ring[i])
+      /* yes, so return it.  */
+      return print_ring[i];
+
   if (++ring_counter == PRINT_RING_SIZE)
     ring_counter = 0;
 
@@ -2736,7 +2824,7 @@ cxx_printable_name_internal (tree decl, int v, bool translate)
 
   free (print_ring[ring_counter]);
 
-  print_ring[ring_counter] = xstrdup (lang_decl_name (decl, v, translate));
+  print_ring[ring_counter] = xstrdup (ret);
   uid_ring[ring_counter] = DECL_UID (decl);
   trans_ring[ring_counter] = translate;
   return print_ring[ring_counter];

@@ -26950,6 +26950,7 @@ cp_parser_class_specifier (cp_parser* parser)
       case CPP_SEMICOLON:
       case CPP_MULT:
       case CPP_AND:
+      case CPP_AND_AND:
       case CPP_OPEN_PAREN:
       case CPP_CLOSE_PAREN:
       case CPP_COMMA:
@@ -41827,7 +41828,7 @@ cp_parser_omp_clause_proc_bind (cp_parser *parser, tree list,
   return c;
 
  invalid_kind:
-  cp_parser_error (parser, "invalid depend kind");
+  cp_parser_error (parser, "invalid proc_bind kind");
  resync_fail:
   cp_parser_skip_to_closing_parenthesis (parser, /*recovering=*/true,
 					 /*or_comma=*/false,
@@ -41877,7 +41878,7 @@ cp_parser_omp_clause_device_type (cp_parser *parser, tree list,
   return c;
 
  invalid_kind:
-  cp_parser_error (parser, "invalid depend kind");
+  cp_parser_error (parser, "expected %<host%>, %<nohost%> or %<any%>");
  resync_fail:
   cp_parser_skip_to_closing_parenthesis (parser, /*recovering=*/true,
 					 /*or_comma=*/false,
@@ -45290,6 +45291,9 @@ substitute_in_tree_walker (tree *tp, int *walk_subtrees ATTRIBUTE_UNUSED,
   else if (TREE_CODE (*tp) == BIND_EXPR
 	   && BIND_EXPR_BODY (*tp) == sit->orig
 	   && !BIND_EXPR_VARS (*tp)
+	   /* BIND_EXPRs in templates likely have NULL BIND_EXPR_VARS,
+	      are created by begin_compound_stmt and are not redundant.  */
+	   && !processing_template_decl
 	   && (sit->flatten || TREE_CODE (sit->repl) == BIND_EXPR))
     {
       *tp = sit->repl;
@@ -45334,7 +45338,12 @@ substitute_in_tree (tree *context, tree orig, tree repl, bool flatten)
   struct sit_data data;
 
   gcc_assert (*context && orig && repl);
-  if (TREE_CODE (repl) == BIND_EXPR && !BIND_EXPR_VARS (repl))
+  /* Look through redundant BIND_EXPR.  BIND_EXPRs in templates likely have
+     NULL BIND_EXPR_VARS, are created by begin_compound_stmt and are not
+     redundant.  */
+  if (TREE_CODE (repl) == BIND_EXPR
+      && !BIND_EXPR_VARS (repl)
+      && !processing_template_decl)
     repl = BIND_EXPR_BODY (repl);
   data.orig = orig;
   data.repl = repl;
@@ -46383,7 +46392,7 @@ cp_parser_omp_taskwait (cp_parser *parser, cp_token *pragma_tok)
   if (clauses)
     {
       tree stmt = make_node (OMP_TASK);
-      TREE_TYPE (stmt) = void_node;
+      TREE_TYPE (stmt) = void_type_node;
       OMP_TASK_CLAUSES (stmt) = clauses;
       OMP_TASK_BODY (stmt) = NULL_TREE;
       SET_EXPR_LOCATION (stmt, pragma_tok->location);
