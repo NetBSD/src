@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.68 2026/09/26 15:41:52 riastradh Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.69 2026/09/26 22:02:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -757,9 +757,25 @@ attrs(const atf_tc_t *tc, const char *mp)
 
 	/*
 	 * Wait a little so the ctime will change when we do utimes(2).
+	 * Then verify that the ctime has changed but the birthtime has
+	 * not.
 	 */
-	if (has_ctime)
-		sleep(1);
+	sleep(1);
+	RL(rump_sys_chmod(TESTFILE, sb.st_mode ^ 0666));
+	rump_sys_sync();
+	RL(rump_sys_chmod(TESTFILE, sb.st_mode));
+	RL(rump_sys_stat(TESTFILE, &sb2));
+	if (has_ctime) {
+		if (FSTYPE_SYSVBFS(tc) ||
+		    FSTYPE_V7FS(tc))
+			atf_tc_expect_fail("PR kern/60800:"
+			    " missing ctime updates");
+		ATF_CHECK(!timespeccmp(&sb.st_ctimespec, &sb2.st_ctimespec,
+			==));
+		atf_tc_expect_pass();
+	}
+	ATF_CHECK(timespeccmp(&sb.st_birthtimespec, &sb2.st_birthtimespec,
+		==));
 
 	tv[0].tv_sec = 1000000000; /* need something >1980 for msdosfs */
 	tv[0].tv_usec = 1;
@@ -790,11 +806,53 @@ attrs(const atf_tc_t *tc, const char *mp)
 		CHECK(st_mtimespec.tv_nsec);
 	}
 #undef  CHECK
+	if (FSTYPE_ZFS(tc)) {
+		atf_tc_expect_fail("PR kern/60806:"
+		    " zfs: can't change birthtime of file");
+	}
+	fprintf(stderr, "birthtime old %lld.%09ld\n"
+	    "birthtime new %lld.%09ld\n",
+	    (long long)sb.st_birthtimespec.tv_sec,
+	    (long)sb.st_birthtimespec.tv_nsec,
+	    (long long)sb2.st_birthtimespec.tv_sec,
+	    (long)sb2.st_birthtimespec.tv_nsec);
+	ATF_CHECK((sb.st_birthtimespec.tv_sec == -1 &&
+		sb.st_birthtimespec.tv_nsec == -1 &&
+		sb2.st_birthtimespec.tv_sec == -1 &&
+		sb2.st_birthtimespec.tv_nsec == -1) ||
+	    /* too many options for missing birthtime, PR 60807 */
+	    (sb.st_birthtimespec.tv_sec == 0 &&
+		sb.st_birthtimespec.tv_nsec == 0 &&
+		sb2.st_birthtimespec.tv_sec == 0 &&
+		sb2.st_birthtimespec.tv_nsec == 0) ||
+	    !timespeccmp(&sb.st_birthtimespec, &sb2.st_birthtimespec, ==));
+	atf_tc_expect_pass();
 
 	if (has_ctime) {
 		ATF_CHECK(!timespeccmp(&sb.st_ctimespec, &sb2.st_ctimespec,
 			==));
 	}
+
+	/*
+	 * Advance the mtime to make sure the birthtime doesn't change.
+	 * This is a separate call to utimes because the first one
+	 * (which lands on 2001-09-09, a long time in the past) will
+	 * have rolled the birthtime back so that birthtime <= mtime.
+	 */
+	sb = sb2;
+	tv[1].tv_sec += 63072000;
+	RL(rump_sys_utimes(TESTFILE, tv));
+	RL(rump_sys_stat(TESTFILE, &sb2));
+	fprintf(stderr, "birthtime old %lld.%09ld\n"
+	    "birthtime new %lld.%09ld\n",
+	    (long long)sb.st_birthtimespec.tv_sec,
+	    (long)sb.st_birthtimespec.tv_nsec,
+	    (long long)sb2.st_birthtimespec.tv_sec,
+	    (long)sb2.st_birthtimespec.tv_nsec);
+	ATF_CHECK_EQ(sb.st_birthtimespec.tv_sec,
+	    sb2.st_birthtimespec.tv_sec);
+	ATF_CHECK_EQ(sb.st_birthtimespec.tv_nsec,
+	    sb2.st_birthtimespec.tv_nsec);
 
 	FSTEST_EXIT();
 }
