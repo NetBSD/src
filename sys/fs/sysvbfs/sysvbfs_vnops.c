@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.71 2026/09/26 22:02:44 riastradh Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.72 2026/09/26 22:09:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.71 2026/09/26 22:02:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.72 2026/09/26 22:09:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -335,6 +335,7 @@ sysvbfs_setattr(void *arg)
 	struct sysvbfs_node *bnode = vp->v_data;
 	struct bfs_inode *inode = bnode->inode;
 	struct bfs_fileattr *attr = &inode->attr;
+	struct bfs *bfs = bnode->bmp->bfs;
 	kauth_cred_t cred = ap->a_cred;
 	int error;
 
@@ -400,14 +401,19 @@ sysvbfs_setattr(void *arg)
 		if (error)
 			return error;
 
-		if (vap->va_atime.tv_sec != VNOVAL)
+		if (vap->va_atime.tv_sec != VNOVAL) {
 			attr->atime = vap->va_atime.tv_sec;
-		if (vap->va_mtime.tv_sec != VNOVAL)
+			bnode->update_atime = false;
+		}
+		if (vap->va_mtime.tv_sec != VNOVAL) {
 			attr->mtime = vap->va_mtime.tv_sec;
+			bnode->update_mtime = false;
+		}
 	}
 
-	bnode->update_ctime = true;
-	sysvbfs_update(vp, NULL, NULL, 0);
+	attr->ctime = time_second;
+	bnode->update_ctime = false;
+	bfs_inode_set_attr(bfs, inode, attr);
 
 	return 0;
 }
