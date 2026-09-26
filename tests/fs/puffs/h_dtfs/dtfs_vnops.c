@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.10 2013/10/19 17:45:00 christos Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.11 2026/09/26 15:41:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -158,6 +158,7 @@ dtfs_node_setattr(struct puffs_usermount *pu, void *opc,
 	}
 
 	puffs_setvattr(&pn->pn_va, va);
+	dtfs_updatetimes(pn, 0, 1, 0);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.67 2026/09/26 15:41:26 riastradh Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.68 2026/09/26 15:41:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -792,13 +792,8 @@ attrs(const atf_tc_t *tc, const char *mp)
 #undef  CHECK
 
 	if (has_ctime) {
-		if (FSTYPE_PUFFS(tc)) {
-			atf_tc_expect_fail("PR kern/60800:"
-			    "tmpfs: missing ctime updates");
-		}
 		ATF_CHECK(!timespeccmp(&sb.st_ctimespec, &sb2.st_ctimespec,
 			==));
-		atf_tc_expect_pass();
 	}
 
 	FSTEST_EXIT();
