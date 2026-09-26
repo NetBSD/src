@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.40 2022/08/06 18:26:42 andvar Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.41 2026/09/26 22:04:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.40 2022/08/06 18:26:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.41 2026/09/26 22:04:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -609,7 +609,8 @@ hfs_vop_getattr(void *v)
 		bsd = &f->bsd;
 		vap->va_bytes = fork->total_blocks * HFS_BLOCKSIZE(vp);
 		vap->va_size = fork->logical_size;
-		hfs_time_to_timespec(f->date_created, &vap->va_ctime);
+		hfs_time_to_timespec(f->date_created, &vap->va_birthtime);
+		hfs_time_to_timespec(f->date_attrib_mod, &vap->va_ctime);
 		hfs_time_to_timespec(f->date_content_mod, &vap->va_mtime);
 		hfs_time_to_timespec(f->date_accessed, &vap->va_atime);
 		vap->va_nlink = 1;
@@ -619,8 +620,9 @@ hfs_vop_getattr(void *v)
 		bsd = &f->bsd;
 		vap->va_size = 512; /* XXX Temporary */
 		vap->va_bytes = 512; /* XXX Temporary */
-		hfs_time_to_timespec(f->date_created, &vap->va_ctime);
-		hfs_time_to_timespec(f->date_content_mod,&vap->va_mtime);
+		hfs_time_to_timespec(f->date_created, &vap->va_birthtime);
+		hfs_time_to_timespec(f->date_attrib_mod, &vap->va_ctime);
+		hfs_time_to_timespec(f->date_content_mod, &vap->va_mtime);
 		hfs_time_to_timespec(f->date_accessed, &vap->va_atime);
 		vap->va_nlink = 2; /* XXX */
 	} else {
