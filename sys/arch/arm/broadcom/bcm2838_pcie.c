@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2838_pcie.c,v 1.11 2026/09/20 11:00:31 skrll Exp $ */
+/*	$NetBSD: bcm2838_pcie.c,v 1.12 2026/09/26 12:41:29 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.11 2026/09/20 11:00:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.12 2026/09/26 12:41:29 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,13 +39,13 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.11 2026/09/20 11:00:31 skrll Exp 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
-#include <dev/fdt/fdtvar.h>
-
-#include <arch/arm/pci/pci_msi_machdep.h>
-#include <arch/arm/broadcom/bcm2838_pcie.h>
-
-#include <arch/evbarm/rpi/vcprop.h>
 #include <dev/pci/pcidevs.h>
+
+#include <dev/fdt/fdtvar.h>
+#include <dev/fdt/pcihost_fdtvar.h>
+
+#include <arm/broadcom/bcm2838_pcie.h>
+#include <evbarm/rpi/vcprop.h>
 
 #define PHYS_HI_RELO		__BIT(31)
 #define PHYS_HI_PREFETCH	__BIT(30)
