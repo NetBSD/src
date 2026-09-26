@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.117 2023/04/29 08:15:13 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.118 2026/09/26 15:40:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005-2020 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.117 2023/04/29 08:15:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.118 2026/09/26 15:40:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -1145,6 +1145,7 @@ tmpfs_chtimes(vnode_t *vp, const struct timespec *atime,
     int vaflags, kauth_cred_t cred, lwp_t *l)
 {
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
+	int changed = 0;
 	int error;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1164,15 +1165,25 @@ tmpfs_chtimes(vnode_t *vp, const struct timespec *atime,
 
 	mutex_enter(&node->tn_timelock);
 	if (atime->tv_sec != VNOVAL) {
-		atomic_and_uint(&node->tn_tflags, ~TMPFS_UPDATE_ATIME);
+		changed |= TMPFS_UPDATE_ATIME;
 		node->tn_atime = *atime;
 	}
 	if (mtime->tv_sec != VNOVAL) {
-		atomic_and_uint(&node->tn_tflags, ~TMPFS_UPDATE_MTIME);
+		changed |= TMPFS_UPDATE_MTIME;
 		node->tn_mtime = *mtime;
 	}
 	if (btime->tv_sec != VNOVAL) {
+		/*
+		 * Birthtime is not ctime, but we changed the
+		 * attributes, so this should trigger a ctime update!
+		 */
+		changed |= TMPFS_UPDATE_CTIME;
 		node->tn_birthtime = *btime;
+	}
+	if (changed) {
+		changed |= TMPFS_UPDATE_CTIME;
+		atomic_and_uint(&node->tn_tflags, ~changed);
+		vfs_timestamp(&node->tn_ctime);
 	}
 	mutex_exit(&node->tn_timelock);
 	return 0;
