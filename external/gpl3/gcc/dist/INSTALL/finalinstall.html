@@ -1,6 +1,9 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
-<!-- Copyright (C) 1988-2024 Free Software Foundation, Inc.
+<!-- Created by GNU Texinfo 7.2, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- Copyright © 1988-2024 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -19,9 +22,6 @@ A GNU Manual
 You have freedom to copy and modify this GNU Manual, like GNU
      software.  Copies published by the Free Software Foundation raise
      funds for GNU development. -->
-<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Installing GCC: Final installation</title>
 
 <meta name="description" content="Installing GCC: Final installation">
@@ -29,31 +29,11 @@ You have freedom to copy and modify this GNU Manual, like GNU
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <style type="text/css">
 <!--
-a.summary-letter {text-decoration: none}
-blockquote.indentedblock {margin-right: 0em}
-blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
-blockquote.smallquotation {font-size: smaller}
-div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
-div.lisp {margin-left: 3.2em}
-div.smalldisplay {margin-left: 3.2em}
-div.smallexample {margin-left: 3.2em}
-div.smalllisp {margin-left: 3.2em}
-kbd {font-style: oblique}
-pre.display {font-family: inherit}
-pre.format {font-family: inherit}
-pre.menu-comment {font-family: serif}
-pre.menu-preformatted {font-family: serif}
-pre.smalldisplay {font-family: inherit; font-size: smaller}
-pre.smallexample {font-size: smaller}
-pre.smallformat {font-family: inherit; font-size: smaller}
-pre.smalllisp {font-size: smaller}
-span.nolinebreak {white-space: nowrap}
-span.roman {font-family: initial; font-weight: normal}
-span.sansserif {font-family: sans-serif; font-weight: normal}
-ul.no-bullet {list-style: none}
 -->
 </style>
 
@@ -61,7 +41,6 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<h1 class="settitle" align="center">Installing GCC: Final installation</h1>
 
 
 
@@ -89,8 +68,8 @@ ul.no-bullet {list-style: none}
 
 
 <p>Now that GCC has been built (and optionally tested), you can install it with
-</p><div class="smallexample">
-<pre class="smallexample">cd <var>objdir</var> &amp;&amp; make install
+</p><div class="example smallexample">
+<pre class="example-preformatted">cd <var class="var">objdir</var> &amp;&amp; make install
 </pre></div>
 
 <p>We strongly recommend to install into a target directory where there is
@@ -100,66 +79,66 @@ depend on this debugging information (catching Ada exceptions for
 instance).
 </p>
 <p>That step completes the installation of GCC; user level binaries can
-be found in <samp><var>prefix</var>/bin</samp> where <var>prefix</var> is the value
-you specified with the <samp>--prefix</samp> to configure (or
-<samp>/usr/local</samp> by default).  (If you specified <samp>--bindir</samp>,
+be found in <samp class="file"><var class="var">prefix</var>/bin</samp> where <var class="var">prefix</var> is the value
+you specified with the <samp class="option">--prefix</samp> to configure (or
+<samp class="file">/usr/local</samp> by default).  (If you specified <samp class="option">--bindir</samp>,
 that directory will be used instead; otherwise, if you specified
-<samp>--exec-prefix</samp>, <samp><var>exec-prefix</var>/bin</samp> will be used.)
+<samp class="option">--exec-prefix</samp>, <samp class="file"><var class="var">exec-prefix</var>/bin</samp> will be used.)
 Headers for the C++ library are installed in
-<samp><var>prefix</var>/include</samp>; libraries in <samp><var>libdir</var></samp>
-(normally <samp><var>prefix</var>/lib</samp>); internal parts of the compiler in
-<samp><var>libdir</var>/gcc</samp> and <samp><var>libexecdir</var>/gcc</samp>; documentation
-in info format in <samp><var>infodir</var></samp> (normally
-<samp><var>prefix</var>/info</samp>).
+<samp class="file"><var class="var">prefix</var>/include</samp>; libraries in <samp class="file"><var class="var">libdir</var></samp>
+(normally <samp class="file"><var class="var">prefix</var>/lib</samp>); internal parts of the compiler in
+<samp class="file"><var class="var">libdir</var>/gcc</samp> and <samp class="file"><var class="var">libexecdir</var>/gcc</samp>; documentation
+in info format in <samp class="file"><var class="var">infodir</var></samp> (normally
+<samp class="file"><var class="var">prefix</var>/info</samp>).
 </p>
 <p>When installing cross-compilers, GCC&rsquo;s executables
-are not only installed into <samp><var>bindir</var></samp>, that
-is, <samp><var>exec-prefix</var>/bin</samp>, but additionally into
-<samp><var>exec-prefix</var>/<var>target-alias</var>/bin</samp>, if that directory
-exists.  Typically, such <em>tooldirs</em> hold target-specific
+are not only installed into <samp class="file"><var class="var">bindir</var></samp>, that
+is, <samp class="file"><var class="var">exec-prefix</var>/bin</samp>, but additionally into
+<samp class="file"><var class="var">exec-prefix</var>/<var class="var">target-alias</var>/bin</samp>, if that directory
+exists.  Typically, such <em class="dfn">tooldirs</em> hold target-specific
 binutils, including assembler and linker.
 </p>
-<p>Installation into a temporary staging area or into a <code>chroot</code>
+<p>Installation into a temporary staging area or into a <code class="command">chroot</code>
 jail can be achieved with the command
 </p>
-<div class="smallexample">
-<pre class="smallexample">make DESTDIR=<var>path-to-rootdir</var> install
+<div class="example smallexample">
+<pre class="example-preformatted">make DESTDIR=<var class="var">path-to-rootdir</var> install
 </pre></div>
 
-<p>where <var>path-to-rootdir</var> is the absolute path of
+<p>where <var class="var">path-to-rootdir</var> is the absolute path of
 a directory relative to which all installation paths will be
-interpreted.  Note that the directory specified by <code>DESTDIR</code>
+interpreted.  Note that the directory specified by <code class="code">DESTDIR</code>
 need not exist yet; it will be created if necessary.
 </p>
-<p>There is a subtle point with tooldirs and <code>DESTDIR</code>:
+<p>There is a subtle point with tooldirs and <code class="code">DESTDIR</code>:
 If you relocate a cross-compiler installation with
-e.g. &lsquo;<samp>DESTDIR=<var>rootdir</var></samp>&rsquo;, then the directory
-<samp><var>rootdir</var>/<var>exec-prefix</var>/<var>target-alias</var>/bin</samp> will
+e.g. &lsquo;<samp class="samp">DESTDIR=<var class="var">rootdir</var></samp>&rsquo;, then the directory
+<samp class="file"><var class="var">rootdir</var>/<var class="var">exec-prefix</var>/<var class="var">target-alias</var>/bin</samp> will
 be filled with duplicated GCC executables only if it already exists,
 it will not be created otherwise.  This is regarded as a feature,
 not as a bug, because it gives slightly more control to the packagers
-using the <code>DESTDIR</code> feature.
+using the <code class="code">DESTDIR</code> feature.
 </p>
 <p>You can install stripped programs and libraries with
 </p>
-<div class="smallexample">
-<pre class="smallexample">make install-strip
+<div class="example smallexample">
+<pre class="example-preformatted">make install-strip
 </pre></div>
 
 <p>By default, only the man pages and info-format GCC documentation
 are built and installed.  If you want to generate the GCC manuals in
 other formats, use commands like
 </p>
-<div class="smallexample">
-<pre class="smallexample">make dvi
+<div class="example smallexample">
+<pre class="example-preformatted">make dvi
 make pdf
 make html
 </pre></div>
 
 <p>to build the manuals in the corresponding formats, and
 </p>
-<div class="smallexample">
-<pre class="smallexample">make install-dvi
+<div class="example smallexample">
+<pre class="example-preformatted">make install-dvi
 make install-pdf
 make install-html
 </pre></div>
@@ -167,20 +146,20 @@ make install-html
 <p>to install them.
 Alternatively, there are prebuilt online versions of the manuals for
 released versions of GCC on
-<a href="https://gcc.gnu.org/onlinedocs/">the GCC web site</a>.
+<a class="uref" href="https://gcc.gnu.org/onlinedocs/">the GCC web site</a>.
 </p>
 <p>If you built GCC yourself we would like to know if the
-<a href="specific.html">host/target specific installation notes</a>
+<a class="uref" href="specific.html">host/target specific installation notes</a>
 didn&rsquo;t include your host/target information or if that information is
 incomplete or out of date.  Send a note to
-<a href="mailto:gcc@gcc.gnu.org">gcc@gcc.gnu.org</a> detailing how the information should be changed.
+<a class="email" href="mailto:gcc@gcc.gnu.org">gcc@gcc.gnu.org</a> detailing how the information should be changed.
 </p>
 <p>If you find a bug, please report it following the
-<a href="../bugs/">bug reporting guidelines</a>.
+<a class="uref" href="../bugs/">bug reporting guidelines</a>.
 </p>
 <hr />
 <p>
-<p><a href="./index.html">Return to the GCC Installation page</a>
+<p><a class="uref" href="./index.html">Return to the GCC Installation page</a>
 </p>
 
 

@@ -1679,13 +1679,17 @@ the next @option{-x} option.  Possible values for @var{language} are:
 @smallexample
 c  c-header  cpp-output
 c++  c++-header  c++-system-header c++-user-header c++-cpp-output
-objective-c  objective-c-header  objective-c-cpp-output
-objective-c++ objective-c++-header objective-c++-cpp-output
+objective-c  objective-c-header  objective-c-cpp-output  objc-cpp-output
+objective-c++  objective-c++-header  objective-c++-cpp-output
+objc++-cpp-output
 assembler  assembler-with-cpp
-ada
+ada  adascil  adawhy
 d
-f77  f77-cpp-input f95  f95-cpp-input
+f77  f77-cpp-input  f95  f95-cpp-input
 go
+modula-2  modula-2-cpp-output
+rust
+lto
 @end smallexample
 
 @item -x none
@@ -21424,7 +21428,7 @@ performance of the code.  Permissible values for this option are:
 @samp{octeontx2f95mm},
 @samp{a64fx}, @samp{fujitsu-monaka},
 @samp{thunderx}, @samp{thunderxt88},
-@samp{thunderxt88p1}, @samp{thunderxt81}, @samp{tsv110},
+@samp{thunderxt88p1}, @samp{thunderxt81}, @samp{tsv110}, @samp{hip12},
 @samp{thunderxt83}, @samp{thunderx2t99}, @samp{thunderx3t110}, @samp{zeus},
 @samp{cortex-a57.cortex-a53}, @samp{cortex-a72.cortex-a53},
 @samp{cortex-a73.cortex-a35}, @samp{cortex-a73.cortex-a53},
@@ -34516,37 +34520,36 @@ VPCLMULQDQ, AVX512BITALG, RDPID and AVX512VPOPCNTDQ instruction set support.
 Intel Alder Lake/Raptor Lake/Meteor Lake/Gracemont CPU with 64-bit extensions,
 MOVBE, MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, POPCNT, AES, PREFETCHW,
 PCLMUL, RDRND, XSAVE, XSAVEC, XSAVES, XSAVEOPT, FSGSBASE, PTWRITE, RDPID, SGX,
-GFNI-SSE, CLWB, MOVDIRI, MOVDIR64B, CLDEMOTE, WAITPKG, ADCX, AVX, AVX2, BMI,
-BMI2, F16C, FMA, LZCNT, PCONFIG, PKU, VAES, VPCLMULQDQ, SERIALIZE, HRESET, KL,
-WIDEKL and AVX-VNNI instruction set support.
+GFNI-SSE, CLWB, MOVDIRI, MOVDIR64B, WAITPKG, ADCX, AVX, AVX2, BMI, BMI2, F16C,
+FMA, LZCNT, PCONFIG, PKU, VAES, VPCLMULQDQ, SERIALIZE, HRESET, KL, WIDEKL and
+AVX-VNNI instruction set support.
 
 @item arrowlake
 Intel Arrow Lake CPU with 64-bit extensions, MOVBE, MMX, SSE, SSE2, SSE3,
 SSSE3, SSE4.1, SSE4.2, POPCNT, AES, PREFETCHW, PCLMUL, RDRND, XSAVE, XSAVEC,
 XSAVES, XSAVEOPT, FSGSBASE, PTWRITE, RDPID, SGX, GFNI-SSE, CLWB, MOVDIRI,
-MOVDIR64B, CLDEMOTE, WAITPKG, ADCX, AVX, AVX2, BMI, BMI2, F16C, FMA, LZCNT,
-PCONFIG, PKU, VAES, VPCLMULQDQ, SERIALIZE, HRESET, KL, WIDEKL, AVX-VNNI,
-UINTR, AVXIFMA, AVXVNNIINT8, AVXNECONVERT and CMPCCXADD instruction set
-support.
+MOVDIR64B, WAITPKG, ADCX, AVX, AVX2, BMI, BMI2, F16C, FMA, LZCNT, PCONFIG, PKU,
+VAES, VPCLMULQDQ, SERIALIZE, HRESET, KL, WIDEKL, AVX-VNNI, UINTR, AVXIFMA,
+AVXVNNIINT8, AVXNECONVERT and CMPCCXADD instruction set support.
 
 @item arrowlake-s
 @itemx lunarlake
 Intel Arrow Lake S/Lunar Lake CPU with 64-bit extensions, MOVBE, MMX, SSE,
 SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, POPCNT, AES, PREFETCHW, PCLMUL, RDRND,
 XSAVE, XSAVEC, XSAVES, XSAVEOPT, FSGSBASE, PTWRITE, RDPID, SGX, GFNI-SSE, CLWB,
-MOVDIRI, MOVDIR64B, CLDEMOTE, WAITPKG, ADCX, AVX, AVX2, BMI, BMI2, F16C, FMA,
-LZCNT, PCONFIG, PKU, VAES, VPCLMULQDQ, SERIALIZE, HRESET, KL, WIDEKL, AVX-VNNI,
-UINTR, AVXIFMA, AVXVNNIINT8, AVXNECONVERT, CMPCCXADD, AVXVNNIINT16, SHA512,
-SM3 and SM4 instruction set support.
+MOVDIRI, MOVDIR64B, WAITPKG, ADCX, AVX, AVX2, BMI, BMI2, F16C, FMA, LZCNT,
+PCONFIG, PKU, VAES, VPCLMULQDQ, SERIALIZE, HRESET, KL, WIDEKL, AVX-VNNI, UINTR,
+AVXIFMA, AVXVNNIINT8, AVXNECONVERT, CMPCCXADD, AVXVNNIINT16, SHA512, SM3 and
+SM4 instruction set support.
 
 @item pantherlake
 Intel Panther Lake CPU with 64-bit extensions, MOVBE, MMX, SSE, SSE2, SSE3,
 SSSE3, SSE4.1, SSE4.2, POPCNT, AES, PREFETCHW, PCLMUL, RDRND, XSAVE, XSAVEC,
 XSAVES, XSAVEOPT, FSGSBASE, PTWRITE, RDPID, SGX, GFNI-SSE, CLWB, MOVDIRI,
-MOVDIR64B, CLDEMOTE, WAITPKG, ADCX, AVX, AVX2, BMI, BMI2, F16C, FMA, LZCNT,
-PCONFIG, PKU, VAES, VPCLMULQDQ, SERIALIZE, HRESET, KL, WIDEKL, AVX-VNNI,
-UINTR, AVXIFMA, AVXVNNIINT8, AVXNECONVERT, CMPCCXADD, AVXVNNIINT16, SHA512,
-SM3, SM4 and PREFETCHI instruction set support.
+MOVDIR64B, WAITPKG, ADCX, AVX, AVX2, BMI, BMI2, F16C, FMA, LZCNT, PCONFIG, PKU,
+VAES, VPCLMULQDQ, SERIALIZE, HRESET, AVX-VNNI, UINTR, AVXIFMA, AVXVNNIINT8,
+AVXNECONVERT, CMPCCXADD, AVXVNNIINT16, SHA512, SM3 and SM4 instruction set
+support.
 
 @item sapphirerapids
 @itemx emeraldrapids
@@ -34635,9 +34638,9 @@ Intel Clearwater Forest CPU with 64-bit extensions, MOVBE, MMX, SSE, SSE2,
 SSE3, SSSE3, SSE4.1, SSE4.2, POPCNT, AES, PREFETCHW, PCLMUL, RDRND, XSAVE,
 XSAVEC, XSAVES, XSAVEOPT, FSGSBASE, PTWRITE, RDPID, SGX, GFNI-SSE, CLWB,
 MOVDIRI, MOVDIR64B, CLDEMOTE, WAITPKG, ADCX, AVX, AVX2, BMI, BMI2, F16C, FMA,
-LZCNT, PCONFIG, PKU, VAES, VPCLMULQDQ, SERIALIZE, HRESET, KL, WIDEKL, AVX-VNNI,
-ENQCMD, UINTR, AVXIFMA, AVXVNNIINT8, AVXNECONVERT, CMPCCXADD, AVXVNNIINT16,
-SHA512, SM3, SM4, USER_MSR and PREFETCHI instruction set support.
+LZCNT, PCONFIG, PKU, VAES, VPCLMULQDQ, SERIALIZE, HRESET, AVX-VNNI, ENQCMD,
+UINTR, AVXIFMA, AVXVNNIINT8, AVXNECONVERT, CMPCCXADD, AVXVNNIINT16, SHA512,
+SM3, SM4, USER_MSR and PREFETCHI instruction set support.
 
 @item knl
 Intel Knights Landing CPU with 64-bit extensions, MOVBE, MMX, SSE, SSE2, SSE3,

@@ -1012,7 +1012,7 @@
    (set_attr "type" "alus_sreg")]
 )
 
-(define_insn "subvsi3_intmin"
+(define_insn "sub_cmpVsi3_intmin"
   [(set (reg:CC_V CC_REGNUM)
 	(compare:CC_V
 	  (plus:DI
@@ -1432,15 +1432,15 @@
       operands[2] = GEN_INT (-INTVAL (operands[2]));
       /* Special case for INT_MIN.  */
       if (INTVAL (operands[2]) == 0x80000000)
-	emit_insn (gen_subvsi3_intmin (operands[0], operands[1]));
+	emit_insn (gen_sub_cmpVsi3_intmin (operands[0], operands[1]));
       else
 	emit_insn (gen_addsi3_compareV_imm (operands[0], operands[1],
-					  operands[2]));
+					    operands[2]));
     }
   else if (CONST_INT_P (operands[1]))
-    emit_insn (gen_subvsi3_imm1 (operands[0], operands[1], operands[2]));
+    emit_insn (gen_sub_cmpVsi3_imm1 (operands[0], operands[1], operands[2]));
   else
-    emit_insn (gen_subvsi3 (operands[0], operands[1], operands[2]));
+    emit_insn (gen_sub_cmpVsi3 (operands[0], operands[1], operands[2]));
 
   arm_gen_unlikely_cbranch (NE, CC_Vmode, operands[3]);
   DONE;
@@ -1513,14 +1513,16 @@
     hi_op2 = force_reg (SImode, hi_op2);
   rtx ccreg = gen_rtx_REG (mode, CC_REGNUM);
   if (CONST_INT_P (hi_op2))
-    emit_insn (gen_subvsi3_borrow_imm (hi_result, hi_op1, hi_op2,
+    emit_insn (gen_sub_cmpVsi3_borrow_imm (hi_result, hi_op1, hi_op2,
+					   gen_rtx_LTU (SImode, ccreg,
+							const0_rtx),
+					   gen_rtx_LTU (DImode, ccreg,
+							const0_rtx)));
+  else
+    emit_insn (gen_sub_cmpVsi3_borrow (hi_result, hi_op1, hi_op2,
 				       gen_rtx_LTU (SImode, ccreg, const0_rtx),
 				       gen_rtx_LTU (DImode, ccreg,
 						    const0_rtx)));
-  else
-    emit_insn (gen_subvsi3_borrow (hi_result, hi_op1, hi_op2,
-				   gen_rtx_LTU (SImode, ccreg, const0_rtx),
-				   gen_rtx_LTU (DImode, ccreg, const0_rtx)));
   arm_gen_unlikely_cbranch (NE, CC_Vmode, operands[3]);
 
   DONE;
@@ -1630,15 +1632,18 @@
     hi_op2 = force_reg (SImode, hi_op2);
   rtx ccreg = gen_rtx_REG (mode, CC_REGNUM);
   if (CONST_INT_P (hi_op2))
-    emit_insn (gen_usubvsi3_borrow_imm (hi_result, hi_op1, hi_op2,
-					GEN_INT (UINTVAL (hi_op2) & 0xffffffff),
+    emit_insn (gen_usub_cmpVsi3_borrow_imm (hi_result, hi_op1, hi_op2,
+					    GEN_INT (UINTVAL (hi_op2)
+						     & 0xffffffff),
+					    gen_rtx_LTU (SImode, ccreg,
+							 const0_rtx),
+					    gen_rtx_LTU (DImode, ccreg,
+							 const0_rtx)));
+  else
+    emit_insn (gen_usub_cmpVsi3_borrow (hi_result, hi_op1, hi_op2,
 					gen_rtx_LTU (SImode, ccreg, const0_rtx),
 					gen_rtx_LTU (DImode, ccreg,
 						     const0_rtx)));
-  else
-    emit_insn (gen_usubvsi3_borrow (hi_result, hi_op1, hi_op2,
-				    gen_rtx_LTU (SImode, ccreg, const0_rtx),
-				    gen_rtx_LTU (DImode, ccreg, const0_rtx)));
   arm_gen_unlikely_cbranch (LTU, CC_Bmode, operands[3]);
 
   DONE;
@@ -1657,7 +1662,7 @@
    (set_attr "type" "alus_sreg")]
 )
 
-(define_insn "subvsi3"
+(define_insn "sub_cmpVsi3"
   [(set (reg:CC_V CC_REGNUM)
 	(compare:CC_V
 	 (minus:DI
@@ -1674,7 +1679,7 @@
    (set_attr "type" "alus_sreg")]
 )
 
-(define_insn "subvsi3_imm1"
+(define_insn "sub_cmpVsi3_imm1"
   [(set (reg:CC_V CC_REGNUM)
 	(compare:CC_V
 	 (minus:DI
@@ -2131,7 +2136,7 @@
    (set_attr "type" "alus_imm")]
 )
 
-(define_insn "usubvsi3_borrow"
+(define_insn "usub_cmpVsi3_borrow"
   [(set (reg:CC_B CC_REGNUM)
 	(compare:CC_B
 	 (zero_extend:DI (match_operand:SI 1 "s_register_operand" "0,r"))
@@ -2149,7 +2154,7 @@
    (set_attr "length" "2,4")]
 )
 
-(define_insn "usubvsi3_borrow_imm"
+(define_insn "usub_cmpVsi3_borrow_imm"
   [(set (reg:CC_B CC_REGNUM)
 	(compare:CC_B
 	 (zero_extend:DI (match_operand:SI 1 "s_register_operand" "r,r"))
@@ -2168,7 +2173,7 @@
    (set_attr "type" "alus_imm")]
 )
 
-(define_insn "subvsi3_borrow"
+(define_insn "sub_cmpVsi3_borrow"
   [(set (reg:CC_V CC_REGNUM)
 	(compare:CC_V
 	 (minus:DI
@@ -2189,7 +2194,7 @@
    (set_attr "length" "2,4")]
 )
 
-(define_insn "subvsi3_borrow_imm"
+(define_insn "sub_cmpVsi3_borrow_imm"
   [(set (reg:CC_V CC_REGNUM)
 	(compare:CC_V
 	 (minus:DI
@@ -10148,6 +10153,7 @@
    (set_attr "type" "multiple")]
 )
 
+;; (pred4 && pred5) != 0
 (define_insn "*cmp_ite0"
   [(set (match_operand 6 "dominant_cc_register" "")
 	(compare
@@ -10164,7 +10170,11 @@
 	        "lPy,rI,L,lPy,lPy,rI,rI,L,L")])
 	  (const_int 0))
 	 (const_int 0)))]
-  "TARGET_32BIT"
+  "TARGET_32BIT
+   && GET_MODE (operands[6]) != CCmode
+   && (GET_MODE (operands[6])
+       == arm_select_dominance_cc_mode (operands[4], operands[5],
+					DOM_CC_X_AND_Y))"
   "*
   {
     static const char * const cmp1[NUM_OF_COND_CMP][2] =
@@ -10231,6 +10241,7 @@
            (const_int 10))])]
 )
 
+;; (!pred4 || pred5) != 0
 (define_insn "*cmp_ite1"
   [(set (match_operand 6 "dominant_cc_register" "")
 	(compare
@@ -10247,7 +10258,11 @@
 	        "lPy,rI,L,lPy,lPy,rI,rI,L,L")])
 	  (const_int 1))
 	 (const_int 0)))]
-  "TARGET_32BIT"
+  "TARGET_32BIT
+   && GET_MODE (operands[6]) != CCmode
+   && (GET_MODE (operands[6])
+       == arm_select_dominance_cc_mode (operands[4], operands[5],
+					DOM_CC_NX_OR_Y))"
   "*
   {
     static const char * const cmp1[NUM_OF_COND_CMP][2] =
@@ -10330,7 +10345,11 @@
 	    (match_operand:SI 3 "arm_add_operand"
 	        "lPy,rI,L,lPy,lPy,r,rI,rI,L,L")]))
 	 (const_int 0)))]
-  "TARGET_32BIT"
+  "TARGET_32BIT
+   && GET_MODE (operands[6]) != CCmode
+   && (GET_MODE (operands[6])
+       == arm_select_dominance_cc_mode (operands[4], operands[5],
+					DOM_CC_X_AND_Y))"
   "*
   {
     static const char *const cmp1[NUM_OF_COND_CMP][2] =
@@ -10415,7 +10434,11 @@
 	    (match_operand:SI 3 "arm_add_operand"
 	        "lPy,rI,L,lPy,lPy,r,rI,rI,L,L")]))
 	 (const_int 0)))]
-  "TARGET_32BIT"
+  "TARGET_32BIT
+   && GET_MODE (operands[6]) != CCmode
+   && (GET_MODE (operands[6])
+       == arm_select_dominance_cc_mode (operands[4], operands[5],
+					DOM_CC_X_OR_Y))"
   "*
   {
     static const char *const cmp1[NUM_OF_COND_CMP][2] =
