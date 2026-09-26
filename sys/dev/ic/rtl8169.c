@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.184 2026/09/23 19:15:25 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.185 2026/09/26 00:48:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.184 2026/09/23 19:15:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.185 2026/09/26 00:48:28 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1212,7 +1212,7 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	return 0;
  out:
 	m_freem(n);
-	return ENOMEM;
+	return error;
 }
 
 static int
@@ -1241,13 +1241,14 @@ re_tx_list_init(struct rtk_softc *sc)
 static int
 re_rx_list_init(struct rtk_softc *sc)
 {
-	int i;
+	int i, error;
 
 	memset(sc->re_ldata.re_rx_list, 0, RE_RX_LIST_SZ);
 
 	for (i = 0; i < RE_RX_DESC_CNT(sc); i++) {
-		if (re_newbuf(sc, i, NULL) == ENOBUFS)
-			return ENOBUFS;
+		error = re_newbuf(sc, i, NULL);
+		if (error != 0)
+			return error;
 	}
 
 	sc->re_ldata.re_rx_prodidx = 0;
@@ -2022,7 +2023,11 @@ re_init_locked(struct rtk_softc *sc)
 	/*
 	 * For C+ mode, initialize the RX descriptors and mbufs.
 	 */
-	re_rx_list_init(sc);
+	error = re_rx_list_init(sc);
+	if (error != 0) {
+		re_stop(ifp, 0);
+		goto out;
+	}
 	re_tx_list_init(sc);
 
 	/*
