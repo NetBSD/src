@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.39 2026/09/26 15:41:26 riastradh Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.40 2026/09/26 22:02:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.39 2026/09/26 15:41:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.40 2026/09/26 22:02:44 riastradh Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -554,15 +554,15 @@ v7fs_setattr(void *v)
 
 		if (vap->va_atime.tv_sec != VNOVAL) {
 			acc = &vap->va_atime;
+			v7node->update_atime = true;
 		}
 		if (vap->va_mtime.tv_sec != VNOVAL) {
 			mod = &vap->va_mtime;
 			v7node->update_mtime = true;
 		}
-		v7node->update_ctime = true;
 	}
 
-	v7node->update_atime = true;
+	v7node->update_ctime = true;
 	v7fs_update(vp, acc, mod, 0);
 
 	return error;
