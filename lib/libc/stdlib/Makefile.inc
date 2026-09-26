@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.105 2025/07/20 23:09:09 dholland Exp $
+#	$NetBSD: Makefile.inc,v 1.106 2026/09/26 16:34:55 thorpej Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -33,7 +33,7 @@ SRCS+= erand48_ieee754.c
 SRCS+=	jemalloc.c aligned_alloc.c
 .      endif 
 .   else
-SRCS+=	malloc.c
+SRCS+=	malloc.c aligned_alloc.c
 .   endif
 .endif
 
