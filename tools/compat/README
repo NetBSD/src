@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.29 2023/09/02 18:45:48 palle Exp $
+$NetBSD: README,v 1.30 2026/09/27 15:40:22 tsutsui Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -36,8 +36,6 @@ build.sh has been tested on:
 * The gcc and g++ package must be installed, along with the typical system 
   development packages (glibc-devel, etc.). The g++ package is sometimes 
   called gcc-c++.
-
-* The ncurses-devel package must be installed (for nbinfo).
 
 * The zlib and zlib-devel packages must be installed (these are
   called zlib1g and zlib1g-dev on Debian and Ubuntu Linux)
