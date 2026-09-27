@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.316 2026/09/26 04:32:00 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.317 2026/09/27 15:17:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.316 2026/09/26 04:32:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.317 2026/09/27 15:17:15 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1095,13 +1095,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		gotblk++;
 
 		/* Zero out inode numbers */
-		for (i = 0; i < LFS_INOPB(fs); ++i) {
-			union lfs_dinode *tmpdi;
-
-			tmpdi = (union lfs_dinode *)((char *)sp->ibp->b_data +
-						     DINOSIZE(fs) * i);
-			lfs_dino_setinumber(fs, tmpdi, 0);
-		}
+		memset(sp->ibp->b_data, 0, lfs_sb_getibsize(fs));
 
 		++sp->start_bpp;
 		lfs_sb_subavail(fs, lfs_btofsb(fs, lfs_sb_getibsize(fs)));
