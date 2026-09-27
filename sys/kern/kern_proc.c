@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.286 2026/08/14 03:04:22 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.287 2026/09/27 22:00:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.286 2026/08/14 03:04:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.287 2026/09/27 22:00:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.286 2026/08/14 03:04:22 riastradh Ex
 #include <sys/sdt.h>
 #include <sys/signalvar.h>
 #include <sys/sleepq.h>
+#include <sys/stdalign.h>
 #include <sys/syscall_stats.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -422,6 +423,8 @@ procinit(void)
 	size_t proc_alignment = coherency_unit;
 	if (proc_alignment < MIN_PROC_ALIGNMENT)
 		proc_alignment = MIN_PROC_ALIGNMENT;
+	if (proc_alignment < alignof(struct proc))
+		proc_alignment = alignof(struct proc);
 
 	proc_cache = pool_cache_init(sizeof(struct proc), proc_alignment, 0, 0,
 	    "procpl", NULL, IPL_NONE, proc_ctor, NULL, NULL);
