@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.59 2026/09/26 04:32:00 perseant Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.60 2026/09/27 18:48:21 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -661,8 +661,18 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 	((lfs_sb_getnseg(fs) + SEGUPB(fs) - 1) / lfs_sb_getsepb(fs))
 
 #ifdef _KERNEL
+# define EXCL_IFLOCK(F) 						\
+  do {									\
+	KASSERT(!mutex_owned(&lfs_lock));				\
+	rw_enter(&(F)->lfs_iflock, RW_WRITER);				\
+  } while(0)
+# define UNEXCL_IFLOCK(F)						\
+  do {									\
+	rw_exit(&(F)->lfs_iflock);					\
+  } while(0)
 # define SHARE_IFLOCK(F) 						\
   do {									\
+	KASSERT(!mutex_owned(&lfs_lock));				\
 	if (!rw_write_held(&(F)->lfs_iflock)) {				\
 		rw_enter(&(F)->lfs_iflock, RW_READER);			\
 	}								\
@@ -674,6 +684,8 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 	}								\
   } while(0)
 #else /* ! _KERNEL */
+# define EXCL_IFLOCK(F)
+# define UNEXCL_IFLOCK(F)
 # define SHARE_IFLOCK(F)
 # define UNSHARE_IFLOCK(F)
 #endif /* ! _KERNEL */

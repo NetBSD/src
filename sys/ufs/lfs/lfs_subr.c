@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.112 2026/09/26 04:32:00 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.113 2026/09/27 18:48:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.112 2026/09/26 04:32:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.113 2026/09/27 18:48:21 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,11 +672,11 @@ lfs_prelock(struct lfs *fs, unsigned long flags)
 		if (fs->lfs_prelocklwp == curlwp) {
 			/* Locked by us already */
 			++fs->lfs_prelock;
-			goto out;
+			goto errout;
 		} else if (flags & SEGM_PAGEDAEMON) {
 			/* Pagedaemon cannot wait */
 			error = EWOULDBLOCK;
-			goto out;
+			goto errout;
 		} else {
 			/* Wait for lock */
 			while (fs->lfs_prelock) {
@@ -689,10 +689,12 @@ lfs_prelock(struct lfs *fs, unsigned long flags)
 	fs->lfs_prelock = 1;
 	fs->lfs_prelocklwp = curlwp;
 
-	rw_enter(&fs->lfs_iflock, RW_WRITER);
- out:
 	mutex_exit(&lfs_lock);
+	EXCL_IFLOCK(fs);
+	return 0;
 
+ errout:
+	mutex_exit(&lfs_lock);
 	return error;
 }
 
@@ -718,13 +720,15 @@ void
 lfs_preunlock(struct lfs *fs)
 {
 	mutex_enter(&lfs_lock);
-	if (--fs->lfs_prelock == 0) {
-		fs->lfs_prelocklwp = NULL;
-		cv_broadcast(&fs->lfs_prelockcv);
-
-		rw_exit(&fs->lfs_iflock);
+	if (--fs->lfs_prelock > 0) {
+		mutex_exit(&lfs_lock);
+		return;
 	}
+
+	fs->lfs_prelocklwp = NULL;
+	cv_broadcast(&fs->lfs_prelockcv);
 	mutex_exit(&lfs_lock);
+	UNEXCL_IFLOCK(fs);
 }
 
 /*
