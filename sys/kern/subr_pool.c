@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.298 2026/08/23 17:49:11 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.299 2026/09/27 22:01:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.298 2026/08/23 17:49:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.299 2026/09/27 22:01:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.298 2026/08/23 17:49:11 riastradh Ex
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/sdt.h>
+#include <sys/stdalign.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -732,10 +733,12 @@ pool_subsystem_init(void)
 	pool_init(&pcg_large_pool, size, coherency_unit, 0, 0,
 	    "pcglarge", &pool_allocator_meta, IPL_VM);
 
-	pool_init(&cache_pool, sizeof(struct pool_cache), coherency_unit,
+	pool_init(&cache_pool, sizeof(struct pool_cache), MAX(coherency_unit,
+		alignof(struct pool_cache)),
 	    0, 0, "pcache", &pool_allocator_meta, IPL_NONE);
 
-	pool_init(&cache_cpu_pool, sizeof(pool_cache_cpu_t), coherency_unit,
+	pool_init(&cache_cpu_pool, sizeof(pool_cache_cpu_t),
+	    MAX(coherency_unit, alignof(pool_cache_cpu_t)),
 	    0, 0, "pcachecpu", &pool_allocator_meta, IPL_NONE);
 }
 
