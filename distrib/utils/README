@@ -1,4 +1,4 @@
-#	$NetBSD: README,v 1.4 2002/03/25 07:39:50 lukem Exp $
+#	$NetBSD: README,v 1.5 2026/09/27 05:20:45 lukem Exp $
 
 From: "Gordon W. Ross" <gwr>
 Date: Tue, 3 Oct 95 16:37:39 EDT
@@ -29,15 +29,9 @@ Also, in the new "src/distrib/utils" area, I've made build
 directories for some programs that build smaller versions,
 usually by adding special CFLAGS
 
-init_s:  (built with -DLETS_GET_SMALL)
-  * Forces single-user mode
-  * Eliminates unnecessary code
-
 libhack:   small implementation of some libc functions
   * Needs only /etc/master.passwd (not pwd.db, spwd.db)
   * Reduces size of an m68k crunched binary by about 64K
-
-x_dd:  built with -DNO_CONV (no conv=* options)
 
 x_ifconfig:  supports inet only
 
