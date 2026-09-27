@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_V5,v 1.14 2026/09/27 19:55:02 yurix Exp $
+# $NetBSD: GENERIC_V5,v 1.15 2026/09/27 19:56:22 yurix Exp $
 #
 # GENERIC ARMv5 kernel
 #
@@ -106,6 +106,7 @@ pseudo-device 	tprof
 
 # GPIOs
 pinctrl* 	at fdt? pass 1		# generic pinctrl driver
+am18xxgpio*	at fdt?	pass 5		# am18xx gpio driver
 am18xxpupd*	at fdt?	pass 1		# am18xx pull up/pull down
 imx23pctl* 	at fdt?	pass 1		# imx23 pin control+gpio
 gpio* 		at gpiobus?
