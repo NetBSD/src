@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.34 2026/08/19 09:28:39 yurix Exp $
+#	$NetBSD: files.ti,v 1.35 2026/09/27 19:55:02 yurix Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -104,6 +104,10 @@ file	arch/arm/ti/am18xx_timer.c	am18xxtimer
 device	tigpio: fdt_gpio, gpiobus
 attach	tigpio at fdt with ti_gpio
 file	arch/arm/ti/ti_gpio.c		ti_gpio
+
+device	am18xxpupd: fdt_pinctrl
+attach	am18xxpupd at fdt
+file	arch/arm/ti/am18xx_pupd.c	am18xxpupd
 
 # I2C
 device	tiiic: fdt_i2c, i2cbus, i2cexec
