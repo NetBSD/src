@@ -38,7 +38,7 @@
 
 #if defined(_KERNEL)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.6 2019/06/12 14:36:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.7 2026/09/28 17:45:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.6 2019/06/12 14:36:32 christos Exp $");
 #include <sys/kmem.h>
 #else
 #include <sys/socket.h>
-#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <stdlib.h>
