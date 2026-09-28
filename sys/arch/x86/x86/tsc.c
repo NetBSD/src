@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.64 2026/03/01 13:57:41 yamt Exp $	*/
+/*	$NetBSD: tsc.c,v 1.65 2026/09/28 19:09:20 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.64 2026/03/01 13:57:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.65 2026/09/28 19:09:20 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,9 @@ tsc_is_invariant(void)
 	 * is to check CPUID 80000007.
 	 */
 	family = CPUID_TO_BASEFAMILY(ci->ci_signature);
-	if (((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
-	    && ((family == 0x06) || (family == 0x0f))) {
+	if (((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD)
+	    || (cpu_vendor == CPUVENDOR_IDT))
+	    && ((family == 0x06) || (family == 0x07) || (family == 0x0f))) {
 		x86_cpuid(0x80000000, descs);
 		if (descs[0] >= 0x80000007) {
 			x86_cpuid(0x80000007, descs);
