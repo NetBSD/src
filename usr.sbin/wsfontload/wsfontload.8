@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.32 2022/06/08 22:38:29 uwe Exp $
+.\"	$NetBSD: wsfontload.8,v 1.33 2026/09/28 05:59:56 charlotte Exp $
 .\"
 .\" Copyright (c) 1999, 2001
 .\" 	Matthias Drochner.  All rights reserved.
@@ -32,7 +32,7 @@
 .Nd "load a font bitmap into the wsfont pool or a wscons display device"
 .Sh SYNOPSIS
 .Nm
-.Op Fl Bbv
+.Op Fl Bbnv
 .Op Fl e Ar encoding
 .Op Fl f Ar wsdev
 .Op Fl h Ar height
@@ -101,6 +101,12 @@ Specifies a name which can be used later to refer to the font.
 If none is given, the
 .Ar fontfile
 name is used to create one.
+.It Fl n
+Does a dry run.
+The
+.Ar fontfile
+is not actually loaded.
+Useful for validating or obtaining information about the font.  
 .It Fl v
 Prints the font's properties before loading it.
 .It Fl w Ar width
@@ -163,6 +169,13 @@ This or another 8\[tmu]8-font is necessary to use the
 50-line screen type on
 .Xr vga 4
 displays.
+.Pp
+Obtain information about a font file without loading it:
+.Pp
+.Bd -literal -offset indent
+# wsfontload -n -v \e
+    /usr/share/wscons/fonts/ter-120n.wsf
+.Ed
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsfont 4 ,
