@@ -1,11 +1,11 @@
-#	$NetBSD: SAM460EX,v 1.6 2026/06/23 22:07:46 rkujawa Exp $
+#	$NetBSD: SAM460EX,v 1.7 2026/09/28 20:41:00 rkujawa Exp $
 #
 #	SAM460EX -- ACube Sam460ex (AMCC 460EX)
 #
 
 include 	"arch/evbppc/conf/std.sam460ex"
 
-#ident 		"SAM460EX-$Revision: 1.6 $"
+#ident 		"SAM460EX-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -66,6 +66,12 @@ cpu0	at plb?				# CPU
 opb*	at plb?				# On-chip Peripheral Bus
 com*	at opb? addr ? irq ?		# UARTs
 wdog*	at opb?				# On-chip Watchdog
+ebc0	at plb?				# External Bus Controller
+samfpga0 at ebc0 bank 2			# Lattice XP2 FPGA
+gpio0	at samfpga0			# GPIOs on J22 connector
+opbgpio* at opb? addr ? irq ?		# On-chip GPIO
+gpio1	at opbgpio0			# GPIO0-31
+gpio2	at opbgpio1			# GPIO32-63
 gpiic*	at opb? addr ? irq ?		# On-chip IIC 
 iic*	at gpiic?			# I2C bus
 
@@ -108,6 +114,7 @@ wsbell*	at spkr?			# bell for the wscons display
 
 # selected via console=pci
 radeonfb* at pci? dev ? function ?	# ATI Radeon R100 - R3XX
+pm2fb*	at pci? dev ? function ?	# 3Dlabs Permedia 2/2v framebuffer
 
 wsdisplay* at wsemuldisplaydev?
 
@@ -118,19 +125,24 @@ options 	FONT_BOLD8x16		# bitmap font
 satalink* at pci? dev ? function ?	# SATALink
 siisata* at pci? dev ? function ?
 
+# SATA shares SERDES PHY with one of PCI root complexes, but we detect
+# which one was enabled on the firmware level and configure accordingly.
 dwcsata0 at plb? addr 0xbffd1000 irq 96	# on-chip DWC SATA-II
 options 	DWCSATA_PIO_ONLY	# force PIO mode
 
 atabus*	at ata?
 wd*	at atabus? drive ? flags 0x0000
 
-# On-chip USB 2.0 host (EHCI + OHCI on the AHB)
-ohci0	at plb? addr 0xbffd0000 irq 94
+# On-chip USB controllers.
+#
+# Due to 460ex CHIP_16 errata, we can not safely operate both EHCI and OHCI
+# at the same time. However, it's not a huge deal in practice.
+#ohci0	at plb? addr 0xbffd0000 irq 94
 ehci0	at plb? addr 0xbffd0400 irq 93
 
 # USB bus support
 usb*	at ehci0
-usb*	at ohci0
+#usb*	at ohci0
 
 # USB Hubs
 uhub*	at usb?

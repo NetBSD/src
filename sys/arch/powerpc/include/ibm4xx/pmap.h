@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 2023/09/28 06:19:19 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -160,7 +160,18 @@ struct pmap {
 #define	pmap_is_modified(pg)	(pmap_check_attr((pg), PMAP_ATTR_CHG, 0))
 #define	pmap_is_referenced(pg)	(pmap_check_attr((pg), PMAP_ATTR_REF, 0))
 
-#define	pmap_phys_address(x)		(x)
+/*
+ * Cache attrs for mmap dev mappings
+ */
+#define	POWERPC_MMAP_FLAG_MASK		0xf
+#define	POWERPC_MMAP_FLAG_PREFETCHABLE	0x1
+#define	POWERPC_MMAP_FLAG_CACHEABLE	0x2
+
+#define	pmap_phys_address(x)		((x) & ~POWERPC_MMAP_FLAG_MASK)
+#define	pmap_mmap_flags(ppn)		ibm4xx_mmap_flags(ppn)
+
+u_int ibm4xx_mmap_flags(paddr_t);
+bool ibm4xx_mmap_ok(paddr_t);
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)

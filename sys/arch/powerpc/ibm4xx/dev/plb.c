@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.27 2026/06/14 00:02:35 rkujawa Exp $ */
+/* $NetBSD: plb.c,v 1.28 2026/09/28 20:41:01 rkujawa Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.27 2026/06/14 00:02:35 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.28 2026/09/28 20:41:01 rkujawa Exp $");
 
 #include "emac.h"
 #include "locators.h"
@@ -111,6 +111,7 @@ const struct plb_dev plb_devs [] = {
 	/* AMCC 460EX */
 	{ AMCC460EX,	"cpu", },
 	{ AMCC460EX,	"opb", },
+	{ AMCC460EX,	"ebc", },
 	{ AMCC460EX,	"pcix", },
 	{ AMCC460EX,	"pciex", },	/* PCIE0 */
 	{ AMCC460EX,	"pciex", },	/* PCIE1 */

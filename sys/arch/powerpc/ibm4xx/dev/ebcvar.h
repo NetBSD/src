@@ -1,6 +1,6 @@
-/*	$NetBSD: ibm4xx_460ex_l2.h,v 1.2 2026/09/28 20:41:01 rkujawa Exp $	*/
+/*	$NetBSD: ebcvar.h,v 1.1 2026/09/28 20:41:01 rkujawa Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -29,12 +29,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IBM4XX_IBM4XX_460EX_L2_H_
-#define _IBM4XX_IBM4XX_460EX_L2_H_
+#ifndef _POWERPC_IBM4XX_DEV_EBCVAR_H_
+#define _POWERPC_IBM4XX_DEV_EBCVAR_H_
 
-extern bool ibm4xx_460ex_l2_enabled;
-extern uint32_t ibm4xx_460ex_l2_cfg;
+#include <sys/bus.h>
 
-void ibm4xx_460ex_l2cache_enable(void);
+/*
+ * External Bus Controller: one child per bank.
+ */
+struct ebc_attach_args {
+	bus_space_tag_t	ebc_bt;
+	bus_dma_tag_t	ebc_dmat;
+	int		ebc_bank;	/* CS line number */
+	bus_addr_t	ebc_addr;	/* bank base addr */
+	bus_size_t	ebc_size;	/* bank size */
+	int		ebc_width;	/* data bus width, bits */
+	int		ebc_usage;	/* EBC_USAGE_* */
+};
 
-#endif /* _IBM4XX_IBM4XX_460EX_L2_H_ */
+#define	EBC_USAGE_DISABLED	0
+#define	EBC_USAGE_RO		1
+#define	EBC_USAGE_WO		2
+#define	EBC_USAGE_RW		3
+
+#endif	/* _POWERPC_IBM4XX_DEV_EBCVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_plb.c,v 1.2 2026/06/19 18:55:23 rkujawa Exp $	*/
+/*	$NetBSD: ehci_plb.c,v 1.3 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -33,9 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_plb.c,v 1.2 2026/06/19 18:55:23 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_plb.c,v 1.3 2026/09/28 20:41:01 rkujawa Exp $");
 
-#include "opt_ppc4xx.h"
+#include "opt_usb.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,9 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_plb.c,v 1.2 2026/06/19 18:55:23 rkujawa Exp $")
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
-#ifdef PPC4XX_L2CACHE
-#include <powerpc/ibm4xx/ibm4xx_460ex_l2.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -56,6 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_plb.c,v 1.2 2026/06/19 18:55:23 rkujawa Exp $")
 #include <dev/usb/ehcivar.h>
 
 #define	EHCI_PLB_SIZE	0x400
+
+/* DesignWare implementation regs. */
+#define	EHCI_DWC_INSNREG01	0x94
+#define	  INSNREG01_THRESH_FULL	0x00800080	/* OUT/IN thresh: 1 packet */
+#define	EHCI_DWC_INSNREG03	0x9c
+#define	  INSNREG03_BMT		0x00000001	/* break transfer */
 
 #include "locators.h"
 
@@ -144,13 +147,12 @@ ehci_plb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bus.ub_hcpriv = sc;
-#ifdef PPC4XX_L2CACHE
-	/* USB DMA needs software L2 invalidation (hardware snoop misses it). */
-	sc->sc_bus.ub_dmatag = ibm4xx_460ex_l2_dmatag();
-#else
+	/* Hardware snoop only. */
 	sc->sc_bus.ub_dmatag = paa->plb_dmat;
-#endif
 	sc->sc_bus.ub_revision = USBREV_2_0;
+
+	/* Handle lost completions, duh. */
+	sc->sc_flags |= EHCIF_DROPPED_INTR_WORKAROUND;
 
 	ehci_plb_tag.pbs_base = paa->plb_addr;
 	ehci_plb_tag.pbs_limit = paa->plb_addr + EHCI_PLB_SIZE;
@@ -168,6 +170,20 @@ ehci_plb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": EHCI USB controller\n");
 
 	sc->sc_offs = bus_space_read_1(sc->iot, sc->ioh, EHCI_CAPLENGTH);
+
+	/*
+	 * Another workaround: 440EPx errata USBH_3:
+	 * bulk-in transfers can stall mid-burst...
+	 */
+	bus_space_write_4(sc->iot, sc->ioh, EHCI_DWC_INSNREG03, INSNREG03_BMT);
+	/* Errata USBH_5: buffer a whole packet before transfer starts. */
+	bus_space_write_4(sc->iot, sc->ioh, EHCI_DWC_INSNREG01,
+	    INSNREG01_THRESH_FULL);
+#ifdef EHCI_DEBUG
+	aprint_normal_dev(self, "insnreg01 %#x insnreg03 %#x\n",
+	    bus_space_read_4(sc->iot, sc->ioh, EHCI_DWC_INSNREG01),
+	    bus_space_read_4(sc->iot, sc->ioh, EHCI_DWC_INSNREG03));
+#endif
 
 	/* Give the EHCI AHB master top arbitration priority (ERR4003 CHIP_16). */
 	ehci_plb_set_arb_priority(self);

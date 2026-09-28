@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.16 2026/03/04 10:54:32 jmcneill Exp $ */
+/*	$NetBSD: picvar.h,v 1.17 2026/09/28 20:41:01 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.16 2026/03/04 10:54:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.17 2026/09/28 20:41:01 rkujawa Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -51,8 +51,11 @@ struct pic_ops {
 	void (*pic_establish_irq)(struct pic_ops *, int, int, int);
 	/* finish setup after CPUs are attached */
 	void (*pic_finish_setup)(struct pic_ops *);
+	int pic_flags;		/* PIC_FLAG_* */
 	char pic_name[16];
 };
+
+#define	PIC_FLAG_LEVEL_MASK	(1<<0)
 
 struct intr_source {
 	int is_type;
@@ -64,6 +67,8 @@ struct intr_source {
 	bool is_cascaded;
 	struct evcnt is_ev;
 	char is_evname[16];
+	struct evcnt is_evmasked;	/* we got it while masked at splN */
+	char is_evmaskedname[24];
 	char is_intrid[INTRIDBUF];
 	u_int is_cpuindex;
 };

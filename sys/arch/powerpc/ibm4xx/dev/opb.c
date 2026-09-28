@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.30 2026/06/14 00:02:35 rkujawa Exp $ */
+/* $NetBSD: opb.c,v 1.31 2026/09/28 20:41:01 rkujawa Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.30 2026/06/14 00:02:35 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.31 2026/09/28 20:41:01 rkujawa Exp $");
 
 #include "locators.h"
 
@@ -150,7 +150,8 @@ const struct opb_dev {
 	{ AMCC460EX,	"com",	AMCC460EX_UART1_BASE,	 1, AMCC460EX_UART1_IRQ, 0 },
 	{ AMCC460EX,	"gpiic",AMCC460EX_IIC0_BASE,	 0, AMCC460EX_IIC0_IRQ, 0 },
 	{ AMCC460EX,	"gpiic",AMCC460EX_IIC1_BASE,	 1, AMCC460EX_IIC1_IRQ, 0 },
-	{ AMCC460EX,	"opbgpio",	AMCC460EX_GPIO0_BASE,	-1, -1, 0 },
+	{ AMCC460EX,	"opbgpio",	AMCC460EX_GPIO0_BASE,	 0, -1, 0 },
+	{ AMCC460EX,	"opbgpio",	AMCC460EX_GPIO1_BASE,	 1, -1, 0 },
 	{ AMCC460EX,	"emac",	AMCC460EX_EMAC0_BASE,	 0, AMCC460EX_EMAC0_IRQ,
 	    OPB_FLAGS_EMAC_GBE | OPB_FLAGS_EMAC_STACV2 | OPB_FLAGS_EMAC_HT256 |\
 	    OPB_FLAGS_EMAC_RMII_RGMII | OPB_FLAGS_EMAC_ETHCFG_ECS |\

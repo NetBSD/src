@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_460ex_l2.c,v 1.1 2026/06/19 18:55:23 rkujawa Exp $	*/
+/*	$NetBSD: ibm4xx_460ex_l2.c,v 1.2 2026/09/28 20:41:00 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -34,140 +34,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_460ex_l2.c,v 1.1 2026/06/19 18:55:23 rkujawa Exp $");
-
-#include "opt_ppc4xx.h"
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_460ex_l2.c,v 1.2 2026/09/28 20:41:00 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/intr.h>
-
-#define	_POWERPC_BUS_DMA_PRIVATE
-#include <sys/bus.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/amcc460ex.h>
 #include <powerpc/ibm4xx/ibm4xx_460ex_l2.h>
 
-#define	L2_LINE_SIZE	32
-#define	L2_WAYS		4
-#define	L2_SIZE		(256 * 1024)
-#define	L2_INDEX_SPAN	(L2_SIZE / L2_WAYS)	/* 64KB */
-
 bool ibm4xx_460ex_l2_enabled = false;
 uint32_t ibm4xx_460ex_l2_cfg;
 
-/*
- * Build the L2C0_ADDR val for an invalidate command 
- */
-static inline uint32_t
-ibm4xx_460ex_l2_addr(bus_addr_t pa)
-{
-	return (uint32_t)pa & 0xfffffff0;
-}
-
-/*
- * Invalidate the L2 lines backing the (offset, offset+len) window 
- */
 static void
-ibm4xx_460ex_l2_invalidate(bus_dma_tag_t t, bus_dmamap_t map,
-    bus_addr_t offset, bus_size_t len)
+ibm4xx_460ex_l2_cmd(uint32_t cmd)
 {
-	const bus_dma_segment_t *ds = map->dm_segs;
-	int s;
 
-	if (len == 0)
-		return;
-
-	s = splhigh();
-
-	if (len >= L2_INDEX_SPAN) {
-		/* Window sweeps every index: one whole-cache invalidate. */
-		mtdcr(DCR_L2C0_ADDR, 0);
-		mtdcr(DCR_L2C0_CMD, L2C_CMD_HCC);
-		while ((mfdcr(DCR_L2C0_SR) & L2C_SR_CC) == 0)
-			;
-		__asm volatile ("msync" ::: "memory");
-		splx(s);
-		return;
-	}
-
-	/* Skip leading amount. */
-	while (offset >= ds->ds_len) {
-		offset -= ds->ds_len;
-		ds++;
-	}
-	for (; len > 0; ds++, offset = 0) {
-		bus_size_t seglen = ds->ds_len - offset;
-		bus_addr_t addr = BUS_MEM_TO_PHYS(t, ds->ds_addr) + offset;
-		bus_addr_t lineoff, epa;
-
-		if (seglen > len)
-			seglen = len;
-		len -= seglen;
-		KASSERT(ds < &map->dm_segs[map->dm_nsegs]);
-
-		/* Realign to cache-line boundaries. */
-		lineoff = addr & (L2_LINE_SIZE - 1);
-		seglen += lineoff;
-		addr -= lineoff;
-
-		for (epa = addr + seglen; addr < epa; addr += L2_LINE_SIZE) {
-			mtdcr(DCR_L2C0_ADDR, ibm4xx_460ex_l2_addr(addr));
-			mtdcr(DCR_L2C0_CMD, L2C_CMD_INV);
-			while ((mfdcr(DCR_L2C0_SR) & L2C_SR_CC) == 0)
-				;
-		}
-	}
-	__asm volatile ("msync" ::: "memory");
-	splx(s);
+	mtdcr(DCR_L2C0_CMD, cmd);
+	while ((mfdcr(DCR_L2C0_SR) & L2C_SR_CC) == 0)
+		;
 }
 
 /*
- * Private bus_dma sync for the USB controllers. 
+ * Enable L2 cache, as write-through, with hardware snooping on the 
+ * low latency PLB segment.
  */
-static void
-ibm4xx_460ex_l2_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
-    bus_addr_t offset, bus_size_t len, int ops)
-{
-	if (ibm4xx_460ex_l2_enabled && (ops & BUS_DMASYNC_POSTREAD) != 0)
-		ibm4xx_460ex_l2_invalidate(t, map, offset, len);
-	_bus_dmamap_sync(t, map, offset, len, ops);
-}
-
-/*
- * A clone of ibm4xx_default_bus_dma_tag sync overriden
- */
-struct powerpc_bus_dma_tag ibm4xx_460ex_l2_bus_dma_tag = {
-	0, 0,
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	ibm4xx_460ex_l2_dmamap_sync,
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-	_bus_dma_phys_to_bus_mem_generic,
-	_bus_dma_bus_mem_to_phys_generic,
-};
-
-bus_dma_tag_t
-ibm4xx_460ex_l2_dmatag(void)
-{
-	return &ibm4xx_460ex_l2_bus_dma_tag;
-}
-
 void
-ibm4xx_460ex_l2cache_enable(u_int memsize)
+ibm4xx_460ex_l2cache_enable(void)
 {
-	uint32_t snpsz;
-	u_int code;
+	uint32_t cfg;
 
 	/* Hand the SRAM0 data arrays back from the SRAM controller. */
 	mtdcr(DCR_SRAM0_SB0CR, 0);
@@ -178,40 +73,28 @@ ibm4xx_460ex_l2cache_enable(u_int memsize)
 	/* RDBW is required; switch the array into L2 mode. */
 	mtdcr(DCR_L2C0_CFG, L2C_CFG_RDBW | L2C_CFG_L2M | L2C_CFG_SS_256KB);
 
-	/* Reset the tag array with the hardware clear command. */
+	/* Clear the array and any parity errors. */
 	mtdcr(DCR_L2C0_ADDR, 0);
-	mtdcr(DCR_L2C0_CMD, L2C_CMD_HCC);
-	while ((mfdcr(DCR_L2C0_SR) & L2C_SR_CC) == 0)
-		;
-	/* Clear any latched cache- and tag-parity errors. */
-	mtdcr(DCR_L2C0_CMD, L2C_CMD_CCP);
-	while ((mfdcr(DCR_L2C0_SR) & L2C_SR_CC) == 0)
-		;
-	mtdcr(DCR_L2C0_CMD, L2C_CMD_CTE);
-	while ((mfdcr(DCR_L2C0_SR) & L2C_SR_CC) == 0)
-		;
+	ibm4xx_460ex_l2_cmd(L2C_CMD_HCC);
+	ibm4xx_460ex_l2_cmd(L2C_CMD_CCP);
+	ibm4xx_460ex_l2_cmd(L2C_CMD_CTE);
 	__asm volatile ("msync" ::: "memory");
 
-	/*
-	 * Program snoop region 0 to cover all of DRAM on the LL segment!
-	 */
-	snpsz = 0x100000;		/* 1MB, the smallest snoop region */
-	code = 0;
-	while (snpsz < memsize) {
-		snpsz <<= 1;
-		code++;
-	}
-	mtdcr(DCR_L2C0_SNP0, (code << L2C_SNP_SSR_SHIFT) | L2C_SNP_ESR);
-	mtdcr(DCR_L2C0_SNP1, 0);
+	/* All of the LL, and the HB alias. */
+	mtdcr(DCR_L2C0_SNP0, L2C_SNP_SSR_32GB | L2C_SNP_ESR);
+	mtdcr(DCR_L2C0_SNP1, 0x80000000 | L2C_SNP_SSR_32GB | L2C_SNP_ESR);
+	__asm volatile ("sync; isync" ::: "memory");
 
-	/* Enable instruction- and data-side L2 caching. */
-	mtdcr(DCR_L2C0_CFG, L2C_CFG_RDBW | L2C_CFG_L2M | L2C_CFG_SS_256KB |
-	    L2C_CFG_FRAN | L2C_CFG_SNPCI | L2C_CFG_ICU | L2C_CFG_DCU);
-	__asm volatile ("msync" ::: "memory");
+	cfg = mfdcr(DCR_L2C0_CFG);
+	cfg &= ~(L2C_CFG_DCW | L2C_CFG_PMUX | L2C_CFG_PMIM | L2C_CFG_TPEI |
+	    L2C_CFG_CPEI | L2C_CFG_NAM | L2C_CFG_NBRM);
+	cfg |= L2C_CFG_ICU | L2C_CFG_DCU | L2C_CFG_TPC | L2C_CFG_CPC |
+	    L2C_CFG_FRAN | L2C_CFG_CPIM | L2C_CFG_TPIM | L2C_CFG_LIM |
+	    L2C_CFG_SMCM | L2C_CFG_SNP440 | L2C_CFG_RDBW;
+	mtdcr(DCR_L2C0_CFG, cfg);
+	__asm volatile ("sync; isync" ::: "memory");
 
-	/* Read back so the caller can confirm what actually stuck. */
 	ibm4xx_460ex_l2_cfg = mfdcr(DCR_L2C0_CFG);
 	if (ibm4xx_460ex_l2_cfg & L2C_CFG_L2M)
 		ibm4xx_460ex_l2_enabled = true;
 }
-

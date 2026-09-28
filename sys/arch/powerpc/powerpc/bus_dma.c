@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.60 2026/07/30 14:41:00 rkujawa Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.61 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.60 2026/07/30 14:41:00 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.61 2026/09/28 20:41:01 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -838,7 +838,17 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 			continue;
 		}
 
-		return (BUS_MEM_TO_PHYS(t, segs[i].ds_addr) + off);
+		paddr_t mmapcookie =
+		    BUS_MEM_TO_PHYS(t, segs[i].ds_addr) + off;
+#if defined(PPC_IBM4XX)
+		/*
+		 * This probably could be the default on OEA too,
+		 * requires more testing.
+		 */
+		if (!PPC_DMAMEM_UNCACHED(flags))
+			mmapcookie |= POWERPC_MMAP_FLAG_CACHEABLE;
+#endif
+		return (mmapcookie);
 	}
 
 	/* Page not found. */

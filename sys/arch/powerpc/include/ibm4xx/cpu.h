@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 2026/06/13 19:45:50 rkujawa Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -64,6 +64,7 @@ extern void (*md_device_register)(device_t dev, void *aux);
 /* export from ibm4xx/machdep.c */
 extern void (*md_consinit)(void);
 extern void (*md_cpu_startup)(void);
+extern void (*md_powerdown)(void);
 
 /* export from ibm4xx/ibm40x_machdep.c */
 extern void ibm40x_memsize_init(u_int, u_int);
@@ -119,7 +120,7 @@ mfcpr(int reg)
 	return mfdcr(DCR_CPR0_CFGDATA);
 }
 
-static void inline
+static __inline void
 mtsdr(int reg, uint32_t val)
 {
 	mtdcr(DCR_SDR0_CFGADDR, reg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlb.h,v 1.9 2026/06/17 15:08:54 rkujawa Exp $	*/
+/*	$NetBSD: tlb.h,v 1.10 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -138,6 +138,10 @@ struct	pmap;
 void	ppc4xx_tlb_enter(int, vaddr_t, u_int);
 void	ppc4xx_tlb_flush(vaddr_t, int);
 void	ppc4xx_tlb_flush_all(void);
+void	ppc44x_tlb_dump(void);
+void	ppc44x_tlb_read(int, u_long *, u_long *, u_long *, u_long *);
+void	ppc44x_tlb_print(int, u_long, u_long, u_long, u_long,
+	    void (*)(const char *, ...));
 void	ppc4xx_tlb_init(void);
 int	ppc4xx_tlb_new_pid(struct pmap *);
 void	ppc4xx_tlb_reserve(paddr_t, vaddr_t, size_t, int);

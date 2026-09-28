@@ -1,4 +1,4 @@
-/*	$NetBSD: pciex.c,v 1.3 2026/06/22 12:34:20 rkujawa Exp $	*/
+/*	$NetBSD: pciex.c,v 1.4 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciex.c,v 1.3 2026/06/22 12:34:20 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciex.c,v 1.4 2026/09/28 20:41:01 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -76,11 +76,21 @@ __KERNEL_RCSID(0, "$NetBSD: pciex.c,v 1.3 2026/06/22 12:34:20 rkujawa Exp $");
  * inbound-read PLB pipeline MUST be cleared for inbound DMA to work.
  */
 #define	PEGPL_CFG_PLE	0x20000000	/* bit 2: inbound read pipeline enable */
+/*
+ * Errata PCIE_8: "Disable Slave MERR Assertion"
+ */
+#define	PEGPL_CFG_DMER	0x02000000	/* bit 6: disable slave MERR */
 
 /* PECFG inbound-mapping registers, accessed via the port's XCFG window */
+#define	PECFG_BAR0LMPA	0x210	/* Inbound BAR0 mask/enable, low */
+#define	PECFG_BAR0HMPA	0x214	/* Inbound BAR0 mask/enable, high */
 #define	PECFG_PIMEN	0x33c	/* PIM enable */
 #define	PECFG_PIM1LAL	0x348	/* PIM1 local (PLB) address low */
 #define	PECFG_PIM1LAH	0x34c	/* PIM1 local (PLB) address high */
+#define	PECFG_POM0LAL	0x380	/* PCI-side base of the OMR1 window, low */
+#define	PECFG_POM0LAH	0x384	/* PCI-side base of the OMR1 window, high */
+#define	PECFG_POM1LAL	0x388	/* PCI-side base of the OMR2 window, low */
+#define	PECFG_POM1LAH	0x38c	/* PCI-side base of the OMR2 window, high */
 
 struct pciex_softc {
 	struct genppc_pci_chipset sc_pc;	/* must be first */
@@ -141,8 +151,8 @@ static struct powerpc_bus_space pciex_xcfg_tag[PCIEX_NPORTS] = {
 	{
 		_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
 		0x00000000,
-		AMCC460EX_PCIE0_CFG_PLBA + AMCC460EX_PCIE_XCFG_OFFSET,
-		AMCC460EX_PCIE0_CFG_PLBA + AMCC460EX_PCIE_XCFG_OFFSET + 0x1000,
+		AMCC460EX_PCIE0_XCFG_PLBA,
+		AMCC460EX_PCIE0_XCFG_PLBA + 0x1000,
 	},
 	{
 		_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
@@ -226,7 +236,29 @@ pciex_conf_ok(void *v, pcitag_t tag)
 	int bus, dev;
 
 	ibm4xx_pci_decompose_tag(v, tag, &bus, &dev, NULL);
-	return bus <= 1 && dev == 0;
+
+	if (bus <= 1 && dev != 0)
+		return false;
+	return bus < AMCC460EX_PCIE_CFG_SIZE / (1024 * 1024);
+}
+
+/*
+ * Errata PCIE_8 workaround.
+ */
+static void
+pciex_set_dmer(int port, bool on)
+{
+	uint32_t cfg;
+
+	if (port == 0) {
+		cfg = mfdcr(AMCC460EX_PCIE0_DCR_BASE + PEGPL_CFG);
+		cfg = on ? (cfg | PEGPL_CFG_DMER) : (cfg & ~PEGPL_CFG_DMER);
+		mtdcr(AMCC460EX_PCIE0_DCR_BASE + PEGPL_CFG, cfg);
+	} else {
+		cfg = mfdcr(AMCC460EX_PCIE1_DCR_BASE + PEGPL_CFG);
+		cfg = on ? (cfg | PEGPL_CFG_DMER) : (cfg & ~PEGPL_CFG_DMER);
+		mtdcr(AMCC460EX_PCIE1_DCR_BASE + PEGPL_CFG, cfg);
+	}
 }
 
 /*
@@ -239,19 +271,32 @@ pciex_conf_read(void *v, pcitag_t tag, int reg)
 	struct pciex_softc *sc = v;
 	struct faultbuf env;
 	pcireg_t data;
+	int s;
 
 	if ((unsigned int)reg >= PCI_CONF_SIZE)
 		return (pcireg_t) -1;
 	if (!pciex_conf_ok(v, tag))
 		return (pcireg_t) -1;
 
+	s = splhigh();
+	pciex_set_dmer(sc->sc_port, true);
 	if (setfault(&env)) {
 		curpcb->pcb_onfault = NULL;
+		pciex_set_dmer(sc->sc_port, false);
+		splx(s);
 		return (pcireg_t) -1;
 	}
 	data = bus_space_read_4(&pciex_cfg_tag[sc->sc_port], sc->sc_cfgh,
 	    (tag << 4) | reg);
 	curpcb->pcb_onfault = NULL;
+	pciex_set_dmer(sc->sc_port, false);
+	splx(s);
+
+	/*
+	 * Errata PCIE_8 again...
+	 */
+	if (reg == PCI_ID_REG && data == 0)
+		return (pcireg_t) -1;
 	return data;
 }
 
@@ -260,19 +305,26 @@ pciex_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct pciex_softc *sc = v;
 	struct faultbuf env;
+	int s;
 
 	if ((unsigned int)reg >= PCI_CONF_SIZE)
 		return;
 	if (!pciex_conf_ok(v, tag))
 		return;
 
+	s = splhigh();
+	pciex_set_dmer(sc->sc_port, true);
 	if (setfault(&env)) {
 		curpcb->pcb_onfault = NULL;
+		pciex_set_dmer(sc->sc_port, false);
+		splx(s);
 		return;
 	}
 	bus_space_write_4(&pciex_cfg_tag[sc->sc_port], sc->sc_cfgh,
 	    (tag << 4) | reg, data);
 	curpcb->pcb_onfault = NULL;
+	pciex_set_dmer(sc->sc_port, false);
+	splx(s);
 }
 
 /*
@@ -317,6 +369,9 @@ pciex_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 	if (cf->cf_unit >= PCIEX_NPORTS)
 		return 0;
+	/* SERDES lane shared with SATA. */
+	if (cf->cf_unit == 0 && !AMCC460EX_SERDES0_IS_PCIE())
+		return 0;
 
 	return 1;
 }
@@ -341,7 +396,7 @@ pciex_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PLB-PCIE root complex, port %d\n", sc->sc_port);
 
 	/*
-	 * Touch the port only if firmware trained the link 
+	 * Touch the port only if firmware trained the link
 	 */
 	if ((mfsdr(sc->sc_port ? AMCC460EX_PESDR1_LOOP :
 	    AMCC460EX_PESDR0_LOOP) & AMCC460EX_PESDR_LOOP_LNKUP) == 0) {
@@ -375,7 +430,8 @@ pciex_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/*
-	 * root-complex inbound window's PIM1 half goes to DRAM.
+	 * Config of the port: PCI base of the window and root-complex inbound
+	 * window whose PIM1 half goes to DRAM.
 	 */
 	{
 		struct powerpc_bus_space *xt = &pciex_xcfg_tag[sc->sc_port];
@@ -383,6 +439,21 @@ pciex_attach(device_t parent, device_t self, void *aux)
 
 		if (bus_space_init(xt, "pciexxcfg", NULL, 0) == 0 &&
 		    bus_space_map(xt, xt->pbs_base, 0x1000, 0, &xh) == 0) {
+			aprint_verbose_dev(self, "firmware POM0 0x%x_%08x "
+			    "POM1 0x%x_%08x PIMEN 0x%x PIM1 0x%x_%08x "
+			    "BAR0 0x%08x_%08x\n",
+			    bus_space_read_4(xt, xh, PECFG_POM0LAH),
+			    bus_space_read_4(xt, xh, PECFG_POM0LAL),
+			    bus_space_read_4(xt, xh, PECFG_POM1LAH),
+			    bus_space_read_4(xt, xh, PECFG_POM1LAL),
+			    bus_space_read_4(xt, xh, PECFG_PIMEN),
+			    bus_space_read_4(xt, xh, PECFG_PIM1LAH),
+			    bus_space_read_4(xt, xh, PECFG_PIM1LAL),
+			    bus_space_read_4(xt, xh, PECFG_BAR0HMPA),
+			    bus_space_read_4(xt, xh, PECFG_BAR0LMPA));
+			bus_space_write_4(xt, xh, PECFG_POM0LAH, 0);
+			bus_space_write_4(xt, xh, PECFG_POM0LAL,
+			    AMCC460EX_PCIE_MEM_BASE);
 			bus_space_write_4(xt, xh, PECFG_PIMEN, 0);
 			bus_space_write_4(xt, xh, PECFG_PIM1LAH, 0);
 			bus_space_write_4(xt, xh, PECFG_PIM1LAL, 0);

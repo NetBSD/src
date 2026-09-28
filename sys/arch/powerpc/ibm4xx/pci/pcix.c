@@ -1,4 +1,4 @@
-/*	$NetBSD: pcix.c,v 1.3 2026/06/19 21:13:52 rkujawa Exp $	*/
+/*	$NetBSD: pcix.c,v 1.4 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcix.c,v 1.3 2026/06/19 21:13:52 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcix.c,v 1.4 2026/09/28 20:41:01 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -304,7 +304,14 @@ pcix_attach(device_t parent, device_t self, void *aux)
 	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
 	    AMCC460EX_PCIX0_MEM_BASE, AMCC460EX_PCIX0_MEM_SIZE);
 	pciconf_resource_add(pcires, PCICONF_RESOURCE_PREFETCHABLE_MEM,
-	    AMCC460EX_PCIX0_PMEM_BASE, AMCC460EX_PCIX0_PMEM_SIZE);
+	    AMCC460EX_PCIX0_PMEM_BASE, AMCC460EX_PCIX0_PMEM_MAP);
+
+	aprint_verbose_dev(self, "mem 0x%08x-0x%08x, prefetchable mem "
+	    "0x%08x-0x%08x\n",
+	    AMCC460EX_PCIX0_MEM_BASE,
+	    AMCC460EX_PCIX0_MEM_BASE + AMCC460EX_PCIX0_MEM_SIZE - 1,
+	    AMCC460EX_PCIX0_PMEM_BASE,
+	    AMCC460EX_PCIX0_PMEM_BASE + AMCC460EX_PCIX0_PMEM_MAP - 1);
 
 	pci_configure_bus(pc, pcires, 0, 32);
 	pciconf_resource_fini(pcires);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.40 2026/06/17 15:08:54 rkujawa Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.41 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_SPACE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.40 2026/06/17 15:08:54 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.41 2026/09/28 20:41:01 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -507,6 +507,10 @@ memio_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t offset, int prot, int flags)
 	paddr_t ret;
 	/* XXX what about stride? */
 	ret = trunc_page(t->pbs_offset + bpa + offset);
+#ifdef PPC_IBM440
+	if (!ibm4xx_mmap_ok(ret))
+		return -1;
+#endif
 
 #ifdef DEBUG
 	if (ret == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.6 2026/06/13 19:45:50 rkujawa Exp $	*/
+/*	$NetBSD: spr.h,v 1.7 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 #ifndef _POWERPC_IBM4XX_SPR_H_
 #define	_POWERPC_IBM4XX_SPR_H_
@@ -121,15 +121,19 @@
 #define	  MMUCR_STS		  0x00010000 /* Search Translation Space [TS] */
 #define	  MMUCR_STID		  0x000000ff /* Search Translation ID */
 #define	SPR_CCR0		0x3b3	/* .4.. Core Configuration Register 0 */
+#ifndef PPC_IBM440
 #define	SPR_IAC3		0x3b4	/* .4.. Instruction Address Compare 3 */
 #define	SPR_IAC4		0x3b5	/* .4.. Instruction Address Compare 4 */
 #define	SPR_DVC1		0x3b6	/* .4.. Data Value Compare 1 */
 #define	SPR_DVC2		0x3b7	/* .4.. Data Value Compare 2 */
+#endif
 #define	SPR_SGR			0x3b9	/* .4.. Storage Guarded Register */
 #define	SPR_DCWR		0x3ba	/* .4.. Data Cache Write-through Register */
 #define	SPR_SLER		0x3bb	/* .4.. Storage Little Endian Register */
 #define	SPR_SU0R		0x3bc	/* .4.. Storage User-defined 0 Register */
+#ifndef PPC_IBM440
 #define	SPR_DBCR1		0x3bd	/* .4.. Debug Control Register 1 */
+#endif
 #define	SPR_ICDBDR		0x3d3	/* .4.. Instruction Cache Debug Data Register */
 #ifndef PPC_IBM440
 #define	SPR_ESR			0x3d4	/* .4.. Exception Syndrome Register */
@@ -262,10 +266,26 @@
 #define	  DBCR0_IA12T		  0x00008000 /* 16: Instruction Address Range Compare 1-2 range Toggle */
 #define	  DBCR0_IA34T		  0x00004000 /* 17: Instruction Address Range Compare 3-4 range Toggle */
 #define	  DBCR0_FT		  0x00000001 /* 31: Freeze Timers on debug event */
+/*
+ * Debug SPRs are different in 40x and 440 (Book E).
+ */
+#ifdef PPC_IBM440
+#define	SPR_DBCR1		0x135	/* E... Debug Control Register 1 */
+#define	SPR_DBCR2		0x136	/* E... Debug Control Register 2 */
+#define	SPR_IAC1		0x138	/* E... Instruction Address Compare 1 */
+#define	SPR_IAC2		0x139	/* E... Instruction Address Compare 2 */
+#define	SPR_IAC3		0x13a	/* E... Instruction Address Compare 3 */
+#define	SPR_IAC4		0x13b	/* E... Instruction Address Compare 4 */
+#define	SPR_DAC1		0x13c	/* E... Data Address Compare 1 */
+#define	SPR_DAC2		0x13d	/* E... Data Address Compare 2 */
+#define	SPR_DVC1		0x13e	/* E... Data Value Compare 1 */
+#define	SPR_DVC2		0x13f	/* E... Data Value Compare 2 */
+#else
 #define	SPR_IAC1		0x3f4	/* .4.. Instruction Address Compare 1 */
 #define	SPR_IAC2		0x3f5	/* .4.. Instruction Address Compare 2 */
 #define	SPR_DAC1		0x3f6	/* .4.. Data Address Compare 1 */
 #define	SPR_DAC2		0x3f7	/* .4.. Data Address Compare 2 */
+#endif
 #define	SPR_DCCR		0x3fa	/* .4.. Data Cache Cachability Register */
 #define	SPR_ICCR		0x3fb	/* .4.. Instruction Cache Cachability Register */
 

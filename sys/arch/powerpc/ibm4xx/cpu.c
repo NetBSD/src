@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.41 2026/06/20 09:30:07 rkujawa Exp $	*/
+/*	$NetBSD: cpu.c,v 1.42 2026/09/28 20:41:00 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41 2026/06/20 09:30:07 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2026/09/28 20:41:00 rkujawa Exp $");
+
+#include "opt_ppcarch.h"
+#ifdef PPC_IBM440
+#include "opt_ppc4xx.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +58,13 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41 2026/06/20 09:30:07 rkujawa Exp $");
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
+#ifdef PPC_IBM440
+#include <powerpc/ibm4xx/amcc460ex.h>
+#include <powerpc/ibm4xx/ibm4xx_460ex_pll.h>
+#ifdef PPC4XX_L2CACHE
+#include <powerpc/ibm4xx/ibm4xx_460ex_l2.h>
+#endif
+#endif
 
 struct cputab {
 	u_int version;
@@ -361,6 +373,29 @@ cpuattach(device_t parent, device_t self, void *aux)
 	    ci->ci_ci.icache_size / 1024, ci->ci_ci.icache_line_size);
 	aprint_normal_dev(self, "%uKB/%uB L1 data cache\n",
 	    ci->ci_ci.dcache_size / 1024, ci->ci_ci.dcache_line_size);
+
+#ifdef PPC_IBM440
+	if ((pvr >> 16) == AMCC460EX) {
+		u_int base_mhz;
+
+#ifdef PPC4XX_L2CACHE
+		ibm4xx_460ex_l2cache_enable();
+		if (ibm4xx_460ex_l2_enabled) {
+			aprint_normal_dev(self, "256KB/32B L2 cache, "
+			    "write-through, snooping\n");
+			aprint_verbose_dev(self, "L2C0_CFG %#x SNP0 %#x SNP1 %#x\n",
+			    ibm4xx_460ex_l2_cfg, mfdcr(DCR_L2C0_SNP0),
+			    mfdcr(DCR_L2C0_SNP1));
+		} else
+			aprint_error_dev(self, "L2 cache not enabled "
+			    "(L2C0_CFG %#x)\n", ibm4xx_460ex_l2_cfg);
+#endif
+		base_mhz = ibm4xx_460ex_base_clock(processor_freq);
+		if (base_mhz != 0)
+			aprint_normal_dev(self, "%uMHz PLL clock\n",
+			    base_mhz);
+	}
+#endif
 }
 
 /*

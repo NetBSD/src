@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.24 2026/06/13 19:45:50 rkujawa Exp $	*/
+/*	$NetBSD: psl.h,v 1.25 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -125,7 +125,10 @@ extern register_t cpu_psluserset, cpu_pslusermod, cpu_pslusermask;
 #endif
 #define	PSL_USERMASK		0xFFFF
 #if defined(PPC_IBM440)
-#define	PSL_USERMOD		(PSL_FP | PSL_FE0 | PSL_FE1)
+/*
+ * PCU lazily owns the FPU, so the user can't set FPU bits.
+ */
+#define	PSL_USERMOD		(PSL_FE0 | PSL_FE1)
 #else
 #define	PSL_USERMOD		(0)
 #endif

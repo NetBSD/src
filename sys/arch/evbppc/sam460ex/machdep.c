@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2026/06/22 12:34:19 rkujawa Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2026/09/28 20:41:00 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2026/06/22 12:34:19 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2026/09/28 20:41:00 rkujawa Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ppc4xx.h"
@@ -112,7 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2026/06/22 12:34:19 rkujawa Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
-#include <sys/sysctl.h>
 #include <sys/systm.h>
 
 #include <dev/cons.h>
@@ -127,7 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2026/06/22 12:34:19 rkujawa Exp $");
 #include <powerpc/ibm4xx/amcc460ex.h>
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
-#include <powerpc/ibm4xx/ibm4xx_460ex_l2.h>
 #include <powerpc/ibm4xx/tlb.h>
 
 #include <powerpc/ibm4xx/pci_machdep.h>
@@ -139,10 +137,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2026/06/22 12:34:19 rkujawa Exp $");
 #if NUKBD > 0
 #include <dev/usb/ukbdvar.h>
 #endif
+#include <dev/ic/comreg.h>
+#include <powerpc/ibm4xx/dev/gpioreg.h>
 #if (NCOM > 0)
 #include <sys/termios.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>
-#include <dev/ic/comreg.h>
 
 #ifndef CONADDR
 #define CONADDR		AMCC460EX_UART0_BASE
@@ -167,6 +166,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2026/06/22 12:34:19 rkujawa Exp $");
 #endif
 
 #define	TLB_PG_SIZE 	(16 * 1024 * 1024)
+#define	TLB_TS0_SIZE	(256 * 1024 * 1024)	/* locore identity */
 
 /* Boot loader handoff, for later FDT parsing */
 paddr_t sam460ex_fdt_pa;
@@ -183,9 +183,9 @@ earlycons_putc(dev_t dev, int c)
 {
 	volatile uint8_t *uart = (volatile uint8_t *)AMCC460EX_UART0_BASE;
 
-	while ((uart[5] & 0x20) == 0)	/* LSR.THRE */
+	while ((uart[com_lsr] & LSR_TXRDY) == 0)
 		;
-	uart[0] = c;
+	uart[com_data] = c;
 }
 
 static int
@@ -193,9 +193,9 @@ earlycons_getc(dev_t dev)
 {
 	volatile uint8_t *uart = (volatile uint8_t *)AMCC460EX_UART0_BASE;
 
-	while ((uart[5] & 0x01) == 0)	/* LSR.DR */
+	while ((uart[com_lsr] & LSR_RXRDY) == 0)
 		;
-	return uart[0];
+	return uart[com_data];
 }
 
 static struct consdev earlycons = {
@@ -236,28 +236,21 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, paddr_t fdt_pa,
 	sam460ex_fdt_info.fi_memsize = memsize;
 #endif
 
-#ifdef PPC4XX_L2CACHE
-	ibm4xx_460ex_l2cache_enable(memsize);
-#endif
-
 	/* Slots 0/1 hold the TS=0 identity entries pinned by locore */
 	ppc44x_tlb_boot_reserved(2);
 
-	/*
-	 * locore TS=0 RAM identity entry covers the first 256MB
-	 */
-	for (paddr_t pa = 0x10000000; pa < memsize; pa += 0x10000000)
+	/* locore's TS=0 RAM identity entry covers the first TLB_TS0_SIZE */
+	for (paddr_t pa = TLB_TS0_SIZE; pa < memsize; pa += TLB_TS0_SIZE)
 		ppc44x_tlb_reserve_ts0(pa);
 
 	/* Linear map kernel memory (TS=1, KERNEL_PID) */
 	for (va = 0; va < endkernel; va += TLB_PG_SIZE)
 		ppc4xx_tlb_reserve(va, va, TLB_PG_SIZE, TLB_EX);
 
-	/*
-	 * Map the on-chip peripherals
-	 */
-	ppc44x_tlb_reserve((uint64_t)AMCC460EX_OPB_PA_HIGH << 32 | 0xef000000,
-	    0xef000000, TLB_PG_SIZE, TLB_I | TLB_G);
+	/* On-chip peripherals */
+	va = AMCC460EX_OPB_BASE & ~(TLB_PG_SIZE - 1);
+	ppc44x_tlb_reserve((uint64_t)AMCC460EX_OPB_PA_HIGH << 32 | va,
+	    va, TLB_PG_SIZE, TLB_I | TLB_G);
 
 	/*
 	 * PCIX host bridge windows
@@ -289,16 +282,21 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, paddr_t fdt_pa,
 	ppc44x_tlb_reserve((uint64_t)AMCC460EX_PCIE_CFG_PA_HIGH << 32 |
 	    AMCC460EX_PCIE1_CFG_PLBA,
 	    SAM460EX_PCIE1CFG_VA, TLB_PG_SIZE, TLB_I | TLB_G);
-	/* PCIE1 local config (XCFG): inbound BAR/PIM registers */
+	/* XCFG */
+	ppc44x_tlb_reserve((uint64_t)AMCC460EX_PCIE_CFG_PA_HIGH << 32 |
+	    AMCC460EX_PCIE0_XCFG_PLBA,
+	    SAM460EX_PCIE0XCFG_VA, TLB_PG_SIZE, TLB_I | TLB_G);
 	ppc44x_tlb_reserve((uint64_t)AMCC460EX_PCIE_CFG_PA_HIGH << 32 |
 	    AMCC460EX_PCIE1_XCFG_PLBA,
 	    SAM460EX_PCIE1XCFG_VA, TLB_PG_SIZE, TLB_I | TLB_G);
-	ppc44x_tlb_reserve((uint64_t)AMCC460EX_PCIE_MEM_PA_HIGH << 32 |
-	    AMCC460EX_PCIE0_MEM_PLBA,
-	    SAM460EX_PCIE0MEM_VA, TLB_PG_SIZE, TLB_I | TLB_G);
-	ppc44x_tlb_reserve((uint64_t)AMCC460EX_PCIE_MEM_PA_HIGH << 32 |
-	    AMCC460EX_PCIE1_MEM_PLBA,
-	    SAM460EX_PCIE1MEM_VA, TLB_PG_SIZE, TLB_I | TLB_G);
+	for (va = 0; va < AMCC460EX_PCIE_MEM_SIZE; va += TLB_PG_SIZE) {
+		ppc44x_tlb_reserve((uint64_t)AMCC460EX_PCIE_MEM_PA_HIGH << 32 |
+		    (AMCC460EX_PCIE0_MEM_PLBA + va),
+		    SAM460EX_PCIE0MEM_VA + va, TLB_PG_SIZE, TLB_I | TLB_G);
+		ppc44x_tlb_reserve((uint64_t)AMCC460EX_PCIE_MEM_PA_HIGH << 32 |
+		    (AMCC460EX_PCIE1_MEM_PLBA + va),
+		    SAM460EX_PCIE1MEM_VA + va, TLB_PG_SIZE, TLB_I | TLB_G);
+	}
 
 	/*
 	 * AHB peripherals (USB OTG/OHCI/EHCI) behind the PLB-AHB
@@ -307,6 +305,11 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, paddr_t fdt_pa,
 	ppc44x_tlb_reserve((uint64_t)AMCC460EX_AHB_PA_HIGH << 32 |
 	    AMCC460EX_AHB_BASE,
 	    SAM460EX_AHB_VA, TLB_PG_SIZE, TLB_I | TLB_G);
+
+	/* FPGA on the EBC */
+	ppc44x_tlb_reserve((uint64_t)AMCC460EX_EBC_PA_HIGH << 32 |
+	    SAM460EX_FPGA_PA,
+	    SAM460EX_FPGA_VA, SAM460EX_FPGA_MAP, TLB_I | TLB_G);
 
 	mtspr(SPR_TCR, 0);	/* disable all timers */
 
@@ -360,7 +363,8 @@ parse_pci_bdf(const char *s)
 	char *ep;
 	int i;
 
-	for (i = 0; i < 3 && *s == ':'; i++) {
+	for (i = 0; i < __arraycount(sam460ex_console_pci_bdf) && *s == ':';
+	    i++) {
 		sam460ex_console_pci_bdf[i] = (int)strtoul(s + 1, &ep, 0);
 		if (ep == s + 1) {		/* no digits consumed */
 			sam460ex_console_pci_bdf[i] = -1;
@@ -376,6 +380,8 @@ parse_bootargs(const char *args)
 	const char *cp = args;
 
 #define	BA_DELIM(c)	((c) == ' ' || (c) == '"')
+#define	BA_KEY(cp, key)	(strncmp((cp), (key), sizeof(key) - 1) == 0)
+#define	BA_SKIP(cp, key)	((cp) += sizeof(key) - 1)
 	while (*cp != '\0') {
 		if (BA_DELIM(*cp)) {
 			cp++;
@@ -384,10 +390,10 @@ parse_bootargs(const char *args)
 		if (*cp == '-') {
 			for (cp++; *cp != '\0' && !BA_DELIM(*cp); cp++)
 				BOOT_FLAG(*cp, boothowto);
-		} else if (strncmp(cp, "root=", 5) == 0) {
+		} else if (BA_KEY(cp, "root=")) {
 			char *bp = bootspec_buf;
 
-			for (cp += 5; *cp != '\0' && !BA_DELIM(*cp) &&
+			for (BA_SKIP(cp, "root="); *cp != '\0' && !BA_DELIM(*cp) &&
 			    bp < &bootspec_buf[sizeof(bootspec_buf) - 1]; )
 				*bp++ = *cp++;
 			*bp = '\0';
@@ -395,11 +401,12 @@ parse_bootargs(const char *args)
 				bootspec = bootspec_buf;
 				booted_method = "bootargs/root";
 			}
-		} else if (strncmp(cp, "console=", 8) == 0) {
+		} else if (BA_KEY(cp, "console=")) {
 			char cbuf[24];
 			char *bp = cbuf;
 
-			for (cp += 8; *cp != '\0' && !BA_DELIM(*cp) &&
+			for (BA_SKIP(cp, "console="); *cp != '\0' &&
+			    !BA_DELIM(*cp) &&
 			    bp < &cbuf[sizeof(cbuf) - 1]; )
 				*bp++ = *cp++;
 			*bp = '\0';
@@ -410,9 +417,9 @@ parse_bootargs(const char *args)
 			else if (strcmp(cbuf, "sm502") == 0 ||
 			    strcmp(cbuf, "fb") == 0)
 				sam460ex_console = SAM460EX_CONS_SM502;
-			else if (strncmp(cbuf, "pci", 3) == 0) {
+			else if (BA_KEY(cbuf, "pci")) {
 				sam460ex_console = SAM460EX_CONS_PCI;
-				parse_pci_bdf(&cbuf[3]);
+				parse_pci_bdf(&cbuf[sizeof("pci") - 1]);
 			}
 		} else {
 			while (*cp != '\0' && !BA_DELIM(*cp))
@@ -420,17 +427,25 @@ parse_bootargs(const char *args)
 		}
 	}
 #undef BA_DELIM
+#undef BA_KEY
+#undef BA_SKIP
 }
 
 /*
- * Sanitize EHCI state before the kernel takes over the USB host controller. 
+ * Sanitize EHCI state before the kernel takes over the USB host controller.
  */
+#define	SAM460EX_USB_STOP_PIN		16
+#define	SAM460EX_USB2HOST_CFG_MASK	0x0000ff00
+#define	SAM460EX_USB2HOST_CFG		0x00004400
+
 static void
 sam460ex_usb_host_init(void)
 {
 	volatile uint32_t *gpio;
 	uint32_t v, srst;
-	const uint32_t pin = 0x00008000;	/* GPIO16 = bit 15 in OR/TCR */
+	const uint32_t pin = GPIO_PIN_MASK(SAM460EX_USB_STOP_PIN);
+	const uint32_t sel = GPIO_SEL_MASK(SAM460EX_USB_STOP_PIN);
+	const uint32_t alt1 = GPIO_SEL_ALT1(SAM460EX_USB_STOP_PIN);
 
 	/* AHB-to-PLB bridge config: 460EX errata for concurrent USB/SATA. */
 	v = mfsdr(DCR_SDR0_AHB_CFG);
@@ -438,13 +453,12 @@ sam460ex_usb_host_init(void)
 	v &= ~SDR0_AHB_CFG_A2P_PROT2;
 	mtsdr(DCR_SDR0_AHB_CFG, v);
 
-	/* USB 2.0 host wrapper config (Sam460ex value). */
 	v = mfsdr(DCR_SDR0_USB2HOST_CFG);
-	v &= ~0x0000ff00;
-	v |= 0x00004400;
+	v &= ~SAM460EX_USB2HOST_CFG_MASK;
+	v |= SAM460EX_USB2HOST_CFG;
 	mtsdr(DCR_SDR0_USB2HOST_CFG, v);
 
-	gpio = ppc4xx_tlb_mapiodev(AMCC460EX_GPIO0_BASE, 0x40);
+	gpio = ppc4xx_tlb_mapiodev(AMCC460EX_GPIO0_BASE, GPIO_NREG);
 
 	/*
 	 * Reset and re-sync the USB 2.0 host and its external ULPI PHY 
@@ -454,20 +468,20 @@ sam460ex_usb_host_init(void)
 
 	if (gpio != NULL) {
 		/* GPIO16 -> GPIO mode, output low */
-		gpio[0x04 / 4] &= ~pin;			/* TCR: tristate */
-		gpio[0x0c / 4] &= ~0xc0000000;		/* OSRH: select GPIO */
-		gpio[0x00 / 4] &= ~pin;			/* OR: drive low */
-		gpio[0x04 / 4] |= pin;			/* TCR: drive output */
+		gpio[GPIO_TCR / 4] &= ~pin;
+		gpio[GPIO_OSRH / 4] &= ~sel;
+		gpio[GPIO_OR / 4] &= ~pin;
+		gpio[GPIO_TCR / 4] |= pin;
 	}
 
 	delay(500 * 1000);
 
 	if (gpio != NULL) {
 		/* GPIO16 -> ALT1 (USB2HostStop), output high */
-		gpio[0x04 / 4] &= ~pin;
-		gpio[0x0c / 4] = (gpio[0x0c / 4] & ~0xc0000000) | 0x40000000;
-		gpio[0x00 / 4] |= pin;
-		gpio[0x04 / 4] |= pin;
+		gpio[GPIO_TCR / 4] &= ~pin;
+		gpio[GPIO_OSRH / 4] = (gpio[GPIO_OSRH / 4] & ~sel) | alt1;
+		gpio[GPIO_OR / 4] |= pin;
+		gpio[GPIO_TCR / 4] |= pin;
 	}
 
 	mtsdr(DCR_SDR0_SRST1, srst & ~SDR0_SRST1_USBHOST);
@@ -512,16 +526,6 @@ cpu_startup(void)
 	}
 #endif
 
-#ifdef PPC4XX_L2CACHE
-	if (ibm4xx_460ex_l2_cfg & L2C_CFG_L2M)
-		printf("sam460ex: 256KB L2 cache enabled, write-through, "
-		    "hw snoop (EMAC) + SW inval (USB) (L2C0_CFG %#x)\n",
-		    ibm4xx_460ex_l2_cfg);
-	else
-		printf("sam460ex: L2 cache NOT enabled (L2C0_CFG %#x)\n",
-		    ibm4xx_460ex_l2_cfg);
-#endif
-
 #ifdef DIAGNOSTIC
 	{
 		uint32_t cr = mfdcr(DCR_AHB_CR);
@@ -530,7 +534,8 @@ cpu_startup(void)
 		    mfdcr(DCR_AHB_REV), mfdcr(DCR_AHB_TOP), mfdcr(DCR_AHB_BOT),
 		    mfdcr(DCR_AHB_ATT), cr,
 		    (cr & AHB_CR_PUOA_MASK) >> AHB_CR_PUOA_SHIFT,
-		    ((cr & AHB_CR_PUOA_MASK) >> AHB_CR_PUOA_SHIFT) < 0x8 ?
+		    ((cr & AHB_CR_PUOA_MASK) >> AHB_CR_PUOA_SHIFT) <
+		    AHB_CR_PUOA_HIGHBW ?
 		    "low-latency (snooped)" : "high-bandwidth (UNSNOOPED)");
 	}
 #endif
@@ -609,8 +614,6 @@ cpu_startup(void)
 /*
  * PCI interrupt routing and slot policy for the on-chip PLB-PCIX
  * bridge (see powerpc/ibm4xx/pci/pcix.c).
- *
- * XXX: On the Sam460ex every PCI intr pin is wired to UIC1 bit 0?
  */
 int
 ibm4xx_pci_bus_maxdevs(void *v, int busno)
@@ -619,16 +622,16 @@ ibm4xx_pci_bus_maxdevs(void *v, int busno)
 }
 
 /*
- * Board interrupt routing for the PCI-X slot. Unlike the AMCC Canyonlands
- * design (where the SoC's external IRQ2 / UIC1 bit 0 is the PCI INT), the
- * Sam460ex wire-ORs all PCI INTx through its FPGA onto UIC1 bit 3 = irq 35
+ * It appears that PCI slot's INTA-D are wire-ORed onto UIC1 input 0, as
+ * on the Canyonlands. However, on-board SM502 drives UIC3 input 20.
  */
-#define	SAM460EX_PCI_INTR_IRQ	32	/* TEMP, see above; correct value is 35? */
+#define	SAM460EX_SM502_DEV	6
 
 int
 ibm4xx_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	*ihp = SAM460EX_PCI_INTR_IRQ;
+	*ihp = pa->pa_bus == 0 && pa->pa_device == SAM460EX_SM502_DEV ?
+	    SAM460EX_IRQ_SM502 : SAM460EX_IRQ_PCI_INTX;
 	return 0;
 }
 
@@ -636,45 +639,6 @@ void
 ibm4xx_pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
     int *iline)
 {
-	*iline = SAM460EX_PCI_INTR_IRQ;
+	*iline = bus == 0 && dev == SAM460EX_SM502_DEV ?
+	    SAM460EX_IRQ_SM502 : SAM460EX_IRQ_PCI_INTX;
 }
-
-#define	UIC_DUMP(n, base)						\
-	blen += snprintf(buf + blen, sizeof(buf) - blen,		\
-	    "uic%d SR=%08x MSR=%08x ER=%08x PR=%08x TR=%08x\n", (n),	\
-	    (unsigned int)mfdcr((base) + DCR_UIC_SR),			\
-	    (unsigned int)mfdcr((base) + DCR_UIC_MSR),			\
-	    (unsigned int)mfdcr((base) + DCR_UIC_ER),			\
-	    (unsigned int)mfdcr((base) + DCR_UIC_PR),			\
-	    (unsigned int)mfdcr((base) + DCR_UIC_TR))
-
-static int
-sysctl_machdep_uicregs(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node;
-	char buf[400];
-	int blen = 0;
-
-	UIC_DUMP(0, DCR_UIC0_BASE);
-	UIC_DUMP(1, DCR_UIC1_BASE);
-	UIC_DUMP(2, DCR_UIC2_BASE);
-	UIC_DUMP(3, DCR_UIC3_BASE);
-
-	node = *rnode;
-	node.sysctl_data = buf;
-	node.sysctl_size = strlen(buf) + 1;
-	return sysctl_lookup(SYSCTLFN_CALL(&node));
-}
-#undef UIC_DUMP
-
-SYSCTL_SETUP(sysctl_machdep_uicregs_setup, "sam460ex UIC register dump")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT | CTLFLAG_READONLY,
-	    CTLTYPE_STRING, "uicregs",
-	    SYSCTL_DESCR("UIC0-3 SR/MSR/ER/PR/TR (interrupt debug)"),
-	    sysctl_machdep_uicregs, 0, NULL, 0,
-	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-}
-

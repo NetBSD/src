@@ -1,4 +1,4 @@
-#	$NetBSD: files.sam460ex,v 1.2 2026/06/16 23:37:48 rkujawa Exp $
+#	$NetBSD: files.sam460ex,v 1.3 2026/09/28 20:41:00 rkujawa Exp $
 #
 # sam460ex-specific configuration info
 
@@ -16,6 +16,11 @@ file	arch/powerpc/ibm4xx/ibm4xx_machdep.c
 
 file	arch/evbppc/sam460ex/machdep.c
 file	arch/evbppc/sam460ex/autoconf.c
+
+# Lattice XP2 on EBC CS2: J22 GPIOs
+device	samfpga: gpiobus, leds
+attach	samfpga at ebc
+file	arch/evbppc/sam460ex/samfpga.c		samfpga
 
 # Machine-independent SCSI and ATA drivers (for satalink and friends)
 include	"dev/scsipi/files.scsipi"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibm4xx,v 1.17 2026/06/19 18:55:23 rkujawa Exp $
+#	$NetBSD: files.ibm4xx,v 1.18 2026/09/28 20:41:00 rkujawa Exp $
 #
 # IBM 4xx specific configuration info
 
@@ -15,6 +15,7 @@ file	arch/powerpc/ibm4xx/board_prop.c
 
 defflag	opt_ppc4xx.h			PPC4XX_L2CACHE
 file	arch/powerpc/ibm4xx/ibm4xx_460ex_l2.c	ppc4xx_l2cache
+file	arch/powerpc/ibm4xx/ibm4xx_460ex_pll.c	ppc_ibm440
 
 # Processor Local Bus
 device	plb {[addr = -1], [irq = -1]}
@@ -25,6 +26,11 @@ file	arch/powerpc/ibm4xx/dev/plb.c		plb
 device	opb {[addr = -1], [irq = -1]}
 attach	opb at plb
 file	arch/powerpc/ibm4xx/dev/opb.c		opb
+
+# External Bus Controller (peripheral CS)
+device	ebc {[bank = -1]}
+attach	ebc at plb
+file	arch/powerpc/ibm4xx/dev/ebc.c		ebc
 
 device	cpu {}
 attach	cpu at plb

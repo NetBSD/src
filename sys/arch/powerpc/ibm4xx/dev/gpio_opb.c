@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_opb.c,v 1.10 2021/08/07 16:19:03 thorpej Exp $	*/
+/*	$NetBSD: gpio_opb.c,v 1.11 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -124,7 +124,7 @@ gpio_opb_attach(device_t parent, device_t self, void *aux)
 	/* Initialize pins array */
 	gpio_pin_t *pin = sc->sc_gpio_pins;
 	for (u_int i = 0 ; i < GPIO_NPINS ; i++, pin++) {
-		const uint32_t pin_mask = 1 << GPIO_PIN_SHIFT(i + 1);
+		const uint32_t pin_mask = GPIO_PIN_MASK(i);
 		pin->pin_num = i;
 		pin->pin_caps = GPIO_PIN_INOUT
 				 | GPIO_PIN_OPENDRAIN
@@ -159,18 +159,16 @@ static int
 gpio_opb_pin_read(void *arg, int pin)
 {
 	struct gpio_opb_softc * const sc = arg;
-	const u_int p = (pin % GPIO_NPINS) + 1;
-	uint32_t reg_ir = gpio_read(sc, GPIO_IR);
+	const uint32_t pin_mask = GPIO_PIN_MASK(pin % GPIO_NPINS);
 
-	return (reg_ir >> GPIO_PIN_SHIFT(p)) & 0x01;
+	return (gpio_read(sc, GPIO_IR) & pin_mask) != 0;
 }
 
 static void
 gpio_opb_pin_write(void *arg, int pin, int value)
 {
 	struct gpio_opb_softc * const sc = arg;
-	const u_int p = (pin % GPIO_NPINS) + 1;
-	const uint32_t pin_mask = 1 << GPIO_PIN_SHIFT(p);
+	const uint32_t pin_mask = GPIO_PIN_MASK(pin % GPIO_NPINS);
 
 	if (value == 0) {
 		gpio_clear(sc, GPIO_OR, pin_mask);
@@ -183,8 +181,7 @@ static void
 gpio_opb_pin_ctl(void *arg, int pin, int flags)
 {
 	struct gpio_opb_softc * const sc = arg;
-	const u_int p = (pin % GPIO_NPINS) + 1;
-	const uint32_t pin_mask = 1 << GPIO_PIN_SHIFT(p);
+	const uint32_t pin_mask = GPIO_PIN_MASK(pin % GPIO_NPINS);
 
 	if (flags & GPIO_PIN_INOUT) {
 		/* GPIOn_ODR register bit is 0 */

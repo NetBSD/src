@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.40 2026/09/01 18:01:24 andvar Exp $ */
+/*	$NetBSD: intr.c,v 1.41 2026/09/28 20:41:01 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40 2026/09/01 18:01:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.41 2026/09/28 20:41:01 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_interrupt.h"
@@ -225,6 +225,10 @@ intr_establish_xname(int hwirq, int type, int ipl, int (*ih_fun)(void *),
 		    is->is_hwirq);
 		evcnt_attach_dynamic(&is->is_ev, EVCNT_TYPE_INTR, NULL,
 		    pic->pic_name, is->is_evname);
+		snprintf(is->is_evmaskedname, sizeof(is->is_evmaskedname),
+		    "irq %d masked", is->is_hwirq);
+		evcnt_attach_dynamic(&is->is_evmasked, EVCNT_TYPE_INTR, NULL,
+		    pic->pic_name, is->is_evmaskedname);
 	}
 
 	/*
@@ -323,6 +327,7 @@ intr_disestablish(void *arg)
 	if (is->is_hand == NULL) {
 		is->is_type = IST_NONE;
 		evcnt_detach(&is->is_ev);
+		evcnt_detach(&is->is_evmasked);
 		/*
 		 * Make the virtual IRQ available again.
 		 */
@@ -505,6 +510,15 @@ intr_deliver(struct intr_source *is, int virq)
 	is->is_ev.ev_count++;
 }
 
+static inline bool
+pic_level_mask_p(const struct pic_ops *pic, const struct intr_source *is)
+{
+
+	return !is->is_cascaded &&
+	    (pic->pic_flags & PIC_FLAG_LEVEL_MASK) != 0 &&
+	    (is->is_type == IST_LEVEL || is->is_type == IST_LEVEL_HIGH);
+}
+
 void
 pic_do_pending_int(void)
 {
@@ -549,8 +563,13 @@ again:
 			ci->ci_cpl = pcpl; /* Don't use splx... we are here already! */
 		}
 
-		pic->pic_reenable_irq(pic, is->is_hwirq - pic->pic_intrbase,
-		    is->is_type);
+		const int picirq = is->is_hwirq - pic->pic_intrbase;
+		/*
+		 * Was acked while still asserted: ack now!
+		 */
+		if (pic_level_mask_p(pic, is))
+			pic->pic_ack_irq(pic, picirq);
+		pic->pic_reenable_irq(pic, picirq, is->is_type);
 		ci->ci_idepth--;
 	}
 
@@ -602,9 +621,11 @@ pic_handle_intr(void *cookie)
 		KASSERT(picirq < pic->pic_numintrs);
 		imask_t v_imen = PIC_VIRQ_TO_MASK(virq);
 		struct intr_source * const is = &intrsources[virq];
+		bool level_masked = false;
 
 		if ((imask[pcpl] & v_imen) != 0) {
 			ci->ci_ipending |= v_imen; /* Masked! Mark this as pending */
+			is->is_evmasked.ev_count++;
 			pic->pic_disable_irq(pic, picirq);
 		} else {
 			/* this interrupt is no longer pending */
@@ -612,6 +633,13 @@ pic_handle_intr(void *cookie)
 			ci->ci_idepth++;
 
 			if (!is->is_cascaded) {
+				/*
+				 * Asserted until handler executes.
+				 */
+				if (pic_level_mask_p(pic, is)) {
+					pic->pic_disable_irq(pic, picirq);
+					level_masked = true;
+				}
 				splraise(is->is_ipl);
 				mtmsr(msr | PSL_EE);
 			}
@@ -625,6 +653,8 @@ pic_handle_intr(void *cookie)
 			ci->ci_idepth--;
 		}
 		pic->pic_ack_irq(pic, picirq);
+		if (level_masked)
+			pic->pic_reenable_irq(pic, picirq, is->is_type);
 	} while ((picirq = pic->pic_get_irq(pic, PIC_GET_RECHECK)) != 255);
 
 	mtmsr(msr | PSL_EE);

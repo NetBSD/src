@@ -1,4 +1,4 @@
-/*	$NetBSD: gpioreg.h,v 1.4 2006/03/13 15:31:11 shige Exp $	*/
+/*	$NetBSD: gpioreg.h,v 1.5 2026/09/28 20:41:01 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,10 @@
 #ifndef _IBM4XX_GPIOREG_H_
 #define	_IBM4XX_GPIOREG_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
+
 /*
  * GPIO Registers
  */
@@ -52,18 +56,34 @@
  *	1	1	0	X	0	Forced to high impedance state
  */
 
-/* GPIO pins */
+/*
+ * 405:     24 pins, 1-24 from bit 1.
+ * 440/460: 32 pins, 0-31 from bit 0.
+ */
+#ifdef PPC_IBM440
+#define GPIO_NPINS		(32)
+#define GPIO_PIN_MASK(p)	(1U << (31 - (p)))
+#else
 #define GPIO_NPINS		(24)
+#define GPIO_PIN_MASK(p)	(1U << (30 - (p)))
+#endif
 
 /* GPIO Registers 0x00-0x7f */
 #define GPIO_NREG		(0x80)
 
-#define GPIO_PIN_SHIFT(n)	(31 - n)
-
 /* Offset */
 #define	GPIO_OR			(0x00)	/* Output */
 #define	GPIO_TCR		(0x04)	/* Three-State Control */
+#define	GPIO_OSRL		(0x08)	/* Output Select, low pins */
+#define	GPIO_OSRH		(0x0c)	/* Output Select, high pins */
+#define	GPIO_TSRL		(0x10)	/* Three-State Select, low pins */
+#define	GPIO_TSRH		(0x14)	/* Three-State Select, high pins */
 #define	GPIO_ODR		(0x18)	/* Open Drain */
 #define	GPIO_IR			(0x1c)	/* Input */
+
+/* Select registers: two bits per pin, 0 = GPIO, 1-3 = ALT1-3 (440) */
+#define	GPIO_SEL_SHIFT(p)	(30 - 2 * ((p) % 16))
+#define	GPIO_SEL_MASK(p)	(3U << GPIO_SEL_SHIFT(p))
+#define	GPIO_SEL_ALT1(p)	(1U << GPIO_SEL_SHIFT(p))
 
 #endif	/* _IBM4XX_GPIOREG_H_ */

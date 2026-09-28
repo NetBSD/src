@@ -1,4 +1,4 @@
-/*	$NetBSD: dwcsata.c,v 1.2 2026/06/15 19:21:14 rkujawa Exp $	*/
+/*	$NetBSD: dwcsata.c,v 1.3 2026/09/28 20:41:00 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcsata.c,v 1.2 2026/06/15 19:21:14 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcsata.c,v 1.3 2026/09/28 20:41:00 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dwcsata.h"
@@ -206,6 +206,16 @@ dwcsata_match(device_t parent, cfdata_t match, void *aux)
 	struct plb_attach_args *paa = aux;
 
 	if (strcmp(paa->plb_name, match->cf_name) != 0)
+		return 0;
+	/*
+	 * SERDES is shared between SATA and PCIe port 0. Only one can
+	 * work at a given time. Determine which one is running now.
+	 * Refuse to attach if PCIe is using the lane.
+	 *
+	 * This is polluting the driver with chip specifics, but
+	 * there's no other consumer of this driver yet anyway.
+	 */
+	if (AMCC460EX_SERDES0_IS_PCIE())
 		return 0;
 
 	if (match->cf_loc[PLBCF_ADDR] == PLBCF_ADDR_DEFAULT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_uic.c,v 1.10 2026/06/13 20:16:23 rkujawa Exp $	*/
+/*	$NetBSD: pic_uic.c,v 1.11 2026/09/28 20:41:00 rkujawa Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.10 2026/06/13 20:16:23 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.11 2026/09/28 20:41:00 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -141,6 +141,7 @@ struct pic_ops pic_uic403 = {
 	.pic_get_irq = uic_get_irq,
 	.pic_ack_irq = uic_ack_irq,
 	.pic_finish_setup = NULL,
+	.pic_flags = PIC_FLAG_LEVEL_MASK,
 	.pic_name = "uic0"
 };
 
@@ -194,6 +195,7 @@ struct pic_ops pic_uic0 = {
 	.pic_get_irq = uic_get_irq,
 	.pic_ack_irq = uic_ack_irq,
 	.pic_finish_setup = NULL,
+	.pic_flags = PIC_FLAG_LEVEL_MASK,
 	.pic_name = "uic0"
 };
 
@@ -261,6 +263,7 @@ struct pic_ops pic_uic1 = {
 	.pic_get_irq = uic_get_irq,
 	.pic_ack_irq = uic_ack_irq,
 	.pic_finish_setup = uic1_finish_setup,
+	.pic_flags = PIC_FLAG_LEVEL_MASK,
 	.pic_name = "uic1"
 };
 
@@ -315,6 +318,7 @@ struct pic_ops pic_uic2 = {
 	.pic_get_irq = uic_get_irq,
 	.pic_ack_irq = uic_ack_irq,
 	.pic_finish_setup = uic2_finish_setup,
+	.pic_flags = PIC_FLAG_LEVEL_MASK,
 	.pic_name = "uic2"
 };
 
@@ -371,6 +375,7 @@ struct pic_ops pic_uic3 = {
 	.pic_get_irq = uic_get_irq,
 	.pic_ack_irq = uic_ack_irq,
 	.pic_finish_setup = uic3_finish_setup,
+	.pic_flags = PIC_FLAG_LEVEL_MASK,
 	.pic_name = "uic3"
 };
 

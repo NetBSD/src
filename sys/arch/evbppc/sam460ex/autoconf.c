@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2026/06/22 12:34:19 rkujawa Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2026/09/28 20:41:00 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2026/06/22 12:34:19 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2026/09/28 20:41:00 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,18 +86,24 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2026/06/22 12:34:19 rkujawa Exp $")
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-/*
- * PCIe INTx routing
- */
+/* PCIe INTA of a root port. */
 int
 pciex_inta_irq(int port)
 {
-
-	return 0x60 + port * 0x6;
+	return SAM460EX_IRQ_PCIE_INTA(port);
 }
 
-/* Set once console=pci has made a PCI display the console (see below). */
-static bool sam460ex_pci_console_found;
+#define	UIC_IRQ_BIT(irq)	__BIT(31 - ((irq) % SAM460EX_UIC_NIRQ))
+#define	UIC_IRQ_BITS(lo, hi)	__BITS(31 - ((hi) % SAM460EX_UIC_NIRQ),	\
+				       31 - ((lo) % SAM460EX_UIC_NIRQ))
+#define	UIC3_PCIE_INTX		UIC_IRQ_BITS(SAM460EX_IRQ_PCIE_INTX,	\
+				    SAM460EX_IRQ_PCIE_INTX + SAM460EX_NPCIE_INTX - 1)
+#define	UIC3_SM502		UIC_IRQ_BIT(SAM460EX_IRQ_SM502)
+
+/* when console is on a PCI card, see device_register() */
+static device_t sam460ex_pci_console_dev;
+static int sam460ex_pci_console_bdf[3];
+static pcireg_t sam460ex_pci_console_id;
 
 /*
  * Determine device configuration for a machine.
@@ -106,22 +112,20 @@ void
 cpu_configure(void)
 {
 
-	/* UIC */
+	/* UIC1 */
 	mtdcr(DCR_UIC1_BASE + DCR_UIC_PR,
-	    mfdcr(DCR_UIC1_BASE + DCR_UIC_PR) & ~0x80000000);
+	    mfdcr(DCR_UIC1_BASE + DCR_UIC_PR) & ~UIC_IRQ_BIT(SAM460EX_IRQ_PCI_INTX));
 	mtdcr(DCR_UIC1_BASE + DCR_UIC_TR,
-	    mfdcr(DCR_UIC1_BASE + DCR_UIC_TR) & ~0x80000000);
-	mtdcr(DCR_UIC1_BASE + DCR_UIC_SR, 0x80000000);
+	    mfdcr(DCR_UIC1_BASE + DCR_UIC_TR) & ~UIC_IRQ_BIT(SAM460EX_IRQ_PCI_INTX));
+	mtdcr(DCR_UIC1_BASE + DCR_UIC_SR, UIC_IRQ_BIT(SAM460EX_IRQ_PCI_INTX));
+	/* UIC3 */
 	mtdcr(DCR_UIC3_BASE + DCR_UIC_PR,
-	    mfdcr(DCR_UIC3_BASE + DCR_UIC_PR) & ~0x000ff000);
+	    (mfdcr(DCR_UIC3_BASE + DCR_UIC_PR) | UIC3_PCIE_INTX) & ~UIC3_SM502);
 	mtdcr(DCR_UIC3_BASE + DCR_UIC_TR,
-	    mfdcr(DCR_UIC3_BASE + DCR_UIC_TR) & ~0x000ff000);
-	mtdcr(DCR_UIC3_BASE + DCR_UIC_SR, 0x000ff000);
+	    mfdcr(DCR_UIC3_BASE + DCR_UIC_TR) & ~(UIC3_PCIE_INTX | UIC3_SM502));
+	mtdcr(DCR_UIC3_BASE + DCR_UIC_SR, UIC3_PCIE_INTX | UIC3_SM502);
 
-	/*
-	 * Initialize intr and add the cascaded UICs.
-	 * UIC0 = 0, UIC1 = +32, UIC2 = +64, UIC3 = +96.
-	 */
+	/* Cascaded UICs: irq = 32 * n + input. */
 	intr_init();
 	pic_add(&pic_uic1);
 	pic_add(&pic_uic2);
@@ -130,7 +134,15 @@ cpu_configure(void)
 	if (config_rootfound("plb", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	if (sam460ex_console == SAM460EX_CONS_PCI && !sam460ex_pci_console_found)
+	if (sam460ex_pci_console_dev != NULL)
+		aprint_normal("sam460ex: console=pci: %s at %d:%d:%d "
+		    "(vendor 0x%04x product 0x%04x)\n",
+		    device_xname(sam460ex_pci_console_dev),
+		    sam460ex_pci_console_bdf[0], sam460ex_pci_console_bdf[1],
+		    sam460ex_pci_console_bdf[2],
+		    PCI_VENDOR(sam460ex_pci_console_id),
+		    PCI_PRODUCT(sam460ex_pci_console_id));
+	else if (sam460ex_console == SAM460EX_CONS_PCI)
 		printf("sam460ex: console=pci: no suitable PCI display found, "
 		    "using serial\n");
 
@@ -151,12 +163,10 @@ device_register(device_t dev, void *aux)
 		prop_dictionary_set_bool(device_properties(dev),
 		    "is_console", true);
 
-	/*
-	 * console=pci: when first non-SM502 PCI display device attaches, make
-	 * a console
-	 */
-	if (sam460ex_console == SAM460EX_CONS_PCI && !sam460ex_pci_console_found &&
-	    device_parent(dev) != NULL && device_is_a(device_parent(dev), "pci")) {
+	/* console=pci: find first/matching non-SM502 PCI display */
+	if (sam460ex_console == SAM460EX_CONS_PCI &&
+	    sam460ex_pci_console_dev == NULL && device_parent(dev) != NULL &&
+	    device_is_a(device_parent(dev), "pci")) {
 		struct pci_attach_args *pa = aux;
 		const int *bdf = sam460ex_console_pci_bdf;
 
@@ -166,19 +176,18 @@ device_register(device_t dev, void *aux)
 		    (bdf[0] == -1 || bdf[0] == pa->pa_bus) &&
 		    (bdf[1] == -1 || bdf[1] == pa->pa_device) &&
 		    (bdf[2] == -1 || bdf[2] == pa->pa_function)) {
-			aprint_normal("sam460ex: console=pci: selected PCI display "
-			    "at %d:%d:%d (vendor 0x%04x product 0x%04x)\n",
-			    pa->pa_bus, pa->pa_device, pa->pa_function,
-			    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id));
+			/* announced later; a print here splits the "at" line */
+			sam460ex_pci_console_dev = dev;
+			sam460ex_pci_console_bdf[0] = pa->pa_bus;
+			sam460ex_pci_console_bdf[1] = pa->pa_device;
+			sam460ex_pci_console_bdf[2] = pa->pa_function;
+			sam460ex_pci_console_id = pa->pa_id;
 			prop_dictionary_set_bool(device_properties(dev),
 			    "is_console", true);
-			sam460ex_pci_console_found = true;
 		}
 	}
 
-	/*
-	 * Match a "root=" from the bootargs.
-	 */
+	/* Match a root= from the bootargs */
 	if (bootspec != NULL) {
 		size_t len = strlen(bootspec);
 		int part = 0;

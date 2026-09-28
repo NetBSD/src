@@ -1,6 +1,6 @@
-/*	$NetBSD: ibm4xx_460ex_l2.h,v 1.2 2026/09/28 20:41:01 rkujawa Exp $	*/
+/*	$NetBSD: ibm4xx_460ex_pll.h,v 1.1 2026/09/28 20:41:01 rkujawa Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -29,12 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IBM4XX_IBM4XX_460EX_L2_H_
-#define _IBM4XX_IBM4XX_460EX_L2_H_
+#ifndef _IBM4XX_IBM4XX_460EX_PLL_H_
+#define _IBM4XX_IBM4XX_460EX_PLL_H_
 
-extern bool ibm4xx_460ex_l2_enabled;
-extern uint32_t ibm4xx_460ex_l2_cfg;
+u_int ibm4xx_460ex_base_clock(uint32_t);
 
-void ibm4xx_460ex_l2cache_enable(void);
-
-#endif /* _IBM4XX_IBM4XX_460EX_L2_H_ */
+#endif /* _IBM4XX_IBM4XX_460EX_PLL_H_ */

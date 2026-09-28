@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.112 2026/06/17 15:08:54 rkujawa Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113 2026/09/28 20:41:00 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2026/06/17 15:08:54 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 2026/09/28 20:41:00 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -188,6 +188,7 @@ static struct tlb44_resv {
 	uint64_t tr_pa;		/* 36-bit physical address */
 	vaddr_t	 tr_va;
 	psize_t	 tr_size;
+	bool	 tr_mmap;	/* userland can map it */
 } tlb44_resv[NTLB];
 #endif
 
@@ -288,6 +289,145 @@ pte_find(struct pmap *pm, vaddr_t va)
 	return NULL;
 }
 
+#ifdef PPC_IBM440
+/* 440 SIZE field, codes 6 and 8 unassigned */
+static const char *const tlb44sizes[] = {
+	  "1kB",
+	  "4kB",
+	 "16kB",
+	 "64kB",
+	"256kB",
+	  "1MB",
+	    "?",
+	 "16MB",
+	    "?",
+	"256MB",
+	  "1GB"
+};
+
+void
+ppc44x_tlb_read(int i, u_long *w0, u_long *w1, u_long *w2, u_long *tid)
+{
+	u_long msr, mmucr;
+
+	__asm volatile("mfmsr %4;"
+		"li %0,0;"
+		"mtmsr %0;"
+		"sync; isync;"
+		"tlbre %0,%5,0;"
+		MFMMUCR(%3)
+		"tlbre %1,%5,1;"
+		"tlbre %2,%5,2;"
+		"mtmsr %4;"
+		"sync; isync"
+		: "=&r" (*w0), "=&r" (*w1), "=&r" (*w2), "=&r" (mmucr),
+		  "=&r" (msr)
+		: "r" (i));
+	*tid = mmucr & MMUCR_STID;
+}
+
+void
+ppc44x_tlb_print(int i, u_long w0, u_long w1, u_long w2, u_long tid,
+    void (*pr)(const char *, ...))
+{
+	const u_long size = (w0 & TLB44_SIZE_MASK) >> TLB44_SIZE_SHFT;
+
+	(*pr)("tlb%c%2d  TID %3lu%s EPN 0x%08lx %-6s RPN %x_%08lx "
+	    "%c%c%c%c%c %s%s%s%s%s%s\n",
+	    (w0 & TLB44_V) ? ' ' : '*', i, tid,
+	    (w0 & TLB44_TS) ? " TS1" : " TS0",
+	    w0 & TLB44_EPN_MASK,
+	    size < __arraycount(tlb44sizes) ? tlb44sizes[size] : "?",
+	    (u_int)(w1 & TLB44_ERPN_MASK), w1 & TLB44_RPN_MASK,
+	    (w2 & TLB44_W) ? 'W' : ' ', (w2 & TLB44_I) ? 'I' : ' ',
+	    (w2 & TLB44_M) ? 'M' : ' ', (w2 & TLB44_G) ? 'G' : ' ',
+	    (w2 & TLB44_E) ? 'E' : ' ',
+	    (w2 & TLB44_SR) ? "sr" : "  ",
+	    (w2 & TLB44_SW) ? "sw" : "  ",
+	    (w2 & TLB44_SX) ? "sx" : "  ",
+	    (w2 & TLB44_UR) ? "ur" : "  ",
+	    (w2 & TLB44_UW) ? "uw" : "  ",
+	    (w2 & TLB44_UX) ? "ux" : "  ");
+}
+
+void
+ppc44x_tlb_dump(void)
+{
+	u_long w0, w1, w2, tid;
+	int i;
+
+	printf("TLB:\n");
+	for (i = 0; i < NTLB; i++) {
+		ppc44x_tlb_read(i, &w0, &w1, &w2, &tid);
+		if (w0 & TLB44_V)
+			ppc44x_tlb_print(i, w0, w1, w2, tid, printf);
+	}
+}
+
+/*
+ * Extended real page numbers. PAE-like thing. Physical address on a 
+ * 440/460 is 36 bits but paddr_t is 32 bit...
+ */
+static paddr_t erpn_lowest = ~(paddr_t)0;
+
+static void
+erpn_init(struct mem_region *memr)
+{
+	struct mem_region *mp;
+	int i;
+
+	for (i = 0; i < tlb_nreserved; i++) {
+		struct tlb44_resv * const tr = &tlb44_resv[i];
+		const paddr_t first = (paddr_t)tr->tr_pa;
+		const paddr_t last = first + tr->tr_size - 1;
+		bool alias = false;
+
+		if (tr->tr_size == 0 || (tr->tr_pa >> 32) == 0)
+			continue;
+		for (mp = memr; mp->size; mp++)
+			if (first <= mp->start + mp->size - 1 &&
+			    mp->start <= last) {
+				alias = true;
+				break;
+			}
+		if (alias) {
+#ifdef DEBUG
+			printf("erpn: window 0x%lx-0x%lx ERPN 0x%x aliases "
+			    "RAM, kernel-only\n", (u_long)first, (u_long)last,
+			    (u_int)(tr->tr_pa >> 32));
+#endif
+			continue;
+		}
+		tr->tr_mmap = true;
+		if (first < erpn_lowest)
+			erpn_lowest = first;
+	}
+}
+
+static inline uint32_t
+erpn_lookup(paddr_t pa)
+{
+	int i;
+
+	if (pa < erpn_lowest)
+		return 0;
+	for (i = 0; i < tlb_nreserved; i++) {
+		const struct tlb44_resv * const tr = &tlb44_resv[i];
+
+		if (tr->tr_mmap && pa - (paddr_t)tr->tr_pa < tr->tr_size)
+			return (uint32_t)(tr->tr_pa >> 32);
+	}
+	return 0;
+}
+
+bool
+ibm4xx_mmap_ok(paddr_t pa)
+{
+
+	return erpn_lookup(pa) != 0 || atop(pa) >= physmem;
+}
+#endif /* PPC_IBM440 */
+
 /*
  * This is called during initppc, before the system is really initialized.
  */
@@ -323,11 +463,11 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	 * Get memory.
 	 */
 	mem_regions(&mem, &avail);
-	for (mp = mem; mp->size; mp++) {
+	for (mp = mem; mp->size; mp++)
 		physmem += btoc(mp->size);
-		printf("+%lx,", mp->size);
-	}
-	printf("\n");
+#ifdef PPC_IBM440
+	erpn_init(mem);
+#endif
 	ppc4xx_tlb_init();
 	/*
 	 * Count the number of available entries.
@@ -345,7 +485,6 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	for (mp = avail; mp->size; mp++) {
 		s = mp->start;
 		e = mp->start + mp->size;
-		printf("%08x-%08x -> ", s, e);
 		/*
 		 * Check whether this region holds all of the kernel.
 		 */
@@ -378,7 +517,6 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		if (e < s)
 			e = s;
 		sz = e - s;
-		printf("%08x-%08x = %x\n", s, e, sz);
 		/*
 		 * Check whether some memory is left here.
 		 */
@@ -443,6 +581,20 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	nextavail = avail->start;
 
 	pmap_bootstrap_done = 1;
+}
+
+/*
+ * Devices are cache-inhibited unless the driver explicitly asked 
+ * for cacheable.
+ */
+u_int
+ibm4xx_mmap_flags(paddr_t pa)
+{
+	u_int flags = PMAP_NOCACHE;
+
+	if (pa & POWERPC_MMAP_FLAG_CACHEABLE)
+		flags &= ~PMAP_NOCACHE;
+	return flags;
 }
 
 /*
@@ -1442,7 +1594,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 #ifdef PPC_IBM440
 	w0 = (va & ~(tlbsize[sz] - 1)) | (sz << TLB44_SIZE_SHFT) |
 	    TLB44_V | TLB44_TS;
-	w1 = pa;		/* ERPN=0: RAM is below 4GB */
+	w1 = pa | erpn_lookup(pa);	/* device windows live above 4GB */
 	w2 = tte_to_tlb44_word2(pte);
 #else
 	hi = (va & TLB_EPN_MASK) | (sz << TLB_SIZE_SHFT) | TLB_VALID;
@@ -1705,6 +1857,15 @@ ppc44x_tlb_reserve(uint64_t pa, vaddr_t va, size_t size, int flags)
 	pa &= ~(uint64_t)(rsize - 1);
 	va &= ~(rsize - 1);
 
+	/* Careful... take ERPN into account. */
+	for (i = 0; i < tlb_nreserved; i++)
+		KASSERTMSG(tlb44_resv[i].tr_size == 0 ||
+		    (paddr_t)pa + rsize - 1 < (paddr_t)tlb44_resv[i].tr_pa ||
+		    (paddr_t)tlb44_resv[i].tr_pa + tlb44_resv[i].tr_size - 1 <
+		    (paddr_t)pa,
+		    "window %#lx+%#zx overlaps reserved entry %d",
+		    (u_long)(paddr_t)pa, rsize, i);
+
 	w0 = va | TLB44_V | TLB44_TS | (enc << TLB44_SIZE_SHFT);
 	w1 = (u_long)pa | ((u_long)(pa >> 32) & TLB44_ERPN_MASK);
 	w2 = TLB44_WIMG(flags) | TLB44_SR | TLB44_SW;
@@ -1862,6 +2023,12 @@ pmap_tlbmiss(vaddr_t va, int ctx)
 		tte = *pte;
 		if (tte == 0)
 			return 1;
+		/*
+		 * All TTEs in a table are TTE_SZ_16K.
+		 */
+		KASSERTMSG((tte & TTE_SZ_MASK) == TTE_SZ_16K,
+		    "corrupt PTE: ctx %d va %#lx pte %p = %#lx",
+		    ctx, (u_long)va, (void *)__UNVOLATILE(pte), tte);
 	} else {
 		/* Create a 16MB writable mapping. */
 		tte = TTE_PA(va) | TTE_ZONE(ZONE_PRIV) | TTE_SZ_16M | TTE_WR;

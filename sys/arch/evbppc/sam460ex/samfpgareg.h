@@ -1,6 +1,6 @@
-/*	$NetBSD: ibm4xx_460ex_l2.h,v 1.2 2026/09/28 20:41:01 rkujawa Exp $	*/
+/*	$NetBSD: samfpgareg.h,v 1.1 2026/09/28 20:41:00 rkujawa Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -29,12 +29,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IBM4XX_IBM4XX_460EX_L2_H_
-#define _IBM4XX_IBM4XX_460EX_L2_H_
+/*
+ * FPGA chip on ACube Sam460ex (Lattice XP2).
+ */
 
-extern bool ibm4xx_460ex_l2_enabled;
-extern uint32_t ibm4xx_460ex_l2_cfg;
+#ifndef _EVBPPC_SAM460EX_SAMFPGAREG_H_
+#define _EVBPPC_SAM460EX_SAMFPGAREG_H_
 
-void ibm4xx_460ex_l2cache_enable(void);
+#define	SAMFPGA_SIZE		0x40
 
-#endif /* _IBM4XX_IBM4XX_460EX_L2_H_ */
+/* J22 GPIO */
+#define	SAMFPGA_GPIO_NBANK	5
+#define	SAMFPGA_GPIO_NPINS	80
+#define	SAMFPGA_GPIO_OUT(b)	(0x02 + 2 * (b))	/* output, r/w */
+#define	SAMFPGA_GPIO_DIR(b)	(0x0c + 2 * (b))	/* 1 = output */
+#define	SAMFPGA_GPIO_IN(b)	(0x20 + 2 * (b))	/* pin level */
+#define	SAMFPGA_GPIO_BANK(p)	((p) >> 4)
+#define	SAMFPGA_GPIO_BIT(p)	__BIT((p) & 0xf)
+
+/* FPGA design revision, BCD */
+#define	SAMFPGA_REV_DATE	0x2a
+#define	 SAMFPGA_REV_DATE_DAY	__BITS(15, 8)
+#define	 SAMFPGA_REV_DATE_MONTH	__BITS(7, 0)
+#define	SAMFPGA_REV_YEAR	0x2c
+#define	 SAMFPGA_REV_YEAR_YEAR	__BITS(15, 8)	/* 20xx */
+#define	 SAMFPGA_REV_YEAR_REV	__BITS(7, 0)
+
+/* Board control */
+#define	SAMFPGA_CTL		0x2e
+#define	 SAMFPGA_CTL_B0		__BIT(0)	/* ??? */
+#define	 SAMFPGA_CTL_LED_RED	__BIT(1)	/* 1 = on */
+#define	 SAMFPGA_CTL_LED_YELLOW	__BIT(2)
+#define	 SAMFPGA_CTL_LED_AMBER	__BIT(3)
+#define	 SAMFPGA_CTL_LEDS	__BITS(3, 1)
+#define	 SAMFPGA_CTL_RESET	__BIT(4)	/* pulsed: board reset; held: power off */
+
+#define	SAMFPGA_USB		0x30		/* ??? U-Boot sets bit 2 */
+
+#endif	/* _EVBPPC_SAM460EX_SAMFPGAREG_H_ */

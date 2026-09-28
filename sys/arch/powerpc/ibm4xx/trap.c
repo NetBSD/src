@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103 2026/06/13 20:16:23 rkujawa Exp $	*/
+/*	$NetBSD: trap.c,v 1.104 2026/09/28 20:41:00 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2026/06/13 20:16:23 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 2026/09/28 20:41:00 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2026/06/13 20:16:23 rkujawa Exp $");
 #include <sys/syscall.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/time.h>
 
 #if defined(KGDB)
 #include <sys/kgdb.h>
@@ -138,6 +139,40 @@ int trapdebug = /* TDB_ALL */ 0;
 #else
 #define DBPRINTF(x, y)
 #endif
+
+#ifdef PPC_IBM440
+/*
+ * Decode and clear MCSR, handle both kernel and user space.
+ */
+static void
+mchk_report(const char *where, bool print)
+{
+	const uint32_t mcsr = mfspr(SPR_MCSR);
+
+	if (!print)
+		goto clear;
+	printf("machine check in %s: MCSR 0x%08x MCSRR0 0x%08lx "
+	    "MCSRR1 0x%08lx\n", where, mcsr,
+	    (u_long)mfspr(SPR_MCSRR0),
+	    (u_long)mfspr(SPR_MCSRR1));
+	printf("machine check cause:%s%s%s%s%s%s%s%s%s%s\n",
+	    (mcsr & MCSR_MCS)  ? " summary"		: "",
+	    (mcsr & MCSR_IB)   ? " insn-PLB"		: "",
+	    (mcsr & MCSR_DRB)  ? " data-read-PLB"	: "",
+	    (mcsr & MCSR_DWB)  ? " data-write-PLB"	: "",
+	    (mcsr & MCSR_TLBP) ? " TLB-parity"		: "",
+	    (mcsr & MCSR_ICP)  ? " Icache-parity"	: "",
+	    (mcsr & MCSR_DCSP) ? " Dcache-search-parity": "",
+	    (mcsr & MCSR_DCFP) ? " Dcache-flush-parity"	: "",
+	    (mcsr & MCSR_IMPE) ? " imprecise"		: "",
+	    (mcsr == 0)        ? " none"		: "");
+	/* TLB parity check can also be TLB multiple hit. */
+	if ((mcsr & MCSR_TLBP) != 0)
+		ppc44x_tlb_dump();
+clear:
+	mtspr(SPR_MCSR, mcsr);
+}
+#endif /* PPC_IBM440 */
 
 void
 trap(struct trapframe *tf)
@@ -418,29 +453,37 @@ sigtrap:
 		/*
 		 * Unrecovered machine check, do what we can.
 		 */
-		{
-			const uint32_t mcsr = mfspr(SPR_MCSR);
-
-			printf("machine check: MCSR 0x%08x MCSRR0 0x%08lx "
-			    "MCSRR1 0x%08lx\n", mcsr,
-			    (u_long)mfspr(SPR_MCSRR0),
-			    (u_long)mfspr(SPR_MCSRR1));
-			printf("machine check cause:%s%s%s%s%s%s%s%s%s%s\n",
-			    (mcsr & MCSR_MCS)  ? " summary"		: "",
-			    (mcsr & MCSR_IB)   ? " insn-PLB"		: "",
-			    (mcsr & MCSR_DRB)  ? " data-read-PLB"	: "",
-			    (mcsr & MCSR_DWB)  ? " data-write-PLB"	: "",
-			    (mcsr & MCSR_TLBP) ? " TLB-parity"		: "",
-			    (mcsr & MCSR_ICP)  ? " Icache-parity"	: "",
-			    (mcsr & MCSR_DCSP) ? " Dcache-search-parity": "",
-			    (mcsr & MCSR_DCFP) ? " Dcache-flush-parity"	: "",
-			    (mcsr & MCSR_IMPE) ? " imprecise"		: "",
-			    (mcsr == 0)        ? " none"		: "");
-			/* MCSR is write-1-to-clear; clear what we read. */
-			mtspr(SPR_MCSR, mcsr);
-		}
+		mchk_report("kernel", true);
 #endif /* PPC_IBM440 */
 		goto brain_damage;
+
+	case EXC_MCHK|EXC_USER:
+		/*
+		 * Meh, can happen for example by access to mmaped aperture of
+		 * a device where PLB slave errored. SRR0 is only a hint
+		 * (it's impresice).
+		 */
+		{
+			static struct timeval mchk_last;
+			static const struct timeval mchk_min = { 1, 0 };
+			/* Limit to one per second. */
+			const bool report = ratecheck(&mchk_last, &mchk_min);
+
+#ifdef PPC_IBM440
+			mchk_report("user", report);
+#endif /* PPC_IBM440 */
+			if (report)
+				printf("%s[%d.%d]: machine check, SIGBUS at "
+				    "0x%08lx\n", p->p_comm, p->p_pid, l->l_lid,
+				    (u_long)tf->tf_srr0);
+		}
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGBUS;
+		ksi.ksi_code = BUS_OBJERR;
+		ksi.ksi_trap = EXC_MCHK;
+		ksi.ksi_addr = (void *)tf->tf_srr0;
+		trapsignal(l, &ksi);
+		break;
 
 	default:
 brain_damage:
