@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.40 2025/07/13 13:21:32 snj Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.41 2026/09/28 18:56:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.40 2025/07/13 13:21:32 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.41 2026/09/28 18:56:17 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -362,6 +362,12 @@ pmap_bootstrap(void)
 #endif
 
 	pmap_bootstrap_common();
+
+#ifdef MULTIPROCESSOR
+	struct cpu_info * const ci = curcpu();
+	kcpuset_create(&ci->ci_shootdowncpus, true);
+	KASSERT(ci->ci_shootdowncpus != NULL);
+#endif
 
 	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
 
