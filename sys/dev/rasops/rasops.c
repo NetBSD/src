@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.130 2026/01/01 02:19:01 tnn Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.131 2026/09/28 12:37:33 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.130 2026/01/01 02:19:01 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.131 2026/09/28 12:37:33 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -1040,6 +1040,35 @@ rasops_unpack_attr(long attr, int *fg, int *bg, int *underline)
 	*bg = ((uint32_t)attr >> 16) & 0xff;
 	if (underline != NULL)
 		*underline = (uint32_t)attr & WSATTR_UNDERLINE;
+}
+
+/*
+ * Recover the args from an attribute (i.e. reverse of ri_ops.allocattr())
+ */
+void
+rasops_unpack_attr_args(long attr, int *fg, int *bg, int *flags)
+{
+	int f, b, fl;
+
+	f = ((uint32_t)attr >> 24) & 0xff;
+	b = ((uint32_t)attr >> 16) & 0xff;
+	fl = (uint32_t)attr & WSATTR_USERMASK;
+
+	if ((fl & WSATTR_REVERSE) != 0) {
+		int swap = f;
+
+		f = b;
+		b = swap;
+	}
+	if ((fl & WSATTR_HILIT) != 0 && f >= 8 && f < 16)
+		f -= 8;
+
+	if (fg != NULL)
+		*fg = f;
+	if (bg != NULL)
+		*bg = b;
+	if (flags != NULL)
+		*flags = fl;
 }
 
 /*

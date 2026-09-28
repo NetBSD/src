@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.70 2025/04/28 07:43:41 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.71 2026/09/28 12:37:32 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.70 2025/04/28 07:43:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.71 2026/09/28 12:37:32 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -569,8 +569,11 @@ vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 	ri->ri_ops.copyrows  = vcons_copyrows;
 	vcons_unlock(vd->active);
 
-	/* notify things that we're about to redraw */
-	if (vd->show_screen_cb != NULL)
+	/*
+	 * notify things that we're about to redraw, however...
+	 * only send call backs to visible screens
+	 */
+	if (vd->show_screen_cb != NULL && SCREEN_IS_VISIBLE(scr))
 		vd->show_screen_cb(scr, vd->show_screen_cookie);
 
 #ifdef VCONS_DRAW_INTR
@@ -703,7 +706,8 @@ vcons_redraw_screen(struct vcons_screen *scr)
 				c = charptr[offset];
 				a = attrptr[offset];
 				acmp = a & mask;
-				if (c == ' ') {
+				/* erasecols() can't draw underline */
+				if (c == ' ' && (a & WSATTR_UNDERLINE) == 0) {
 					/*
 					 * if we already erased the background
 					 * and if this blank uses the same
@@ -1410,11 +1414,39 @@ vcons_cursor_noread(void *cookie, int on, int row, int col)
 /* methods to read/write characters via ioctl() */
 
 static int
+vcons_wschar_attrflags(int caps, int wsflags)
+{
+	int flags = 0;
+
+	if ((caps & WSSCREEN_WSCOLORS) != 0)
+		flags |= WSATTR_WSCOLORS;
+	if ((caps & WSSCREEN_HILIT) != 0 &&
+	    (wsflags & WSDISPLAY_CHAR_BRIGHT) != 0)
+		flags |= WSATTR_HILIT;
+	if ((caps & WSSCREEN_BLINK) != 0 &&
+	    (wsflags & WSDISPLAY_CHAR_BLINK) != 0)
+		flags |= WSATTR_BLINK;
+	return flags;
+}
+
+static int
+vcons_wschar_flags(int flags)
+{
+	int wsflags = 0;
+
+	if ((flags & WSATTR_HILIT) != 0)
+		wsflags |= WSDISPLAY_CHAR_BRIGHT;
+	if ((flags & WSATTR_BLINK) != 0)
+		wsflags |= WSDISPLAY_CHAR_BLINK;
+	return wsflags;
+}
+
+static int
 vcons_putwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 {
 	long attr;
 	struct rasops_info *ri;
-	int error;
+	int error, flags;
 
 	KASSERT(scr != NULL);
 	KASSERT(wsc != NULL);
@@ -1423,7 +1455,7 @@ vcons_putwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 
 	/* allow col as linear index if row == 0 */
 	if (wsc->row == 0) {
-		if (wsc->col < 0 || wsc->col > (ri->ri_cols * ri->ri_rows))
+		if (wsc->col < 0 || wsc->col >= (ri->ri_cols * ri->ri_rows))
 			return EINVAL;
 	    	int rem;
 	    	rem = wsc->col % ri->ri_cols;
@@ -1438,8 +1470,9 @@ vcons_putwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 			return EINVAL;
 	}
 
+	flags = vcons_wschar_attrflags(ri->ri_caps, wsc->flags);
 	error = ri->ri_ops.allocattr(ri, wsc->foreground,
-	    wsc->background, wsc->flags, &attr);
+	    wsc->background, flags, &attr);
 	if (error)
 		return error;
 	vcons_putchar(ri, wsc->row, wsc->col, wsc->letter, attr);
@@ -1454,7 +1487,7 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	int offset;
 	long attr;
 	struct rasops_info *ri;
-	int fg, bg, ul;
+	int fg, bg, flags;
 
 	KASSERT(scr != NULL);
 	KASSERT(wsc != NULL);
@@ -1463,7 +1496,7 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 
 	/* allow col as linear index if row == 0 */
 	if (wsc->row == 0) {
-		if (wsc->col < 0 || wsc->col > (ri->ri_cols * ri->ri_rows))
+		if (wsc->col < 0 || wsc->col >= (ri->ri_cols * ri->ri_rows))
 			return EINVAL;
 	    	int rem;
 	    	rem = wsc->col % ri->ri_cols;
@@ -1486,33 +1519,13 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	DPRINTF("vcons_getwschar: %d, %d, %x, %lx\n", wsc->row,
 	    wsc->col, wsc->letter, attr);
 
-	/*
-	 * this is ugly. We need to break up an attribute into colours and
-	 * flags but there's no rasops method to do that so we must rely on
-	 * the 'canonical' encoding.
-	 */
-
-	/* only fetches underline attribute */
-	/* rasops_unpack_attr(attr, &fg, &bg, &ul); */
-	fg = (attr >> 24) & 0xf;
-	bg = (attr >> 16) & 0xf;
-	ul = (attr & 1);
+	/* break the attribute into colours and flags */
+	rasops_unpack_attr_args(attr, &fg, &bg, &flags);
 
 	wsc->foreground = fg;
 	wsc->background = bg;
 
-	/* clear trashed bits and restore underline flag */
-	attr &= ~(WSATTR_HILIT | WSATTR_BLINK | WSATTR_UNDERLINE);
-	if (ul)
-		attr |= WSATTR_UNDERLINE;
-
-	/* restore highlight boost */
-	if (attr & WSATTR_HILIT)
-		if (wsc->foreground >= 8)
-			wsc->foreground -= 8;
-
-	/* we always use colors, even when not stored */
-	attr |= WSATTR_WSCOLORS;
+	wsc->flags = vcons_wschar_flags(flags);
 	return 0;
 }
 

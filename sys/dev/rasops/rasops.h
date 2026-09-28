@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.52 2025/11/02 22:16:24 nia Exp $ */
+/* 	$NetBSD: rasops.h,v 1.53 2026/09/28 12:37:33 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -185,6 +185,7 @@ struct rasops_info {
 int	rasops_init(struct rasops_info *, int, int);
 int	rasops_reconfig(struct rasops_info *, int, int);
 void	rasops_unpack_attr(long, int *, int *, int *);
+void	rasops_unpack_attr_args(long, int *, int *, int *);
 void	rasops_eraserows(void *, int, int, long);
 void	rasops_erasecols(void *, int, int, int, long);
 int	rasops_get_cmap(struct rasops_info *, uint8_t *, size_t);

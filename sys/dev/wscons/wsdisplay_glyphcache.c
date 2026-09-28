@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.15 2026/02/17 07:02:09 macallan Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.16 2026/09/28 12:37:32 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -150,8 +150,10 @@ glyphcache_reconfig(glyphcache *gc, int cellwidth, int cellheight, long attr)
 	 * if we don't have enough video memory to cache at least a few glyphs
 	 * we stop right here
 	 */
-	if (buckets < 1)
+	if (buckets < 1) {
+		gc->gc_numbuckets = 0;
 		return ENOMEM;
+	}
 
 	buckets = uimin(buckets, gc->gc_nbuckets);
 	gc->gc_numbuckets = buckets;
@@ -217,7 +219,8 @@ glyphcache_wipe(glyphcache *gc)
 		b = &gc->gc_buckets[i];
 		b->gb_usedcells = 0;
 		b->gb_index = -1;
-		for (j = 0; j < b->gb_numcells; j++)
+		/* careful: map per character */
+		for (j = 0; j < __arraycount(b->gb_map); j++)
 			b->gb_map[j] = -1;
 	}
 
@@ -282,8 +285,8 @@ glyphcache_try(glyphcache *gc, int c, int x, int y, long attr)
 	gc_bucket *b;
 
 	idx = attr2idx(attr);
-	/* see if we're in range */
-	if ((c < 33) || (c > 255) || (idx < 0))
+	/* see if we're in range, and have a cache */
+	if ((c < 33) || (c > 255) || (idx < 0) || (gc->gc_numbuckets < 1))
 		return GC_NOPE;
 	/* see if there's already a bucket for this attribute */
 	bi = gc->gc_attrmap[idx];
@@ -310,6 +313,8 @@ glyphcache_try(glyphcache *gc, int c, int x, int y, long attr)
 			time_t moo = time_uptime;
 			int i, oldest = 1;
 
+			if (gc->gc_numbuckets < 2)
+				return GC_NOPE;
 			for (i = 1; i < gc->gc_numbuckets; i++) {
 				if (gc->gc_buckets[i].gb_lastread < moo) {
 					oldest = i;
@@ -324,7 +329,7 @@ glyphcache_try(glyphcache *gc, int c, int x, int y, long attr)
 			b->gb_usedcells = 0;
 			gc->gc_attrmap[idx] = oldest;
 			/* now scrub it */
-			for (i = 0; i < b->gb_numcells; i++)
+			for (i = 0; i < __arraycount(b->gb_map); i++)
 				b->gb_map[i] = -1;
 			/* and set the time stamp */
 			b->gb_lastread = time_uptime;
