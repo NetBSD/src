@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.25 2025/12/19 09:33:24 nia Exp $ */
+/* $NetBSD: wsfontload.c,v 1.26 2026/09/28 05:59:38 charlotte Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -142,6 +142,7 @@ main(int argc, char **argv)
 	size_t len;
 	int c, res, wsfd, ffd, verbose = 0, listfonts = 0;
 	int use_embedded_name = 1;
+	int dry_run = 0;
 	void *buf;
 	char nbuf[65];
 
@@ -156,7 +157,7 @@ main(int argc, char **argv)
 	f.bitorder = DEFBITORDER;
 	f.byteorder = DEFBYTEORDER;
 
-	while ((c = getopt(argc, argv, "f:w:h:e:N:bBvl")) != -1) {
+	while ((c = getopt(argc, argv, "f:w:h:e:N:bBnvl")) != -1) {
 		switch (c) {
 		case 'f':
 			wsdev = optarg;
@@ -174,6 +175,9 @@ main(int argc, char **argv)
 			break;
 		case 'e':
 			f.encoding = getencoding(optarg);
+			break;
+		case 'n':
+			dry_run = 1;
 			break;
 		case 'N':
 			f.name = optarg;
@@ -299,9 +303,11 @@ main(int argc, char **argv)
 			rgetfontorder(f.byteorder), f.byteorder);
 	}
 
-	res = ioctl(wsfd, WSDISPLAYIO_LDFONT, &f);
-	if (res < 0)
-		err(3, "WSDISPLAYIO_LDFONT");
+	if (!dry_run) {
+		res = ioctl(wsfd, WSDISPLAYIO_LDFONT, &f);
+		if (res < 0)
+			err(3, "WSDISPLAYIO_LDFONT");
+	}
 
 	return (0);
 }
