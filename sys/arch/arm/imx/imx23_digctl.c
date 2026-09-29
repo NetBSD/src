@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_digctl.c,v 1.7 2026/02/02 09:51:40 yurix Exp $ */
+/* $NetBSD: imx23_digctl.c,v 1.8 2026/09/29 20:04:27 yurix Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,25 +43,19 @@
 #include <arm/imx/imx23var.h>
 
 struct imx23_digctl_softc {
-	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_hdl;
+	struct timecounter sc_tc;
 };
 
 static int	imx23_digctl_match(device_t, cfdata_t, void *);
 static void	imx23_digctl_attach(device_t, device_t, void *);
 
-static void     imx23_digctl_init(struct imx23_digctl_softc *);
-
 /* timecounter. */
 static u_int imx23_digctl_tc_get_timecount(struct timecounter *);
 
-static struct imx23_digctl_softc *_sc = NULL;
-
 CFATTACH_DECL_NEW(imx23digctl, sizeof(struct imx23_digctl_softc),
 		  imx23_digctl_match, imx23_digctl_attach, NULL, NULL);
-
-static struct timecounter tc_useconds;
 
 #define DCTL_RD(sc, reg)                                                 \
         bus_space_read_4(sc->sc_iot, sc->sc_hdl, (reg))
@@ -88,7 +82,6 @@ imx23_digctl_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 
-	sc->sc_dev = self;
 	sc->sc_iot = faa->faa_bst;
 
 	bus_addr_t addr;
@@ -102,33 +95,27 @@ imx23_digctl_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	aprint_naive("\n");
 	aprint_normal("\n");
-
-	imx23_digctl_init(sc);
 
 	/*
 	 * Setup timecounter to use digctl microseconds counter.
 	 */
-	tc_useconds.tc_get_timecount = imx23_digctl_tc_get_timecount;
-	tc_useconds.tc_poll_pps = NULL;
-	tc_useconds.tc_counter_mask = 0xffffffff; /* 32bit counter. */
-	tc_useconds.tc_frequency = 1000000;       /* @ 1MHz */
-	tc_useconds.tc_name = "digctl";
-	tc_useconds.tc_quality = 100;
+	sc->sc_tc.tc_get_timecount = imx23_digctl_tc_get_timecount;
+	sc->sc_tc.tc_poll_pps = NULL;
+	sc->sc_tc.tc_counter_mask = 0xffffffff; /* 32bit counter. */
+	sc->sc_tc.tc_frequency = 1000000;       /* @ 1MHz */
+	sc->sc_tc.tc_name = "digctl";
+	sc->sc_tc.tc_quality = 100;
+	sc->sc_tc.tc_priv = sc;
 
 	/* Enable counter. */
 	DCTL_WR(sc, HW_DIGCTL_CTRL_CLR, HW_DIGCTL_CTRL_XTAL24M_GATE);
 
-	tc_init(&tc_useconds);
+	tc_init(&sc->sc_tc);
 
 	/* Enable USB clocks */
 	DCTL_WR(sc, HW_DIGCTL_CTRL_CLR, HW_DIGCTL_CTRL_USB_CLKGATE);
-}
-
-static void
-imx23_digctl_init(struct imx23_digctl_softc *sc)
-{
-	_sc = sc;
 }
 
 /*
@@ -137,6 +124,6 @@ imx23_digctl_init(struct imx23_digctl_softc *sc)
 static u_int
 imx23_digctl_tc_get_timecount(struct timecounter *tc)
 {
-	struct imx23_digctl_softc *sc = _sc;
+	struct imx23_digctl_softc * const sc = tc->tc_priv;
 	return DCTL_RD(sc, HW_DIGCTL_MICROSECONDS);
 }
