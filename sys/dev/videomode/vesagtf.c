@@ -1,4 +1,4 @@
-/* $NetBSD: vesagtf.c,v 1.4 2021/12/25 13:51:31 mlelstv Exp $ */
+/* $NetBSD: vesagtf.c,v 1.5 2026/09/29 10:36:43 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -153,7 +153,7 @@
 #ifdef	_KERNEL
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vesagtf.c,v 1.4 2021/12/25 13:51:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesagtf.c,v 1.5 2026/09/29 10:36:43 rkujawa Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +243,8 @@ vesagtf_mode_params(unsigned h_pixels, unsigned v_lines, unsigned freq,
 #ifdef	GTFDEBUG
     unsigned h_freq;
 #endif
+
+    vmp->name = NULL;
     
     /*  1. In order to give correct results, the number of horizontal
      *  pixels requested is first processed to ensure that it is divisible
@@ -626,7 +628,14 @@ vesagtf_mode_params(unsigned h_pixels, unsigned v_lines, unsigned freq,
     vmp->vdisplay = v_lines;
 
     vmp->dot_clock = pixel_freq;
-    
+
+    /*
+     * Handle sync polarity, interlace.
+     */
+    vmp->flags = VID_NHSYNC | VID_PVSYNC;
+
+    if (interlace)
+	vmp->flags |= VID_INTERLACE;
 }
 
 void

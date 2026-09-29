@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.18 2022/09/25 21:27:39 thorpej Exp $ */
+/* $NetBSD: edid.c,v 1.19 2026/09/29 10:36:43 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.18 2022/09/25 21:27:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.19 2026/09/29 10:36:43 rkujawa Exp $");
 
 #ifdef _KERNEL
 #include <sys/param.h>
@@ -412,6 +412,7 @@ edid_det_timing(uint8_t *data, struct videomode *vmp)
 	vmp->vsync_end = vmp->vsync_start + vsyncwid;
 
 	vmp->flags = 0;
+	vmp->name = NULL;
 
 	if (flags & EDID_DET_TIMING_FLAG_INTERLACE)
 		vmp->flags |= VID_INTERLACE;
