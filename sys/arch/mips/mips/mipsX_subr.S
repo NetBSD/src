@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.120 2026/09/28 10:53:41 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.121 2026/09/29 06:03:33 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.120 2026/09/28 10:53:41 skrll Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.121 2026/09/29 06:03:33 skrll Exp $")
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2764,7 +2764,7 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 #if (USPACE > PAGE_SIZE)
 #error Unsupported
 #else
-	/* even/odd are contiguaous */
+	/* even/odd are contiguous */
 	INT_ADD a2, a1, MIPS3_PG_NEXT		# a2 = upper half
 #endif
 #else
