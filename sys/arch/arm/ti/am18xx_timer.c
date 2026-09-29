@@ -1,4 +1,4 @@
-/* $NetBSD: am18xx_timer.c,v 1.3 2026/07/31 05:21:45 skrll Exp $ */
+/* $NetBSD: am18xx_timer.c,v 1.4 2026/09/29 20:03:36 yurix Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
 #include <sys/param.h>
 #include <sys/cdefs.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
+#include <dev/clk/clk.h>
 #include <dev/fdt/fdtvar.h>
 
 #include <arm/fdt/arm_fdtvar.h>
@@ -44,12 +46,15 @@
 struct am18xx_timer_softc {
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+	struct timecounter sc_tc;
+	struct clk *sc_clk;
 };
 
 static int 	am18xx_timer_match(device_t, cfdata_t, void *);
 static void 	am18xx_timer_attach(device_t, device_t, void *);
 static void	am18xx_timer_cpu_initclocks(void);
 static int	am18xx_timer_irq(void *);
+static u_int	am18xx_timer_get_timecount(struct timecounter *);
 
 static struct am18xx_timer_softc *timer_sc;
 
@@ -64,8 +69,10 @@ CFATTACH_DECL_NEW(am18xxtimer, sizeof(struct am18xx_timer_softc),
 #define AM18XX_TIMER_TGCR 0x24
 
 #define AM18XX_TIMER_TCR_ENAMODE12_CONTINUOUS 0x80
+#define AM18XX_TIMER_TCR_ENAMODE34_CONTINUOUS 0x800000
 #define AM18XX_TIMER_TGCR_TIMMODE32_UNCHAINED 0x4
 #define AM18XX_TIMER_TGCR_TIM12EN 0x1
+#define AM18XX_TIMER_TGCR_TIM34EN 0x2
 
 #define	TIMER_READ(sc, reg)					\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, reg)
@@ -81,21 +88,27 @@ static void
 am18xx_timer_cpu_initclocks(void)
 {
 	struct am18xx_timer_softc *sc = timer_sc;
-	uint32_t timer_interval = 24000000/hz;
+	uint32_t clk_rate = clk_get_rate(sc->sc_clk);
+	uint32_t timer_interval = clk_rate/hz;
 
 	/* disable counter to allow changing mode */
 	TIMER_WRITE(sc, AM18XX_TIMER_TCR, 0);
 	/* set mode to 32-bit unchained */
 	TIMER_WRITE(sc, AM18XX_TIMER_TGCR, AM18XX_TIMER_TGCR_TIMMODE32_UNCHAINED
-					   | AM18XX_TIMER_TGCR_TIM12EN);
+					   | AM18XX_TIMER_TGCR_TIM12EN
+					   | AM18XX_TIMER_TGCR_TIM34EN);
 	/* start counting from zero */
 	TIMER_WRITE(sc, AM18XX_TIMER_TIM12, 0);
 	TIMER_WRITE(sc, AM18XX_TIMER_TIM34, 0);
 	/* load period registers with maximum period */
 	TIMER_WRITE(sc, AM18XX_TIMER_PRD12, timer_interval);
-	TIMER_WRITE(sc, AM18XX_TIMER_PRD34, 0);
+	TIMER_WRITE(sc, AM18XX_TIMER_PRD34, UINT32_MAX);
 	/* enable timer */
-	TIMER_WRITE(sc, AM18XX_TIMER_TCR, AM18XX_TIMER_TCR_ENAMODE12_CONTINUOUS);
+	TIMER_WRITE(sc, AM18XX_TIMER_TCR, AM18XX_TIMER_TCR_ENAMODE12_CONTINUOUS
+					  | AM18XX_TIMER_TCR_ENAMODE34_CONTINUOUS);
+
+	/* enable the timecounter */
+	tc_init(&sc->sc_tc);
 }
 
 int
@@ -104,6 +117,14 @@ am18xx_timer_irq(void *frame)
 	hardclock(frame);
 
 	return 1;
+}
+
+static u_int
+am18xx_timer_get_timecount(struct timecounter *tc)
+{
+	struct am18xx_timer_softc * const sc = tc->tc_priv;
+
+	return TIMER_READ(sc, AM18XX_TIMER_TIM34);
 }
 
 int
@@ -136,6 +157,17 @@ am18xx_timer_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/* enable clock */
+	sc->sc_clk = fdtbus_clock_get_index(phandle, 0);
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't get clock\n");
+		return;
+	}
+	if (clk_enable(sc->sc_clk) != 0) {
+		aprint_error(": couldn't enable clock\n");
+		return;
+	}
+
 	/* establish interrupt */
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error(": failed to decode interrupt\n");
@@ -149,8 +181,17 @@ am18xx_timer_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_tc.tc_get_timecount = am18xx_timer_get_timecount;
+	sc->sc_tc.tc_poll_pps = NULL;
+	sc->sc_tc.tc_counter_mask = 0xFFFFFFFF; /* 32-bit */
+	sc->sc_tc.tc_frequency = clk_get_rate(sc->sc_clk);
+	sc->sc_tc.tc_name = "da830-timer";
+	sc->sc_tc.tc_quality = 100;
+	sc->sc_tc.tc_priv = sc;
+
 	arm_fdt_timer_register(am18xx_timer_cpu_initclocks);
 
+	aprint_naive("\n");
 	aprint_normal(": timer on %s\n", intrstr);
 }
 
