@@ -1,4 +1,4 @@
-.\"	$NetBSD: fssconfig.8,v 1.17 2026/09/29 19:27:26 uwe Exp $	*/
+.\"	$NetBSD: fssconfig.8,v 1.18 2026/09/29 19:38:30 uwe Exp $	*/
 .\"
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -153,12 +153,12 @@ When taking a snapshot,
 must either not exist or be an existing directory.
 If it doesn't exist,
 .Nm
-will create it.
-if it is an existing directory,
+will create a file with that name.
+If it is an existing directory,
 .Nm
-will create a temporary file with an unpredictable name in it as the
-snapshot backing store, and then immediately unlink the backing store,
-so the storage will be released once
+will create a temporary file with an unpredictable name in that
+directory as the snapshot's backing store, and then immediately unlink
+the file, so that the storage will be released once
 .Ar fssdev
 is unconfigured.
 .Pp
@@ -208,7 +208,7 @@ If
 .Ar snapstore
 is a directory for
 .Nm
-to create a temporary file in, that file will be unlinked anyway, with
+to create a temporary file in, that file will always be unlinked, with
 or without
 .Fl x .
 .El
