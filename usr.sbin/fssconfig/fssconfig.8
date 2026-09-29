@@ -1,4 +1,4 @@
-.\"	$NetBSD: fssconfig.8,v 1.16 2026/07/07 22:42:14 riastradh Exp $	*/
+.\"	$NetBSD: fssconfig.8,v 1.17 2026/09/29 19:27:26 uwe Exp $	*/
 .\"
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,17 +36,18 @@
 .Nd configure file system snapshot devices
 .Sh SYNOPSIS
 .Nm
-.Op Fl cxv
-.Ar fss_dev
+.Op Fl c
+.Op Fl xv
+.Ar fssdev
 .Ar fs
 .Ar snapstore
 .Op Ar cluster Op Ar size
 .Nm
 .Fl u Op Fl v
-.Ar fss_dev
+.Ar fssdev
 .Nm
 .Fl l Op Fl v
-.Op Ar fss_dev
+.Op Ar fssdev
 .Sh DESCRIPTION
 The
 .Nm
@@ -54,11 +55,11 @@ command configures
 .Xr fss 4
 file system snapshot pseudo disk devices.
 It will associate the file system snapshot disk
-.Ar fss_dev
+.Ar fssdev
 with a snapshot of the file system mounted on
 .Ar fs ,
 allowing
-.Ar fss_dev
+.Ar fssdev
 to be accessed as though it were a disk.
 .Pp
 The file system can remain in use when a snapshot is taken.
@@ -67,28 +68,31 @@ the snapshot backing store
 .Ar snapstore ,
 which can be either a regular file or a raw character disk device, so
 that the old data will remain unchanged through
-.Ar fss_dev
+.Ar fssdev
 since the snapshot was taken.
 .Pp
 There are two types of snapshot:
 .Sy persistent
 and
 .Sy non-persistent .
-.Bl -tag -width "Sy non-persistent"
+.Bl -tag -width Sy -offset indent
 .It Sy persistent
 .Ar snapstore
-is a regular file on the same file system as it is a snapshot of, and
-the snapshot persists until
+is a regular file on the
+.Em same
+file system as it is a snapshot of, and the snapshot persists until
 .Ar snapstore
 is unlinked, even if the
-.Ar fss_dev
+.Ar fssdev
 used to create it is unconfigured or the system is rebooted.
 .Pp
 After it has been created, a persistent snapshot can be loaded again
 from
 .Ar snapstore
 with the same
-.Dl Nm Oo Fl c Oc Ar fss_dev Ar fs Ar snapstore
+.Pp
+.Dl Nm Oo Fl c Oc Ar fssdev fs snapstore
+.Pp
 command that was used to create it.
 .Pp
 Unlinked but open files get removed from the snapshot.
@@ -103,9 +107,10 @@ Supported file system types:
 .El
 .It Sy non-persistent
 .Ar snapstore
-is a disk device, or a regular file on a separate file system from the
-one it represents a snapshot of, and becomes invalid as soon as it is
-unconfigured.
+is a disk device, or a regular file on a
+.Em separate
+file system from the one it represents a snapshot of, and becomes
+invalid as soon as it is unconfigured.
 .Pp
 Unlinked but open files are still present on the snapshot.
 The time needed to create a snapshot is independent of the size of the
@@ -123,20 +128,20 @@ Options indicating an action to be performed:
 .It Fl c
 Configure the device.
 If successful,
-.Ar fss_dev
+.Ar fssdev
 will expose the contents of
 .Ar fs
 at the time the snapshot was taken.
 .Pp
 If
 .Ar snapstore
-is an existing persistent snapshot on
+is an existing persistent snapshot of
 .Ar fs ,
 .Nm
 will load it so that the past state of the file system represented by
 .Ar snapstore
 is exposed through
-.Ar fss_dev .
+.Ar fssdev .
 Otherwise,
 .Nm
 will create a backing store at
@@ -154,7 +159,7 @@ if it is an existing directory,
 will create a temporary file with an unpredictable name in it as the
 snapshot backing store, and then immediately unlink the backing store,
 so the storage will be released once
-.Ar fss_dev
+.Ar fssdev
 is unconfigured.
 .Pp
 Overwritten data will be saved in units of at least
@@ -173,11 +178,11 @@ fail.
 .It Fl l
 List the snapshot devices and indicate which ones are in use.
 If a specific
-.Ar fss_dev
+.Ar fssdev
 is given, then only that will be described.
 .It Fl u
 Unconfigure the
-.Ar fss_dev .
+.Ar fssdev .
 .El
 .Pp
 If no action option is given,
@@ -196,7 +201,7 @@ only
 Unlink
 .Ar snapstore
 after the
-.Ar fss_dev
+.Ar fssdev
 is configured.
 .Pp
 If
