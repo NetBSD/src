@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3298 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3299 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -428,3 +428,5 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	ssh(1), sshd(8): Import OpenSSH 10.5. [christos 20260921]
 	wsfontload(8): Add a -n option to inspect or validate font files
 		without loading them. [charlotte 20260927]
+	evbarm: Add a GPIO and timecounter driver for  the TI AM1808.
+		[yurix 20260929]
