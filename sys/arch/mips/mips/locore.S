@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.232 2026/06/30 12:24:48 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.233 2026/09/29 05:54:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.232 2026/06/30 12:24:48 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.233 2026/09/29 05:54:06 skrll Exp $")
 
 #include "assym.h"
 
@@ -130,9 +130,9 @@ EXPORT_OBJECT(kernel_text)			# libkvm refers this
 #endif /* MIPS64_OCTEON */
 2:
 #endif
-/*
- * Initialize stack and call machine startup.
- */
+	/*
+	 * Initialize stack and call machine startup.
+	 */
 	PTR_LA	v1, start
 	slt	v0, v1, sp
 	bne	v0, zero, 1f
@@ -704,30 +704,31 @@ XNESTED(mips_fpu_trap)
 	bgez		t2, 3f			# no, normal trap
 	 nop
 
-/*
- * We received an unimplemented operation trap so
- * fetch the instruction and emulate the instruction.
- *
- * We check whether it's an unimplemented FP instruction here rather
- * than invoking mips_emul_inst(), since it is faster.
- */
+	/*
+	 * We received an unimplemented operation trap so
+	 * fetch the instruction and emulate the instruction.
+	 *
+	 * We check whether it's an unimplemented FP instruction here rather
+	 * than invoking mips_emul_inst(), since it is faster.
+	 */
 	srl		v1, a2, 31		# move branch delay bit to LSB
 	sll		v1, 2			# shift it left by 2 (mult by 4)
 	PTR_ADDU	a0, v1			# add to a0
 	INT_L		a0, 0(a0)		# a0 = coproc instruction
 	NOP_L					# load delay
 
-/*
- * Check to see if the instruction to be emulated is a floating-point
- * instruction.
- */
+	/*
+	 * Check to see if the instruction to be emulated is a floating-point
+	 * instruction.
+	 */
 	srl		t2, a0, MIPS_OPCODE_SHIFT
 	beq		t2, MIPS_OPCODE_C1, 4f
 	 nop
 
-/*
- * Send an ILL signal to the current LWP if the instruction can't be emulated.
- */
+	/*
+	 * Send an ILL signal to the current LWP if the instruction can't be
+	 * emulated.
+	 */
 	srl		a2, 8
 	sll		a2, 8
 	ori		a2, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
@@ -745,10 +746,10 @@ XNESTED(mips_fpu_trap)
 	b		FPReturn
 	 nop
 
-/*
- * Send a FPE signal to the current LWP if it tripped the any of
- * the VZOUI bits.
- */
+	/*
+	 * Send a FPE signal to the current LWP if it tripped the any of
+	 * the VZOUI bits.
+	 */
 3:
 	REG_PROLOGUE
 	REG_S		a2, TF_REG_CAUSE(a1)
@@ -764,17 +765,17 @@ XNESTED(mips_fpu_trap)
 	b		FPReturn
 	 nop
 
-/*
- * Finally, we can call
- * mips_emul_fp(uint32_t insn, struct trapframe *tf, uint32_t cause).
- */
+	/*
+	 * Finally, we can call
+	 * mips_emul_fp(uint32_t insn, struct trapframe *tf, uint32_t cause).
+	 */
 4:
 	jal		_C_LABEL(mips_emul_fp)
 	 nop
 
-/*
- * Turn off the floating point coprocessor and return.
- */
+	/*
+	 * Turn off the floating point coprocessor and return.
+	 */
 FPReturn:
 	mfc0		t0, MIPS_COP_0_STATUS
 	REG_L		ra, CALLFRAME_RA(sp)
@@ -820,7 +821,7 @@ LEAF(mips_pagecopy)
 END(mips_pagecopy)
 
 LEAF(mips_pagezero)
-/* We can always safely store a 64-bit zero on MIPS3,4,64 */
+	/* We can always safely store a 64-bit zero on MIPS3,4,64 */
 	.set	push
 #if (MIPS1 + MIPS32 + MIPS32R2) == 0
 	.set	mips3
