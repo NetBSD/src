@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11 2026/03/18 06:41:41 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12 2026/09/29 18:46:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2026/03/18 06:41:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2026/09/29 18:46:38 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -230,8 +230,6 @@ cpu_attach(device_t dv, cpuid_t hartid)
 	cpu_identify(dv, ci);
 
 #ifdef MULTIPROCESSOR
-	kcpuset_create(&ci->ci_shootdowncpus, true);
-
 	ipi_init(ci);
 
 	kcpuset_create(&ci->ci_multicastcpus, true);

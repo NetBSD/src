@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.16 2024/08/04 08:16:25 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.17 2026/09/29 18:46:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ struct cpu_info {
 	struct evcnt ci_evcnt_synci_deferred_rqst;
 	struct evcnt ci_evcnt_synci_ipi_rqst;
 
-	kcpuset_t *ci_shootdowncpus;
+	kcpuset_t *ci_shootdowncpus;		/* Not used. Maybe one day. */
 	kcpuset_t *ci_multicastcpus;
 	kcpuset_t *ci_watchcpus;
 	kcpuset_t *ci_ddbcpus;

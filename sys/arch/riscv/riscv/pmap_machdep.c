@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.28 2026/05/17 06:15:05 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.29 2026/09/29 18:46:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.28 2026/05/17 06:15:05 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.29 2026/09/29 18:46:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -309,12 +309,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	VPRINTF("common ");
 	pmap_bootstrap_common();
 
-#ifdef MULTIPROCESSOR
-	VPRINTF("cpusets ");
-	struct cpu_info * const ci = curcpu();
-	kcpuset_create(&ci->ci_shootdowncpus, true);
-#endif
-
 	VPRINTF("bs_pde %p ", bootstrap_pde);
 
 //	kend = (kend + 0x200000 - 1) & -0x200000;
@@ -342,6 +336,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	KASSERT(pm->pm_onproc != NULL);
 	KASSERT(pm->pm_active != NULL);
 
+	struct cpu_info * const ci = curcpu();
 	kcpuset_set(pm->pm_onproc, cpu_index(ci));
 	kcpuset_set(pm->pm_active, cpu_index(ci));
 #endif
