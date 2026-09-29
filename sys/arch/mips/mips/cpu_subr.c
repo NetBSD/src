@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.68 2026/09/28 18:56:17 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.69 2026/09/29 05:45:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019, 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.68 2026/09/28 18:56:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.69 2026/09/29 05:45:44 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -322,15 +322,15 @@ cpu_startup_common(void)
 
 #ifdef MULTIPROCESSOR
 	kcpuset_create(&cpus_halted, true);
-		KASSERT(cpus_halted != NULL);
 	kcpuset_create(&cpus_hatched, true);
-		KASSERT(cpus_hatched != NULL);
 	kcpuset_create(&cpus_paused, true);
-		KASSERT(cpus_paused != NULL);
 	kcpuset_create(&cpus_resumed, true);
-		KASSERT(cpus_resumed != NULL);
 	kcpuset_create(&cpus_running, true);
-		KASSERT(cpus_running != NULL);
+	KASSERT(cpus_halted != NULL);
+	KASSERT(cpus_hatched != NULL);
+	KASSERT(cpus_paused != NULL);
+	KASSERT(cpus_resumed != NULL);
+	KASSERT(cpus_running != NULL);
 	kcpuset_set(cpus_hatched, cpu_number());
 	kcpuset_set(cpus_running, cpu_number());
 #endif
