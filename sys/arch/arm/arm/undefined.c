@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.75 2023/10/05 19:41:03 ad Exp $	*/
+/*	$NetBSD: undefined.c,v 1.76 2026/09/30 18:03:48 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,7 +50,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.75 2023/10/05 19:41:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.76 2026/09/30 18:03:48 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -390,6 +390,19 @@ undefinedinstruction(trapframe_t *tf)
 	else
 #endif
 	{
+#ifdef THUMB_CODE
+		/* Thumb-2 Advanced SIMD to ARM encoding... */
+		if ((tf->tf_spsr & PSR_T_bit) != 0) {
+			if ((fault_instruction & 0xef000000) == 0xef000000)
+				fault_instruction = 0xf2000000
+				    | ((fault_instruction >> 4) & 0x01000000)
+				    | (fault_instruction & 0x00ffffff);
+			else if ((fault_instruction & 0xff100000) == 0xf9000000)
+				fault_instruction = 0xf4000000
+				    | (fault_instruction & 0x00ffffff);
+		}
+#endif
+
 		/* Check for coprocessor instruction */
 
 		/*
