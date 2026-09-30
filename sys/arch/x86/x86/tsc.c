@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.66 2026/09/30 06:27:08 andvar Exp $	*/
+/*	$NetBSD: tsc.c,v 1.67 2026/09/30 06:29:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.66 2026/09/30 06:27:08 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.67 2026/09/30 06:29:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ tsc_setfunc(struct cpu_info *ci)
 		use_lfence = true;
 	else if (cpu_vendor == CPUVENDOR_IDT) {
 		family = CPUID_TO_BASEFAMILY(ci->ci_signature);
-		use_lfence = family > 6 || (family == 6 &&
+		use_lfence = family > 0x06 || (family == 0x06 &&
 		    CPUID_TO_MODEL(ci->ci_signature) == 0x0f);
 	}
 
