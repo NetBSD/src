@@ -148,7 +148,7 @@ struct si_packet {
 };
 
 struct sicomcsr_txn {
-	unsigned			status;		/* txn current state */
+	unsigned			state;		/* txn current state */
 	uint32_t			comcsr;		/* write to sicomcsr */
 	kcondvar_t			cv;		/* signal completion */
 	kmutex_t			lock;		/* cv interlock */

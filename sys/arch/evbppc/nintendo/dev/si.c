@@ -501,8 +501,8 @@ tcint_handler(struct work *, void *arg)
 
 	txn = TAILQ_FIRST(&txn_head);
 	mutex_enter(&txn->lock);
-	if (txn->status == TXN_READY) {
-		txn->status = TXN_DEQUEUED;
+	if (txn->state == TXN_READY) {
+		txn->state = TXN_DEQUEUED;
 		TAILQ_REMOVE(&txn_head, txn, txn_q);
 		txn_len--;
 		pk = txn->pk;
@@ -517,7 +517,6 @@ tcint_handler(struct work *, void *arg)
 				status = (sisr_mask >> shift_amt) & 0x3F;
 				pk->status = status;
 			}
-
 		}
 		cv_signal(&txn->cv);
 	}
@@ -534,7 +533,7 @@ txn_init(struct sicomcsr_txn *txn)
 {
 	cv_init(&txn->cv, "sicomcsr_txn");
 	mutex_init(&txn->lock, MUTEX_DEFAULT, IPL_VM);
-	txn->status = TXN_READY;
+	txn->state = TXN_READY;
 	txn->pk = NULL;
 }
 
@@ -579,8 +578,8 @@ txn_dequeue(struct sicomcsr_txn *txn)
 {
 	mutex_enter(&sicomcsr_qlock);
 	mutex_enter(&txn->lock);
-	if (txn->status != TXN_DEQUEUED) {
-		txn->status = TXN_DEQUEUED;
+	if (txn->state != TXN_DEQUEUED) {
+		txn->state = TXN_DEQUEUED;
 		txn_len--;
 		TAILQ_REMOVE(&txn_head, txn, txn_q);
 	}
@@ -601,7 +600,7 @@ txn_await(struct sicomcsr_txn *txn)
 	timeval2bintime(&tv, &bt);
 
 	mutex_enter(&txn->lock);
-	while (txn->status == TXN_READY) {
+	while (txn->state == TXN_READY) {
 		err = cv_timedwaitbt(&txn->cv, &txn->lock, &bt,
 		    DEFAULT_TIMEOUT_EPSILON);
 		if (err) {

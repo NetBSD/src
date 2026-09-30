@@ -241,6 +241,7 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 	pk.chan = ch->ch_index;
 	pk.outsize = p->outsize;
 	pk.insize = p->insize;
+	pk.status = 0;
 
 
 	if ((err = copyin(p->out, pk.out, pk.outsize)) != 0) {
