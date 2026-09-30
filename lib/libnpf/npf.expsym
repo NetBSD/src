@@ -30,6 +30,7 @@ npf_config_retrieve
 npf_config_submit
 npf_conn_list
 npf_ext_construct
+npf_ext_param_binary
 npf_ext_param_bool
 npf_ext_param_string
 npf_ext_param_u32

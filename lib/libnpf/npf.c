@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.57 2026/03/06 07:04:05 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.58 2026/09/30 18:00:30 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -670,6 +670,12 @@ void
 npf_ext_param_string(nl_ext_t *ext, const char *key, const char *val)
 {
 	nvlist_add_string(ext->ext_dict, key, val);
+}
+
+void
+npf_ext_param_binary(nl_ext_t *ext, const char *key, const void *val, size_t len)
+{
+	nvlist_add_binary(ext->ext_dict, key, val, len);
 }
 
 /*
