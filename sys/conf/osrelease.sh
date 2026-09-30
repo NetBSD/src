@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.122 2012/02/16 23:56:57 christos Exp $
+#	$NetBSD: osrelease.sh,v 1.123 2026/09/30 02:40:37 kre Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,6 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+### NOTE: This script is for use building various parts of NetBSD kernels.
+### Use for any other purpose is not supported, and is unlikely to
+### produce meaningful results.
+
 # We use the number specified in <sys/param.h>
 
 path="$0"
@@ -50,6 +54,15 @@ do
 done
 
 # default: return MM.mm.pp
+#	MM mm (here and below) are each a string of 1 of more digits.
+#		leading (irrelevant) zeros are omitted.
+#	pp can be a digit string (1 or more) or something like _STABLE
+#	   or _BETA or _RC3 (etc).  It can also be empty.  If it is not
+#	   a digit string, the '.' that proceeds it is omitted.
+#
+# The following options are seemingly no longer used, and might
+# be removed at any time.
+#
 # -m: return MM, representing only the major number; however, for -current,
 #     return the next major number (e.g. for 5.99.nn, return 6)
 # -n: return MM.mm
@@ -58,7 +71,7 @@ done
 
 option="$1"
 
-# ${rel_num} is [M]Mmm00pp00
+# ${rel_num} is [M]Mmm00pp00 (or [M]Mmm0ppp00 occasionally).
 rel_num=${rel_num%??}
 rel_MMmm=${rel_num%????}
 rel_MM=${rel_MMmm%??}
@@ -72,11 +85,11 @@ beta=${3#[0-9]}
 beta=${beta#[0-9]}
 shift 3
 IFS=' '
-set -- $rel_MM ${rel_mm#0}$beta $*
+set -- "$rel_MM" "${rel_mm#0}$beta" "$@"
 
 case "$option" in
 -k)
-	if [ ${rel_mm#0} = 99 ]
+	if [ "${rel_mm#0}" = 99 ]
 	then
 		IFS=.
 		echo "$*"
