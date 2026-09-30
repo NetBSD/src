@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.65 2026/09/28 19:09:20 andvar Exp $	*/
+/*	$NetBSD: tsc.c,v 1.66 2026/09/30 06:27:08 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.65 2026/09/28 19:09:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.66 2026/09/30 06:27:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,7 @@ void
 tsc_setfunc(struct cpu_info *ci)
 {
 	bool use_lfence, use_mfence;
+	uint32_t family;
 
 	use_lfence = use_mfence = false;
 
@@ -192,6 +193,11 @@ tsc_setfunc(struct cpu_info *ci)
 		use_mfence = true;
 	else if (cpu_vendor == CPUVENDOR_INTEL)
 		use_lfence = true;
+	else if (cpu_vendor == CPUVENDOR_IDT) {
+		family = CPUID_TO_BASEFAMILY(ci->ci_signature);
+		use_lfence = family > 6 || (family == 6 &&
+		    CPUID_TO_MODEL(ci->ci_signature) == 0x0f);
+	}
 
 	/* LFENCE and MFENCE are applicable if SSE2 is set. */
 	if ((ci->ci_feat_val[0] & CPUID_SSE2) == 0)
