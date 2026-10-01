@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.29 2026/05/21 12:10:28 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.30 2026/10/01 18:28:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -341,7 +341,7 @@ pte_prot_downgrade(pt_entry_t pte, vm_prot_t prot)
 	const uint32_t ro_bit = MIPS_MMU(PG_RO);
 	const uint32_t rw_bit = MIPS_MMU(PG_D);
 
-	return (pte & ~(ro_bit|rw_bit))
+	return (pte & ~(ro_bit | rw_bit))
 	    | ((prot & VM_PROT_WRITE) ? rw_bit : ro_bit);
 }
 
