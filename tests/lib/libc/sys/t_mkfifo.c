@@ -1,4 +1,4 @@
-/* $NetBSD: t_mkfifo.c,v 1.8 2026/09/25 15:57:31 riastradh Exp $ */
+/* $NetBSD: t_mkfifo.c,v 1.9 2026/10/01 22:45:45 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mkfifo.c,v 1.8 2026/09/25 15:57:31 riastradh Exp $");
+__RCSID("$NetBSD: t_mkfifo.c,v 1.9 2026/10/01 22:45:45 riastradh Exp $");
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -602,9 +602,6 @@ ATF_TC_BODY(mkfifo_readeof_block, tc)
 	support();
 
 	RL(mkfifo(path, 0600));
-
-	atf_tc_expect_fail("PR kern/60789:"
-	    " read on fifo without writer may block");
 
 	/*
 	 * Open nonblocking so we open immediately, but then switch to
