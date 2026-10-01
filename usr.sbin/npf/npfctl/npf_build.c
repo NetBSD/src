@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.55 2020/05/30 14:16:56 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.55.6.1 2026/10/01 14:40:27 martin Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -1035,6 +1035,7 @@ void
 npfctl_build_table(const char *tname, unsigned type, const char *fname)
 {
 	nl_table_t *tl;
+	int error;
 
 	if (type == NPF_TABLE_CONST && !fname) {
 		yyerror("table type 'const' must be loaded from a file");
@@ -1043,8 +1044,13 @@ npfctl_build_table(const char *tname, unsigned type, const char *fname)
 	tl = npfctl_load_table(tname, npfctl_tid_counter++, type, fname, NULL);
 	assert(tl != NULL);
 
-	if (npf_table_insert(npf_conf, tl)) {
+	error = npf_table_insert(npf_conf, tl);
+	if (error == EEXIST) {
 		yyerror("table '%s' is already defined", tname);
+	} else if (error && type == NPF_TABLE_CONST) {
+		yyerror(" failed to insert table '%s', duplicate entries?", tname);
+	} else if (error) {
+		yyerror(" failed to insert table '%s'", tname);
 	}
 }
 
