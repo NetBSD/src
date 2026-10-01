@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1431 2026/09/24 22:10:22 riastradh Exp $
+# $NetBSD: mi,v 1.1432 2026/10/01 22:23:57 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -2416,6 +2416,7 @@
 ./usr/tests/kernel/t_extattrctl				tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_extent				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_fcntl				tests-kernel-tests	atf
+./usr/tests/kernel/t_fdpass				tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_fdrestart				tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_fexecve				tests-kernel-tests	atf
 ./usr/tests/kernel/t_filedesc				tests-kernel-tests	atf,rump

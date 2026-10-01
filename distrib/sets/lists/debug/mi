@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.520 2026/09/24 22:10:22 riastradh Exp $
+# $NetBSD: mi,v 1.521 2026/10/01 22:23:56 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1828,6 +1828,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_extattrctl.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_fcntl.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_fdpass.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_fdrestart.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_filedesc.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_kauth_pr_47598.debug		tests-kernel-tests	debug,atf,compattestfile

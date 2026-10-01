@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.102 2026/09/23 18:26:22 riastradh Exp $
+# $NetBSD: Makefile,v 1.103 2026/10/01 22:23:57 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -13,6 +13,7 @@ TESTS_C+=	t_clofork
 TESTS_C+=	t_execregs
 TESTS_C+=	t_fcntl
 .if ${MKRUMP} != "no"
+TESTS_C+=	t_fdpass
 TESTS_C+=	t_fdrestart
 .endif
 TESTS_C+=	t_kauth_pr_47598
@@ -71,6 +72,11 @@ PROGS+=		h_segv
 
 SCRIPTSDIR=	${TESTSDIR}
 SCRIPTS=	h_interpreter.sh
+
+LDADD.t_fdpass+=	-lrumpnet_local
+LDADD.t_fdpass+=	-lrumpnet_net
+LDADD.t_fdpass+=	-lrumpnet
+LDADD.t_fdpass+=	${LIBRUMPBASE}
 
 LDADD.t_fdrestart+=	-lpthread
 LDADD.t_fdrestart+=	-lrumpkern_tty
