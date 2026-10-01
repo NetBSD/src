@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3299 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3300 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -430,3 +430,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		without loading them. [charlotte 20260927]
 	evbarm: Add a GPIO and timecounter driver for  the TI AM1808.
 		[yurix 20260929]
+	tzdata: Updated to 2026e (using 2026egtz) [kre 20261001]
