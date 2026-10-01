@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.310 2026/07/01 17:01:43 rkujawa Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.311 2026/10/01 21:58:53 riastradh Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.310 2026/07/01 17:01:43 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.311 2026/10/01 21:58:53 riastradh Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1632,7 +1632,7 @@ cpu_identify(device_t dev)
 		    opts->mips_num_tlb_entries);
 #if !defined(__mips_o32)
 		if (CPUIS64BITS) {
-			int64_t pfn_mask;
+			uint64_t pfn_mask;
 			i = ffs(~(opts->mips3_tlb_vpn_mask >> 31)) + 30;
 			aprint_normal(", %d%cB (%d-bit) VAs",
 			    1 << (i % 10), sufx[(i / 10) - 1], i);
