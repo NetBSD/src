@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfext_route.c,v 1.1 2026/04/08 00:33:06 joe Exp $");
+__RCSID("$NetBSD: npfext_route.c,v 1.2 2026/10/01 21:02:56 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: npfext_route.c,v 1.1 2026/04/08 00:33:06 joe Exp $");
 #include <errno.h>
 #include <err.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 
 #include <npf.h>
 
@@ -63,9 +64,63 @@ npfext_route_construct(const char *name)
 }
 
 int
-npfext_route_param(nl_ext_t *ext, const char *param, const char *val __unused)
+npfext_route_param(nl_ext_t *ext, const char *param, const char *val)
 {
-    assert(param != NULL);
-    npf_ext_param_string(ext, "route-interface", param);
+    enum ptype {
+		PARAM_INTERFACE,
+        PARAM_INET4,
+        PARAM_INET6,
+        PARAM_DUP,
+	};
+	static const struct param {
+		const char *	name;
+		enum ptype	type;
+		bool		reqval;
+	} params[] = {
+		{ "interface",	PARAM_INTERFACE,	true    },
+		{ "via",	PARAM_INET4,	true	},
+        { "via6",   PARAM_INET6,   true    },
+        { "dup-to", PARAM_DUP,  false   },
+	};
+
+	for (unsigned i = 0; i < __arraycount(params); i++) {
+		const char *name = params[i].name;
+        struct in_addr addr;
+        struct in6_addr addr6;
+
+		if (strcmp(name, param) != 0) {
+			continue;
+		}
+		if (val == NULL && params[i].reqval) {
+			return EINVAL;
+		}
+
+		switch (params[i].type) {
+        case PARAM_DUP:
+            npf_ext_param_bool(ext, name, true);
+            break;
+        case PARAM_INTERFACE:
+            npf_ext_param_string(ext, name, val);
+            break;
+        /* catch invalid addresses early */
+        case PARAM_INET4:
+            if (inet_pton(AF_INET, val, &addr) != 1) {
+                warn("Invalid IPv4 address `%s'", val);
+                return EINVAL;
+            }
+            npf_ext_param_binary(ext, name, &addr, sizeof(struct in_addr));
+            break;
+        case PARAM_INET6:
+            if (inet_pton(AF_INET6, val, &addr6) != 1) {
+                warn("Invalid IPv6 address `%s'", val);
+                return EINVAL;
+            }
+            npf_ext_param_binary(ext, name, &addr6, sizeof(struct in6_addr));
+            break;
+
+		default:
+			break;
+		}
+	}
     return 0;
 }
