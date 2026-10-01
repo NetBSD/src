@@ -1,4 +1,4 @@
-.\"	$NetBSD: fssconfig.8,v 1.18 2026/09/29 19:38:30 uwe Exp $	*/
+.\"	$NetBSD: fssconfig.8,v 1.19 2026/10/01 18:30:31 riastradh Exp $	*/
 .\"
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -56,11 +56,12 @@ command configures
 file system snapshot pseudo disk devices.
 It will associate the file system snapshot disk
 .Ar fssdev
-with a snapshot of the file system mounted on
-.Ar fs ,
-allowing
+with a snapshot of the file system mounted on the mount point
+.Ar fs .
+The snapshot can be mounted from the block device
 .Ar fssdev
-to be accessed as though it were a disk.
+with
+.Xr mount 8 .
 .Pp
 The file system can remain in use when a snapshot is taken.
 As parts of the file system are overwritten, old data will be stored in
@@ -70,6 +71,13 @@ which can be either a regular file or a raw character disk device, so
 that the old data will remain unchanged through
 .Ar fssdev
 since the snapshot was taken.
+.Pp
+Only a whole mounted file system, not arbitrary subdirectories, can
+have snapshots with
+.Xr fss 4 ;
+the
+.Ar fs
+parameter must specify a file system mount point.
 .Pp
 There are two types of snapshot:
 .Sy persistent
@@ -128,8 +136,9 @@ Options indicating an action to be performed:
 .It Fl c
 Configure the device.
 If successful,
+the block device
 .Ar fssdev
-will expose the contents of
+will expose the contents of the file system mounted at
 .Ar fs
 at the time the snapshot was taken.
 .Pp
@@ -148,19 +157,27 @@ will create a backing store at
 .Ar snapstore
 to take a new snapshot.
 .Pp
-When taking a snapshot,
+When taking a new snapshot,
 .Ar snapstore
-must either not exist or be an existing directory.
-If it doesn't exist,
+must either not exist or be an existing directory:
+.Bl -bullet -compact
+.It
+If
+.Ar snapstore
+doesn't exist,
 .Nm
 will create a file with that name.
-If it is an existing directory,
+.It
+If
+.Ar snapstore
+is an existing directory,
 .Nm
 will create a temporary file with an unpredictable name in that
 directory as the snapshot's backing store, and then immediately unlink
 the file, so that the storage will be released once
 .Ar fssdev
 is unconfigured.
+.El
 .Pp
 Overwritten data will be saved in units of at least
 .Ar cluster
@@ -276,7 +293,7 @@ not the block device
 .Pa /dev/ld0e .
 .Pp
 Once
-.Fa fss2
+.Pa fss2
 is unconfigured, the content of
 .Pa ld0e
 will become useless garbage.
@@ -312,14 +329,17 @@ option,
 .Xr dump 8
 will internally manage an
 .Xr fss 4
-instance to take the snapshot and read the file system:
+instance to take the snapshot and read the file system (so there is no
+need to use
+.Nm
+directly):
 .Bd -literal
-# dump -0 -f /backups/root.20260706.dump -X /
+# dump -X -0 -f /backups/root.20260706.dump /
 .Ed
 .Pp
-For file system types other than ffs, which don't support persistent
-snapshots, a place for a backing store must be given explicitly with
-the
+For file system types other than ffs such as msdosfs or ext2fs, which
+don't support persistent snapshots, a place for a backing store must be
+given explicitly with the
 .Fl x
 option to
 .Xr dump 8 ,
@@ -327,7 +347,7 @@ which again will internally manage an
 .Xr fss 4
 instance:
 .Bd -literal
-# dump -0 -f /backups/boot.20260706.dump -x /var/tmp/ /boot
+# dump -x /var/tmp/ -0 -f /backups/boot.20260706.dump /boot
 .Ed
 .El
 .Sh SEE ALSO
