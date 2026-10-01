@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.210 2026/09/17 01:21:34 riastradh Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.211 2026/10/01 22:24:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.210 2026/09/17 01:21:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.211 2026/10/01 22:24:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -568,8 +568,12 @@ unp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 		 * Wake up readers.
 		 */
 		if (control) {
-			if (sbappendcontrol(rcv, m, control) != 0)
+			if (sbappendcontrol(rcv, m, control) != 0) {
 				control = NULL;
+			} else {
+				error = SET_ERROR(ENOBUFS);
+				break;
+			}
 		} else {
 			switch(so->so_type) {
 			case SOCK_SEQPACKET:
