@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigio.c,v 1.3 2026/10/02 15:43:09 riastradh Exp $	*/
+/*	$NetBSD: t_sigio.c,v 1.4 2026/10/02 15:43:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigio.c,v 1.3 2026/10/02 15:43:09 riastradh Exp $");
+__RCSID("$NetBSD: t_sigio.c,v 1.4 2026/10/02 15:43:59 riastradh Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -2078,13 +2078,20 @@ ATF_TC_BODY(socket_local_write_shutdown, tc)
 	(void)pthread_barrier_wait(&bar);
 
 	/*
-	 * XXX Why does this return EAGAIN and not EPIPE?  Shouldn't
-	 * this refuse to send any more data now that the reader has
-	 * shutdown that direction?
+	 * XXX We don't have a way to wait for the shutdown
+	 * notification because there is no shutdown notification, so
+	 * the best we can get is EAGAIN because the buffer is full.
 	 */
 	check_write_fail(sockfd[1], EAGAIN);
 
 	RZ(pthread_join(t, NULL));
+
+	/*
+	 * XXX Even after we know the shutdown has happened, we don't
+	 * get notified of the fact -- write() will just continue to
+	 * think the buffer is full, until the peer is actually closed.
+	 */
+	check_write_fail(sockfd[1], EAGAIN);
 }
 
 ATF_TP_ADD_TCS(tp)
