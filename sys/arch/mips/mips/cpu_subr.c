@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.64.8.1 2025/10/19 10:29:19 martin Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.64.8.2 2026/10/02 11:41:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019, 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.64.8.1 2025/10/19 10:29:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.64.8.2 2026/10/02 11:41:40 martin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -280,6 +280,12 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 		KASSERT(cpuid_infos[ci->ci_cpuid] == NULL);
 		atomic_store_release(&cpuid_infos[ci->ci_cpuid], ci);
 		membar_producer(); /* Cavium sync plunger */
+
+		/*
+		 * The BP has its ci_shootdowncpus cpuset created in
+		 * pmap_bootstrap.
+		 */
+		kcpuset_create(&ci->ci_shootdowncpus, true);
 	}
 	KASSERT(cpuid_infos[ci->ci_cpuid] != NULL);
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_activate_rqst,
@@ -300,7 +306,6 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 	 */
 	ipi_init(ci);
 
-	kcpuset_create(&ci->ci_shootdowncpus, true);
 	kcpuset_create(&ci->ci_multicastcpus, true);
 	kcpuset_create(&ci->ci_watchcpus, true);
 	kcpuset_create(&ci->ci_ddbcpus, true);
