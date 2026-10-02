@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.307 2026/10/02 18:53:54 riastradh Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.308 2026/10/02 19:52:26 riastradh Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -123,13 +123,13 @@ CFLAGS+=	-fno-strict-aliasing
 CFLAGS+=	-fno-common
 .endif
 
-.if ${HAVE_GCC:U0} >= 12 || defined(HAVE_LLVM)
-CFLAGS+=	-ftrivial-auto-var-init=pattern
-#CFLAGS+=	-ftrivial-auto-var-init=zero
-#.  if defined(HAVE_LLVM)
-#CFLAGS+=	-enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang-arg
-#.  endif
-.endif
+# XXX Make the choice of `pattern' vs `zero' conditional on `options
+# DEBUG' or `options DIAGNOSTIC'?
+CFLAGS+=	${${ACTIVE_CC} == "gcc":?${${HAVE_GCC} >= 12:?-ftrivial-auto-var-init=pattern:}:}
+CFLAGS+=	${${ACTIVE_CC} == "clang":?-ftrivial-auto-var-init=pattern:}
+#CFLAGS+=	${${ACTIVE_CC} == "gcc":?${${HAVE_GCC} >= 12:?-ftrivial-auto-var-init=zero:}:}
+#CFLAGS+=	${${ACTIVE_CC} == "clang":?-ftrivial-auto-var-init=zero:}
+#CFLAGS+=	${${ACTIVE_CC} == "clang":?-enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang-arg:}
 
 # Use the per-source COPTS variables to add -g to just those
 # files that match the shell patterns given in ${DEBUGLIST}
