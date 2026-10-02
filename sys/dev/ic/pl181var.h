@@ -1,4 +1,4 @@
-/* $NetBSD: pl181var.h,v 1.3 2018/02/19 19:00:42 jmcneill Exp $ */
+/* $NetBSD: pl181var.h,v 1.3.44.1 2026/10/02 11:44:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,6 +39,7 @@ struct plmmc_softc {
 	device_t		sc_sdmmc_dev;
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_intr_cv;
+	void			*sc_ih;
 	uint32_t		sc_intr_status;
 
 	struct sdmmc_command	*sc_cmd;

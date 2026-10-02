@@ -1,4 +1,4 @@
-/* $NetBSD: plmmc_ifpga.c,v 1.2 2021/07/27 21:13:41 skrll Exp $ */
+/* $NetBSD: plmmc_ifpga.c,v 1.2.18.1 2026/10/02 11:44:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: plmmc_ifpga.c,v 1.2 2021/07/27 21:13:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plmmc_ifpga.c,v 1.2.18.1 2026/10/02 11:44:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -76,9 +76,7 @@ plmmc_ifpga_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-#if 0
 	sc->sc_ih = ifpga_intr_establish(ifa->ifa_irq, IPL_BIO, plmmc_intr, sc);
-#endif
 
 	config_interrupts(self, plmmc_ifpga_attach_i);
 }
