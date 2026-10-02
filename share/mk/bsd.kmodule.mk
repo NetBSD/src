@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.88 2025/12/18 04:57:55 riastradh Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.89 2026/10/02 21:26:31 riastradh Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -40,6 +40,12 @@ CFLAGS+=	-fno-strict-aliasing
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 CWARNFLAGS+=	-Wno-type-limits
 CWARNFLAGS+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+
+CFLAGS+=	${${ACTIVE_CC} == "gcc":?${${HAVE_GCC} >= 12:?-ftrivial-auto-var-init=pattern:}:}
+CFLAGS+=	${${ACTIVE_CC} == "clang":?-ftrivial-auto-var-init=pattern:}
+#CFLAGS+=	${${ACTIVE_CC} == "gcc":?${${HAVE_GCC} >= 12:?-ftrivial-auto-var-init=zero:}:}
+#CFLAGS+=	${${ACTIVE_CC} == "clang":?-ftrivial-auto-var-init=zero:}
+#CFLAGS+=	${${ACTIVE_CC} == "clang":?-enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang-arg:}
 
 # XXX This is a workaround for platforms that have relative relocations
 # that, when relocated by the module loader, result in addresses that
