@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.156 2026/09/12 19:43:35 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.157 2026/10/02 14:07:57 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.156 2026/09/12 19:43:35 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.157 2026/10/02 14:07:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1049,6 +1049,9 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 		name = TZDEFAULT;
 		if (! name)
 		  return EINVAL;
+		/* Omit "tzloadflags &= ~TZLOAD_FROMENV;" here, as that
+		   would hurt performance by rereading and reanalyzing the
+		   TZDEFAULT file even when it is unchanged.  */
 	}
 
 	if (name[0] == ':')
