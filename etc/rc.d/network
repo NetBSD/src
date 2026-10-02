@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.85 2020/10/16 15:31:04 kim Exp $
+# $NetBSD: network,v 1.86 2026/10/02 06:53:07 kre Exp $
 #
 
 # PROVIDE: network
@@ -242,6 +242,9 @@ network_start_interfaces()
 		for cloner in $(/sbin/ifconfig -C); do
 			for int in /etc/ifconfig.${cloner}[0-9]*; do
 				[ ! -f $int ] && break
+				case ${int#"/etc/ifconfig.${cloner}"} in
+				*[!0-9]*)	continue;;
+				esac
 				tmp="$tmp ${int##*.}"
 			done
 		done
