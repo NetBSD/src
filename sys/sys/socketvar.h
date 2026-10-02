@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.172 2026/09/25 01:10:59 riastradh Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.173 2026/10/02 01:33:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -273,7 +273,7 @@ int	sbappendaddr(struct sockbuf *, const struct sockaddr *, struct mbuf *,
 	    struct mbuf *);
 int	sbappendaddrchain(struct sockbuf *, const struct sockaddr *,
 	     struct mbuf *, int);
-int	sbappendcontrol(struct sockbuf *, struct mbuf *, struct mbuf *);
+void	sbappendcontrol(struct sockbuf *, struct mbuf *, struct mbuf *);
 void	sbappendrecord(struct sockbuf *, struct mbuf *);
 void	sbcheck(struct sockbuf *);
 void	sbcompress(struct sockbuf *, struct mbuf *, struct mbuf *);

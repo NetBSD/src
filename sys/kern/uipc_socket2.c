@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.149 2026/10/02 01:31:31 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.150 2026/10/02 01:33:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.149 2026/10/02 01:31:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.150 2026/10/02 01:33:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1223,7 +1223,7 @@ bad:
 }
 
 
-int
+void
 sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 {
 	struct mbuf	*m, *mlast, *n;
@@ -1254,8 +1254,6 @@ sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 	sb->sb_mbtail = mlast;
 	SBLASTMBUFCHK(sb, "sbappendcontrol");
 	SBLASTRECORDCHK(sb, "sbappendcontrol 2");
-
-	return (1);
 }
 
 /*
