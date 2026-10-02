@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.4 2026/09/22 10:34:22 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.5 2026/10/02 05:03:07 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -25,4 +25,9 @@ sys/dev/pci/if_ixl.c				1.102-1.105
 
 	ixl(4): PR 60736: fix link state handling.
 	[tls, ticket #1343]
+
+usr.sbin/npf/npfctl/npf_build.c			1.64,1.67
+
+	npf: PR 60740: improve error message when table updates fail.
+	[joe, ticket #1344]
 
