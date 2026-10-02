@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.802 2026/05/20 22:56:58 gutteridge Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.803 2026/10/02 18:53:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.802 2026/05/20 22:56:58 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.803 2026/10/02 18:53:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -12157,6 +12157,8 @@ wm_gmii_mdic_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	uint32_t mdic = 0;
 	int i;
 
+	*val = 0;
+
 	if ((sc->sc_phytype != WMPHY_82579) && (sc->sc_phytype != WMPHY_I217)
 	    && (reg > MII_ADDRMASK)) {
 		device_printf(dev, "%s: PHYTYPE = %d, addr 0x%x > 0x1f\n",
@@ -12260,6 +12262,8 @@ wm_gmii_i82544_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
+	*val = 0;
+
 	rv = sc->phy.acquire(sc);
 	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
@@ -12278,6 +12282,8 @@ wm_gmii_i82544_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct wm_softc *sc = device_private(dev);
 	int rv;
+
+	*val = 0;
 
 	switch (sc->sc_phytype) {
 	case WMPHY_IGP:
@@ -12370,6 +12376,8 @@ wm_gmii_i80003_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	int page_select;
 	uint16_t temp, temp2;
 	int rv;
+
+	*val = 0;
 
 	if (phy != 1) /* Only one PHY on kumeran bus */
 		return -1;
@@ -12488,6 +12496,8 @@ wm_gmii_bm_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	struct wm_softc *sc = device_private(dev);
 	uint16_t page = reg >> BME1000_PAGE_SHIFT;
 	int rv;
+
+	*val = 0;
 
 	rv = sc->phy.acquire(sc);
 	if (rv != 0) {
@@ -12757,6 +12767,8 @@ wm_gmii_hv_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	DPRINTF(sc, WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(dev), __func__));
 
+	*val = 0;
+
 	rv = sc->phy.acquire(sc);
 	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
@@ -12774,6 +12786,8 @@ wm_gmii_hv_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 	uint16_t page = BM_PHY_REG_PAGE(reg);
 	uint16_t regnum = BM_PHY_REG_NUM(reg);
 	int rv;
+
+	*val = 0;
 
 	phy = (page >= HV_INTC_FC_PAGE_START) ? 1 : phy;
 
@@ -12907,6 +12921,8 @@ wm_gmii_82580_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	struct wm_softc *sc = device_private(dev);
 	int rv;
 
+	*val = 0;
+
 	rv = sc->phy.acquire(sc);
 	if (rv != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
@@ -12971,6 +12987,8 @@ wm_gmii_gs40g_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	struct wm_softc *sc = device_private(dev);
 	int page, offset;
 	int rv;
+
+	*val = 0;
 
 	/* Acquire semaphore */
 	rv = sc->phy.acquire(sc);
@@ -13104,6 +13122,8 @@ static int
 wm_kmrn_readreg(struct wm_softc *sc, int reg, uint16_t *val)
 {
 	int rv;
+
+	*val = 0;
 
 	if (sc->sc_type == WM_T_80003)
 		rv = wm_get_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
@@ -13294,6 +13314,8 @@ wm_sgmii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct wm_softc *sc = device_private(dev);
 	int rv;
+
+	*val = 0;
 
 	rv = sc->phy.acquire(sc);
 	if (rv != 0) {
