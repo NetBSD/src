@@ -1,5 +1,3 @@
-#! /usr/bin/env bash
-# Creates release tarball and detached GPG signature file for upload
 #                          __  __            _
 #                       ___\ \/ /_ __   __ _| |_
 #                      / _ \\  /| '_ \ / _` | __|
@@ -7,7 +5,7 @@
 #                      \___/_/\_\ .__/ \__,_|\__|
 #                               |_| XML parser
 #
-# Copyright (c) 2018-2019 Sebastian Pipping <sebastian@pipping.org>
+# Copyright (c) 2026 Expat development team
 # Licensed under the MIT license:
 #
 # Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -29,26 +27,11 @@
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 # USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-set -e
+set(CMAKE_SYSTEM_NAME Windows)
 
-PS4='# '
-set -x
+set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
+set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
+set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
 
-version="$(./conftools/get-version.sh lib/expat.h)"
-
-./buildconf.sh
-./configure
-make distcheck
-
-extensions=(
-    gz
-    bz2
-    lz
-    xz
-)
-
-for ext in ${extensions[@]} ; do
-    archive=expat-${version}.tar.${ext}
-    gpg --armor --output ${archive}.asc --detach-sign ${archive}
-    gpg --verify ${archive}.asc ${archive}
-done
+set(WIN32 ON)
+set(MINGW ON)
