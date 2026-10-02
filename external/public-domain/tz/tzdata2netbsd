@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.22 2026/09/15 12:21:45 kre Exp $
+# $NetBSD: tzdata2netbsd,v 1.23 2026/10/02 03:06:26 kre Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -364,6 +364,7 @@ setup_versions()
 	MERGEDONEFILE="${WORKDIR}/merge.done"
 	FILECONTENTCHECKDONE="${WORKDIR}/filecheck.done"
 	COMMITMERGEDONEFILE="${WORKDIR}/commitmerge.done"
+	TZDATAVERSFILE="${WORKDIR}/tzdata_version.done"
 
 	printf '%s\n' "${CVSOLDTAG}"  > "${WORK_PFX}/updating_from"
 }
@@ -1010,10 +1011,30 @@ EOF
 		return 0
 	fi
 
+	if ! [ -e "${TZDATAVERSFILE}" ]
+	then
+		DOIT hg commit -m "Update TZDATA_VERSION to ${NEWVER}" \
+		    "${TZDISTDIR}/TZDATA_VERSION" ||
+			exit 1
+		touch "${TZDATAVERSFILE}"
+	fi
+
 	DOIT hg merge TZDATA && {
 		touch "${MERGEDONEFILE}"
 		return 0	# no conflicts found
 	}
+
+	if [ -e "${TZDISTDIR}/.hgtags.orig" ]
+	then
+		rm -f "${TZDISTDIR}/.hgtags.orig"
+		hg resolve -m "${TZDISTDIR}/.hgtags"
+	fi
+
+	if [ -z "$(hg resolve -l | sed  -e '/^R /d')" ]
+	then
+		touch "${MERGEDONEFILE}"
+		return 0	# no real conflicts found
+	fi
 
 	printf '\n*********************************** CONFLICTS\n'
 	printf 'The following files have conflicts:\n'
@@ -1024,8 +1045,10 @@ EOF
 	    $'Resolve these issues, and run\n\thg resolve -m file...'	\
 	    'as each file listed above is corrected.' ''		\
 	    $'Use\n\thg resolve -l\nto see an updated list of work' ''	\
-	    'Then run this script again (use the same args).'
+    'Then after all files are 'R' status (resolved) run this script again' \
+	    '       (use the same args).'
 
+	touch "${MERGEDONEFILE}"	# Cannot do another merge, commit next
 	exit 1
 }
 
