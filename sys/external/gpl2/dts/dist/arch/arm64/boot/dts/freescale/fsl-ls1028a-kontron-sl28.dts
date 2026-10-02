@@ -2,7 +2,7 @@
 /*
  * Device Tree file for the Kontron SMARC-sAL28 board.
  *
- * Copyright (C) 2019 Michael Walle <michael@walle.cc>
+ * Copyright (C) 2021 Michael Walle <michael@walle.cc>
  *
  */
 
@@ -80,22 +80,21 @@
 	status = "okay";
 };
 
+&enetc_mdio_pf3 {
+	phy0: ethernet-phy@5 {
+		reg = <0x5>;
+		eee-broken-1000t;
+		eee-broken-100tx;
+	};
+};
+
 &enetc_port0 {
 	phy-handle = <&phy0>;
-	phy-connection-type = "sgmii";
+	phy-mode = "sgmii";
 	managed = "in-band-status";
+	nvmem-cells = <&base_mac_address 0>;
+	nvmem-cell-names = "mac-address";
 	status = "okay";
-
-	mdio {
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		phy0: ethernet-phy@5 {
-			reg = <0x5>;
-			eee-broken-1000t;
-			eee-broken-100tx;
-		};
-	};
 };
 
 &esdhc {
@@ -157,7 +156,26 @@
 				label = "bootloader environment";
 			};
 		};
+
+		otp-1 {
+			compatible = "user-otp";
+
+			nvmem-layout {
+				compatible = "kontron,sl28-vpd";
+
+				serial_number: serial-number {
+				};
+
+				base_mac_address: base-mac-address {
+					#nvmem-cell-cells = <1>;
+				};
+			};
+		};
 	};
+};
+
+&ftm_alarm0 {
+	status = "okay";
 };
 
 &gpio1 {
@@ -307,5 +325,22 @@
 };
 
 &lpuart1 {
+	status = "okay";
+};
+
+&mscc_felix_port4 {
+	dsa-tag-protocol = "ocelot-8021q";
+};
+
+&mscc_felix_port5 {
+	dsa-tag-protocol = "ocelot-8021q";
+};
+
+&usb0 {
+	status = "okay";
+};
+
+&usb1 {
+	dr_mode = "host";
 	status = "okay";
 };

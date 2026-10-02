@@ -1,6 +1,6 @@
-/*	$NetBSD: meson-axg-power.h,v 1.1.1.1 2021/11/07 16:49:56 jmcneill Exp $	*/
+/*	$NetBSD: meson-axg-power.h,v 1.1.1.1.12.1 2026/10/02 11:38:19 martin Exp $	*/
 
-/* SPDX-License-Identifier: (GPL-2.0+ or MIT) */
+/* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
 /*
  * Copyright (c) 2020 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>

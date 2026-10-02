@@ -1,3 +1,5 @@
+/*	$NetBSD: starfive,jh7110-pinctrl.h,v 1.1.4.1 2026/10/02 11:38:18 martin Exp $	*/
+
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /*
  * Copyright (C) 2022 Emil Renner Berthing <kernel@esmil.dk>

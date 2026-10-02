@@ -1,6 +1,6 @@
-/*	$NetBSD: sun50i-h6-ccu.h,v 1.1.1.1 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: sun50i-h6-ccu.h,v 1.1.1.1.42.1 2026/10/02 11:38:06 martin Exp $	*/
 
-// SPDX-License-Identifier: (GPL-2.0+ or MIT)
+/* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
 /*
  * Copyright (C) 2017 Icenowy Zheng <icenowy@aosc.io>
  */

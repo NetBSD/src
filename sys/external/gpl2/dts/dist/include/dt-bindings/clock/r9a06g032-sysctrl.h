@@ -1,4 +1,4 @@
-/*	$NetBSD: r9a06g032-sysctrl.h,v 1.1.1.1 2019/01/22 14:57:01 jmcneill Exp $	*/
+/*	$NetBSD: r9a06g032-sysctrl.h,v 1.1.1.1.42.1 2026/10/02 11:38:04 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -76,6 +76,7 @@
 #define R9A06G032_CLK_DDRPHY_PCLK	81	/* AKA CLK_REF_SYNC_D4 */
 #define R9A06G032_CLK_FW		81	/* AKA CLK_REF_SYNC_D4 */
 #define R9A06G032_CLK_CRYPTO		81	/* AKA CLK_REF_SYNC_D4 */
+#define R9A06G032_CLK_WATCHDOG		82	/* AKA CLK_REF_SYNC_D8 */
 #define R9A06G032_CLK_A7MP		84	/* AKA DIV_CA7 */
 #define R9A06G032_HCLK_CAN0		85
 #define R9A06G032_HCLK_CAN1		86

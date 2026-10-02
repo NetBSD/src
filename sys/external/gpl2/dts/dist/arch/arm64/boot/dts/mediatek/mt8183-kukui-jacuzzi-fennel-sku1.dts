@@ -5,14 +5,16 @@
 
 /dts-v1/;
 #include "mt8183-kukui-jacuzzi-fennel.dtsi"
+#include "mt8183-kukui-audio-da7219-rt1015p.dtsi"
 
 / {
 	model = "Google fennel sku1 board";
+	chassis-type = "convertible";
 	compatible = "google,fennel-sku1", "google,fennel", "mediatek,mt8183";
 
 	pwmleds {
 		compatible = "pwm-leds";
-		keyboard_backlight: keyboard-backlight {
+		keyboard_backlight: led-0 {
 			label = "cros_ec::kbd_backlight";
 			pwms = <&cros_ec_pwm 0>;
 			max-brightness = <1023>;
@@ -29,8 +31,7 @@
 
 	compatible = "hid-over-i2c";
 	reg = <0x10>;
-	interrupt-parent = <&pio>;
-	interrupts = <155 IRQ_TYPE_LEVEL_LOW>;
+	interrupts-extended = <&pio 155 IRQ_TYPE_LEVEL_LOW>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&touchscreen_pins>;
 
