@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.30 2021/11/07 17:13:53 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.31 2026/10/02 07:24:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.30 2021/11/07 17:13:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.31 2026/10/02 07:24:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -330,6 +330,25 @@ fdtbus_intr_unmask(int phandle, void *cookie)
 
 	ic->ic_funcs->unmask(ic->ic_dev, cookie);
 	fdtbus_put_interrupt_cookie(c);
+}
+
+bool
+fdtbus_intr_str_byname(int phandle, const char *name, char *buf, size_t buflen)
+{
+	const u_int *specifier;
+	int index;
+	int ihandle;
+	int err;
+
+	err = fdtbus_get_index(phandle, "interrupt-names", name, &index);
+	if (err != 0)
+		return NULL;
+
+	specifier = get_specifier_by_index(phandle, index, &ihandle);
+	if (specifier == NULL)
+		return false;
+
+	return fdtbus_intr_str_raw(ihandle, specifier, buf, buflen);
 }
 
 bool

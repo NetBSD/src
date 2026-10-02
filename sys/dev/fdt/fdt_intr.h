@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_intr.h,v 1.1 2025/09/06 20:11:30 thorpej Exp $	*/
+/*	$NetBSD: fdt_intr.h,v 1.2 2026/10/02 07:24:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -66,6 +66,7 @@ void		fdtbus_intr_mask(int, void *);
 void		fdtbus_intr_unmask(int, void *);
 void		fdtbus_intr_disestablish(int, void *);
 bool		fdtbus_intr_str(int, u_int, char *, size_t);
+bool		fdtbus_intr_str_byname(int, const char *, char *, size_t);
 bool		fdtbus_intr_str_raw(int, const u_int *, char *, size_t);
 int		fdtbus_intr_parent(int);
 
