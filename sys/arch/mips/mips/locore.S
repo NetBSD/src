@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.233 2026/09/29 05:54:06 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.234 2026/10/02 08:33:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.233 2026/09/29 05:54:06 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.234 2026/10/02 08:33:39 simonb Exp $")
 
 #include "assym.h"
 
@@ -187,14 +187,10 @@ EXPORT_OBJECT(kernel_text)			# libkvm refers this
 	/*
 	 * Now enable interrupts (but they are all masked).
 	 */
-#if __mips_isa_rev >= 2
-	ei
-#else
 	mfc0	v0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
 	or	v0, MIPS_SR_INT_IE
 	mtc0	v0, MIPS_COP_0_STATUS
-#endif
 	COP0_SYNC
 
 	jal	_C_LABEL(main)			# main(void)
