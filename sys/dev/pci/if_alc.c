@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.56 2025/03/09 06:37:06 mlelstv Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.57 2026/10/02 18:53:06 riastradh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -381,6 +381,8 @@ alc_miidbg_readreg(struct alc_softc *sc, int reg, uint16_t *val)
 {
 	int rv;
 
+	*val = 0;
+
 	rv = alc_miibus_writereg(sc->sc_dev, sc->alc_phyaddr, ALC_MII_DBG_ADDR,
 	    reg);
 	if (rv != 0)
@@ -411,6 +413,8 @@ alc_miiext_readreg(struct alc_softc *sc, int devaddr, int reg, uint16_t *val)
 {
 	uint32_t clk, v;
 	int i;
+
+	*val = 0;
 
 	CSR_WRITE_4(sc, ALC_EXT_MDIO, EXT_MDIO_REG(reg) |
 	    EXT_MDIO_DEVADDR(devaddr));
