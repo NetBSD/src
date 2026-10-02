@@ -11,8 +11,9 @@
 
 / {
 	thermal-zones {
-		pm660-thermal {
+		pm660 {
 			polling-delay-passive = <250>;
+			polling-delay = <1000>;
 
 			thermal-sensors = <&pm660_temp>;
 
@@ -48,46 +49,18 @@
 		};
 
 		pon: pon@800 {
-			compatible = "qcom,pm8998-pon";
-			reg = <0x800>;
-			mode-bootloader = <0x2>;
-			mode-recovery = <0x1>;
+			compatible = "qcom,pm8916-pon";
 
-			pon_pwrkey: pwrkey {
+			reg = <0x800>;
+
+			pwrkey {
 				compatible = "qcom,pm8941-pwrkey";
 				interrupts = <0x0 0x8 0 IRQ_TYPE_EDGE_BOTH>;
 				debounce = <15625>;
 				bias-pull-up;
 				linux,code = <KEY_POWER>;
-
-				status = "disabled";
 			};
 
-			pon_resin: resin {
-				compatible = "qcom,pm8941-resin";
-				interrupts = <0x0 0x8 1 IRQ_TYPE_EDGE_BOTH>;
-				debounce = <15625>;
-				bias-pull-up;
-
-				status = "disabled";
-			};
-		};
-
-		pm660_charger: charger@1000 {
-			compatible = "qcom,pm660-charger";
-			reg = <0x1000>;
-
-			interrupts = <0x0 0x13 0x4 IRQ_TYPE_EDGE_BOTH>,
-				     <0x0 0x12 0x2 IRQ_TYPE_EDGE_BOTH>,
-				     <0x0 0x16 0x1 IRQ_TYPE_EDGE_RISING>,
-				     <0x0 0x13 0x6 IRQ_TYPE_EDGE_RISING>;
-			interrupt-names = "usb-plugin", "bat-ov", "wdog-bark", "usbin-icl-change";
-
-			io-channels = <&pm660_rradc 3>,
-				      <&pm660_rradc 4>;
-			io-channel-names = "usbin_i", "usbin_v";
-
-			status = "disabled";
 		};
 
 		pm660_temp: temp-alarm@2400 {
@@ -107,106 +80,87 @@
 			#size-cells = <0>;
 			#io-channel-cells = <1>;
 
-			channel@0 {
+			ref_gnd: ref_gnd@0 {
 				reg = <ADC5_REF_GND>;
 				qcom,decimation = <1024>;
 				qcom,pre-scaling = <1 1>;
-				label = "ref_gnd";
 			};
 
-			channel@1 {
+			vref_1p25: vref_1p25@1 {
 				reg = <ADC5_1P25VREF>;
 				qcom,decimation = <1024>;
 				qcom,pre-scaling = <1 1>;
-				label = "vref_1p25";
 			};
 
-			channel@6 {
+			die_temp: die_temp@6 {
 				reg = <ADC5_DIE_TEMP>;
 				qcom,decimation = <1024>;
 				qcom,pre-scaling = <1 1>;
-				label = "die_temp";
 			};
 
-			channel@4c {
+			xo_therm: xo_therm@4c {
 				reg = <ADC5_XO_THERM_100K_PU>;
 				qcom,pre-scaling = <1 1>;
 				qcom,decimation = <1024>;
 				qcom,hw-settle-time = <200>;
 				qcom,ratiometric;
-				label = "xo_therm";
 			};
 
-			channel@4d {
+			msm_therm: msm_therm@4d {
 				reg = <ADC5_AMUX_THM1_100K_PU>;
 				qcom,pre-scaling = <1 1>;
 				qcom,decimation = <1024>;
 				qcom,hw-settle-time = <200>;
 				qcom,ratiometric;
-				label = "msm_therm";
 			};
 
-			channel@4e {
+			emmc_therm: emmc_therm@4e {
 				reg = <ADC5_AMUX_THM2_100K_PU>;
 				qcom,pre-scaling = <1 1>;
 				qcom,decimation = <1024>;
 				qcom,hw-settle-time = <200>;
 				qcom,ratiometric;
-				label = "emmc_therm";
 			};
 
-			channel@4f {
+			pa_therm0: thermistor0@4f {
 				reg = <ADC5_AMUX_THM3_100K_PU>;
 				qcom,pre-scaling = <1 1>;
 				qcom,decimation = <1024>;
 				qcom,hw-settle-time = <200>;
 				qcom,ratiometric;
-				label = "pa_therm0";
 			};
 
-			channel@50 {
+			pa_therm1: thermistor1@50 {
 				reg = <ADC5_AMUX_THM4_100K_PU>;
 				qcom,pre-scaling = <1 1>;
 				qcom,decimation = <1024>;
 				qcom,hw-settle-time = <200>;
 				qcom,ratiometric;
-				label = "pa_therm1";
 			};
 
-			channel@51 {
+			quiet_therm: quiet_therm@51 {
 				reg = <ADC5_AMUX_THM5_100K_PU>;
 				qcom,pre-scaling = <1 1>;
 				qcom,decimation = <1024>;
 				qcom,hw-settle-time = <200>;
 				qcom,ratiometric;
-				label = "quiet_therm";
 			};
 
-			channel@83 {
+			vadc_vph_pwr: vph_pwr@83 {
 				reg = <ADC5_VPH_PWR>;
 				qcom,decimation = <1024>;
 				qcom,pre-scaling = <1 3>;
-				label = "vph_pwr";
 			};
 
-			channel@85 {
+			vcoin: vcoin@83 {
 				reg = <ADC5_VCOIN>;
 				qcom,decimation = <1024>;
 				qcom,pre-scaling = <1 3>;
-				label = "vcoin";
 			};
 		};
 
-		pm660_rradc: adc@4500 {
-			compatible = "qcom,pm660-rradc";
-			reg = <0x4500>;
-			#io-channel-cells = <1>;
-
-			status = "disabled";
-		};
-
-		pm660_gpios: gpio@c000 {
-			compatible = "qcom,pm660-gpio", "qcom,spmi-gpio";
+		pm660_gpios: gpios@c000 {
+			compatible = "qcom,pm660-gpio";
 			reg = <0xc000>;
 			gpio-controller;
 			gpio-ranges = <&pm660_gpios 0 0 13>;
@@ -222,7 +176,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		pm660_spmi_regulators: regulators {
+		pm660_spmi_regulators: pm660-regulators {
 			compatible = "qcom,pm660-regulators";
 		};
 	};

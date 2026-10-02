@@ -23,9 +23,7 @@
 	#address-cells = <2>;
 	#size-cells = <2>;
 
-	chosen {
-		stdout-path = "serial0:115200n8";
-	};
+	chosen { };
 
 	aliases {
 		serial0 = &v2m_serial0;
@@ -73,8 +71,6 @@
 
 		L2_0: l2-cache0 {
 			compatible = "cache";
-			cache-level = <2>;
-			cache-unified;
 		};
 	};
 

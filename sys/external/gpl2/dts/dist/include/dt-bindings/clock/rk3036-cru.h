@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3036-cru.h,v 1.1.1.3.12.1 2026/10/02 11:38:04 martin Exp $	*/
+/*	$NetBSD: rk3036-cru.h,v 1.1.1.3.12.2 2026/10/02 18:07:15 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
@@ -95,6 +95,8 @@
 #define HCLK_VCODEC		476
 #define HCLK_CPU		477
 #define HCLK_PERI		478
+
+#define CLK_NR_CLKS		(HCLK_PERI + 1)
 
 /* soft-reset indices */
 #define SRST_CORE0		0

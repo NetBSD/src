@@ -1,4 +1,4 @@
-/*	$NetBSD: px30-cru.h,v 1.1.1.2.34.1 2026/10/02 11:37:56 martin Exp $	*/
+/*	$NetBSD: px30-cru.h,v 1.1.1.2.34.2 2026/10/02 18:07:11 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 
@@ -177,6 +177,8 @@
 #define PCLK_CIF		352
 #define PCLK_OTP_PHY		353
 
+#define CLK_NR_CLKS		(PCLK_OTP_PHY + 1)
+
 /* pmu-clocks indices */
 
 #define PLL_GPLL		1
@@ -194,6 +196,8 @@
 
 #define PCLK_GPIO0_PMU		20
 #define PCLK_UART0_PMU		21
+
+#define CLKPMU_NR_CLKS		(PCLK_UART0_PMU + 1)
 
 /* soft-reset indices */
 #define SRST_CORE0_PO		0

@@ -21,15 +21,15 @@
 	leds {
 		compatible = "gpio-leds";
 
-		led-usb {
+		usb {
 			gpios = <&gpio 9 GPIO_ACTIVE_LOW>;
 		};
 
-		led-wps {
+		wps {
 			gpios = <&gpio 11 GPIO_ACTIVE_LOW>;
 		};
 
-		led-wireless {
+		wireless {
 			label = "2.4g";
 			gpios = <&gpio 18 GPIO_ACTIVE_LOW>;
 		};

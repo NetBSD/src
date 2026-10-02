@@ -11,6 +11,7 @@
 	thermal-zones {
 		pmm8155au-2-thermal {
 			polling-delay-passive = <100>;
+			polling-delay = <0>;
 
 			thermal-sensors = <&pmm8155au_2_temp>;
 
@@ -44,7 +45,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		pon@800 {
+		power-on@800 {
 			compatible = "qcom,pm8916-pon";
 			reg = <0x0800>;
 
@@ -68,19 +69,19 @@
 			#io-channel-cells = <1>;
 			interrupts = <0x4 0x31 0x0 IRQ_TYPE_EDGE_RISING>;
 
-			channel@0 {
+			ref-gnd@0 {
 				reg = <ADC5_REF_GND>;
 				qcom,pre-scaling = <1 1>;
 				label = "ref_gnd";
 			};
 
-			channel@1 {
+			vref-1p25@1 {
 				reg = <ADC5_1P25VREF>;
 				qcom,pre-scaling = <1 1>;
 				label = "vref_1p25";
 			};
 
-			channel@6 {
+			die-temp@6 {
 				reg = <ADC5_DIE_TEMP>;
 				qcom,pre-scaling = <1 1>;
 				label = "die_temp";
@@ -88,7 +89,7 @@
 		};
 
 		pmm8155au_2_gpios: gpio@c000 {
-			compatible = "qcom,pmm8155au-gpio", "qcom,spmi-gpio";
+			compatible = "qcom,pmm8155au-gpio";
 			reg = <0xc000>;
 			gpio-controller;
 			#gpio-cells = <2>;

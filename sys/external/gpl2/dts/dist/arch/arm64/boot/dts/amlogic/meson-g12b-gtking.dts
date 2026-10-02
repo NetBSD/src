@@ -22,6 +22,7 @@
 	spdif_dit: audio-codec-1 {
 		#sound-dai-cells = <0>;
 		compatible = "linux,spdif-dit";
+		status = "okay";
 		sound-name-prefix = "DIT";
 	};
 
@@ -33,13 +34,9 @@
 				"TDMOUT_B IN 1", "FRDDR_B OUT 1",
 				"TDMOUT_B IN 2", "FRDDR_C OUT 1",
 				"TDM_B Playback", "TDMOUT_B OUT",
-				"SPDIFOUT_A IN 0", "FRDDR_A OUT 3",
-				"SPDIFOUT_A IN 1", "FRDDR_B OUT 3",
-				"SPDIFOUT_A IN 2", "FRDDR_C OUT 3";
-
-		clocks = <&clkc CLKID_MPLL2>,
-			 <&clkc CLKID_MPLL0>,
-			 <&clkc CLKID_MPLL1>;
+				"SPDIFOUT IN 0", "FRDDR_A OUT 3",
+				"SPDIFOUT IN 1", "FRDDR_B OUT 3",
+				"SPDIFOUT IN 2", "FRDDR_C OUT 3";
 
 		assigned-clocks = <&clkc CLKID_MPLL2>,
 				  <&clkc CLKID_MPLL0>,
@@ -48,6 +45,7 @@
 		assigned-clock-rates = <294912000>,
 				       <270950400>,
 				       <393216000>;
+		status = "okay";
 
 		dai-link-0 {
 			sound-dai = <&frddr_a>;
@@ -78,7 +76,7 @@
 
 		/* spdif hdmi or toslink interface */
 		dai-link-4 {
-			sound-dai = <&spdifout_a>;
+			sound-dai = <&spdifout>;
 
 			codec-0 {
 				sound-dai = <&spdif_dit>;
@@ -142,7 +140,7 @@
 	};
 };
 
-&spdifout_a {
+&spdifout {
 	pinctrl-0 = <&spdif_out_h_pins>;
 	pinctrl-names = "default";
 	status = "okay";

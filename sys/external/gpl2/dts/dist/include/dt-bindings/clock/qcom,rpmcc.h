@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,rpmcc.h,v 1.1.1.6.12.1 2026/10/02 11:38:00 martin Exp $	*/
+/*	$NetBSD: qcom,rpmcc.h,v 1.1.1.6.12.2 2026/10/02 18:07:13 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -161,16 +161,5 @@
 #define RPM_SMD_SNOC_PERIPH_A_CLK		113
 #define RPM_SMD_SNOC_LPASS_CLK			114
 #define RPM_SMD_SNOC_LPASS_A_CLK		115
-#define RPM_SMD_HWKM_CLK			116
-#define RPM_SMD_HWKM_A_CLK			117
-#define RPM_SMD_PKA_CLK				118
-#define RPM_SMD_PKA_A_CLK			119
-#define RPM_SMD_CPUSS_GNOC_CLK			120
-#define RPM_SMD_CPUSS_GNOC_A_CLK		121
-#define RPM_SMD_MSS_CFG_AHB_CLK		122
-#define RPM_SMD_MSS_CFG_AHB_A_CLK		123
-#define RPM_SMD_BIMC_FREQ_LOG			124
-#define RPM_SMD_LN_BB_CLK_PIN			125
-#define RPM_SMD_LN_BB_A_CLK_PIN			126
 
 #endif

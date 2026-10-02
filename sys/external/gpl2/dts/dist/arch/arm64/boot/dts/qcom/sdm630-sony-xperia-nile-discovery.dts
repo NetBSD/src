@@ -11,5 +11,4 @@
 / {
 	model = "Sony Xperia XA2 Ultra";
 	compatible = "sony,discovery-row", "qcom,sdm630";
-	chassis-type = "handset";
 };

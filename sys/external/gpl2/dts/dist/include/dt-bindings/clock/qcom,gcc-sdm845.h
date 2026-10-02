@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-sdm845.h,v 1.1.1.3.36.1 2026/10/02 11:37:58 martin Exp $	*/
+/*	$NetBSD: qcom,gcc-sdm845.h,v 1.1.1.3.36.2 2026/10/02 18:07:12 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -201,7 +201,6 @@
 #define GCC_QSPI_CNOC_PERIPH_AHB_CLK				189
 #define GCC_LPASS_Q6_AXI_CLK					190
 #define GCC_LPASS_SWAY_CLK					191
-#define GPLL6							192
 
 /* GCC Resets */
 #define GCC_MMSS_BCR						0

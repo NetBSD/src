@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,sc8180x.h,v 1.1.1.1.12.1 2026/10/02 11:38:12 martin Exp $	*/
+/*	$NetBSD: qcom,sc8180x.h,v 1.1.1.1.12.2 2026/10/02 18:07:20 martin Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
 /*
@@ -131,6 +131,9 @@
 #define SLAVE_SERVICE_GEM_NOC			16
 #define SLAVE_SERVICE_GEM_NOC_1			17
 
+#define MASTER_IPA_CORE				0
+#define SLAVE_IPA_CORE				1
+
 #define MASTER_LLCC				0
 #define SLAVE_EBI_CH0				1
 
@@ -180,12 +183,5 @@
 #define MASTER_ROTATOR_DISPLAY			2
 #define SLAVE_MNOC_SF_MEM_NOC_DISPLAY		3
 #define SLAVE_MNOC_HF_MEM_NOC_DISPLAY		4
-
-#define MASTER_QUP_CORE_0			0
-#define MASTER_QUP_CORE_1			1
-#define MASTER_QUP_CORE_2			2
-#define SLAVE_QUP_CORE_0			3
-#define SLAVE_QUP_CORE_1			4
-#define SLAVE_QUP_CORE_2			5
 
 #endif

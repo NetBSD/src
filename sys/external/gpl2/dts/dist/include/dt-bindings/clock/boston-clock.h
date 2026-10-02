@@ -1,8 +1,9 @@
-/*	$NetBSD: boston-clock.h,v 1.1.1.1.44.1 2026/10/02 11:37:51 martin Exp $	*/
+/*	$NetBSD: boston-clock.h,v 1.1.1.1.44.2 2026/10/02 18:07:08 martin Exp $	*/
 
-/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2016 Imagination Technologies
+ *
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef __DT_BINDINGS_CLOCK_BOSTON_CLOCK_H__

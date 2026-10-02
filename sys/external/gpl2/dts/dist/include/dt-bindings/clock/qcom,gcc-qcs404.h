@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-qcs404.h,v 1.1.1.2.34.1 2026/10/02 11:37:58 martin Exp $	*/
+/*	$NetBSD: qcom,gcc-qcs404.h,v 1.1.1.2.34.2 2026/10/02 18:07:12 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -178,9 +178,5 @@
 #define GCC_PCIE_0_SLEEP_ARES				20
 #define GCC_PCIE_0_PIPE_ARES				21
 #define GCC_WDSP_RESTART				22
-
-/* Indexes for GDSCs */
-#define MDSS_GDSC				0
-#define OXILI_GDSC				1
 
 #endif

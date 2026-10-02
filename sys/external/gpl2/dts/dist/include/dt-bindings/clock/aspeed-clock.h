@@ -1,4 +1,4 @@
-/*	$NetBSD: aspeed-clock.h,v 1.1.1.4.34.1 2026/10/02 11:37:51 martin Exp $	*/
+/*	$NetBSD: aspeed-clock.h,v 1.1.1.4.34.2 2026/10/02 18:07:08 martin Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
 
@@ -54,6 +54,5 @@
 #define ASPEED_RESET_I2C		7
 #define ASPEED_RESET_AHB		8
 #define ASPEED_RESET_CRT1		9
-#define ASPEED_RESET_HACE		10
 
 #endif

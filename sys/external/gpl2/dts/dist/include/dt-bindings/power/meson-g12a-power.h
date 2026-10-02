@@ -1,6 +1,6 @@
-/*	$NetBSD: meson-g12a-power.h,v 1.1.1.1.36.1 2026/10/02 11:38:20 martin Exp $	*/
+/*	$NetBSD: meson-g12a-power.h,v 1.1.1.1.36.2 2026/10/02 18:07:25 martin Exp $	*/
 
-/* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
+/* SPDX-License-Identifier: (GPL-2.0+ or MIT) */
 /*
  * Copyright (c) 2019 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
@@ -11,7 +11,5 @@
 
 #define PWRC_G12A_VPU_ID		0
 #define PWRC_G12A_ETH_ID		1
-#define PWRC_G12A_NNA_ID		2
-#define PWRC_G12A_ISP_ID		3
 
 #endif

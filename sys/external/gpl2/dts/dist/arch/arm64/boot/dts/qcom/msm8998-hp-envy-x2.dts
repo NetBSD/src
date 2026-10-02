@@ -8,7 +8,6 @@
 / {
 	model = "HP Envy x2";
 	compatible = "hp,envy-x2", "qcom,msm8998";
-	chassis-type = "convertible";
 };
 
 &blsp1_i2c6 {
@@ -16,14 +15,13 @@
 
 	keyboard@3a {
 		compatible = "hid-over-i2c";
+		interrupt-parent = <&tlmm>;
+		interrupts = <0x79 IRQ_TYPE_LEVEL_LOW>;
 		reg = <0x3a>;
+		hid-descr-addr = <0x0001>;
+
 		pinctrl-names = "default";
 		pinctrl-0 = <&touchpad>;
-
-		interrupt-parent = <&tlmm>;
-		interrupts = <121 IRQ_TYPE_LEVEL_LOW>;
-
-		hid-descr-addr = <0x0001>;
 	};
 };
 

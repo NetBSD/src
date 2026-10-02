@@ -15,7 +15,6 @@
 / {
 	model = "Microsoft Surface Duo";
 	compatible = "microsoft,surface-duo", "qcom,sm8150";
-	chassis-type = "handset";
 
 	aliases {
 		serial0 = &uart2;
@@ -49,10 +48,10 @@
 		vin-supply = <&vph_pwr>;
 	};
 
-	gpio-keys {
+	gpio_keys {
 		compatible = "gpio-keys";
 
-		key-vol-up {
+		vol_up {
 			label = "Volume Up";
 			gpios = <&pm8150_gpios 6 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_VOLUMEUP>;
@@ -61,7 +60,7 @@
 };
 
 &apps_rsc {
-	regulators-0 {
+	pm8150-rpmh-regulators {
 		compatible = "qcom,pm8150-rpmh-regulators";
 		qcom,pmic-id = "a";
 
@@ -216,7 +215,7 @@
 		};
 	};
 
-	regulators-1 {
+	pm8150l-rpmh-regulators {
 		compatible = "qcom,pm8150l-rpmh-regulators";
 		qcom,pmic-id = "c";
 
@@ -329,7 +328,7 @@
 		};
 	};
 
-	regulators-2 {
+	pm8009-rpmh-regulators {
 		compatible = "qcom,pm8009-rpmh-regulators";
 		qcom,pmic-id = "f";
 
@@ -376,8 +375,8 @@
 		pinctrl-0 = <&da7280_intr_default>;
 
 		dlg,actuator-type = "LRA";
-		dlg,const-op-mode = <1>;
-		dlg,periodic-op-mode = <1>;
+		dlg,dlg,const-op-mode = <1>;
+		dlg,dlg,periodic-op-mode = <1>;
 		dlg,nom-microvolt = <2000000>;
 		dlg,abs-max-microvolt = <2000000>;
 		dlg,imax-microamp = <129000>;
@@ -430,8 +429,18 @@
 	/* MAX34417 @ 0x1e */
 };
 
-&pon_pwrkey {
-	status = "okay";
+&pon {
+	pwrkey {
+		status = "okay";
+	};
+
+	resin {
+		compatible = "qcom,pm8941-resin";
+		interrupts = <0x0 0x8 0x1 IRQ_TYPE_EDGE_BOTH>;
+		debounce = <15625>;
+		bias-pull-up;
+		linux,code = <KEY_VOLUMEDOWN>;
+	};
 };
 
 &qupv3_id_0 {
@@ -466,19 +475,14 @@
 	firmware-name = "qcom/sm8150/microsoft/slpi.mdt";
 };
 
-&pon_resin {
-	status = "okay";
-
-	linux,code = <KEY_VOLUMEDOWN>;
-};
-
 &tlmm {
 	gpio-reserved-ranges = <126 4>;
 
-	da7280_intr_default: da7280-intr-default-state {
+	da7280_intr_default: da7280-intr-default {
 		pins = "gpio42";
 		function = "gpio";
 		bias-pull-up;
+		input-enable;
 	};
 };
 
@@ -503,7 +507,9 @@
 	status = "okay";
 
 	vdda-phy-supply = <&vdda_ufs_2ln_core_1>;
+	vdda-max-microamp = <90200>;
 	vdda-pll-supply = <&vreg_l3c_1p2>;
+	vdda-pll-max-microamp = <19000>;
 };
 
 &usb_1_hsphy {

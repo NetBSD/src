@@ -1,4 +1,4 @@
-/*	$NetBSD: imx8mm-clock.h,v 1.1.1.3.12.1 2026/10/02 11:37:53 martin Exp $	*/
+/*	$NetBSD: imx8mm-clock.h,v 1.1.1.3.12.2 2026/10/02 18:07:09 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -282,6 +282,7 @@
 #define IMX8MM_CLK_CLKOUT2_SEL			255
 #define IMX8MM_CLK_CLKOUT2_DIV			256
 #define IMX8MM_CLK_CLKOUT2			257
+
 
 #define IMX8MM_CLK_END				258
 

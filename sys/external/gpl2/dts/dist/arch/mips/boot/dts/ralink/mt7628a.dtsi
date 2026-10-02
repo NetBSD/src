@@ -51,85 +51,85 @@
 			pinctrl-single,register-width = <32>;
 			pinctrl-single,function-mask = <0x1>;
 
-			pinmux_gpio_gpio: gpio-gpio-pins {
+			pinmux_gpio_gpio: pinmux_gpio_gpio {
 				pinctrl-single,bits = <0x0 0x0 0x3>;
 			};
 
-			pinmux_spi_cs1_cs: spi-cs1-cs-pins {
+			pinmux_spi_cs1_cs: pinmux_spi_cs1_cs {
 				pinctrl-single,bits = <0x0 0x0 0x30>;
 			};
 
-			pinmux_i2s_gpio: i2s-gpio-pins {
+			pinmux_i2s_gpio: pinmux_i2s_gpio {
 				pinctrl-single,bits = <0x0 0x40 0xc0>;
 			};
 
-			pinmux_uart0_uart: uart0-uart0-pins {
+			pinmux_uart0_uart: pinmux_uart0_uart0 {
 				pinctrl-single,bits = <0x0 0x0 0x300>;
 			};
 
-			pinmux_sdmode_sdxc: sdmode-sdxc-pins {
+			pinmux_sdmode_sdxc: pinmux_sdmode_sdxc {
 				pinctrl-single,bits = <0x0 0x0 0xc00>;
 			};
 
-			pinmux_sdmode_gpio: sdmode-gpio-pins {
+			pinmux_sdmode_gpio: pinmux_sdmode_gpio {
 				pinctrl-single,bits = <0x0 0x400 0xc00>;
 			};
 
-			pinmux_spi_spi: spi-spi-pins {
+			pinmux_spi_spi: pinmux_spi_spi {
 				pinctrl-single,bits = <0x0 0x0 0x1000>;
 			};
 
-			pinmux_refclk_gpio: refclk-gpio-pins {
+			pinmux_refclk_gpio: pinmux_refclk_gpio {
 				pinctrl-single,bits = <0x0 0x40000 0x40000>;
 			};
 
-			pinmux_i2c_i2c: i2c-i2c-pins {
+			pinmux_i2c_i2c: pinmux_i2c_i2c {
 				pinctrl-single,bits = <0x0 0x0 0x300000>;
 			};
 
-			pinmux_uart1_uart: uart1-uart1-pins {
+			pinmux_uart1_uart: pinmux_uart1_uart1 {
 				pinctrl-single,bits = <0x0 0x0 0x3000000>;
 			};
 
-			pinmux_uart2_uart: uart2-uart-pins {
+			pinmux_uart2_uart: pinmux_uart2_uart {
 				pinctrl-single,bits = <0x0 0x0 0xc000000>;
 			};
 
-			pinmux_pwm0_pwm: pwm0-pwm-pins {
+			pinmux_pwm0_pwm: pinmux_pwm0_pwm {
 				pinctrl-single,bits = <0x0 0x0 0x30000000>;
 			};
 
-			pinmux_pwm0_gpio: pwm0-gpio-pins {
+			pinmux_pwm0_gpio: pinmux_pwm0_gpio {
 				pinctrl-single,bits = <0x0 0x10000000
 						       0x30000000>;
 			};
 
-			pinmux_pwm1_pwm: pwm1-pwm-pins {
+			pinmux_pwm1_pwm: pinmux_pwm1_pwm {
 				pinctrl-single,bits = <0x0 0x0 0xc0000000>;
 			};
 
-			pinmux_pwm1_gpio: pwm1-gpio-pins {
+			pinmux_pwm1_gpio: pinmux_pwm1_gpio {
 				pinctrl-single,bits = <0x0 0x40000000
 						       0xc0000000>;
 			};
 
-			pinmux_p0led_an_gpio: p0led-an-gpio-pins {
+			pinmux_p0led_an_gpio: pinmux_p0led_an_gpio {
 				pinctrl-single,bits = <0x4 0x4 0xc>;
 			};
 
-			pinmux_p1led_an_gpio: p1led-an-gpio-pins {
+			pinmux_p1led_an_gpio: pinmux_p1led_an_gpio {
 				pinctrl-single,bits = <0x4 0x10 0x30>;
 			};
 
-			pinmux_p2led_an_gpio: p2led-an-gpio-pins {
+			pinmux_p2led_an_gpio: pinmux_p2led_an_gpio {
 				pinctrl-single,bits = <0x4 0x40 0xc0>;
 			};
 
-			pinmux_p3led_an_gpio: p3led-an-gpio-pins {
+			pinmux_p3led_an_gpio: pinmux_p3led_an_gpio {
 				pinctrl-single,bits = <0x4 0x100 0x300>;
 			};
 
-			pinmux_p4led_an_gpio: p4led-an-gpio-pins {
+			pinmux_p4led_an_gpio: pinmux_p4led_an_gpio {
 				pinctrl-single,bits = <0x4 0x400 0xc00>;
 			};
 		};

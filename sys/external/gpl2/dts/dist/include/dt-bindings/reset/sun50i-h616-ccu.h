@@ -1,6 +1,6 @@
-/*	$NetBSD: sun50i-h616-ccu.h,v 1.1.1.1.12.1 2026/10/02 11:38:24 martin Exp $	*/
+/*	$NetBSD: sun50i-h616-ccu.h,v 1.1.1.1.12.2 2026/10/02 18:07:28 martin Exp $	*/
 
-/* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
+/* SPDX-License-Identifier: (GPL-2.0+ or MIT) */
 /*
  * Copyright (C) 2020 Arm Ltd.
  */
@@ -68,6 +68,5 @@
 #define RST_BUS_TVE0		57
 #define RST_BUS_HDCP		58
 #define RST_BUS_KEYADC		59
-#define RST_BUS_GPADC		60
 
 #endif /* _DT_BINDINGS_RESET_SUN50I_H616_H_ */

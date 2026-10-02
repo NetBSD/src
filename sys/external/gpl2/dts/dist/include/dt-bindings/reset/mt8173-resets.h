@@ -1,4 +1,4 @@
-/*	$NetBSD: mt8173-resets.h,v 1.1.1.2.34.1 2026/10/02 11:38:22 martin Exp $	*/
+/*	$NetBSD: mt8173-resets.h,v 1.1.1.2.34.2 2026/10/02 18:07:27 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -29,8 +29,6 @@
 #define MT8173_INFRA_GCE_FAXI_RST       40
 #define MT8173_INFRA_MMIOMMURST         47
 
-/* MMSYS resets */
-#define MT8173_MMSYS_SW0_RST_B_DISP_DSI0	25
 
 /*  PERICFG resets */
 #define MT8173_PERI_UART0_SW_RST        0

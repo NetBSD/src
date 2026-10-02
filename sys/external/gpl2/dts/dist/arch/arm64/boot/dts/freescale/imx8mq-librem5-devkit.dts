@@ -7,7 +7,6 @@
 
 #include "dt-bindings/input/input.h"
 #include <dt-bindings/interrupt-controller/irq.h>
-#include <dt-bindings/leds/common.h>
 #include "dt-bindings/pwm/pwm.h"
 #include "dt-bindings/usb/pd.h"
 #include "imx8mq.dtsi"
@@ -19,7 +18,7 @@
 	backlight_dsi: backlight-dsi {
 		compatible = "pwm-backlight";
 		/* 200 Hz for the PAM2841 */
-		pwms = <&pwm1 0 5000000 0>;
+		pwms = <&pwm1 0 5000000>;
 		brightness-levels = <0 100>;
 		num-interpolated-steps = <100>;
 		/* Default brightness level (index into the array defined by */
@@ -37,21 +36,21 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_gpio_keys>;
 
-		button-1 {
+		btn1 {
 			label = "VOL_UP";
 			gpios = <&gpio4 21 GPIO_ACTIVE_LOW>;
 			wakeup-source;
 			linux,code = <KEY_VOLUMEUP>;
 		};
 
-		button-2 {
+		btn2 {
 			label = "VOL_DOWN";
 			gpios = <&gpio4 22 GPIO_ACTIVE_LOW>;
 			wakeup-source;
 			linux,code = <KEY_VOLUMEDOWN>;
 		};
 
-		button-3 {
+		wwan-wake {
 			label = "WWAN_WAKE";
 			gpios = <&gpio3 8 GPIO_ACTIVE_LOW>;
 			interrupt-parent = <&gpio3>;
@@ -62,13 +61,14 @@
 	};
 
 	leds {
-		compatible = "pwm-leds";
+		compatible = "gpio-leds";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_gpio_leds>;
 
-		led-1 {
-			function = LED_FUNCTION_STATUS;
-			color = <LED_COLOR_ID_RED>;
-			max-brightness = <248>;
-			pwms = <&pwm2 0 50000 0>;
+		led1 {
+			label = "LED 1";
+			gpios = <&gpio1 13 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
 		};
 	};
 
@@ -135,6 +135,18 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		gpio = <&gpio1 8 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-always-on;
+	};
+
+	reg_usdhc2_vmmc: regulator-usdhc2-vmmc {
+		compatible = "regulator-fixed";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_usdhc2_pwr>;
+		regulator-name = "VSD_3V3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&gpio2 19 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		regulator-always-on;
 	};
@@ -230,13 +242,6 @@
 		enable-active-high;
 		regulator-always-on;
 	};
-
-	wifi_pwr_seq: pwrseq {
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_usdhc2_rst>;
-		compatible = "mmc-pwrseq-simple";
-		reset-gpios = <&gpio2 19 GPIO_ACTIVE_LOW>;
-	};
 };
 
 &A53_0 {
@@ -319,7 +324,6 @@
 				regulator-ramp-delay = <1250>;
 				rohm,dvs-run-voltage = <1000000>;
 				rohm,dvs-idle-voltage = <900000>;
-				regulator-always-on;
 			};
 
 			buck3_reg: BUCK3 {
@@ -429,7 +433,7 @@
 	};
 
 	typec_ptn5100: usb-typec@52 {
-		compatible = "nxp,ptn5110", "tcpci";
+		compatible = "nxp,ptn5110";
 		reg = <0x52>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_typec>;
@@ -557,9 +561,9 @@
 		reg = <0x6a>;
 		vdd-supply = <&reg_3v3_p>;
 		vddio-supply = <&reg_3v3_p>;
-		mount-matrix = "1",  "0",  "0",
-			       "0",  "1",  "0",
-			       "0",  "0", "-1";
+		mount-matrix =  "1",  "0",  "0",
+				"0",  "1",  "0",
+				"0",  "0", "-1";
 	};
 };
 
@@ -611,9 +615,9 @@
 		>;
 	};
 
-	pinctrl_pwm_led: pwmledgrp {
+	pinctrl_gpio_leds: gpioledgrp {
 		fsl,pins = <
-			MX8MQ_IOMUXC_GPIO1_IO13_PWM2_OUT	0x16
+			MX8MQ_IOMUXC_GPIO1_IO13_GPIO1_IO13	0x16
 		>;
 	};
 
@@ -663,7 +667,7 @@
 		>;
 	};
 
-	pinctrl_spkamp: spkampgrp {
+	pinctrl_spkamp: spkamp {
 		fsl,pins = <
 			MX8MQ_IOMUXC_SPDIF_TX_GPIO5_IO3		0x81  /* MUTE */
 		>;
@@ -803,7 +807,7 @@
 		>;
 	};
 
-	pinctrl_usdhc2_rst: usdhc2rstgrp {
+	pinctrl_usdhc2_pwr: usdhc2pwrgrp {
 		fsl,pins = <
 			MX8MQ_IOMUXC_SD2_RESET_B_GPIO2_IO19	0x41
 		>;
@@ -916,12 +920,6 @@
 	status = "okay";
 };
 
-&pwm2 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_pwm_led>;
-	status = "okay";
-};
-
 &snvs_pwrkey {
 	status = "okay";
 };
@@ -1026,8 +1024,8 @@
 	pinctrl-1 = <&pinctrl_usdhc2_100mhz>;
 	pinctrl-2 = <&pinctrl_usdhc2_200mhz>;
 	bus-width = <4>;
-	vmmc-supply = <&wifi_pwr_en>;
-	mmc-pwrseq = <&wifi_pwr_seq>;
+	vmmc-supply = <&reg_usdhc2_vmmc>;
+	power-supply = <&wifi_pwr_en>;
 	broken-cd;
 	disable-wp;
 	cap-sdio-irq;

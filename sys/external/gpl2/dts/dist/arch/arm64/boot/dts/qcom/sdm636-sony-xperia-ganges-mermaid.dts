@@ -11,7 +11,6 @@
 / {
 	model = "Sony Xperia 10 Plus";
 	compatible = "sony,mermaid-row", "qcom,sdm636";
-	chassis-type = "handset";
 
 	/* SDM636 v1 */
 	qcom,msm-id = <345 0>;
@@ -19,7 +18,7 @@
 };
 
 &sdc2_state_on {
-	clk-pins {
+	pinconf-clk {
 		drive-strength = <14>;
 	};
 };

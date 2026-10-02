@@ -46,9 +46,9 @@
 	gpio-keys {
 		pinctrl-0 = <&reset_button_pin>;
 
-		/delete-node/ key-power;
+		/delete-node/ power;
 
-		key-reset {
+		reset {
 			debounce-interval = <50>;
 			gpios = <&gpio1 RK_PC6 GPIO_ACTIVE_LOW>;
 			label = "reset";
@@ -73,6 +73,7 @@
 };
 
 &pcie0 {
+	max-link-speed = <1>;
 	num-lanes = <1>;
 	vpcie3v3-supply = <&vcc3v3_sys>;
 };

@@ -5,7 +5,6 @@
 
 /dts-v1/;
 #include "rk3399-puma.dtsi"
-#include <dt-bindings/input/input.h>
 
 / {
 	model = "Theobroma Systems RK3399-Q7 SoM";
@@ -17,38 +16,6 @@
 
 	chosen {
 		stdout-path = "serial0:115200n8";
-	};
-
-	gpio-keys {
-		compatible = "gpio-keys";
-		pinctrl-0 = <&haikou_keys_pin>;
-		pinctrl-names = "default";
-
-		button-batlow-n {
-			gpios = <&gpio0 RK_PB2 GPIO_ACTIVE_LOW>;
-			label = "BATLOW#";
-			linux,code = <KEY_BATTERY>;
-		};
-
-		button-slp-btn-n {
-			gpios = <&gpio0 RK_PB3 GPIO_ACTIVE_LOW>;
-			label = "SLP_BTN#";
-			linux,code = <KEY_SLEEP>;
-		};
-
-		button-wake-n {
-			gpios = <&gpio0 RK_PB1 GPIO_ACTIVE_LOW>;
-			label = "WAKE#";
-			linux,code = <KEY_WAKEUP>;
-			wakeup-source;
-		};
-
-		switch-lid-btn-n {
-			gpios = <&gpio0 RK_PA4 GPIO_ACTIVE_LOW>;
-			label = "LID_BTN#";
-			linux,code = <SW_LID>;
-			linux,input-type = <EV_SW>;
-		};
 	};
 
 	leds {
@@ -82,7 +49,7 @@
 	sgtl5000_clk: sgtl5000-oscillator  {
 			compatible = "fixed-clock";
 			#clock-cells = <0>;
-			clock-frequency = <24576000>;
+			clock-frequency  = <24576000>;
 	};
 
 	dc_12v: dc-12v {
@@ -194,14 +161,15 @@
 	num-lanes = <4>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pcie_clkreqn_cpm>;
-	vpcie3v3-supply = <&vcc3v3_baseboard>;
-	vpcie12v-supply = <&dc_12v>;
 	status = "okay";
 };
 
 &pinctrl {
-	buttons {
-		haikou_keys_pin: haikou-keys-pin {
+	pinctrl-names = "default";
+	pinctrl-0 = <&haikou_pin_hog>;
+
+	hog {
+		haikou_pin_hog: haikou-pin-hog {
 			rockchip,pins =
 			  /* LID_BTN */
 			  <0 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>,
@@ -209,7 +177,7 @@
 			  <0 RK_PB2 RK_FUNC_GPIO &pcfg_pull_up>,
 			  /* SLP_BTN# */
 			  <0 RK_PB3 RK_FUNC_GPIO &pcfg_pull_up>,
-			  /* WAKE# */
+			  /* BIOS_DISABLE# */
 			  <0 RK_PB1 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 	};
@@ -239,7 +207,7 @@
 	cap-sd-highspeed;
 	cd-gpios = <&gpio0 RK_PA7 GPIO_ACTIVE_LOW>;
 	disable-wp;
-	max-frequency = <40000000>;
+	max-frequency = <150000000>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&sdmmc_clk &sdmmc_cmd &sdmmc_cd &sdmmc_bus4>;
 	vmmc-supply = <&vcc3v3_baseboard>;
@@ -264,7 +232,6 @@
 
 &usbdrd_dwc3_0 {
 	dr_mode = "otg";
-	extcon = <&extcon_usb3>;
 	status = "okay";
 };
 
@@ -275,12 +242,19 @@
 
 &uart0 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&uart0_xfer>;
+	pinctrl-0 = <&uart0_xfer &uart0_cts &uart0_rts>;
 	status = "okay";
 };
 
 &uart2 {
-	rts-gpios = <&gpio2 RK_PC3 GPIO_ACTIVE_HIGH>;
+	status = "okay";
+};
+
+&usb_host0_ehci {
+	status = "okay";
+};
+
+&usb_host0_ohci {
 	status = "okay";
 };
 

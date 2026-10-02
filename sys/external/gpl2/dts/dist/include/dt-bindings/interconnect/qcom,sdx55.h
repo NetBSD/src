@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,sdx55.h,v 1.1.1.1.12.1 2026/10/02 11:38:12 martin Exp $	*/
+/*	$NetBSD: qcom,sdx55.h,v 1.1.1.1.12.2 2026/10/02 18:07:20 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -72,5 +72,7 @@
 #define SLAVE_QDSS_STM			48
 #define SLAVE_TCU			49
 
+#define MASTER_IPA_CORE			0
+#define SLAVE_IPA_CORE			1
 
 #endif

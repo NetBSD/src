@@ -64,8 +64,6 @@
 
 		l2: cache {
 			compatible = "cache";
-			cache-level = <2>;
-			cache-unified;
 		};
 
 		idle-states {
@@ -88,7 +86,7 @@
 	};
 
 	pmu {
-		compatible = "arm,cortex-a53-pmu";
+		compatible = "arm,cortex-a53-pmu", "arm,armv8-pmuv3";
 		interrupts = <GIC_SPI 23 IRQ_TYPE_LEVEL_HIGH>,
 			     <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>,
 			     <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>,
@@ -291,7 +289,7 @@
 				};
 			};
 
-			uart0: serial@d000 {
+			uart0: uart@d000 {
 				compatible = "snps,dw-apb-uart";
 				reg = <0xd000 0x100>;
 				interrupts = <8>;

@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,mmcc-msm8974.h,v 1.1.1.2.34.1 2026/10/02 11:37:59 martin Exp $	*/
+/*	$NetBSD: qcom,mmcc-msm8974.h,v 1.1.1.2.34.2 2026/10/02 18:07:12 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -123,6 +123,7 @@
 #define MMSS_MMSSNOC_BTO_AHB_CLK			112
 #define MMSS_MMSSNOC_AXI_CLK				113
 #define MMSS_S0_AXI_CLK					114
+#define OCMEMCX_AHB_CLK					115
 #define OCMEMCX_OCMEMNOC_CLK				116
 #define OXILI_OCMEMGX_CLK				117
 #define OCMEMNOC_CLK					118

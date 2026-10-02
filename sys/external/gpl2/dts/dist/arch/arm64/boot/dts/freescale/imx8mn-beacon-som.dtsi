@@ -3,8 +3,6 @@
  * Copyright 2020 Compass Electronics Group, LLC
  */
 
-#include "imx8mn-overdrive.dtsi"
-
 / {
 	aliases {
 		rtc0 = &rtc;
@@ -57,15 +55,15 @@
 	ddrc_opp_table: opp-table {
 		compatible = "operating-points-v2";
 
-		opp-25000000 {
+		opp-25M {
 			opp-hz = /bits/ 64 <25000000>;
 		};
 
-		opp-100000000 {
+		opp-100M {
 			opp-hz = /bits/ 64 <100000000>;
 		};
 
-		opp-800000000 {
+		opp-800M {
 			opp-hz = /bits/ 64 <800000000>;
 		};
 	};
@@ -123,7 +121,7 @@
 		interrupts = <3 IRQ_TYPE_LEVEL_LOW>;
 		rohm,reset-snvs-powered;
 		#clock-cells = <0>;
-		clocks = <&osc_32k>;
+		clocks = <&osc_32k 0>;
 		clock-output-names = "clk-32k-out";
 
 		regulators {
@@ -242,7 +240,6 @@
 	rtc: rtc@51 {
 		compatible = "nxp,pcf85263";
 		reg = <0x51>;
-		quartz-load-femtofarads = <12500>;
 	};
 };
 
@@ -277,6 +274,7 @@
 	bus-width = <4>;
 	non-removable;
 	cap-power-off-card;
+	pm-ignore-notify;
 	keep-power-in-suspend;
 	mmc-pwrseq = <&usdhc1_pwrseq>;
 	status = "okay";
@@ -297,8 +295,6 @@
 	pinctrl-0 = <&pinctrl_usdhc3>;
 	pinctrl-1 = <&pinctrl_usdhc3_100mhz>;
 	pinctrl-2 = <&pinctrl_usdhc3_200mhz>;
-	assigned-clocks = <&clk IMX8MN_CLK_USDHC3>;
-	assigned-clock-rates = <400000000>;
 	bus-width = <8>;
 	non-removable;
 	status = "okay";

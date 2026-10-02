@@ -12,5 +12,4 @@
 / {
 	model = "Sony Xperia XZ";
 	compatible = "sony,kagura-row", "qcom,msm8996";
-	chassis-type = "handset";
 };

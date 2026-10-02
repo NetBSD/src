@@ -1,4 +1,4 @@
-/*	$NetBSD: apple-aic.h,v 1.1.1.1.12.1 2026/10/02 11:38:13 martin Exp $	*/
+/*	$NetBSD: apple-aic.h,v 1.1.1.1.12.2 2026/10/02 18:07:21 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0+ OR MIT */
 #ifndef _DT_BINDINGS_INTERRUPT_CONTROLLER_APPLE_AIC_H
@@ -13,7 +13,5 @@
 #define AIC_TMR_HV_VIRT		1
 #define AIC_TMR_GUEST_PHYS	2
 #define AIC_TMR_GUEST_VIRT	3
-#define AIC_CPU_PMU_E		4
-#define AIC_CPU_PMU_P		5
 
 #endif

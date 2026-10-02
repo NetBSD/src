@@ -23,7 +23,6 @@
 		serial3 = &uart3;
 		serial4 = &uart4;
 		serial5 = &uart5;
-		spi0 = &spi0;
 	};
 
 	chosen {
@@ -43,6 +42,18 @@
 
 &osc_32k {
 	clock-frequency = <32768>;
+};
+
+&apb_clk {
+	clock-frequency = <62500000>;
+};
+
+&sdhci_clk {
+	clock-frequency = <198000000>;
+};
+
+&uart_sclk {
+	clock-frequency = <100000000>;
 };
 
 &dmac0 {
@@ -66,9 +77,5 @@
 };
 
 &uart0 {
-	status = "okay";
-};
-
-&spi0 {
 	status = "okay";
 };

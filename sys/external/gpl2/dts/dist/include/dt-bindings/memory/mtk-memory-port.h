@@ -1,4 +1,4 @@
-/*	$NetBSD: mtk-memory-port.h,v 1.1.1.1.12.1 2026/10/02 11:38:15 martin Exp $	*/
+/*	$NetBSD: mtk-memory-port.h,v 1.1.1.1.12.2 2026/10/02 18:07:22 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -13,7 +13,5 @@
 #define MTK_M4U_ID(larb, port)		(((larb) << 5) | (port))
 #define MTK_M4U_TO_LARB(id)		(((id) >> 5) & 0x1f)
 #define MTK_M4U_TO_PORT(id)		((id) & 0x1f)
-
-#define MTK_IFAIOMMU_PERI_ID(port)	MTK_M4U_ID(0, port)
 
 #endif

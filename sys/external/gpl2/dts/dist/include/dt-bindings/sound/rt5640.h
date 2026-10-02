@@ -1,4 +1,4 @@
-/*	$NetBSD: rt5640.h,v 1.1.1.1.42.1 2026/10/02 11:38:25 martin Exp $	*/
+/*	$NetBSD: rt5640.h,v 1.1.1.1.42.2 2026/10/02 18:07:29 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __DT_RT5640_H
@@ -18,7 +18,6 @@
 #define RT5640_JD_SRC_GPIO2		4
 #define RT5640_JD_SRC_GPIO3		5
 #define RT5640_JD_SRC_GPIO4		6
-#define RT5640_JD_SRC_HDA_HEADER	7
 
 #define RT5640_OVCD_SF_0P5		0
 #define RT5640_OVCD_SF_0P75		1

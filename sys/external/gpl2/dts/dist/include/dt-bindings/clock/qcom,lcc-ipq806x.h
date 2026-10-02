@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,lcc-ipq806x.h,v 1.1.1.2.34.1 2026/10/02 11:37:59 martin Exp $	*/
+/*	$NetBSD: qcom,lcc-ipq806x.h,v 1.1.1.2.34.2 2026/10/02 18:07:12 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -20,7 +20,5 @@
 #define SPDIF_SRC			9
 #define SPDIF_CLK			10
 #define AHBIX_CLK			11
-
-#define LCC_PCM_RESET			0
 
 #endif

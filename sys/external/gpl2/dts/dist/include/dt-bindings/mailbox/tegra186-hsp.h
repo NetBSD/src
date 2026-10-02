@@ -1,4 +1,4 @@
-/*	$NetBSD: tegra186-hsp.h,v 1.1.1.3.36.1 2026/10/02 11:38:14 martin Exp $	*/
+/*	$NetBSD: tegra186-hsp.h,v 1.1.1.3.36.2 2026/10/02 18:07:21 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -16,11 +16,6 @@
 #define TEGRA_HSP_MBOX_TYPE_SM 0x1
 #define TEGRA_HSP_MBOX_TYPE_SS 0x2
 #define TEGRA_HSP_MBOX_TYPE_AS 0x3
-
-/*
- * These define the types of shared mailbox supported based on data size.
- */
-#define TEGRA_HSP_MBOX_TYPE_SM_128BIT (1 << 8)
 
 /*
  * These defines represent the bit associated with the given master ID in the

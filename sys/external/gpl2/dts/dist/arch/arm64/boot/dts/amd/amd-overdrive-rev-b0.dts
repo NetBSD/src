@@ -9,7 +9,6 @@
 /dts-v1/;
 
 /include/ "amd-seattle-soc.dtsi"
-/include/ "amd-seattle-cpus.dtsi"
 
 / {
 	model = "AMD Seattle (Rev.B0) Development Board (Overdrive)";
@@ -20,13 +19,13 @@
 	};
 
 	psci {
-		compatible = "arm,psci-0.2";
-		method = "smc";
+		compatible   = "arm,psci-0.2";
+		method       = "smc";
 	};
 };
 
 &ccp0 {
-	status = "okay";
+	status = "ok";
 	amd,zlib-support = <1>;
 };
 
@@ -34,41 +33,54 @@
  * NOTE: In Rev.B, gpio0 is reserved.
  */
 &gpio1 {
-	status = "okay";
+	status = "ok";
+};
+
+&gpio2 {
+	status = "ok";
+};
+
+&gpio3 {
+	status = "ok";
 };
 
 &gpio4 {
-	status = "okay";
+	status = "ok";
 };
 
 &i2c0 {
-	status = "okay";
+	status = "ok";
 };
 
 &i2c1 {
-	status = "okay";
+	status = "ok";
 };
 
 &pcie0 {
-	status = "okay";
+	status = "ok";
 };
 
 &spi0 {
-	status = "okay";
+	status = "ok";
 };
 
 &spi1 {
-	status = "okay";
+	status = "ok";
 	sdcard0: sdcard@0 {
 		compatible = "mmc-spi-slot";
 		reg = <0>;
 		spi-max-frequency = <20000000>;
 		voltage-ranges = <3200 3400>;
+		pl022,hierarchy = <0>;
 		pl022,interface = <0>;
 		pl022,com-mode = <0x0>;
 		pl022,rx-level-trig = <0>;
 		pl022,tx-level-trig = <0>;
 	};
+};
+
+&ipmi_kcs {
+	status = "ok";
 };
 
 &smb0 {

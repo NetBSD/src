@@ -1,4 +1,4 @@
-/*	$NetBSD: alphascale,asm9260.h,v 1.1.1.2.34.1 2026/10/02 11:37:50 martin Exp $	*/
+/*	$NetBSD: alphascale,asm9260.h,v 1.1.1.2.34.2 2026/10/02 18:07:07 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -57,7 +57,7 @@
 #define CLKID_AHB_I2S1		45
 #define CLKID_AHB_MAC1		46
 
-/* divider */
+/* devider */
 #define CLKID_SYS_CPU		47
 #define CLKID_SYS_AHB		48
 #define CLKID_SYS_I2S0M		49

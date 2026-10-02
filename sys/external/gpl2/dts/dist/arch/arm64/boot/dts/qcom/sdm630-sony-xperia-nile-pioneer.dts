@@ -11,5 +11,4 @@
 / {
 	model = "Sony Xperia XA2";
 	compatible = "sony,pioneer-row", "qcom,sdm630";
-	chassis-type = "handset";
 };

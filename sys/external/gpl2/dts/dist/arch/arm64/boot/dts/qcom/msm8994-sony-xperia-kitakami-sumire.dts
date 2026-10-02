@@ -10,7 +10,6 @@
 / {
 	model = "Sony Xperia Z5";
 	compatible = "sony,sumire-row", "qcom,msm8994";
-	chassis-type = "handset";
 };
 
 /delete-node/ &pm8994_l19;

@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-ipq806x.h,v 1.1.1.2.34.1 2026/10/02 11:38:23 martin Exp $	*/
+/*	$NetBSD: qcom,gcc-ipq806x.h,v 1.1.1.2.34.2 2026/10/02 18:07:28 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -165,10 +165,5 @@
 #define NSS_CAL_PRBS_RST_N_RESET			154
 #define NSS_LCKDT_RST_N_RESET				155
 #define NSS_SRDS_N_RESET				156
-#define CRYPTO_ENG1_RESET				157
-#define CRYPTO_ENG2_RESET				158
-#define CRYPTO_ENG3_RESET				159
-#define CRYPTO_ENG4_RESET				160
-#define CRYPTO_AHB_RESET				161
 
 #endif

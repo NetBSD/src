@@ -1,6 +1,6 @@
-/*	$NetBSD: sun50i-h616-ccu.h,v 1.1.1.1.12.1 2026/10/02 11:38:06 martin Exp $	*/
+/*	$NetBSD: sun50i-h616-ccu.h,v 1.1.1.1.12.2 2026/10/02 18:07:16 martin Exp $	*/
 
-/* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
+/* SPDX-License-Identifier: (GPL-2.0+ or MIT) */
 /*
  * Copyright (C) 2020 Arm Ltd.
  */
@@ -113,7 +113,5 @@
 #define CLK_BUS_TVE0		125
 #define CLK_HDCP		126
 #define CLK_BUS_HDCP		127
-#define CLK_PLL_SYSTEM_32K	128
-#define CLK_BUS_GPADC		129
 
 #endif /* _DT_BINDINGS_CLK_SUN50I_H616_H_ */

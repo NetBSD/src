@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3128-cru.h,v 1.1.1.2.34.1 2026/10/02 11:38:04 martin Exp $	*/
+/*	$NetBSD: rk3128-cru.h,v 1.1.1.2.34.2 2026/10/02 18:07:15 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
@@ -118,7 +118,6 @@
 #define PCLK_GMAC		367
 #define PCLK_PMU_PRE		368
 #define PCLK_SIM_CARD		369
-#define PCLK_MIPIPHY		370
 
 /* hclk gates */
 #define HCLK_SPDIF		440
@@ -146,7 +145,8 @@
 #define HCLK_TSP		475
 #define HCLK_CRYPTO		476
 #define HCLK_PERI		478
-#define HCLK_SFC		479
+
+#define CLK_NR_CLKS		(HCLK_PERI + 1)
 
 /* soft-reset indices */
 #define SRST_CORE0_PO		0

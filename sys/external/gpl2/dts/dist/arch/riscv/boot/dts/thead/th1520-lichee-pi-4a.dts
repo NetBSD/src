@@ -20,7 +20,6 @@
 		serial3 = &uart3;
 		serial4 = &uart4;
 		serial5 = &uart5;
-		spi0 = &spi0;
 	};
 
 	chosen {
@@ -29,9 +28,5 @@
 };
 
 &uart0 {
-	status = "okay";
-};
-
-&spi0 {
 	status = "okay";
 };

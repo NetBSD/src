@@ -1,4 +1,4 @@
-/*	$NetBSD: phy.h,v 1.1.1.4.12.1 2026/10/02 11:38:17 martin Exp $	*/
+/*	$NetBSD: phy.h,v 1.1.1.4.12.2 2026/10/02 18:07:23 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -24,6 +24,5 @@
 #define PHY_TYPE_QSGMII		9
 #define PHY_TYPE_DPHY		10
 #define PHY_TYPE_CPHY		11
-#define PHY_TYPE_USXGMII	12
 
 #endif /* _DT_BINDINGS_PHY */

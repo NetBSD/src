@@ -1,6 +1,6 @@
-/*	$NetBSD: sdtv-standards.h,v 1.1.1.1.12.1 2026/10/02 11:38:07 martin Exp $	*/
+/*	$NetBSD: sdtv-standards.h,v 1.1.1.1.12.2 2026/10/02 18:07:17 martin Exp $	*/
 
-/* SPDX-License-Identifier: GPL-2.0-only OR X11 */
+/* SPDX-License-Identifier: GPL-2.0-only or X11 */
 /*
  * Copyright 2019 Pengutronix, Marco Felsch <kernel@pengutronix.de>
  */

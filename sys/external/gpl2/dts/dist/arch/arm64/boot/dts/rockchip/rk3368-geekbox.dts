@@ -12,7 +12,6 @@
 	compatible = "geekbuying,geekbox", "rockchip,rk3368";
 
 	aliases {
-		ethernet0 = &gmac;
 		mmc0 = &emmc;
 	};
 
@@ -44,7 +43,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pwr_key>;
 
-		key-power {
+		power {
 			gpios = <&gpio0 RK_PA2 GPIO_ACTIVE_LOW>;
 			label = "GPIO Power";
 			linux,code = <KEY_POWER>;

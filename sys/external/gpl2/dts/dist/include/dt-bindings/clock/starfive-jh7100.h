@@ -1,5 +1,3 @@
-/*	$NetBSD: starfive-jh7100.h,v 1.1.4.1 2026/10/02 11:38:06 martin Exp $	*/
-
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /*
  * Copyright (C) 2021 Ahmad Fatoum, Pengutronix

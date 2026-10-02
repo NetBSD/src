@@ -5,19 +5,19 @@
  */
 
 &lpuart0 {
-	compatible = "fsl,imx8qxp-lpuart";
+	compatible = "fsl,imx8qxp-lpuart", "fsl,imx7ulp-lpuart";
 };
 
 &lpuart1 {
-	compatible = "fsl,imx8qxp-lpuart";
+	compatible = "fsl,imx8qxp-lpuart", "fsl,imx7ulp-lpuart";
 };
 
 &lpuart2 {
-	compatible = "fsl,imx8qxp-lpuart";
+	compatible = "fsl,imx8qxp-lpuart", "fsl,imx7ulp-lpuart";
 };
 
 &lpuart3 {
-	compatible = "fsl,imx8qxp-lpuart";
+	compatible = "fsl,imx8qxp-lpuart", "fsl,imx7ulp-lpuart";
 };
 
 &i2c0 {

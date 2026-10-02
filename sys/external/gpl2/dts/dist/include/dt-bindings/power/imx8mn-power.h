@@ -1,4 +1,4 @@
-/*	$NetBSD: imx8mn-power.h,v 1.1.1.1.12.1 2026/10/02 11:38:19 martin Exp $	*/
+/*	$NetBSD: imx8mn-power.h,v 1.1.1.1.12.2 2026/10/02 18:07:25 martin Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0 OR MIT) */
 /*
@@ -13,10 +13,5 @@
 #define IMX8MN_POWER_DOMAIN_GPUMIX	2
 #define IMX8MN_POWER_DOMAIN_DISPMIX	3
 #define IMX8MN_POWER_DOMAIN_MIPI	4
-
-#define IMX8MN_DISPBLK_PD_MIPI_DSI	0
-#define IMX8MN_DISPBLK_PD_MIPI_CSI	1
-#define IMX8MN_DISPBLK_PD_LCDIF	2
-#define IMX8MN_DISPBLK_PD_ISI	3
 
 #endif

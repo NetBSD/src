@@ -61,14 +61,10 @@
 
 		cluster0_l2_cache: l2-cache0 {
 			compatible = "cache";
-			cache-level = <2>;
-			cache-unified;
 		};
 
 		cluster1_l2_cache: l2-cache1 {
 			compatible = "cache";
-			cache-level = <2>;
-			cache-unified;
 		};
 	};
 
@@ -89,7 +85,7 @@
 	};
 
 	gic: interrupt-controller@7d001000 {
-		compatible = "arm,cortex-a15-gic";
+		compatible = "arm,cortex-a15-gic", "arm,cortex-a9-gic";
 		#interrupt-cells = <3>;
 		#address-cells = <0>;
 		interrupt-controller;

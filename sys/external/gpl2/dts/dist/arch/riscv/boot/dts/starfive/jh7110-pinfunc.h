@@ -1,4 +1,4 @@
-/*	$NetBSD: jh7110-pinfunc.h,v 1.2.2.1 2026/10/02 11:37:49 martin Exp $	*/
+/*	$NetBSD: jh7110-pinfunc.h,v 1.2.2.2 2026/10/02 18:07:07 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /*
@@ -91,7 +91,7 @@
 #define GPOUT_SYS_SDIO1_DATA1			59
 #define GPOUT_SYS_SDIO1_DATA2			60
 #define GPOUT_SYS_SDIO1_DATA3			61
-#define GPOUT_SYS_SDIO1_DATA4			62
+#define GPOUT_SYS_SDIO1_DATA4			63
 #define GPOUT_SYS_SDIO1_DATA5			63
 #define GPOUT_SYS_SDIO1_DATA6			64
 #define GPOUT_SYS_SDIO1_DATA7			65

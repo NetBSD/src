@@ -7,7 +7,6 @@
 
 / {
 	aliases {
-		ethernet0 = &gmac;
 		mmc1 = &sdmmc;
 		mmc2 = &sdio;
 	};

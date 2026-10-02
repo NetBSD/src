@@ -10,5 +10,4 @@
 / {
 	model = "Sony Xperia 1";
 	compatible = "sony,griffin-generic", "qcom,sm8150";
-	chassis-type = "handset";
 };

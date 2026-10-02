@@ -10,7 +10,6 @@
 
 / {
 	model = "MediaTek MT6779 EVB";
-	chassis-type = "embedded";
 	compatible = "mediatek,mt6779-evb", "mediatek,mt6779";
 
 	aliases {

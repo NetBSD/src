@@ -1,1 +1,1 @@
-#include <arm/socionext/uniphier-pinctrl.dtsi>
+#include <arm/uniphier-pinctrl.dtsi>

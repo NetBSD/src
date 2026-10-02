@@ -84,6 +84,9 @@
 	pinctrl-names = "default";
 	status = "okay";
 
+	/* Single DAI */
+	#sound-dai-cells = <0>;
+
 	/* audio_clkout0/1/2/3 */
 	#clock-cells = <1>;
 	clock-frequency = <12288000 11289600>;
@@ -109,7 +112,7 @@
 		 <&cpg CPG_MOD 1019>, <&cpg CPG_MOD 1018>,
 		 <&audio_clk_a>, <&cs2000>,
 		 <&audio_clk_c>,
-		 <&cpg CPG_MOD 922>;
+		 <&cpg CPG_CORE CPG_AUDIO_CLK_I>;
 
 	rsnd_port: port {
 		rsnd_endpoint: endpoint {

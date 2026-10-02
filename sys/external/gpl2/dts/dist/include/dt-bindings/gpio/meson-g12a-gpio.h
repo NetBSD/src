@@ -1,6 +1,6 @@
-/*	$NetBSD: meson-g12a-gpio.h,v 1.1.1.1.42.1 2026/10/02 11:38:08 martin Exp $	*/
+/*	$NetBSD: meson-g12a-gpio.h,v 1.1.1.1.42.2 2026/10/02 18:07:18 martin Exp $	*/
 
-/* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
+/* SPDX-License-Identifier: (GPL-2.0+ or MIT) */
 /*
  * Copyright (c) 2018 Amlogic, Inc. All rights reserved.
  * Author: Xingyu Chen <xingyu.chen@amlogic.com>

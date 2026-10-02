@@ -1,1 +1,1 @@
-#include <arm/socionext/uniphier-support-card.dtsi>
+#include <arm/uniphier-support-card.dtsi>

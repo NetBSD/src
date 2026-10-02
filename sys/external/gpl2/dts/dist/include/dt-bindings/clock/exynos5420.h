@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5420.h,v 1.1.1.5.12.1 2026/10/02 11:37:52 martin Exp $	*/
+/*	$NetBSD: exynos5420.h,v 1.1.1.5.12.2 2026/10/02 18:07:09 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -272,5 +272,8 @@
 #define CLK_FF_DOUT_SPLL2	797
 #define CLK_DOUT_PCLK_DREX0	798
 #define CLK_DOUT_PCLK_DREX1	799
+
+/* must be greater than maximal clock id */
+#define CLK_NR_CLKS		800
 
 #endif /* _DT_BINDINGS_CLOCK_EXYNOS_5420_H */

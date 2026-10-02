@@ -17,3 +17,4 @@
 		stdout-path = &uart2;
 	};
 };
+

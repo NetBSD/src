@@ -1,10 +1,10 @@
-/*	$NetBSD: axis,artpec6-clkctrl.h,v 1.1.1.2.34.1 2026/10/02 11:37:51 martin Exp $	*/
+/*	$NetBSD: axis,artpec6-clkctrl.h,v 1.1.1.2.34.2 2026/10/02 18:07:08 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * ARTPEC-6 clock controller indexes
  *
- * Copyright 2016 Axis Communications AB.
+ * Copyright 2016 Axis Comunications AB.
  */
 
 #ifndef DT_BINDINGS_CLK_ARTPEC6_CLKCTRL_H

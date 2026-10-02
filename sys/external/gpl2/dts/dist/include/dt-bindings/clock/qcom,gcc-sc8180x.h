@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-sc8180x.h,v 1.1.1.1.12.1 2026/10/02 11:37:58 martin Exp $	*/
+/*	$NetBSD: qcom,gcc-sc8180x.h,v 1.1.1.1.12.2 2026/10/02 18:07:12 martin Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
 /*
@@ -248,9 +248,6 @@
 #define GCC_PCIE_3_CLKREF_CLK					236
 #define GCC_USB3_PRIM_CLKREF_CLK				237
 #define GCC_USB3_SEC_CLKREF_CLK					238
-#define GCC_UFS_MEM_CLKREF_EN					239
-#define GCC_UFS_CARD_CLKREF_EN					240
-#define GPLL9							241
 
 #define GCC_EMAC_BCR						0
 #define GCC_GPU_BCR						1
@@ -297,10 +294,6 @@
 #define GCC_VIDEO_AXI0_CLK_BCR					42
 #define GCC_VIDEO_AXI1_CLK_BCR					43
 #define GCC_USB3_DP_PHY_SEC_BCR					44
-#define GCC_USB3_UNIPHY_MP0_BCR					45
-#define GCC_USB3_UNIPHY_MP1_BCR					46
-#define GCC_USB3UNIPHY_PHY_MP0_BCR				47
-#define GCC_USB3UNIPHY_PHY_MP1_BCR				48
 
 /* GCC GDSCRs */
 #define EMAC_GDSC						0
@@ -314,10 +307,5 @@
 #define USB30_MP_GDSC						8
 #define USB30_PRIM_GDSC						9
 #define USB30_SEC_GDSC						10
-#define HLOS1_VOTE_MMNOC_MMU_TBU_HF0_GDSC		11
-#define HLOS1_VOTE_MMNOC_MMU_TBU_HF1_GDSC		12
-#define HLOS1_VOTE_MMNOC_MMU_TBU_SF_GDSC		13
-#define HLOS1_VOTE_TURING_MMU_TBU0_GDSC			14
-#define HLOS1_VOTE_TURING_MMU_TBU1_GDSC			15
 
 #endif

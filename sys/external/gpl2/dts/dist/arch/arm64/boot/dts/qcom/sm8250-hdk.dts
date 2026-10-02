@@ -14,7 +14,6 @@
 / {
 	model = "Qualcomm Technologies, Inc. SM8250 HDK";
 	compatible = "qcom,sm8250-hdk", "qcom,sm8250";
-	chassis-type = "embedded";
 
 	aliases {
 		serial0 = &uart12;
@@ -54,10 +53,10 @@
 		vin-supply = <&vph_pwr>;
 	};
 
-	gpio-keys {
+	gpio_keys {
 		compatible = "gpio-keys";
 
-		key-vol-up {
+		vol-up {
 			label = "Volume Up";
 			linux,code = <KEY_VOLUMEUP>;
 			gpios = <&pm8150_gpios 6 GPIO_ACTIVE_LOW>;
@@ -66,7 +65,7 @@
 };
 
 &apps_rsc {
-	regulators-0 {
+	pm8150-rpmh-regulators {
 		compatible = "qcom,pm8150-rpmh-regulators";
 		qcom,pmic-id = "a";
 
@@ -200,7 +199,7 @@
 		};
 	};
 
-	regulators-1 {
+	pm8150l-rpmh-regulators {
 		compatible = "qcom,pm8150l-rpmh-regulators";
 		qcom,pmic-id = "c";
 
@@ -311,7 +310,7 @@
 		};
 	};
 
-	regulators-2 {
+	pm8009-rpmh-regulators {
 		compatible = "qcom,pm8009-rpmh-regulators";
 		qcom,pmic-id = "f";
 
@@ -410,7 +409,9 @@
 	status = "okay";
 
 	vdda-phy-supply = <&vreg_l5a_0p88>;
+	vdda-max-microamp = <89900>;
 	vdda-pll-supply = <&vreg_l9a_1p2>;
+	vdda-pll-max-microamp = <18800>;
 };
 
 &usb_1_hsphy {

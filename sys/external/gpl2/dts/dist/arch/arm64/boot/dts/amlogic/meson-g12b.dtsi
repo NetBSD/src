@@ -105,8 +105,6 @@
 
 		l2: l2-cache0 {
 			compatible = "cache";
-			cache-level = <2>;
-			cache-unified;
 		};
 	};
 };
@@ -140,12 +138,4 @@
 
 &mali {
 	dma-coherent;
-};
-
-&pmu {
-	compatible = "amlogic,g12b-ddr-pmu";
-};
-
-&npu {
-	power-domains = <&pwrc PWRC_G12A_NNA_ID>;
 };

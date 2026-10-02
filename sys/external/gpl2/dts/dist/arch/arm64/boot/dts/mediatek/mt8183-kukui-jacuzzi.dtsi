@@ -4,41 +4,50 @@
  */
 
 #include "mt8183-kukui.dtsi"
-/* Must come after mt8183-kukui.dtsi to modify cros_ec */
-#include <arm/cros-ec-keyboard.dtsi>
 
 / {
-	pp1000_mipibrdg: pp1000-mipibrdg {
+	panel: panel {
+		compatible = "auo,b116xw03";
+		power-supply = <&pp3300_panel>;
+		ddc-i2c-bus = <&i2c4>;
+		backlight = <&backlight_lcd0>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&anx7625_out>;
+			};
+		};
+	};
+
+	pp1200_mipibrdg: pp1200-mipibrdg {
 		compatible = "regulator-fixed";
-		regulator-name = "pp1000_mipibrdg";
-		regulator-min-microvolt = <1000000>;
-		regulator-max-microvolt = <1000000>;
+		regulator-name = "pp1200_mipibrdg";
 		pinctrl-names = "default";
-		pinctrl-0 = <&pp1000_mipibrdg_en>;
+		pinctrl-0 = <&pp1200_mipibrdg_en>;
 
 		enable-active-high;
 		regulator-boot-on;
 
 		gpio = <&pio 54 GPIO_ACTIVE_HIGH>;
-		vin-supply = <&pp1800_alw>;
 	};
 
 	pp1800_mipibrdg: pp1800-mipibrdg {
 		compatible = "regulator-fixed";
 		regulator-name = "pp1800_mipibrdg";
 		pinctrl-names = "default";
-		pinctrl-0 = <&pp1800_mipibrdg_en>;
+		pinctrl-0 = <&pp1800_lcd_en>;
 
 		enable-active-high;
 		regulator-boot-on;
 
 		gpio = <&pio 36 GPIO_ACTIVE_HIGH>;
-		vin-supply = <&pp1800_alw>;
 	};
 
 	pp3300_panel: pp3300-panel {
 		compatible = "regulator-fixed";
 		regulator-name = "pp3300_panel";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pp3300_panel_pins>;
 
@@ -46,20 +55,18 @@
 		regulator-boot-on;
 
 		gpio = <&pio 35 GPIO_ACTIVE_HIGH>;
-		vin-supply = <&pp3300_alw>;
 	};
 
-	pp3300_mipibrdg: pp3300-mipibrdg {
+	vddio_mipibrdg: vddio-mipibrdg {
 		compatible = "regulator-fixed";
-		regulator-name = "pp3300_mipibrdg";
+		regulator-name = "vddio_mipibrdg";
 		pinctrl-names = "default";
-		pinctrl-0 = <&pp3300_mipibrdg_en>;
+		pinctrl-0 = <&vddio_mipibrdg_en>;
 
 		enable-active-high;
 		regulator-boot-on;
 
 		gpio = <&pio 37 GPIO_ACTIVE_HIGH>;
-		vin-supply = <&pp3300_alw>;
 	};
 
 	volume_buttons: volume-buttons {
@@ -67,7 +74,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&volume_button_pins>;
 
-		button-volume-down {
+		volume_down {
 			label = "Volume Down";
 			linux,code = <KEY_VOLUMEDOWN>;
 			debounce-interval = <100>;
@@ -75,7 +82,7 @@
 			gpios = <&pio 6 GPIO_ACTIVE_LOW>;
 		};
 
-		button-volume-up {
+		volume_up {
 			label = "Volume Up";
 			linux,code = <KEY_VOLUMEUP>;
 			debounce-interval = <100>;
@@ -86,7 +93,7 @@
 };
 
 &cros_ec {
-	cros_ec_pwm: pwm {
+	cros_ec_pwm: ec-pwm {
 		compatible = "google,cros-ec-pwm";
 		#pwm-cells = <1>;
 		status = "disabled";
@@ -96,10 +103,13 @@
 &dsi0 {
 	status = "okay";
 	/delete-node/panel@0;
-};
-
-&dsi_out {
-	remote-endpoint = <&anx7625_in>;
+	ports {
+		port {
+			dsi_out: endpoint {
+				remote-endpoint = <&anx7625_in>;
+			};
+		};
+	};
 };
 
 &i2c0 {
@@ -148,44 +158,28 @@
 		reg = <0x58>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&anx7625_pins>;
+		panel_flags = <1>;
 		enable-gpios = <&pio 45 GPIO_ACTIVE_HIGH>;
 		reset-gpios = <&pio 73 GPIO_ACTIVE_HIGH>;
-		vdd10-supply = <&pp1000_mipibrdg>;
+		vdd10-supply = <&pp1200_mipibrdg>;
 		vdd18-supply = <&pp1800_mipibrdg>;
-		vdd33-supply = <&pp3300_mipibrdg>;
+		vdd33-supply = <&vddio_mipibrdg>;
 
-		ports {
-			#address-cells = <1>;
-			#size-cells = <0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port@0 {
+			reg = <0>;
 
-			port@0 {
-				reg = <0>;
-
-				anx7625_in: endpoint {
-					remote-endpoint = <&dsi_out>;
-				};
-			};
-
-			port@1 {
-				reg = <1>;
-
-				anx7625_out: endpoint {
-					remote-endpoint = <&panel_in>;
-				};
+			anx7625_in: endpoint {
+				remote-endpoint = <&dsi_out>;
 			};
 		};
 
-		aux-bus {
-			panel: panel {
-				compatible = "edp-panel";
-				power-supply = <&pp3300_panel>;
-				backlight = <&backlight_lcd0>;
+		port@1 {
+			reg = <1>;
 
-				port {
-					panel_in: endpoint {
-						remote-endpoint = <&anx7625_out>;
-					};
-				};
+			anx7625_out: endpoint {
+				remote-endpoint = <&panel_in>;
 			};
 		};
 	};
@@ -395,14 +389,14 @@
 		"",
 		"";
 
-	pp1000_mipibrdg_en: pp1000-mipibrdg-en {
+	pp1200_mipibrdg_en: pp1200-mipibrdg-en {
 		pins1 {
 			pinmux = <PINMUX_GPIO54__FUNC_GPIO54>;
 			output-low;
 		};
 	};
 
-	pp1800_mipibrdg_en: pp1800-mipibrdg-en {
+	pp1800_lcd_en: pp1800-lcd-en {
 		pins1 {
 			pinmux = <PINMUX_GPIO36__FUNC_GPIO36>;
 			output-low;
@@ -444,27 +438,27 @@
 	};
 
 	touchscreen_pins: touchscreen-pins {
-		touch-int-odl {
+		touch_int_odl {
 			pinmux = <PINMUX_GPIO155__FUNC_GPIO155>;
 			input-enable;
 			bias-pull-up;
 		};
 
-		touch-rst-l {
+		touch_rst_l {
 			pinmux = <PINMUX_GPIO156__FUNC_GPIO156>;
 			output-high;
 		};
 	};
 
 	trackpad_pins: trackpad-pins {
-		trackpad-int {
+		trackpad_int {
 			pinmux = <PINMUX_GPIO7__FUNC_GPIO7>;
 			input-enable;
 			bias-disable; /* pulled externally */
 		};
 	};
 
-	pp3300_mipibrdg_en: pp3300-mipibrdg-en {
+	vddio_mipibrdg_en: vddio-mipibrdg-en {
 		pins1 {
 			pinmux = <PINMUX_GPIO37__FUNC_GPIO37>;
 			output-low;

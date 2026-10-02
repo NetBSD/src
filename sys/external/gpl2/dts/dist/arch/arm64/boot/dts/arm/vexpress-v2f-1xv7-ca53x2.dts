@@ -13,7 +13,7 @@
 /dts-v1/;
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
-#include "arm/arm/vexpress-v2m-rs1.dtsi"
+#include "vexpress-v2m-rs1.dtsi"
 
 / {
 	model = "V2F-1XV7 Cortex-A53x2 SMM";
@@ -57,8 +57,6 @@
 
 		L2_0: l2-cache0 {
 			compatible = "cache";
-			cache-level = <2>;
-			cache-unified;
 		};
 	};
 
@@ -102,7 +100,7 @@
 	};
 
 	pmu {
-		compatible = "arm,cortex-a53-pmu";
+		compatible = "arm,armv8-pmuv3";
 		interrupts = <GIC_SPI 68 IRQ_TYPE_LEVEL_HIGH>,
 			     <GIC_SPI 69 IRQ_TYPE_LEVEL_HIGH>;
 	};
@@ -111,7 +109,7 @@
 		compatible = "arm,vexpress,config-bus";
 		arm,vexpress,config-bridge = <&v2m_sysreg>;
 
-		smbclk: clock-controller {
+		smbclk: smclk {
 			/* SMC clock */
 			compatible = "arm,vexpress-osc";
 			arm,vexpress-sysreg,func = <1 4>;
@@ -120,7 +118,7 @@
 			clock-output-names = "smclk";
 		};
 
-		regulator-vio {
+		volt-vio {
 			/* VIO to expansion board above */
 			compatible = "arm,vexpress-volt";
 			arm,vexpress-sysreg,func = <2 0>;
@@ -130,7 +128,7 @@
 			regulator-always-on;
 		};
 
-		regulator-12v {
+		volt-12v {
 			/* 12V from power connector J6 */
 			compatible = "arm,vexpress-volt";
 			arm,vexpress-sysreg,func = <2 1>;

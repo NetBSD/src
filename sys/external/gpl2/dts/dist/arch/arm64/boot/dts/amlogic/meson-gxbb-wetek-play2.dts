@@ -17,6 +17,7 @@
 	spdif_dit: audio-codec-0 {
 		#sound-dai-cells = <0>;
 		compatible = "linux,spdif-dit";
+		status = "okay";
 		sound-name-prefix = "DIT";
 	};
 
@@ -36,9 +37,11 @@
 
 	gpio-keys-polled {
 		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
 		poll-interval = <100>;
 
-		button {
+		button@0 {
 			label = "reset";
 			linux,code = <KEY_RESTART>;
 			gpios = <&gpio_ao GPIOAO_3 GPIO_ACTIVE_LOW>;
@@ -48,10 +51,6 @@
 	sound {
 		compatible = "amlogic,gx-sound-card";
 		model = "WETEK-PLAY2";
-		clocks = <&clkc CLKID_MPLL0>,
-			 <&clkc CLKID_MPLL1>,
-			 <&clkc CLKID_MPLL2>;
-
 		assigned-clocks = <&clkc CLKID_MPLL0>,
 				  <&clkc CLKID_MPLL1>,
 				  <&clkc CLKID_MPLL2>;
@@ -59,6 +58,7 @@
 		assigned-clock-rates = <294912000>,
 				       <270950400>,
 				       <393216000>;
+		status = "okay";
 
 		dai-link-0 {
 			sound-dai = <&aiu AIU_CPU CPU_I2S_FIFO>;

@@ -1,6 +1,6 @@
-/*	$NetBSD: summit,smb347-charger.h,v 1.1.1.1.12.1 2026/10/02 11:38:21 martin Exp $	*/
+/*	$NetBSD: summit,smb347-charger.h,v 1.1.1.1.12.2 2026/10/02 18:07:26 martin Exp $	*/
 
-/* SPDX-License-Identifier: (GPL-2.0-or-later OR MIT) */
+/* SPDX-License-Identifier: (GPL-2.0-or-later or MIT) */
 /*
  * Author: David Heidelberg <david@ixit.cz>
  */

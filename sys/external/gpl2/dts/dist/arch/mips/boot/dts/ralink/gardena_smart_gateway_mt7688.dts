@@ -26,7 +26,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinmux_gpio_gpio>;	/* GPIO11 */
 
-		button {
+		user_btn1 {
 			label = "USER_BTN1";
 			gpios = <&gpio 11 GPIO_ACTIVE_LOW>;
 			linux,code =<KEY_PROG1> ;
@@ -47,67 +47,67 @@
 		 * (see below). So we can't include it in this LED node.
 		 */
 
-		led-power-blue {
+		power_blue {
 			label = "smartgw:power:blue";
 			gpios = <&gpio 18 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
 		};
 
-		led-power-green {
+		power_green {
 			label = "smartgw:power:green";
 			gpios = <&gpio 19 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
 		};
 
-		led-power-red {
+		power_red {
 			label = "smartgw:power:red";
 			gpios = <&gpio 22 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
 		};
 
-		led-radio-blue {
+		radio_blue {
 			label = "smartgw:radio:blue";
 			gpios = <&gpio 23 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
 		};
 
-		led-radio-green {
+		radio_green {
 			label = "smartgw:radio:green";
 			gpios = <&gpio 24 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
 		};
 
-		led-radio-red {
+		radio_red {
 			label = "smartgw:radio:red";
 			gpios = <&gpio 25 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
 		};
 
-		led-internet-blue {
+		internet_blue {
 			label = "smartgw:internet:blue";
 			gpios = <&gpio 26 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
 		};
 
-		led-internet-green {
+		internet_green {
 			label = "smartgw:internet:green";
 			gpios = <&gpio 27 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
 		};
 
-		led-internet-red {
+		internet_red {
 			label = "smartgw:internet:red";
 			gpios = <&gpio 28 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
 		};
 
-		led-ethernet-link {
+		ethernet_link {
 			label = "smartgw:eth:link";
 			gpios = <&gpio 3 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "netdev";
 		};
 
-		led-ethernet-activity {
+		ethernet_activity {
 			label = "smartgw:eth:act";
 			gpios = <&gpio 43 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "netdev";
@@ -129,7 +129,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinmux_spi_spi>, <&pinmux_spi_cs1_cs>;
 
-	flash@0 {
+	m25p80@0 {
 		compatible = "jedec,spi-nor";
 		reg = <0>;
 		spi-max-frequency = <40000000>;

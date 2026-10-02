@@ -39,17 +39,17 @@
 };
 
 &gpio {
-	i2cmux_pins_i: i2cmux-pins {
+	i2cmux_pins_i: i2cmux-pins-i {
 		pins = "GPIO_17", "GPIO_16";
 		function = "twi_scl_m";
 		output-low;
 	};
-	i2cmux_0: i2cmux-0-pins {
+	i2cmux_0: i2cmux-0 {
 		pins = "GPIO_17";
 		function = "twi_scl_m";
 		output-high;
 	};
-	i2cmux_1: i2cmux-1-pins {
+	i2cmux_1: i2cmux-1 {
 		pins = "GPIO_16";
 		function = "twi_scl_m";
 		output-high;

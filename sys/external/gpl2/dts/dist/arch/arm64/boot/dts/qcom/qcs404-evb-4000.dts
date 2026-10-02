@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2018, Linaro Limited
- */
+// Copyright (c) 2018, Linaro Limited
 
 /dts-v1/;
 
@@ -27,8 +25,8 @@
 	phy-handle = <&phy1>;
 	phy-mode = "rgmii";
 	mdio {
-		#address-cells = <1>;
-		#size-cells = <0>;
+		#address-cells = <0x1>;
+		#size-cells = <0x0>;
 		compatible = "snps,dwmac-mdio";
 		phy1: phy@4 {
 			compatible = "ethernet-phy-ieee802.3-c22";
@@ -39,54 +37,54 @@
 };
 
 &tlmm {
-	ethernet_defaults: ethernet-defaults-state {
-		int-pins {
+	ethernet_defaults: ethernet-defaults {
+		int {
 			pins = "gpio61";
 			function = "rgmii_int";
 			bias-disable;
 			drive-strength = <2>;
 		};
-		mdc-pins {
+		mdc {
 			pins = "gpio76";
 			function = "rgmii_mdc";
 			bias-pull-up;
 		};
-		mdio-pins {
+		mdio {
 			pins = "gpio75";
 			function = "rgmii_mdio";
 			bias-pull-up;
 		};
-		tx-pins {
+		tx {
 			pins = "gpio67", "gpio66", "gpio65", "gpio64";
 			function = "rgmii_tx";
 			bias-pull-up;
 			drive-strength = <16>;
 		};
-		rx-pins {
+		rx {
 			pins = "gpio73", "gpio72", "gpio71", "gpio70";
 			function = "rgmii_rx";
 			bias-disable;
 			drive-strength = <2>;
 		};
-		tx-ctl-pins {
+		tx-ctl {
 			pins = "gpio68";
 			function = "rgmii_ctl";
 			bias-pull-up;
 			drive-strength = <16>;
 		};
-		rx-ctl-pins {
+		rx-ctl {
 			pins = "gpio74";
 			function = "rgmii_ctl";
 			bias-disable;
 			drive-strength = <2>;
 		};
-		tx-ck-pins {
+		tx-ck {
 			pins = "gpio63";
 			function = "rgmii_ck";
 			bias-pull-up;
 			drive-strength = <16>;
 		};
-		rx-ck-pins {
+		rx-ck {
 			pins = "gpio69";
 			function = "rgmii_ck";
 			bias-disable;

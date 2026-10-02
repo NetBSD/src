@@ -30,8 +30,6 @@
 
 		l2: l2-cache {
 			compatible = "cache";
-			cache-level = <2>;
-			cache-unified;
 		};
 	};
 

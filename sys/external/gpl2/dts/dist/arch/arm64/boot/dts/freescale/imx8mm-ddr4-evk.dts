@@ -23,11 +23,12 @@
 &gpmi {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_gpmi_nand>;
+	nand-on-flash-bbt;
 	status = "okay";
 };
 
 &iomuxc {
-	pinctrl_gpmi_nand: gpminandgrp {
+	pinctrl_gpmi_nand: gpmi-nand {
 		fsl,pins = <
 			MX8MM_IOMUXC_NAND_ALE_RAWNAND_ALE		0x00000096
 			MX8MM_IOMUXC_NAND_CE0_B_RAWNAND_CE0_B		0x00000096

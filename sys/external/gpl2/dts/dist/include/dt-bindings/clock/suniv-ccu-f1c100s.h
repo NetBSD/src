@@ -1,4 +1,4 @@
-/*	$NetBSD: suniv-ccu-f1c100s.h,v 1.1.1.1.38.1 2026/10/02 11:38:06 martin Exp $	*/
+/*	$NetBSD: suniv-ccu-f1c100s.h,v 1.1.1.1.38.2 2026/10/02 18:07:16 martin Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0+ OR MIT)
  *
@@ -68,7 +68,5 @@
 #define CLK_VE			64
 #define CLK_CODEC		65
 #define CLK_AVS			66
-
-#define CLK_IR			67
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: stm32f4-rcc.h,v 1.1.1.2.44.1 2026/10/02 11:38:16 martin Exp $	*/
+/*	$NetBSD: stm32f4-rcc.h,v 1.1.1.2.44.2 2026/10/02 18:07:22 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -35,6 +35,7 @@
 
 #define STM32F4_AHB1_RESET(bit) (STM32F4_RCC_AHB1_##bit + (0x10 * 8))
 #define STM32F4_AHB1_CLOCK(bit) (STM32F4_RCC_AHB1_##bit)
+
 
 /* AHB2 */
 #define STM32F4_RCC_AHB2_DCMI	0

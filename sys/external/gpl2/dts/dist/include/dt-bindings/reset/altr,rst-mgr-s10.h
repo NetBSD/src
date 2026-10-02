@@ -1,4 +1,4 @@
-/*	$NetBSD: altr,rst-mgr-s10.h,v 1.1.1.2.34.1 2026/10/02 11:38:21 martin Exp $	*/
+/*	$NetBSD: altr,rst-mgr-s10.h,v 1.1.1.2.34.2 2026/10/02 18:07:27 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -65,15 +65,12 @@
 #define I2C2_RESET		74
 #define I2C3_RESET		75
 #define I2C4_RESET		76
-#define I3C0_RESET		77
-#define I3C1_RESET		78
-/* 79 is empty */
+/* 77-79 is empty */
 #define UART0_RESET		80
 #define UART1_RESET		81
 /* 82-87 is empty */
 #define GPIO0_RESET		88
 #define GPIO1_RESET		89
-#define WATCHDOG4_RESET		90
 
 /* BRGMODRST */
 #define SOC2FPGA_RESET		96

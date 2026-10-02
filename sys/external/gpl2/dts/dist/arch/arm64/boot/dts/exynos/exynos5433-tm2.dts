@@ -13,7 +13,6 @@
 / {
 	model = "Samsung TM2 board";
 	compatible = "samsung,tm2", "samsung,exynos5433";
-	chassis-type = "handset";
 };
 
 &cmu_disp {

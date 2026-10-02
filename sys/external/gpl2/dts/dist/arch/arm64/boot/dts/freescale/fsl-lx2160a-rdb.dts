@@ -49,14 +49,6 @@
 	managed = "in-band-status";
 };
 
-&dpmac5 {
-	phy-handle = <&inphi_phy>;
-};
-
-&dpmac6 {
-	phy-handle = <&inphi_phy>;
-};
-
 &dpmac17 {
 	phy-handle = <&rgmii_phy1>;
 	phy-connection-type = "rgmii-id";
@@ -114,15 +106,6 @@
 
 	can-transceiver {
 		max-bitrate = <5000000>;
-	};
-};
-
-&emdio2 {
-	status = "okay";
-
-	inphi_phy: ethernet-phy@0 {
-		compatible = "ethernet-phy-id0210.7440";
-		reg = <0x0>;
 	};
 };
 
@@ -217,10 +200,6 @@
 		/* IRQ_RTC_B -> IRQ08, active low */
 		interrupts-extended = <&extirq 8 IRQ_TYPE_LEVEL_LOW>;
 	};
-};
-
-&optee {
-	status = "okay";
 };
 
 &pcs_mdio3 {

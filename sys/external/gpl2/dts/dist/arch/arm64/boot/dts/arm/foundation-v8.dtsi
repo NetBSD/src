@@ -18,9 +18,7 @@
 	#address-cells = <2>;
 	#size-cells = <2>;
 
-	chosen {
-		stdout-path = "serial0:115200n8";
-	};
+	chosen { };
 
 	aliases {
 		serial0 = &v2m_serial0;
@@ -60,8 +58,6 @@
 
 		L2_0: l2-cache0 {
 			compatible = "cache";
-			cache-level = <2>;
-			cache-unified;
 		};
 	};
 
@@ -88,11 +84,6 @@
 			     <GIC_SPI 63 IRQ_TYPE_LEVEL_HIGH>;
 	};
 
-	spe-pmu {
-		compatible = "arm,statistical-profiling-extension-v1";
-		interrupts = <GIC_PPI 5 IRQ_TYPE_LEVEL_HIGH>;
-	};
-
 	watchdog@2a440000 {
 		compatible = "arm,sbsa-gwdt";
 		reg = <0x0 0x2a440000 0 0x1000>,
@@ -101,21 +92,21 @@
 		timeout-sec = <30>;
 	};
 
-	v2m_clk24mhz: clock-24000000 {
+	v2m_clk24mhz: clk24mhz {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
 		clock-frequency = <24000000>;
 		clock-output-names = "v2m:clk24mhz";
 	};
 
-	v2m_refclk1mhz: clock-1000000 {
+	v2m_refclk1mhz: refclk1mhz {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
 		clock-frequency = <1000000>;
 		clock-output-names = "v2m:refclk1mhz";
 	};
 
-	v2m_refclk32khz: clock-32768 {
+	v2m_refclk32khz: refclk32khz {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
 		clock-frequency = <32768>;
@@ -229,7 +220,7 @@
 				clock-names = "uartclk", "apb_pclk";
 			};
 
-			virtio@130000 {
+			virtio-block@130000 {
 				compatible = "virtio,mmio";
 				reg = <0x130000 0x200>;
 				interrupts = <42>;

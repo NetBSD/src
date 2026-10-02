@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a7795-sysc.h,v 1.1.1.3.34.1 2026/10/02 11:38:20 martin Exp $	*/
+/*	$NetBSD: r8a7795-sysc.h,v 1.1.1.3.34.2 2026/10/02 18:07:26 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -32,6 +32,7 @@
 #define R8A7795_PD_CA53_SCU		21
 #define R8A7795_PD_3DG_E		22
 #define R8A7795_PD_A3IR			24
+#define R8A7795_PD_A2VC0		25	/* ES1.x only */
 #define R8A7795_PD_A2VC1		26
 
 /* Always-on power area */

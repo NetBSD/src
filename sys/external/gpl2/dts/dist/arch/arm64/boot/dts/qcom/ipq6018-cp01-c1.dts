@@ -19,6 +19,7 @@
 
 	chosen {
 		stdout-path = "serial0:115200n8";
+		bootargs-append = " swiotlb=1";
 	};
 };
 
@@ -28,34 +29,33 @@
 	status = "okay";
 };
 
-&blsp1_i2c3 {
+&i2c_1 {
 	pinctrl-0 = <&i2c_1_pins>;
 	pinctrl-names = "default";
 	status = "okay";
 };
 
-&blsp1_spi1 {
-	pinctrl-0 = <&spi_0_pins>;
-	pinctrl-names = "default";
+&spi_0 {
+	cs-select = <0>;
 	status = "okay";
 
-	flash@0 {
+	m25p80@0 {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		reg = <0>;
-		compatible = "micron,n25q128a11", "jedec,spi-nor";
+		compatible = "n25q128a11";
 		spi-max-frequency = <50000000>;
 	};
 };
 
 &tlmm {
-	i2c_1_pins: i2c-1-state {
+	i2c_1_pins: i2c-1-pins {
 		pins = "gpio42", "gpio43";
 		function = "blsp2_i2c";
 		drive-strength = <8>;
 	};
 
-	spi_0_pins: spi-0-state {
+	spi_0_pins: spi-0-pins {
 		pins = "gpio38", "gpio39", "gpio40", "gpio41";
 		function = "blsp0_spi";
 		drive-strength = <8>;
@@ -80,9 +80,9 @@
 };
 
 &qusb_phy_1 {
-	status = "okay";
+	status = "ok";
 };
 
 &usb2 {
-	status = "okay";
+	status = "ok";
 };

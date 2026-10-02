@@ -32,16 +32,22 @@
 
 &uart0 {
 	status = "okay";
+	clocks = <&uart_clk>;
+	clock-names = "apb_pclk";
 };
 
 &uart1 {
 	status = "okay";
+	clocks = <&uart_clk>;
+	clock-names = "apb_pclk";
 };
 
 &piether {
 	status = "okay";
 	phy-handle = <&phy0>;
 	phy-mode = "rgmii-id";
+	clocks = <&clk300mhz>, <&clk125mhz>;
+	clock-names = "stmmaceth", "phy_ref_clk";
 
 	mdio0 {
 		#address-cells = <1>;
@@ -56,6 +62,7 @@
 
 &wdt {
 	status = "okay";
+	clocks = <&wdt_clk>;
 };
 
 &gpio {
@@ -67,9 +74,5 @@
 };
 
 &pwm {
-	status = "okay";
-};
-
-&pcie {
 	status = "okay";
 };

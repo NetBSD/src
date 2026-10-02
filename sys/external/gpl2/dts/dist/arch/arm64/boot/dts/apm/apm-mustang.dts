@@ -15,14 +15,14 @@
 
 	chosen { };
 
-	memory@100000000 {
+	memory {
 		device_type = "memory";
 		reg = < 0x1 0x00000000 0x0 0x80000000 >; /* Updated by bootloader */
 	};
 
 	gpio-keys {
 		compatible = "gpio-keys";
-		button {
+		button@1 {
 			label = "POWER";
 			linux,code = <116>;
 			linux,input-type = <0x1>;
@@ -32,7 +32,7 @@
 	};
 
 	poweroff_mbox: poweroff_mbox@10548000 {
-		compatible = "apm,mustang-poweroff-mailbox", "syscon";
+		compatible = "syscon";
 		reg = <0x0 0x10548000 0x0 0x30>;
 	};
 
@@ -45,36 +45,36 @@
 };
 
 &pcie0clk {
-	status = "okay";
+	status = "ok";
 };
 
 &pcie0 {
-	status = "okay";
+	status = "ok";
 };
 
 &serial0 {
-	status = "okay";
+	status = "ok";
 };
 
 &menet {
-	status = "okay";
+	status = "ok";
 };
 
 &sgenet0 {
-	status = "okay";
+	status = "ok";
 };
 
 &sgenet1 {
-	status = "okay";
+	status = "ok";
 };
 
 &xgenet {
-	status = "okay";
+	status = "ok";
 	rxlos-gpios = <&sbgpio 12 1>;
 };
 
 &mmc0 {
-	status = "okay";
+	status = "ok";
 };
 
 &mdio {

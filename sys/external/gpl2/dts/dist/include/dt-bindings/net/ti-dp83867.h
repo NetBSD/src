@@ -1,12 +1,12 @@
-/*	$NetBSD: ti-dp83867.h,v 1.1.1.3.34.1 2026/10/02 11:38:16 martin Exp $	*/
+/*	$NetBSD: ti-dp83867.h,v 1.1.1.3.34.2 2026/10/02 18:07:23 martin Exp $	*/
 
-/* SPDX-License-Identifier: GPL-2.0-only OR MIT */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Device Tree constants for the Texas Instruments DP83867 PHY
  *
  * Author: Dan Murphy <dmurphy@ti.com>
  *
- * Copyright (C) 2015-2024 Texas Instruments Incorporated - https://www.ti.com/
+ * Copyright:   (C) 2015 Texas Instruments, Inc.
  */
 
 #ifndef _DT_BINDINGS_TI_DP83867_H

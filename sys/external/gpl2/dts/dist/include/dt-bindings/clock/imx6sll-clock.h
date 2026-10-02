@@ -1,6 +1,6 @@
-/*	$NetBSD: imx6sll-clock.h,v 1.1.1.2.38.1 2026/10/02 11:37:53 martin Exp $	*/
+/*	$NetBSD: imx6sll-clock.h,v 1.1.1.2.38.2 2026/10/02 18:07:09 martin Exp $	*/
 
-/* SPDX-License-Identifier: GPL-2.0 */
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017-2018 NXP.

@@ -7,7 +7,6 @@
 / {
 	model = "Samsung Galaxy A3U (EUR)";
 	compatible = "samsung,a3u-eur", "qcom,msm8916";
-	chassis-type = "handset";
 
 	reg_panel_vdd3: regulator-panel-vdd3 {
 		compatible = "regulator-fixed";
@@ -15,7 +14,7 @@
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
 
-		gpio = <&tlmm 9 GPIO_ACTIVE_HIGH>;
+		gpio = <&msmgpio 9 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 
 		pinctrl-names = "default";
@@ -28,7 +27,7 @@
 		regulator-min-microvolt = <2800000>;
 		regulator-max-microvolt = <2800000>;
 
-		gpio = <&tlmm 86 GPIO_ACTIVE_HIGH>;
+		gpio = <&msmgpio 86 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 
 		pinctrl-names = "default";
@@ -41,7 +40,7 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 
-		gpio = <&tlmm 60 GPIO_ACTIVE_HIGH>;
+		gpio = <&msmgpio 60 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 
 		pinctrl-names = "default";
@@ -49,16 +48,15 @@
 	};
 };
 
+&touchkey {
+	vcc-supply = <&reg_touch_key>;
+	vdd-supply = <&reg_key_led>;
+};
+
 &accelerometer {
 	mount-matrix = "0", "1", "0",
 		       "1", "0", "0",
 		       "0", "0", "1";
-};
-
-&battery {
-	charge-term-current-microamp = <150000>;
-	constant-charge-current-max-microamp = <1000000>;
-	constant-charge-voltage-max-microvolt = <4350000>;
 };
 
 &blsp_i2c5 {
@@ -68,25 +66,21 @@
 		compatible = "zinitix,bt541";
 
 		reg = <0x20>;
-		interrupt-parent = <&tlmm>;
+		interrupt-parent = <&msmgpio>;
 		interrupts = <13 IRQ_TYPE_EDGE_FALLING>;
 
 		touchscreen-size-x = <540>;
 		touchscreen-size-y = <960>;
 
-		vcca-supply = <&reg_vdd_tsp_a>;
-		vdd-supply = <&pm8916_l6>;
+		vdd-supply = <&reg_vdd_tsp>;
+		vddo-supply = <&pm8916_l6>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&ts_int_default>;
 	};
 };
 
-&clk_pwm {
-	status = "okay";
-};
-
-&mdss_dsi0 {
+&dsi0 {
 	panel@0 {
 		reg = <0>;
 
@@ -94,44 +88,23 @@
 
 		vdd3-supply = <&reg_panel_vdd3>;
 		vci-supply = <&pm8916_l17>;
-		reset-gpios = <&tlmm 25 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_HIGH>;
 
 		port {
 			panel_in: endpoint {
-				remote-endpoint = <&mdss_dsi0_out>;
+				remote-endpoint = <&dsi0_out>;
 			};
 		};
 	};
 };
 
-&mdss_dsi0_out {
+&dsi0_out {
 	data-lanes = <0 1>;
 	remote-endpoint = <&panel_in>;
 };
 
-&touchkey {
-	vcc-supply = <&reg_touch_key>;
-	vdd-supply = <&reg_key_led>;
-};
-
-&vibrator {
-	status = "okay";
-};
-
-&wcnss {
-	status = "okay";
-};
-
-&wcnss_iris {
-	compatible = "qcom,wcn3620";
-};
-
-&wcnss_mem {
-	status = "okay";
-};
-
-&tlmm {
-	panel_vdd3_default: panel-vdd3-default-state {
+&msmgpio {
+	panel_vdd3_default: panel-vdd3-default {
 		pins = "gpio9";
 		function = "gpio";
 
@@ -139,7 +112,7 @@
 		bias-disable;
 	};
 
-	tkey_en_default: tkey-en-default-state {
+	tkey_en_default: tkey-en-default {
 		pins = "gpio86";
 		function = "gpio";
 
@@ -147,8 +120,16 @@
 		bias-disable;
 	};
 
-	tkey_led_en_default: tkey-led-en-default-state {
+	tkey_led_en_default: tkey-led-en-default {
 		pins = "gpio60";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	ts_int_default: ts-int-default {
+		pins = "gpio13";
 		function = "gpio";
 
 		drive-strength = <2>;

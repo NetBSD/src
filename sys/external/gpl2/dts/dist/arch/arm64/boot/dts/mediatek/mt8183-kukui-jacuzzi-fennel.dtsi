@@ -25,6 +25,3 @@
 	};
 };
 
-&i2c2 {
-	i2c-scl-internal-delay-ns = <21500>;
-};

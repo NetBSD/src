@@ -14,7 +14,7 @@
 		     "amlogic,meson-gxm";
 	model = "Libre Computer AML-S912-PC";
 
-	typec2_vbus: regulator-typec2-vbus {
+	typec2_vbus: regulator-typec2_vbus {
 		compatible = "regulator-fixed";
 		regulator-name = "TYPEC2_VBUS";
 		regulator-min-microvolt = <5000000>;
@@ -54,10 +54,6 @@
 		vbus-supply = <&typec2_vbus>;
 
 		status = "okay";
-
-		connector {
-			compatible = "usb-c-connector";
-		};
 	};
 };
 

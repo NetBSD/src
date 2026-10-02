@@ -69,7 +69,7 @@
 	flash@0 {
 		#address-cells = <1>;
 		#size-cells = <1>;
-		compatible = "micron,n25q128a11", "jedec,spi-nor";
+		compatible = "n25q128a11", "jedec,spi-nor";
 		reg = <0>;
 		spi-max-frequency = <10000000>;
 	};
@@ -110,7 +110,7 @@
 &i2c0 {
 	status = "okay";
 
-	i2c-mux@77 {
+	pca9547@77 {
 		compatible = "nxp,pca9547";
 		reg = <0x77>;
 		#address-cells = <1>;

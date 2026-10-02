@@ -12,7 +12,6 @@
 
 / {
 	model = "Mediatek X20 Development Board";
-	chassis-type = "embedded";
 	compatible = "archermind,mt6797-x20-dev", "mediatek,mt6797";
 
 	aliases {

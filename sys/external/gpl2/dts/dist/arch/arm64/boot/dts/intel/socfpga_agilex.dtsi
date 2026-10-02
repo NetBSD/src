@@ -60,27 +60,8 @@
 		};
 	};
 
-	firmware {
-		svc {
-			compatible = "intel,agilex-svc";
-			method = "smc";
-			memory-region = <&service_reserved>;
-
-			fpga_mgr: fpga-mgr {
-				compatible = "intel,agilex-soc-fpga-mgr";
-			};
-		};
-	};
-
-	fpga-region {
-		compatible = "fpga-region";
-		#address-cells = <0x2>;
-		#size-cells = <0x2>;
-		fpga-mgr = <&fpga_mgr>;
-	};
-
 	pmu {
-		compatible = "arm,cortex-a53-pmu";
+		compatible = "arm,armv8-pmuv3";
 		interrupts = <GIC_SPI 170 IRQ_TYPE_LEVEL_HIGH>,
 			     <GIC_SPI 171 IRQ_TYPE_LEVEL_HIGH>,
 			     <GIC_SPI 172 IRQ_TYPE_LEVEL_HIGH>,
@@ -149,13 +130,20 @@
 		compatible = "usb-nop-xceiv";
 	};
 
-	soc@0 {
+	soc {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "simple-bus";
 		device_type = "soc";
 		interrupt-parent = <&intc>;
 		ranges = <0 0 0 0xffffffff>;
+
+		base_fpga_region {
+			#address-cells = <0x1>;
+			#size-cells = <0x1>;
+			compatible = "fpga-region";
+			fpga-mgr = <&fpga_mgr>;
+		};
 
 		clkmgr: clock-controller@ffd10000 {
 			compatible = "intel,agilex-clkmgr";
@@ -170,7 +158,7 @@
 			interrupt-names = "macirq";
 			mac-address = [00 00 00 00 00 00];
 			resets = <&rst EMAC0_RESET>, <&rst EMAC0_OCP_RESET>;
-			reset-names = "stmmaceth", "ahb";
+			reset-names = "stmmaceth", "stmmaceth-ocp";
 			tx-fifo-depth = <16384>;
 			rx-fifo-depth = <16384>;
 			snps,multicast-filter-bins = <256>;
@@ -188,7 +176,7 @@
 			interrupt-names = "macirq";
 			mac-address = [00 00 00 00 00 00];
 			resets = <&rst EMAC1_RESET>, <&rst EMAC1_OCP_RESET>;
-			reset-names = "stmmaceth", "ahb";
+			reset-names = "stmmaceth", "stmmaceth-ocp";
 			tx-fifo-depth = <16384>;
 			rx-fifo-depth = <16384>;
 			snps,multicast-filter-bins = <256>;
@@ -206,7 +194,7 @@
 			interrupt-names = "macirq";
 			mac-address = [00 00 00 00 00 00];
 			resets = <&rst EMAC2_RESET>, <&rst EMAC2_OCP_RESET>;
-			reset-names = "stmmaceth", "ahb";
+			reset-names = "stmmaceth", "stmmaceth-ocp";
 			tx-fifo-depth = <16384>;
 			rx-fifo-depth = <16384>;
 			snps,multicast-filter-bins = <256>;
@@ -312,7 +300,7 @@
 			status = "disabled";
 		};
 
-		mmc: mmc@ff808000 {
+		mmc: dwmmc0@ff808000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "altr,socfpga-dw-mshc";
@@ -325,7 +313,6 @@
 				 <&clkmgr AGILEX_SDMMC_CLK>;
 			clock-names = "biu", "ciu";
 			iommus = <&smmu 5>;
-			altr,sysmgr-syscon = <&sysmgr 0x28 4>;
 			status = "disabled";
 		};
 
@@ -348,12 +335,9 @@
 		ocram: sram@ffe00000 {
 			compatible = "mmio-sram";
 			reg = <0xffe00000 0x40000>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-			ranges = <0 0xffe00000 0x40000>;
 		};
 
-		pdma: dma-controller@ffda0000 {
+		pdma: pdma@ffda0000 {
 			compatible = "arm,pl330", "arm,primecell";
 			reg = <0xffda0000 0x1000>;
 			interrupts = <GIC_SPI 81 IRQ_TYPE_LEVEL_HIGH>,
@@ -366,31 +350,18 @@
 				     <GIC_SPI 88 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 89 IRQ_TYPE_LEVEL_HIGH>;
 			#dma-cells = <1>;
+			#dma-channels = <8>;
+			#dma-requests = <32>;
 			resets = <&rst DMA_RESET>, <&rst DMA_OCP_RESET>;
 			reset-names = "dma", "dma-ocp";
 			clocks = <&clkmgr AGILEX_L4_MAIN_CLK>;
 			clock-names = "apb_pclk";
 		};
 
-		pinctrl0: pinctrl@ffd13000 {
-			compatible = "pinctrl-single";
-			#pinctrl-cells = <1>;
-			reg = <0xffd13000 0xa0>;
-			pinctrl-single,register-width = <32>;
-			pinctrl-single,function-mask = <0x0000000f>;
-		};
-
-		pinctrl1: pinctrl@ffd13100 {
-			compatible = "pinctrl-single";
-			#pinctrl-cells = <1>;
-			reg = <0xffd13100 0x20>;
-			pinctrl-single,register-width = <32>;
-		};
-
 		rst: rstmgr@ffd11000 {
-			compatible = "altr,stratix10-rst-mgr", "altr,rst-mgr";
-			reg = <0xffd11000 0x100>;
 			#reset-cells = <1>;
+			compatible = "altr,stratix10-rst-mgr";
+			reg = <0xffd11000 0x100>;
 		};
 
 		smmu: iommu@fa000000 {
@@ -531,7 +502,7 @@
 		};
 
 		usb0: usb@ffb00000 {
-			compatible = "intel,socfpga-agilex-hsotg", "snps,dwc2";
+			compatible = "snps,dwc2";
 			reg = <0xffb00000 0x40000>;
 			interrupts = <GIC_SPI 93 IRQ_TYPE_LEVEL_HIGH>;
 			phys = <&usbphy0>;
@@ -539,13 +510,12 @@
 			resets = <&rst USB0_RESET>, <&rst USB0_OCP_RESET>;
 			reset-names = "dwc2", "dwc2-ecc";
 			clocks = <&clkmgr AGILEX_USB_CLK>;
-			clock-names = "otg";
 			iommus = <&smmu 6>;
 			status = "disabled";
 		};
 
 		usb1: usb@ffb40000 {
-			compatible = "intel,socfpga-agilex-hsotg", "snps,dwc2";
+			compatible = "snps,dwc2";
 			reg = <0xffb40000 0x40000>;
 			interrupts = <GIC_SPI 94 IRQ_TYPE_LEVEL_HIGH>;
 			phys = <&usbphy0>;
@@ -612,7 +582,7 @@
 			sdramedac {
 				compatible = "altr,sdram-edac-s10";
 				altr,sdr-syscon = <&sdr>;
-				interrupts = <16 IRQ_TYPE_LEVEL_HIGH>;
+				interrupts = <16 4>;
 			};
 
 			ocram-ecc@ff8cc000 {
@@ -620,7 +590,7 @@
 					     "altr,socfpga-a10-ocram-ecc";
 				reg = <0xff8cc000 0x100>;
 				altr,ecc-parent = <&ocram>;
-				interrupts = <1 IRQ_TYPE_LEVEL_HIGH>;
+				interrupts = <1 4>;
 			};
 
 			usb0-ecc@ff8c4000 {
@@ -628,7 +598,7 @@
 					     "altr,socfpga-usb-ecc";
 				reg = <0xff8c4000 0x100>;
 				altr,ecc-parent = <&usb0>;
-				interrupts = <2 IRQ_TYPE_LEVEL_HIGH>;
+				interrupts = <2 4>;
 			};
 
 			emac0-rx-ecc@ff8c0000 {
@@ -636,7 +606,7 @@
 					     "altr,socfpga-eth-mac-ecc";
 				reg = <0xff8c0000 0x100>;
 				altr,ecc-parent = <&gmac0>;
-				interrupts = <4 IRQ_TYPE_LEVEL_HIGH>;
+				interrupts = <4 4>;
 			};
 
 			emac0-tx-ecc@ff8c0400 {
@@ -644,7 +614,7 @@
 					     "altr,socfpga-eth-mac-ecc";
 				reg = <0xff8c0400 0x100>;
 				altr,ecc-parent = <&gmac0>;
-				interrupts = <5 IRQ_TYPE_LEVEL_HIGH>;
+				interrupts = <5 4>;
 			};
 
 			sdmmca-ecc@ff8c8c00 {
@@ -652,13 +622,13 @@
 					     "altr,socfpga-sdmmc-ecc";
 				reg = <0xff8c8c00 0x100>;
 				altr,ecc-parent = <&mmc>;
-				interrupts = <14 IRQ_TYPE_LEVEL_HIGH>,
-					     <15 IRQ_TYPE_LEVEL_HIGH>;
+				interrupts = <14 4>,
+					     <15 4>;
 			};
 		};
 
 		qspi: spi@ff8d2000 {
-			compatible = "intel,socfpga-qspi", "cdns,qspi-nor";
+			compatible = "cdns,qspi-nor";
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0xff8d2000 0x100>,
@@ -670,6 +640,18 @@
 			clocks = <&qspi_clk>;
 
 			status = "disabled";
+		};
+
+		firmware {
+			svc {
+				compatible = "intel,agilex-svc";
+				method = "smc";
+				memory-region = <&service_reserved>;
+
+				fpga_mgr: fpga-mgr {
+					compatible = "intel,agilex-soc-fpga-mgr";
+				};
+			};
 		};
 	};
 };

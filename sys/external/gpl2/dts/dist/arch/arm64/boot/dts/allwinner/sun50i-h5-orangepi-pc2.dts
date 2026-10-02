@@ -3,7 +3,6 @@
 
 /dts-v1/;
 #include "sun50i-h5.dtsi"
-#include "sun50i-h5-cpu-opp.dtsi"
 
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
@@ -55,10 +54,10 @@
 		};
 	};
 
-	gpio-keys {
+	r-gpio-keys {
 		compatible = "gpio-keys";
 
-		key-sw4 {
+		sw4 {
 			label = "sw4";
 			linux,code = <BTN_0>;
 			gpios = <&r_pio 0 3 GPIO_ACTIVE_LOW>;

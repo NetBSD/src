@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic,meson-g12a-reset.h,v 1.1.1.1.38.1 2026/10/02 11:38:21 martin Exp $	*/
+/*	$NetBSD: amlogic,meson-g12a-reset.h,v 1.1.1.1.38.2 2026/10/02 18:07:27 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause */
 /*
@@ -71,9 +71,7 @@
 #define RESET_PARSER_FETCH		72
 #define RESET_CTL			73
 #define RESET_PARSER_TOP		74
-/*					75	*/
-#define RESET_NNA			76
-/*					77	*/
+/*					75-77	*/
 #define RESET_DVALIN			78
 #define RESET_HDMITX			79
 /*					80-95	*/

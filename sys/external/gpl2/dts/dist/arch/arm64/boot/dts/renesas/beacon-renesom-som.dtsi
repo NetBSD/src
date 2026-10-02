@@ -4,7 +4,7 @@
  */
 
 #include <dt-bindings/gpio/gpio.h>
-#include <dt-bindings/clock/versaclock.h>
+#include <dt-bindings/clk/versaclock.h>
 
 / {
 	memory@48000000 {
@@ -20,7 +20,7 @@
 		clock-output-names = "osc_32k";
 	};
 
-	reg_1p8v: regulator-1p8v {
+	reg_1p8v: regulator0 {
 		compatible = "regulator-fixed";
 		regulator-name = "fixed-1.8V";
 		regulator-min-microvolt = <1800000>;
@@ -29,7 +29,7 @@
 		regulator-always-on;
 	};
 
-	reg_3p3v: regulator-3p3v {
+	reg_3p3v: regulator1 {
 		compatible = "regulator-fixed";
 		regulator-name = "fixed-3.3V";
 		regulator-min-microvolt = <3300000>;
@@ -50,7 +50,6 @@
 &avb {
 	pinctrl-0 = <&avb_pins>;
 	pinctrl-names = "default";
-	phy-mode = "rgmii-rxid";
 	phy-handle = <&phy0>;
 	rx-internal-delay-ps = <1800>;
 	tx-internal-delay-ps = <2000>;
@@ -59,10 +58,9 @@
 	status = "okay";
 
 	phy0: ethernet-phy@0 {
-		compatible = "ethernet-phy-id0022.1640",
-			     "ethernet-phy-ieee802.3-c22";
 		reg = <0>;
-		interrupts-extended = <&gpio2 11 IRQ_TYPE_LEVEL_LOW>;
+		interrupt-parent = <&gpio2>;
+		interrupts = <11 IRQ_TYPE_LEVEL_LOW>;
 		reset-gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
 	};
 };
@@ -76,7 +74,7 @@
 };
 
 &gpio6 {
-	usb-hub-reset-hog {
+	usb_hub_reset {
 		gpio-hog;
 		gpios = <10 GPIO_ACTIVE_HIGH>;
 		output-high;
@@ -292,6 +290,7 @@
 	vqmmc-supply = <&reg_1p8v>;
 	non-removable;
 	cap-power-off-card;
+	pm-ignore-notify;
 	keep-power-in-suspend;
 	mmc-pwrseq = <&wlan_pwrseq>;
 	status = "okay";
