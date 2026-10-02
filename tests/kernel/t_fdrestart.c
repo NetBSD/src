@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdrestart.c,v 1.10 2026/10/02 14:54:50 riastradh Exp $	*/
+/*	$NetBSD: t_fdrestart.c,v 1.11 2026/10/02 14:59:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* ERESTART */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdrestart.c,v 1.10 2026/10/02 14:54:50 riastradh Exp $");
+__RCSID("$NetBSD: t_fdrestart.c,v 1.11 2026/10/02 14:59:25 riastradh Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -372,18 +372,9 @@ doit(void *cookie)
 }
 
 static void
-on_sigalrm(int signo)
-{
-
-	atf_tc_fail("timed out");
-}
-
-static void
 testfdrestart(struct fdrestart *F)
 {
 	pthread_t t;
-
-	REQUIRE_LIBC(signal(SIGALRM, &on_sigalrm), SIG_ERR);
 
 	RZ(pthread_barrier_init(&F->barrier, NULL, 2));
 	RZ(pthread_create(&t, NULL, &doit, F));
@@ -518,7 +509,8 @@ ATF_TC_BODY(fifo_read, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &doread;
 	F->fd = fifo_setup(O_RDONLY);
-	atf_tc_expect_fail("PR kern/57659:" /* similar bug for fifos */
+	/* similar bug for fifos */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
 	    " closing pipe writefd fails to wake concurrent write"
 	    " on same writefd");
 	testfdrestart(F);
@@ -539,7 +531,8 @@ ATF_TC_BODY(fifo_pollread, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &dopollread;
 	F->fd = fifo_setup(O_RDONLY);
-	atf_tc_expect_fail("PR kern/57659:" /* similar bug for fifos */
+	/* similar bug for fifos */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
 	    " closing pipe writefd fails to wake concurrent write"
 	    " on same writefd");
 	testfdrestart(F);
@@ -560,7 +553,8 @@ ATF_TC_BODY(fifo_selectread, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &doselectread;
 	F->fd = fifo_setup(O_RDONLY);
-	atf_tc_expect_fail("PR kern/57659:" /* similar bug for fifos */
+	/* similar bug for fifos */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
 	    " closing pipe writefd fails to wake concurrent write"
 	    " on same writefd");
 	testfdrestart(F);
@@ -581,7 +575,8 @@ ATF_TC_BODY(fifo_write, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &dowrite;
 	F->fd = fifo_setup(O_WRONLY);
-	atf_tc_expect_fail("PR kern/57659:" /* similar bug for fifos */
+	/* similar bug for fifos */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
 	    " closing pipe writefd fails to wake concurrent write"
 	    " on same writefd");
 	testfdrestart(F);
@@ -702,7 +697,9 @@ ATF_TC_BODY(pipe_write, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &dowrite;
 	F->fd = fd[1];
-	atf_tc_expect_fail("PR kern/57659");
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
 	testfdrestart(F);
 }
 
@@ -765,7 +762,8 @@ ATF_TC_BODY(ptyhost_read, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &doread;
 	F->fd = hostfd;
-	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty host side */
+	/* similar bug for pty host side */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
 	    " closing pipe writefd fails to wake concurrent write"
 	    " on same writefd");
 	testfdrestart(F);
@@ -830,7 +828,8 @@ ATF_TC_BODY(ptyhost_write, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &dowrite;
 	F->fd = hostfd;
-	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty host side */
+	/* similar bug for pty host side */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
 	    " closing pipe writefd fails to wake concurrent write"
 	    " on same writefd");
 	testfdrestart(F);
@@ -895,7 +894,8 @@ ATF_TC_BODY(ptyapp_read, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &doread;
 	F->fd = appfd;
-	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty app side */
+	/* similar bug for pty app side */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
 	    " closing pipe writefd fails to wake concurrent write"
 	    " on same writefd");
 	testfdrestart(F);
@@ -960,7 +960,8 @@ ATF_TC_BODY(ptyapp_write, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &dowrite;
 	F->fd = appfd;
-	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty app side */
+	/* similar bug for pty app side */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
 	    " closing pipe writefd fails to wake concurrent write"
 	    " on same writefd");
 	testfdrestart(F);
@@ -984,7 +985,8 @@ ATF_TC_BODY(ptyapp_pollwrite, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &dopollwrite;
 	F->fd = appfd;
-	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty app side */
+	/* similar bug for pty app side */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
 	    " closing pipe writefd fails to wake concurrent write"
 	    " on same writefd");
 	testfdrestart(F);
@@ -1008,7 +1010,8 @@ ATF_TC_BODY(ptyapp_selectwrite, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &doselectwrite;
 	F->fd = appfd;
-	atf_tc_expect_fail("PR kern/57659:" /* similar bug for pty app side */
+	/* similar bug for pty app side */
+	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
 	    " closing pipe writefd fails to wake concurrent write"
 	    " on same writefd");
 	testfdrestart(F);
