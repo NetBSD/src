@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.5 2026/10/02 05:03:07 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.6 2026/10/02 11:51:17 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -30,4 +30,21 @@ usr.sbin/npf/npfctl/npf_build.c			1.64,1.67
 
 	npf: PR 60740: improve error message when table updates fail.
 	[joe, ticket #1344]
+
+sys/dev/ic/rtl8169.c				1.184
+
+	re(4): fix mangled TX queue on DMA map loading errors.
+	[tsutsui, ticket #1346]
+
+sys/arch/mips/mips/mipsX_subr.S			1.119
+
+	mips: PR 60664: fix rdhwr emulation wrt TLB misses on loading the
+	faulting instruction.
+	[skrll, ticket #1347]
+
+share/examples/npf/host-npf.conf		1.13,1.14
+share/examples/npf/soho_gw-npf.conf		1.22
+
+	Fix a couple more ``blacklist --> blocklist''
+	[hgutch, ticket #1348]
 
