@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.16 2026/09/22 10:47:11 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.17 2026/10/02 05:02:37 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -695,4 +695,19 @@ sys/dev/ic/mk48txxvar.h 			(apply patch)
 					 
 	mk48txx(4): handle TODR difference between current and 11
 	[jdc, ticket #491]
+
+sys/arch/atari/atari/atari_init.c		1.121,1.122
+
+	atari: fix 68030 MMU TC initialization and SRP setup bugs.
+	[tsutsui, ticket #492]
+
+sys/kern/vfs_bio.c				1.309
+
+	vfs_bio: PR 60584: retry fresh buffer allocation if recycling fails.
+	[tsutsui, ticket #493]
+
+usr.sbin/npf/npfctl/npf_build.c			1.64,1.67
+
+	npf: PR 60740: improve error message when table updates fail.
+	[joe, ticket #494]
 
