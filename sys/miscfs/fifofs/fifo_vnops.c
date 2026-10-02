@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.93 2026/10/01 22:45:44 riastradh Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.94 2026/10/02 03:53:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.93 2026/10/01 22:45:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.94 2026/10/02 03:53:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,8 +206,7 @@ fifo_open(void *v)
 		} else {
 			uint64_t wgen = fip->fi_wgen;
 
-			while (!soreadable(rso) && fip->fi_writers == 0 &&
-			    wgen == fip->fi_wgen) {
+			while (fip->fi_writers == 0 && wgen == fip->fi_wgen) {
 				VOP_UNLOCK(vp);
 				error = cv_wait_sig(&fip->fi_rcv,
 				    wso->so_lock);

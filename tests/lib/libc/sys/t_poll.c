@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.17 2026/09/23 18:25:45 riastradh Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.18 2026/10/02 03:53:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -1241,12 +1241,6 @@ ATF_TC_BODY(pollclosedpeer_fifo0_immediate_readsome, tc)
 {
 	int writefd, readfd;
 
-	/*
-	 * poll(2) returns nothing, when it is supposed to return
-	 * POLLHUP|POLLIN.
-	 */
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
-
 	pollclosed_fifo1_setup(&writefd, &readfd); /* reverse r/w */
 	fillpipebuf(writefd);
 	check_pollclosedpeer_immediate_readsome(readfd, writefd, POLLHUP);
@@ -1293,13 +1287,6 @@ ATF_TC_BODY(pollclosedpeer_fifo0_delayed_process_read, tc)
 {
 	int writefd, readfd;
 
-	/*
-	 * poll(2) wakes up with POLLHUP|POLLIN, but the state isn't
-	 * persistent as it is supposed to be -- it returns nothing
-	 * after that.
-	 */
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
-
 	pollclosed_fifo1_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
 	check_pollclosedpeer_delayed_process(readfd, writefd,
@@ -1331,13 +1318,6 @@ ATF_TC_HEAD(pollclosedpeer_fifo0_delayed_thread_read, tc)
 ATF_TC_BODY(pollclosedpeer_fifo0_delayed_thread_read, tc)
 {
 	int writefd, readfd;
-
-	/*
-	 * poll(2) wakes up with POLLHUP|POLLIN, but the state isn't
-	 * persistent as it is supposed to be -- it returns nothing
-	 * after that.
-	 */
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
 
 	pollclosed_fifo1_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
@@ -1385,12 +1365,6 @@ ATF_TC_BODY(pollclosedpeer_fifo1_immediate_readsome, tc)
 {
 	int writefd, readfd;
 
-	/*
-	 * poll(2) returns nothing, when it is supposed to return
-	 * POLLHUP|POLLIN.
-	 */
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
-
 	pollclosed_fifo0_setup(&writefd, &readfd); /* reverse r/w */
 	fillpipebuf(writefd);
 	check_pollclosedpeer_immediate_readsome(readfd, writefd, POLLHUP);
@@ -1437,13 +1411,6 @@ ATF_TC_BODY(pollclosedpeer_fifo1_delayed_process_read, tc)
 {
 	int writefd, readfd;
 
-	/*
-	 * poll(2) wakes up with POLLHUP|POLLIN, but the state isn't
-	 * persistent as it is supposed to be -- it returns nothing
-	 * after that.
-	 */
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
-
 	pollclosed_fifo0_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
 	check_pollclosedpeer_delayed_process(readfd, writefd,
@@ -1475,13 +1442,6 @@ ATF_TC_HEAD(pollclosedpeer_fifo1_delayed_thread_read, tc)
 ATF_TC_BODY(pollclosedpeer_fifo1_delayed_thread_read, tc)
 {
 	int writefd, readfd;
-
-	/*
-	 * poll(2) wakes up with POLLHUP|POLLIN, but the state isn't
-	 * persistent as it is supposed to be -- it returns nothing
-	 * after that.
-	 */
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
 
 	pollclosed_fifo0_setup(&writefd, &readfd); /* reverse r/w */
 	/* don't fill pipe buf */
