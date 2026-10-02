@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.306 2026/05/10 14:19:11 tls Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.307 2026/10/02 18:53:54 riastradh Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -121,6 +121,14 @@ CWARNFLAGS+=	-Walloca
 .if defined(HAVE_GCC) || defined(HAVE_LLVM)
 CFLAGS+=	-fno-strict-aliasing
 CFLAGS+=	-fno-common
+.endif
+
+.if ${HAVE_GCC:U0} >= 12 || defined(HAVE_LLVM)
+CFLAGS+=	-ftrivial-auto-var-init=pattern
+#CFLAGS+=	-ftrivial-auto-var-init=zero
+#.  if defined(HAVE_LLVM)
+#CFLAGS+=	-enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang-arg
+#.  endif
 .endif
 
 # Use the per-source COPTS variables to add -g to just those
