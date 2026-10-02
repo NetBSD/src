@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.140 2026/07/06 13:03:33 riastradh Exp $
+#	$NetBSD: Makefile.rump,v 1.141 2026/10/02 21:29:04 riastradh Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -58,6 +58,12 @@ CPPFLAGS+=	${RUMP_NBCOMPAT:C/^[1-9][0-9]*/-DCOMPAT_&/g}
 
 CPPFLAGS+=	-nostdinc
 CFLAGS+=	-ffreestanding -fno-strict-aliasing
+
+CFLAGS+=	${${ACTIVE_CC} == "gcc":?${${HAVE_GCC} >= 12:?-ftrivial-auto-var-init=pattern:}:}
+CFLAGS+=	${${ACTIVE_CC} == "clang":?-ftrivial-auto-var-init=pattern:}
+#CFLAGS+=	${${ACTIVE_CC} == "gcc":?${${HAVE_GCC} >= 12:?-ftrivial-auto-var-init=zero:}:}
+#CFLAGS+=	${${ACTIVE_CC} == "clang":?-ftrivial-auto-var-init=zero:}
+#CFLAGS+=	${${ACTIVE_CC} == "clang":?-enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang-arg:}
 
 CWARNFLAGS+=	-Wno-format-zero-length -Wno-pointer-sign
 
