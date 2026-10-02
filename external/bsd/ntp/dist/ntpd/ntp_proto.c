@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.20 2024/08/18 20:47:17 christos Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.20.2.1 2026/10/02 11:52:34 martin Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 4 protocol machinery
@@ -2308,37 +2308,28 @@ receive(
 	 * this maximum and advance the headway to give the sender some
 	 * headroom. Very intricate.
 	 */
+	peer->ppoll = max(peer->minpoll, pkt->ppoll);
 
 	/*
 	 * Check for any kiss codes. Note this is only used when a server
-	 * responds to a packet request.
+	 * responds to a client request.
 	 */
-
-	/*
-	 * Check to see if this is a RATE Kiss Code
-	 * Currently this kiss code will accept whatever valid poll
-	 * rate that the server sends
-	 */
-	if (   (NTP_MINPOLL > pkt->ppoll)
-	    || (NTP_MAXPOLL < pkt->ppoll)
-	   ) {
-		DPRINTF(2, ("RATEKISS: Invalid ppoll (%d) from %s\n",
-				pkt->ppoll, stoa(&rbufp->recv_srcadr)));
-		sys_badlength++;
-		return;			/* invalid packet poll */
-	}
-	peer->ppoll = max(peer->minpoll, pkt->ppoll);
 	if (kissCode == RATEKISS) {
+		if (   pkt->ppoll < NTP_MINPOLL
+		    || pkt->ppoll > NTP_MAXPOLL) {
+			DPRINTF(2, ("Ignoring ppoll %d RATE KoD from %s\n",
+				    pkt->ppoll, stoa(&rbufp->recv_srcadr)));
+			sys_badlength++;
+			return;			/* invalid packet poll */
+		}
 		peer->selbroken++;	/* Increment the KoD count */
 		report_event(PEVNT_RATE, peer, NULL);
-		if (pkt->ppoll > peer->minpoll)
-			peer->minpoll = peer->ppoll;
+		peer->minpoll = peer->ppoll;
 		peer->burst = peer->retry = 0;
 		peer->throttle = (NTP_SHIFT + 1) * (1 << peer->minpoll);
 		poll_update(peer, pkt->ppoll, 0);
 		return;				/* kiss-o'-death */
-	}
-	if (kissCode != NOKISS) {
+	} else if (kissCode != NOKISS) {
 		peer->selbroken++;	/* Increment the KoD count */
 		return;		/* Drop any other kiss code packets */
 	}
