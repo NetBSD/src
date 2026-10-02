@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdrestart.c,v 1.9 2026/09/25 01:10:45 riastradh Exp $	*/
+/*	$NetBSD: t_fdrestart.c,v 1.10 2026/10/02 14:54:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* ERESTART */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdrestart.c,v 1.9 2026/09/25 01:10:45 riastradh Exp $");
+__RCSID("$NetBSD: t_fdrestart.c,v 1.10 2026/10/02 14:54:50 riastradh Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -200,7 +200,7 @@ fillpipebuf(int fd)
 		ATF_REQUIRE_MSG(nspace >= 0, "nspace=%d", nspace);
 		if (nspace == 0)
 			break;
-		RL(rump_sys_write(fd, buf, (size_t)nspace));
+		RL(rump_sys_write(fd, buf, MIN((size_t)nspace, sizeof(buf))));
 	}
 }
 
@@ -426,24 +426,28 @@ fifo_setup(int flags)
 	RL(rfd = rump_sys_open("/mnt/fifo", O_RDONLY|O_NONBLOCK));
 
 	/*
-	 * If the caller asked for the read side, return it.
-	 * Otherwise, open the write side (but leave the reader side
-	 * open so that write will block rather than fail with
-	 * EPIPE/SIGPIPE).
+	 * Open the writer side.
+	 *
+	 * => If the caller asked for the read side, we need to have a
+	 *    writer open so reads don't immediately return EOF.
+	 *
+	 * => If the caller asked for the write side, we need to open
+	 *    that -- and leave the read side open so that the write
+	 *    will block rather than fail with EPIPE/SIGPIPE.
 	 */
+	RL(wfd = rump_sys_open("/mnt/fifo", O_WRONLY|O_NONBLOCK));
 	switch (flags) {
 	case O_RDONLY:
 		fd = rfd;
-		goto out;
+		break;
 	case O_WRONLY:
-		RL(wfd = rump_sys_open("/mnt/fifo", O_WRONLY|O_NONBLOCK));
 		fd = wfd;
-		goto out;
+		break;
 	default:
 		atf_tc_fail("invalid fifo setup flags");
 	}
 
-out:	/*
+	/*
 	 * Whichever side the caller wanted, make it blocking.
 	 */
 	RL(flags = rump_sys_fcntl(fd, F_GETFL));
@@ -477,8 +481,6 @@ ptysetup(int *hostfd, int *appfd)
 	RL(rump_sys_ioctl(*appfd, TIOCGETA, &t));
 	t.c_lflag &= ~ICANON;	/* block rather than drop input */
 	RL(rump_sys_ioctl(*appfd, TIOCSETA, &t));
-
-	fprintf(stderr, "hostfd=%d appfd=%d\n", *hostfd, *appfd);
 }
 
 union sockaddr_union {
@@ -537,6 +539,9 @@ ATF_TC_BODY(fifo_pollread, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &dopollread;
 	F->fd = fifo_setup(O_RDONLY);
+	atf_tc_expect_fail("PR kern/57659:" /* similar bug for fifos */
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
 	testfdrestart(F);
 }
 
@@ -555,6 +560,9 @@ ATF_TC_BODY(fifo_selectread, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &doselectread;
 	F->fd = fifo_setup(O_RDONLY);
+	atf_tc_expect_fail("PR kern/57659:" /* similar bug for fifos */
+	    " closing pipe writefd fails to wake concurrent write"
+	    " on same writefd");
 	testfdrestart(F);
 }
 
