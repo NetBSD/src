@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.175 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.175.4.1 2026/10/02 10:23:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.175 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.175.4.1 2026/10/02 10:23:13 martin Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1604,8 +1604,9 @@ re_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 	ofree = sc->re_ldata.re_txq_free;
+	idx = sc->re_ldata.re_txq_prodidx;
 
-	for (idx = sc->re_ldata.re_txq_prodidx;; idx = RE_NEXT_TXQ(sc, idx)) {
+	for (;;) {
 
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
@@ -1804,6 +1805,8 @@ re_start(struct ifnet *ifp)
 		sc->re_ldata.re_txq_free--;
 		sc->re_ldata.re_tx_free -= nsegs;
 		sc->re_ldata.re_tx_nextfree = curdesc;
+
+		idx = RE_NEXT_TXQ(sc, idx);
 
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
