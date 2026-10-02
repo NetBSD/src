@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdpass.c,v 1.3 2026/10/02 01:31:12 riastradh Exp $	*/
+/*	$NetBSD: t_fdpass.c,v 1.4 2026/10/02 01:31:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdpass.c,v 1.3 2026/10/02 01:31:12 riastradh Exp $");
+__RCSID("$NetBSD: t_fdpass.c,v 1.4 2026/10/02 01:31:31 riastradh Exp $");
 
 #include <sys/param.h>		/* needed by sys/mbuf.h */
 
@@ -336,20 +336,7 @@ ATF_TC_BODY(pr60832, tc)
 		const unsigned nfds = i + 1;
 
 		printf("test %u fd%s\n", nfds, nfds == 1 ? "" : "s");
-
-		if (CMSG_SPACE(nfds * sizeof(int)) <
-		    CMSG_SPACE(nfds * sizeof(struct file *))) {
-			atf_tc_expect_fail("PR kern/60832:"
-			    " AF_LOCAL stream: sendmsg() with SCM_RIGHTS"
-			    " silently drops data and descriptors"
-			    " but reports success");
-		}
-
 		test_pr60832(fds, nfds);
-
-		if (CMSG_SPACE(nfds * sizeof(int)) <
-		    CMSG_SPACE(nfds * sizeof(struct file *)))
-			atf_tc_expect_pass();
 	}
 }
 
