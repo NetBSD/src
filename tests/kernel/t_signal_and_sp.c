@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signal_and_sp.c,v 1.24 2026/08/28 12:04:02 riastradh Exp $	*/
+/*	$NetBSD: t_signal_and_sp.c,v 1.25 2026/10/02 16:22:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	__EXPOSE_STACK	/* <sys/param.h>: expose STACK_ALIGNBYTES */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_signal_and_sp.c,v 1.24 2026/08/28 12:04:02 riastradh Exp $");
+__RCSID("$NetBSD: t_signal_and_sp.c,v 1.25 2026/10/02 16:22:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resource.h>
@@ -881,6 +881,10 @@ ATF_TC_BODY(getstack_failedspawn_rlimit_data, tc)
 	rlim = rlim0;
 	rlim.rlim_cur = 0;
 	RL(setrlimit(RLIMIT_DATA, &rlim));
+#ifdef __sparc__
+	atf_tc_expect_fail("PR port-sparc/60838:"
+	    " sparc fails to enforce RLIMIT_DATA on exec");
+#endif
 	ATF_CHECK_ERRNO(ENOMEM,
 	    (errno = posix_spawn(&pid, argv[0], NULL, NULL, argv, NULL)) != 0);
 	RL(setrlimit(RLIMIT_DATA, &rlim0));
@@ -1096,6 +1100,10 @@ ATF_TC_BODY(getstack_failedexec_rlimit_data, tc)
 	rlim = rlim0;
 	rlim.rlim_cur = 0;
 	RL(setrlimit(RLIMIT_DATA, &rlim));
+#ifdef __sparc__
+	atf_tc_expect_fail("PR port-sparc/60838:"
+	    " sparc fails to enforce RLIMIT_DATA on exec");
+#endif
 	ATF_CHECK_ERRNO(ENOMEM, execve(argv[0], argv, NULL) == -1);
 	RL(setrlimit(RLIMIT_DATA, &rlim0));
 	ATF_CHECK(checkgetstack() == 0);
