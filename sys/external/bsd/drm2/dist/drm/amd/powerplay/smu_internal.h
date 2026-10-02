@@ -1,4 +1,4 @@
-/*	$NetBSD: smu_internal.h,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: smu_internal.h,v 1.3 2026/10/02 20:56:36 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -113,7 +113,7 @@ int smu_send_smc_msg(struct smu_context *smu, enum smu_message_type msg);
 	((smu)->ppt_funcs->set_default_od8_settings ? (smu)->ppt_funcs->set_default_od8_settings((smu)) : 0)
 
 #define smu_get_current_clk_freq(smu, clk_id, value) \
-	((smu)->ppt_funcs->get_current_clk_freq? (smu)->ppt_funcs->get_current_clk_freq((smu), (clk_id), (value)) : 0)
+	((smu)->ppt_funcs->get_current_clk_freq? (smu)->ppt_funcs->get_current_clk_freq((smu), (clk_id), (value)) : -EINVAL)
 
 #define smu_tables_init(smu, tab) \
 	((smu)->ppt_funcs->tables_init ? (smu)->ppt_funcs->tables_init((smu), (tab)) : 0)
@@ -140,7 +140,7 @@ int smu_send_smc_msg(struct smu_context *smu, enum smu_message_type msg);
 #define smu_unforce_dpm_levels(smu) \
 	((smu)->ppt_funcs->unforce_dpm_levels ? (smu)->ppt_funcs->unforce_dpm_levels((smu)) : 0)
 #define smu_get_profiling_clk_mask(smu, level, sclk_mask, mclk_mask, soc_mask) \
-	((smu)->ppt_funcs->get_profiling_clk_mask ? (smu)->ppt_funcs->get_profiling_clk_mask((smu), (level), (sclk_mask), (mclk_mask), (soc_mask)) : 0)
+	((smu)->ppt_funcs->get_profiling_clk_mask ? (smu)->ppt_funcs->get_profiling_clk_mask((smu), (level), (sclk_mask), (mclk_mask), (soc_mask)) : -EINVAL)
 #define smu_set_cpu_power_state(smu) \
 	((smu)->ppt_funcs->set_cpu_power_state ? (smu)->ppt_funcs->set_cpu_power_state((smu)) : 0)
 
@@ -159,18 +159,18 @@ int smu_send_smc_msg(struct smu_context *smu, enum smu_message_type msg);
 #define smu_run_btc(smu) \
 	((smu)->ppt_funcs? ((smu)->ppt_funcs->run_btc? (smu)->ppt_funcs->run_btc((smu)) : 0) : 0)
 #define smu_get_allowed_feature_mask(smu, feature_mask, num) \
-	((smu)->ppt_funcs? ((smu)->ppt_funcs->get_allowed_feature_mask? (smu)->ppt_funcs->get_allowed_feature_mask((smu), (feature_mask), (num)) : 0) : 0)
+	((smu)->ppt_funcs? ((smu)->ppt_funcs->get_allowed_feature_mask? (smu)->ppt_funcs->get_allowed_feature_mask((smu), (feature_mask), (num)) : -EINVAL) : -EINVAL)
 
 
 #define smu_store_cc6_data(smu, st, cc6_dis, pst_dis, pst_sw_dis) \
 	((smu)->ppt_funcs->store_cc6_data ? (smu)->ppt_funcs->store_cc6_data((smu), (st), (cc6_dis), (pst_dis), (pst_sw_dis)) : 0)
 
 #define smu_get_dal_power_level(smu, clocks) \
-	((smu)->ppt_funcs->get_dal_power_level ? (smu)->ppt_funcs->get_dal_power_level((smu), (clocks)) : 0)
+	((smu)->ppt_funcs->get_dal_power_level ? (smu)->ppt_funcs->get_dal_power_level((smu), (clocks)) : -EINVAL)
 #define smu_get_perf_level(smu, designation, level) \
-	((smu)->ppt_funcs->get_perf_level ? (smu)->ppt_funcs->get_perf_level((smu), (designation), (level)) : 0)
+	((smu)->ppt_funcs->get_perf_level ? (smu)->ppt_funcs->get_perf_level((smu), (designation), (level)) : -EINVAL)
 #define smu_get_current_shallow_sleep_clocks(smu, clocks) \
-	((smu)->ppt_funcs->get_current_shallow_sleep_clocks ? (smu)->ppt_funcs->get_current_shallow_sleep_clocks((smu), (clocks)) : 0)
+	((smu)->ppt_funcs->get_current_shallow_sleep_clocks ? (smu)->ppt_funcs->get_current_shallow_sleep_clocks((smu), (clocks)) : -EINVAL)
 
 #define smu_dpm_set_uvd_enable(smu, enable) \
 	((smu)->ppt_funcs->dpm_set_uvd_enable ? (smu)->ppt_funcs->dpm_set_uvd_enable((smu), (enable)) : 0)
@@ -182,16 +182,16 @@ int smu_send_smc_msg(struct smu_context *smu, enum smu_message_type msg);
 #define smu_set_watermarks_table(smu, tab, clock_ranges) \
 	((smu)->ppt_funcs->set_watermarks_table ? (smu)->ppt_funcs->set_watermarks_table((smu), (tab), (clock_ranges)) : 0)
 #define smu_get_current_clk_freq_by_table(smu, clk_type, value) \
-	((smu)->ppt_funcs->get_current_clk_freq_by_table ? (smu)->ppt_funcs->get_current_clk_freq_by_table((smu), (clk_type), (value)) : 0)
+	((smu)->ppt_funcs->get_current_clk_freq_by_table ? (smu)->ppt_funcs->get_current_clk_freq_by_table((smu), (clk_type), (value)) : -EINVAL)
 #define smu_thermal_temperature_range_update(smu, range, rw) \
 	((smu)->ppt_funcs->thermal_temperature_range_update? (smu)->ppt_funcs->thermal_temperature_range_update((smu), (range), (rw)) : 0)
 #define smu_get_thermal_temperature_range(smu, range) \
-	((smu)->ppt_funcs->get_thermal_temperature_range? (smu)->ppt_funcs->get_thermal_temperature_range((smu), (range)) : 0)
+	((smu)->ppt_funcs->get_thermal_temperature_range? (smu)->ppt_funcs->get_thermal_temperature_range((smu), (range)) : -EINVAL)
 #define smu_register_irq_handler(smu) \
 	((smu)->ppt_funcs->register_irq_handler ? (smu)->ppt_funcs->register_irq_handler(smu) : 0)
 
 #define smu_get_dpm_ultimate_freq(smu, param, min, max) \
-		((smu)->ppt_funcs->get_dpm_ultimate_freq ? (smu)->ppt_funcs->get_dpm_ultimate_freq((smu), (param), (min), (max)) : 0)
+		((smu)->ppt_funcs->get_dpm_ultimate_freq ? (smu)->ppt_funcs->get_dpm_ultimate_freq((smu), (param), (min), (max)) : -EINVAL)
 
 #define smu_asic_set_performance_level(smu, level) \
 	((smu)->ppt_funcs->set_performance_level? (smu)->ppt_funcs->set_performance_level((smu), (level)) : -EINVAL);
