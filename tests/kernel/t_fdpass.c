@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdpass.c,v 1.2 2026/10/01 22:24:25 riastradh Exp $	*/
+/*	$NetBSD: t_fdpass.c,v 1.3 2026/10/02 01:31:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdpass.c,v 1.2 2026/10/01 22:24:25 riastradh Exp $");
+__RCSID("$NetBSD: t_fdpass.c,v 1.3 2026/10/02 01:31:12 riastradh Exp $");
 
 #include <sys/param.h>		/* needed by sys/mbuf.h */
 
@@ -76,7 +76,6 @@ test_pr60832(const int fds[static 0], unsigned nfds)
 	unsigned resid, clen, nfds_before, nfds_after;
 	ssize_t nsent, nrcvd;
 	size_t total = 0;
-	bool sentfds;
 
 	/*
 	 * Create a socket pair, nonblocking so that we fail promptly
@@ -185,51 +184,9 @@ test_pr60832(const int fds[static 0], unsigned nfds)
 	cmsg->cmsg_type = SCM_RIGHTS;
 	memcpy(CMSG_DATA(cmsg), fds, nfds * sizeof(int));
 
-	/*
-	 * If the kernel uses an intermediate data structure for the
-	 * control message that is larger than the user's buffer, we
-	 * might pass the blocking check (so no EAGAIN) but then fail
-	 * with ENOBUFS a little downstream.
-	 *
-	 * XXX This is suboptimal!  For example, there is no way to
-	 * block until the buffer space is available.  Perhaps the
-	 * kernel should account only the user's buffer size, not the
-	 * kernel's intermediate buffer size, in the path that fails
-	 * with ENOBUFS?
-	 *
-	 * The obvious alternative, of counting the kernel's
-	 * intermediate buffer size in the path that decides whether to
-	 * block, has two problems:
-	 *
-	 * 1. it crosses abstraction layers (blocking path is in
-	 *    AF-generic logic in uipc_socket.c, treats control message
-	 *    as opaque),
-	 *
-	 * 2. it would mean that the caller can't count up to sndbuf by
-	 *    adding the data and control byte counts, because the
-	 *    user's control byte count might be lower than the
-	 *    kernel's control byte count.
-	 *
-	 * In any case, if we fix this so that the backpressure is
-	 * applied in the blocking path and cannot lead to ENOBUFS,
-	 * then we can tighten this to simply
-	 *
-	 *	RL(nsent = rump_sys_sendmsg(sock[0], &msg, 0));
-	 *
-	 * and assert that we always sent the fds.
-	 */
 	printf("send %zd data bytes with %u control bytes\n", nsend, clen);
-	nsent = rump_sys_sendmsg(sock[0], &msg, 0);
-	if (nsent == -1) {
-		int error = errno;
-
-		ATF_CHECK_EQ_MSG(error, ENOBUFS, "error=%d (%s)", error,
-		    strerror(errno));
-		sentfds = false;
-	} else {
-		sentfds = true;
-		total += (size_t)nsent;
-	}
+	RL(nsent = rump_sys_sendmsg(sock[0], &msg, 0));
+	total += (size_t)nsent;
     }
 
 	/*
@@ -304,10 +261,7 @@ test_pr60832(const int fds[static 0], unsigned nfds)
 				continue;
 			}
 			n = (cmsg->cmsg_len - CMSG_LEN(0))/sizeof(int);
-			if (sentfds)
-				ATF_CHECK(n > 0);
-			else
-				ATF_CHECK_MSG(n == 0, "n=%u", n);
+			ATF_CHECK(n > 0);
 			fdptr = (const int *)CMSG_DATA(cmsg);
 			for (i = 0; i < n; i++)
 				RL(rump_sys_close(fdptr[i]));
@@ -382,7 +336,20 @@ ATF_TC_BODY(pr60832, tc)
 		const unsigned nfds = i + 1;
 
 		printf("test %u fd%s\n", nfds, nfds == 1 ? "" : "s");
+
+		if (CMSG_SPACE(nfds * sizeof(int)) <
+		    CMSG_SPACE(nfds * sizeof(struct file *))) {
+			atf_tc_expect_fail("PR kern/60832:"
+			    " AF_LOCAL stream: sendmsg() with SCM_RIGHTS"
+			    " silently drops data and descriptors"
+			    " but reports success");
+		}
+
 		test_pr60832(fds, nfds);
+
+		if (CMSG_SPACE(nfds * sizeof(int)) <
+		    CMSG_SPACE(nfds * sizeof(struct file *)))
+			atf_tc_expect_pass();
 	}
 }
 
