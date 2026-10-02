@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigio.c,v 1.2 2026/09/25 01:09:57 riastradh Exp $	*/
+/*	$NetBSD: t_sigio.c,v 1.3 2026/10/02 15:43:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigio.c,v 1.2 2026/09/25 01:09:57 riastradh Exp $");
+__RCSID("$NetBSD: t_sigio.c,v 1.3 2026/10/02 15:43:09 riastradh Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -301,13 +301,34 @@ fillpipebuf(int writefd)
 {
 	char buf[BUFSIZ] = {0};
 	size_t n = 0;
+	int nspace, sndlowat;
+	socklen_t optlen;
 	ssize_t nwrit;
 	int flags;
 
+	RL(ioctl(writefd, FIONSPACE, &nspace));
+	optlen = sizeof(sndlowat);
+	RL(getsockopt(writefd, SOL_SOCKET, SO_SNDLOWAT, &sndlowat, &optlen));
+	ATF_REQUIRE_MSG(optlen == sizeof(sndlowat),
+	    "optlen=%u sizeof(sndlowat)=%zu",
+	    optlen, sizeof(sndlowat));
+	fprintf(stderr, "fd %d nspace=%d sndlowat=%d\n",
+	    writefd, nspace, sndlowat);
+
 	RL(flags = fcntl(writefd, F_GETFL));
 	RL(fcntl(writefd, F_SETFL, flags|O_NONBLOCK));
-	while ((nwrit = write(writefd, buf, sizeof(buf))) != -1)
+	while ((nwrit = write(writefd, buf, sizeof(buf))) != -1) {
+		RL(ioctl(writefd, FIONSPACE, &nspace));
+		optlen = sizeof(sndlowat);
+		RL(getsockopt(writefd, SOL_SOCKET, SO_SNDLOWAT, &sndlowat,
+			&optlen));
+		ATF_REQUIRE_MSG(optlen == sizeof(sndlowat),
+		    "optlen=%u sizeof(sndlowat)=%zu",
+		    optlen, sizeof(sndlowat));
+		fprintf(stderr, "fd %d wrote %zd, nspace=%d sndlowat=%d\n",
+		    writefd, nwrit, nspace, sndlowat);
 		n += (size_t)nwrit;
+	}
 	ATF_CHECK_EQ_MSG(errno, EAGAIN, "errno=%d", errno);
 	RL(fcntl(writefd, F_SETFL, flags));
 	fprintf(stderr, "filled %d with %zu bytes\n", writefd, n);
