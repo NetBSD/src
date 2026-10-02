@@ -6597,6 +6597,19 @@ dtrace_dif_emulate(dtrace_difo_t *difo, dtrace_mstate_t *mstate,
 			uintptr_t s2 = regs[r2];
 			size_t lim1, lim2;
 
+			/*
+			 * We are comparing NUL-terminated strings, and
+			 * dtrace_strncmp treats a null pointer as if
+			 * it were an empty string, i.e., a one-element
+			 * array (char[]){'\0'}.  In case s1 or s2 is a
+			 * null pointer, take lim1 or lim2 to be 1 by
+			 * default so we compare the NUL terminator,
+			 * rather than taking them to be uninitialized
+			 * by default and comparing the great booger
+			 * demon instead.
+			 */
+			lim1 = lim2 = 1;
+
 			if (s1 != 0 &&
 			    !dtrace_strcanload(s1, sz, &lim1, mstate, vstate))
 				break;
