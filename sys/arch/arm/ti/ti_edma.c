@@ -1,4 +1,4 @@
-/* $NetBSD: ti_edma.c,v 1.9 2026/08/19 09:26:38 yurix Exp $ */
+/* $NetBSD: ti_edma.c,v 1.10 2026/10/02 07:27:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.9 2026/08/19 09:26:38 yurix Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.10 2026/10/02 07:27:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,7 @@ edma_attach(device_t parent, device_t self, void *aux)
 	struct edma_softc *sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	const char *ccint_name = "edma3_ccint";
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
@@ -176,11 +177,6 @@ edma_attach(device_t parent, device_t self, void *aux)
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
-		return;
-	}
-
-	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
-		aprint_error(": failed to decode interrupt\n");
 		return;
 	}
 
@@ -215,12 +211,17 @@ edma_attach(device_t parent, device_t self, void *aux)
 
 	edma_init(sc);
 
-	sc->sc_ih = fdtbus_intr_establish_byname(phandle, "edma3_ccint",
+	sc->sc_ih = fdtbus_intr_establish_byname(phandle, ccint_name,
 	    IPL_VM, FDT_INTR_MPSAFE, edma_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt\n");
 		return;
 	}
+	if (!fdtbus_intr_str_byname(phandle, ccint_name, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
+		return;
+	}
+
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	fdtbus_register_dma_controller(self, phandle, &edma_fdt_funcs);
