@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.150 2026/10/01 07:32:34 andvar Exp $	*/
+/*	$NetBSD: i386.c,v 1.151 2026/10/02 04:20:49 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.150 2026/10/01 07:32:34 andvar Exp $");
+__RCSID("$NetBSD: i386.c,v 1.151 2026/10/02 04:20:49 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -478,7 +478,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_586,
 			{
-				0, 0, "6x86", 0,
+				0, 0, "6x86", "6x86",
 				"MMX-enhanced MediaGX (GXm)", /* or Geode? */
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			},
@@ -491,7 +491,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				"6x86MX", 0, 0, 0, 0, 0, 0, 0,
+				"6x86MX/MII", "MII/MIIv", 0, 0, 0, "III (Joshua)", 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
 			},
 			"6x86MX",		/* Default */
