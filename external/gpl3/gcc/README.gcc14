@@ -1,4 +1,4 @@
-$NetBSD: README.gcc14,v 1.33 2026/09/23 12:03:37 rin Exp $
+$NetBSD: README.gcc14,v 1.34 2026/10/03 06:07:02 rin Exp $
 
 arch/feature list.
 
@@ -17,7 +17,7 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
 aarch64		y	y	y	y	y	y		y	y	y
 aarch64eb	y	y	y	y	y	y		y	y	y
-alpha		y	b	y	y	y	y[11]		n[14]	n[15]	?
+alpha		y	b	y	y	y	y[11]		n[14]	y[15]	?
 earmv4		y	b	y	y	y	y		?	?	y
 earmv4eb	y	b	y	y	y	y		?	?	y
 earmv5		y	y	y	y	y	y		y	y	y
@@ -75,7 +75,7 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       __glob13.c:800:1: internal compiler error: Illegal instruction
         800 | globextend(path, pglob, limit)
             | ^~~~~~~~~~
-[15]: some pic_profile variants of tests in usr.bin/c++ crash.
+[15]: some pic_profile variants of tests in usr.bin/c++ crash. --> worked around by PR toolchain/60842.
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
