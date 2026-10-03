@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.176 2026/10/03 16:28:17 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.177 2026/10/03 16:28:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.176 2026/10/03 16:28:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.177 2026/10/03 16:28:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.176 2026/10/03 16:28:17 riastradh Exp
 #include <sys/pipe.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/select.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
@@ -216,7 +217,7 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	proc_t *p;
 
 	if (flags & ~(O_CLOEXEC|O_CLOFORK|O_NONBLOCK|O_NOSIGPIPE))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	p = curproc;
 	rpipe = wpipe = NULL;
 	getnanotime(&nt);
@@ -257,7 +258,7 @@ pipe1(struct lwp *l, int *fildes, int flags)
 
 	fd_affix(p, rf, fildes[0]);
 	fd_affix(p, wf, fildes[1]);
-	return (0);
+	return 0;
 free3:
 	fd_abort(p, rf, fildes[0]);
 free2:
@@ -266,7 +267,7 @@ free2:
 	if (rpipe)
 		pipefree(rpipe);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -290,7 +291,7 @@ pipespace(struct pipe *pipe, int size)
 		buffer = (void *)uvm_km_alloc(kernel_map, round_page(size),
 		    0, UVM_KMF_PAGEABLE);
 		if (buffer == NULL)
-			return (ENOMEM);
+			return SET_ERROR(ENOMEM);
 		atomic_add_int(&amountpipekva, size);
 	}
 
@@ -301,7 +302,7 @@ pipespace(struct pipe *pipe, int size)
 	pipe->pipe_buffer.in = 0;
 	pipe->pipe_buffer.out = 0;
 	pipe->pipe_buffer.cnt = 0;
-	return (0);
+	return 0;
 }
 
 /*
@@ -447,10 +448,10 @@ pipe_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	 */
 	if ((fp->f_flag & FNONBLOCK) != 0) {
 		if (__predict_false(uio->uio_resid == 0))
-			return (0);
+			return 0;
 		if (atomic_load_relaxed(&bp->cnt) == 0 &&
 		    (atomic_load_relaxed(&rpipe->pipe_state) & PIPE_EOF) == 0)
-			return (EAGAIN);
+			return SET_ERROR(EAGAIN);
 	}
 
 	mutex_enter(lock);
@@ -518,7 +519,7 @@ again:
 		 * Don't block on non-blocking I/O.
 		 */
 		if (fp->f_flag & FNONBLOCK) {
-			error = EAGAIN;
+			error = SET_ERROR(EAGAIN);
 			break;
 		}
 
@@ -537,7 +538,7 @@ again:
 		cv_broadcast(&wpipe->pipe_wcv);
 
 		if (wakeup_state & PIPE_RESTART) {
-			error = ERESTART;
+			error = SET_ERROR(ERESTART);
 			goto unlocked_error;
 		}
 
@@ -576,7 +577,7 @@ unlocked_error:
 	}
 
 	mutex_exit(lock);
-	return (error);
+	return error;
 }
 
 static int
@@ -602,7 +603,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	 */
 	if (rpipe == NULL || (rpipe->pipe_state & PIPE_EOF) != 0) {
 		mutex_exit(lock);
-		return EPIPE;
+		return SET_ERROR(EPIPE);
 	}
 	++wpipe->pipe_busy;
 
@@ -613,7 +614,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			cv_broadcast(&wpipe->pipe_draincv);
 		}
 		mutex_exit(lock);
-		return (error);
+		return error;
 	}
 
 	bp = &rpipe->pipe_buffer;
@@ -699,7 +700,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			 * Don't block on non-blocking I/O.
 			 */
 			if (fp->f_flag & FNONBLOCK) {
-				error = EAGAIN;
+				error = SET_ERROR(EAGAIN);
 				break;
 			}
 
@@ -711,7 +712,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				pipeselwakeup(rpipe, POLL_IN);
 
 			if (wakeup_state & PIPE_RESTART) {
-				error = ERESTART;
+				error = SET_ERROR(ERESTART);
 				break;
 			}
 
@@ -725,7 +726,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			 * XXX Distinguish reader-closed from writer-closed?
 			 */
 			if (rpipe->pipe_state & PIPE_EOF) {
-				error = EPIPE;
+				error = SET_ERROR(EPIPE);
 				break;
 			}
 
@@ -773,7 +774,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 
 	pipeunlock(rpipe);
 	mutex_exit(lock);
-	return (error);
+	return error;
 }
 
 /*
@@ -788,7 +789,7 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 	switch (cmd) {
 
 	case FIONBIO:
-		return (0);
+		return 0;
 
 	case FIOASYNC:
 		mutex_enter(lock);
@@ -798,13 +799,13 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 			pipe->pipe_state &= ~PIPE_ASYNC;
 		}
 		mutex_exit(lock);
-		return (0);
+		return 0;
 
 	case FIONREAD:
 		mutex_enter(lock);
 		*(int *)data = pipe->pipe_buffer.cnt;
 		mutex_exit(lock);
-		return (0);
+		return 0;
 
 	case FIONWRITE:
 		/* Look at other side */
@@ -815,7 +816,7 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 		else
 			*(int *)data = pipe->pipe_buffer.cnt;
 		mutex_exit(lock);
-		return (0);
+		return 0;
 
 	case FIONSPACE:
 		/* Look at other side */
@@ -827,7 +828,7 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 			*(int *)data = pipe->pipe_buffer.size -
 			    pipe->pipe_buffer.cnt;
 		mutex_exit(lock);
-		return (0);
+		return 0;
 
 	case TIOCSPGRP:
 	case FIOSETOWN:
@@ -838,7 +839,7 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 		return fgetown(pipe->pipe_pgid, cmd, data);
 
 	}
-	return (EPASSTHROUGH);
+	return EPASSTHROUGH;
 }
 
 int
@@ -899,7 +900,7 @@ pipe_poll(file_t *fp, int events)
 		selrecord(curlwp, &pipe->pipe_sel);
 	mutex_exit(pipe->pipe_lock);
 
-	return (revents);
+	return revents;
 }
 
 static int
@@ -936,7 +937,7 @@ pipe_close(file_t *fp)
 
 	fp->f_pipe = NULL;
 	pipeclose(fp, pipe);
-	return (0);
+	return 0;
 }
 
 static void
@@ -970,7 +971,7 @@ pipe_fpathconf(struct file *fp, int name, register_t *retval)
 		*retval = PIPE_BUF;
 		return 0;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 }
 
@@ -978,7 +979,7 @@ static int
 pipe_posix_fadvise(struct file *fp, off_t offset, off_t len, int advice)
 {
 
-	return ESPIPE;
+	return SET_ERROR(ESPIPE);
 }
 
 static void
@@ -1211,27 +1212,27 @@ pipe_kqfilter(file_t *fp, struct knote *kn)
 	case EVFILT_READ:
 		if ((fp->f_flag & FREAD) == 0) {
 			mutex_exit(lock);
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		}
 		kn->kn_fop = &pipe_rfiltops;
 		break;
 	case EVFILT_WRITE:
 		if ((fp->f_flag & FWRITE) == 0) {
 			mutex_exit(lock);
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		}
 		kn->kn_fop = &pipe_wfiltops;
 		break;
 	default:
 		mutex_exit(lock);
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	}
 
 	kn->kn_hook = pipe;
 	selrecord_knote(&pipe->pipe_sel, kn);
 	mutex_exit(lock);
 
-	return (0);
+	return 0;
 }
 
 /*
