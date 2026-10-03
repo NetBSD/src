@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.5 2023/06/19 21:41:41 christos Exp $	*/
+/*	$NetBSD: connect.c,v 1.6 2026/10/03 04:49:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -1014,9 +1014,9 @@ kill_kids(pid_t *pids, int max_kids, int sig)
 
     for (i=0; i < max_kids; i++)
 	if (pids[i] > 0)
-	    kill(sig, pids[i]);
+	    kill(pids[i], sig);
     if (bonjour_pid > 0)
-        kill(sig, bonjour_pid);
+        kill(bonjour_pid, sig);
 }
 
 static int
