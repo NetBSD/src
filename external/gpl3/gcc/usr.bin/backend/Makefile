@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2026/04/28 08:12:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.85 2026/10/03 06:29:56 rin Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -580,6 +580,15 @@ COPTS.diagnostic-manager.cc+=	-Wno-format-extra-args -Wno-format
 
 # XXXGCC14
 COPTS.access-diagram.cc+=	${CC_WNO_MAYBE_UNINITIALIZED}
+
+.if ${MACHINE} == "alpha"
+# XXX PR toolchain/60843
+COPTS.gimple-range-phi.cc+=		-O1
+COPTS.tree-ssa-strlen.cc+= 		-O1
+COPTS.tree-ssa-tail-merge.cc+=		-O1
+COPTS.tree-ssa-threadbackward.cc+=	-O1
+COPTS.tree-ssa-threadedge.cc+=		-O1
+.endif
 
 .if ${MACHINE_CPU} == "m68k"
 # XXX libnbcompat-20251029/db/btree/bt_conv.c:60:1: internal compiler error: Segmentation fault
