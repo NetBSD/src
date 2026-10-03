@@ -114,7 +114,7 @@ mips_dsp_state_save(lwp_t *l)
 		"mfhi	%[mulhi2], $ac2"		"\n\t"
 		"mflo	%[mullo3], $ac3"		"\n\t"
 		"mfhi	%[mulhi3], $ac3"		"\n\t"
-		"rddsp	%[dspctl]"			"\n\t"
+		"rddsp	%[dspctl], 0x3ff"		"\n\t"
 		"xor	%[status], %[mips_sr_mx]"	"\n\t"
 		"mtc0	%[status], $%[cp0_status]"	"\n\t"
 		"ehb"					"\n\t"

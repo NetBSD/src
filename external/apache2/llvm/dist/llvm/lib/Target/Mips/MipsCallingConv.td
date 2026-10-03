@@ -339,14 +339,16 @@ def CC_Mips_FixedArg : CallingConv<[
 
   CCIfCC<"CallingConv::Fast", CCDelegateTo<CC_Mips_FastCC>>,
 
-  CCIfSubtarget<"isABI_O32()", CCDelegateTo<CC_MipsO32_FP>>,
+  CCIfSubtarget<"isABI_O32()",
+      CCIfSubtargetNot<"isGP64bit()", CCDelegateTo<CC_MipsO32_FP>>>,
   CCDelegateTo<CC_MipsN>
 ]>;
 
 def CC_Mips_VarArg : CallingConv<[
   CCIfByVal<CCDelegateTo<CC_Mips_ByVal>>,
 
-  CCIfSubtarget<"isABI_O32()", CCDelegateTo<CC_MipsO32_FP>>,
+  CCIfSubtarget<"isABI_O32()",
+      CCIfSubtargetNot<"isGP64bit()", CCDelegateTo<CC_MipsO32_FP>>>,
   CCDelegateTo<CC_MipsN_VarArg>
 ]>;
 

@@ -92,7 +92,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int onstack, error;
 	const int signo = ksi->ksi_signo;
 	struct sigframe_siginfo *sf = getframe(l, signo, &onstack,
-	    sizeof(*sf), _Alignof(*sf));
+	    sizeof(*sf), _Alignof(struct sigframe_siginfo));
 	struct sigframe_siginfo ksf;
 	const sig_t catcher = SIGACTION(p, signo).sa_handler;
 

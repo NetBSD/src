@@ -37,9 +37,12 @@ ArrayRef<MCPhysReg> MipsABIInfo::GetByValArgRegs() const {
   llvm_unreachable("Unhandled ABI");
 }
 
-ArrayRef<MCPhysReg> MipsABIInfo::GetVarArgRegs() const {
-  if (IsO32())
+ArrayRef<MCPhysReg> MipsABIInfo::getVarArgRegs(bool IsGP64Bit) const {
+  if (IsO32()) {
+    if (IsGP64Bit)
+      return makeArrayRef(Mips64IntRegs);
     return makeArrayRef(O32IntRegs);
+  }
   if (IsN32() || IsN64())
     return makeArrayRef(Mips64IntRegs);
   llvm_unreachable("Unhandled ABI");
@@ -124,4 +127,3 @@ unsigned MipsABIInfo::GetEhDataReg(unsigned I) const {
 
   return IsN64() ? EhDataReg64[I] : EhDataReg[I];
 }
-

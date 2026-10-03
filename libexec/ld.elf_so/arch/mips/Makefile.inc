@@ -3,6 +3,8 @@
 SRCS+=		rtld_start.S mips_reloc.c
 
 COPTS+=		-G0
+COPTS.mips_reloc.c+=	-fno-jump-tables
+CPPFLAGS+=	-fPIC
 
 CPPFLAGS+=	-DELFSIZE=_MIPS_SZPTR
 CPPFLAGS+=	-DRTLD_INHIBIT_COPY_RELOCS
