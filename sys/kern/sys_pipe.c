@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.170 2026/10/03 16:22:55 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.171 2026/10/03 16:23:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.170 2026/10/03 16:22:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.171 2026/10/03 16:23:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -902,6 +902,7 @@ static void
 pipe_restart(file_t *fp)
 {
 	struct pipe *pipe = fp->f_pipe;
+	struct pipe *rpipe;
 
 	/*
 	 * Unblock blocked reads/writes in order to allow close() to complete.
@@ -909,11 +910,12 @@ pipe_restart(file_t *fp)
 	 * (Partial writes return the transfer length.)
 	 */
 	mutex_enter(pipe->pipe_lock);
-	pipe->pipe_state |= PIPE_RESTART;
-	/* Wakeup both cvs, maybe we only need one, but maybe there are some
-	 * other paths where wakeup is needed, and it saves deciding which! */
-	cv_broadcast(&pipe->pipe_rcv);
-	cv_broadcast(&pipe->pipe_wcv);
+	rpipe = (fp->f_flag & FREAD) ? pipe : pipe->pipe_peer;
+	if (rpipe != NULL) {
+		rpipe->pipe_state |= PIPE_RESTART;
+		cv_broadcast(&rpipe->pipe_rcv);
+		cv_broadcast(&rpipe->pipe_wcv);
+	}
 	mutex_exit(pipe->pipe_lock);
 }
 

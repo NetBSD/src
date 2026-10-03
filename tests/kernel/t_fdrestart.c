@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fdrestart.c,v 1.11 2026/10/02 14:59:25 riastradh Exp $	*/
+/*	$NetBSD: t_fdrestart.c,v 1.12 2026/10/03 16:23:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_KMEMUSER		/* ERESTART */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fdrestart.c,v 1.11 2026/10/02 14:59:25 riastradh Exp $");
+__RCSID("$NetBSD: t_fdrestart.c,v 1.12 2026/10/03 16:23:18 riastradh Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -697,9 +697,6 @@ ATF_TC_BODY(pipe_write, tc)
 	memset(F, 0, sizeof(*F));
 	F->op = &dowrite;
 	F->fd = fd[1];
-	atf_tc_expect_signal(SIGALRM, "PR kern/57659:"
-	    " closing pipe writefd fails to wake concurrent write"
-	    " on same writefd");
 	testfdrestart(F);
 }
 
