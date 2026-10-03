@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.187 2026/08/15 13:27:30 riastradh Exp $	*/
+/*	$NetBSD: readline.c,v 1.188 2026/10/03 12:54:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.187 2026/08/15 13:27:30 riastradh Exp $");
+__RCSID("$NetBSD: readline.c,v 1.188 2026/10/03 12:54:13 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: readline.c,v 1.187 2026/08/15 13:27:30 riastradh Exp $");
 #include "emacs.h"
 #include "fcns.h"
 #include "filecomplete.h"
+#include "history.h"
 
 void rl_prep_terminal(int);
 void rl_deprep_terminal(void);
@@ -1390,7 +1391,7 @@ history_truncate_file (const char *filename, int nlines)
 	if (ret || nlines > 0)
 		goto out3;
 
-	if (fseeko(fp, (off_t)0, SEEK_SET) == (off_t)-1) {
+	if (fseeko(fp, (off_t)hist_cookie_len, SEEK_SET) == (off_t)-1) {
 		ret = errno;
 		goto out3;
 	}

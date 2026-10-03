@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.65 2026/03/03 15:06:35 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.66 2026/10/03 12:54:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.65 2026/03/03 15:06:35 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.66 2026/10/03 12:54:12 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: history.c,v 1.65 2026/03/03 15:06:35 christos Exp $");
 static const char hist_cookie[] = "_HiStOrY_V2_\n";
 
 #include "histedit.h"
+#include "history.h"
 
 
 #ifdef NARROWCHAR
@@ -88,6 +89,8 @@ static const char hist_cookie[] = "_HiStOrY_V2_\n";
 #define	Strncmp(d, s, n)	wcsncmp(d, s, n)
 #define	Strncpy(d, s, n)	wcsncpy(d, s, n)
 #define	Strncat(d, s, n)	wcsncat(d, s, n)
+
+libedit_private size_t hist_cookie_len = sizeof(hist_cookie) - 1;
 
 #endif
 
