@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.174 2026/10/03 16:26:50 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.175 2026/10/03 16:28:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.174 2026/10/03 16:26:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.175 2026/10/03 16:28:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1063,7 +1063,7 @@ pipeclose(struct file *fp, struct pipe *pipe)
 			cv_broadcast(&ppipe->pipe_rcv);
 			cv_broadcast(&ppipe->pipe_wcv);
 			while (ppipe->pipe_busy)
-				cv_wait_sig(&ppipe->pipe_draincv, lock);
+				cv_wait(&ppipe->pipe_draincv, lock);
 		}
 		ppipe->pipe_peer = NULL;
 	}
