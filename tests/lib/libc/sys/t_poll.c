@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.18 2026/10/02 03:53:00 riastradh Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.19 2026/10/03 16:26:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -1459,14 +1459,6 @@ ATF_TC_BODY(pollclosedpeer_pipe_immediate_writefull, tc)
 {
 	int writefd, readfd;
 
-	/*
-	 * poll(2) returns POLLHUP|POLLOUT, which is forbidden --
-	 * POLLHUP and POLLOUT are mutually exclusive.  And POLLHUP is
-	 * only supposed to be returned by polling for read, not
-	 * polling for write.  So it should be POLLOUT.
-	 */
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
-
 	pollclosed_pipe_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
 	check_pollclosedpeer_immediate_write(writefd, readfd, POLLOUT, EPIPE);
@@ -1481,14 +1473,6 @@ ATF_TC_HEAD(pollclosedpeer_pipe_immediate_writeempty, tc)
 ATF_TC_BODY(pollclosedpeer_pipe_immediate_writeempty, tc)
 {
 	int writefd, readfd;
-
-	/*
-	 * poll(2) returns POLLHUP|POLLOUT, which is forbidden --
-	 * POLLHUP and POLLOUT are mutually exclusive.  And POLLHUP is
-	 * only supposed to be returned by polling for read, not
-	 * polling for write.  So it should be POLLOUT.
-	 */
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
 
 	pollclosed_pipe_setup(&writefd, &readfd);
 	/* don't fill pipe buf */
@@ -1535,14 +1519,6 @@ ATF_TC_BODY(pollclosedpeer_pipe_delayed_process_write, tc)
 {
 	int writefd, readfd;
 
-	/*
-	 * poll(2) returns POLLHUP|POLLOUT, which is forbidden --
-	 * POLLHUP and POLLOUT are mutually exclusive.  And POLLHUP is
-	 * only supposed to be returned by polling for read, not
-	 * polling for write.  So it should be POLLOUT.
-	 */
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
-
 	pollclosed_pipe_setup(&writefd, &readfd);
 	fillpipebuf(writefd);
 	check_pollclosedpeer_delayed_process(writefd, readfd,
@@ -1574,14 +1550,6 @@ ATF_TC_HEAD(pollclosedpeer_pipe_delayed_thread_write, tc)
 ATF_TC_BODY(pollclosedpeer_pipe_delayed_thread_write, tc)
 {
 	int writefd, readfd;
-
-	/*
-	 * poll(2) returns POLLHUP|POLLOUT, which is forbidden --
-	 * POLLHUP and POLLOUT are mutually exclusive.  And POLLHUP is
-	 * only supposed to be returned by polling for read, not
-	 * polling for write.  So it should be POLLOUT.
-	 */
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
 
 	pollclosed_pipe_setup(&writefd, &readfd);
 	fillpipebuf(writefd);

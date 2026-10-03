@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigio.c,v 1.6 2026/10/03 14:38:28 riastradh Exp $	*/
+/*	$NetBSD: t_sigio.c,v 1.7 2026/10/03 16:26:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigio.c,v 1.6 2026/10/03 14:38:28 riastradh Exp $");
+__RCSID("$NetBSD: t_sigio.c,v 1.7 2026/10/03 16:26:51 riastradh Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -824,15 +824,6 @@ ATF_TC_BODY(pipe_write, tc)
 	expected_si_band = POLLOUT|POLLWRNORM;
 	si_band_mask = ~0;
 
-	/*
-	 * OK, not quite the same bug but we're tracking a bunch of
-	 * related issues there...  The wrong fd is reported in SIGIO,
-	 * because the sys_pipe.c logic has a bunch of variables
-	 * backwards and confused about which side of the pipe is
-	 * which.
-	 */
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
-
 	REQUIRE_LIBC(alarm(1), (unsigned)-1);
 	(void)pthread_barrier_wait(&bar);
 	wait_for_io(&omask);
@@ -877,7 +868,6 @@ ATF_TC_BODY(pipe_write_closed, tc)
 
 	REQUIRE_LIBC(alarm(1), (unsigned)-1);
 	(void)pthread_barrier_wait(&bar);
-	atf_tc_expect_fail("PR kern/59056: poll POLLHUP bugs");
 	wait_for_io(&omask);
 	check_write_fail(pipefd[1], EPIPE);
 
