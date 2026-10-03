@@ -1,4 +1,4 @@
-$NetBSD: README.gcc14,v 1.34 2026/10/03 06:07:02 rin Exp $
+$NetBSD: README.gcc14,v 1.35 2026/10/03 06:34:59 rin Exp $
 
 arch/feature list.
 
@@ -17,7 +17,7 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
 aarch64		y	y	y	y	y	y		y	y	y
 aarch64eb	y	y	y	y	y	y		y	y	y
-alpha		y	b	y	y	y	y[11]		n[14]	y[15]	?
+alpha		y	b	y	y	y	y[11]		y[14]	y[15]	?
 earmv4		y	b	y	y	y	y		?	?	y
 earmv4eb	y	b	y	y	y	y		?	?	y
 earmv5		y	y	y	y	y	y		y	y	y
@@ -69,12 +69,7 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
      ...
       32,nbmakefs: Writing inode 151 (work/./etc/protocols), bytes 0 + 118: No space left on device
 [11]: alpha needs an -O0 for mopd's file.c to avoid an ICE.
-[14]: cc1 crashes by jumping into rodata segment when compiling pkgsrc/pkgtools/libnbcompat:
-      In file included from glob.c:12:
-      __glob13.c: In function 'globextend':
-      __glob13.c:800:1: internal compiler error: Illegal instruction
-        800 | globextend(path, pglob, limit)
-            | ^~~~~~~~~~
+[14]: cc1 crashes when compiling pkgsrc's --> worked around by PR toolchain/60843 GCC/alpha 14 miscompiles GCC backend
 [15]: some pic_profile variants of tests in usr.bin/c++ crash. --> worked around by PR toolchain/60842.
 
 
