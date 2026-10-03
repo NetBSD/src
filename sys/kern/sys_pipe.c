@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.175 2026/10/03 16:28:04 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.176 2026/10/03 16:28:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,29 +55,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.175 2026/10/03 16:28:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.176 2026/10/03 16:28:17 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/filio.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/ttycom.h>
-#include <sys/stat.h>
-#include <sys/poll.h>
-#include <sys/signalvar.h>
-#include <sys/vnode.h>
-#include <sys/uio.h>
-#include <sys/select.h>
 #include <sys/mount.h>
+#include <sys/pipe.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
+#include <sys/select.h>
+#include <sys/signalvar.h>
+#include <sys/stat.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
-#include <sys/kauth.h>
-#include <sys/atomic.h>
-#include <sys/pipe.h>
+#include <sys/systm.h>
+#include <sys/ttycom.h>
+#include <sys/uio.h>
+#include <sys/vnode.h>
 
 static int	pipe_read(file_t *, off_t *, struct uio *, kauth_cred_t, int);
 static int	pipe_write(file_t *, off_t *, struct uio *, kauth_cred_t, int);
