@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.64 2022/10/26 23:23:52 riastradh Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.65 2026/10/03 00:13:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.64 2022/10/26 23:23:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.65 2026/10/03 00:13:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -660,7 +660,7 @@ hardupdate(long offset)
 	time_status &= ~STA_MODE;
 	if (mtemp >= MINSEC && (time_status & STA_FLL || mtemp >
 	    MAXSEC)) {
-		L_LINT(ftemp, (time_monitor << 4) / mtemp);
+		L_LINT(ftemp, ((int64_t)time_monitor * 16) / mtemp);
 		L_RSHIFT(ftemp, SHIFT_FLL + 4);
 		L_ADD(time_freq, ftemp);
 		time_status |= STA_MODE;
