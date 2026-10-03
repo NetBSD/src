@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.172 2026/10/03 16:23:46 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.173 2026/10/03 16:24:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.172 2026/10/03 16:23:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.173 2026/10/03 16:24:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,7 +544,6 @@ again:
 unlocked_error:
 	--rpipe->pipe_busy;
 	if (rpipe->pipe_busy == 0) {
-		rpipe->pipe_state &= ~PIPE_RESTART;
 		cv_broadcast(&rpipe->pipe_draincv);
 	}
 	if (bp->cnt < MINPIPESIZE) {
@@ -598,7 +597,6 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	if ((error = pipelock(rpipe, true)) != 0) {
 		--wpipe->pipe_busy;
 		if (wpipe->pipe_busy == 0) {
-			wpipe->pipe_state &= ~PIPE_RESTART;
 			cv_broadcast(&wpipe->pipe_draincv);
 		}
 		mutex_exit(lock);
@@ -729,7 +727,6 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 
 	--wpipe->pipe_busy;
 	if (wpipe->pipe_busy == 0) {
-		wpipe->pipe_state &= ~PIPE_RESTART;
 		cv_broadcast(&wpipe->pipe_draincv);
 	}
 	if (bp->cnt > 0) {
