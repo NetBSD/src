@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.169 2026/10/03 16:22:22 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.170 2026/10/03 16:22:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.169 2026/10/03 16:22:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.170 2026/10/03 16:22:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,7 @@ static u_int	nbigpipe = 0;
 static u_int	amountpipekva = 0;
 
 static void	pipeclose(struct pipe *);
+static void	pipefree(struct pipe *);
 static void	pipe_free_kmem(struct pipe *);
 static int	pipe_create(struct pipe **, pool_cache_t, struct timespec *);
 static int	pipelock(struct pipe *, bool);
@@ -258,8 +259,10 @@ pipe1(struct lwp *l, int *fildes, int flags)
 free3:
 	fd_abort(p, rf, fildes[0]);
 free2:
-	pipeclose(wpipe);
-	pipeclose(rpipe);
+	if (wpipe)
+		pipefree(wpipe);
+	if (rpipe)
+		pipefree(rpipe);
 
 	return (error);
 }
@@ -962,18 +965,13 @@ pipeclose(struct pipe *pipe)
 	kmutex_t *lock;
 	struct pipe *ppipe;
 
-	if (pipe == NULL)
-		return;
-
 	KASSERT(cv_is_valid(&pipe->pipe_rcv));
 	KASSERT(cv_is_valid(&pipe->pipe_wcv));
 	KASSERT(cv_is_valid(&pipe->pipe_draincv));
 	KASSERT(cv_is_valid(&pipe->pipe_lkcv));
 
 	lock = pipe->pipe_lock;
-	if (lock == NULL)
-		/* Must have failed during create */
-		goto free_resources;
+	KASSERT(lock != NULL);
 
 	mutex_enter(lock);
 	pipeselwakeup(pipe, pipe, POLL_HUP);
@@ -1016,7 +1014,13 @@ pipeclose(struct pipe *pipe)
 	/*
 	 * Free resources.
 	 */
-    free_resources:
+	pipefree(pipe);
+}
+
+static void
+pipefree(struct pipe *pipe)
+{
+
 	pipe->pipe_pgid = 0;
 	pipe->pipe_state = PIPE_SIGNALR;
 	pipe->pipe_peer = NULL;
