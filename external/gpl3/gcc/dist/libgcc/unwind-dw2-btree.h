@@ -723,6 +723,9 @@ btree_merge_node (struct btree *t, unsigned child_slot,
 
 // Insert an entry.
 static bool
+#ifdef __alpha__ /* XXX PR toolchain/60842 */
+__attribute__((optimize("no-tree-loop-distribute-patterns")))
+#endif
 btree_insert (struct btree *t, uintptr_type base, uintptr_type size,
 	      struct object *ob)
 {
