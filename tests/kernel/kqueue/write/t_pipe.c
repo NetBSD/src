@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe.c,v 1.2 2017/01/13 21:30:41 christos Exp $ */
+/* $NetBSD: t_pipe.c,v 1.3 2026/10/03 21:06:05 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pipe.c,v 1.2 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_pipe.c,v 1.3 2026/10/03 21:06:05 riastradh Exp $");
 
 #include <sys/event.h>
 #include <sys/wait.h>
@@ -65,8 +65,22 @@ ATF_TC_BODY(pipe1, tc)
 
 	EV_SET(&event[0], fds[1], EVFILT_WRITE, EV_ADD|EV_ENABLE, 0, 0, 0);
 	ATF_REQUIRE_EQ_MSG((n = kevent(kq, event, 1, NULL, 0, NULL)),
-	    -1, "got: %d", n);
-	ATF_REQUIRE_EQ_MSG(errno, EBADF, "got: %s", strerror(errno));
+	    0, "got: %d", n);
+	REQUIRE_LIBC(alarm(1), (unsigned)-1);
+	ATF_REQUIRE_EQ_MSG((n = kevent(kq, NULL, 0, event, 1, NULL)),
+	    1, "got: %d", n);
+	REQUIRE_LIBC(alarm(0), (unsigned)-1);
+	printf("event[0].ident = %"PRId64"\n", event[0].ident);
+	printf("event[0].filter = %"PRId32"\n", event[0].filter);
+	printf("event[0].flags = 0x%"PRIx32"\n", event[0].flags);
+	printf("event[0].fflags = 0x%"PRIx32"\n", event[0].fflags);
+	printf("event[0].data = %p\n", (void *)event[0].data);
+	printf("event[0].udata = %p\n", (void *)event[0].udata);
+	ATF_REQUIRE(event[0].ident == (uintptr_t)fds[1]);
+	ATF_REQUIRE(event[0].filter == EVFILT_WRITE);
+	ATF_REQUIRE(event[0].flags & EV_EOF);
+	ATF_REQUIRE(event[0].data == 0); /* zero space remains in buffer */
+	ATF_REQUIRE(event[0].udata == 0); /* we set no udata */
 }
 
 ATF_TC(pipe2);
