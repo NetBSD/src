@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe.c,v 1.3 2026/10/03 21:06:05 riastradh Exp $ */
+/* $NetBSD: t_pipe.c,v 1.4 2026/10/04 01:25:49 kre Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pipe.c,v 1.3 2026/10/03 21:06:05 riastradh Exp $");
+__RCSID("$NetBSD: t_pipe.c,v 1.4 2026/10/04 01:25:49 kre Exp $");
 
 #include <sys/event.h>
 #include <sys/wait.h>
@@ -74,7 +74,7 @@ ATF_TC_BODY(pipe1, tc)
 	printf("event[0].filter = %"PRId32"\n", event[0].filter);
 	printf("event[0].flags = 0x%"PRIx32"\n", event[0].flags);
 	printf("event[0].fflags = 0x%"PRIx32"\n", event[0].fflags);
-	printf("event[0].data = %p\n", (void *)event[0].data);
+	printf("event[0].data = %#"PRIx64"\n", event[0].data);
 	printf("event[0].udata = %p\n", (void *)event[0].udata);
 	ATF_REQUIRE(event[0].ident == (uintptr_t)fds[1]);
 	ATF_REQUIRE(event[0].filter == EVFILT_WRITE);
