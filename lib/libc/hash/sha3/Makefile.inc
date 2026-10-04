@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2 2017/11/30 16:00:48 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2026/10/04 03:28:44 mrg Exp $
 
-.PATH: ${.CURDIR}/hash/sha3
+.PATH: ${.PARSEDIR}
 
 SRCS+=	keccak.c sha3.c
 

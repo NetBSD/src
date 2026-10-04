@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.5 2012/01/20 16:31:29 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2026/10/04 03:28:44 mrg Exp $
 
-.PATH:	${ARCHDIR}/iconv ${.CURDIR}/iconv
+.PATH:	${ARCHDIR}/iconv ${.PARSEDIR}
 
 SRCS+=	iconv.c
 MAN+=	iconv.3

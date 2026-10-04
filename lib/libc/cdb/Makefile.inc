@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.6 2026/04/18 21:45:23 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2026/10/04 03:28:41 mrg Exp $
 
 # Constant database reader/writer
 
-.PATH:	${.CURDIR}/cdb
+.PATH:	${.PARSEDIR}
 .PATH:	${NETBSDSRCDIR}/common/lib/libc/cdb
 
 SRCS+=		cdbr.c cdbw.c

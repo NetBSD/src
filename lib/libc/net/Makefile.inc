@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.96 2023/08/03 14:56:36 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.97 2026/10/04 03:28:45 mrg Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
-.PATH: ${ARCHDIR}/net ${.CURDIR}/net
+.PATH: ${ARCHDIR}/net ${.PARSEDIR}
 
 SRCS+=	base64.c ethers.c gethnamaddr.c getifaddrs.c \
 	getnetnamadr.c getnetent.c getpeereid.c \

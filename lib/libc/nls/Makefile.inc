@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.12 2013/08/19 08:03:34 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2026/10/04 03:28:45 mrg Exp $
 
-.PATH: ${.CURDIR}/nls
+.PATH:	${.PARSEDIR}
 
 SRCS+=	catclose.c catgets.c catopen.c 
 MAN+=	catclose.3 catgets.3 catopen.3

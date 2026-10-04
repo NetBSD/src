@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.9 2023/06/03 09:09:09 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2026/10/04 03:28:45 mrg Exp $
 
 # net sources
-.PATH: ${.CURDIR}/resolv
+.PATH: ${.PARSEDIR}
 CPPFLAGS+=-DCOMPAT__RES -DUSE_POLL
 
 SRCS+=	h_errno.c herror.c res_comp.c res_data.c res_debug.c \

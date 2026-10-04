@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2025/10/20 14:31:39 nat Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2026/10/04 03:28:45 mrg Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # Quad support
@@ -34,4 +34,4 @@ SRCS.quad+=	adddi3.c anddi3.c iordi3.c notdi2.c subdi3.c xordi3.c
 
 SRCS+=	${SRCS.quad}
 
-.PATH: ${ARCHDIR}/quad ${.CURDIR}/quad
+.PATH: ${ARCHDIR}/quad ${.PARSEDIR}

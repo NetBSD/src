@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.5 2017/10/25 06:32:59 kre Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2026/10/04 03:28:46 mrg Exp $
 
-.PATH:	${.CURDIR}/termios
+.PATH:	${.PARSEDIR}
 
 SRCS+=	cfgetispeed.c cfgetospeed.c cfmakeraw.c cfsetispeed.c cfsetospeed.c \
 	cfsetspeed.c tcdrain.c tcflow.c tcflush.c tcgetattr.c tcgetpgrp.c \

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.23 2025/10/04 21:03:16 nat Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2026/10/04 03:28:45 mrg Exp $
 
 SOFTFLOAT_BITS?=64
 .PATH:		${ARCHDIR}/softfloat \
-		${.CURDIR}/softfloat/bits${SOFTFLOAT_BITS} ${.CURDIR}/softfloat
+		${.PARSEDIR}/bits${SOFTFLOAT_BITS} ${.PARSEDIR}
 
-CPPFLAGS+=	-I${ARCHDIR}/softfloat -I${.CURDIR}/softfloat
+CPPFLAGS+=	-I${ARCHDIR}/softfloat -I${.PARSEDIR}
 CPPFLAGS+=	-DSOFTFLOAT_FOR_GCC
 
 SRCS.softfloat= softfloat.c

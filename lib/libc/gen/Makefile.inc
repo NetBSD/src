@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.231 2026/07/11 03:53:40 kre Exp $
+#	$NetBSD: Makefile.inc,v 1.232 2026/10/04 03:28:43 mrg Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
-.PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
+.PATH: ${ARCHDIR}/gen ${.PARSEDIR}
 
 .if ${RUMPRUN} != "yes"
 SRCS+=	_errno.c daemon.c

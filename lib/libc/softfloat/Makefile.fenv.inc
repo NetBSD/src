@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.fenv.inc,v 1.1 2025/09/10 23:07:39 nat Exp $
+#	$NetBSD: Makefile.fenv.inc,v 1.2 2026/10/04 03:28:45 mrg Exp $
 
-.PATH:		${.CURDIR}/softfloat
+.PATH:		${.PARSEDIR}
 
-CPPFLAGS+=	-I${ARCHDIR}/softfloat -I${.CURDIR}/softfloat
+CPPFLAGS+=	-I${ARCHDIR}/softfloat -I${.PARSEDIR}
 CPPFLAGS+=	-DSOFTFLOAT_FOR_GCC
 
 SRCS+=	fpgetround.c fpsetround.c fpgetmask.c fpsetmask.c \

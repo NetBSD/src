@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2026/02/03 19:42:49 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2026/10/04 03:28:41 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -65,7 +65,7 @@ LINTFLAGS+=	-X 351
 
 .include "libcincludes.mk"
 
-ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
+ARCHDIR=	${LIBCDIR}/arch/${ARCHSUBDIR}
 AFLAGS+=	-I${ARCHDIR}
 CLEANFILES+=	tags
 

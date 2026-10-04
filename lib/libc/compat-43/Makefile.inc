@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.16 2006/04/24 17:15:06 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2026/10/04 03:28:41 mrg Exp $
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/2/93
 
 # compat-43 sources
-.PATH: ${ARCHDIR}/compat-43 ${.CURDIR}/compat-43
+.PATH: ${ARCHDIR}/compat-43 ${.PARSEDIR}
 
 SRCS+=	creat.c getdtablesize.c gethostid.c \
 	killpg.c sethostid.c setpgrp.c \

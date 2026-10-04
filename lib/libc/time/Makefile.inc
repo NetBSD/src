@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.25 2025/04/06 16:17:30 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2026/10/04 03:28:46 mrg Exp $
 
-.PATH: ${.CURDIR}/time
+.PATH: ${.PARSEDIR}
 
 SRCS+=	asctime.c difftime.c localtime.c getdate.c strftime.c strptime.c
 MAN+=	ctime.3 getdate.3 offtime.3 strftime.3 strptime.3		\

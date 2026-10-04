@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.5 2021/04/20 21:42:32 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2026/10/04 03:28:44 mrg Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
-.PATH: ${ARCHDIR}/misc ${.CURDIR}/misc
+.PATH: ${ARCHDIR}/misc ${.PARSEDIR}
 
 # other sources shared with the kernel
 .if ${MKLIBCSANITIZER:Uno} == "yes"

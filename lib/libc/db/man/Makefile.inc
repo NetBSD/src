@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.10 2004/04/30 21:13:23 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2026/10/04 03:28:42 mrg Exp $
 #       @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
-.PATH: ${.CURDIR}/db/man
+.PATH: ${.PARSEDIR}
 
 MAN+=	btree.3 dbm_clearerr.3 dbopen.3 hash.3 recno.3 mpool.3
 MLINKS+= dbm_clearerr.3 dbm_close.3 dbm_clearerr.3 dbm_delete.3

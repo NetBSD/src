@@ -1,5 +1,5 @@
-# $NetBSD: Makefile.inc,v 1.1 2012/07/08 11:43:47 rmind Exp $
+# $NetBSD: Makefile.inc,v 1.2 2026/10/04 03:28:43 mrg Exp $
 
-.PATH: ${.CURDIR}/hash/murmurhash
+.PATH: ${.PARSEDIR}
 
 SRCS+=	murmurhash.c

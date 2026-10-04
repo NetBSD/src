@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.5 2022/04/09 23:32:52 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2026/10/04 03:28:41 mrg Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
-.PATH:	${.CURDIR}/atomic
+.PATH:	${.PARSEDIR}
 
 MAN+=	atomic_add.3 atomic_and.3 atomic_cas.3 atomic_dec.3 \
 	atomic_inc.3 atomic_ops.3 atomic_or.3 atomic_swap.3 \

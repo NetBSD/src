@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.175 2025/03/30 16:17:04 riastradh Exp $
+#	$NetBSD: Makefile,v 1.176 2026/10/04 03:28:41 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -21,12 +21,12 @@
 # generated code depends on RTTI
 LIBCSANITIZERFLAGS+=	${${ACTIVE_CC} == "clang":? -fno-sanitize=function :}
 
+LIBCDIR=	${NETBSDSRCDIR}/lib/libc
+
 .include "Makefile.inc"
 
 LIB=		c
-CPPFLAGS+=	-I${.CURDIR}/include -I${.CURDIR}
-
-LIBCDIR=	${.CURDIR}
+CPPFLAGS+=	-I${LIBCDIR}/include -I${LIBCDIR}
 
 .if exists (${ARCHDIR}/Makefile.inc)
 .PATH:	${ARCHDIR}
@@ -53,54 +53,54 @@ BUILD_LEGACY?= no
 SUBDIR=compat
 .include <bsd.subdir.mk>
 .else
-COMPATDIR=${.CURDIR}/compat
-.include "${.CURDIR}/compat/Makefile.inc"
+COMPATDIR?=${.PARSEDIR}/compat
+.include "${.PARSEDIR}/compat/Makefile.inc"
 # Marker for compat code that can't be easily isolated
 CPPFLAGS+=	-D__BUILD_LEGACY
 .endif
 
-.include "${.CURDIR}/../../common/lib/libc/Makefile.inc"
-.include "${.CURDIR}/atomic/Makefile.inc"
-.include "${.CURDIR}/cdb/Makefile.inc"
-.include "${.CURDIR}/db/Makefile.inc"
-.include "${.CURDIR}/citrus/Makefile.inc"
-.include "${.CURDIR}/compat-43/Makefile.inc"
-.include "${.CURDIR}/compiler_rt/Makefile.inc"
-.include "${.CURDIR}/dlfcn/Makefile.inc"
-.include "${.CURDIR}/gdtoa/Makefile.inc"
-.include "${.CURDIR}/gen/Makefile.inc"
-.include "${.CURDIR}/gmon/Makefile.inc"
-.include "${.CURDIR}/hash/Makefile.inc"
-.include "${.CURDIR}/iconv/Makefile.inc"
-.include "${.CURDIR}/inet/Makefile.inc"
-.include "${.CURDIR}/isc/Makefile.inc"
-.include "${.CURDIR}/locale/Makefile.inc"
-.include "${.CURDIR}/md/Makefile.inc"
-.include "${.CURDIR}/misc/Makefile.inc"
-.include "${.CURDIR}/net/Makefile.inc"
-.include "${.CURDIR}/nameser/Makefile.inc"
-.include "${.CURDIR}/nls/Makefile.inc"
-.include "${.CURDIR}/posix1e/Makefile.inc"
-.include "${.CURDIR}/regex/Makefile.inc"
-.include "${.CURDIR}/resolv/Makefile.inc"
-.include "${.CURDIR}/rpc/Makefile.inc"
-.include "${.CURDIR}/ssp/Makefile.inc"
-.include "${.CURDIR}/stdio/Makefile.inc"
-.include "${.CURDIR}/stdlib/Makefile.inc"
-.include "${.CURDIR}/string/Makefile.inc"
-.include "${.CURDIR}/termios/Makefile.inc"
-.include "${.CURDIR}/thread-stub/Makefile.inc"
-.include "${.CURDIR}/time/Makefile.inc"
+.include "${.PARSEDIR}/../../common/lib/libc/Makefile.inc"
+.include "${.PARSEDIR}/atomic/Makefile.inc"
+.include "${.PARSEDIR}/cdb/Makefile.inc"
+.include "${.PARSEDIR}/db/Makefile.inc"
+.include "${.PARSEDIR}/citrus/Makefile.inc"
+.include "${.PARSEDIR}/compat-43/Makefile.inc"
+.include "${.PARSEDIR}/compiler_rt/Makefile.inc"
+.include "${.PARSEDIR}/dlfcn/Makefile.inc"
+.include "${.PARSEDIR}/gdtoa/Makefile.inc"
+.include "${.PARSEDIR}/gen/Makefile.inc"
+.include "${.PARSEDIR}/gmon/Makefile.inc"
+.include "${.PARSEDIR}/hash/Makefile.inc"
+.include "${.PARSEDIR}/iconv/Makefile.inc"
+.include "${.PARSEDIR}/inet/Makefile.inc"
+.include "${.PARSEDIR}/isc/Makefile.inc"
+.include "${.PARSEDIR}/locale/Makefile.inc"
+.include "${.PARSEDIR}/md/Makefile.inc"
+.include "${.PARSEDIR}/misc/Makefile.inc"
+.include "${.PARSEDIR}/net/Makefile.inc"
+.include "${.PARSEDIR}/nameser/Makefile.inc"
+.include "${.PARSEDIR}/nls/Makefile.inc"
+.include "${.PARSEDIR}/posix1e/Makefile.inc"
+.include "${.PARSEDIR}/regex/Makefile.inc"
+.include "${.PARSEDIR}/resolv/Makefile.inc"
+.include "${.PARSEDIR}/rpc/Makefile.inc"
+.include "${.PARSEDIR}/ssp/Makefile.inc"
+.include "${.PARSEDIR}/stdio/Makefile.inc"
+.include "${.PARSEDIR}/stdlib/Makefile.inc"
+.include "${.PARSEDIR}/string/Makefile.inc"
+.include "${.PARSEDIR}/termios/Makefile.inc"
+.include "${.PARSEDIR}/thread-stub/Makefile.inc"
+.include "${.PARSEDIR}/time/Makefile.inc"
 .if ${RUMPRUN} != "yes"
-.include "${.CURDIR}/tls/Makefile.inc"
+.include "${.PARSEDIR}/tls/Makefile.inc"
 .endif
-.include "${.CURDIR}/sys/Makefile.inc"
+.include "${.PARSEDIR}/sys/Makefile.inc"
 .if ${HAVE_LIBGCC_EH} == "no"
 .include "${NETBSDSRCDIR}/sys/lib/libunwind/Makefile.inc"
 .endif
-.include "${.CURDIR}/uuid/Makefile.inc"
+.include "${.PARSEDIR}/uuid/Makefile.inc"
 .if (${MKYP} != "no")
-.include "${.CURDIR}/yp/Makefile.inc"
+.include "${.PARSEDIR}/yp/Makefile.inc"
 .endif
 
 # Remove from SRCS the .c files for any .S files added by the MD makefiles,

@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.51 2025/07/07 20:05:06 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.52 2026/10/04 03:28:46 mrg Exp $
 
 # stdio sources
-.PATH: ${.CURDIR}/stdio
+.PATH: ${.PARSEDIR}
 
 SRCS+=	clrerr.c dprintf.c fclose.c fdopen.c feof.c ferror.c \
 	fflush.c fgetc.c fgetln.c fgetpos.c fgets.c fgetstr.c fgetwc.c \

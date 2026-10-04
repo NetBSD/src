@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2021/10/31 22:24:36 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2026/10/04 03:28:41 mrg Exp $
 
 SRCS+=	__sigtramp2.S
 
@@ -17,7 +17,7 @@ CPPFLAGS+=	-DSOFTFLOAT_NEED_FIXUNS
 # in softfloat. Just provide a wrapper which pulls it in via a #include
 SRCS.softfloat= softfloat-wrapper.c
 SRCS+= ${SRCS.softfloat}
-CPPFLAGS+=      -I${ARCHDIR}/softfloat -I${.CURDIR}/softfloat \
-		-I${.CURDIR}/softfloat/bits64
+CPPFLAGS+=	-I${ARCHDIR}/softfloat -I${LIBCDIR}/softfloat \
+		-I${LIBCDIR}/softfloat/bits64
 
 .endif

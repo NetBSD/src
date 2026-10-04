@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.10 2024/01/20 14:52:48 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2026/10/04 03:28:45 mrg Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # regex sources
-.PATH: ${.CURDIR}/regex
+.PATH: ${.PARSEDIR}
 
 CPPFLAGS+=-DPOSIX_MISTAKE
 

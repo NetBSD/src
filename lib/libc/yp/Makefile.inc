@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.15 2012/03/02 17:27:49 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2026/10/04 03:28:47 mrg Exp $
 
 # yp sources
-.PATH: ${ARCHDIR}/yp ${.CURDIR}/yp
+.PATH: ${ARCHDIR}/yp ${.PARSEDIR}
 
 SRCS+=	xdryp.c yp_all.c yp_first.c yp_maplist.c yp_master.c yp_match.c \
 	yp_order.c yplib.c yperr_string.c ypprot_err.c
