@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_nkmp.c,v 1.9 2026/10/04 03:03:17 rxg Exp $ */
+/* $NetBSD: sunxi_ccu_nkmp.c,v 1.10 2026/10/04 07:45:07 rxg Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nkmp.c,v 1.9 2026/10/04 03:03:17 rxg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nkmp.c,v 1.10 2026/10/04 07:45:07 rxg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -106,9 +106,9 @@ sunxi_ccu_nkmp_get_rate(struct sunxi_ccu_softc *sc,
 			if (tab->pat == pat_val)
 				break;
 		if (tab->rate == 0)
-			return EINVAL;
+			return 0;
 		if (tab->n != n || tab->k != k || tab->m != m || tab->p != p)
-			return EINVAL;
+			return 0;
 		return tab->rate;
 	}
 
