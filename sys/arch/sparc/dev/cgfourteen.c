@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.100 2026/07/13 08:42:06 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.101 2026/10/04 16:11:36 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -848,7 +848,7 @@ cg14_init_cmap(struct cgfourteen_softc *sc)
 		 * intensity, fix that with the gamma LUT
 		 */
 
-		sc->sc_dac->dac_mode &= ~6;	/* 8bit mode, for simlicity */
+		sc->sc_dac->dac_mode &= ~6;	/* 8bit mode, for simplicity */
 		for (i = 0; i < 128; i++) {
 			sc->sc_dac->dac_addr = i;
 			sc->sc_dac->dac_gammalut = i << 1;
@@ -863,7 +863,7 @@ cg14_init_cmap(struct cgfourteen_softc *sc)
 		         CG14_RIGHT_CLUT1 | CG14_RIGHT_X;
 	} else {
 		/* in 8 or 24bit put a linear ramp in the gamma LUT */
-		sc->sc_dac->dac_mode &= ~6;	/* 8bit mode, for simlicity */
+		sc->sc_dac->dac_mode &= ~6;	/* 8bit mode, for simplicity */
 		for (i = 0; i < 256; i++) {
 			sc->sc_dac->dac_addr = i;
 			sc->sc_dac->dac_gammalut = i;
