@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.18 2022/09/01 12:29:00 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.19 2026/10/04 06:09:56 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,11 +25,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.18 2022/09/01 12:29:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.19 2026/10/04 06:09:56 mlelstv Exp $");
 
 #include "opt_xen.h"
 
 #include <sys/types.h>
+#include <sys/kmem.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
@@ -59,22 +60,27 @@ int
 xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t va,
     grant_handle_t *handlep, int flags)
 {
-	gnttab_map_grant_ref_t op[XENSHM_MAX_PAGES_PER_REQUEST];
+	gnttab_map_grant_ref_t *op;
 	int ret, i;
 #ifndef XENPV
 	paddr_t base_paddr;
 #endif
 	
-
 #ifdef DIAGNOSTIC
 	if (nentries > XENSHM_MAX_PAGES_PER_REQUEST) {
 		panic("xen_shm_map: %d entries", nentries);
 	}
 #endif
+	op = kmem_alloc(nentries * sizeof(*op), KM_NOSLEEP);
+	if (op == NULL)
+		return ENOMEM;
+
 #ifndef XENPV
 	base_paddr = xenmem_alloc_pa(nentries * PAGE_SIZE, PAGE_SIZE, false);
-	if (base_paddr == 0)
+	if (base_paddr == 0) {
+		kmem_free(op, nentries * sizeof(*op));
 		return ENOMEM;
+	}
 #endif
 
 	for (i = 0; i < nentries; i++) {
@@ -166,12 +172,13 @@ xen_shm_map(int nentries, int domid, grant_ref_t *grefp, vaddr_t va,
 		    VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 #endif
-
+	kmem_free(op, nentries * sizeof(*op));
 	return 0;
 err1:
 #ifndef XENPV
 	xenmem_free_pa(base_paddr, nentries * PAGE_SIZE);
 #endif
+	kmem_free(op, nentries * sizeof(*op));
 	return ret;
 }
 
