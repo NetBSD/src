@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.51 2026/05/11 19:38:21 yurix Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.52 2026/10/04 11:00:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.51 2026/05/11 19:38:21 yurix Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.52 2026/10/04 11:00:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -107,7 +107,6 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	struct mpcore_attach_args * const mpcaa = aux;
 	struct gtmr_softc *sc = &gtmr_sc;
 	prop_dictionary_t dict = device_properties(self);
-	prop_dictionary_t pdict = device_properties(device_parent(self));
 	char freqbuf[sizeof("X.XXX SHz")];
 	bool flag;
 
@@ -117,8 +116,13 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	if (!prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq))
 		sc->sc_freq = gtmr_cntfrq_read();
 
-	if (!prop_dictionary_get_bool(dict, "physical", &sc->sc_physical))
-	    prop_dictionary_get_bool(pdict, "physical", &sc->sc_physical);
+	if (!prop_dictionary_get_bool(dict, "physical", &sc->sc_physical)) {
+		/* Now check the parent device */
+		KASSERT(parent == device_parent(self));
+		const prop_dictionary_t pdict = device_properties(parent);
+
+		prop_dictionary_get_bool(pdict, "physical", &sc->sc_physical);
+	}
 
 	KASSERT(sc->sc_freq != 0);
 
