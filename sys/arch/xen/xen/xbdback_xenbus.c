@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.109 2026/09/12 09:43:42 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.110 2026/10/04 06:16:11 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2006,2024 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.109 2026/09/12 09:43:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.110 2026/10/04 06:16:11 mlelstv Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -208,6 +208,7 @@ struct xbdback_instance {
 	const struct bdevsw *xbdi_bdevsw; /* pointer to the device's bdevsw */
 	struct vnode *xbdi_vp;
 	uint64_t xbdi_size;
+	unsigned xbdi_secsize;
 	bool xbdi_ro; /* is device read-only ? */
 	/* parameters for the communication */
 	unsigned int xbdi_evtchn;
@@ -572,7 +573,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 			xbdi->xbdi_proto = XBDIP_64;
 			proto = XEN_IO_PROTO_ABI_X86_64;
 		} else {
-			aprint_error("xbd domain %d: unknown proto %s\n",
+			printf("xbd domain %d: unknown proto %s\n",
 			    xbdi->xbdi_domid, xsproto);
 			return -1;
 		}
@@ -591,7 +592,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	gring_ref = ring_ref;
 	if (xen_shm_map(1, xbdi->xbdi_domid, &gring_ref, xbdi->xbdi_ring_va,
 	    &xbdi->xbdi_ring_handle, 0) != 0) {
-		aprint_error("xbdback %s: can't map grant ref\n",
+		printf("xbdback %s: can't map grant ref\n",
 		    xbusd->xbusd_path);
 		xenbus_dev_fatal(xbusd, EINVAL,
 		    "can't map ring", xbusd->xbusd_otherend);
@@ -625,7 +626,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	evop.u.bind_interdomain.remote_port = revtchn;
 	err = HYPERVISOR_event_channel_op(&evop);
 	if (err) {
-		aprint_error("blkback %s: "
+		printf("blkback %s: "
 		    "can't get event channel: %d\n",
 		    xbusd->xbusd_otherend, err);
 		xenbus_dev_fatal(xbusd, err,
@@ -639,7 +640,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	    xbdi->xbdi_evtchn, IST_LEVEL, IPL_BIO, xbdback_evthandler, xbdi,
 	    true, xbdi->xbdi_name);
 	KASSERT(xbdi->xbdi_ih != NULL);
-	aprint_verbose("xbd backend domain %d handle %#x (%d) "
+	printf("xbd backend domain %d handle %#x (%d) "
 	    "using event channel %d, protocol %s\n", xbdi->xbdi_domid,
 	    xbdi->xbdi_handle, xbdi->xbdi_handle, xbdi->xbdi_evtchn, proto);
 
@@ -713,7 +714,7 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 	case XenbusStateUnknown:
 	case XenbusStateInitWait:
 	default:
-		aprint_error("xbdback %s: invalid frontend state %d\n",
+		printf("xbdback %s: invalid frontend state %d\n",
 		    xbusd->xbusd_path, new_state);
 	}
 	return;
@@ -800,16 +801,19 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	}
 	VOP_UNLOCK(xbdi->xbdi_vp);
 
-	/* dk device; get wedge data */
 	struct dkwedge_info wi;
-	if ((err = getdiskinfo(xbdi->xbdi_vp, &wi)) == 0) {
-		xbdi->xbdi_size = wi.dkw_size;
-		printf("xbd backend: attach device %s (size %" PRIu64 ") "
-		    "for domain %d\n", wi.dkw_devname, xbdi->xbdi_size,
-		    xbdi->xbdi_domid);
+	if (getdiskinfo(xbdi->xbdi_vp, &wi) == 0)
+		devname = wi.dkw_devname;
+
+	err = getdisksize(xbdi->xbdi_vp, &xbdi->xbdi_size, &xbdi->xbdi_secsize);
+	if (err == 0) {
+		printf("xbd backend: attach device %s"
+		    " (size %" PRIu64 " x %u) for domain %d\n",
+		    devname, xbdi->xbdi_size,
+		    xbdi->xbdi_secsize, xbdi->xbdi_domid);
 	} else {
-		/* If both Ioctls failed set device size to 0 and return */
-		printf("xbdback %s: can't DIOCGWEDGEINFO device "
+		/* If Ioctls failed set device size to 0 and return */
+		printf("xbdback %s: can't get size of device "
 		    "0x%"PRIx64": %d\n", xbusd->xbusd_path,
 		    xbdi->xbdi_dev, err);
 		xbdi->xbdi_size = xbdi->xbdi_dev = 0;
@@ -825,7 +829,7 @@ again:
 		    return;
 	}
 	err = xenbus_printf(xbt, xbusd->xbusd_path, "sectors", "%" PRIu64 ,
-	    xbdi->xbdi_size);
+	    xbdi->xbdi_size * xbdi->xbdi_secsize / VBD_BSIZE);
 	if (err) {
 		printf("xbdback: failed to write %s/sectors: %d\n",
 		    xbusd->xbusd_path, err);
@@ -838,8 +842,17 @@ again:
 		    xbusd->xbusd_path, err);
 		goto abort;
 	}
+
+	/*
+	 * don't pass true sector size as defined by spec but
+	 * constant 512 bytes.
+	 * 1. doesn't confuse guests that cannot handle large sectors
+	 * 2. matches the disk-size above
+	 * 3. what Linux does
+	 * 4. guest needs to take care about alignment on its own
+	 */
 	err = xenbus_printf(xbt, xbusd->xbusd_path, "sector-size", "%lu",
-	    (u_long)DEV_BSIZE);
+	    (u_long)VBD_BSIZE);
 	if (err) {
 		printf("xbdback: failed to write %s/sector-size: %d\n",
 		    xbusd->xbusd_path, err);
@@ -1461,7 +1474,7 @@ xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 		    kauth_cred_get());
 		mutex_enter(&xbdi->xbdi_lock);
 		if (error) {
-			aprint_error("xbdback %s: DIOCCACHESYNC returned %d\n",
+			printf("xbdback %s: DIOCCACHESYNC returned %d\n",
 			    xbdi->xbdi_xbusd->xbusd_path, error);
 			 if (error == EOPNOTSUPP || error == ENOTTY)
 				error = BLKIF_RSP_EOPNOTSUPP;
