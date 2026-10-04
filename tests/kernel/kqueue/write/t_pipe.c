@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe.c,v 1.4 2026/10/04 01:25:49 kre Exp $ */
+/* $NetBSD: t_pipe.c,v 1.5 2026/10/04 03:28:10 kre Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pipe.c,v 1.4 2026/10/04 01:25:49 kre Exp $");
+__RCSID("$NetBSD: t_pipe.c,v 1.5 2026/10/04 03:28:10 kre Exp $");
 
 #include <sys/event.h>
 #include <sys/wait.h>
@@ -70,7 +70,7 @@ ATF_TC_BODY(pipe1, tc)
 	ATF_REQUIRE_EQ_MSG((n = kevent(kq, NULL, 0, event, 1, NULL)),
 	    1, "got: %d", n);
 	REQUIRE_LIBC(alarm(0), (unsigned)-1);
-	printf("event[0].ident = %"PRId64"\n", event[0].ident);
+	printf("event[0].ident = %#"PRIxPTR"\n", event[0].ident);
 	printf("event[0].filter = %"PRId32"\n", event[0].filter);
 	printf("event[0].flags = 0x%"PRIx32"\n", event[0].flags);
 	printf("event[0].fflags = 0x%"PRIx32"\n", event[0].fflags);
