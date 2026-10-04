@@ -1,4 +1,4 @@
-/* $NetBSD: if_ae.c,v 1.46 2025/10/04 04:44:20 thorpej Exp $ */
+/* $NetBSD: if_ae.c,v 1.47 2026/10/04 16:14:39 andvar Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -73,7 +73,7 @@
  * Device driver for the onboard ethernet MAC found on the AR5312
  * chip's AHB bus.
  *
- * This device is very simliar to the tulip in most regards, and
+ * This device is very similar to the tulip in most regards, and
  * the code is directly derived from NetBSD's tulip.c.  However, it
  * is different enough that it did not seem to be a good idea to
  * add further complexity to the tulip driver, so we have our own.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.46 2025/10/04 04:44:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.47 2026/10/04 16:14:39 andvar Exp $");
 
 
 #include <sys/param.h>
