@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.24 2024/09/16 23:37:13 macallan Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.25 2026/10/04 03:03:17 rxg Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -96,6 +96,11 @@ struct sunxi_ccu_nkmp_tbl {
 	uint32_t	k;
 	uint32_t	m;
 	uint32_t	p;
+	uint32_t	pat;
+};
+
+struct sunxi_ccu_nkmp_pat {
+	bus_size_t	reg;
 };
 
 struct sunxi_ccu_nkmp {
@@ -106,8 +111,10 @@ struct sunxi_ccu_nkmp {
 	uint32_t	m;
 	uint32_t	p;
 	uint32_t	lock;
+	uint32_t	sdm_en;
 	uint32_t	enable;
 	uint32_t	flags;
+	const struct sunxi_ccu_nkmp_pat *pat;
 	const struct sunxi_ccu_nkmp_tbl *table;
 #define	SUNXI_CCU_NKMP_DIVIDE_BY_TWO		__BIT(0)
 #define	SUNXI_CCU_NKMP_FACTOR_N_EXACT		__BIT(1)
@@ -126,8 +133,9 @@ int	sunxi_ccu_nkmp_set_rate(struct sunxi_ccu_softc *,
 const char *sunxi_ccu_nkmp_get_parent(struct sunxi_ccu_softc *,
 				      struct sunxi_ccu_clk *);
 
-#define	SUNXI_CCU_NKMP_TABLE(_id, _name, _parent, _reg, _n, _k, _m, \
-		       _p, _enable, _lock, _tbl, _flags)	\
+#define	SUNXI_CCU_NKMP_SDM_TABLE(_id, _name, _parent, _reg, _n, _k, _m, \
+				 _p, _enable, _lock, _sdm_en, _pat, _tbl, \
+				 _flags) \
 	[_id] = {						\
 		.type = SUNXI_CCU_NKMP,				\
 		.base.name = (_name),				\
@@ -140,6 +148,8 @@ const char *sunxi_ccu_nkmp_get_parent(struct sunxi_ccu_softc *,
 		.u.nkmp.enable = (_enable),			\
 		.u.nkmp.flags = (_flags),			\
 		.u.nkmp.lock = (_lock),				\
+		.u.nkmp.sdm_en = (_sdm_en),			\
+		.u.nkmp.pat = (_pat),				\
 		.u.nkmp.table = (_tbl),				\
 		.enable = sunxi_ccu_nkmp_enable,		\
 		.get_rate = sunxi_ccu_nkmp_get_rate,		\
@@ -147,6 +157,10 @@ const char *sunxi_ccu_nkmp_get_parent(struct sunxi_ccu_softc *,
 		.get_parent = sunxi_ccu_nkmp_get_parent,	\
 	}
 
+#define	SUNXI_CCU_NKMP_TABLE(_id, _name, _parent, _reg, _n, _k, _m, \
+			     _p, _enable, _lock, _tbl, _flags)	\
+	SUNXI_CCU_NKMP_SDM_TABLE(_id, _name, _parent, _reg, _n, _k, _m, \
+				 _p, _enable, _lock, 0, NULL, _tbl, _flags)
 #define	SUNXI_CCU_NKMP(_id, _name, _parent, _reg, _n, _k, _m,	\
 		       _p, _enable, _flags)			\
 	SUNXI_CCU_NKMP_TABLE(_id, _name, _parent, _reg, _n, _k, _m, \
