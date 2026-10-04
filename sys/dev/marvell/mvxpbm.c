@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpbm.c,v 1.4 2024/02/08 20:51:24 andvar Exp $	*/
+/*	$NetBSD: mvxpbm.c,v 1.5 2026/10/04 16:46:46 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvxpbm.c,v 1.4 2024/02/08 20:51:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvxpbm.c,v 1.5 2026/10/04 16:46:46 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -123,7 +123,7 @@ mvxpbm_match(device_t parent, cfdata_t match, void *aux)
 }
 
 STATIC void
-mvxpbm_attach(device_t parnet, device_t self, void *aux)
+mvxpbm_attach(device_t parent, device_t self, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
 	struct mvxpbm_softc *sc = device_private(self);
