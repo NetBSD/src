@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.110 2026/10/04 06:16:11 mlelstv Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.111 2026/10/04 06:46:55 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2006,2024 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.110 2026/10/04 06:16:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.111 2026/10/04 06:46:55 mlelstv Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -394,11 +394,13 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 	/*
 	 * allocate page-aligned memory for segments, so that for each
 	 * xbdback_io its segments are in a single page.
-	 * sizeof(struct blkif_request_segment) * VBD_MAX_INDIRECT_SEGMENTS
-	 * is 128 so this helps us avoiding a page boundary withing a
-	 * block of VBD_MAX_INDIRECT_SEGMENTS segments.
+	 * avoid a page boundary within a block of VBD_MAX_INDIRECT_SEGMENTS
+	 * segments.
 	 */
-	CTASSERT(sizeof(struct blkif_request_segment) * VBD_MAX_INDIRECT_SEGMENTS == 128);
+
+	CTASSERT(PAGE_SIZE % (sizeof(struct blkif_request_segment) * VBD_MAX_INDIRECT_SEGMENTS) == 0);
+	CTASSERT(PAGE_SIZE / (sizeof(struct blkif_request_segment) * VBD_MAX_INDIRECT_SEGMENTS) >= 1);
+
 	xbdi->xbdi_segs = (void *)uvm_km_alloc(kernel_map, round_page(
 	    sizeof(struct blkif_request_segment) * VBD_MAX_INDIRECT_SEGMENTS * BLKIF_RING_SIZE),
 	    PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_WAITVA);
