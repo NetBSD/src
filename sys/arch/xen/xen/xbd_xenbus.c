@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.136 2026/07/15 15:38:21 riastradh Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.137 2026/10/04 06:52:27 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.136 2026/07/15 15:38:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.137 2026/10/04 06:52:27 mlelstv Exp $");
 
 #include "opt_xen.h"
 
@@ -94,14 +94,17 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.136 2026/07/15 15:38:21 riastradh E
 #define GRANT_INVALID_REF -1
 
 #define XBD_RING_SIZE __CONST_RING_SIZE(blkif, PAGE_SIZE)
+
+/* max I/O size for direct request */
 #define XBD_MAX_XFER (PAGE_SIZE * BLKIF_MAX_SEGMENTS_PER_REQUEST)
-#define XBD_MAX_CHUNK	32*1024		/* max I/O size we process in 1 req */
-#define XBD_XFER_LIMIT	(2*XBD_MAX_XFER)
+#define XBD_XFER_LIMIT	MAXPHYS
+
+/* max number of pages touched by I/O (+1 if not page aligned) */
+#define XBD_XFER_PAGES ((MAXPHYS >> PAGE_SHIFT) + 1)
 
 #define XEN_BSHIFT      9               /* log2(XEN_BSIZE) */
 #define XEN_BSIZE       (1 << XEN_BSHIFT)
 
-CTASSERT((MAXPHYS <= 2*XBD_MAX_CHUNK));
 CTASSERT(XEN_BSIZE == DEV_BSIZE);
 
 struct xbd_indirect {
@@ -114,11 +117,10 @@ struct xbd_req {
 	SLIST_ENTRY(xbd_req) req_next;
 	uint16_t req_id; /* ID passed to backend */
 	bus_dmamap_t req_dmamap;
-	struct xbd_req *req_parent, *req_child;
-	bool req_parent_done;
+	struct xbd_req *req_parent, *req_child, *req_first;
 	union {
 	    struct {
-		grant_ref_t req_gntref[XBD_XFER_LIMIT >> PAGE_SHIFT];
+		grant_ref_t req_gntref[XBD_XFER_PAGES];
 		struct buf *req_bp; /* buffer associated with this request */
 		void *req_data; /* pointer to the data buffer */
 		struct xbd_indirect *req_indirect;	/* indirect page */
@@ -159,6 +161,8 @@ struct xbd_xenbus_softc {
 	vmem_addr_t sc_unalign_buffer;
 	void *sc_unalign_used;
 
+	u_long sc_xfer_bytes;
+
 	int sc_backend_status; /* our status with backend */
 #define BLKIF_STATE_DISCONNECTED 0
 #define BLKIF_STATE_CONNECTED    1
@@ -169,9 +173,8 @@ struct xbd_xenbus_softc {
 #define BLKIF_SHUTDOWN_REMOTE 1 /* backend-initiated shutdown in progress */
 #define BLKIF_SHUTDOWN_LOCAL  2 /* locally-initiated shutdown in progress */
 
-	uint64_t sc_sectors; /* number of sc_secsize sectors for this device */
+	uint64_t sc_sectors; /* number of sectors for this device */
 	u_long sc_secsize; /* sector size */
-	uint64_t sc_xbdsize; /* size of disk in DEV_BSIZE */
 	u_long sc_info; /* VDISK_* */
 	u_long sc_handle; /* from backend */
 	int sc_features;
@@ -204,7 +207,7 @@ static void xbd_features(struct xbd_xenbus_softc *);
 static void xbd_diskstart_submit(struct xbd_xenbus_softc *, int,
 	struct buf *bp, int, bus_dmamap_t, grant_ref_t *);
 static void xbd_diskstart_submit_indirect(struct xbd_xenbus_softc *,
-	struct xbd_req *, struct buf *bp);
+	struct xbd_req *, struct buf *bp, int, bus_dmamap_t, grant_ref_t *);
 static int  xbd_map_align(struct xbd_xenbus_softc *, struct xbd_req *);
 static void xbd_unmap_align(struct xbd_xenbus_softc *, struct xbd_req *,
 	struct buf *);
@@ -299,6 +302,12 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_detach_cv, "xbddetach");
 	cv_init(&sc->sc_suspend_cv, "xbdsuspend");
 
+	/*
+	 * maximum bytes per transfer (updated when indirect
+	 * transfers are available)
+	 */
+	sc->sc_xfer_bytes = XBD_MAX_XFER;
+
 	xbd_features(sc);
 
 	/* initialize free requests list */
@@ -344,7 +353,7 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 
 	for (i = 0; i < XBD_RING_SIZE; i++) {
 		if (bus_dmamap_create(sc->sc_xbusd->xbusd_dmat,
-		    MAXPHYS, XBD_XFER_LIMIT >> PAGE_SHIFT,
+		    MAXPHYS, XBD_XFER_PAGES,
 		    PAGE_SIZE, PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &sc->sc_reqs[i].req_dmamap) != 0) {
 			aprint_error_dev(self, "can't alloc dma maps\n");
@@ -675,16 +684,15 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 
 		xbd_connect(sc);
 		sc->sc_shutdown = BLKIF_SHUTDOWN_RUN;
-		sc->sc_xbdsize =
-		    sc->sc_sectors * (uint64_t)sc->sc_secsize / DEV_BSIZE;
 		dg = &sc->sc_dksc.sc_dkdev.dk_geom;
 		memset(dg, 0, sizeof(*dg));
 
 		dg->dg_secperunit = sc->sc_sectors;
 		dg->dg_secsize = sc->sc_secsize;
+		/* Fake geometry with 1MByte cylinders */
 		dg->dg_ntracks = 1;
 		dg->dg_nsectors = (1024 * 1024) / dg->dg_secsize;
-		dg->dg_ncylinders = dg->dg_secperunit / dg->dg_nsectors;
+		dg->dg_ncylinders = dg->dg_secperunit / (dg->dg_nsectors * dg->dg_ntracks);
 
 		bufq_alloc(&sc->sc_dksc.sc_bufq, "fcfs", 0);
 		dk_attach(&sc->sc_dksc);
@@ -694,10 +702,10 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 		hypervisor_unmask_event(sc->sc_evtchn);
 
 		format_bytes(buf, uimin(9, sizeof(buf)),
-		    sc->sc_sectors * dg->dg_secsize);
+		    sc->sc_sectors * sc->sc_secsize);
 		aprint_normal_dev(sc->sc_dksc.sc_dev,
-				"%s, %d bytes/sect x %" PRIu64 " sectors\n",
-				buf, (int)dg->dg_secsize, sc->sc_sectors);
+				"%s, %u bytes/sect x %" PRIu64 " sectors\n",
+				buf, (unsigned)sc->sc_secsize, sc->sc_sectors);
 		snprintb(buf, sizeof(buf), BLKIF_FEATURE_BITS,
 		    sc->sc_features);
 		aprint_normal_dev(sc->sc_dksc.sc_dev,
@@ -788,9 +796,29 @@ xbd_features(struct xbd_xenbus_softc *sc)
 	    "feature-max-indirect-segments", &val, 10);
 	if (err)
 		val = 0;
-	if (val >= (MAXPHYS >> PAGE_SHIFT) + 1) {
-		/* We can use indirect segments, the limit is big enough */
+	if (val > BLKIF_MAX_SEGMENTS_PER_REQUEST) {
+		/*
+		 * Indirect limit is larger than direct limit.
+		 * Update max transfer size.
+		 */
 		sc->sc_features |= BLKIF_FEATURE_INDIRECT;
+		val = ulmin(val, MAXPHYS >> PAGE_SHIFT);
+		sc->sc_xfer_bytes = val << PAGE_SHIFT;
+	}
+}
+
+static void
+xbd_release_indirect(struct xbd_xenbus_softc *sc, struct xbd_req *xbdreq)
+{
+	if (xbdreq->req_indirect) {
+		/* No persistent mappings, so check that
+		 * backend unmapped the indirect segment grant too.
+		 */
+		KASSERT(xengnt_status(xbdreq->req_indirect->in_gntref)
+		    == 0);
+		SLIST_INSERT_HEAD(&sc->sc_indirect_head,
+		    xbdreq->req_indirect, in_next);
+		xbdreq->req_indirect = NULL;
 	}
 }
 
@@ -828,7 +856,7 @@ again:
 
 		if (rep->operation != BLKIF_OP_READ &&
 		    rep->operation != BLKIF_OP_WRITE) {
-			aprint_error_dev(sc->sc_dksc.sc_dev,
+			device_printf(sc->sc_dksc.sc_dev,
 			    "bad operation %d from backend\n", rep->operation);
 			continue;
 		}
@@ -847,26 +875,36 @@ again:
 		}
 
 		if (xbdreq->req_parent) {
-			struct xbd_req *req_parent = xbdreq->req_parent;
+			/* Unhook request with busy parent */
+			xbdreq->req_parent->req_child = xbdreq->req_child;
+		}
 
-			/* Unhook and recycle child */
+		if (xbdreq->req_child) {
+			/* Unhook request with busy child */
+			xbdreq->req_child->req_parent = xbdreq->req_parent;
+		}
+
+		if (xbdreq->req_parent != NULL || xbdreq->req_child != NULL) {
+			/* Finished before other requests */
 			xbdreq->req_parent = NULL;
-			req_parent->req_child = NULL;
-			SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq,
-				    req_next);
+			xbdreq->req_child = NULL;
 
-			if (!req_parent->req_parent_done) {
-				/* Finished before parent, nothing else to do */
-				continue;
+			/* Recycle unless first request */
+			if (xbdreq != xbdreq->req_first) {
+				xbd_release_indirect(sc, xbdreq);
+				SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq,
+					    req_next);
 			}
 
-			/* Must do the cleanup now */
-			xbdreq = req_parent;
-		}
-		if (xbdreq->req_child) {
-			/* Finished before child, child will cleanup */
-			xbdreq->req_parent_done = true;
 			continue;
+		}
+
+		if (xbdreq != xbdreq->req_first) {
+			struct xbd_req *req_first = xbdreq->req_first;
+			xbd_release_indirect(sc, xbdreq);
+			SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq,
+				    req_next);
+			xbdreq = req_first;
 		}
 
 		if (bp->b_error == 0)
@@ -879,11 +917,7 @@ again:
 			 * expect the backend to release the grant
 			 * immediately.
 			 */
-			if (xbdreq->req_indirect) {
-				gntref =
-				    xbdreq->req_indirect->in_addr[seg].gref;
-			} else
-				gntref = xbdreq->req_gntref[seg];
+			gntref = xbdreq->req_gntref[seg];
 			KASSERT(xengnt_status(gntref) == 0);
 			xengnt_revoke_access(gntref);
 		}
@@ -896,16 +930,7 @@ again:
 
 		dk_done(&sc->sc_dksc, bp);
 
-		if (xbdreq->req_indirect) {
-			/* No persistent mappings, so check that
-			 * backend unmapped the indirect segment grant too.
-			 */
-			KASSERT(xengnt_status(xbdreq->req_indirect->in_gntref)
-			    == 0);
-			SLIST_INSERT_HEAD(&sc->sc_indirect_head,
-			    xbdreq->req_indirect, in_next);
-			xbdreq->req_indirect = NULL;
-		}
+		xbd_release_indirect(sc, xbdreq);
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
 	sc->sc_ring.rsp_cons = i;
@@ -1124,9 +1149,11 @@ static int
 xbd_diskstart(device_t self, struct buf *bp)
 {
 	struct xbd_xenbus_softc *sc = device_private(self);
-	struct xbd_req *xbdreq;
+	struct xbd_req *xbdreq, *req_parent, *req_next;
 	int error = 0;
 	int notify;
+	bool indirect;
+	int chunk;
 
 	KASSERT(bp->b_bcount <= MAXPHYS);
 
@@ -1140,7 +1167,7 @@ xbd_diskstart(device_t self, struct buf *bp)
 		goto out;
 	}
 
-	if (bp->b_rawblkno < 0 || bp->b_rawblkno > sc->sc_sectors) {
+	if (bp->b_rawblkno < 0 || bp->b_rawblkno >= sc->sc_sectors) {
 		/* invalid block number */
 		error = EINVAL;
 		goto out;
@@ -1164,19 +1191,40 @@ xbd_diskstart(device_t self, struct buf *bp)
 	}
 	KASSERT(!RING_FULL(&sc->sc_ring));
 
-	if ((sc->sc_features & BLKIF_FEATURE_INDIRECT) == 0
-	    && bp->b_bcount > XBD_MAX_CHUNK) {
-		if (!SLIST_NEXT(xbdreq, req_next)) {
+	/* Is indirect mode available and needed ? */
+	indirect = sc->sc_xfer_bytes > XBD_MAX_XFER && bp->b_bcount > XBD_MAX_XFER;
+
+	/* Max bytes per request */
+	chunk = indirect ? sc->sc_xfer_bytes : XBD_MAX_XFER;
+
+	/* Check if we have enough requests in free list */
+	req_next = xbdreq;
+	for (int bytes = bp->b_bcount; bytes > chunk; bytes -= chunk) {
+		req_next = SLIST_NEXT(req_next, req_next);
+		if (!req_next) {
 			DPRINTF(("%s: need extra req\n", __func__));
 			error = EAGAIN;
 			goto out;
 		}
 	}
 
+	if (indirect) {
+		/* Check if we have enough indirect requests in free list */
+		struct xbd_indirect *req_ind = SLIST_FIRST(&sc->sc_indirect_head);
+		for (int bytes = bp->b_bcount; bytes > 0; bytes -= chunk) {
+			if (!req_ind) {
+				DPRINTF(("%s: need extra indirect headers\n", __func__));
+				error = EAGAIN;
+				goto out;
+			}
+			req_ind = SLIST_NEXT(req_ind, in_next);
+		}
+	}
+
 	bp->b_resid = bp->b_bcount;
 	xbdreq->req_bp = bp;
 	xbdreq->req_data = bp->b_data;
-	if (__predict_false((vaddr_t)bp->b_data & (sc->sc_secsize - 1))) {
+	if (__predict_false((vaddr_t)bp->b_data & PAGE_MASK)) {
 		if (__predict_false(xbd_map_align(sc, xbdreq) != 0)) {
 			DPRINTF(("xbd_diskstart: no align\n"));
 			error = EAGAIN;
@@ -1184,11 +1232,13 @@ xbd_diskstart(device_t self, struct buf *bp)
 		}
 	}
 
-	if (__predict_false(bus_dmamap_load(sc->sc_xbusd->xbusd_dmat,
+	error = bus_dmamap_load(sc->sc_xbusd->xbusd_dmat,
 	    xbdreq->req_dmamap, xbdreq->req_data, bp->b_bcount, NULL,
-	    BUS_DMA_NOWAIT) != 0)) {
-		printf("%s: %s: bus_dmamap_load failed\n",
-		    device_xname(sc->sc_dksc.sc_dev), __func__);
+	    BUS_DMA_NOWAIT);
+	if (__predict_false(error != 0)) {
+		printf("%s: %s: bus_dmamap_load failed (error=%d, bcount=%d)\n",
+		    device_xname(sc->sc_dksc.sc_dev), __func__,
+		    error, bp->b_bcount);
 		if (__predict_false(bp->b_data != xbdreq->req_data))
 			xbd_unmap_align(sc, xbdreq, NULL);
 		error = EINVAL;
@@ -1228,31 +1278,56 @@ xbd_diskstart(device_t self, struct buf *bp)
 	/* We are now committed to the transfer */
 	SLIST_REMOVE_HEAD(&sc->sc_xbdreq_head, req_next);
 
-	if ((sc->sc_features & BLKIF_FEATURE_INDIRECT) != 0 &&
-	    bp->b_bcount > XBD_MAX_CHUNK) {
-		xbd_diskstart_submit_indirect(sc, xbdreq, bp);
-		goto push;
-	}
+	req_parent = NULL;
+	for (int bytes = bp->b_bcount, start = 0; bytes > 0;
+	    bytes -= chunk, start += chunk) {
 
-	xbd_diskstart_submit(sc, xbdreq->req_id,
-	    bp, 0, xbdreq->req_dmamap, xbdreq->req_gntref);
+		struct xbd_req *xbdreq2;
 
-	if (bp->b_bcount > XBD_MAX_CHUNK) {
 		KASSERT(!RING_FULL(&sc->sc_ring));
-		struct xbd_req *xbdreq2 = SLIST_FIRST(&sc->sc_xbdreq_head);
-		KASSERT(xbdreq2 != NULL); /* Checked earlier */
-		SLIST_REMOVE_HEAD(&sc->sc_xbdreq_head, req_next);
-		xbdreq->req_child = xbdreq2;
-		xbdreq->req_parent_done = false;
-		xbdreq2->req_parent = xbdreq;
-		xbdreq2->req_bp = bp;
-		xbdreq2->req_data = xbdreq->req_data;
-		xbd_diskstart_submit(sc, xbdreq2->req_id,
-		    bp, XBD_MAX_CHUNK, xbdreq->req_dmamap,
-		    xbdreq->req_gntref);
+
+		if (start == 0) {
+			/*
+			 * First chunk uses the already allocated
+			 * transfer.
+			 */
+			KASSERT(req_parent == NULL);
+			xbdreq2 = xbdreq;
+		} else {
+			/*
+			 * Any further chunk is taken from free list.
+			 * We already checked that there are enough
+			 * requests available
+			 */
+			KASSERT(req_parent != NULL);
+			xbdreq2 = SLIST_FIRST(&sc->sc_xbdreq_head);
+			KASSERT(xbdreq2 != NULL);
+			SLIST_REMOVE_HEAD(&sc->sc_xbdreq_head, req_next);
+
+			/*
+			 * Extend chain
+			 */
+			req_parent->req_child = xbdreq2;
+			xbdreq2->req_parent = req_parent;
+			xbdreq2->req_child = NULL;
+			xbdreq2->req_bp = xbdreq->req_bp;
+			xbdreq2->req_data = xbdreq->req_data;
+		}
+
+		xbdreq2->req_first = xbdreq;
+		req_parent = xbdreq2;
+
+		if (indirect) {
+			xbd_diskstart_submit_indirect(sc, xbdreq2,
+			    bp, start, xbdreq->req_dmamap,
+			    xbdreq->req_gntref);
+		} else {
+			xbd_diskstart_submit(sc, xbdreq2->req_id,
+			    bp, start, xbdreq->req_dmamap,
+			    xbdreq->req_gntref);
+		}
 	}
 
-push:
 	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&sc->sc_ring, notify);
 	if (notify)
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
@@ -1284,7 +1359,7 @@ xbd_diskstart_submit(struct xbd_xenbus_softc *sc,
 	    __func__, req->id, req->operation, req->sector_number,
 	    req->handle));
 
-	size = uimin(bp->b_bcount - start, XBD_MAX_CHUNK);
+	size = uimin(bp->b_bcount - start, XBD_MAX_XFER);
 	for (dmaseg = 0; dmaseg < dmamap->dm_nsegs && size > 0; dmaseg++) {
 		bus_dma_segment_t *ds = &dmamap->dm_segs[dmaseg];
 
@@ -1325,11 +1400,12 @@ xbd_diskstart_submit(struct xbd_xenbus_softc *sc,
 
 static void
 xbd_diskstart_submit_indirect(struct xbd_xenbus_softc *sc,
-    struct xbd_req *xbdreq, struct buf *bp)
+    struct xbd_req *xbdreq, struct buf *bp, int start,
+    bus_dmamap_t dmamap, grant_ref_t *gntref)
 {
 	blkif_request_indirect_t *req;
 	paddr_t ma;
-	int nsects, nbytes, dmaseg, first_sect;
+	int nsects, nbytes, dmaseg, first_sect, size;
 	struct blkif_request_segment *reqseg;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -1340,7 +1416,8 @@ xbd_diskstart_submit_indirect(struct xbd_xenbus_softc *sc,
 	req->operation = BLKIF_OP_INDIRECT;
 	req->indirect_op =
 	    bp->b_flags & B_READ ? BLKIF_OP_READ : BLKIF_OP_WRITE;
-	req->sector_number = bp->b_rawblkno * sc->sc_secsize / XEN_BSIZE;
+	req->sector_number = (bp->b_rawblkno * sc->sc_secsize / XEN_BSIZE) +
+	    (start >> XEN_BSHIFT);
 	req->handle = sc->sc_handle;
 	DPRINTF(("%s: id %" PRIu64 " op %d sn %" PRIu64 " handle %d\n",
 	    __func__, req->id, req->indirect_op, req->sector_number,
@@ -1352,30 +1429,42 @@ xbd_diskstart_submit_indirect(struct xbd_xenbus_softc *sc,
 	req->indirect_grefs[0] = xbdreq->req_indirect->in_gntref;
 
 	reqseg = xbdreq->req_indirect->in_addr;
-	for (dmaseg = 0; dmaseg < xbdreq->req_dmamap->dm_nsegs; dmaseg++) {
-		bus_dma_segment_t *ds = &xbdreq->req_dmamap->dm_segs[dmaseg];
+	size = uimin(bp->b_bcount - start, sc->sc_xfer_bytes);
+	for (dmaseg = 0; dmaseg < dmamap->dm_nsegs && size > 0; dmaseg++) {
+		bus_dma_segment_t *ds = &dmamap->dm_segs[dmaseg];
 
 		ma = ds->ds_addr;
 		nbytes = ds->ds_len;
 
+		if (start > 0) {
+			if (start >= nbytes) {
+				start -= nbytes;
+				continue;
+			}
+			ma += start;
+			nbytes -= start;
+			start = 0;
+		}
+		size -= nbytes;
+
 		KASSERT(((ma & PAGE_MASK) & (sc->sc_secsize - 1)) == 0);
 		KASSERT((nbytes & (sc->sc_secsize - 1)) == 0);
-
+		KASSERT((size & (sc->sc_secsize - 1)) == 0);
 		first_sect = (ma & PAGE_MASK) >> XEN_BSHIFT;
 		nsects = nbytes >> XEN_BSHIFT;
 
 		reqseg->first_sect = first_sect;
 		reqseg->last_sect = first_sect + nsects - 1;
-		reqseg->gref = xbdreq->req_gntref[dmaseg];
-		DPRINTF(("%s: seg %d fs %d ls %d\n", __func__, dmaseg,
-		    reqseg->first_sect, reqseg->last_sect));
-
 		KASSERT(reqseg->first_sect <= reqseg->last_sect);
 		KASSERT(reqseg->last_sect < (PAGE_SIZE / XEN_BSIZE));
 
-		reqseg++;
+		reqseg->gref = gntref[dmaseg];
+		DPRINTF(("%s: seg %d fs %d ls %d\n", __func__, dmaseg,
+		    reqseg->first_sect, reqseg->last_sect));
+
+		++reqseg;
 	}
-	req->nr_segments = dmaseg;
+	req->nr_segments = reqseg - xbdreq->req_indirect->in_addr;
 	sc->sc_ring.req_prod_pvt++;
 
 	sc->sc_cnt_indirect.ev_count++;
