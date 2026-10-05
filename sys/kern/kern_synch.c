@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.366 2023/11/22 13:18:48 riastradh Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.367 2026/10/05 15:01:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.366 2023/11/22 13:18:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.367 2026/10/05 15:01:51 skrll Exp $");
 
 #include "opt_kstack.h"
 #include "opt_ddb.h"
@@ -553,7 +553,7 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 	/*
 	 * Let sched_nextlwp() select the LWP to run the CPU next.
 	 * If no LWP is runnable, select the idle LWP.
-	 * 
+	 *
 	 * On arrival here LWPs on a run queue are locked by spc_mutex which
 	 * is currently held.  Idle LWPs are always locked by spc_lwplock,
 	 * which may or may not be held here.  On exit from this code block,
@@ -870,7 +870,7 @@ mi_switch(lwp_t *l)
 	}
 
 	KASSERT(l == curlwp);
-	KASSERT(l->l_stat == LSONPROC || (l->l_flag & LW_IDLE) != 0); 
+	KASSERT(l->l_stat == LSONPROC || (l->l_flag & LW_IDLE) != 0);
 
 	SYSCALL_TIME_WAKEUP(l);
 	LOCKDEBUG_BARRIER(NULL, 1);
@@ -961,7 +961,7 @@ setrunnable(struct lwp *l)
 /*
  * suspendsched:
  *
- *	Convert all non-LW_SYSTEM LSSLEEP or LSRUN LWPs to LSSUSPENDED. 
+ *	Convert all non-LW_SYSTEM LSSLEEP or LSRUN LWPs to LSSUSPENDED.
  */
 void
 suspendsched(void)
@@ -1020,8 +1020,8 @@ suspendsched(void)
 	mutex_exit(&proc_lock);
 
 	/*
-	 * Kick all CPUs to make them preempt any LWPs running in user mode. 
-	 * They'll trap into the kernel and suspend themselves in userret(). 
+	 * Kick all CPUs to make them preempt any LWPs running in user mode.
+	 * They'll trap into the kernel and suspend themselves in userret().
 	 *
 	 * Unusually, we don't hold any other scheduler object locked, which
 	 * would keep preemption off for sched_resched_cpu(), so disable it
