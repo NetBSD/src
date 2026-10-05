@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.177 2026/10/03 16:28:30 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.178 2026/10/05 10:40:09 kre Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.177 2026/10/03 16:28:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.178 2026/10/05 10:40:09 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -534,8 +534,10 @@ again:
 		 * If the "write-side" is blocked, wake it up now.
 		 */
 		wpipe = rpipe->pipe_peer;
-		pipeselwakeup(wpipe, POLL_OUT);
-		cv_broadcast(&wpipe->pipe_wcv);
+		if (wpipe != NULL) {
+			pipeselwakeup(wpipe, POLL_OUT);
+			cv_broadcast(&wpipe->pipe_wcv);
+		}
 
 		if (wakeup_state & PIPE_RESTART) {
 			error = SET_ERROR(ERESTART);
