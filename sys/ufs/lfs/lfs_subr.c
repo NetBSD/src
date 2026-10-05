@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.113 2026/09/27 18:48:21 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.114 2026/10/05 13:49:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.113 2026/09/27 18:48:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.114 2026/10/05 13:49:43 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -719,6 +719,14 @@ lfs_prelock_held(struct lfs *fs)
 void
 lfs_preunlock(struct lfs *fs)
 {
+	int last = 0;
+
+	mutex_enter(&lfs_lock);
+	last = (fs->lfs_prelock == 1);
+	mutex_exit(&lfs_lock);
+	if (last)
+		UNEXCL_IFLOCK(fs);
+
 	mutex_enter(&lfs_lock);
 	if (--fs->lfs_prelock > 0) {
 		mutex_exit(&lfs_lock);
@@ -728,7 +736,6 @@ lfs_preunlock(struct lfs *fs)
 	fs->lfs_prelocklwp = NULL;
 	cv_broadcast(&fs->lfs_prelockcv);
 	mutex_exit(&lfs_lock);
-	UNEXCL_IFLOCK(fs);
 }
 
 /*
