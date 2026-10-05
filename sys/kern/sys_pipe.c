@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.181 2026/10/05 20:49:28 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.182 2026/10/05 21:01:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.181 2026/10/05 20:49:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.182 2026/10/05 21:01:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -81,8 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.181 2026/10/05 20:49:28 riastradh Exp
 #include <sys/ttycom.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
-
-#define	PIPE_DESTROYED	0x40000000
 
 static int	pipe_read(file_t *, off_t *, struct uio *, kauth_cred_t, int);
 static int	pipe_write(file_t *, off_t *, struct uio *, kauth_cred_t, int);
@@ -125,8 +123,6 @@ static const struct fileops pipeops = {
 #define	LIMITBIGPIPES	32
 static u_int	maxbigpipes __read_mostly = LIMITBIGPIPES;
 static u_int	nbigpipe = 0;
-
-static uint64_t	pipegen = 0;
 
 /*
  * Amount of KVA consumed by pipe buffers.
@@ -229,7 +225,6 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	    (error = pipe_create(&wpipe, pipe_wr_cache, &nt))) {
 		goto free2;
 	}
-	rpipe->pipe_gen = wpipe->pipe_gen = atomic_inc_64_nv(&pipegen);
 	rpipe->pipe_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	wpipe->pipe_lock = rpipe->pipe_lock;
 	mutex_obj_hold(wpipe->pipe_lock);
@@ -323,7 +318,6 @@ pipe_create(struct pipe **pipep, pool_cache_t cache, struct timespec *nt)
 	KASSERT(pipe != NULL);
 	*pipep = pipe;
 	error = 0;
-	pipe->pipe_state &= ~PIPE_DESTROYED;
 	pipe->pipe_atime = pipe->pipe_mtime = pipe->pipe_btime = *nt;
 	pipe->pipe_lock = NULL;
 	if (cache == pipe_rd_cache) {
@@ -461,7 +455,6 @@ pipe_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	}
 
 	mutex_enter(lock);
-	KASSERT((rpipe->pipe_state & PIPE_DESTROYED) == 0);
 	++rpipe->pipe_busy;
 	ocnt = bp->cnt;
 
@@ -484,7 +477,6 @@ again:
 			mutex_exit(lock);
 			error = uiomove((char *)bp->buffer + bp->out, size, uio);
 			mutex_enter(lock);
-			KASSERT((rpipe->pipe_state & PIPE_DESTROYED) == 0);
 			if (error)
 				break;
 
@@ -541,10 +533,6 @@ again:
 		/*
 		 * If the "write-side" is blocked, wake it up now.
 		 */
-		KASSERT((rpipe->pipe_state & PIPE_EOF) == 0);
-		KASSERT(rpipe->pipe_peer != NULL);
-		KASSERT((rpipe->pipe_peer->pipe_state & PIPE_DESTROYED) == 0);
-		KASSERT(rpipe->pipe_peer->pipe_gen == rpipe->pipe_gen);
 		wpipe = rpipe->pipe_peer;
 		if (wpipe != NULL) {
 			pipeselwakeup(wpipe, POLL_OUT);
@@ -585,10 +573,6 @@ unlocked_error:
 	 */
 	if ((bp->size - bp->cnt) >= PIPE_BUF
 	    && (ocnt != bp->cnt || (rpipe->pipe_state & PIPE_SIGNALR))) {
-		KASSERT(rpipe->pipe_peer == NULL ||
-		    (rpipe->pipe_peer->pipe_state & PIPE_DESTROYED) == 0);
-		KASSERT(rpipe->pipe_peer == NULL ||
-		    rpipe->pipe_peer->pipe_gen == rpipe->pipe_gen);
 		if ((wpipe = rpipe->pipe_peer) != NULL)
 			pipeselwakeup(wpipe, POLL_OUT);
 		rpipe->pipe_state &= ~PIPE_SIGNALR;
@@ -614,16 +598,10 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	error = 0;
 
 	mutex_enter(lock);
-	KASSERT((wpipe->pipe_state & PIPE_DESTROYED) == 0);
 	rpipe = wpipe->pipe_peer;
-	KASSERT(rpipe == NULL || (rpipe->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(rpipe == NULL || rpipe->pipe_gen == wpipe->pipe_gen);
 
 	/*
 	 * Detect loss of pipe read side, issue SIGPIPE if lost.
-	 *
-	 * After this, once we busy wpipe, the peer rpipe will remain
-	 * stable (though may have PIPE_EOF set) until we unbusy it.
 	 */
 	if (rpipe == NULL || (rpipe->pipe_state & PIPE_EOF) != 0) {
 		mutex_exit(lock);
@@ -702,13 +680,6 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				    size - segsize, uio);
 			}
 			mutex_enter(lock);
-			KASSERT((wpipe->pipe_state & PIPE_DESTROYED) == 0);
-			KASSERT(wpipe->pipe_peer == NULL ||
-			    wpipe->pipe_peer == rpipe);
-			KASSERT(wpipe->pipe_peer == NULL ||
-			    (wpipe->pipe_state & PIPE_DESTROYED) == 0);
-			KASSERT(wpipe->pipe_peer == NULL ||
-			    wpipe->pipe_peer->pipe_gen == wpipe->pipe_gen);
 			if (error)
 				break;
 
@@ -722,26 +693,6 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			KASSERT(bp->cnt <= bp->size);
 			wakeup_state = 0;
 		} else {
-			/*
-			 * XXX ORDERING BELOW APPEARS TO BE WRONG
-			 *
-			 * 1. Surely if we are going to wake either
-			 *    rpipe->pipe_rcv _or_ the select waiters,
-			 *    we should wake both of them, no?  But in
-			 *    the FNONBLOCK case, we wake
-			 *    rpipe->pipe_rcv _but not_ the select
-			 *    waiters.
-			 *
-			 *    => Need to write a test case for this.
-			 *       Tricky because there has to be stuff
-			 *       in the buffer already.  Maybe not an
-			 *       issue because we also issue a select
-			 *       wakeup outside the loop?
-			 *
-			 * 2. Does it matter whether EAGAIN or ERESTART
-			 *    has priority?
-			 */
-
 			/*
 			 * If the "read-side" has been blocked, wake it up now.
 			 */
@@ -844,7 +795,6 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 
 	case FIOASYNC:
 		mutex_enter(lock);
-		KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
 		if (*(int *)data) {
 			pipe->pipe_state |= PIPE_ASYNC;
 		} else {
@@ -855,7 +805,6 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 
 	case FIONREAD:
 		mutex_enter(lock);
-		KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
 		*(int *)data = pipe->pipe_buffer.cnt;
 		mutex_exit(lock);
 		return 0;
@@ -863,37 +812,23 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 	case FIONWRITE:
 		/* Look at other side */
 		mutex_enter(lock);
-		KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
-		KASSERT(pipe->pipe_peer == NULL ||
-		    (pipe->pipe_peer->pipe_state & PIPE_DESTROYED) == 0);
-		KASSERT(pipe->pipe_peer == NULL ||
-		    pipe->pipe_peer->pipe_gen == pipe->pipe_gen);
 		pipe = pipe->pipe_peer;
 		if (pipe == NULL)
 			*(int *)data = 0;
-		else {
-			KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
+		else
 			*(int *)data = pipe->pipe_buffer.cnt;
-		}
 		mutex_exit(lock);
 		return 0;
 
 	case FIONSPACE:
 		/* Look at other side */
 		mutex_enter(lock);
-		KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
-		KASSERT(pipe->pipe_peer == NULL ||
-		    (pipe->pipe_peer->pipe_state & PIPE_DESTROYED) == 0);
-		KASSERT(pipe->pipe_peer == NULL ||
-		    pipe->pipe_peer->pipe_gen == pipe->pipe_gen);
 		pipe = pipe->pipe_peer;
 		if (pipe == NULL)
 			*(int *)data = 0;
-		else {
-			KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
+		else
 			*(int *)data = pipe->pipe_buffer.size -
 			    pipe->pipe_buffer.cnt;
-		}
 		mutex_exit(lock);
 		return 0;
 
@@ -917,10 +852,7 @@ pipe_poll(file_t *fp, int events)
 	int revents = 0;
 
 	mutex_enter(pipe->pipe_lock);
-	KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
 	ppipe = pipe->pipe_peer;
-	KASSERT(ppipe == NULL || (ppipe->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(ppipe == NULL || ppipe->pipe_gen == pipe->pipe_gen);
 
 	if (fp->f_flag & FREAD) {
 		struct pipe *rpipe = pipe;
@@ -979,11 +911,6 @@ pipe_stat(file_t *fp, struct stat *ub)
 	struct pipe *pipe = fp->f_pipe;
 
 	mutex_enter(pipe->pipe_lock);
-	KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(pipe->pipe_peer == NULL ||
-	    (pipe->pipe_peer->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(pipe->pipe_peer == NULL ||
-	    pipe->pipe_peer->pipe_gen == pipe->pipe_gen);
 	memset(ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
 	ub->st_blksize = pipe->pipe_buffer.size;
@@ -1094,11 +1021,6 @@ pipeclose(struct file *fp, struct pipe *pipe)
 	KASSERT(lock != NULL);
 
 	mutex_enter(lock);
-	KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(pipe->pipe_peer == NULL ||
-	    (pipe->pipe_peer->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(pipe->pipe_peer == NULL ||
-	    pipe->pipe_peer->pipe_gen == pipe->pipe_gen);
 
 	/*
 	 * fd_close has issued .fo_restart to wake all waiters on this
@@ -1128,9 +1050,6 @@ pipeclose(struct file *fp, struct pipe *pipe)
 	KASSERT(pipe->pipe_peer != NULL || (pipe->pipe_state & PIPE_EOF) != 0);
 	pipe->pipe_state |= PIPE_EOF;
 	if ((ppipe = pipe->pipe_peer) != NULL) {
-		KASSERT((ppipe->pipe_state & PIPE_DESTROYED) == 0);
-		KASSERT(ppipe->pipe_gen == pipe->pipe_gen);
-
 		if (fp->f_flag & FREAD) {
 			struct pipe *wpipe = ppipe;
 
@@ -1177,7 +1096,7 @@ pipefree(struct pipe *pipe)
 {
 
 	pipe->pipe_pgid = 0;
-	pipe->pipe_state = PIPE_SIGNALR|PIPE_DESTROYED;
+	pipe->pipe_state = PIPE_SIGNALR;
 	pipe->pipe_peer = NULL;
 	mutex_obj_free(pipe->pipe_lock);
 	pipe->pipe_lock = NULL;
@@ -1199,12 +1118,6 @@ filt_pipedetach(struct knote *kn)
 	lock = pipe->pipe_lock;
 
 	mutex_enter(lock);
-	KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(pipe->pipe_peer == NULL ||
-	    (pipe->pipe_peer->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(pipe->pipe_peer == NULL ||
-	    pipe->pipe_peer->pipe_gen == pipe->pipe_gen);
-
 	KASSERT(kn->kn_hook == pipe);
 	selremove_knote(&pipe->pipe_sel, kn);
 	mutex_exit(lock);
@@ -1236,10 +1149,7 @@ filt_piperead(struct knote *kn, long hint)
 	} else {
 		KASSERT(mutex_owned(rpipe->pipe_lock));
 	}
-	KASSERT((rpipe->pipe_state & PIPE_DESTROYED) == 0);
 	wpipe = rpipe->pipe_peer;
-	KASSERT(wpipe == NULL || (wpipe->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(wpipe == NULL || wpipe->pipe_gen == rpipe->pipe_gen);
 	kn->kn_data = rpipe->pipe_buffer.cnt;
 
 	if ((rpipe->pipe_state & PIPE_EOF) ||
@@ -1270,10 +1180,7 @@ filt_pipewrite(struct knote *kn, long hint)
 	} else {
 		KASSERT(mutex_owned(wpipe->pipe_lock));
 	}
-	KASSERT((wpipe->pipe_state & PIPE_DESTROYED) == 0);
 	rpipe = wpipe->pipe_peer;
-	KASSERT(rpipe == NULL || (rpipe->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(rpipe == NULL || rpipe->pipe_gen == wpipe->pipe_gen);
 
 	if ((rpipe == NULL) || (rpipe->pipe_state & PIPE_EOF)) {
 		kn->kn_data = 0;
@@ -1316,11 +1223,6 @@ pipe_kqfilter(file_t *fp, struct knote *kn)
 	lock = pipe->pipe_lock;
 
 	mutex_enter(lock);
-	KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(pipe->pipe_peer == NULL ||
-	    (pipe->pipe_peer->pipe_state & PIPE_DESTROYED) == 0);
-	KASSERT(pipe->pipe_peer == NULL ||
-	    pipe->pipe_peer->pipe_gen == pipe->pipe_gen);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -1338,7 +1240,6 @@ pipe_kqfilter(file_t *fp, struct knote *kn)
 			return 0;
 		}
 		kn->kn_fop = &pipe_wfiltops;
-		KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
 		break;
 	default:
 		mutex_exit(lock);
