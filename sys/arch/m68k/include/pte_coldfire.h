@@ -1,4 +1,4 @@
-/* $NetBSD: pte_coldfire.h,v 1.4 2026/05/17 06:31:39 skrll Exp $ */
+/* $NetBSD: pte_coldfire.h,v 1.5 2026/10/05 07:07:20 skrll Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -171,6 +171,8 @@ pte_clear_modify(pt_entry_t pt_entry)
 static inline pt_entry_t
 pte_prot_downgrade(pt_entry_t pt_entry, vm_prot_t newprot)
 {
+	KASSERT((newprot & VM_PROT_READ) != 0);
+
 	pt_entry &= ~MMUDR_W;
 	if ((newprot & VM_PROT_EXECUTE) == 0)
 		pt_entry &= ~MMUDR_X;

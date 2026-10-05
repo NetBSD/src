@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.15 2026/10/01 18:28:13 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.16 2026/10/05 07:07:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -201,6 +201,8 @@ pte_clear_reference(pt_entry_t pt_entry)
 static __inline pt_entry_t
 pte_prot_downgrade(pt_entry_t pt_entry, vm_prot_t newprot)
 {
+	KASSERT((newprot & VM_PROT_READ) != 0);
+
 	pt_entry &= ~(PTE_xW | PTE_UNMODIFIED);
 	if ((newprot & VM_PROT_EXECUTE) == 0)
 		pt_entry &= ~(PTE_xX|PTE_UNSYNCED);
