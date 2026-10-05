@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.183 2026/10/05 21:14:15 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.184 2026/10/05 22:15:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.183 2026/10/05 21:14:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.184 2026/10/05 22:15:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -533,11 +533,11 @@ again:
 		/*
 		 * If the "write-side" is blocked, wake it up now.
 		 */
+		KASSERT((rpipe->pipe_state & PIPE_EOF) == 0);
+		KASSERT(rpipe->pipe_peer != NULL);
 		wpipe = rpipe->pipe_peer;
-		if (wpipe != NULL) {
-			pipeselwakeup(wpipe, POLL_OUT);
-			cv_broadcast(&wpipe->pipe_wcv);
-		}
+		pipeselwakeup(wpipe, POLL_OUT);
+		cv_broadcast(&wpipe->pipe_wcv);
 
 		if (wakeup_state & PIPE_RESTART) {
 			error = SET_ERROR(ERESTART);
@@ -602,6 +602,9 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 
 	/*
 	 * Detect loss of pipe read side, issue SIGPIPE if lost.
+	 *
+	 * After this, once we busy wpipe, the peer rpipe will remain
+	 * stable (though may have PIPE_EOF set) until we unbusy it.
 	 */
 	if (rpipe == NULL || (rpipe->pipe_state & PIPE_EOF) != 0) {
 		mutex_exit(lock);
@@ -1069,8 +1072,27 @@ pipeclose(struct file *fp, struct pipe *pipe)
 			cv_broadcast(&ppipe->pipe_wcv);
 			while (ppipe->pipe_busy)
 				cv_wait(&ppipe->pipe_draincv, lock);
+
+				/*
+				 * After the cv_wait, another thread
+				 * may have concurrently closed ppipe,
+				 * with two effects:
+				 *
+				 * 1. ppipe may now be invalid, so we
+				 *    MUST NOT touch it.
+				 *
+				 * 2. pipe->pipe_peer may have been set
+				 *    to null (under the common mutex),
+				 *    so we can detect this case.
+				 */
+				KASSERT(pipe->pipe_peer == NULL ||
+				    pipe->pipe_peer == ppipe);
+				if ((ppipe = pipe->pipe_peer) == NULL)
+					break;
+			}
 		}
-		ppipe->pipe_peer = NULL;
+		if (ppipe)
+			ppipe->pipe_peer = NULL;
 	}
 
 	/*
