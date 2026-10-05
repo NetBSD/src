@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe.c,v 1.6 2026/10/05 20:48:52 riastradh Exp $ */
+/* $NetBSD: t_pipe.c,v 1.7 2026/10/05 20:49:13 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pipe.c,v 1.6 2026/10/05 20:48:52 riastradh Exp $");
+__RCSID("$NetBSD: t_pipe.c,v 1.7 2026/10/05 20:49:13 riastradh Exp $");
 
 #include <sys/event.h>
 #include <sys/wait.h>
@@ -168,8 +168,6 @@ ATF_TC_BODY(pipe_wrong_end, tc)
 	RL(kq = kqueue());
 
 	EV_SET(&event[0], fds[0], EVFILT_WRITE, EV_ADD|EV_ENABLE, 0, 0, 0);
-	atf_tc_expect_fail("PR kern/60851: change in pipe kevent"
-	    " EVFILT_READ/WRITE on wrong end");
 	RL(kevent(kq, event, 1, NULL, 0, NULL));
 
 	/* make sure there is something in the pipe */

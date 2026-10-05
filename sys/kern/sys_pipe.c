@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.179 2026/10/05 14:01:05 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.180 2026/10/05 20:49:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.179 2026/10/05 14:01:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.180 2026/10/05 20:49:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1210,6 +1210,20 @@ filt_pipedetach(struct knote *kn)
 	mutex_exit(lock);
 }
 
+static void
+filt_pipenodetach(struct knote *kn)
+{
+	/* not attached, nothing to do */
+}
+
+static int
+filt_pipewrongend(struct knote *kn, long hint)
+{
+
+	/* Never ready! */
+	return 0;
+}
+
 static int
 filt_piperead(struct knote *kn, long hint)
 {
@@ -1311,15 +1325,17 @@ pipe_kqfilter(file_t *fp, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		if ((fp->f_flag & FREAD) == 0) {
+			kn->kn_fop = &pipe_wrongendfiltops;
 			mutex_exit(lock);
-			return SET_ERROR(EINVAL);
+			return 0;
 		}
 		kn->kn_fop = &pipe_rfiltops;
 		break;
 	case EVFILT_WRITE:
 		if ((fp->f_flag & FWRITE) == 0) {
+			kn->kn_fop = &pipe_wrongendfiltops;
 			mutex_exit(lock);
-			return SET_ERROR(EINVAL);
+			return 0;
 		}
 		kn->kn_fop = &pipe_wfiltops;
 		KASSERT((pipe->pipe_state & PIPE_DESTROYED) == 0);
