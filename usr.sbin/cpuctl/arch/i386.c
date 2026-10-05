@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.151 2026/10/02 04:20:49 andvar Exp $	*/
+/*	$NetBSD: i386.c,v 1.152 2026/10/05 06:28:24 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.151 2026/10/02 04:20:49 andvar Exp $");
+__RCSID("$NetBSD: i386.c,v 1.152 2026/10/05 06:28:24 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -661,17 +661,17 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			NULL,
 		},
-		/* Family > 6, not yet available from Transmeta */
+		/* Family > 6 */
 		{
 			CPUCLASS_686,
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
 			},
-			"Pentium Pro compatible",	/* Default */
+			"Efficeon",	/* Default */
 			NULL,
 			NULL,
-			NULL,
+			transmeta_cpu_info,
 		} }
 	}
 };
@@ -1503,20 +1503,40 @@ static void
 transmeta_cpu_info(struct cpu_info *ci)
 {
 	u_int descs[4], nreg;
-	u_int frequency, voltage, percentage;
+	u_int frequency, voltage, percentage, revision;
 
 	x86_cpuid(0x80860000, descs);
 	nreg = descs[0];
 	if (nreg >= 0x80860001) {
 		x86_cpuid(0x80860001, descs);
-		aprint_verbose_dev(ci->ci_dev, "Processor revision %u.%u.%u.%u\n",
-		    (descs[1] >> 24) & 0xff,
-		    (descs[1] >> 16) & 0xff,
-		    (descs[1] >> 8) & 0xff,
-		    descs[1] & 0xff);
+		revision = descs[1];
+
+		/*
+		 * On Efficeon the hardware revision is in cpuid leaf 0x80860002
+		 * register EAX, indicated by the value 0x02000000 here.
+		 */
+		if (revision != 0x02000000)
+			aprint_verbose_dev(ci->ci_dev, "Processor revision %u.%u.%u.%u\n",
+			    (revision >> 24) & 0xff,
+			    (revision >> 16) & 0xff,
+			    (revision >> 8) & 0xff,
+			    revision & 0xff);
 	}
 	if (nreg >= 0x80860002) {
 		x86_cpuid(0x80860002, descs);
+
+		/*
+		 * Efficeon hardware revision format is described in
+		 * https://www.sandpile.org/x86/cpuid.htm#leaf_8086_0002h
+		 * https://web.archive.org/web/20260925233921/https://www.sandpile.org/x86/cpuid.htm#leaf_8086_0002h
+		 * Major revision is bits 31..29, minor is bits 28..25.
+		 * Bits 11..8 encode the package type.
+		 * All other bits are reserved.
+		 */
+		if (revision == 0x02000000)
+			aprint_verbose_dev(ci->ci_dev, "Processor revision %u.%u (0x%08x)\n",
+			    descs[0] >> 29, (descs[0] >> 25) & 0xf, descs[0]);
+
 		aprint_verbose_dev(ci->ci_dev, "Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
 		    (descs[1] >> 24) & 0xff,
 		    (descs[1] >> 16) & 0xff,
