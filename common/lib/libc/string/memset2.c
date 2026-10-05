@@ -1,4 +1,4 @@
-/*	$NetBSD: memset2.c,v 1.11 2022/01/15 10:38:56 andvar Exp $	*/
+/*	$NetBSD: memset2.c,v 1.12 2026/10/05 05:12:46 kre Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: memset2.c,v 1.11 2022/01/15 10:38:56 andvar Exp $");
+__RCSID("$NetBSD: memset2.c,v 1.12 2026/10/05 05:12:46 kre Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -95,13 +95,21 @@ memset(void *addr, int c, size_t len)
 
 	/*
 	 * Pad out the fill byte (v) across a memword_t.
-	 * The conditional at the end prevents GCC from complaining about
-	 * shift count >= width of type 
+	 *
+	 * nb: fill is not guaranteed to be unsigned, so to avoid UB
+	 * use a var that is, and is as wide as we ever need.
+	 * Then use the optimally sized "fill"
 	 */
-	fill = (unsigned char)c;
-	fill |= fill << 8;
-	fill |= fill << 16;
-	fill |= fill << (sizeof(c) < sizeof(fill) ? 32 : 0);
+	{
+		uint64_t ufill;
+
+		ufill = (unsigned char)c;
+		ufill |= ufill << 8;
+		ufill |= ufill << 16;
+		ufill |= ufill << 32;
+
+		fill = ufill;
+	}
 
 	/*
 	 * Get the number of unaligned bytes to fill in the first word.
