@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.16 2026/10/04 03:28:43 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2026/10/05 04:43:56 kre Exp $
 
 # gdtoa sources
 .PATH:	${.PARSEDIR}
-CPPFLAGS+=-I${.PARSEDIR} -I${LIBCDIR}/locale
+GDtoAMakefileParseDir:=${.PARSEDIR}
+CPPFLAGS+=-I${GDtoAMakefileParseDir} -I${LIBCDIR}/locale
 
 .if ${MACHINE_ARCH} == "vax"
 CPPFLAGS+=-DNO_FENV_H

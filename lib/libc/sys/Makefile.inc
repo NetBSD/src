@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.260 2026/10/04 03:28:46 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.261 2026/10/05 04:43:56 kre Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
 .PATH: ${ARCHDIR}/sys ${.PARSEDIR}
+LIBC_SYS_Makefile_ParseDir:=${.PARSEDIR}
 
 # other sources shared with the kernel, used in syscalls
 SRCS+=	cpuset.c
@@ -203,7 +204,7 @@ _GENFILES=	${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} \
 SRCS+=		${_GENFILES}
 CLEANFILES+=	${_GENFILES}
 
-ASMDEPS=	${.PARSEDIR}/Makefile.inc ${ARCHDIR}/SYS.h \
+ASMDEPS=	${LIBC_SYS_Makefile_ParseDir}/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
 
 _LINTASM=	${ASM:Nsa_*.S} ${WEAKASM:Nsa_*.S}
