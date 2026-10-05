@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.43 2026/03/11 21:54:22 andvar Exp $ */
+/* $NetBSD: pipe.h,v 1.44 2026/10/05 14:01:05 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -103,6 +103,7 @@ struct pipe {
 	u_int	pipe_state;		/* pipe status info */
 	int	pipe_busy;		/* busy flag, to handle rundown */
 	vaddr_t	pipe_kmem;		/* preallocated PIPE_SIZE buffer */
+	uint64_t pipe_gen;
 };
 
 /*
