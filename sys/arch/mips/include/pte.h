@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.30 2026/10/01 18:28:13 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.31 2026/10/05 07:00:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -336,13 +336,13 @@ pte_nv_entry(bool kernel_p)
 }
 
 static inline pt_entry_t
-pte_prot_downgrade(pt_entry_t pte, vm_prot_t prot)
+pte_prot_downgrade(pt_entry_t pte, vm_prot_t newprot)
 {
 	const uint32_t ro_bit = MIPS_MMU(PG_RO);
 	const uint32_t rw_bit = MIPS_MMU(PG_D);
 
 	return (pte & ~(ro_bit | rw_bit))
-	    | ((prot & VM_PROT_WRITE) ? rw_bit : ro_bit);
+	    | ((newprot & VM_PROT_WRITE) ? rw_bit : ro_bit);
 }
 
 static inline pt_entry_t

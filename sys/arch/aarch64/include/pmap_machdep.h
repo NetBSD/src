@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.23 2026/07/11 11:39:47 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.24 2026/10/05 07:00:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -297,14 +297,14 @@ pte_nv_entry(bool kernel_p)
 }
 
 static inline pt_entry_t
-pte_prot_downgrade(pt_entry_t pte, vm_prot_t prot)
+pte_prot_downgrade(pt_entry_t pte, vm_prot_t newprot)
 {
-	KASSERT((prot & VM_PROT_READ) != 0);
+	KASSERT((newprot & VM_PROT_READ) != 0);
 
 	/*
 	 * Modified state has been saved already by pmap_pte_protect.
 	 */
-	const bool mod_tracking_p = (prot & VM_PROT_WRITE) != 0;
+	const bool mod_tracking_p = (newprot & VM_PROT_WRITE) != 0;
 
 	const pt_entry_t pte_mod_tracking = cpu_has_hw_mod_p() ?
 	    LX_BLKPAG_DBM : LX_BLKPAG_OS_MODEMUL;
