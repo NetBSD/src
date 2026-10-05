@@ -101,7 +101,7 @@ static void    elf_read_syms(struct elf_syms *, int, off_t, off_t, off_t,
     off_t);
 
 
-static void
+static __printflike(2, 3) void
 debug_printf(int level, const char *format, ...)
 {
 	if (debug >= level) {
@@ -112,7 +112,7 @@ debug_printf(int level, const char *format, ...)
 	}
 }
 
-static void
+static __dead void
 usage(void)
 {
 	fprintf(stderr,
@@ -259,6 +259,7 @@ main(int argc, char **argv)
 		case PT_NOTE:
 		case PT_NULL:
 		case PT_PHDR:
+		case PT_GNU_STACK:
 		case PT_MIPS_ABIFLAGS:
 		case PT_MIPS_REGINFO:
 			/* Section types we can ignore... */

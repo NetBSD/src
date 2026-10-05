@@ -3,7 +3,7 @@
 #include "assym.h"
 
 /*  ldscript for NetBSD/mips kernels and LKMs */
-OUTPUT_ARCH(mips)
+OUTPUT_ARCH("mips")
 ENTRY(_start)
 /* Do we need any of these?
    __DYNAMIC = 0;    */

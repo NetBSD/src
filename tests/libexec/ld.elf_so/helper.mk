@@ -15,4 +15,11 @@ NOPICINSTALL=	# defined
 NOPROFILE=	# defined
 NOSTATICLIB=	# defined
 
+.if defined(MIPS_IFUNC_NO_FATAL_WARNINGS)
+.include <bsd.own.mk>
+.if ${MACHINE_CPU} == "mips" && ${ACTIVE_CC} == "clang"
+LDADD+=		-Wl,--no-fatal-warnings
+.endif
+.endif
+
 .include <bsd.lib.mk>

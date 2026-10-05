@@ -212,9 +212,11 @@ paired_single_op:
 #define floor_l_s	ill
 #define cvt_l_s		ill
 #define cvt_ps_s	ill
+#ifndef FPEMUL
 #define	movcf_s		ill
 #define	movn_s		ill
 #define	movz_s		ill
+#endif
 #define	rsqrt_s		ill
 #define	rsqrt1_s	ill
 #define	rsqrt2_s	ill
@@ -244,9 +246,11 @@ paired_single_op:
 #define	recip1_d	ill
 #define	recip2_d	ill
 #define	cvt_l_d		ill
+#ifndef FPEMUL
 #define	movcf_d		ill
 #define	movz_d		ill
 #define	movn_d		ill
+#endif
 #define	recip_d		ill
 #define	rsqrt_d		ill
 #define	rsqrt1_d	ill
@@ -1673,6 +1677,126 @@ mov_s:
 mov_d:
 	jal	_C_LABEL(get_fs_d)
 	b	result_fs_d
+
+#ifdef FPEMUL
+/*
+ * Conditional floating-point moves are part of MIPS32.  NOFPU kernels
+ * must perform the move directly in the saved FP register file: using the
+ * usual unpack/repack helpers would change NaN payloads.
+ */
+movcf_s:
+	srl	t0, a0, 18			# condition-code field
+	andi	t0, t0, 7
+	bne	t0, zero, 1f
+	li	v0, MIPS_FCSR_FCC0
+	b	2f
+1:	addiu	t0, t0, 24			# FCC1..FCC7 are bits 25..31
+	li	v0, 1
+	sllv	v0, v0, t0
+2:	and	v0, v0, a2
+	sltu	v0, zero, v0
+	srl	t0, a0, 16			# true/false selector
+	andi	t0, t0, 1
+	bne	v0, t0, done
+	b	move_s_cond
+
+movz_s:
+	REG_PROLOGUE
+	REG_S	zero, TF_REG_ZERO(a1)
+	srl	t0, a0, 16-REG_SCALESHIFT	# rt is in bits 20:16
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU v0, a1, t0
+	REG_L	v0, TF_REG_ZERO(v0)
+	REG_EPILOGUE
+	bne	v0, zero, done
+	b	move_s_cond
+
+movn_s:
+	REG_PROLOGUE
+	REG_S	zero, TF_REG_ZERO(a1)
+	srl	t0, a0, 16-REG_SCALESHIFT	# rt is in bits 20:16
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU v0, a1, t0
+	REG_L	v0, TF_REG_ZERO(v0)
+	REG_EPILOGUE
+	beq	v0, zero, done
+
+move_s_cond:
+	srl	t1, a0, 11-FPX_SCALESHIFT	# fs is in bits 15:11
+	PTR_L	t0, L_PCB(MIPS_CURLWP)
+	andi	t1, t1, FPX_REGMASK
+	PTR_ADDU t1, t0, t1
+	FPX_L	v0, PCB_FPREGS+FRAME_FP0(t1)
+
+	srl	t1, a0, 6-FPX_SCALESHIFT	# fd is in bits 10:6
+	andi	t1, t1, FPX_REGMASK
+	PTR_ADDU t0, t0, t1
+	FPX_S	v0, PCB_FPREGS+FRAME_FP0(t0)
+	b	done
+
+movcf_d:
+	srl	t0, a0, 18			# condition-code field
+	andi	t0, t0, 7
+	bne	t0, zero, 1f
+	li	v0, MIPS_FCSR_FCC0
+	b	2f
+1:	addiu	t0, t0, 24			# FCC1..FCC7 are bits 25..31
+	li	v0, 1
+	sllv	v0, v0, t0
+2:	and	v0, v0, a2
+	sltu	v0, zero, v0
+	srl	t0, a0, 16			# true/false selector
+	andi	t0, t0, 1
+	bne	v0, t0, done
+	b	move_d_cond
+
+movz_d:
+	REG_PROLOGUE
+	REG_S	zero, TF_REG_ZERO(a1)
+	srl	t0, a0, 16-REG_SCALESHIFT	# rt is in bits 20:16
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU v0, a1, t0
+	REG_L	v0, TF_REG_ZERO(v0)
+	REG_EPILOGUE
+	bne	v0, zero, done
+	b	move_d_cond
+
+movn_d:
+	REG_PROLOGUE
+	REG_S	zero, TF_REG_ZERO(a1)
+	srl	t0, a0, 16-REG_SCALESHIFT	# rt is in bits 20:16
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU v0, a1, t0
+	REG_L	v0, TF_REG_ZERO(v0)
+	REG_EPILOGUE
+	beq	v0, zero, done
+
+move_d_cond:
+	srl	t1, a0, 11-FPX_SCALESHIFT	# fs is in bits 15:11
+	PTR_L	t0, L_PCB(MIPS_CURLWP)
+#if defined(__mips_o32) || defined(__mips_o64)
+	andi	t1, t1, FPX_REGEVENMASK
+	PTR_ADDU t1, t0, t1
+	FPX_L	v0, PCB_FPREGS+FRAME_FP0(t1)
+	FPX_L	v1, PCB_FPREGS+FRAME_FP0+SZFREG(t1)
+
+	srl	t1, a0, 6-FPX_SCALESHIFT	# fd is in bits 10:6
+	andi	t1, t1, FPX_REGEVENMASK
+	PTR_ADDU t0, t0, t1
+	FPX_S	v0, PCB_FPREGS+FRAME_FP0(t0)
+	FPX_S	v1, PCB_FPREGS+FRAME_FP0+SZFREG(t0)
+#else
+	andi	t1, t1, FPX_REGMASK
+	PTR_ADDU t1, t0, t1
+	FPX_L	v0, PCB_FPREGS+FRAME_FP0(t1)
+
+	srl	t1, a0, 6-FPX_SCALESHIFT	# fd is in bits 10:6
+	andi	t1, t1, FPX_REGMASK
+	PTR_ADDU t0, t0, t1
+	FPX_S	v0, PCB_FPREGS+FRAME_FP0(t0)
+#endif
+	b	done
+#endif /* FPEMUL */
 
 /*
  * Single precision negate.
