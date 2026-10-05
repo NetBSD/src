@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.235 2026/10/03 12:37:47 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.236 2026/10/05 14:22:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.235 2026/10/03 12:37:47 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.236 2026/10/05 14:22:09 skrll Exp $")
 
 #include "assym.h"
 
@@ -127,9 +127,9 @@ EXPORT_OBJECT(kernel_text)			# libkvm refers this
 1:	wait
 	b	1b
 	 nop
-#endif /* MIPS64_OCTEON */
+#endif /* MULTIPROCESSOR */
 2:
-#endif
+#endif /* MIPS64_OCTEON */
 	/*
 	 * Initialize stack and call machine startup.
 	 */
@@ -167,7 +167,7 @@ EXPORT_OBJECT(kernel_text)			# libkvm refers this
 	/* Disable again, we don't want it on in the kernel */
 	and	k0, ~MIPS_SR_COP_1_BIT
 	mtc0	k0, MIPS_COP_0_STATUS
-#endif
+#endif /* NOFPU */
 
 	INT_S	t0, _C_LABEL(mips_options)+MO_CPU_ID # save PRID register
 	INT_S	t1, _C_LABEL(mips_options)+MO_FPU_ID # save FPU ID register
@@ -649,7 +649,7 @@ LEAF(longjmp)
 	jr	ra
 	 li	v0, 1
 END(longjmp)
-#endif
+#endif /* DDB || KGDB */
 
 /*
  * uint32_t mips_cp0_cause_read(void)
