@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.180 2026/10/05 20:49:13 riastradh Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.181 2026/10/05 20:49:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.180 2026/10/05 20:49:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.181 2026/10/05 20:49:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1165,7 +1165,6 @@ pipeclose(struct file *fp, struct pipe *pipe)
 
 	KASSERT((pipe->pipe_state & PIPE_LOCKFL) == 0);
 	mutex_exit(lock);
-	mutex_obj_free(lock);
 
 	/*
 	 * Free resources.
@@ -1180,6 +1179,7 @@ pipefree(struct pipe *pipe)
 	pipe->pipe_pgid = 0;
 	pipe->pipe_state = PIPE_SIGNALR|PIPE_DESTROYED;
 	pipe->pipe_peer = NULL;
+	mutex_obj_free(pipe->pipe_lock);
 	pipe->pipe_lock = NULL;
 	pipe_free_kmem(pipe);
 	if (pipe->pipe_kmem != 0) {
