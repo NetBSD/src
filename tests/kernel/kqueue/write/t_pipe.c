@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe.c,v 1.5 2026/10/04 03:28:10 kre Exp $ */
+/* $NetBSD: t_pipe.c,v 1.6 2026/10/05 20:48:52 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pipe.c,v 1.5 2026/10/04 03:28:10 kre Exp $");
+__RCSID("$NetBSD: t_pipe.c,v 1.6 2026/10/05 20:48:52 riastradh Exp $");
 
 #include <sys/event.h>
 #include <sys/wait.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: t_pipe.c,v 1.5 2026/10/04 03:28:10 kre Exp $");
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <atf-c.h>
@@ -150,12 +151,43 @@ ATF_TC_BODY(pipe3, tc)
 	RL(close(fds[1]));
 }
 
+ATF_TC(pipe_wrong_end);
+ATF_TC_HEAD(pipe_wrong_end, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks EVFILT_WRITE on the read side of a pipe never triggers");
+}
+ATF_TC_BODY(pipe_wrong_end, tc)
+{
+	struct kevent event[1];
+	int fds[2];
+	int kq, n;
+	struct timespec zerots = { .tv_sec = 0, .tv_nsec = 0 };
+
+	RL(pipe(fds));
+	RL(kq = kqueue());
+
+	EV_SET(&event[0], fds[0], EVFILT_WRITE, EV_ADD|EV_ENABLE, 0, 0, 0);
+	atf_tc_expect_fail("PR kern/60851: change in pipe kevent"
+	    " EVFILT_READ/WRITE on wrong end");
+	RL(kevent(kq, event, 1, NULL, 0, NULL));
+
+	/* make sure there is something in the pipe */
+	RL(write(fds[1], "foo", 3));
+	(void)printf("pipe: wrote 'foo' to pipe\n");
+
+	/* event should not trigger but also kevent(2) should not fail */
+	RL(n = kevent(kq, NULL, 0, event, 1, &zerots));
+	ATF_REQUIRE(n == 0);
+}
 
 ATF_TP_ADD_TCS(tp)
 {
+
 	ATF_TP_ADD_TC(tp, pipe1);
 	ATF_TP_ADD_TC(tp, pipe2);
 	ATF_TP_ADD_TC(tp, pipe3);
+	ATF_TP_ADD_TC(tp, pipe_wrong_end);
 
 	return atf_no_error();
 }
