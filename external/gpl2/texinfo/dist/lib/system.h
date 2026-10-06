@@ -1,4 +1,4 @@
-/*	$NetBSD: system.h,v 1.5 2026/10/06 18:44:11 christos Exp $	*/
+/*	$NetBSD: system.h,v 1.6 2026/10/06 18:55:49 christos Exp $	*/
 
 /* system.h: system-dependent declarations; include this first.
    Id: system.h,v 1.12 2004/04/26 13:56:57 karl Exp 
@@ -88,7 +88,7 @@ extern char *getenv (const char *);
 #endif
 
 #if !HAVE_DECL_MEMCHR
-char *memchr (const void *, int, size_t);
+void *memchr (const void *, int, size_t);
 #endif
 
 /* <unistd.h> defines _POSIX_VERSION, but Paul Eggert points out that is
