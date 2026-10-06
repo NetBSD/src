@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.308 2026/10/02 19:52:26 riastradh Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.309 2026/10/06 04:29:58 riastradh Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -125,11 +125,36 @@ CFLAGS+=	-fno-common
 
 # XXX Make the choice of `pattern' vs `zero' conditional on `options
 # DEBUG' or `options DIAGNOSTIC'?
-CFLAGS+=	${${ACTIVE_CC} == "gcc":?${${HAVE_GCC} >= 12:?-ftrivial-auto-var-init=pattern:}:}
-CFLAGS+=	${${ACTIVE_CC} == "clang":?-ftrivial-auto-var-init=pattern:}
-#CFLAGS+=	${${ACTIVE_CC} == "gcc":?${${HAVE_GCC} >= 12:?-ftrivial-auto-var-init=zero:}:}
-#CFLAGS+=	${${ACTIVE_CC} == "clang":?-ftrivial-auto-var-init=zero:}
-#CFLAGS+=	${${ACTIVE_CC} == "clang":?-enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang-arg:}
+COPT_AUTOINIT+=	${${ACTIVE_CC} == "gcc":?${${HAVE_GCC} >= 12:?-ftrivial-auto-var-init=pattern:}:}
+COPT_AUTOINIT+=	${${ACTIVE_CC} == "clang":?-ftrivial-auto-var-init=pattern:}
+#COPT_AUTOINIT+=	${${ACTIVE_CC} == "gcc":?${${HAVE_GCC} >= 12:?-ftrivial-auto-var-init=zero:}:}
+#COPT_AUTOINIT+=	${${ACTIVE_CC} == "clang":?-ftrivial-auto-var-init=zero:}
+#COPT_AUTOINIT+=	${${ACTIVE_CC} == "clang":?-enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang-arg:}
+
+# If COPTS has -Os, leave -ftrivial-auto-var-init off in CFLAGS.
+# Otherwise, turn it on.
+#
+# We have to use an intermediate variable _COPTS_Os because if you write
+#
+#	${!empty(COPTS:M-Os):?:${COPT_AUTOINIT}}
+#	  ^^^^^^^^^^^^^
+#
+# then make(1) will treat `!empty(COPTS' as the variable being modified
+# by `:M', instead of treating `!empty(COPTS:M-Os)' as the condition
+# being modified by `:?', and raise a rather confusing objection:
+#
+# nbmake: /home/riastradh/netbsd/current/src/share/mk/bsd.sys.mk:67: Unknown modifier ":)"
+#         while evaluating variable "!empty(COPTS" with value ""
+#         while evaluating variable "CFLAGS" with value "${DBG} -msoft-float -mno-mmx -mno-sse -mno-avx ${${ACTIVE_CC} == "gcc" :? -mindirect-branch=thunk :} ${${ACTIVE_CC} == "gcc" :? -mindirect-branch-register :} -ffreestanding -fno-zero-initialized-in-bss ${${ACTIVE_CC} == "gcc":? -fno-delete-null-pointer-checks :} ${DEBUG} ${COPTS} ${${ACTIVE_CC} == "gcc":? -fstack-usage -Wstack-usage=3584 :} -fno-strict-aliasing -fno-common ${!empty(COPTS:M-Os):?${COPT_AUTOINIT}:} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}"
+#         in /home/riastradh/netbsd/current/src/share/mk/bsd.sys.mk:67
+#         in /home/riastradh/netbsd/current/src/share/mk/bsd.obj.mk:110
+#         in /home/riastradh/netbsd/current/src/share/mk/bsd.files.mk:158
+#         in /home/riastradh/netbsd/current/src/sys/conf/Makefile.kern.inc:530
+#         in /home/riastradh/netbsd/current/obj.i386/sys/arch/i386/compile/GENERIC/Makefile:3476
+# nbmake: Fatal errors encountered -- cannot continue
+#
+_COPTS_Os=	${COPTS:M-Os}
+CFLAGS+=	${!empty(_COPTS_Os):?:${COPT_AUTOINIT}}
 
 # Use the per-source COPTS variables to add -g to just those
 # files that match the shell patterns given in ${DEBUGLIST}
