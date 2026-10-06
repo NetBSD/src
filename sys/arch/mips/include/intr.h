@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.14 2026/09/24 15:44:26 skrll Exp $ */
+/* $NetBSD: intr.h,v 1.15 2026/10/06 08:18:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -124,21 +124,25 @@ extern	struct splsw	mips_splsw;
 extern	struct ipl_sr_map ipl_sr_map;
 #endif /* __INTR_PRIVATE */
 
-int	__noubsan splhigh(void);
-int	__noubsan __noprofile splhigh_noprof(void);
-int	__noubsan splsched(void);
-int	__noubsan splvm(void);
-int	__noubsan splsoftserial(void);
-int	__noubsan splsoftnet(void);
-int	__noubsan splsoftbio(void);
-int	__noubsan splsoftclock(void);
-int	__noubsan splraise(int);
-void	__noubsan splx(int);
-void	__noubsan __noprofile splx_noprof(int);
-void	__noubsan spl0(void);
-int	__noubsan splintr(uint32_t *);
-void	__noubsan _setsoftintr(uint32_t);
-void	__noubsan _clrsoftintr(uint32_t);
+int	__noubsan	splhigh(void)		__section(".stub");
+int	__noubsan	splsched(void)		__section(".stub");
+int	__noubsan	splvm(void)		__section(".stub");
+int	__noubsan	splsoftserial(void)	__section(".stub");
+int	__noubsan	splsoftnet(void)	__section(".stub");
+int	__noubsan	splsoftbio(void)	__section(".stub");
+int	__noubsan	splsoftclock(void)	__section(".stub");
+int	__noubsan	splraise(int)		__section(".stub");
+void	__noubsan	splx(int)		__section(".stub");
+void	__noubsan	spl0(void)		__section(".stub");
+int	__noubsan	splintr(uint32_t *)	__section(".stub");
+void	__noubsan	_setsoftintr(uint32_t)	__section(".stub");
+void	__noubsan	_clrsoftintr(uint32_t)	__section(".stub");
+void	__noubsan	splcheck(void)		__section(".stub");
+
+int	__noubsan __noprofile						\
+			splhigh_noprof(void)	__section(".stub");
+void	__noubsan __noprofile						\
+			splx_noprof(int)	__section(".stub");
 
 struct cpu_info;
 

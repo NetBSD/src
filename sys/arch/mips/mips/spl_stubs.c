@@ -1,4 +1,4 @@
-/*	$NetBSD: spl_stubs.c,v 1.3 2011/02/20 16:38:13 rmind Exp $	*/
+/*	$NetBSD: spl_stubs.c,v 1.4 2026/10/06 08:18:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spl_stubs.c,v 1.3 2011/02/20 16:38:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl_stubs.c,v 1.4 2026/10/06 08:18:37 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -39,23 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: spl_stubs.c,v 1.3 2011/02/20 16:38:13 rmind Exp $");
 #include <mips/cache.h>
 #include <mips/intr.h>
 #include <mips/locore.h>
-
-int	splhigh(void)		__section(".stub");
-int	splhigh_noprof(void)	__section(".stub");
-int	splsched(void)		__section(".stub");
-int	splvm(void)		__section(".stub");
-int	splsoftserial(void)	__section(".stub");
-int	splsoftnet(void)	__section(".stub");
-int	splsoftbio(void)	__section(".stub");
-int	splsoftclock(void)	__section(".stub");
-int	splraise(int)		__section(".stub");
-void	splx(int)		__section(".stub");
-void	splx_noprof(int)	__section(".stub");
-void	spl0(void)		__section(".stub");
-int	splintr(uint32_t *)	__section(".stub");
-void	_setsoftintr(uint32_t)	__section(".stub");
-void	_clrsoftintr(uint32_t)	__section(".stub");
-void	splcheck(void)		__section(".stub");
 
 int
 splhigh(void)
