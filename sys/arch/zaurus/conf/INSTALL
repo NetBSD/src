@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.41 2021/01/21 06:18:22 nia Exp $
+# $NetBSD: INSTALL,v 1.42 2026/10/06 13:08:56 riastradh Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -11,12 +11,6 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
-
-# for reduce kernel size.
-# kernel size must be less than 5MB.
-# - see src/sys/arch/zaurus/stand/zbsdmod/zbsdmod.c:bsdimage[]
-
-makeoptions		COPTS="-Os"
 
 no options		EXEC_AOUT
 no options		RFC2292

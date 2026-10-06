@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.97 2024/04/02 22:56:51 charlotte Exp $
+#	$NetBSD: GENERIC,v 1.98 2026/10/06 13:08:56 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -34,6 +34,11 @@ makeoptions	CPUFLAGS="-mcpu=xscale"
 # Architecture options
 options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 options 	PXAGPIO_HAS_GPION_INTRS
+
+# for reduce kernel size.
+# kernel size must be less than 5MB.
+# - see src/sys/arch/zaurus/stand/zbsdmod/zbsdmod.c:bsdimage[]
+makeoptions		COPTS="-Os"
 
 # in-kernel bootloader, see kloader(4)
 options 	KLOADER
