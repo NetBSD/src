@@ -1,4 +1,4 @@
-# $NetBSD: cond-cmp-numeric-eq.mk,v 1.9 2025/06/28 22:39:28 rillig Exp $
+# $NetBSD: cond-cmp-numeric-eq.mk,v 1.10 2026/10/07 05:45:31 rillig Exp $
 #
 # Tests for numeric comparisons with the == operator in .if conditions.
 
@@ -54,12 +54,12 @@
 # to the 992.
 .if 9007199254740993 == 9007199254740992
 .else
-. error
+.  error
 .endif
 # The 995 is rounded up, the 997 is rounded down.
 .if 9007199254740995 == 9007199254740997
 .else
-. error Probably a misconfiguration in the floating point environment, \
+.  error Probably a misconfiguration in the floating point environment, \
 	or maybe a machine without IEEE 754 floating point support.
 .endif
 
