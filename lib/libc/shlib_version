@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.301 2026/08/23 22:56:28 riastradh Exp $
+#	$NetBSD: shlib_version,v 1.302 2026/10/07 00:51:26 riastradh Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -55,6 +55,7 @@
 # - remove tzsetwall(3), upstream has removed it
 # - move *rand48* to libcompat
 # - move humanize_number/dehumanize_number to libutil
+# - delete __ssp_protected_* symbols, which never should have been defined
 #
 major=12
 minor=224
