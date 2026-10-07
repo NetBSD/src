@@ -1,6 +1,6 @@
-/*	$NetBSD: sshd-auth.c,v 1.8 2026/09/21 21:31:00 christos Exp $	*/
-/* $OpenBSD: sshd-auth.c,v 1.16 2026/06/14 03:59:34 djm Exp $ */
-/* $OpenBSD: sshd-auth.c,v 1.18 2026/07/27 12:28:52 markus Exp $ */
+/*	$NetBSD: sshd-auth.c,v 1.9 2026/10/07 17:32:09 christos Exp $	*/
+/* $OpenBSD: sshd-auth.c,v 1.20 2026/09/16 00:29:44 djm Exp $ */
+
 /*
  * SSH2 implementation:
  * Privilege Separation:
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-auth.c,v 1.8 2026/09/21 21:31:00 christos Exp $");
+__RCSID("$NetBSD: sshd-auth.c,v 1.9 2026/10/07 17:32:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -694,6 +694,8 @@ main(int ac, char **av)
 	/* Prepare the channels layer */
 	channel_init_channels(ssh);
 	channel_set_af(ssh, options.address_family);
+	channel_set_tcp_keepalives(ssh,
+	    options.tcp_keep_alive == SSH_KEEPALIVES_ALL);
 	server_process_channel_timeouts(ssh);
 	server_process_permitopen(ssh);
 
@@ -790,6 +792,7 @@ do_ssh2_kex(struct ssh *ssh)
 	if ((r = kex_setup(ssh, myproposal)) != 0)
 		fatal_r(r, "kex_setup");
 	kex_set_server_sig_algs(ssh, options.pubkey_accepted_algos);
+	kex_set_warn_weak_crypto(ssh, options.warn_weak_crypto);
 	kex = ssh->kex;
 
 #ifdef WITH_OPENSSL

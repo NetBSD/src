@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.42 2026/09/21 21:30:59 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.215 2026/06/21 19:23:56 tb Exp $ */
+/*	$NetBSD: misc.c,v 1.43 2026/10/07 17:32:07 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.221 2026/09/16 17:31:27 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -20,7 +20,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.42 2026/09/21 21:30:59 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.43 2026/10/07 17:32:07 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -233,6 +233,19 @@ set_reuseaddr(int fd)
 
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
 		error("setsockopt SO_REUSEADDR fd %d: %s", fd, strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+
+/* Set TCP keepalives */
+int
+set_keepalive(int fd)
+{
+	int on = 1;
+
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) == -1) {
+		error("setsockopt SO_KEEPALIVE fd %d: %s", fd, strerror(errno));
 		return -1;
 	}
 	return 0;
@@ -2527,6 +2540,7 @@ parse_absolute_time(const char *s, uint64_t *tp)
 			return SSH_ERR_INVALID_FORMAT;
 	} else {
 		tm.tm_wday = -1;	/* sentinel for error */
+		tm.tm_isdst = -1;	/* mktime decides DST */
 		if ((tt = mktime(&tm)) == -1 && tm.tm_wday == -1)
 			return SSH_ERR_INVALID_FORMAT;
 	}
@@ -2553,10 +2567,10 @@ format_absolute_time(uint64_t t, char *buf, size_t len)
  * Caller must free *typep.
  */
 int
-parse_pattern_interval(const char *s, char **typep, int *secsp)
+parse_pattern_interval(const char *s, char **typep, double *secsp)
 {
 	char *cp, *sdup;
-	int secs;
+	double secs;
 
 	if (typep != NULL)
 		*typep = NULL;
@@ -2571,7 +2585,7 @@ parse_pattern_interval(const char *s, char **typep, int *secsp)
 		return -1;
 	}
 	*cp++ = '\0';
-	if ((secs = convtime(cp)) < 0) {
+	if ((secs = convtime_double(cp)) < 0.0) {
 		free(sdup);
 		return -1;
 	}
@@ -3008,6 +3022,22 @@ ptimeout_deadline_ms(struct timespec *pt, long ms)
 	ptimeout_deadline_tsp(pt, &p);
 }
 
+/* Specify a poll/ppoll deadline of at most 'sec' seconds (double) */
+void
+ptimeout_deadline_sec_double(struct timespec *pt, double sec)
+{
+	struct timespec t;
+
+	memset(&t, 0, sizeof(t));
+	if ((int64_t)sec >= SSH_TIME_T_MAX)
+		t.tv_sec = SSH_TIME_T_MAX;
+	else if (sec > 0) {
+		t.tv_sec = sec;
+		t.tv_nsec = (sec - (double)t.tv_sec) * 1000000000.0;
+	}
+	ptimeout_deadline_tsp(pt, &t);
+}
+
 /* Specify a poll/ppoll deadline at wall clock monotime 'when' (timespec) */
 void
 ptimeout_deadline_monotime_tsp(struct timespec *pt, struct timespec *when)
@@ -3024,6 +3054,13 @@ ptimeout_deadline_monotime_tsp(struct timespec *pt, struct timespec *when)
 		timespecsub(when, &now, &t);
 		ptimeout_deadline_tsp(pt, &t);
 	}
+}
+
+/* Specify a poll/ppoll deadline at wall clock monotime 'when' (double) */
+void
+ptimeout_deadline_monotime_double(struct timespec *pt, double when)
+{
+	ptimeout_deadline_sec_double(pt, when - monotime_double());
 }
 
 /* Specify a poll/ppoll deadline at wall clock monotime 'when' */
@@ -3120,4 +3157,52 @@ get_homedir(void)
 		return xstrdup(pw->pw_dir);
 
 	return NULL;
+}
+
+int
+mkdir_path(const char *target, mode_t mode)
+{
+	char *dir, *odir = NULL, *next;
+	int fd = AT_FDCWD, fd2, subpath_len, ret = -1;
+
+	dir = odir = xstrdup(target);
+
+	if (*dir == '/' &&
+	    (fd = open("/", O_RDONLY|O_DIRECTORY)) == -1) {
+		error_f("open(\"/\"): %s", strerror(errno));
+		free(odir);
+		return -1;
+	}
+	/* Work through the path, component-wise */
+	for (; dir != NULL && *dir != '\0'; dir = next) {
+		if ((next = strchr(dir, '/')) != NULL)
+			*(next++) = '\0';
+		if (*dir == '\0')
+			continue;
+		subpath_len = (next == NULL) ? INT_MAX : next - odir - 1;
+		if (mkdirat(fd, dir, mode) == 0)
+			debug_f("created directory %.*s", subpath_len, target);
+		else if (errno != EEXIST) {
+			error_f("mkdir(\"%.*s\"): %s",
+			    subpath_len, target, strerror(errno));
+			goto out;
+		}
+
+		/* descend */
+		if ((fd2 = openat(fd, dir, O_RDONLY|O_DIRECTORY)) == -1) {
+			error_f("open(\"%.*s\"): %s",
+			    subpath_len, target, strerror(errno));
+			goto out;
+		}
+		if (fd != AT_FDCWD)
+			close(fd);
+		fd = fd2;
+	}
+	/* success */
+	ret = 0;
+ out:
+	free(odir);
+	if (fd != AT_FDCWD)
+		close(fd);
+	return ret;
 }

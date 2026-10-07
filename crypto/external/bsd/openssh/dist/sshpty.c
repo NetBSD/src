@@ -1,5 +1,5 @@
-/*	$NetBSD: sshpty.c,v 1.9 2026/04/08 18:58:41 christos Exp $	*/
-/* $OpenBSD: sshpty.c,v 1.35 2026/02/11 17:05:32 dtucker Exp $ */
+/*	$NetBSD: sshpty.c,v 1.10 2026/10/07 17:32:09 christos Exp $	*/
+/* $OpenBSD: sshpty.c,v 1.36 2026/09/15 06:30:58 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshpty.c,v 1.9 2026/04/08 18:58:41 christos Exp $");
+__RCSID("$NetBSD: sshpty.c,v 1.10 2026/10/07 17:32:09 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -185,17 +185,5 @@ pty_setowner(struct passwd *pw, const char *tty)
 				fatal("chmod(%.100s, 0%o) failed: %.100s",
 				    tty, (u_int)mode, strerror(errno));
 		}
-	}
-}
-
-/* Disconnect from the controlling tty. */
-void
-disconnect_controlling_tty(void)
-{
-	int fd;
-
-	if ((fd = open(_PATH_TTY, O_RDWR | O_NOCTTY)) >= 0) {
-		(void) ioctl(fd, TIOCNOTTY, NULL);
-		close(fd);
 	}
 }

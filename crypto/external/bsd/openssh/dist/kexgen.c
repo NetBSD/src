@@ -1,6 +1,6 @@
-/*	$NetBSD: kexgen.c,v 1.11 2026/09/21 21:30:59 christos Exp $	*/
-/* $OpenBSD: kexgen.c,v 1.12 2026/03/03 09:57:25 dtucker Exp $ */
-/* $OpenBSD: kexgen.c,v 1.14 2026/07/30 07:29:09 dtucker Exp $ */
+/*	$NetBSD: kexgen.c,v 1.12 2026/10/07 17:32:07 christos Exp $	*/
+/* $OpenBSD: kexgen.c,v 1.15 2026/09/16 00:31:27 djm Exp $ */
+
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
  *
@@ -167,7 +167,8 @@ input_kex_gen_reply(int type, uint32_t seq, struct ssh *ssh)
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if ((r = sshkey_fromb(tmp, &server_host_key)) != 0)
+	if ((r = sshkey_fromb_allowlist(tmp, &server_host_key,
+	    kex->hostkey_alg, NULL)) != 0)
 		goto out;
 	if ((r = kex_verify_host_key(ssh, server_host_key)) != 0)
 		goto out;

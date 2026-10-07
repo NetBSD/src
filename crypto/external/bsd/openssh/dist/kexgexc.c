@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgexc.c,v 1.19 2026/04/08 18:58:40 christos Exp $	*/
-/* $OpenBSD: kexgexc.c,v 1.42 2026/03/03 09:57:25 dtucker Exp $ */
+/*	$NetBSD: kexgexc.c,v 1.20 2026/10/07 17:32:07 christos Exp $	*/
+/* $OpenBSD: kexgexc.c,v 1.43 2026/09/16 00:31:27 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexc.c,v 1.19 2026/04/08 18:58:40 christos Exp $");
+__RCSID("$NetBSD: kexgexc.c,v 1.20 2026/10/07 17:32:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -166,7 +166,8 @@ input_kex_dh_gex_reply(int type, uint32_t seq, struct ssh *ssh)
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if ((r = sshkey_fromb(tmp, &server_host_key)) != 0 ||
+	if ((r = sshkey_fromb_allowlist(tmp, &server_host_key,
+	    kex->hostkey_alg, NULL)) != 0 ||
 	    (r = kex_verify_host_key(ssh, server_host_key)) != 0)
 		goto out;
 	/* DH parameter f, server public DH key, signed H */

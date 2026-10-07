@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.35 2026/09/21 21:31:00 christos Exp $
+.\"	$NetBSD: sshd.8,v 1.36 2026/10/07 17:32:09 christos Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,8 +34,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.330 2026/07/11 11:15:03 naddy Exp $
-.Dd July 11 2025
+.\" $OpenBSD: sshd.8,v 1.332 2026/09/02 00:37:59 djm Exp $
+.Dd September 2 2026
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -444,7 +444,7 @@ sk-ssh-ed25519@openssh.com
 .It
 ssh-ed25519
 .It
-ssh-mldsa44-ed25519@openssh.com
+ssh-mldsa44-ed25519
 .It
 ssh-rsa
 .El
@@ -460,7 +460,7 @@ You don't want to type them in; instead, copy the
 .Pa id_ecdsa_sk.pub ,
 .Pa id_ed25519.pub ,
 .Pa id_ed25519_sk.pub ,
-.Pa id_mldsa44_ed25519 ,
+.Pa id_mldsa44_ed25519.pub ,
 or the
 .Pa id_rsa.pub
 file and edit it.

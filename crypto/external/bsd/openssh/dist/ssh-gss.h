@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-gss.h,v 1.11 2024/07/08 22:33:44 christos Exp $	*/
-/* $OpenBSD: ssh-gss.h,v 1.16 2024/05/17 06:42:04 jsg Exp $ */
+/*	$NetBSD: ssh-gss.h,v 1.12 2026/10/07 17:32:08 christos Exp $	*/
+/* $OpenBSD: ssh-gss.h,v 1.18 2026/09/16 00:37:52 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -55,6 +55,7 @@ typedef struct {
 	gss_cred_id_t creds;
 	struct ssh_gssapi_mech_struct *mech;
 	ssh_gssapi_ccache store;
+	int userok;
 } ssh_gssapi_client;
 
 typedef struct ssh_gssapi_mech_struct {
@@ -113,6 +114,7 @@ void ssh_gssapi_do_child(char ***, u_int *);
 void ssh_gssapi_cleanup_creds(void);
 void ssh_gssapi_storecreds(void);
 const char *ssh_gssapi_displayname(void);
+void ssh_gssapi_cleanup_global_client(void);
 
 #endif /* GSSAPI */
 

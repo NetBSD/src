@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.30 2026/04/08 18:58:41 christos Exp $	*/
-/* $OpenBSD: packet.h,v 1.107 2026/03/03 09:57:25 dtucker Exp $ */
+/*	$NetBSD: packet.h,v 1.31 2026/10/07 17:32:08 christos Exp $	*/
+/* $OpenBSD: packet.h,v 1.108 2026/09/22 00:24:47 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -71,6 +71,7 @@ struct ssh {
 
 	/* datafellows */
 	uint32_t compat;
+	char *remote_version;
 
 	/* Lists for private and public keys */
 	TAILQ_HEAD(, key_entry) private_keys;

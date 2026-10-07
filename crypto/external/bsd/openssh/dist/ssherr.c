@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssherr.c,v 1.12 2026/06/14 03:59:34 djm Exp $	*/
+/*	$OpenBSD: ssherr.c,v 1.13 2026/09/16 00:31:27 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssherr.c,v 1.12 2026/09/21 21:31:00 christos Exp $");
+__RCSID("$NetBSD: ssherr.c,v 1.13 2026/10/07 17:32:09 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -149,6 +149,8 @@ ssh_err(int n)
 		return "Invalid key length";
 	case SSH_ERR_NUMBER_TOO_LARGE:
 		return "number is too large";
+	case SSH_ERR_KEY_ALG_UNSUPPORTED:
+		return "key algorithm not supported";
 	case SSH_ERR_SIGN_ALG_UNSUPPORTED:
 		return "signature algorithm not supported";
 	case SSH_ERR_FEATURE_UNSUPPORTED:

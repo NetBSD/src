@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.38 2026/04/08 18:58:41 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.163 2026/03/30 07:18:24 djm Exp $ */
+/*	$NetBSD: readconf.h,v 1.39 2026/10/07 17:32:08 christos Exp $	*/
+/* $OpenBSD: readconf.h,v 1.164 2026/09/16 00:13:58 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -254,6 +254,10 @@ typedef struct {
 #define SSH_KEYSTROKE_DEFAULT_INTERVAL_MS	20
 #define SSH_KEYSTROKE_CHAFF_MIN_MS		1024
 #define SSH_KEYSTROKE_CHAFF_RNG_MS		2048
+
+#define SSH_KEEPALIVES_OFF		0
+#define SSH_KEEPALIVES_TRANSPORT	1
+#define SSH_KEEPALIVES_ALL		2
 
 const char *kex_default_pk_alg(void);
 char	*ssh_connection_hash(const char *thishost, const char *host,

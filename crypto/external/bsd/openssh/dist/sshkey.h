@@ -1,5 +1,5 @@
-/*	$NetBSD: sshkey.h,v 1.27 2026/09/21 21:31:00 christos Exp $	*/
-/* $OpenBSD: sshkey.h,v 1.74 2026/06/14 03:59:34 djm Exp $ */
+/*	$NetBSD: sshkey.h,v 1.28 2026/10/07 17:32:09 christos Exp $	*/
+/* $OpenBSD: sshkey.h,v 1.75 2026/09/16 00:31:27 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -255,6 +255,8 @@ char		*sshkey_alg_list(int, int, int, char);
 
 int	 sshkey_from_blob(const u_char *, size_t, struct sshkey **);
 int	 sshkey_fromb(struct sshbuf *, struct sshkey **);
+int	 sshkey_fromb_allowlist(struct sshbuf *, struct sshkey **,
+    const char *, const char *);
 int	 sshkey_froms(struct sshbuf *, struct sshkey **);
 int	 sshkey_to_blob(const struct sshkey *, u_char **, size_t *);
 int	 sshkey_to_base64(const struct sshkey *, char **);

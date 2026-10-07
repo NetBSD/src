@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp.c,v 1.45 2026/09/21 21:31:00 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.257 2026/06/30 02:30:19 djm Exp $ */
+/*	$NetBSD: sftp.c,v 1.46 2026/10/07 17:32:08 christos Exp $	*/
+/* $OpenBSD: sftp.c,v 1.260 2026/10/01 03:11:49 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.45 2026/09/21 21:31:00 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.46 2026/10/07 17:32:08 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -287,12 +287,12 @@ help(void)
 	    "help                               Display this help text\n"
 	    "lcd path                           Change local directory to 'path'\n"
 	    "lls [ls-options [path]]            Display local directory listing\n"
-	    "lmkdir path                        Create local directory\n"
+	    "lmkdir [-p] path                   Create local directory\n"
 	    "ln [-s] oldpath newpath            Link remote file (-s for symlink)\n"
 	    "lpwd                               Print local working directory\n"
 	    "ls [-1afhlnrSt] [path]             Display remote directory listing\n"
 	    "lumask umask                       Set local umask to 'umask'\n"
-	    "mkdir path                         Create remote directory\n"
+	    "mkdir [-p] path                    Create remote directory\n"
 	    "progress                           Toggle display of progress meter\n"
 	    "put [-afpR] local [remote]         Upload file\n"
 	    "pwd                                Display remote working directory\n"
@@ -406,6 +406,30 @@ parse_getput_flags(const char *cmd, char **argv, int argc,
 		case 'r':
 		case 'R':
 			*rflag = 1;
+			break;
+		default:
+			error("%s: Invalid flag -%c", cmd, optopt);
+			return -1;
+		}
+	}
+
+	return optind;
+}
+
+static int
+parse_mkdir_flags(const char *cmd, char **argv, int argc, int *pflag)
+{
+	extern int opterr, optind, optopt, optreset;
+	int ch;
+
+	optind = optreset = 1;
+	opterr = 0;
+
+	*pflag = 0;
+	while ((ch = getopt(argc, argv, "p")) != -1) {
+		switch (ch) {
+		case 'p':
+			*pflag = 1;
 			break;
 		default:
 			error("%s: Invalid flag -%c", cmd, optopt);
@@ -675,9 +699,15 @@ process_get(struct sftp_conn *conn, const char *src, const char *dst,
 			goto out;
 		}
 
-		/* Special handling for dest of '..' */
-		if (strcmp(filename, "..") == 0)
-			filename = "."; /* Download to dest, not dest/.. */
+		/*
+		 * Special handling for destinations of '..' and remote roots.
+		 * In particular, never select the local root as an implicit
+		 * destination for a remote root.
+		 */
+		if (strcmp(filename, "..") == 0 ||
+		    (filename[0] != '\0' &&
+		    filename[strspn(filename, "/")] == '\0'))
+			filename = ".";
 
 		if (g.gl_matchc == 1 && dst) {
 			if (local_is_dir(dst)) {
@@ -944,7 +974,7 @@ sglob_comp(const void *aa, const void *bb)
 	u_int b = *(const u_int *)bb;
 	const char *ap = sort_glob->gl_pathv[a];
 	const char *bp = sort_glob->gl_pathv[b];
-#if 0
+#if GLOB_KEEPSTAT != 0
 	const struct stat *as = sort_glob->gl_statv[a];
 	const struct stat *bs = sort_glob->gl_statv[b];
 #else
@@ -955,7 +985,11 @@ sglob_comp(const void *aa, const void *bb)
 	int rmul = sort_flag & LS_REVERSE_SORT ? -1 : 1;
 
 #define NCMP(a,b) (a == b ? 0 : (a < b ? 1 : -1))
-#if 1
+#if GLOB_KEEPSTAT != 0
+	/* order entries without stat information last */
+	if (as == NULL || bs == NULL)
+		return (as == bs) ? 0 : (as == NULL ? rmul : -rmul);
+#else
 	if (stat(ap, &ass) == -1 || stat(bp, &bss) == -1)
 		return 0;
 #endif
@@ -1479,16 +1513,21 @@ parse_args(const char **cpp, int *ignore_errors, int *disable_echo, int *aflag,
 		undo_glob_escape(*path1);
 		undo_glob_escape(*path2);
 		break;
-	case I_RM:
 	case I_MKDIR:
-	case I_RMDIR:
 	case I_LMKDIR:
+		if ((optidx = parse_mkdir_flags(cmd, argv, argc, pflag)) == -1)
+			return -1;
+		path1_mandatory = 1;
+		goto parse_one_path;
+	case I_RM:
+	case I_RMDIR:
 		path1_mandatory = 1;
 		/* FALLTHROUGH */
 	case I_CHDIR:
 	case I_LCHDIR:
 		if ((optidx = parse_no_flags(cmd, argv, argc)) == -1)
 			return -1;
+ parse_one_path:
 		/* Get pathname (mandatory) */
 		if (argc - optidx < 1) {
 			if (!path1_mandatory)
@@ -1669,7 +1708,10 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
 		attrib_clear(&a);
 		a.flags |= SSH2_FILEXFER_ATTR_PERMISSIONS;
 		a.perm = 0777;
-		err = sftp_mkdir(conn, path1, &a, 1);
+		if (pflag)
+			err = sftp_mkpath(conn, path1, &a, 1);
+		else
+			err = sftp_mkdir(conn, path1, &a, 1);
 		break;
 	case I_RMDIR:
 		path1 = sftp_make_absolute(path1, *pwd);
@@ -1738,6 +1780,11 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
 		}
 		break;
 	case I_LMKDIR:
+		if (pflag) {
+			if (mkdir_path(path1, 0777) != 0)
+				err = 1;
+			break;
+		}
 		if (mkdir(path1, 0777) == -1) {
 			error("Couldn't create local directory "
 			    "\"%s\": %s", path1, strerror(errno));

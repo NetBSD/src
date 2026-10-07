@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.c,v 1.30 2025/10/11 15:45:06 christos Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.102 2025/09/15 04:38:00 djm Exp $ */
+/*	$NetBSD: auth-options.c,v 1.31 2026/10/07 17:32:06 christos Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.103 2026/09/16 00:33:44 djm Exp $ */
 
 /*
  * Copyright (c) 2018 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.30 2025/10/11 15:45:06 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.31 2026/10/07 17:32:06 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -607,6 +607,7 @@ sshauthopt_merge(const struct sshauthopt *primary,
 	OPTFLAG_AND(no_require_user_presence);
 	/* Restrictive flags are logical-OR (i.e. must be set in either) */
 	OPTFLAG_OR(require_verify);
+	OPTFLAG_OR(restricted);
 #undef OPTFLAG_AND
 
 	/* Earliest expiry time should win */

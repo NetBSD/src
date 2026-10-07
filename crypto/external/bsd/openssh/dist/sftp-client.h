@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.h,v 1.20 2026/04/08 18:58:41 christos Exp $	*/
-/* $OpenBSD: sftp-client.h,v 1.41 2026/03/03 09:57:25 dtucker Exp $ */
+/*	$NetBSD: sftp-client.h,v 1.21 2026/10/07 17:32:08 christos Exp $	*/
+/* $OpenBSD: sftp-client.h,v 1.42 2026/09/07 20:24:22 job Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -87,6 +87,9 @@ int sftp_rm(struct sftp_conn *, const char *);
 
 /* Create directory 'path' */
 int sftp_mkdir(struct sftp_conn *, const char *, Attrib *, int);
+
+/* Create directory 'path' and intermediate directories as required */
+int sftp_mkpath(struct sftp_conn *, const char *, Attrib *, int);
 
 /* Remove directory 'path' */
 int sftp_rmdir(struct sftp_conn *, const char *);

@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.46 2026/09/21 21:31:00 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.350 2026/06/05 08:53:07 djm Exp $ */
+/*	$NetBSD: session.c,v 1.47 2026/10/07 17:32:08 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.351 2026/09/16 00:25:50 djm Exp $ */
 
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.46 2026/09/21 21:31:00 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.47 2026/10/07 17:32:08 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -154,6 +154,7 @@ static char *auth_info_file = NULL;
 
 /* Name and directory of socket for authentication agent forwarding. */
 static char *auth_sock_name = NULL;
+static char *auth_sock_dir = NULL; /* only set if directory needs cleanup */
 
 /* removes the agent forwarding socket */
 
@@ -162,7 +163,9 @@ auth_sock_cleanup_proc(struct passwd *pw)
 {
 	if (auth_sock_name != NULL) {
 		temporarily_use_uid(pw);
-		unlink(auth_sock_name);
+		agent_listener_cleanup(options.agent_socket_path,
+		    auth_sock_name, auth_sock_dir);
+		free(auth_sock_name);
 		auth_sock_name = NULL;
 		restore_uid();
 	}
@@ -182,7 +185,9 @@ auth_input_request_forwarding(struct ssh *ssh, struct passwd *pw, int agent_new)
 	/* Temporarily drop privileged uid for mkdir/bind. */
 	temporarily_use_uid(pw);
 
-	if (agent_listener(pw->pw_dir, "sshd", &sock, &auth_sock_name) != 0) {
+	if (agent_listener(options.agent_socket_path, pw->pw_name, pw->pw_uid,
+	    pw->pw_dir, getpid(), "sshd", &sock, &auth_sock_name,
+	    &auth_sock_dir) != 0) {
 		/* a more detailed error is already logged */
 		ssh_packet_send_debug(ssh, "Agent forwarding disabled: "
 		    "couldn't create listener socket");

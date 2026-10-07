@@ -1,6 +1,6 @@
-/*	$NetBSD: monitor_wrap.c,v 1.39 2026/09/21 21:31:00 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.147 2026/05/31 11:30:50 djm Exp $ */
-/* $OpenBSD: monitor_wrap.c,v 1.148 2026/07/21 06:17:42 djm Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.40 2026/10/07 17:32:07 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.151 2026/09/16 06:23:16 djm Exp $ */
+
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.39 2026/09/21 21:31:00 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.40 2026/10/07 17:32:07 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -380,7 +380,10 @@ out:
 	mm_decode_activate_server_options(ssh, m);
 	server_process_permitopen(ssh);
 	server_process_channel_timeouts(ssh);
+	channel_set_tcp_keepalives(ssh,
+	    options.tcp_keep_alive == SSH_KEEPALIVES_ALL);
 	kex_set_server_sig_algs(ssh, options.pubkey_accepted_algos);
+	kex_set_warn_weak_crypto(ssh, options.warn_weak_crypto);
 	ssh_packet_set_rekey_limits(ssh, options.rekey_limit,
 	    options.rekey_interval);
 	sshbuf_free(m);
@@ -1243,7 +1246,7 @@ void
 server_process_channel_timeouts(struct ssh *ssh)
 {
 	u_int i;
-	int secs;
+	double secs;
 	char *type;
 
 	debug3_f("setting %u timeouts", options.num_channel_timeouts);

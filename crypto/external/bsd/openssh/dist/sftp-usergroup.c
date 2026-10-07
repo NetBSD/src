@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-usergroup.c,v 1.3 2023/10/25 20:19:57 christos Exp $	*/
+/*	$NetBSD: sftp-usergroup.c,v 1.4 2026/10/07 17:32:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2022 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
 
 /* sftp client user/group lookup and caching */
 #include "includes.h"
-__RCSID("$NetBSD: sftp-usergroup.c,v 1.3 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: sftp-usergroup.c,v 1.4 2026/10/07 17:32:08 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -159,6 +159,8 @@ collect_ids_from_glob(glob_t *g, int user, u_int **idsp, u_int *nidsp)
 		struct stat *stp;
 #if GLOB_KEEPSTAT != 0
 		stp = g->gl_statv[i];
+		if (stp == NULL) /* no stat information */
+			continue;
 #else
 		struct stat st;
 		if (lstat(g->gl_pathv[i], stp = &st) == -1) {

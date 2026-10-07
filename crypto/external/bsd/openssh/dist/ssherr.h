@@ -1,5 +1,5 @@
-/*	$NetBSD: ssherr.h,v 1.6 2026/09/21 21:31:00 christos Exp $	*/
-/*	$OpenBSD: ssherr.h,v 1.10 2026/06/14 03:59:34 djm Exp $	*/
+/*	$NetBSD: ssherr.h,v 1.7 2026/10/07 17:32:09 christos Exp $	*/
+/*	$OpenBSD: ssherr.h,v 1.11 2026/09/16 00:31:27 djm Exp $	*/
 
 /*
  * Copyright (c) 2011 Damien Miller
@@ -86,6 +86,7 @@
 #define SSH_ERR_DEVICE_NOT_FOUND		-60
 #define SSH_ERR_CRYPTO_ERROR			-61
 #define SSH_ERR_INTERNAL_CRYPTO_ERROR		-62
+#define SSH_ERR_KEY_ALG_UNSUPPORTED		-63
 
 /* Translate a numeric error code to a human-readable error string */
 const char *ssh_err(int n);
