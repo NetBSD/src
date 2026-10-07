@@ -114,6 +114,7 @@ channel_send_window_changes
 channel_set_af
 channel_set_fds
 channel_set_hpn
+channel_set_tcp_keepalives
 channel_set_tty
 channel_set_x11_refuse_time
 channel_set_xtype
@@ -161,13 +162,10 @@ crypto_kem_sntrup761_dec
 crypto_kem_sntrup761_enc
 crypto_kem_sntrup761_keypair
 crypto_scalarmult_curve25519
-crypto_sign_ed25519
+crypto_sign_ed25519_detached
 crypto_sign_ed25519_keypair
-crypto_sign_ed25519_keypair_from_seed
-crypto_sign_ed25519_open
-crypto_sign_ed25519_ref_ge25519_base
-crypto_sign_ed25519_ref_isneutral_vartime
-crypto_sign_ed25519_ref_unpackneg_vartime
+crypto_sign_ed25519_seed_keypair
+crypto_sign_ed25519_verify_detached
 crypto_sign_mldsa44
 crypto_sign_mldsa44_ed25519_keygen
 crypto_sign_mldsa44_ed25519_keygen_seeded
@@ -200,6 +198,7 @@ get_u16
 get_u32
 get_u32_le
 get_u64
+getexecpath
 hostfile_create_user_ssh_dir
 hpdelim2
 init_hostkeys
@@ -210,6 +209,7 @@ kex_buf2prop
 kex_c25519_dec
 kex_c25519_enc
 kex_c25519_keypair
+kex_check_warn_weak_crypto
 kex_derive_keys
 kex_dh_compute_key
 kex_dh_dec
@@ -255,6 +255,7 @@ kex_send_kexinit
 kex_send_newkeys
 kex_server_update_ext_info
 kex_set_server_sig_algs
+kex_set_warn_weak_crypto
 kex_setup
 kex_start_rekex
 kex_type_from_name
@@ -300,6 +301,7 @@ match_pattern
 match_pattern_list
 match_user
 match_usergroup_pattern_list
+mkdir_path
 mktemp_proto
 monotime_double
 monotime_ts
@@ -328,9 +330,11 @@ pkcs11_sign
 pkcs11_terminate
 poly1305_auth
 ptimeout_deadline_monotime
+ptimeout_deadline_monotime_double
 ptimeout_deadline_monotime_tsp
 ptimeout_deadline_ms
 ptimeout_deadline_sec
+ptimeout_deadline_sec_double
 ptimeout_get_ms
 ptimeout_get_tsp
 ptimeout_init
@@ -344,6 +348,7 @@ recallocarray
 restore_uid
 rtrim
 scan_scaled
+set_keepalive
 set_log_handler
 set_nodelay
 set_nonblock
@@ -696,6 +701,7 @@ sshkey_free
 sshkey_from_blob
 sshkey_from_private
 sshkey_fromb
+sshkey_fromb_allowlist
 sshkey_froms
 sshkey_generate
 sshkey_get_sigtype

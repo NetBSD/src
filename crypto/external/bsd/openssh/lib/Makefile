@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2026/09/21 21:31:01 christos Exp $
+#	$NetBSD: Makefile,v 1.51 2026/10/07 17:33:00 christos Exp $
 
 # libssh is not meant for applications to link against -- it's a
 # private library of the ssh/sshd/&c. executables we ship.  So don't
@@ -41,6 +41,7 @@ compat.c \
 dispatch.c \
 dns.c \
 ed25519.c \
+execpath.c \
 fatal.c \
 freezero.c \
 hmac.c \
@@ -131,6 +132,7 @@ COPTS.sshkey.c+=	${CC_WNO_FORMAT_TRUNCATION}
 COPTS.cipher.c+=	-Wno-error=deprecated-declarations
 COPTS.dh.c+=		-Wno-error=deprecated-declarations
 COPTS.digest-libc.c+=	-Wno-error=cast-function-type
+COPTS.ed25519.c+=	-Wno-error=deprecated-declarations
 COPTS.kex.c+=		-Wno-error=deprecated-declarations
 COPTS.kexmlkem768ecdh.c+=	-Wno-error=deprecated-declarations
 COPTS.kexdh.c+=		-Wno-error=deprecated-declarations
