@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.h,v 1.167 2026/06/24 06:53:11 djm Exp $ */
+/* $OpenBSD: channels.h,v 1.171 2026/09/16 23:26:41 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -90,6 +90,7 @@
 struct ssh;
 struct Channel;
 typedef struct Channel Channel;
+struct channel_connect;
 
 typedef void channel_open_fn(struct ssh *, int, int, void *);
 typedef void channel_callback_fn(struct ssh *, int, int, void *);
@@ -108,13 +109,6 @@ struct channel_confirm {
 	void *ctx;
 };
 TAILQ_HEAD(channel_confirms, channel_confirm);
-
-/* Context for non-blocking connects */
-struct channel_connect {
-	char *host;
-	int port;
-	struct addrinfo *ai, *aitop;
-};
 
 /* Callbacks for mux channels back into client-specific code */
 typedef int mux_callback_fn(struct ssh *, struct Channel *);
@@ -150,7 +144,7 @@ struct Channel {
 	int     isatty;		/* rfd is a tty */
 	int	client_tty;	/* (client) TTY has been requested */
 	int     force_drain;	/* force close on iEOF */
-	time_t	notbefore;	/* Pause IO until deadline (time_t) */
+	double	notbefore;	/* Pause IO until deadline */
 	int     delayed;	/* post-IO handlers for newly created
 				 * channels are delayed until the first call
 				 * to a matching pre-IO handler.
@@ -179,7 +173,7 @@ struct Channel {
 	u_int	local_consumed;
 	u_int	local_maxpacket;
 	int     extended_usage;
-	int	agent_new;	/* For agent listeners, use RFC XXX reqests */
+	int	agent_new;	/* For agent listeners, use RFC 9987 requests */
 	int	single_connection;
 
 	char   *ctype;		/* const type - NB. not freed on channel_free */
@@ -203,8 +197,7 @@ struct Channel {
 	int			datagram;
 
 	/* non-blocking connect */
-	/* XXX make this a pointer so the structure can be opaque */
-	struct channel_connect	connect_ctx;
+	struct channel_connect	*connect_ctx;
 
 	/* multiplexing protocol hook, called for each packet received */
 	mux_callback_fn		*mux_rcb;
@@ -215,9 +208,9 @@ struct Channel {
 	/* Inactivity timeouts */
 
 	/* Last traffic seen for OPEN channels */
-	time_t			lastused;
+	double			lastused;
 	/* Inactivity timeout deadline in seconds (0 = no timeout) */
-	int			inactive_deadline;
+	double			inactive_deadline;
 };
 
 #define CHAN_EXTENDED_IGNORE		0
@@ -316,9 +309,10 @@ void	 channel_cancel_cleanup(struct ssh *, int);
 int	 channel_close_fd(struct ssh *, Channel *, int *);
 void	 channel_send_window_changes(struct ssh *);
 int	 channel_has_bulk(struct ssh *);
+void	 channel_set_tcp_keepalives(struct ssh *, int);
 
 /* channel inactivity timeouts */
-void channel_add_timeout(struct ssh *, const char *, int);
+void channel_add_timeout(struct ssh *, const char *, double);
 void channel_clear_timeouts(struct ssh *);
 
 /* mux proxy support */
@@ -386,7 +380,7 @@ int	 permitopen_port(const char *);
 
 /* x11 forwarding */
 
-void	 channel_set_x11_refuse_time(struct ssh *, time_t);
+void	 channel_set_x11_refuse_time(struct ssh *, double);
 int	 x11_connect_display(struct ssh *);
 int	 x11_create_display_inet(struct ssh *, int, int, int, u_int *, int **);
 void	 x11_request_forwarding_with_spoofing(struct ssh *, int,
@@ -399,7 +393,7 @@ int	 chan_is_dead(struct ssh *, Channel *, int);
 void	 chan_mark_dead(struct ssh *, Channel *);
 
 /* agent forwarding */
-void	 client_channel_reqest_agent_forwarding(struct ssh *, int);
+void	 client_channel_request_agent_forwarding(struct ssh *, int);
 
 /* channel events */
 
