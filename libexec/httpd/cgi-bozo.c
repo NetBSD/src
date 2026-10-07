@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.57 2026/06/11 05:44:11 mlelstv Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.58 2026/10/07 07:46:51 nia Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -493,6 +493,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	    (request->hr_remotehost && *request->hr_remotehost ? 1 : 0) +
 	    (request->hr_remoteaddr && *request->hr_remoteaddr ? 1 : 0) +
 	    (cgihandler ? 1 : 0) +
+	    (httpd->cgibin ? 1 : 0) +
 	    bozo_auth_cgi_count(request) +
 	    (request->hr_serverport && *request->hr_serverport ? 1 : 0);
 
@@ -568,6 +569,12 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		bozo_setenv(httpd, "REMOTE_ADDR", request->hr_remoteaddr,
 				curenvp++);
 	/*
+	 * RFC3875 The current working directory for the script SHOULD
+	 * be set to the directory containing the script.
+	 */
+	if (httpd->cgibin)
+		bozo_setenv(httpd, "PWD", httpd->cgibin, curenvp++);
+	/*
 	 * Apache does this when invoking content handlers, and PHP
 	 * 5.3 requires it as a "security" measure.
 	 */
@@ -607,6 +614,9 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		close(sv[1]);
 		closelog();
 		bozo_daemon_closefds(httpd);
+
+		if (httpd->cgibin && chdir(httpd->cgibin) == -1)
+			bozoerr(httpd, 1, "failed to chdir(2)");
 
 		if (-1 == execve(path, argv, envp)) {
 			int saveerrno = errno;
