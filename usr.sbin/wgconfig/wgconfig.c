@@ -1,4 +1,4 @@
-/*	$NetBSD: wgconfig.c,v 1.7 2025/09/25 15:49:03 christos Exp $	*/
+/*	$NetBSD: wgconfig.c,v 1.8 2026/10/07 17:21:10 gdt Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wgconfig.c,v 1.7 2025/09/25 15:49:03 christos Exp $");
+__RCSID("$NetBSD: wgconfig.c,v 1.8 2026/10/07 17:21:10 gdt Exp $");
 
 #include <sys/ioctl.h>
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: wgconfig.c,v 1.7 2025/09/25 15:49:03 christos Exp $");
 
 #include <prop/proplib.h>
 
-#define PROP_BUFFER_LEN	4096
+#define PROP_BUFFER_LEN	16384
 #define KEY_LEN			32
 #define KEY_BASE64_LEN		44
 
