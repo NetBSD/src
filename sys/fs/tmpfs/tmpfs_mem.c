@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_mem.c,v 1.14 2023/04/29 06:29:55 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_mem.c,v 1.15 2026/10/07 04:25:08 kre Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.14 2023/04/29 06:29:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.15 2026/10/07 04:25:08 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -121,7 +121,8 @@ tmpfs_bytes_max(struct tmpfs_mount *mp)
 	} else {
 		freepages -= freetarg;
 	}
-	avail_mem = round_page(mp->tm_bytes_used) + (freepages << PAGE_SHIFT);
+	avail_mem = round_page(mp->tm_bytes_used) +
+		((uint64_t)freepages << PAGE_SHIFT);
 	return MIN(mp->tm_mem_limit, avail_mem);
 }
 
