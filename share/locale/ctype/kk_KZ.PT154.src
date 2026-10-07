@@ -1,4 +1,4 @@
-/* $NetBSD: kk_KZ.PT154.src,v 1.1 2006/03/28 14:44:01 tnozaki Exp $ */
+/* $NetBSD: kk_KZ.PT154.src,v 1.2 2026/10/07 02:49:57 kre Exp $ */
 
 /*
  * LOCALE_CTYPE for PT154 character set (IANA PTCP154)
@@ -24,6 +24,8 @@ UPPER		'A' - 'Z'
 XDIGIT		'0' - '9' 'a' - 'f' 'A' - 'F'
 
 MAPLOWER	<'A' - 'Z' : 'a'>
+MAPLOWER	<'a' - 'z' : 'a'>
+MAPUPPER	<'a' - 'z' : 'A'>
 MAPUPPER	<'A' - 'Z' : 'A'>
 TODIGIT       	<'0' - '9' : 0>
 TODIGIT       	<'A' - 'F' : 10>
