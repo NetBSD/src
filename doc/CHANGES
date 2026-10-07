@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3301 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3302 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -421,14 +421,30 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		called with iovcnt=0. [sborrill 20260911]
 	tzdata: Updated to 2026d (using 2026dgtz) [kre 20260912]
 	tzcode: Updated to 2026d. [christos 20260912]
+	pcfiic(4): Add interrupt support, reduces system time used
+		during i2c operations. [jdc 20260916]
 	unbound(8): Import 1.26.1. [christos 20260917]
 	bind: Import version 9.20.29. [christos 20260917]
+	boot(8): Add bootxx_hd9660, a loader that supports booting
+		from ISO 9660 file systems on hard drive-style media.
+		[jakllsch 20260918]
 	news68k: add wsdisplay(9) support for NWB-225 framebuffer console
 		[tsutsui 20260920]
 	ssh(1), sshd(8): Import OpenSSH 10.5. [christos 20260921]
+	make(1): Allow many more temporary scripts to concurrently
+		eixst with unique file names. [sjg 20260921]
+	sparc: In the cgtwelve framebuffer driver, allow setting color
+		depth from userspace, allow retrieving color map via
+		ioctl(2), and add screen blanking support.
+		[macallan 20260921]
+	sparc: Add hardware cursor support for cgtwelve framebuffers.
+		[macallan 20260922]
+	sparc64: Add interrupt support for Pyro-based firei2c hardware,
+		reduces system time used during i2c operations.
+		[jdc 20260925]
 	wsfontload(8): Add a -n option to inspect or validate font files
 		without loading them. [charlotte 20260927]
-	evbarm: Add a GPIO and timecounter driver for  the TI AM1808.
+	evbarm: Add a GPIO and timecounter driver for the TI AM1808.
 		[yurix 20260929]
 	tzdata: Updated to 2026e (using 2026egtz) [kre 20261001]
 	tzcode: Updated to 2026e. [christos 20261002]
