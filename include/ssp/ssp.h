@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp.h,v 1.16 2023/11/15 03:14:16 christos Exp $	*/
+/*	$NetBSD: ssp.h,v 1.17 2026/10/07 00:51:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2011, 2023 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@
 		__chk_fail()
 #define __ssp_redirect_raw(rtype, fun, symbol, args, call, cond, bos) \
 rtype __ssp_real_(fun) args __RENAME(symbol); \
-__ssp_inline rtype fun args __RENAME(__ssp_protected_ ## fun); \
 __ssp_inline rtype fun args { \
 	if (cond) \
 		__ssp_check(__buf, __len, bos); \

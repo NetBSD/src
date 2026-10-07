@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp_redirect.c,v 1.3 2024/01/20 14:52:49 christos Exp $	*/
+/*	$NetBSD: ssp_redirect.c,v 1.4 2026/10/07 00:51:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,28 +29,52 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef _FORTIFY_SOURCE
-#define _FORTIFY_SOURCE 2
-#define __ssp_inline
-
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ssp_redirect.c,v 1.3 2024/01/20 14:52:49 christos Exp $");
+__RCSID("$NetBSD: ssp_redirect.c,v 1.4 2026/10/07 00:51:18 riastradh Exp $");
 
 #include <unistd.h>
 
+/*
+ * This file provides useless wrappers for getcwd, read, and readlink,
+ * for compatibility with programs built against buggy definitions of
+ * the ssp wrappers.  For the gory details, see PR lib/60858:
+ * fortuitous embarrassment: fortify is all kinds of busted
+ * <https://gnats.NetBSD.org/60858>.
+ *
+ * DO NOT ADD MORE FUNCTIONS HERE.  If you are tempted to add another
+ * __ssp_protected_* symbol, YOU ARE DOING SOMETHING WRONG AND YOU MUST
+ * UNDERSTAND WHY IT IS WRONG.
+ */
+
+__typeof(getcwd) __ssp_protected_getcwd;
+__typeof(read) __ssp_protected_read;
+__typeof(readlink) __ssp_protected_readlink;
+
+char *
+__ssp_protected_getcwd(char *buf, size_t len)
+{
+
+	return getcwd(buf, len);
+}
+
+ssize_t
+__ssp_protected_read(int fd, void *buf, size_t len)
+{
+
+	return read(fd, buf, len);
+}
+
+ssize_t
+__ssp_protected_readlink(const char *restrict path,
+    char *restrict buf, size_t bufsiz)
+{
+
+	return readlink(path, buf, bufsiz);
+}
 
 /*
- * Provide definitions of the redirect functions in libc.
+ * Remember: DO NOT ADD MORE FUNCTIONS HERE.  This file was a mistake;
+ * we just can't get rid of it without breaking compatibility with
+ * existing binaries (which don't even use the symbols, just demand
+ * they be present).
  */
-static int __used
-/*LINTED unused*/
-__ssp_use(void)
-{
-	if (getcwd(NULL, 0) == NULL)
-		return -1;
-	if (read(-1, NULL, 0) == -1)
-		return -1;
-	if (readlink(NULL, NULL, 0) == -1)
-		return -1;
-	return 0;
-}
