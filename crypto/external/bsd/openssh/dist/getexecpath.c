@@ -1,4 +1,4 @@
-/*	$NetBSD: getexecpath.c,v 1.1 2026/10/07 17:32:07 christos Exp $	*/
+/*	$NetBSD: getexecpath.c,v 1.2 2026/10/07 20:15:03 christos Exp $	*/
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,8 +42,10 @@ getexecpath(char *buf, size_t len)
 
 	for (aux = _dlauxinfo(); aux->a_type != AT_NULL; ++aux)
 		if (aux->a_type == AT_SUN_EXECNAME) {
-			strlcpy(buf, (void *)(intptr_t)aux->a_v, len);
-			return 0;
+			if (strlcpy(buf, (void *)(intptr_t)aux->a_v, len) < len)
+				return 0;
+			errno = ERANGE;
+			return -1;
 		}
 	errno = ENOENT;
 	return -1;
@@ -53,10 +55,12 @@ getexecpath(char *buf, size_t len)
 #include <stdio.h>
 #include <err.h>
 #include <stdlib.h>
+#include <limits.h>
+
 int
 main(void)
 {
-	char buf[1024];
+	char buf[PATH_MAX];
 	if (getexecpath(buf, sizeof(buf)) == -1)
 		err(EXIT_FAILURE, "Can't get path");
 	printf("%s\n", buf);
