@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.81 2026/09/09 06:15:05 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.82 2026/10/07 09:19:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -874,9 +874,13 @@ AARCH64REG_READWRITE_INLINE(cptr_el2)	// Architectural Feature Trap Register
 AARCH64REG_READWRITE_INLINE(hpfar_el2)		// Hypervisor IPA Fault Address Register
 
 #define HPFAR_EL2_NS		__BIT(63)	// Faulting IPA address space (FEAT_SEL2)
-#define HPFAR_EL2_FIPA_D128	__BITS(47,4)	// Faulting Intermediate Physical Address Bits [55:12]
-#define HPFAR_EL2_FIPA		__BITS(43,4)    // Faulting Intermediate Physical Address Bits [51:12]
-#define HPFAR_EL2_FIPA_BITSHIFT	12
+#define HPFAR_EL2_FIPA_D128	__BITS(47,  4)	// Faulting Intermediate Physical Address Bits [55:12]
+#define HPFAR_EL2_FIPA_D128_BITS \
+				__BITS(55, 12)
+#define HPFAR_EL2_FIPA_LPA	__BITS(43,  4)	// Faulting Intermediate Physical Address Bits [51:12]
+#define HPFAR_EL2_FIPA_LPA_BITS __BITS(51, 12)
+#define HPFAR_EL2_FIPA		__BITS(39,  4)	// Faulting Intermediate Physical Address Bits [47:12]
+#define HPFAR_EL2_FIPA_BITS	__BITS(47, 12)
 
 
 AARCH64REG_READWRITE_INLINE(hstr_el2)		// Hypervisor System Trap Register
