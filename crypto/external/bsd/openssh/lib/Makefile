@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2026/10/07 20:07:32 kre Exp $
+#	$NetBSD: Makefile,v 1.53 2026/10/07 22:09:49 christos Exp $
 
 # libssh is not meant for applications to link against -- it's a
 # private library of the ssh/sshd/&c. executables we ship.  So don't
@@ -41,6 +41,7 @@ compat.c \
 dispatch.c \
 dns.c \
 ed25519.c \
+getexecpath.c \
 fatal.c \
 freezero.c \
 getexecpath.c \
