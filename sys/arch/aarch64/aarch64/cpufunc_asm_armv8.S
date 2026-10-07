@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv8.S,v 1.8 2021/02/11 08:35:11 ryo Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv8.S,v 1.9 2026/10/07 09:53:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 Robin Randhawa
@@ -293,3 +293,47 @@ ENTRY(aarch64_tlbi_by_asid_va_ll)
 	isb
 	ret
 END(aarch64_tlbi_by_asid_va_ll)
+
+/* EL2: aarch64_tlbi_by_vmid(void) */
+ENTRY(aarch64_tlbi_by_vmid)
+	dsb	ishst
+#ifdef MULTIPROCESSOR
+	tlbi	vmalls12e1is
+#else
+	tlbi	vmalls12e1
+#endif
+	dsb	ish
+	isb
+	ret
+END(aarch64_tlbi_by_vmid)
+
+/* EL2: aarch64_tlbi_by_vmid_ipa(paddr_t) */
+ENTRY(aarch64_tlbi_by_vmid_ipa)
+	/*
+	 * FEAT_D128 has IPA in bits [55:12]
+	 * FEAT_LPA  has IPA in bits [51:12]
+	 * otherwise     IPA in bits [47:12]
+	 *
+	 * cover all cases with [55:12]
+	 */
+
+	/* x8 = bit 63[RES0]44, 43[VA(55:12)]0 */
+	ubfx	x8, x0, #12, #44
+	dsb	ishst
+#ifdef MULTIPROCESSOR
+	tlbi	ipas2e1is, x8
+#else
+	tlbi	ipas2e1, x8
+#endif
+	dsb	ish
+	isb
+	ret
+END(aarch64_tlbi_by_vmid_ipa)
+
+/* EL2: aarch64_tlbi_all_local_el2(void) */
+ENTRY(aarch64_tlbi_all_local_el2)
+	tlbi	alle2
+	dsb	nsh
+	isb
+	ret
+END(aarch64_tlbi_all_local_el2)
