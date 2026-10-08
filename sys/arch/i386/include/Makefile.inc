@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2014/10/19 15:41:05 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.4 2026/10/08 19:11:09 riastradh Exp $
 
 CFLAGS+=	-msoft-float
 CFLAGS+=	-mno-mmx -mno-sse -mno-avx
@@ -8,4 +8,4 @@ CFLAGS+=	-mno-mmx -mno-sse -mno-avx
 CFLAGS+=	-fno-omit-frame-pointer
 .endif
 
-USE_SSP?=	yes
+USE_SSP_DEFAULT=yes
