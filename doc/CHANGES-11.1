@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.19 2026/10/02 18:07:51 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.20 2026/10/08 19:13:53 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -929,4 +929,323 @@ doc/3RDPARTY					(apply patch)
 
 	Updated tzdata to 2026e (using the 2026egtz fork).
 	[kre, ticket #507]
+
+sys/arch/x86/include/specialreg.h		1.223
+
+	x86: fix CPU identification for Zhaoxin family 7 CPUs.
+	[andvar, ticket #508]
+
+sys/arch/x86/x86/tsc.c				1.65-1.67
+
+	x86: add support for invariant TSC for recent Zhaoxin CPUs.
+	[andvar, ticket #509]
+
+external/bsd/unbound/dist/libunbound/remote.h   up to 1.1.1.1
+external/bsd/unbound/dist/testdata/10-unbound-anchor.tdir/key-setup.sh up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_xfr_host_bogus.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/dns64_dnssec.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/dns64_fwd_nocache.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/dns64_respip_bypass.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/edns_nsid_repeat.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/errreport_agent_domain_len.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/fill_reply_uninit.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/ghost_glue_a.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_class_any_merge.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_class_mixreferral.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_dname_ttl0_grace.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_ghost_ns_childapex.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_scrub_mx.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_scrub_ns_min.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_self_glue.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_self_glue_promisc.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/local_block_a.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/nsec_cross_zone.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/respip_bogus_rewrite.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/respip_cname_loop_tagged.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/rpz_clientip_passthru_cache.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/rpz_clientip_passthru_dns64.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/rrsig_agr_wild.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/serve_expired_respip_cname.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/serve_expired_respip_drop.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/serve_expired_rpz_drop.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/serve_expired_rpz_nx.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/serve_expired_wildcard_swap_ad.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/stop_nxdomain_label.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/sub_ds_deepcopy.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/subnet_dns64_lookup.crpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/val_any_cap.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/val_canon_short_px.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/val_cnameother.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/val_global_quota.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/val_negcache_ds_nsec3.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/val_wcnsec_nods.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_transfer_limit.tdir/auth_transfer_limit.conf up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_transfer_limit.tdir/auth_transfer_limit.dsc up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_transfer_limit.tdir/auth_transfer_limit.post up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_transfer_limit.tdir/auth_transfer_limit.pre up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_transfer_limit.tdir/auth_transfer_limit.test up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_transfer_limit.tdir/auth_transfer_limit.testns up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_transfer_limit.tdir/auth_transfer_limit.testns2 up to 1.1.1.1
+external/bsd/unbound/dist/testdata/fast_reload_authdel.tdir/example.com.zone up to 1.1.1.1
+external/bsd/unbound/dist/testdata/fast_reload_authdel.tdir/fast_reload_authdel.conf up to 1.1.1.1
+external/bsd/unbound/dist/testdata/fast_reload_authdel.tdir/fast_reload_authdel.conf2 up to 1.1.1.1
+external/bsd/unbound/dist/testdata/fast_reload_authdel.tdir/fast_reload_authdel.dsc up to 1.1.1.1
+external/bsd/unbound/dist/testdata/fast_reload_authdel.tdir/fast_reload_authdel.post up to 1.1.1.1
+external/bsd/unbound/dist/testdata/fast_reload_authdel.tdir/fast_reload_authdel.pre up to 1.1.1.1
+external/bsd/unbound/dist/testdata/fast_reload_authdel.tdir/fast_reload_authdel.test up to 1.1.1.1
+external/bsd/unbound/dist/testdata/fast_reload_authdel.tdir/fast_reload_authdel.testns up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tcp_conn_limit_dec.tdir/tcp_conn_limit_dec.conf up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tcp_conn_limit_dec.tdir/tcp_conn_limit_dec.dsc up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tcp_conn_limit_dec.tdir/tcp_conn_limit_dec.post up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tcp_conn_limit_dec.tdir/tcp_conn_limit_dec.pre up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tcp_conn_limit_dec.tdir/tcp_conn_limit_dec.test up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tcp_conn_limit_dec.tdir/tcp_conn_limit_dec.testns up to 1.1.1.1
+external/bsd/unbound/dist/README.md             up to 1.1.1.6
+external/bsd/unbound/dist/ax_pthread.m4         up to 1.1.1.3
+external/bsd/unbound/dist/config.guess          up to 1.10
+external/bsd/unbound/dist/config.h.in           up to 1.1.1.12
+external/bsd/unbound/dist/config.sub            up to 1.9
+external/bsd/unbound/dist/configure             up to 1.1.1.12
+external/bsd/unbound/dist/configure.ac          up to 1.1.1.12
+external/bsd/unbound/dist/cachedb/cachedb.c     up to 1.1.1.11
+external/bsd/unbound/dist/compat/getentropy_osx.c up to 1.1.1.3
+external/bsd/unbound/dist/compat/inet_pton.c    up to 1.1.1.2
+external/bsd/unbound/dist/compat/sha512.c       up to 1.1.1.6
+external/bsd/unbound/dist/daemon/cachedump.c    up to 1.1.1.9
+external/bsd/unbound/dist/daemon/daemon.c       up to 1.1.1.11
+external/bsd/unbound/dist/daemon/daemon.h       up to 1.1.1.8
+external/bsd/unbound/dist/daemon/remote.c       up to 1.1.1.12
+external/bsd/unbound/dist/daemon/remote.h       up to 1.1.1.7
+external/bsd/unbound/dist/daemon/stats.c        up to 1.1.1.12
+external/bsd/unbound/dist/daemon/worker.c       up to 1.1.1.12
+external/bsd/unbound/dist/daemon/worker.h       up to 1.1.1.5
+external/bsd/unbound/dist/dns64/dns64.c         up to 1.1.1.11
+external/bsd/unbound/dist/dnscrypt/dnscrypt.c   up to 1.1.1.7
+external/bsd/unbound/dist/dnscrypt/dnscrypt.h   up to 1.1.1.4
+external/bsd/unbound/dist/dnstap/dnstap.c       up to 1.1.1.9
+external/bsd/unbound/dist/dnstap/dnstap.h       up to 1.1.1.6
+external/bsd/unbound/dist/dnstap/dtstream.c     up to 1.1.1.7
+external/bsd/unbound/dist/dnstap/unbound-dnstap-socket.c up to 1.1.1.6
+external/bsd/unbound/dist/doc/Changelog         up to 1.1.1.12
+external/bsd/unbound/dist/doc/README            up to 1.1.1.12
+external/bsd/unbound/dist/doc/example.conf.in   up to 1.1.1.12
+external/bsd/unbound/dist/doc/libunbound.3.in   up to 1.1.1.12
+external/bsd/unbound/dist/doc/unbound-anchor.8.in up to 1.1.1.12
+external/bsd/unbound/dist/doc/unbound-checkconf.8.in up to 1.1.1.12
+external/bsd/unbound/dist/doc/unbound-control.8.in up to 1.1.1.12
+external/bsd/unbound/dist/doc/unbound-control.rst up to 1.1.1.3
+external/bsd/unbound/dist/doc/unbound-host.1.in up to 1.1.1.12
+external/bsd/unbound/dist/doc/unbound.8.in      up to 1.1.1.12
+external/bsd/unbound/dist/doc/unbound.conf.5.in up to 1.1.1.12
+external/bsd/unbound/dist/doc/unbound.conf.rst  up to 1.1.1.3
+external/bsd/unbound/dist/edns-subnet/addrtree.c up to 1.1.1.5
+external/bsd/unbound/dist/edns-subnet/subnetmod.c up to 1.1.1.11
+external/bsd/unbound/dist/ipsecmod/ipsecmod-whitelist.c up to 1.1.1.2
+external/bsd/unbound/dist/ipsecmod/ipsecmod.c   up to 1.1.1.7
+external/bsd/unbound/dist/ipset/ipset.c         up to 1.1.1.5
+external/bsd/unbound/dist/iterator/iter_delegpt.c up to 1.1.1.8
+external/bsd/unbound/dist/iterator/iter_delegpt.h up to 1.1.1.9
+external/bsd/unbound/dist/iterator/iter_donotq.c up to 1.1.1.2
+external/bsd/unbound/dist/iterator/iter_resptype.c up to 1.1.1.3
+external/bsd/unbound/dist/iterator/iter_resptype.h up to 1.1.1.3
+external/bsd/unbound/dist/iterator/iter_scrub.c up to 1.1.1.12
+external/bsd/unbound/dist/iterator/iter_scrub.h up to 1.1.1.3
+external/bsd/unbound/dist/iterator/iter_utils.c up to 1.1.1.11
+external/bsd/unbound/dist/iterator/iter_utils.h up to 1.1.1.10
+external/bsd/unbound/dist/iterator/iterator.c   up to 1.1.1.12
+external/bsd/unbound/dist/iterator/iterator.h   up to 1.1.1.9
+external/bsd/unbound/dist/libunbound/context.h  up to 1.1.1.7
+external/bsd/unbound/dist/libunbound/libunbound.c up to 1.1.1.10
+external/bsd/unbound/dist/libunbound/libworker.c up to 1.1.1.11
+external/bsd/unbound/dist/libunbound/libworker.h up to 1.1.1.4
+external/bsd/unbound/dist/libunbound/worker.h   up to 1.1.1.6
+external/bsd/unbound/dist/pythonmod/interface.i up to 1.1.1.11
+external/bsd/unbound/dist/pythonmod/pythonmod.c up to 1.1.1.9
+external/bsd/unbound/dist/respip/respip.c       up to 1.1.1.9
+external/bsd/unbound/dist/services/authzone.c   up to 1.7
+external/bsd/unbound/dist/services/authzone.h   up to 1.1.1.9
+external/bsd/unbound/dist/services/listen_dnsport.c up to 1.1.1.12
+external/bsd/unbound/dist/services/listen_dnsport.h up to 1.1.1.9
+external/bsd/unbound/dist/services/localzone.c  up to 1.1.1.11
+external/bsd/unbound/dist/services/localzone.h  up to 1.1.1.10
+external/bsd/unbound/dist/services/mesh.c       up to 1.1.1.12
+external/bsd/unbound/dist/services/mesh.h       up to 1.1.1.10
+external/bsd/unbound/dist/services/outside_network.c up to 1.1.1.12
+external/bsd/unbound/dist/services/outside_network.h up to 1.1.1.11
+external/bsd/unbound/dist/services/rpz.c        up to 1.1.1.7
+external/bsd/unbound/dist/services/cache/dns.c  up to 1.1.1.11
+external/bsd/unbound/dist/services/cache/rrset.c up to 1.1.1.9
+external/bsd/unbound/dist/sldns/keyraw.c        up to 1.1.1.7
+external/bsd/unbound/dist/sldns/str2wire.c      up to 1.1.1.10
+external/bsd/unbound/dist/smallapp/unbound-anchor.c up to 1.1.1.11
+external/bsd/unbound/dist/smallapp/unbound-checkconf.c up to 1.1.1.12
+external/bsd/unbound/dist/smallapp/worker_cb.c  up to 1.1.1.8
+external/bsd/unbound/dist/testcode/dohclient.c  up to 1.1.1.6
+external/bsd/unbound/dist/testcode/doqclient.c  up to 1.1.1.4
+external/bsd/unbound/dist/testcode/fake_event.c up to 1.1.1.11
+external/bsd/unbound/dist/testcode/testbound.c  up to 1.1.1.10
+external/bsd/unbound/dist/testcode/unitauth.c   up to 1.1.1.8
+external/bsd/unbound/dist/testcode/unitecs.c    up to 1.1.1.4
+external/bsd/unbound/dist/testcode/unitldns.c   up to 1.1.1.7
+external/bsd/unbound/dist/testcode/unitmain.c   up to 1.1.1.12
+external/bsd/unbound/dist/testcode/unittcpreuse.c up to 1.1.1.3
+external/bsd/unbound/dist/testcode/unitverify.c up to 1.1.1.10
+external/bsd/unbound/dist/testdata/auth_zonemd_xfr_chain_fail.rpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/dns_error_reporting.rpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/ipsecmod_hook.sh up to 1.1.1.2
+external/bsd/unbound/dist/testdata/iter_prefetch_fail.rpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/iter_privaddr.rpl up to 1.1.1.6
+external/bsd/unbound/dist/testdata/iter_resolve_minimised.rpl up to 1.1.1.6
+external/bsd/unbound/dist/testdata/iter_svcb_malformed.rpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/local_ds.rpl up to 1.1.1.3
+external/bsd/unbound/dist/testdata/stop_nxdomain_minimised.rpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/val_cnametonsec.rpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/val_cnametooptin.rpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/val_ds_cname.rpl up to 1.1.1.7
+external/bsd/unbound/dist/testdata/val_dsnsec.rpl up to 1.1.1.3
+external/bsd/unbound/dist/testdata/val_refer_unsignadd.rpl up to 1.1.1.6
+external/bsd/unbound/dist/testdata/val_referglue.rpl up to 1.1.1.7
+external/bsd/unbound/dist/testdata/val_secds_nosig.rpl up to 1.1.1.5
+external/bsd/unbound/dist/testdata/03-testbound.tdir/03-testbound.test up to 1.1.1.4
+external/bsd/unbound/dist/testdata/10-unbound-anchor.tdir/10-unbound-anchor.conf up to 1.1.1.2
+external/bsd/unbound/dist/testdata/10-unbound-anchor.tdir/10-unbound-anchor.test up to 1.1.1.2
+external/bsd/unbound/dist/testdata/10-unbound-anchor.tdir/petal.key up to 1.1.1.2
+external/bsd/unbound/dist/testdata/10-unbound-anchor.tdir/petal.pem up to 1.1.1.2
+external/bsd/unbound/dist/testdata/10-unbound-anchor.tdir/test_cert.key up to 1.1.1.2
+external/bsd/unbound/dist/testdata/10-unbound-anchor.tdir/test_cert.pem up to 1.1.1.2
+external/bsd/unbound/dist/testdata/10-unbound-anchor.tdir/127.0.0.1/no_more_keys.p7s up to 1.1.1.2
+external/bsd/unbound/dist/testdata/10-unbound-anchor.tdir/127.0.0.1/root.p7s up to 1.1.1.2
+external/bsd/unbound/dist/testdata/dnscrypt_cert.tdir/dnscrypt_cert.test up to 1.1.1.3
+external/bsd/unbound/dist/testdata/dnscrypt_cert_chacha.tdir/dnscrypt_cert_chacha.test up to 1.1.1.3
+external/bsd/unbound/dist/testdata/root_anchor.tdir/root_anchor.test up to 1.1.1.4
+external/bsd/unbound/dist/testdata/stat_values.tdir/stat_values.test up to 1.1.1.7
+external/bsd/unbound/dist/testdata/svcb.tdir/svcb.success-cases.zone up to 1.1.1.3
+external/bsd/unbound/dist/testdata/svcb.tdir/svcb.success-cases.zone.cmp up to 1.1.1.3
+external/bsd/unbound/dist/util/config_file.c    up to 1.1.1.12
+external/bsd/unbound/dist/util/config_file.h    up to 1.1.1.12
+external/bsd/unbound/dist/util/configlexer.c    up to 1.1.1.12
+external/bsd/unbound/dist/util/configlexer.lex  up to 1.1.1.12
+external/bsd/unbound/dist/util/configparser.c   up to 1.1.1.12
+external/bsd/unbound/dist/util/configparser.h   up to 1.1.1.12
+external/bsd/unbound/dist/util/configparser.y   up to 1.1.1.12
+external/bsd/unbound/dist/util/fptr_wlist.c     up to 1.1.1.11
+external/bsd/unbound/dist/util/fptr_wlist.h     up to 1.1.1.8
+external/bsd/unbound/dist/util/iana_ports.inc   up to 1.1.1.12
+external/bsd/unbound/dist/util/module.h         up to 1.1.1.10
+external/bsd/unbound/dist/util/net_help.c       up to 1.1.1.12
+external/bsd/unbound/dist/util/netevent.c       up to 1.10
+external/bsd/unbound/dist/util/netevent.h       up to 1.1.1.10
+external/bsd/unbound/dist/util/proxy_protocol.c up to 1.1.1.3
+external/bsd/unbound/dist/util/proxy_protocol.h up to 1.1.1.2
+external/bsd/unbound/dist/util/tube.c           up to 1.1.1.7
+external/bsd/unbound/dist/util/data/dname.c     up to 1.1.1.8
+external/bsd/unbound/dist/util/data/msgencode.c up to 1.1.1.11
+external/bsd/unbound/dist/util/data/msgparse.c  up to 1.1.1.10
+external/bsd/unbound/dist/util/data/msgreply.c  up to 1.1.1.12
+external/bsd/unbound/dist/util/data/msgreply.h  up to 1.1.1.12
+external/bsd/unbound/dist/util/data/packed_rrset.c up to 1.1.1.7
+external/bsd/unbound/dist/util/data/packed_rrset.h up to 1.1.1.8
+external/bsd/unbound/dist/util/shm_side/shm_main.c up to 1.1.1.7
+external/bsd/unbound/dist/validator/autotrust.c up to 1.1.1.9
+external/bsd/unbound/dist/validator/autotrust.h up to 1.1.1.4
+external/bsd/unbound/dist/validator/val_anchor.c up to 1.1.1.9
+external/bsd/unbound/dist/validator/val_neg.c   up to 1.1.1.9
+external/bsd/unbound/dist/validator/val_nsec.c  up to 1.1.1.8
+external/bsd/unbound/dist/validator/val_nsec.h  up to 1.1.1.6
+external/bsd/unbound/dist/validator/val_nsec3.c up to 1.1.1.8
+external/bsd/unbound/dist/validator/val_nsec3.h up to 1.1.1.7
+external/bsd/unbound/dist/validator/val_secalgo.c up to 1.1.1.9
+external/bsd/unbound/dist/validator/val_sigcrypt.c up to 1.1.1.11
+external/bsd/unbound/dist/validator/val_sigcrypt.h up to 1.1.1.7
+external/bsd/unbound/dist/validator/val_utils.c up to 1.1.1.8
+external/bsd/unbound/dist/validator/val_utils.h up to 1.1.1.8
+external/bsd/unbound/dist/validator/validator.c up to 1.1.1.12
+external/bsd/unbound/dist/validator/validator.h up to 1.1.1.8
+external/bsd/unbound/include/config.h           up to 1.18
+external/bsd/unbound/lib/libunbound/Makefile    up to 1.10
+external/bsd/unbound/lib/libunbound/shlib_version up to 1.10
+external/bsd/unbound/lib/libunbound/unbound.expsym up to 1.5
+distrib/sets/lists/base/shl.mi				1.1049
+distrib/sets/lists/debug/shl.mi				1.413
+
+	Import unbound 1.26.1.
+	[christos, ticket #510]
+
+distrib/utils/embedded/mkimage			1.98
+etc/Makefile					1.478
+etc/etc.evbarm/Makefile.inc			1.139-1.142,1.145
+etc/etc.evbmips/Makefile.inc			1.33
+etc/etc.evbppc/Makefile.inc			1.23
+etc/etc.riscv/Makefile.inc			1.8
+
+	Checksum file generation improvements for various
+	image targets.
+	[gutteridge, ticket #511]
+
+xsrc/external/mit/xorg-server/dist/ChangeLog         up to 1.1.1.35
+xsrc/external/mit/xorg-server/dist/configure         up to 1.28
+xsrc/external/mit/xorg-server/dist/configure.ac      up to 1.30
+xsrc/external/mit/xorg-server/dist/meson.build       up to 1.1.1.25
+xsrc/external/mit/xorg-server/dist/Xext/xtest.c      up to 1.11
+xsrc/external/mit/xorg-server/dist/Xi/exevents.c     up to 1.1.1.16
+xsrc/external/mit/xorg-server/dist/Xi/extinit.c      up to 1.1.1.10
+xsrc/external/mit/xorg-server/dist/Xi/xibarriers.c   up to 1.7
+xsrc/external/mit/xorg-server/dist/Xi/xipassivegrab.c up to 1.10
+xsrc/external/mit/xorg-server/dist/Xi/xiquerydevice.c up to 1.6
+xsrc/external/mit/xorg-server/dist/config/udev.c     up to 1.1.1.7
+xsrc/external/mit/xorg-server/dist/dix/devices.c     up to 1.18
+xsrc/external/mit/xorg-server/dist/dix/region.c      up to 1.5
+xsrc/external/mit/xorg-server/dist/dri3/meson.build  up to 1.1.1.3
+xsrc/external/mit/xorg-server/dist/exa/exa_accel.c   up to 1.8
+xsrc/external/mit/xorg-server/dist/fb/fb.h           up to 1.4
+xsrc/external/mit/xorg-server/dist/fb/fbgc.c         up to 1.1.1.6
+xsrc/external/mit/xorg-server/dist/glamor/glamor_compositerects.c up to 1.1.1.2
+xsrc/external/mit/xorg-server/dist/glx/glxcmds.c     up to 1.18
+xsrc/external/mit/xorg-server/dist/hw/kdrive/src/kinput.c up to 1.1.1.10
+xsrc/external/mit/xorg-server/dist/hw/xfree86/common/xf86.h up to 1.7
+xsrc/external/mit/xorg-server/dist/hw/xfree86/common/xf86Configure.c up to 1.14
+xsrc/external/mit/xorg-server/dist/hw/xfree86/common/xf86fbman.c up to 1.1.1.6
+xsrc/external/mit/xorg-server/dist/hw/xfree86/common/xf86platformBus.c up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/hw/xfree86/drivers/modesetting/dri2.c up to 1.1.1.6
+xsrc/external/mit/xorg-server/dist/hw/xfree86/drivers/modesetting/drmmode_display.c up to 1.13
+xsrc/external/mit/xorg-server/dist/hw/xfree86/int10/meson.build up to 1.1.1.3
+xsrc/external/mit/xorg-server/dist/hw/xfree86/man/xorg.conf.man up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/hw/xfree86/os-support/meson.build up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/hw/xfree86/parser/Files.c up to 1.1.1.7
+xsrc/external/mit/xorg-server/dist/hw/xfree86/parser/Flags.c up to 1.1.1.9
+xsrc/external/mit/xorg-server/dist/hw/xfree86/parser/scan.c up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/hw/xquartz/X11Application.m up to 1.1.1.12
+xsrc/external/mit/xorg-server/dist/hw/xquartz/GL/indirect.c up to 1.1.1.9
+xsrc/external/mit/xorg-server/dist/hw/xquartz/xpr/dri.c up to 1.1.1.7
+xsrc/external/mit/xorg-server/dist/include/xkbstr.h  up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/mi/miarc.c        up to 1.6
+xsrc/external/mit/xorg-server/dist/miext/damage/damage.c up to 1.1.1.7
+xsrc/external/mit/xorg-server/dist/miext/damage/damagestr.h up to 1.1.1.6
+xsrc/external/mit/xorg-server/dist/os/utils.c        up to 1.16
+xsrc/external/mit/xorg-server/dist/present/present_notify.c up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/randr/rrproviderproperty.c up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/render/glyph.c    up to 1.7
+xsrc/external/mit/xorg-server/dist/test/string.c     up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/test/xi2/protocol-eventconvert.c up to 1.1.1.6
+xsrc/external/mit/xorg-server/dist/test/xi2/protocol-xiquerydevice.c up to 1.1.1.6
+xsrc/external/mit/xorg-server/dist/xkb/XKBAlloc.c    up to 1.1.1.7
+xsrc/external/mit/xorg-server/dist/xkb/XKBMAlloc.c   up to 1.1.1.9
+xsrc/external/mit/xorg-server/dist/xkb/ddxBeep.c     up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/xkb/xkb.c         up to 1.15
+xsrc/external/mit/xorg-server/dist/xkb/xkbInit.c     up to 1.1.1.7
+xsrc/external/mit/xorg-server/dist/xkb/xkbUtils.c    up to 1.1.1.11
+xsrc/external/mit/xorg-server/dist/xkb/xkmread.c     up to 1.1.1.7
+xsrc/external/mit/xorg-server/include/dix-config.h   up to 1.61
+xsrc/external/mit/xorg-server/include/version-config.h up to 1.31
+xsrc/external/mit/xorg-server/include/xorg-config.h  up to 1.41
+xsrc/external/mit/xorg-server/include/xorg-server.h  up to 1.41
+share/mk/bsd.x11.mk					(apply patch)
+
+	Import xorg-server-21.1.25.
+	[mrg, ticket #512]
+
+sys/arch/sparc64/sparc64/ofw_patch.c		1.19
+
+	sparc64: remove misplaced break in V215 HDD GPIO case.
+	[jdc, ticket #513]
 
