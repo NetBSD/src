@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2012/02/14 19:39:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2026/10/08 17:50:26 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ SUBDIR=	notes .WAIT
 .endif
 
 SUBDIR+= utils
+SUBDIR+= lib .WAIT
 
 .if exists(${MACHINE}/miniroot/Makefile.inc)
 SUBDIR+= miniroot .WAIT

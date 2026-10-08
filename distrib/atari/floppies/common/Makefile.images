@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.images,v 1.16 2026/06/23 16:41:01 martin Exp $
+#	$NetBSD: Makefile.images,v 1.17 2026/10/08 17:50:26 mrg Exp $
 
 NOSSP=yes
 .include <bsd.own.mk>
@@ -12,6 +12,10 @@ DBG+=		-fno-reorder-blocks
 DBG+=		-DNDEBUG	# to remove assert(3) macro
 DBG+=		-D_PTHREADS	# to remove putc
 DBG+=		-DNO_PROGRESS	# to remove ftp's progress
+
+LIBCDIR!=	cd ${NETBSDSRCDIR}/distrib/lib/libc_small && ${PRINTOBJDIR}
+LDFLAGS+=	-L${LIBCDIR}
+CRUNCHENV+=	LDFLAGS=${LDFLAGS:Q}
 
 CRUNCHBIN=	instbin
 LISTS=		${.CURDIR}/list ${.CURDIR}/../common/list.images
