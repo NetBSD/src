@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.57.4.1 2024/10/02 18:24:35 martin Exp $	*/
+/*	$NetBSD: tsc.c,v 1.57.4.2 2026/10/08 19:42:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.57.4.1 2024/10/02 18:24:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.57.4.2 2026/10/08 19:42:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,9 @@ tsc_is_invariant(void)
 	 * is to check CPUID 80000007.
 	 */
 	family = CPUID_TO_BASEFAMILY(ci->ci_signature);
-	if (((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
-	    && ((family == 0x06) || (family == 0x0f))) {
+	if (((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD)
+	    || (cpu_vendor == CPUVENDOR_IDT))
+	    && ((family == 0x06) || (family == 0x07) || (family == 0x0f))) {
 		x86_cpuid(0x80000000, descs);
 		if (descs[0] >= 0x80000007) {
 			x86_cpuid(0x80000007, descs);
@@ -168,6 +169,7 @@ void
 tsc_setfunc(struct cpu_info *ci)
 {
 	bool use_lfence, use_mfence;
+	uint32_t family;
 
 	use_lfence = use_mfence = false;
 
@@ -184,6 +186,11 @@ tsc_setfunc(struct cpu_info *ci)
 		use_mfence = true;
 	else if (cpu_vendor == CPUVENDOR_INTEL)
 		use_lfence = true;
+	else if (cpu_vendor == CPUVENDOR_IDT) {
+		family = CPUID_TO_BASEFAMILY(ci->ci_signature);
+		use_lfence = family > 0x06 || (family == 0x06 &&
+		    CPUID_TO_MODEL(ci->ci_signature) == 0x0f);
+	}
 
 	/* LFENCE and MFENCE are applicable if SSE2 is set. */
 	if ((ci->ci_feat_val[0] & CPUID_SSE2) == 0)
