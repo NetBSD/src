@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2025/12/14 17:51:03 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2026/10/08 14:28:03 christos Exp $
 
 USE_FORT?=	yes
 CWARNFLAGS.clang=	-Wno-format-extra-args
@@ -22,10 +22,10 @@ EXPSYM_SRCS+=	ldap_r.kerberos.expsym
 .endif
 
 LIB_EXPSYM=	ldap_r.expsym
-ldap_r.expsym: ${EXPSYM_SRCS}
+${LIB_EXPSYM}: ${EXPSYM_SRCS}
 	${_MKTARGET_CREATE}
 	LC_ALL=C sort -m ${.ALLSRC} > ${.TARGET}.tmp && \
 	${MV} ${.TARGET}.tmp ${.TARGET}
-CLEANFILES+=	ldap_r.expsym ldap_r.expsym.tmp
+CLEANFILES+=	${LIB_EXPSYM} ${LIB_EXPSYM}.tmp
 
 .include <bsd.lib.mk>
