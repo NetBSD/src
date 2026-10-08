@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.219.2.1 2026/07/19 15:57:27 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.219.2.2 2026/10/08 18:26:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -381,10 +381,11 @@
 
 /*
  * The Extended family bits should only be inspected when CPUID_TO_BASEFAMILY()
- * returns 15. They are use to encode family value 16 to 270 (add 15).
+ * returns 15. They are used to encode family value 16 to 270 (add 15).
  * The Extended model bits are the high 4 bits of the model.
- * They are only valid for family >= 15 or family 6 (intel, but all amd
- * family 6 are documented to return zero bits for them).
+ * They are only valid for family >= 15, family 6 (intel, but all amd
+ * family 6 are documented to return zero bits for them) or family 7
+ * (Zhaoxin CPUs).
  */
 #define CPUID_TO_EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
 #define CPUID_TO_EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
@@ -396,6 +397,7 @@
 #define CPUID_TO_MODEL(cpuid)	(CPUID_TO_BASEMODEL(cpuid)	\
 	    | ((CPUID_TO_BASEFAMILY(cpuid) != 0x0f)		\
 		&& (CPUID_TO_BASEFAMILY(cpuid) != 0x06)		\
+		&& (CPUID_TO_BASEFAMILY(cpuid) != 0x07)		\
 		? 0 : (CPUID_TO_EXTMODEL(cpuid) << 4)))
 
 /* %ebx */
