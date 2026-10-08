@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.40 2026/10/07 17:32:07 christos Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.41 2026/10/08 14:25:36 christos Exp $	*/
 /* $OpenBSD: monitor_wrap.c,v 1.151 2026/09/16 06:23:16 djm Exp $ */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.40 2026/10/07 17:32:07 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.41 2026/10/08 14:25:36 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: monitor_wrap.c,v 1.40 2026/10/07 17:32:07 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #ifdef WITH_OPENSSL
 #include <openssl/bn.h>

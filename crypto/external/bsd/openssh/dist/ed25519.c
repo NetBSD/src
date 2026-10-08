@@ -21,7 +21,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ed25519.c,v 1.8 2026/10/07 17:32:07 christos Exp $");
+__RCSID("$NetBSD: ed25519.c,v 1.9 2026/10/08 14:25:36 christos Exp $");
 
 #include <sys/types.h>
 #include <stdint.h>
@@ -34,8 +34,12 @@ __RCSID("$NetBSD: ed25519.c,v 1.8 2026/10/07 17:32:07 christos Exp $");
 #define ACQUIRE_FENCE (void)0
 #define COMPILER_ASSERT(x) (void)sizeof(char[(x) ? 1 : -1])
 
-#ifdef WITH_OPENSSL
-# include <openssl/sha.h>
+#if defined(WITH_OPENSSL) || defined(__NetBSD__)
+# ifdef WITH_OPENSSL
+#  include <openssl/sha.h>
+# else
+#  include <sha2.h>
+# endif
 typedef SHA512_CTX crypto_hash_sha512_state;
 #else
 typedef SHA2_CTX crypto_hash_sha512_state;
