@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2024/02/17 18:31:19 christos Exp $
+# $NetBSD: Makefile,v 1.9.4.1 2026/10/08 18:51:02 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -113,6 +113,11 @@ libunbound.3: libunbound.3.in __subst
 
 COPTS.keyraw.c+= -Wno-error=deprecated-declarations
 COPTS.net_help.c+= -Wno-error=deprecated-declarations
+
+# ub_c_parse() overflows the PC-relative offsets used for jump tables
+.if ${MACHINE_CPU} == "m68k"
+COPTS.configparser.c+= -fno-jump-tables
+.endif
 
 .include <bsd.lib.mk>
 
