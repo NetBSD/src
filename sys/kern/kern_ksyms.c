@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.111 2026/01/04 01:34:57 riastradh Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.112 2026/10/08 14:53:57 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #define _KSYMS_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.111 2026/01/04 01:34:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.112 2026/10/08 14:53:57 andvar Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -1495,7 +1495,7 @@ ksymsioctl(struct file *fp, u_long cmd, void *data)
 	case OKIOCGVALUE:
 		/*
 		 * Use the in-kernel symbol lookup code for fast
-		 * retreival of a value.
+		 * retrieval of a value.
 		 */
 		error = ksyms_getval(NULL, str, &val, KSYMS_EXTERN);
 		if (error == 0)
@@ -1506,7 +1506,7 @@ ksymsioctl(struct file *fp, u_long cmd, void *data)
 	case OKIOCGSYMBOL:
 		/*
 		 * Use the in-kernel symbol lookup code for fast
-		 * retreival of a symbol.
+		 * retrieval of a symbol.
 		 */
 		s = pserialize_read_enter();
 		PSLIST_READER_FOREACH(st, &ksyms_symtabs_psz,
@@ -1536,7 +1536,7 @@ ksymsioctl(struct file *fp, u_long cmd, void *data)
 	case KIOCGVALUE:
 		/*
 		 * Use the in-kernel symbol lookup code for fast
-		 * retreival of a value.
+		 * retrieval of a value.
 		 */
 		error = ksyms_getval(NULL, str, &val, KSYMS_EXTERN);
 		if (error == 0)
@@ -1547,7 +1547,7 @@ ksymsioctl(struct file *fp, u_long cmd, void *data)
 	case KIOCGSYMBOL:
 		/*
 		 * Use the in-kernel symbol lookup code for fast
-		 * retreival of a symbol.
+		 * retrieval of a symbol.
 		 */
 		s = pserialize_read_enter();
 		PSLIST_READER_FOREACH(st, &ksyms_symtabs_psz,

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi.h,v 1.5 2023/11/25 10:08:27 mlelstv Exp $	*/
+/*	$NetBSD: iscsi.h,v 1.6 2026/10/08 14:53:57 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2004,2006,2011 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ typedef struct {
 #define ISCSID_STATUS_INVALID_TARGET_ID      1103	/* Target ID not found */
 #define ISCSID_STATUS_NOT_FOUND              1104	/* Search failed */
 #define ISCSID_STATUS_HOST_NOT_FOUND         1105	/* Target address not found */
-#define ISCSID_STATUS_HOST_TRY_AGAIN         1106	/* Target address retreival failed, try again later */
+#define ISCSID_STATUS_HOST_TRY_AGAIN         1106	/* Target address retrieval failed, try again later */
 #define ISCSID_STATUS_HOST_ERROR             1107	/* Target address invalid */
 #define ISCSID_STATUS_NO_TARGETS_FOUND	     1108	/* No targets found during refresh */
 #define ISCSID_STATUS_INVALID_ISNS_ID        1111	/* iSNS ID not found */
