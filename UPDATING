@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.392 2026/07/20 22:45:55 riastradh Exp $
+$NetBSD: UPDATING,v 1.393 2026/10/08 19:20:20 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,14 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20261008:
+	A series of changes to the way USE_SSP and USE_FORT work in
+	makefiles requires a clean build; otherwise the kernel may fail
+	to link and some object files and programs, in the kernel and
+	userland alike, may have mistakenly built without SSP.  For
+	details, see PR lib/60858: fortuitous embarrassment: fortify is
+	all kinds of busted <https://gnats.NetBSD.org/60858>.
 
 20260720:
 	The ld.elf_so change to enable DEBUG by default requires making
