@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19.2.1 2025/11/20 19:14:49 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.19.2.2 2026/10/08 18:56:26 martin Exp $
 #
 #	etc.evbppc/Makefile.inc -- evbppc-specific etc Makefile targets
 #
@@ -58,11 +58,13 @@ __mkimage: .USE
 	MACHINE=${MACHINE} \
 	MKDTB=${MKDTB} \
 	MKPOSTFIX=${MKPOSTFIX} \
-	CKSUM=${CKSUM} \
-	IMAGEDIR=${IMAGE.dir} \
 	${HOST_SH} -x ${MKIMAGE} -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
             -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
             ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
+	@echo "===> Making hash files: ${HASHES}"
+	for hash in ${HASHES}; do \
+		(cd ${IMAGE.dir} && ${TOOL_CKSUM} -a $${hash} ${.TARGET:S/smp_//}.img.gz > $${hash}); \
+	done
 
 .if ${MACHINE_ARCH} == "powerpc"
 smp_wii: __mkimage
