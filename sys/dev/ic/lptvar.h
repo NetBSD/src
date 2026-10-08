@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.56 2008/03/07 17:15:51 cube Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.57 2026/10/08 15:54:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -74,6 +74,7 @@ struct lpt_softc {
 #define	LPT_OPEN	0x01	/* device is open */
 #define	LPT_OBUSY	0x02	/* printer is busy doing output */
 #define	LPT_INIT	0x04	/* waiting to initialize for open */
+#define	LPT_WRITING	0x08	/* write in progress */
 	u_char sc_flags;
 #define	LPT_AUTOLF	0x20	/* automatic LF on CR */
 #define	LPT_NOPRIME	0x40	/* don't prime on open */

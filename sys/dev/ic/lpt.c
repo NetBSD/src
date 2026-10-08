@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.82 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: lpt.c,v 1.83 2026/10/08 15:54:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.82 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.83 2026/10/08 15:54:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,7 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	u_char control;
 	int error;
 	int spin;
+	int s;
 
 	sc = device_lookup_private(&lpt_cd, LPTUNIT(dev));
 	if (!sc || !sc->sc_dev_ok)
@@ -174,8 +175,12 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 		    sc->sc_state);
 #endif
 
-	if (sc->sc_state)
-		return EBUSY;
+	s = spltty();
+
+	if (sc->sc_state) {
+		error = EBUSY;
+		goto out;
+	}
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
@@ -197,14 +202,15 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	for (spin = 0; NOT_READY_ERR(); spin += STEP) {
 		if (spin >= TIMEOUT) {
 			sc->sc_state = 0;
-			return EBUSY;
+			error = EBUSY;
+			goto out;
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
 		error = tsleep((void *)sc, LPTPRI | PCATCH, "lptopen", STEP);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
-			return error;
+			goto out;
 		}
 	}
 
@@ -216,6 +222,7 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	bus_space_write_1(iot, ioh, lpt_control, control);
 
 	sc->sc_inbuf = malloc(LPT_BSIZE, M_DEVBUF, M_WAITOK);
+	sc->sc_cp = NULL;
 	sc->sc_count = 0;
 	sc->sc_state = LPT_OPEN;
 
@@ -223,7 +230,10 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 		lptwakeup(sc);
 
 	LPRINTF(("%s: opened\n", device_xname(sc->sc_dev)));
-	return 0;
+	error = 0;
+
+out:	splx(s);
+	return error;
 }
 
 int
@@ -274,9 +284,12 @@ lptclose(dev_t dev, int flag, int mode,
 	    device_lookup_private(&lpt_cd, LPTUNIT(dev));
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int s;
 
+	s = spltty();
 	if (sc->sc_count)
 		(void) lptpushbytes(sc);
+	sc->sc_count = 0;
 
 	if ((sc->sc_flags & LPT_NOINTR) == 0)
 		callout_stop(&sc->sc_wakeup_ch);
@@ -285,6 +298,8 @@ lptclose(dev_t dev, int flag, int mode,
 	sc->sc_state = 0;
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
 	free(sc->sc_inbuf, M_DEVBUF);
+	sc->sc_cp = sc->sc_inbuf = NULL;
+	splx(s);
 
 	LPRINTF(("%s: closed\n", device_xname(sc->sc_dev)));
 	return 0;
@@ -367,7 +382,18 @@ lptwrite(dev_t dev, struct uio *uio, int flags)
 	struct lpt_softc *sc =
 	    device_lookup_private(&lpt_cd, LPTUNIT(dev));
 	size_t n;
+	int s;
+	bool locked = false;
 	int error = 0;
+
+	s = spltty();
+	while (sc->sc_state & LPT_WRITING) {
+		error = tsleep(&sc->sc_state, LPTPRI | PCATCH, "lptwrite", 0);
+		if (error)
+			goto out;
+	}
+	sc->sc_state |= LPT_WRITING;
+	locked = true;
 
 	while ((n = uimin(LPT_BSIZE, uio->uio_resid)) != 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf, n, uio);
@@ -380,10 +406,17 @@ lptwrite(dev_t dev, struct uio *uio, int flags)
 			 */
 			uio->uio_resid += sc->sc_count;
 			sc->sc_count = 0;
-			return error;
+			goto out;
 		}
 	}
-	return 0;
+	error = 0;
+
+out:	if (locked) {
+		sc->sc_state &= ~LPT_WRITING;
+		wakeup(&sc->sc_state);
+	}
+	splx(s);
+	return error;
 }
 
 /*
