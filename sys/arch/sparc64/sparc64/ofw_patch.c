@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7.26.3 2026/09/19 15:52:21 martin Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.26.4 2026/10/08 19:12:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.26.3 2026/09/19 15:52:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.26.4 2026/10/08 19:12:35 martin Exp $");
 
 #include <sys/param.h>
 
@@ -145,7 +145,6 @@ add_gpio_props_v245(device_t dev, void *aux)
 
 	switch (ia->ia_addr) {
 		case 0x12:	/* V215 disk status / LED's */
-			break;
 			pins = prop_array_create();
 			add_gpio_pin(pins, "ALERT HDD 0 present",
 			    6, 1, -1, -1);
