@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.8 2026/10/08 19:17:11 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.9 2026/10/09 15:35:51 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -119,4 +119,33 @@ share/mk/bsd.x11.mk				(apply patch)
 
 	Import xorg-server 21.1.25
 	[mrg, ticket #1351]
+
+tests/lib/libc/sys/t_posix_fadvise.c		1.4
+
+	t_posix_fadvise: PR 53931: don't check whether errno is preserved.
+	[riastradh, ticket #1352]
+
+tests/lib/librumphijack/t_tcpip.sh		1.23,1.25,1.26
+
+	t_tcpip: PR 49674, PR 59278, PR 59354: fix test issues.
+	[riastradh, ticket #1353]
+
+libexec/ld.elf_so/headers.c			1.73
+sys/arch/mips/include/elf_machdep.h		1.21
+tests/libexec/ld.elf_so/t_dlinfo.c		1.7,1.8
+tests/libexec/ld.elf_so/t_rtld_r_debug.c	1.4,1.5,1.7-1.11
+
+	ld.elf_so(1): PR 55908 and 59296: fix PIE debug data on mips.
+	gdb(1): PR 55908: make 32bit gdb work on mips64.
+	t_rtld_r_debug: PR 59296: fix test.
+	[riastradh, ticket #1354]
+
+external/gpl3/gcc/dist/gcc/config/arm/arm.cc	1.2,1.3	(patch)
+	(applied to arm.c on the branch)
+external/gpl3/gcc/dist/gcc/config/arm/arm.h	1.27	(patch)
+external/gpl3/gcc/dist/gcc/config/arm/arm.md	1.24	(patch)
+
+	gcc/arm: PR 57638: for -mtp=soft, ensure stack alignment
+	even in leaves.
+	[riastradh, ticket #1356]
 
