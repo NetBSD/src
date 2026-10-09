@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.c,v 1.9 2024/09/22 20:34:26 christos Exp $	*/
+/*	$NetBSD: nbperf.c,v 1.10 2026/10/09 11:54:25 kre Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf.c,v 1.9 2024/09/22 20:34:26 christos Exp $");
+__RCSID("$NetBSD: nbperf.c,v 1.10 2026/10/09 11:54:25 kre Exp $");
 
 #include <sys/endian.h>
 #include <err.h>
@@ -121,6 +121,8 @@ main(int argc, char **argv)
 	    .allow_hash_fudging = 0,
 	};
 	FILE *input;
+	const char *outfile = NULL;
+	const char *mapfile = NULL;
 	size_t curlen = 0, curalloc = 0;
 	char *line, *eos;
 	ssize_t line_len;
@@ -170,21 +172,13 @@ main(int argc, char **argv)
 			max_iterations = (uint32_t)tmp;
 			break;
 		case 'm':
-			if (nbperf.map_output)
-				fclose(nbperf.map_output);
-			nbperf.map_output = fopen(optarg, "w");
-			if (nbperf.map_output == NULL)
-				err(2, "cannot open map file");
+			mapfile = optarg;
 			break;
 		case 'n':
 			nbperf.hash_name = optarg;
 			break;
 		case 'o':
-			if (nbperf.output)
-				fclose(nbperf.output);
-			nbperf.output = fopen(optarg, "w");
-			if (nbperf.output == NULL)
-				err(2, "cannot open output file");
+			outfile = optarg;
 			break;
 		case 'p':
 			predictable = 1;
@@ -203,15 +197,15 @@ main(int argc, char **argv)
 	if (argc > 1)
 		usage();
 
+	if (outfile != NULL && mapfile != NULL && strcmp(outfile, mapfile) == 0)
+		errx(2, "-m and -o must not name the same file");
+
 	if (argc == 1) {
 		input = fopen(argv[0], "r");
 		if (input == NULL)
 			err(1, "can't open input file");
 	} else
 		input = stdin;
-
-	if (nbperf.output == NULL)
-		nbperf.output = stdout;
 
 	line = NULL;
 	line_allocated = 0;
@@ -241,9 +235,25 @@ main(int argc, char **argv)
 	if (input != stdin)
 		fclose(input);
 
+	if (curlen == 0)
+		errx(1, "No keys!");
+
 	nbperf.n = curlen;
 	nbperf.keys = keys;
 	nbperf.keylens = keylens;
+
+	if (outfile == NULL)
+		nbperf.output = stdout;
+	else {
+		nbperf.output = fopen(outfile, "w");
+		if (nbperf.output == NULL)
+			err(2, "cannot open output file: '%s'", outfile);
+	}
+	if (mapfile != NULL) {
+		nbperf.map_output = fopen(mapfile, "w");
+		if (nbperf.map_output == NULL)
+			err(2, "cannot open map file: '%s'", mapfile);
+	}
 
 	looped = 0;
 	int rv;
