@@ -1624,6 +1624,8 @@ typedef struct GTY(()) machine_function
   /* The number of bytes used to store the static chain register on the
      stack, above the stack frame.  */
   int static_chain_stack_bytes;
+  /* Set to 1 if this function accesses thread-local storage */
+  int uses_tls;
 }
 machine_function;
 #endif

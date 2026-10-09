@@ -9404,6 +9404,8 @@ arm_legitimize_address (rtx x, rtx orig_x, machine_mode mode)
 
       x = legitimize_tls_address (x, NULL_RTX);
 
+      cfun->machine->uses_tls = true;
+
       if (addend)
 	{
 	  x = gen_rtx_PLUS (SImode, x, addend);
@@ -21756,6 +21758,9 @@ arm_output_function_prologue (FILE *f)
 	       frame_pointer_needed,
 	       cfun->machine->uses_anonymous_args);
 
+  asm_fprintf (f, "\t%@ uses_tls = %d, is_leaf = %d\n",
+	       cfun->machine->uses_tls, crtl->is_leaf);
+
   if (cfun->machine->lr_save_eliminated)
     asm_fprintf (f, "\t%@ link register save eliminated.\n");
 
@@ -22900,7 +22905,16 @@ arm_compute_frame_layout (void)
   if (crtl->is_leaf && frame_size == 0
       /* However if it calls alloca(), we have a dynamically allocated
 	 block of BIGGEST_ALIGNMENT on stack, so still do stack alignment.  */
-      && ! cfun->calls_alloca)
+      && ! cfun->calls_alloca
+      /* If queries to the thread pointer go through __aeabi_read_tp,
+	 we must ensure the stack has correct alignment even though we
+	 think of this as a leaf routine.  Even if __aeabi_read_tp
+	 itself doesn't use the stack, resolving the symbol may take a
+	 detour through a procedure call to the dynamic linker.  We
+	 enforce alignment only if the procedure actually uses
+	 __aeabi_read_tp (load_tp_soft*).  */
+      && ! TARGET_SOFT_TP
+      && ! cfun->machine->uses_tls)
     {
       offsets->outgoing_args = offsets->soft_frame;
       offsets->locals_base = offsets->soft_frame;
