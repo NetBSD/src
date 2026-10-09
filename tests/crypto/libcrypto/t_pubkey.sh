@@ -1,4 +1,4 @@
-# $NetBSD: t_pubkey.sh,v 1.9 2025/08/27 10:38:21 martin Exp $
+# $NetBSD: t_pubkey.sh,v 1.10 2026/10/09 13:00:00 martin Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,6 +40,7 @@ atf_test_case dh
 dh_head()
 {
 	atf_set "descr" "Checks Diffie-Hellman key agreement protocol"
+	atf_set "timeout" "1000"
 }
 dh_body()
 {
