@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.82 2026/10/07 09:19:02 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.83 2026/10/09 06:24:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -816,7 +816,7 @@ AARCH64REG_READWRITE_INLINE(hcr_el2)		// Hypervisor Configuration Register
 #define	HCR_EL2_TEA		__BIT(37)	// Route synchronous External abort exceptions to EL2 (FEAT_RAS)
 #define	HCR_EL2_TERR		__BIT(36)	// Trap accesses of Error Record registers (FEAT_RAS)
 #define	HCR_EL2_TLOR		__BIT(35)	// Trap LOR registers (FEAT_LOR)
-#define	HCR_EL2_VHE		__BIT(34)	// EL2 Host (FEAT_VHE)
+#define	HCR_EL2_E2H		__BIT(34)	// EL2 Host (FEAT_VHE)
 #define	HCR_EL2_ID		__BIT(33)	// stage2 IC disable
 #define	HCR_EL2_CD		__BIT(32)	// stage2 DC disable
 #define	HCR_EL2_RW		__BIT(31)	// register width
