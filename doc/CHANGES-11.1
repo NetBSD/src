@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.20 2026/10/08 19:13:53 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.21 2026/10/09 15:26:57 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -1248,4 +1248,22 @@ sys/arch/sparc64/sparc64/ofw_patch.c		1.19
 
 	sparc64: remove misplaced break in V215 HDD GPIO case.
 	[jdc, ticket #513]
+
+libexec/ld.elf_so/Makefile			1.152
+share/mk/bsd.kmodule.mk				1.87,1.88
+share/mk/bsd.lib.mk				1.424
+share/mk/bsd.prog.mk				1.360,1.361
+tests/lib/csu/Makefile				1.14
+tests/libexec/ld.elf_so/Makefile		1.33
+
+	bsd.*.mk: PR 57241: fix parallel builds of debug data.
+	[riastradh, ticket #514]
+
+external/gpl3/gcc/dist/gcc/config/arm/arm.cc	1.2,1.3
+external/gpl3/gcc/dist/gcc/config/arm/arm.h	1.27
+external/gpl3/gcc/dist/gcc/config/arm/arm.md	1.24
+
+	gcc/arm: PR 57638: for -mtp=soft, ensure stack alignment
+	even in leaves.
+	[riastradh, ticket #515]
 
