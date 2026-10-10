@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.389.2.2 2023/08/11 13:43:42 martin Exp $
+#	$NetBSD: bsd.lib.mk,v 1.389.2.3 2026/10/10 15:35:33 martin Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -646,10 +646,10 @@ ${_LIB.so.debug}: ${_LIB.so.link}
 	) || (rm -f ${.TARGET}; false)
 ${_LIB.so.full}: ${_LIB.so.link} ${_LIB.so.debug}
 	${_MKTARGET_CREATE}
-	(  ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
-		--add-gnu-debuglink=${_LIB.so.debug} \
-		${_LIB.so.link} ${_LIB.so.full}.tmp && \
-		${MV} ${_LIB.so.full}.tmp ${_LIB.so.full} \
+	(  ${OBJCOPY} --strip-debug -R .gnu_debuglink \
+	    --add-gnu-debuglink=${_LIB.so.debug} \
+	    ${_LIB.so.link} ${_LIB.so.full}.tmp && \
+	    ${MV} ${_LIB.so.full}.tmp ${_LIB.so.full} \
 	) || (rm -f ${.TARGET}; false)
 ${_LIB.so.link}: ${_MAINLIBDEPS}
 .else # aka no MKDEBUG

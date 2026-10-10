@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.341.2.3 2024/02/24 13:06:22 martin Exp $
+#	$NetBSD: bsd.prog.mk,v 1.341.2.4 2026/10/10 15:35:33 martin Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -547,9 +547,29 @@ CLEANFILES+=	${_P}.d
 
 ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 
-${_P}: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
-    ${LIBCRTEND} ${_DPADD.${_P}}
-.if !commands(${_P})
+_PROGDEPS.${_P}=.gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} \
+		${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
+
+.if commands(${_P}) || commands(${_P}.link)
+
+# Caller has defined their own recipe for the program.  It's up to the
+# caller to produce debug data; we'll just add the dependencies now
+# that OBJS and DPADD are resolved -- if the caller had written `foo:
+# ${OBJS} or `foo.link: ${OBJS}' before including bsd.prog.mk, it would
+# be too early to expand OBJS and would be missing dependencies
+
+${_P} ${_P}.link: ${_PROGDEPS.${_P}}
+
+.else	# !commands(${_P}) && !commands(${_P}.link)
+
+# Default recipe for the program.
+
+.if defined(_PROGDEBUG.${_P})
+CLEANFILES+=	${_P}.link
+${_P}.link: ${_PROGDEPS.${_P}}
+.else	# !defined(_PROGDEBUG.${_P})
+${_P}: ${_PROGDEPS.${_P}}
+.endif
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
 	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} \
@@ -563,6 +583,7 @@ ${_P}: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
+
 .endif	# !commands(${_P})
 .endif	# USE_COMBINE
 
@@ -571,12 +592,15 @@ ${_P}.ro: ${OBJS.${_P}} ${_DPADD.${_P}}
 	${CC} ${LDFLAGS:N-pie} -nostdlib -r -Wl,-dc -o ${.TARGET} ${OBJS.${_P}}
 
 .if defined(_PROGDEBUG.${_P})
-${_PROGDEBUG.${_P}}: ${_P}
+${_PROGDEBUG.${_P}}: ${_P}.link
 	${_MKTARGET_CREATE}
-	(  ${OBJCOPY} --only-keep-debug ${_P} ${_PROGDEBUG.${_P}} \
-	&& ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
-		--add-gnu-debuglink=${_PROGDEBUG.${_P}} ${_P} \
-	) || (rm -f ${_PROGDEBUG.${_P}}; false)
+	${OBJCOPY} --only-keep-debug \
+	    ${_P}.link ${.TARGET}
+${_P}: ${_P}.link ${_PROGDEBUG.${_P}}
+	${_MKTARGET_CREATE}
+	${OBJCOPY} --strip-debug -R .gnu_debuglink \
+	    --add-gnu-debuglink=${_PROGDEBUG.${_P}} \
+	    ${_P}.link ${.TARGET}
 .endif
 
 .endif	# defined(OBJS.${_P}) && !empty(OBJS.${_P})			# }
