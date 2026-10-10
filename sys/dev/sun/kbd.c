@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.73 2021/08/07 16:19:16 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.74 2026/10/10 08:56:12 macallan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.73 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.74 2026/10/10 08:56:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,6 +488,7 @@ kbd_input(struct kbd_softc *k, int code)
 		kbd_input_wskbd(k, code);
 		return;
 	}
+	k->k_wsleds = 0;
 #endif
 
 	/*
@@ -1002,14 +1003,15 @@ wssunkbd_set_leds(void *v, int leds)
 		l |= LED_COMPOSE;
 	if (k->k_ops != NULL && k->k_ops->setleds != NULL)
 		(*k->k_ops->setleds)(k, l, 0);
-	k->k_leds=l;
+	k->k_leds = l;
+	k->k_wsleds = leds;	/* keep the wskbd version for WSKBDIO_GETLEDS */
 }
 
 static int
 wssunkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct kbd_softc *k = v;
-	
+
 	switch (cmd) {
 		case WSKBDIO_GTYPE:
 			/* we can't tell  4 from  5 or 6 */
@@ -1020,7 +1022,7 @@ wssunkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 			wssunkbd_set_leds(v, *(int *)data);
 			return 0;
 		case WSKBDIO_GETLEDS:
-			*(int *)data = k->k_leds;
+			*(int *)data = k->k_wsleds;
 			return 0;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 		case WSKBDIO_SETMODE:
@@ -1088,7 +1090,7 @@ kbd_enable(device_t dev)
 	callout_init(&k->k_wsbell, 0);
 
 	wssunkbd_enable(k,1);
-	
+
 	wssunkbd_set_leds(k, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
 	delay(100000);
 	wssunkbd_set_leds(k, 0);

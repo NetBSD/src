@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.21 2012/04/26 00:50:10 macallan Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.22 2026/10/10 08:56:12 macallan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@ struct kbd_softc {
 #if NWSKBD > 0
 	device_t  k_wskbd;/* handle for wskbd, if it is attached */
 	int k_wsenabled;	/* set if we are using wskbd */
+	int k_wsleds;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int k_wsraw;		/* send raw events to wscons */
 #endif
