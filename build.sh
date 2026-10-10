@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.365.2.8 2025/07/08 15:25:03 martin Exp $
+#	$NetBSD: build.sh,v 1.365.2.9 2026/10/10 11:03:22 martin Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1973,6 +1973,69 @@ validatemakeparams()
 	    [ "${MKUNPRIVED}" = "no" ] ; then
 		bomb "-U must be specified on building release to create images later"
 	fi
+
+	# A mismatched Darwin SDK can cause mysterious failures
+	# in the tools build, which come and go as we update external
+	# code that may use different versions of autoconf.  Avoid them.
+	if [ "${uname_s}" = "Darwin" ] && [ -z "${SDKROOT}" ]; then
+	    _host_cc="${HOST_CC:-cc}"
+	    case "$("${_host_cc}" --version 2>/dev/null)" in
+	    *Apple*clang* | *Apple*LLVM*)
+		_host_ver=$(sw_vers -productVersion 2>/dev/null)
+		_host_major=${_host_ver%%.*}
+		_sdk_ver=$(xcrun --show-sdk-version 2>/dev/null)
+		_sdk_major=${_sdk_ver%%.*}
+
+		if [ -n "${_host_major}" ] && [ -n "${_sdk_major}" ] && \
+		   [ "${_sdk_major}" -gt "${_host_major}" ]; then
+		    statusmsg "Active Xcode SDK (${_sdk_ver}) is newer than" \
+		    	      "host MacOS (${_host_ver})"
+		    _compat_sdk=""
+		    _best_major=0
+		    _xcbase="$(xcode-select -p 2>/dev/null)"
+
+		    for _sdk_dir in \
+		        /Library/Developer/CommandLineTools/SDKs \
+		        "${_xcbase}"/Platforms/MacOSX.platform/Developer/SDKs;
+		    do
+			[ -d "${_sdk_dir}" ] || continue
+			for _s in "${_sdk_dir}"/MacOSX*.sdk; do
+			    [ -d "${_s}" ] || continue
+			    _base=$(basename "${_s}")
+			    _s_major=$(echo "${_base}" | sed -E -n \
+				       's/^MacOSX([0-9]+).*\.sdk$/\1/p')
+
+			    if [ -n "${_s_major}" ] && \
+			       [ "${_s_major}" -le "${_host_major}" ] && \
+			       [ "${_s_major}" -gt "${_best_major}" ]; then
+			        _best_major="${_s_major}"
+				_compat_sdk="${_s}"
+			    fi
+		    done
+		done
+
+		if [ -n "${_compat_sdk}" ]; then
+		    statusmsg "Redirecting host toolchain to compatible SDK: " \
+			      "${_compat_sdk}"
+		    setmakeenv SDKROOT "${_compat_sdk}"
+		    export SDKROOT="${_compat_sdk}"
+		else
+		    if ${do_expertmode}; then
+		    	warning "Default Xcode SDK (${_sdk_ver}) > host " \
+				"macOS (${_host_ver} and " \
+				"no older Xcode SDK found."
+		    else
+		    	bomb "${_host_cc} is from an Xcode SDK too new "
+			     "for this system and no alternative is installed."
+		    fi
+		fi
+	    fi
+	    ;;
+	*)
+	    # Compiler is not from Xcode.  Carry on, then.
+	    ;;
+	esac
+    fi
 }
 
 
@@ -2040,7 +2103,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.365.2.8 2025/07/08 15:25:03 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.365.2.9 2026/10/10 11:03:22 martin Exp $
 # with these arguments: ${_args}
 #
 
