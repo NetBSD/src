@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.10 2026/10/10 11:04:11 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.11 2026/10/10 15:36:22 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -154,4 +154,12 @@ tools/Makefile.gnuhost				1.58
 
 	build: protect against autoconf/Xcode mishegas on macOS.
 	[tls, ticket #1357]
+
+libexec/ld.elf_so/Makefile			1.152 (patch)
+share/mk/bsd.kmodule.mk				1.87,1.88 (patch)
+share/mk/bsd.lib.mk				1.424 (patch)
+share/mk/bsd.prog.mk				1.360,1.361 (patch)
+
+	build: PR 57241: fix parallel builds of debug data.
+	[riastradh, ticket #1355]
 
