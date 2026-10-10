@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.21 2026/10/09 15:26:57 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.22 2026/10/10 11:02:07 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -1266,4 +1266,10 @@ external/gpl3/gcc/dist/gcc/config/arm/arm.md	1.24
 	gcc/arm: PR 57638: for -mtp=soft, ensure stack alignment
 	even in leaves.
 	[riastradh, ticket #515]
+
+build.sh					1.406
+tools/Makefile.gnuhost				1.58
+
+	build: protect against autoconf/Xcode mishegas on macOS.
+	[tls, ticket #516]
 
