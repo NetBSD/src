@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-session.c,v 1.17 2026/10/07 17:32:09 christos Exp $	*/
+/*	$NetBSD: sshd-session.c,v 1.18 2026/10/10 10:49:57 rin Exp $	*/
 /* $OpenBSD: sshd-session.c,v 1.26 2026/09/16 00:13:58 djm Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.17 2026/10/07 17:32:09 christos Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.18 2026/10/10 10:49:57 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1173,11 +1173,10 @@ main(int ac, char **av)
 #ifdef LIBWRAP
 	/* Check whether logins are denied from this host. */
 	if (ssh_packet_connection_is_on_socket(ssh)) {
-		/* First, try with the value stored in __progname */
-		check_connection(__progname, sock_in);
 		/*
-		 * Test with "sshd" as well, since that is what most people
-		 * will have in their hosts.allow and hosts.deny files.
+		 * Test with "sshd", instead of "sshd-session";
+		 * the latter is an internal implementation detail.
+		 * See PR bin/60512.
 		 */
 		check_connection("sshd", sock_in);
 	}
