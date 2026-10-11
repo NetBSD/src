@@ -1,4 +1,4 @@
-#	$NetBSD: files.clockport,v 1.6 2021/04/28 00:35:47 rin Exp $
+#	$NetBSD: files.clockport,v 1.7 2026/10/11 17:23:13 rkujawa Exp $
 
 define	clockportbus {}
 
@@ -47,3 +47,6 @@ device	flipper
 attach	flipper at clockport
 file	arch/amiga/clockport/flipper.c		flipper
 
+# Individual Computers RapidRoad USB
+attach	isp1763hc at clockport with isp1763hc_rr
+file	arch/amiga/clockport/isp1763hc_rr.c	isp1763hc_rr

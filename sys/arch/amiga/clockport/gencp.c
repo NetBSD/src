@@ -1,4 +1,4 @@
-/*      $NetBSD: gencp.c,v 1.3 2021/08/07 16:18:41 thorpej Exp $ */
+/*      $NetBSD: gencp.c,v 1.4 2026/10/11 17:23:13 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -52,10 +52,11 @@ void
 gencp_attach(struct gencp_softc *gsc)
 {
 	aprint_normal(": generic clockport pa 0x%x\n",
-	    (bus_addr_t) kvtop((void*) gsc->cpb_aa->cp_iot->base));
+	    (bus_addr_t) kvtop((void*) gsc->cpb_aa.cp_iot->base));
 
-	gsc->cpb_aa->cp_intr_establish = clockport_generic_intr_establish;
+	gsc->cpb_aa.cp_intr_establish = clockport_generic_intr_establish;
+	gsc->cpb_aa.cp_intr_disestablish = clockport_generic_intr_disestablish;
 
-	config_found(gsc->sc_dev, gsc->cpb_aa, 0, CFARGS_NONE);
+	config_found(gsc->sc_dev, &gsc->cpb_aa, 0, CFARGS_NONE);
 }
 

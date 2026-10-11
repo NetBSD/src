@@ -1,4 +1,4 @@
-/*      $NetBSD: clockportvar.h,v 1.5 2012/10/30 01:17:24 rkujawa Exp $ */
+/*      $NetBSD: clockportvar.h,v 1.6 2026/10/11 17:23:13 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,18 +30,7 @@
  */
 
 #include <sys/types.h>
-
-struct gencp_softc {
-	device_t	sc_dev;
-
-	struct clockportbus_attach_args *cpb_aa;
-};
-
-struct clockportbus_softc {
-	device_t	sc_dev;
-
-	struct clockportbus_attach_args *cpb_aa;
-};
+#include <sys/bus.h>
 
 /* Struct passed down to clockportbus. */
 struct clockportbus_attach_args {
@@ -49,20 +38,43 @@ struct clockportbus_attach_args {
 	bus_space_tag_t cp_iot;
 
 	void *(*cp_intr_establish)(int (*)(void *), void *);
+
+	void (*cp_intr_disestablish)(void *);
 };
 
 /*
  * Struct passed down to devices attached to clockportbus, currently
  * has the same data as above. 
+ *
+ * Careful: traditionally Amiga clockport has interrupt at level 6,
+ * which is above IPL_VM! This means that the handler must NOT take 
+ * any locks below IPL_SCHED.
  */
 struct clockport_attach_args {
 
 	bus_space_tag_t cp_iot;
 
 	void *(*cp_intr_establish)(int (*)(void *), void *);
+
+	void (*cp_intr_disestablish)(void *);
+};
+
+struct gencp_softc {
+	device_t	sc_dev;
+
+	struct bus_space_tag cpb_bst;
+	struct clockportbus_attach_args cpb_aa;
+};
+
+struct clockportbus_softc {
+	device_t	sc_dev;
+	device_t	sc_child;
+
+	struct clockportbus_attach_args cpb_aa;
 };
 
 void *clockport_generic_intr_establish(int (*)(void *), void *);
+void clockport_generic_intr_disestablish(void *);
 
 void gencp_attach(struct gencp_softc *gsc);
 

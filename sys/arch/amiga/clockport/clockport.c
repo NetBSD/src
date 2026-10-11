@@ -1,4 +1,4 @@
-/*      $NetBSD: clockport.c,v 1.7 2021/08/07 16:18:41 thorpej Exp $ */
+/*      $NetBSD: clockport.c,v 1.8 2026/10/11 17:23:13 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -44,9 +44,12 @@ static int	clockport_match(device_t, cfdata_t , void *);
 static void	clockport_attach(device_t, device_t, void *);
 static int	clockport_print(void *, const char *);
 static int	clockport_search(device_t, cfdata_t, const int *, void *);
+static int	clockport_rescan(device_t, const char *, const int *);
+static void	clockport_childdetached(device_t, device_t);
 
-CFATTACH_DECL_NEW(clockport, sizeof(struct clockportbus_softc),
-    clockport_match, clockport_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(clockport, sizeof(struct clockportbus_softc),
+    clockport_match, clockport_attach, NULL, NULL, clockport_rescan,
+    clockport_childdetached, 0);
 
 static int
 clockport_match(device_t parent, cfdata_t cf, void *aux)
@@ -63,10 +66,30 @@ clockport_attach(device_t parent, device_t self, void *aux)
 
 	sc = device_private(self);
 	sc->sc_dev = self;
-	sc->cpb_aa = (struct clockportbus_attach_args *) aux;
+	sc->cpb_aa = *(struct clockportbus_attach_args *) aux;
+
+	clockport_rescan(self, NULL, NULL);
+}
+
+static int
+clockport_rescan(device_t self, const char *ifattr, const int *locs)
+{
 
 	config_search(self, NULL,
 	    CFARGS(.search = clockport_search));
+
+	return 0;
+}
+
+static void
+clockport_childdetached(device_t self, device_t child)
+{
+	struct clockportbus_softc *sc;
+
+	sc = device_private(self);
+
+	if (sc->sc_child == child)
+		sc->sc_child = NULL;
 }
 
 static int
@@ -77,12 +100,17 @@ clockport_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	sc = device_private(parent);
 
-	/* XXX: copy bus_space_tag and intr routine for now... */
-	a.cp_iot = sc->cpb_aa->cp_iot;
-	a.cp_intr_establish = sc->cpb_aa->cp_intr_establish;
+	/* A clockport holds a single device. */
+	if (sc->sc_child != NULL)
+		return 0;
+
+	a.cp_iot = sc->cpb_aa.cp_iot;
+	a.cp_intr_establish = sc->cpb_aa.cp_intr_establish;
+	a.cp_intr_disestablish = sc->cpb_aa.cp_intr_disestablish;
 
 	if (config_probe(parent, cf, &a)) {
-		config_attach(parent, cf, &a, clockport_print, CFARGS_NONE);
+		sc->sc_child = config_attach(parent, cf, &a, clockport_print,
+		    CFARGS_NONE);
 		return 1;
 	}
 

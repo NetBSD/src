@@ -1,4 +1,4 @@
-/*      $NetBSD: a1k2cp.c,v 1.5 2021/08/07 16:18:41 thorpej Exp $ */
+/*      $NetBSD: a1k2cp.c,v 1.6 2026/10/11 17:23:13 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -57,6 +57,9 @@ static void	a1k2cp_attach(device_t, device_t, void *);
 
 struct a1k2cp_softc {
 	device_t	sc_dev;
+
+	struct bus_space_tag sc_bst;
+	struct clockportbus_attach_args sc_cpb_aa;
 };
 
 CFATTACH_DECL_NEW(a1k2cp, sizeof(struct a1k2cp_softc),
@@ -85,24 +88,24 @@ static void
 a1k2cp_attach(device_t parent, device_t self, void *aux)
 {
 	struct a1k2cp_softc *sc;
-	struct clockportbus_attach_args a1k2cp_aa;
-	struct bus_space_tag a1k2cp_bst;
 
 	sc = device_private(self);
 	sc->sc_dev = self;
 
 	aprint_normal(": A1200 on-board clockport\n");
 
-	a1k2cp_bst.base = (bus_addr_t) __UNVOLATILE(ztwomap(A1K2CP_BASE));
-	a1k2cp_bst.absm = &amiga_bus_stride_4;
+	sc->sc_bst.base = (bus_addr_t) __UNVOLATILE(ztwomap(A1K2CP_BASE));
+	sc->sc_bst.absm = &amiga_bus_stride_4;
 
-	a1k2cp_aa.cp_iot = &a1k2cp_bst;
-	a1k2cp_aa.cp_intr_establish = clockport_generic_intr_establish;
+	sc->sc_cpb_aa.cp_iot = &sc->sc_bst;
+	sc->sc_cpb_aa.cp_intr_establish = clockport_generic_intr_establish;
+	sc->sc_cpb_aa.cp_intr_disestablish =
+	    clockport_generic_intr_disestablish;
 
 #ifdef A1K2CP_DEBUG
 	aprint_normal_dev(sc->sc_dev, "pa %x va %p\n", 
-	    A1K2CP_BASE, (void*) a1k2cp_bst.base);
+	    A1K2CP_BASE, (void*) sc->sc_bst.base);
 #endif /* A1K2CP_DEBUG */
 
-	config_found(sc->sc_dev, &a1k2cp_aa, 0, CFARGS_NONE);
+	config_found(sc->sc_dev, &sc->sc_cpb_aa, 0, CFARGS_NONE);
 }

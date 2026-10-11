@@ -1,4 +1,4 @@
-/*      $NetBSD: gencp_xsurf.c,v 1.2 2012/10/27 17:17:26 chs Exp $ */
+/*      $NetBSD: gencp_xsurf.c,v 1.3 2026/10/11 17:23:13 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -79,20 +79,17 @@ static void
 gencp_xsurf_attach(device_t parent, device_t self, void *aux)
 {
 	struct gencp_softc *sc;
-	struct bus_space_tag cpb_bst;
-	struct clockportbus_attach_args cpb_aa;
 	struct xsurfbus_attach_args *xsb_aa;
 
 	xsb_aa = aux;
 	sc = device_private(self);
 	sc->sc_dev = self;
-	sc->cpb_aa = &cpb_aa;
 
 	/* Set the address and bus access methods. */
-	cpb_bst.base = xsb_aa->xaa_base;
-	cpb_bst.absm = &amiga_bus_stride_4;
+	sc->cpb_bst.base = xsb_aa->xaa_base;
+	sc->cpb_bst.absm = &amiga_bus_stride_4;
 
-	sc->cpb_aa->cp_iot = &cpb_bst;
+	sc->cpb_aa.cp_iot = &sc->cpb_bst;
 
 	gencp_attach(sc);
 }

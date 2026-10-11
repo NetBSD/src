@@ -1,4 +1,4 @@
-/*      $NetBSD: clockport_common.c,v 1.1 2012/04/17 09:59:03 rkujawa Exp $ */
+/*      $NetBSD: clockport_common.c,v 1.2 2026/10/11 17:23:13 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,6 @@
 
 /*
  * Routines for generic clockports, shared among all backend drivers. 
- * TODO: implement clockport_intr_disestablish.
  */
 
 #include <sys/cdefs.h>
@@ -39,6 +38,7 @@
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/bus.h>
+#include <sys/intr.h>
 #include <sys/kmem.h>
 
 #include <machine/cpu.h>
@@ -63,3 +63,17 @@ clockport_generic_intr_establish(int (*isr)(void *), void *arg)
 	return sc_isr;
 }
 
+void
+clockport_generic_intr_disestablish(void *cookie)
+{
+	struct isr *sc_isr;
+	int s;
+
+	sc_isr = cookie;
+
+	s = splhigh();
+	remove_isr(sc_isr);
+	splx(s);
+
+	kmem_free(sc_isr, sizeof(struct isr));
+}
