@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.15 2022/09/29 07:00:47 skrll Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.16 2026/10/11 21:02:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.15 2022/09/29 07:00:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.16 2026/10/11 21:02:44 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -856,7 +856,7 @@ rmixl_intr_disestablish(void *cookie)
 		rmixl_irt_disestablish(vec);
 
 	/*
-	 * disasociate from vector and free the handle
+	 * disassociate from vector and free the handle
 	 */
 	rmixl_vec_disestablish(cookie);
 
