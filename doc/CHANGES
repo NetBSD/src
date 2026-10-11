@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3303 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3304 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -432,7 +432,7 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		[tsutsui 20260920]
 	ssh(1), sshd(8): Import OpenSSH 10.5. [christos 20260921]
 	make(1): Allow many more temporary scripts to concurrently
-		eixst with unique file names. [sjg 20260921]
+		exist with unique file names. [sjg 20260921]
 	sparc: In the cgtwelve framebuffer driver, allow setting color
 		depth from userspace, allow retrieving color map via
 		ioctl(2), and add screen blanking support.
