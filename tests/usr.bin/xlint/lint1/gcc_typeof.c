@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_typeof.c,v 1.7 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: gcc_typeof.c,v 1.8 2026/10/11 07:39:24 rillig Exp $	*/
 # 3 "gcc_typeof.c"
 
 /*
@@ -56,3 +56,9 @@ void _fc_atomic_ptr_cmpexch(void)
 	/* expect+1: error: 'expr' undefined [99] */
 	__typeof__ (expr) var = 0;
 }
+
+
+// Taken from lib/libc/ssp/ssp_redirect.c, function getcwd.
+char *existing_function(char *, unsigned long);
+__typeof(existing_function) type_assertion;
+char *type_assertion(char *, unsigned long);

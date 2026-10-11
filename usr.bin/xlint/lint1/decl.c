@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.429 2026/06/16 05:27:57 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.430 2026/10/11 07:39:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.429 2026/06/16 05:27:57 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.430 2026/10/11 07:39:24 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -392,7 +392,7 @@ dcs_add_type(type_t *tp)
 				dcs->d_invalid_type_combination = true;
 			dcs->d_abstract_type = t;
 		}
-	} else if (t == PTR)
+	} else if (t == PTR || t == FUNC)
 		dcs->d_type = tp;
 	else if (t == COMPLEX && dcs->d_abstract_type == NO_TSPEC)
 		dcs->d_abstract_type = t;
