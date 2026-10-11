@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.29 2023/10/17 10:24:11 riastradh Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.30 2026/10/11 10:53:06 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.29 2023/10/17 10:24:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.30 2026/10/11 10:53:06 mlelstv Exp $");
 
 #include "opt_xen.h"
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.29 2023/10/17 10:24:11 riastradh E
 #include <sys/boot_flag.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
+#include <sys/disklabel.h>
 #include <sys/device.h>
 #include <sys/mount.h>
 #include <sys/reboot.h>
@@ -546,14 +547,28 @@ xen_bootconf(void)
 			break;
 		}
 
-		if (strncmp(xcp.xcp_bootdev, devname, strlen(devname)))
-			continue;
+		if (is_disk) {
+			size_t len;
+			int part;
 
-		if (is_disk && strlen(xcp.xcp_bootdev) > strlen(devname)) {
-			/* XXX check device_cfdata as in x86_autoconf.c? */
-			booted_partition = toupper(
-				xcp.xcp_bootdev[strlen(devname)]) - 'A';
-			DPRINTF(("%s: booted_partition: %d\n", __func__, booted_partition));
+			len = strlen(devname);
+			if  (strncmp(xcp.xcp_bootdev, devname, len) != 0)
+				continue;
+
+			if (xcp.xcp_bootdev[len] != '\0') {
+				part = xcp.xcp_bootdev[len] - 'a';
+				if (part < 0 || part >= MAXPARTITIONS)
+					continue;
+
+				if (xcp.xcp_bootdev[len+1] != '\0')
+					continue;
+
+				booted_partition = part;
+				DPRINTF(("%s: booted_partition: %d\n", __func__, booted_partition));
+			}
+		} else {
+			if  (strcmp(xcp.xcp_bootdev, devname) != 0)
+				continue;
 		}
 
 		booted_device = dv;
