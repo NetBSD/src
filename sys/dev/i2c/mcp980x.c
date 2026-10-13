@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp980x.c,v 1.8 2024/01/16 21:08:52 andvar Exp $ */
+/*	$NetBSD: mcp980x.c,v 1.9 2026/10/13 08:16:44 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.8 2024/01/16 21:08:52 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.9 2026/10/13 08:16:44 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ CFATTACH_DECL_NEW(mcp980x, sizeof (struct mcp980x_softc),
 static int
 mcp980x_match(device_t parent, cfdata_t cf, void *aux)
 {
+	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_addr >= MCP980X_ADDR_CONST &&
 	    ia->ia_addr <= (MCP980X_ADDR_CONST + MCP980X_ADDR_VAR))
