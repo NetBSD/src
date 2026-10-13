@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.101 2026/10/04 16:11:36 andvar Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.102 2026/10/13 08:19:48 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -167,6 +167,7 @@ static void cg14_copycols(void *, int, int, int, int);
 static void cg14_erasecols(void *, int, int, int, long);
 static void cg14_copyrows(void *, int, int, int);
 static void cg14_eraserows(void *, int, int, long);
+static int  cg14_allocattr(void *, int, int, int, long *);
 
 /* 
  * issue ALU instruction:
@@ -1161,6 +1162,7 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_ops.eraserows = cg14_eraserows;
 		ri->ri_ops.erasecols = cg14_erasecols;
 		ri->ri_ops.cursor = cg14_cursor;
+		ri->ri_ops.allocattr = cg14_allocattr;
 		if (FONT_IS_ALPHA(ri->ri_font)) {
 			ri->ri_ops.putchar = cg14_putchar_aa;
 		} else
@@ -1625,7 +1627,7 @@ cg14_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	if (c == 0x20) {
 		cg14_rectfill(sc, x, y, wi, he, bg);
-		if (attr & 1)
+		if (attr & WSATTR_UNDERLINE)
 			cg14_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
@@ -1636,33 +1638,64 @@ cg14_putchar(void *cookie, int row, int col, u_int c, long attr)
 	data = WSFONT_GLYPH(c, font);
 	addr = sc->sc_fb_paddr + x + stride * y;
 
-	switch (font->stride) {
-		case 1: {
-			uint8_t *data8 = data;
-			uint32_t reg;
-			for (i = 0; i < he; i++) {
-				reg = *data8;
-				cg14_set_mask(sc, reg << 24);
-				sxm(SX_STBS, addr, 8, wi - 1);
-				data8++;
-				addr += stride;
+	if (attr & WSATTR_HILIT) {
+		switch (font->stride) {
+			case 1: {
+				uint8_t *data8 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data8;
+					reg |= reg >> 1;
+					cg14_set_mask(sc, reg << 24);
+					sxm(SX_STBS, addr, 8, wi - 1);
+					data8++;
+					addr += stride;
+				}
+				break;
 			}
-			break;
+			case 2: {
+				uint16_t *data16 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data16;
+					reg |= reg >> 1;
+					cg14_set_mask(sc, reg << 16);
+					sxm(SX_STBS, addr, 8, wi - 1);
+					data16++;
+					addr += stride;
+				}
+				break;
+			}
 		}
-		case 2: {
-			uint16_t *data16 = data;
-			uint32_t reg;
-			for (i = 0; i < he; i++) {
-				reg = *data16;
-				cg14_set_mask(sc, reg << 16);
-				sxm(SX_STBS, addr, 8, wi - 1);
-				data16++;
-				addr += stride;
+	} else {
+		switch (font->stride) {
+			case 1: {
+				uint8_t *data8 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data8;
+					cg14_set_mask(sc, reg << 24);
+					sxm(SX_STBS, addr, 8, wi - 1);
+					data8++;
+					addr += stride;
+				}
+				break;
 			}
-			break;
+			case 2: {
+				uint16_t *data16 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data16;
+					cg14_set_mask(sc, reg << 16);
+					sxm(SX_STBS, addr, 8, wi - 1);
+					data16++;
+					addr += stride;
+				}
+				break;
+			}
 		}
 	}
-	if (attr & 1)
+	if (attr & WSATTR_UNDERLINE)
 		cg14_rectfill(sc, x, y + he - 2, wi, 1, fg);
 }
 
@@ -1714,6 +1747,28 @@ cg14_cursor(void *cookie, int on, int row, int col)
 
 }
 
+static int
+cg14_allocattr(void *cookie, int fg0, int bg0, int flg, long *attr)
+{
+	struct rasops_info *ri = cookie;
+	int fg = fg0, bg = bg0;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return EINVAL;
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = bg0;
+		bg = fg0;
+	}
+
+	if (FONT_IS_ALPHA(ri->ri_font) && ((flg & WSATTR_HILIT) != 0)) {
+		fg = fg0 < 8 ? fg0 + 8 : fg0;
+	}
+
+	*attr = (bg << 16) | (fg << 24) | flg;
+	return 0;
+}
+
 static void
 cg14_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 {
@@ -1746,7 +1801,7 @@ cg14_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	y = ri->ri_yorigin + row * he;
 	if (c == 0x20) {
 		cg14_rectfill(sc, x, y, wi, he, bg);
-		if (attr & 1)
+		if (attr & WSATTR_UNDERLINE)
 			cg14_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
@@ -1819,15 +1874,13 @@ cg14_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		if (cnt > 0) {
 			sxm(SX_STB, next, reg, cnt - 1);
 		}
-			
 		addr += stride;
 	}
 
 	if (rv == GC_ADD) {
 		glyphcache_add(&sc->sc_gc, c, x, y);
-	} else if (attr & 1)
+	} else if (attr & WSATTR_UNDERLINE)
 		cg14_rectfill(sc, x, y + he - 2, wi, 1, fg);
-
 }
 
 static void
@@ -1837,7 +1890,7 @@ cg14_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct cgfourteen_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		if (ri->ri_crow == row && 
 		   (ri->ri_ccol >= srccol && ri->ri_ccol < (srccol + ncols)) &&
@@ -1863,7 +1916,7 @@ cg14_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct cgfourteen_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1909,7 +1962,7 @@ cg14_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct cgfourteen_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_xorigin;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
