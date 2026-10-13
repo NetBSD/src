@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.31 2022/03/20 19:26:27 andvar Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.32 2026/10/13 20:47:39 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.31 2022/03/20 19:26:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.32 2026/10/13 20:47:39 andvar Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -81,7 +81,7 @@ InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr, RF_RaidAccessDesc_t *desc)
  * as a linked list (dagList) which is executed sequentially (to preserve
  * atomic parity updates in the stripe).
  *
- * dags which operate on independent parity goups (stripes) are returned in
+ * dags which operate on independent parity groups (stripes) are returned in
  * independent dagLists (distinct elements in desc->dagArray) and may be
  * executed concurrently.
  *
