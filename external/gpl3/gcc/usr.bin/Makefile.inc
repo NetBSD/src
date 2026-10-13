@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.43 2026/01/18 08:51:07 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.44 2026/10/13 23:47:20 rin Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -98,10 +98,14 @@ COPTS.generic-match.cc+=-fno-jump-tables
 COPTS.gimple-match.cc+=-fno-jump-tables
 .if ${HAVE_GCC:U0} >= 14
 COPTS.generic-match-1.cc+=-fno-jump-tables
+COPTS.generic-match-4.cc+=-fno-jump-tables
 COPTS.generic-match-5.cc+=-fno-jump-tables
 COPTS.generic-match-6.cc+=-fno-jump-tables
+COPTS.generic-match-10.cc+=-fno-jump-tables
+COPTS.gimple-match-1.cc+=-fno-jump-tables
 COPTS.gimple-match-2.cc+=-fno-jump-tables
 COPTS.gimple-match-4.cc+=-fno-jump-tables
+COPTS.gimple-match-7.cc+=-fno-jump-tables
 COPTS.gimple-match-9.cc+=-fno-jump-tables
 .endif
 .endif
