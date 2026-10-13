@@ -56,7 +56,7 @@ make_desktop(hfsvol *vol, int end)
 	ent.rsize = 0;				/* resource size == 0 */
 	strcpy(ent.creator, DBFC);		/* creator */
 	strcpy(ent.type, DBT);			/* type */
-	ent.crdate = ent.mddate = time(0);	/* date is now */
+	ent.crdate = ent.mddate = time_now();	/* date is now */
 	ent.fdflags = HFS_FNDR_ISINVISIBLE;	/* invisible files */
 
 	/* clear the DB file */

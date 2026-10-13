@@ -560,7 +560,7 @@ int hfs_format(char *path, int pnum, char *vname)
   vbmsz = (vol.vlen / vol.lpa + 4095) / 4096;
 
   vol.mdb.drSigWord  = 0x4244;
-  vol.mdb.drCrDate   = d_tomtime(time(0));
+  vol.mdb.drCrDate   = d_tomtime(d_getnow());
   vol.mdb.drLsMod    = vol.mdb.drCrDate;
   vol.mdb.drAtrb     = 0;
   vol.mdb.drNmFls    = 0;
@@ -1318,7 +1318,7 @@ long hfs_write(hfsfile *file, void *buf, unsigned long len)
 
   if (count)
     {
-      file->cat.u.fil.filMdDat = d_tomtime(time(0));
+      file->cat.u.fil.filMdDat = d_tomtime(d_getnow());
       file->flags |= HFS_UPDATE_CATREC;
     }
 
@@ -1386,7 +1386,7 @@ int hfs_truncate(hfsfile *file, unsigned long len)
 
       *lglen = len;
 
-      file->cat.u.fil.filMdDat = d_tomtime(time(0));
+      file->cat.u.fil.filMdDat = d_tomtime(d_getnow());
       file->flags |= HFS_UPDATE_CATREC;
 
       if (file->pos > len)
@@ -1729,7 +1729,7 @@ int hfs_create(hfsvol *vol, char *path, char *type, char *creator)
   data.u.fil.filRStBlk = 0;
   data.u.fil.filRLgLen = 0;
   data.u.fil.filRPyLen = 0;
-  data.u.fil.filCrDat  = d_tomtime(time(0));
+  data.u.fil.filCrDat  = d_tomtime(d_getnow());
   data.u.fil.filMdDat  = data.u.fil.filCrDat;
   data.u.fil.filBkDat  = 0;
 
