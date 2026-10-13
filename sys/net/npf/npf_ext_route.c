@@ -31,9 +31,9 @@
  * NPF route extension.
  */
 
- #ifdef _KERNEL
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.16 2026/10/08 15:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.17 2026/10/13 20:20:46 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -92,7 +92,7 @@ npf_route_ctor(npf_rproc_t *rp, const nvlist_t* params)
 	const void *v4_gw, *v6_gw;
 	size_t alen;
 
-	ifname = nvlist_get_string(params, "route-interface");
+	ifname = dnvlist_get_string(params, "route-interface", NULL);
 	if (!ifname)
 		return EINVAL;
 
@@ -369,11 +369,11 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi,
 	if (npf_iscached(npc, NPC_IP6)) {
 #if defined(INET6)
 		struct ip6_hdr *ip6 = npc->npc_ip.v6;
+		dst.v6 = route->v6_gateway;
 
-		if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
+		/* if no gateway is specified or this is mutlicast, use dst addr */
+		if (IN6_IS_ADDR_UNSPECIFIED(&dst.v6.sin6_addr) || IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
 			sockaddr_in6_init(&dst.v6, &ip6->ip6_dst, 0, 0, 0);
-		else
-			dst.v6 = route->v6_gateway;
 
 		if (IN6_IS_SCOPE_EMBEDDABLE(&dst.v6.sin6_addr)) {
 			error = in6_setscope(&dst.v6.sin6_addr, ifp, NULL);
@@ -407,12 +407,12 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi,
 		struct ip *ip = npc->npc_ip.v4;
 		sockaddr_in_init(&dst.v4, &ip->ip_dst, 0);
 
-		/* multicast needs no route */
-		if (m0->m_flags & M_MCAST) {
+		edst = sintocsa(&route->v4_gateway);
+
+		/* if no gateway is specified or if this is multicast, use dst address */
+		if (edst == NULL || m0->m_flags & M_MCAST)
 			edst = sintocsa(&dst.v4);
-		} else {
-			edst = sintocsa(&route->v4_gateway);
-		}
+
 		/*
 		 * NB: This code is copied from ip_output and re-arranged
 		 * checks fragmentation, checksum and source address validity
