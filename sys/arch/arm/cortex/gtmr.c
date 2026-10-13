@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.52 2026/10/04 11:00:06 skrll Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.53 2026/10/13 14:20:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.52 2026/10/04 11:00:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.53 2026/10/13 14:20:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -355,7 +355,7 @@ gtmr_intr(void *arg)
 	struct gtmr_softc * const sc = &gtmr_sc;
 
 	const uint32_t ctl = gtmr_read_ctl(sc);
-	if ((ctl & (CNTCTL_ENABLE|CNTCTL_ISTATUS)) != (CNTCTL_ENABLE|CNTCTL_ISTATUS)) {
+	if ((ctl & (CNTCTL_ENABLE | CNTCTL_ISTATUS)) != (CNTCTL_ENABLE | CNTCTL_ISTATUS)) {
 		aprint_debug_dev(ci->ci_dev, "spurious timer interrupt (ctl=%#x)\n", ctl);
 		return 0;
 	}
