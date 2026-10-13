@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.140 2026/10/13 08:16:44 rkujawa Exp $
+#	$NetBSD: files.i2c,v 1.141 2026/10/13 08:20:08 rkujawa Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -204,11 +204,11 @@ attach	tps65217reg at tps65217pmic
 file	dev/i2c/tps65217pmic.c 		tps65217pmic	needs-flag
 
 # Linear Technology LTC3589
-device	ltc3589pmic { }: fdt_regulator, sysmon_envsys
-device	ltc3589reg: ltc3589pmic
-attach	ltc3589pmic at iic
-attach	ltc3589reg at ltc3589pmic
-file	dev/i2c/ltc3589pmic.c		ltc3589pmic
+#device	ltc3589pmic { }: fdt_regulator, sysmon_envsys
+#device	ltc3589reg: ltc3589pmic
+#attach	ltc3589pmic at iic
+#attach	ltc3589reg at ltc3589pmic
+#file	dev/i2c/ltc3589pmic.c		ltc3589pmic
 
 # Microchip MCP23008 / MCP23017 I/O Expander
 attach	mcpgpio at iic with mcpgpio_i2c
