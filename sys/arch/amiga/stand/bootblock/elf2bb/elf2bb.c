@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.30 2022/04/29 07:12:42 rin Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.31 2026/10/13 23:45:19 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ main(int argc, char *argv[])
 		 * But if it is not the case in the future, format for
 		 * relocation table should be modified.
 		 */
-		bbsize = roundup(tsz + dsz, 512);
+		bbsize = roundup(tsz + dsz + bsz, 512);
 		sumsize = bbsize / 512;
 	} else {
 		/*
