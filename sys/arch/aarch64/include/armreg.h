@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.84 2026/10/10 06:45:49 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.85 2026/10/13 17:58:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -651,8 +651,10 @@ AARCH64REG_WRITEIMM_INLINE(daifset)
 #define	DAIF_MASK		(DAIF_D | DAIF_A | DAIF_I | DAIF_F)
 
 AARCH64REG_READWRITE_INLINE(elr_el1)		// Exception Link Register
+AARCH64REG_READWRITE_INLINE(elr_el2)
 
 AARCH64REG_READWRITE_INLINE(esr_el1)		// Exception Symdrone Register
+AARCH64REG_READWRITE_INLINE(esr_el2)
 
 #define	ESR_EC			__BITS(31,26) // Exception Cause
 #define	 ESR_EC_UNKNOWN		 0x00	// AXX: Unknown Reason
@@ -1464,7 +1466,10 @@ AARCH64REG_READWRITE_INLINE(pmxevtyper_el0)
 AARCH64REG_READ_INLINE(cntfrq_el0)
 
 AARCH64REG_READWRITE_INLINE(cnthctl_el2)
+AARCH64REG_READWRITE_INLINE(cnthv_ctl_el2)
+AARCH64REG_READWRITE_INLINE(cnthp_ctl_el2)
 AARCH64REG_READWRITE_INLINE(cntvoff_el2)
+
 /*
  * Common fields independent of FEAT_VHE configuration
  */
