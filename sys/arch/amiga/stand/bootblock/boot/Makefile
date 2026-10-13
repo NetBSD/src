@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2026/05/05 08:37:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.65 2026/10/13 23:44:11 rin Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -114,7 +114,8 @@ boot.amiga: x.out
 
 x.out: xxstart.o moddi3.o libboot.a ${LIBZ}
 	${_MKTARGET_LINK}
-	${LD} ${LDFLAGS} -r -dc -e start -o $@ $>
+	${LD} ${LDFLAGS} -r -dc -e start -T ${.CURDIR}/../ldscript.booters \
+		-o $@ $>
 	${SIZE} $@
 	${NM} -u $@
 

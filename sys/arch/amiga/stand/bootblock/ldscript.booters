@@ -1,0 +1,15 @@
+/*	$NetBSD: ldscript.booters,v 1.1 2026/10/13 23:44:11 rin Exp $	*/
+
+/*
+ * elf2bb(1) and booters assume that .rodata.str1.1 section precedes .bss,
+ * which is not guaranteed by recent binutils. We put the section just
+ * behind .rodata as done by older binutils.
+ */
+SECTIONS
+{
+  .rodata.str1.1 :
+  {
+    *(.rodata.str1.1)
+  }
+}
+INSERT AFTER .rodata;
