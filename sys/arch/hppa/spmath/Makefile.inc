@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2018/06/13 16:05:14 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.12.40.1 2026/10/14 17:43:17 martin Exp $
 
 #	$OpenBSD: Makefile.inc,v 1.4 2001/03/29 03:58:17 mickey Exp $
 #
@@ -20,7 +20,7 @@ SPMATHMAKE= \
 	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
 	    LD=${LD:q} STRIP=${STRIP:q} \
 	    CPP=${CPP:q} STRIP=${STRIP:q} AR=${AR:q} \
-	    NM=${NM:q} LORDER=${LORDER:q} \
+	    NM=${NM:q} LORDER=${LORDER:q} TSORT=${TSORT:q} \
 	    XMACHINE=${MACHINE:q} XMACHINE_ARCH=${MACHINE_ARCH:q}
 
 ${SPMATH}:	.NOTMAIN .MAKE __always_make_spmath
