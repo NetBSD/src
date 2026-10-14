@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.59 2021/11/27 22:30:26 rillig Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.59.2.1 2026/10/14 17:24:58 martin Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.59 2021/11/27 22:30:26 rillig Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.59.2.1 2026/10/14 17:24:58 martin Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -213,8 +213,9 @@ opendb(struct pwddb *db, const char *dbname, const char *username,
 	(void)snprintf(db->dbname, sizeof(db->dbname), "%s%s.tmp", prefix,
 	    dbname);
 
+	(void)snprintf(buf, sizeof(buf), "%s%s", prefix, dbname);
+
 	if (username != NULL) {
-		(void)snprintf(buf, sizeof(buf), "%s%s", prefix, dbname);
 		cp(buf, db->dbname, perm);
 	}
 
@@ -223,7 +224,7 @@ opendb(struct pwddb *db, const char *dbname, const char *username,
 		mkpw_error("Cannot open `%s'", db->dbname);
 
 	db->fname = dbname;
-	db->rversion = getversion(dbname);
+	db->rversion = getversion(buf);
 	if (req_version == ~0U)
 		db->wversion = db->rversion;
 	else
