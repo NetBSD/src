@@ -287,6 +287,9 @@ extern int use_eltorito;
 extern int use_RockRidge;
 extern int use_Joliet;
 extern int rationalize;
+extern time_t force_time;
+extern int force_time_set;
+extern time_t time_now __PR((void));
 extern int follow_links;
 extern int verbose;
 extern int all_files;
@@ -324,6 +327,7 @@ extern char *hfs_volume_id;	/* HFS volume ID */
 #define MAP_LAST	1	/* process magic then map file */
 #define MAG_LAST	2	/* process map then magic file */
 extern char *hfs_bless;		/* name of folder to 'bless' (System Folder) */
+extern void d_setnow __PR((time_t));
 #endif /* APPLE_HYB */
 
 /* tree.c */

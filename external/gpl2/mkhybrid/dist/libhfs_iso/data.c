@@ -29,6 +29,12 @@
 static
 unsigned long tzdiff = -1;
 
+static
+int forcetime_set;
+
+static
+time_t forcetime;
+
 unsigned char hfs_charorder[256] = {
   0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
   0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
@@ -316,4 +322,27 @@ int d_relstring(char *str1, char *str2)
     return 1;
 
   return 0;
+}
+
+/*
+ * NAME: 	data->setnow()
+ * DESCRIPTION:	force use of a specific time for "now", with UTC TZ.
+ */
+void d_setnow(time_t t)
+{
+  tzdiff = 0;
+  forcetime = t;
+  forcetime_set = 1;
+}
+
+/*
+ * NAME:	data->getnow();
+ * DESCRIPTION: get the current time, or the timestamp we are forcing.
+ */
+time_t d_getnow(void)
+{
+  if (forcetime_set) {
+	return forcetime;
+  }
+  return time(0);
 }
