@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.18.2.4 2026/10/14 18:09:51 martin Exp $ */
+/* $NetBSD: ascaudio.c,v 1.18.2.5 2026/10/14 18:13:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.18.2.4 2026/10/14 18:09:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.18.2.5 2026/10/14 18:13:08 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -968,6 +968,9 @@ static void
 ascaudio_intr_enable(void)
 {
 	int s;
+
+	if (mac68k_machine.aux_interrupts)
+		return;
 
 	s = splhigh();
 	if (VIA2 == VIA2OFF)
