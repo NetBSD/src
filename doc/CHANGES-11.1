@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.22 2026/10/10 11:02:07 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.23 2026/10/14 18:14:22 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -1272,4 +1272,98 @@ tools/Makefile.gnuhost				1.58
 
 	build: protect against autoconf/Xcode mishegas on macOS.
 	[tls, ticket #516]
+
+distrib/sets/lists/comp/ad.riscv		1.30 (patch)
+
+	build: all the riscv ldscripts were marked with compat,
+	breaking MKCOMPAT=no builds.
+	[tls, ticket #426]
+
+libexec/httpd/bozohttpd.8			1.103
+
+	bozohttpd(8): clarify how the CGI options work.
+	[nia, ticket #517]
+
+usr.sbin/pwd_mkdb/pwd_mkdb.c			1.63
+
+	pwd_mkdb(8): don't try to get the database version from the host's
+	database when running cross.
+	[tls, ticket #518]
+
+common/lib/libc/stdlib/random.c			1.9
+tools/compat/Makefile				1.98
+tools/compat/compat_defs.h			1.134
+
+	build: make builds reproducible across hosts with different
+	libc random(3) implementations.
+	[tls, ticket #519]
+
+sys/dev/pci/if_vr.c				1.139
+
+	vr(4): PR 60848: reinitialize device when rx engine fails to go to
+	the idle state.
+	[andvar, ticket #520]
+
+sys/arch/hppa/spmath/Makefile			1.7
+sys/arch/hppa/spmath/Makefile.inc		1.13
+
+	build: use tool tsort, not host tsort, for hppa spmath build.
+	[tls, ticket #521]
+
+etc/Makefile					1.479
+external/gpl2/mkhybrid/dist/desktop.c		1.3
+external/gpl2/mkhybrid/dist/libhfs_iso/block.c	1.2
+external/gpl2/mkhybrid/dist/libhfs_iso/data.c	1.2
+external/gpl2/mkhybrid/dist/libhfs_iso/data.h	1.2
+external/gpl2/mkhybrid/dist/libhfs_iso/hfs.c	1.2
+external/gpl2/mkhybrid/dist/libhfs_iso/lvolume.c 1.2
+external/gpl2/mkhybrid/dist/mkhybrid.8		1.3
+external/gpl2/mkhybrid/dist/mkisofs.c		1.8
+external/gpl2/mkhybrid/dist/mkisofs.h		1.7
+external/gpl2/mkhybrid/dist/tree.c		1.4
+external/gpl2/mkhybrid/dist/write.c		1.3
+
+	macppc: add MKREPRO support to mkhybrid and fix bugs.
+	[tls, ticket #522]
+
+common/lib/libc/string/memset2.c		1.12
+
+	mips: PR 60780: fix undefined behaviour.
+	[kre, ticket #523]
+
+sys/net/bsd-comp.c				1.24
+
+	ppp(4): fix bounds check in bsd_decompress().
+	[mrg, ticket #524]
+
+sys/arch/mac68k/dev/akbd.c			1.31
+
+	mac68k: PR 60691: honor keyboard bell volume.
+	[nat, ticket #525]
+
+sys/arch/mac68k/obio/ascaudio.c			1.23
+
+	ascaudio(4): fix locking issue.
+	[nat, ticket #526]
+
+sys/arch/mac68k/obio/ascaudio.c			1.22
+
+	ascaudio(4): respect maximum and minimum values when recording.
+	[nat, ticket #527]
+
+sys/arch/mac68k/obio/ascaudio.c			1.21
+
+	ascaudio(4): fix module build.
+	[nat, ticket #528]
+
+sys/arch/mac68k/obio/ascaudio.c			1.20
+
+	ascaudio(4): honor playback block size within resonable limits.
+	[nat, ticket #529]
+
+sys/arch/mac68k/obio/ascaudio.c			1.19
+
+	ascaudio(4): fix interrupt handling on machines using the aux
+	interrupt mappings.
+	[nat, ticket #530]
 
