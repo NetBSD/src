@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.138 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.138.4.1 2026/10/14 17:39:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.138 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.138.4.1 2026/10/14 17:39:46 martin Exp $");
 
 
 
@@ -418,22 +418,8 @@ vr_mii_statchg(struct ifnet *ifp)
 	 * register, we first have to put the transmit and/or receive logic
 	 * in the idle state.
 	 */
-	if ((sc->vr_mii.mii_media_status & IFM_ACTIVE) &&
-	    IFM_SUBTYPE(sc->vr_mii.mii_media_active) != IFM_NONE) {
-		sc->vr_link = true;
-
-		if (CSR_READ_2(sc, VR_COMMAND) & (VR_CMD_TX_ON | VR_CMD_RX_ON))
-			VR_CLRBIT16(sc, VR_COMMAND,
-			    (VR_CMD_TX_ON | VR_CMD_RX_ON));
-
-		if (sc->vr_mii.mii_media_active & IFM_FDX)
-			VR_SETBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
-		else
-			VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
-
-		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON | VR_CMD_RX_ON);
-	} else {
-		sc->vr_link = false;
+	sc->vr_link = false;
+	if (CSR_READ_2(sc, VR_COMMAND) & (VR_CMD_TX_ON | VR_CMD_RX_ON)) {
 		VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_TX_ON | VR_CMD_RX_ON);
 		for (i = VR_TIMEOUT; i > 0; i--) {
 			delay(10);
@@ -446,7 +432,19 @@ vr_mii_statchg(struct ifnet *ifp)
 			aprint_error_dev(sc->vr_dev, "rx shutdown error!\n");
 #endif
 			sc->vr_flags |= VR_F_RESTART;
+			return;
 		}
+	}
+	if ((sc->vr_mii.mii_media_status & IFM_ACTIVE) &&
+	    IFM_SUBTYPE(sc->vr_mii.mii_media_active) != IFM_NONE) {
+		sc->vr_link = true;
+
+		if (sc->vr_mii.mii_media_active & IFM_FDX)
+			VR_SETBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
+		else
+			VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
+
+		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON | VR_CMD_RX_ON);
 	}
 }
 
