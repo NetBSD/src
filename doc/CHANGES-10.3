@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.11 2026/10/10 15:36:22 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.12 2026/10/14 17:55:45 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -162,4 +162,34 @@ share/mk/bsd.prog.mk				1.360,1.361 (patch)
 
 	build: PR 57241: fix parallel builds of debug data.
 	[riastradh, ticket #1355]
+
+libexec/httpd/bozohttpd.8			1.103
+
+	bozohttpd(8): clarify how the CGI options work.
+	[nia, ticket #1358]
+
+usr.sbin/pwd_mkdb/pwd_mkdb.c			1.63
+
+	pwd_mkdb(8): don't try to get the database version from the host's
+	database when running cross.
+	[tls, ticket #1359]
+
+common/lib/libc/stdlib/random.c			1.9
+tools/compat/Makefile				1.98
+tools/compat/compat_defs.h			1.134
+
+	build: make builds reproducible across hosts with different
+	libc random(3) implementations.
+	[tls, ticket #1360]
+
+sys/dev/pci/if_vr.c				1.139
+
+	vr(4): PR 60848: reinitialize device when rx engine fails to go to
+	the idle state.
+	[andvar, ticket #1361]
+
+sys/net/bsd-comp.c				1.24
+
+	ppp(4): fix bounds check in bsd_decompress().
+	[mrg, ticket #1362]
 
