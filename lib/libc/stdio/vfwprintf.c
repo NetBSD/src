@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.39.2.1 2023/04/17 18:22:20 martin Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.39.2.2 2026/10/14 18:33:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.39.2.1 2023/04/17 18:22:20 martin Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.39.2.2 2026/10/14 18:33:22 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -138,9 +138,9 @@ __printflike(3, 0)
 static int	__sbprintf(FILE *, locale_t, const CHAR_T *, va_list);
 
 static CHAR_T	*__ujtoa(uintmax_t, CHAR_T *, int, int, const char *, int,
-		    char, const char *);
+		    char *, const char *);
 static CHAR_T	*__ultoa(u_long, CHAR_T *, int, int, const char *, int,
-		    char, const char *);
+		    char *, const char *);
 #ifndef NARROW
 static CHAR_T	*__mbsconv(char *, int, locale_t);
 static wint_t	__xfputwc(CHAR_T, FILE *, locale_t);
@@ -260,7 +260,7 @@ __sprint(FILE *fp, struct __suio *uio)
  */
 static CHAR_T *
 __ultoa(u_long val, CHAR_T *endp, int base, int octzero, const char *xdigs,
-    int needgrp, char thousep, const char *grp)
+    int needgrp, char *thousep, const char *grp)
 {
 	CHAR_T *cp = endp;
 	long sval;
@@ -299,7 +299,8 @@ __ultoa(u_long val, CHAR_T *endp, int base, int octzero, const char *xdigs,
 			if (needgrp && ndig == *grp
 			    && (unsigned char)*grp != (unsigned char)CHAR_MAX
 			    && sval > 9) {
-				*--cp = thousep;
+				cp -= needgrp;
+				memcpy(cp, thousep, needgrp);
 				ndig = 0;
 				/*
 				 * If (*(grp+1) == '\0') then we have to
@@ -338,7 +339,7 @@ __ultoa(u_long val, CHAR_T *endp, int base, int octzero, const char *xdigs,
 /* Identical to __ultoa, but for intmax_t. */
 static CHAR_T *
 __ujtoa(uintmax_t val, CHAR_T *endp, int base, int octzero,
-    const char *xdigs, int needgrp, char thousep, const char *grp)
+    const char *xdigs, int needgrp, char *thousep, const char *grp)
 {
 	CHAR_T *cp = endp;
 	intmax_t sval;
@@ -369,11 +370,11 @@ __ujtoa(uintmax_t val, CHAR_T *endp, int base, int octzero,
 			 * If (*grp == CHAR_MAX) then no more grouping
 			 * should be performed.
 			 */
-			if (needgrp
+			if (needgrp && ndig == *grp
 			    && (unsigned char)*grp != (unsigned char)CHAR_MAX
-			    && ndig == *grp
 			    && sval > 9) {
-				*--cp = thousep;
+				cp -= needgrp;
+				memcpy(cp, thousep, needgrp);
 				ndig = 0;
 				/*
 				 * If (*(grp+1) == '\0') then we have to
@@ -588,10 +589,10 @@ static int exponent(CHAR_T *, int, int);
  * The size of the buffer we use as scratch space for integer
  * conversions, among other things.  Technically, we would need the
  * most space for base 10 conversions with thousands' grouping
- * characters between each pair of digits.  100 bytes is a
- * conservative overestimate even for a 128-bit uintmax_t.
+ * characters (up to 4 bytes ea) between each pair of digits.
+ * 240 bytes is a conservative overestimate even for a 128-bit uintmax_t.
  */
-#define	BUF	100
+#define	BUF	240
 
 #define STATIC_ARG_TBL_SIZE 8           /* Size of static argument table. */
 
@@ -628,7 +629,8 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 	int width;		/* width from format (%8d), or 0 */
 	int prec;		/* precision from format; <0 for N/A */
 	CHAR_T sign;		/* sign prefix (' ', '+', '-', or \0) */
-	char thousands_sep;	/* locale specific thousands separator */
+	char *thousands_sep;	/* locale specific thousands separator */
+	int tsl;		/* strlen(thousands_sep) */
 	const char *grouping;	/* locale specific numeric grouping rules */
 #ifndef NO_FLOATING_POINT
 	/*
@@ -646,6 +648,7 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 	 * F:	at least two digits for decimal, at least one digit for hex
 	 */
 	char *decimal_point;	/* locale specific decimal point */
+	int decpt_len;		/* length of decimal_point */
 	int signflag;		/* true if float is negative */
 	union {			/* floating point arguments %[aAeEfFgG] */
 		double dbl;
@@ -821,10 +824,17 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 
 	_SET_ORIENTATION(fp, -1);
 
-	thousands_sep = '\0';
+	thousands_sep = NULL;
+	tsl = 0;
 	grouping = NULL;
 #ifndef NO_FLOATING_POINT
+	/* it might make sense to move all this to after the cantwrite test */
 	decimal_point = localeconv_l(loc)->decimal_point;
+	if (decimal_point == NULL)	/* should not happen */
+		decimal_point = __UNCONST(".");		/* XXX (or "" ?) */
+	/* avoid calling strlen() in the common case its result is 1 */
+	decpt_len = (decimal_point[0] != '\0' && decimal_point[1] == '\0')
+	    ? 1 : (int)strlen(decimal_point);
 	expsize = 0;		/* XXXGCC -Wuninitialized [sh3,m68000] */
 	ndig = -1;	/* XXX gcc */
 #endif
@@ -920,13 +930,22 @@ reswitch:	switch (ch) {
 			sign = '+';
 			goto rflag;
 		case '\'':
-			thousands_sep = *(localeconv_l(loc)->thousands_sep);
+			thousands_sep = localeconv_l(loc)->thousands_sep;
 			grouping = localeconv_l(loc)->grouping;
 			/* Use grouping if defined by locale */
-			if (thousands_sep && grouping && *grouping)
+			if (thousands_sep && *thousands_sep && grouping &&
+			    (int)*grouping > 0 && *grouping != CHAR_MAX) {
 				flags |= GROUPING;
-			else {
-				thousands_sep = '\0';
+				if (thousands_sep[1] == '\0')
+					tsl = 1;
+				else {
+					tsl = (int)strlen(thousands_sep);
+					if (tsl > 4)	/*XXX*/
+						tsl = 0;
+				}
+			} else {
+				thousands_sep = NULL;
+				tsl = 0;
 				grouping = NULL;
 			}
 			goto rflag;
@@ -1194,7 +1213,7 @@ fp_common:
 				expsize = exponent(expstr, expt - 1, expchar);
 				size = expsize + prec;
 				if (prec > 1 || flags & ALT)
-					++size;
+					size += decpt_len;
 			} else {
 				/* space for digits before decimal point */
 				if (expt > 0)
@@ -1203,7 +1222,7 @@ fp_common:
 					size = 1;
 				/* space for decimal pt and following digits */
 				if (prec || flags & ALT)
-					size += prec + 1;
+					size += prec + decpt_len;
 				if (grouping && expt > 0) {
 					/* space for thousands' grouping */
 					nseps = nrepeats = 0;
@@ -1219,7 +1238,7 @@ fp_common:
 						} else
 							nrepeats++;
 					}
-					size += nseps + nrepeats;
+					size += (nseps + nrepeats) * tsl;
 				} else
 					lead = expt;
 			}
@@ -1371,15 +1390,15 @@ number:			if ((dprec = prec) >= 0)
 				    (flags & ALT && base == 8))
 					result = __ujtoa(ujval, cp, base,
 					    flags & ALT, xdigs,
-					    flags & GROUPING, thousands_sep,
-					    grouping);
+					    ((flags & GROUPING) ? tsl : 0),
+					    thousands_sep, grouping);
 			} else {
 				if (ulval != 0 || prec != 0 ||
 				    (flags & ALT && base == 8))
 					result = __ultoa(ulval, cp, base,
 					    flags & ALT, xdigs,
-					    flags & GROUPING, thousands_sep,
-					    grouping);
+					    ((flags & GROUPING) ? tsl : 0),
+					    thousands_sep, grouping);
 			}
 			_DIAGASSERT(__type_fit(int, buf + BUF - result));
 			size = (int)(buf + BUF - result);
@@ -1452,7 +1471,7 @@ number:			if ((dprec = prec) >= 0)
 				if (expt <= 0) {
 					PRINT(zeroes, 1);
 					if (prec || flags & ALT)
-						PRINT(decimal_point, 1);
+						PRINT(decimal_point, decpt_len);
 					PAD(-expt, zeroes);
 					/* already handled initial 0's */
 					prec += expt;
@@ -1468,8 +1487,8 @@ number:			if ((dprec = prec) >= 0)
 								grouping--;
 								nseps--;
 							}
-							PRINT(&thousands_sep,
-							    1);
+							PRINT(thousands_sep,
+							    tsl);
 							PRINTANDPAD(result,
 							    convbuf + ndig,
 							    *grouping, zeroes);
@@ -1478,18 +1497,18 @@ number:			if ((dprec = prec) >= 0)
 						if (result > convbuf + ndig)
 							result = convbuf + ndig;
 					}
-					if (prec || flags & ALT) {
-						buf[0] = *decimal_point;
-						PRINT(buf, 1);
-					}
+					if (prec || flags & ALT)
+						PRINT(decimal_point, decpt_len);
 				}
 				PRINTANDPAD(result, convbuf + ndig, prec,
 				    zeroes);
 			} else {	/* %[eE] or sufficiently long %[gG] */
 				if (prec > 1 || flags & ALT) {
-					buf[0] = *result++;
-					buf[1] = *decimal_point;
-					PRINT(buf, 2);
+					/* PRINT() ptr arg eval'd in loop */
+					/* using "result++" maybe OK, but... */
+					PRINT(result, 1);
+					result++;
+					PRINT(decimal_point, decpt_len);
 					PRINT(result, ndig-1);
 					PAD(prec - ndig, zeroes);
 				} else	/* XeYYY */
@@ -1726,6 +1745,7 @@ reswitch:	switch (ch) {
 		case 'e':
 		case 'E':
 		case 'f':
+		case 'F':
 		case 'g':
 		case 'G':
 			if (flags & LONGDBL)
