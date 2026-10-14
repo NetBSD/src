@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.79 2026/04/26 12:54:12 tsutsui Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.80 2026/10/14 05:58:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.79 2026/04/26 12:54:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.80 2026/10/14 05:58:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -409,7 +409,7 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 
 	/* This shouldn't ever happen.  */
 	if (fault_code != FAULT_USER &&
-	    (curlwp->l_flag & (LW_SYSTEM|LW_SYSTEM_FPU)) == LW_SYSTEM)
+	    (curlwp->l_flag & (LW_SYSTEM | LW_SYSTEM_FPU)) == LW_SYSTEM)
 		panic("VFP fault at %#x in non-user mode", frame->tf_pc);
 
 	if (ci->ci_vfp_id == 0) {
@@ -500,7 +500,7 @@ neon_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 
 	/* This shouldn't ever happen.  */
 	if (fault_code != FAULT_USER &&
-	    (curlwp->l_flag & (LW_SYSTEM|LW_SYSTEM_FPU)) == LW_SYSTEM)
+	    (curlwp->l_flag & (LW_SYSTEM | LW_SYSTEM_FPU)) == LW_SYSTEM)
 		panic("NEON fault in non-user mode");
 
 	/* if we already own the FPU and it's enabled, raise SIGILL */
@@ -671,8 +671,8 @@ static inline bool
 lwp_system_fpu_p(struct lwp *l)
 {
 
-	return (l->l_flag & (LW_SYSTEM|LW_SYSTEM_FPU)) ==
-	    (LW_SYSTEM|LW_SYSTEM_FPU);
+	return (l->l_flag & (LW_SYSTEM | LW_SYSTEM_FPU)) ==
+	    (LW_SYSTEM | LW_SYSTEM_FPU);
 }
 
 static const struct vfpreg zero_vfpreg;

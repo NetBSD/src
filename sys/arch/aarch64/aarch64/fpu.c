@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.c,v 1.15 2026/09/16 11:09:35 jmcneill Exp $ */
+/* $NetBSD: fpu.c,v 1.16 2026/10/14 05:58:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.15 2026/09/16 11:09:35 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.16 2026/10/14 05:58:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -142,8 +142,8 @@ static inline bool
 lwp_system_fpu_p(struct lwp *l)
 {
 
-	return (l->l_flag & (LW_SYSTEM|LW_SYSTEM_FPU)) ==
-	    (LW_SYSTEM|LW_SYSTEM_FPU);
+	return (l->l_flag & (LW_SYSTEM | LW_SYSTEM_FPU)) ==
+	    (LW_SYSTEM | LW_SYSTEM_FPU);
 }
 
 void
