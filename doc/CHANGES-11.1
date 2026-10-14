@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.23 2026/10/14 18:14:22 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.24 2026/10/14 18:32:45 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -1366,4 +1366,11 @@ sys/arch/mac68k/obio/ascaudio.c			1.19
 	ascaudio(4): fix interrupt handling on machines using the aux
 	interrupt mappings.
 	[nat, ticket #530]
+
+lib/libc/stdio/vfwprintf.c			1.42,1.43
+
+	printf(3): PR 60708, PR 60496: fix 'F' format for
+	positional parameters.
+	Fix multi-byte decimal point and grouping separator.
+	[kre, ticket #531]
 
