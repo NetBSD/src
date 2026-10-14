@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.22 2016/08/06 22:38:18 pgoyette Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.22.46.1 2026/10/14 17:53:43 martin Exp $	*/
 /*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.22 2016/08/06 22:38:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.22.46.1 2026/10/14 17:53:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -916,7 +916,7 @@ bsd_decompress(void *state, struct mbuf *cmp, struct mbuf **dmpp)
 	    break;
 	}
 
-	if (incode > max_ent + 2 || incode > db->maxmaxcode
+	if (incode > max_ent + 1 || incode > db->maxmaxcode
 	    || (incode > max_ent && oldcode == CLEAR)) {
 	    m_freem(mret);
 	    if (db->debug) {
