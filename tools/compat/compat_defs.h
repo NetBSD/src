@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.120.4.3 2026/01/25 16:51:06 martin Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.120.4.4 2026/10/14 17:36:53 martin Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -472,6 +472,21 @@ int __nbcompat_heapsort (void *, size_t, size_t, int (*)(const void *, const voi
 #if !HAVE_DECL_HEAPSORT
 int heapsort (void *, size_t, size_t, int (*)(const void *, const void *));
 #endif
+
+/*
+ * Unconditionally use our own random() implementation so the srandom()
+ * magic used for reproducibility works across hosts with different libc
+ * random() implementations.
+ */
+long __nbcompat_random(void);
+void __nbcompat_srandom(unsigned int);
+char *__nbcompat_initstate(unsigned int, char *, size_t);
+char *__nbcompat_setstate(char *);
+
+#define random __nbcompat_random
+#define srandom __nbcompat_srandom
+#define initstate __nbcompat_initstate
+#define setstate __nbcompat_setstate
 
 char	       *flags_to_string(unsigned long, const char *);
 int		string_to_flags(char **, unsigned long *, unsigned long *);
