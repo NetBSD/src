@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.87 2025/12/10 21:33:03 andvar Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.88 2026/10/14 20:11:20 joe Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.87 2025/12/10 21:33:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.88 2026/10/14 20:11:20 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -116,10 +116,10 @@ static struct work	ipflow_slowtimo_wk;
 static size_t
 ipflow_hash(const struct ip *ip)
 {
-	size_t hash = ip->ip_tos;
+	size_t hash = ip->ip_tos + ip->ip_src.s_addr;
 	size_t idx;
 
-	for (idx = 0; idx < 32; idx += IPFLOW_HASHBITS) {
+	for (idx = 1; idx < 32; idx += IPFLOW_HASHBITS) {
 		hash += (ip->ip_dst.s_addr >> (32 - idx)) +
 		    (ip->ip_src.s_addr >> idx);
 	}
