@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.7 2021/12/12 22:20:52 andvar Exp $	*/
+/*	$NetBSD: random.c,v 1.7.10.1 2026/10/14 17:31:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,13 +29,25 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+/*
+ * XXX Undefine the renames of these functions so that we don't
+ * XXX rename the versions found in the host's headers by mistake!
+ */
+#undef initstate
+#undef random
+#undef setstate
+#undef srandom
+#endif
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.7 2021/12/12 22:20:52 andvar Exp $");
+__RCSID("$NetBSD: random.c,v 1.7.10.1 2026/10/14 17:31:12 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,7 +56,19 @@ __RCSID("$NetBSD: random.c,v 1.7 2021/12/12 22:20:52 andvar Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
+#if !HAVE_NBTOOL_CONFIG_H
 #include "reentrant.h"
+#endif
+
+#if HAVE_NBTOOL_CONFIG_H
+/* XXX Now, re-apply the renaming that we undid above. */
+#define initstate    __nbcompat_initstate
+#define random        __nbcompat_random
+#define setstate    __nbcompat_setstate
+#define srandom        __nbcompat_srandom
+#define mutex_lock(a)    (void)0
+#define mutex_unlock(a) (void)0
+#endif
 
 #ifdef __weak_alias
 __weak_alias(initstate,_initstate)
@@ -53,8 +77,7 @@ __weak_alias(setstate,_setstate)
 __weak_alias(srandom,_srandom)
 #endif
 
-
-#ifdef _REENTRANT
+#if defined(_REENTRANT) && !HAVE_NBTOOL_CONFIG_H
 static mutex_t random_mutex = MUTEX_INITIALIZER;
 #endif
 #else
