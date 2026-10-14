@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.43 2024/06/29 13:00:44 riastradh Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.44 2026/10/14 20:19:32 joe Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.43 2024/06/29 13:00:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.44 2026/10/14 20:19:32 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -152,9 +152,9 @@ ip6flow_hash(const struct ip6_hdr *ip6)
 	dst_sum = ip6->ip6_dst.s6_addr32[0] + ip6->ip6_dst.s6_addr32[1]
 	    + ip6->ip6_dst.s6_addr32[2] + ip6->ip6_dst.s6_addr32[3];
 
-	hash = ip6->ip6_flow;
+	hash = ip6->ip6_flow + src_sum;
 
-	for (idx = 0; idx < 32; idx += IP6FLOW_HASHBITS)
+	for (idx = 1; idx < 32; idx += IP6FLOW_HASHBITS)
 		hash += (dst_sum >> (32 - idx)) + (src_sum >> idx);
 
 	return hash & (ip6_hashsize-1);
