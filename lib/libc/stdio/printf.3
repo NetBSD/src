@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.74 2026/10/15 10:45:08 uwe Exp $
+.\"	$NetBSD: printf.3,v 1.75 2026/10/15 11:53:10 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -97,7 +97,7 @@ and
 .Fn vprintf
 functions
 write output to
-.Em stdout ,
+.Va stdout ,
 the standard output stream;
 .Fn fprintf
 and
@@ -197,7 +197,9 @@ ordinary
 characters (not
 .Cm % ) ,
 which are copied unchanged to the output stream;
-and conversion specifications, each of which results
+and
+.Em conversion specifications ,
+each of which results
 in fetching zero or more subsequent arguments.
 Each conversion specification is introduced by
 the character
@@ -219,7 +221,8 @@ Arguments are numbered starting at
 If unaccessed arguments in the format string are interspersed with ones that
 are accessed the results will be indeterminate.
 .It
-Zero or more of the following flags:
+Zero or more of the following
+.Em flags :
 .Bl -tag -width Cm
 .It Cm #
 The value should be converted to an
@@ -286,11 +289,8 @@ the
 .Cm 0
 flag is ignored.
 .It Cm \-
-A negative field width flag;
-the converted value is to be left adjusted on the field boundary.
-Except for
-.Cm n
-conversions, the converted value is padded on the right with blanks,
+The converted value is to be left adjusted on the field boundary.
+It is padded on the right with blanks,
 rather than on the left with blanks or zeros.
 A
 .Sq Cm \-
@@ -312,14 +312,14 @@ produced by a signed conversion
 or
 .Cm i ) .
 .It Cm +
-A sign must always be placed before a
+A plus or minus sign must always be placed before a
 number produced by a signed conversion.
 A
 .Sq Cm +
 overrides a
 .Em space
 flag if both are used.
-.It Cm '
+.It Cm ' No (apostrophe)
 Decimal conversions
 .Cm ( d , u ,
 or
@@ -333,12 +333,15 @@ the non-monetary separator returned by
 .Xr localeconv 3 .
 .El
 .It
-An optional decimal digit string specifying a minimum field width.
+An optional decimal digit string specifying a minimum
+.Em field width .
 If the converted value has fewer characters than the field width, it will
 be padded with spaces on the left (or right, if the left-adjustment
 flag has been given) to fill out the field width.
 .It
-An optional precision, in the form of a period
+An optional
+.Em precision ,
+in the form of a period
 .Sq Cm \&.
 followed by an optional digit string.
 If the digit string is omitted, the precision is taken as zero.
@@ -367,7 +370,9 @@ string for
 .Cm s
 conversions.
 .It
-An optional length modifier, that specifies the size of the argument.
+An optional
+.Em length modifier ,
+that specifies the size of the argument.
 The following length modifiers are valid for the
 .Cm d , i , n , o , u , x ,
 or
@@ -465,7 +470,9 @@ If a single format directive mixes positional
 .Pq Ar n Ns Cm $
 and non-positional arguments, the results are undefined.
 .Pp
-The conversion specifiers and their meanings are:
+The
+.Em conversion specifiers
+and their meanings are:
 .Bl -tag -width Cm
 .It Cm diouxX
 The
