@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.139 2026/10/12 19:35:49 andvar Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.140 2026/10/15 19:46:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.139 2026/10/12 19:35:49 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.140 2026/10/15 19:46:03 andvar Exp $");
 
 
 
@@ -469,6 +469,7 @@ vr_setmulti(struct vr_softc *sc)
 	rxfilt = CSR_READ_1(sc, VR_RXCFG);
 
 	if (ifp->if_flags & IFF_PROMISC) {
+		rxfilt |= VR_RXCFG_RX_PROMISC;
 allmulti:
 		ifp->if_flags |= IFF_ALLMULTI;
 		rxfilt |= VR_RXCFG_RX_MULTI;
@@ -477,6 +478,7 @@ allmulti:
 		CSR_WRITE_4(sc, VR_MAR1, 0xFFFFFFFF);
 		return;
 	}
+	rxfilt &= ~VR_RXCFG_RX_PROMISC;
 
 	/* first, zot all the existing hash bits */
 	CSR_WRITE_4(sc, VR_MAR0, 0);
