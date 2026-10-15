@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.13 2026/10/14 18:34:07 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.14 2026/10/15 07:51:43 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -199,4 +199,9 @@ lib/libc/stdio/vfwprintf.c			1.42,1.43
 	positional parameters.
 	Fix multi-byte decimal point and grouping separator.
 	[kre, ticket #1363]
+
+common/lib/libc/string/memset2.c		1.12
+
+	mips: PR 60780: fix undefined behaviour.
+	[kre, ticket #1364]
 
