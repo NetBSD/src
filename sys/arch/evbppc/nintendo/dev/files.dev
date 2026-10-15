@@ -30,11 +30,16 @@ attach	gecko at exi
 file	arch/evbppc/nintendo/dev/gecko.c		gecko	needs-flag
 
 define	si { }
-device	si: si, hid
+device	si: si
 attach	si at mainbus
 file	arch/evbppc/nintendo/dev/si.c			si
 
-attach	uhid at si with uhid_si
+define	gcport { }
+device	gcport: gcport, hid
+attach	gcport at si with gcport_si
+file	arch/evbppc/nintendo/dev/gcport_si.c		gcport_si
+
+attach	uhid at gcport with uhid_si
 file	arch/evbppc/nintendo/dev/uhid_si.c		uhid_si
 
 define	ahb { [addr=-1], [irq=-1] }
