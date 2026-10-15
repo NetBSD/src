@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.72 2026/10/15 07:41:14 kre Exp $
+.\"	$NetBSD: printf.3,v 1.73 2026/10/15 09:35:32 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -220,8 +220,8 @@ If unaccessed arguments in the format string are interspersed with ones that
 are accessed the results will be indeterminate.
 .It
 Zero or more of the following flags:
-.Bl -tag -width ".So \  Sc (space)"
-.It Sq Cm #
+.Bl -tag -width Cm
+.It Cm #
 The value should be converted to an
 .Dq alternate form .
 For
@@ -269,7 +269,7 @@ and
 .Cm G
 conversions, trailing zeros are not removed from the result as they
 would otherwise be.
-.It So Cm 0 Sc (zero)
+.It Cm 0 No (zero)
 Zero padding.
 For all conversions except
 .Cm n ,
@@ -285,7 +285,7 @@ and
 the
 .Cm 0
 flag is ignored.
-.It Sq Cm \-
+.It Cm \-
 A negative field width flag;
 the converted value is to be left adjusted on the field boundary.
 Except for
@@ -297,7 +297,7 @@ A
 overrides a
 .Sq Cm \&0
 if both are given.
-.It So "\ " Sc (space)
+.It Em space
 A blank should be left before a positive number
 produced by a signed conversion
 .Pf ( Cm a ,
@@ -311,13 +311,15 @@ produced by a signed conversion
 .Cm G ,
 or
 .Cm i ) .
-.It Sq Cm +
+.It Cm +
 A sign must always be placed before a
 number produced by a signed conversion.
 A
 .Sq Cm +
-overrides a space if both are used.
-.It Sq Cm '
+overrides a
+.Em space
+flag if both are used.
+.It Cm '
 Decimal conversions
 .Cm ( d , u ,
 or
@@ -465,7 +467,7 @@ If a single format directive mixes positional
 and non-positional arguments, the results are undefined.
 .Pp
 The conversion specifiers and their meanings are:
-.Bl -tag -width ".Cm diouxX"
+.Bl -tag -width Cm
 .It Cm diouxX
 The
 .Vt int
