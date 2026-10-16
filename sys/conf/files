@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1324 2026/09/03 05:52:43 jdc Exp $
+#	$NetBSD: files,v 1.1325 2026/10/16 17:48:55 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -177,11 +177,13 @@ defflag				COMPAT_LINUX: COMPAT_NETBSD, COMPAT_43
 defflag				COMPAT_SUNOS: COMPAT_09, COMPAT_43
 defflag				COMPAT_ULTRIX: COMPAT_50
 
-# mips64 and aarch64 have COMPAT_NETBSD32 but cannot have EXEC_AOUT; all
-# other users of COMPAT_NETBSD32 need EXEC_AOUT
+# mips64, aarch64, and riscv64 have COMPAT_NETBSD32 but cannot have
+# EXEC_AOUT; all other users of COMPAT_NETBSD32 need EXEC_AOUT
 ifdef mips
 defflag				COMPAT_NETBSD32
 elifdef aarch64
+defflag				COMPAT_NETBSD32
+elifdef riscv
 defflag				COMPAT_NETBSD32
 else
 defflag				COMPAT_NETBSD32	: EXEC_AOUT
