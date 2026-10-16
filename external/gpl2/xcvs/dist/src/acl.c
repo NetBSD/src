@@ -29,7 +29,7 @@
  * 
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acl.c,v 1.6 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: acl.c,v 1.7 2026/10/16 21:33:12 riastradh Exp $");
 
 #include "cvs.h"
 #include "getline.h"
@@ -712,7 +712,7 @@ cvsacl (int argc, char **argv)
 	usage (is_racl ? racl_usage : acl_usage);
 
     /* parse the args */
-    optind = 0;
+    getoptreset ();
 
     while ((c = getopt (argc, argv, "dRr:l")) != -1)
     {
