@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.24 2021/12/19 12:21:30 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.25 2026/10/16 14:50:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ si_meminfo(struct sysinfo *si)
 {
 
 	si->totalram = uvmexp.npages;
-	si->totalhigh = kernel_map->size >> PAGE_SHIFT;
+	si->totalhigh = 0;
 	si->mem_unit = PAGE_SIZE;
 	/* XXX Fill in more as needed.  */
 }
