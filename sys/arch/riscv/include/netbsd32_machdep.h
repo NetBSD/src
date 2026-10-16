@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.2 2024/05/28 06:57:03 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.3 2026/10/16 17:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -58,5 +58,7 @@ typedef netbsd32_pointer_t			netbsd32_sigcontextp_t;
  */
 #define	netbsd32_syscall_intern			syscall_intern
 void	netbsd32_setregs(struct lwp *, struct exec_package *, vaddr_t);
+
+#define	__HAVE_MD_NETBSD32_SENDSIG
 
 #endif /* _MACHINE_NETBSD32_H_ */

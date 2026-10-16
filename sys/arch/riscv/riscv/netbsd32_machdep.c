@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.5 2020/11/04 07:09:46 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.6 2026/10/16 17:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: netbsd32_machdep.c,v 1.5 2020/11/04 07:09:46 skrll Exp $");
+__RCSID("$NetBSD: netbsd32_machdep.c,v 1.6 2026/10/16 17:49:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -41,7 +41,9 @@ __RCSID("$NetBSD: netbsd32_machdep.c,v 1.5 2020/11/04 07:09:46 skrll Exp $");
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
+#include <riscv/frame.h>
 #include <riscv/locore.h>
+#include <riscv/userret.h>
 
 char machine_arch32[] = MACHINE_ARCH32;
 char machine32[] = MACHINE;
@@ -83,12 +85,13 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	const struct trapframe * const tf = l->l_md.md_utf;
 
 	/* Save register context. */
+	/* XXX Isn't this missing a lot of registers to save? */
 	for (size_t i = _X_RA; i <= _X_GP; i++) {
 		mcp->__gregs[i] = tf->tf_reg[i];
 	}
 	mcp->__gregs[_REG_PC] = tf->tf_pc;
 
-	mcp->__private = (intptr_t)l->l_private;
+	mcp->__gregs[_REG_TP] = (uint32_t)(uintptr_t)l->l_private;
 
 	*flags |= _UC_CPU | _UC_TLSBASE;
 
@@ -136,6 +139,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 			return error;
 
 		/* Save register context. */
+		/* XXX Isn't this missing a lot of registers to restore? */
 		for (size_t i = _X_RA; i <= _X_GP; i++) {
 			tf->tf_reg[i] = (int32_t)gr[i];
 		}
@@ -144,7 +148,8 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 
 	/* Restore the private thread context */
 	if (flags & _UC_TLSBASE) {
-		lwp_setprivate(l, (void *)(intptr_t)(int32_t)mcp->__private);
+		lwp_setprivate(l,
+		    (void *)(uintptr_t)(uint32_t)mcp->__gregs[_REG_TP]);
 	}
 
 	/* Restore floating point register context, if any. */
@@ -186,4 +191,18 @@ netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size,
 		return VM_DEFAULT_ADDRESS32_TOPDOWN(base, size);
 	else
 		return VM_DEFAULT_ADDRESS32_BOTTOMUP(base, size);
+}
+
+void
+netbsd32_machdep_md_init(void)
+{
+
+	/* nothing to do */
+}
+
+void
+netbsd32_machdep_md_fini(void)
+{
+
+	/* nothing to do */
 }
