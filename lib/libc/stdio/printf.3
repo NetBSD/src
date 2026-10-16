@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.75 2026/10/15 11:53:10 uwe Exp $
+.\"	$NetBSD: printf.3,v 1.76 2026/10/16 17:41:43 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -194,8 +194,11 @@ effectively assume an infinite
 The format string is composed of zero or more directives:
 ordinary
 .\" multibyte
-characters (not
-.Cm % ) ,
+characters
+.Po
+other than
+.Cm %
+.Pc ,
 which are copied unchanged to the output stream;
 and
 .Em conversion specifications ,
@@ -211,13 +214,17 @@ After the
 the following appear in sequence:
 .Bl -bullet
 .It
-An optional field, consisting of a decimal digit string followed by a
-.Cm $ ,
-specifying the next argument to access.
-If this field is not provided, the argument following the last
+An optional argument position, that consists of a decimal digit string
+followed by a
+.Cm $
+.Po
+i.e.\&
+.Cm % Ns Ar n Ns Cm $
+.Pc ,
+specifying the position of the argument to convert.
+Arguments are numbered starting at 1.
+If explicit position is not specified, the argument following the last
 argument accessed will be used.
-Arguments are numbered starting at
-.Cm 1 .
 If unaccessed arguments in the format string are interspersed with ones that
 are accessed the results will be indeterminate.
 .It
@@ -457,17 +464,22 @@ A character that specifies the type of conversion to be applied.
 A field width or precision, or both, may be indicated by
 an asterisk
 .Ql * ,
-or an asterisk followed by one or more decimal digits and a
+or an asterisk followed by a decimal digit string and a
 .Ql $
-instead of a digit string.
-In this case, an
+instead of an explicit number.
+In this case, the next
+.Pq for Sq Cm * ,
+or
+.Ar n Ap th
+.Pq for Sq Cm * Ns Ar n Ns Cm $
 .Vt int
 argument supplies the field width or precision.
-A negative field width is treated as a left adjustment flag followed by a
-positive field width; a negative precision is treated as though it were
-missing.
+A negative field width is treated as a left adjustment flag
+.Pq Sq Cm \-
+followed by a positive field width; a negative precision is treated as
+though it were omitted.
 If a single format directive mixes positional
-.Pq Ar n Ns Cm $
+.Pq Sq Ar n Ns Cm $
 and non-positional arguments, the results are undefined.
 .Pp
 The
