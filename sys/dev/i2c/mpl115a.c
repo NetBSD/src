@@ -1,4 +1,4 @@
-/*	$NetBSD: mpl115a.c,v 1.4 2025/06/27 21:36:24 andvar Exp $ */
+/*	$NetBSD: mpl115a.c,v 1.5 2026/10/16 13:42:24 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpl115a.c,v 1.4 2025/06/27 21:36:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpl115a.c,v 1.5 2026/10/16 13:42:24 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>
-#include <sys/endian.h>
 
 #include <sys/bus.h>
 #include <dev/i2c/i2cvar.h>
@@ -52,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: mpl115a.c,v 1.4 2025/06/27 21:36:24 andvar Exp $");
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/i2c/mpl115areg.h>
-
-#define MPL115A_DEBUG 1
 
 struct mpl115a_softc {
 	device_t		sc_dev;
@@ -113,12 +110,10 @@ mpl115a_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": Freescale MPL115A2 Pressure Sensor\n");
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	/* Since coefficients do not change load them once. */
 	mpl115a_load_coeffs(sc);
-
-	mpl115a_pressure(sc);
-
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	mpl115a_envsys_register(sc);
 }
@@ -129,7 +124,7 @@ mpl115a_make_coeff(uint8_t msb, uint8_t lsb)
 {
 	uint16_t rv;
 
-	rv = le16toh((msb << 8) | lsb);
+	rv = (msb << 8) | lsb;
 
 #ifdef MPL115A_DEBUG
 	aprint_normal("msb %x, lsb %x, ret val %x\n", msb, lsb, rv);
@@ -203,11 +198,9 @@ mpl115a_pressure(struct mpl115a_softc *sc)
 
 	rv = 0;
 
-	mpl115a_reg_write_1(sc, MPL115A_CONVERT, 1);
-	delay(20); /* even 3 should be enough */
+	mpl115a_reg_write_1(sc, MPL115A_CONVERT, 0);
+	delay(MPL115A_CONVERT_US);
 
-	padc = mpl115a_make_coeff(mpl115a_reg_read_1(sc, MPL115A_PADC_MSB),
-	    mpl115a_reg_read_1(sc, MPL115A_PADC_LSB)); /* XXX, this fails */
 	padc = mpl115a_make_coeff(mpl115a_reg_read_1(sc, MPL115A_PADC_MSB),
 	    mpl115a_reg_read_1(sc, MPL115A_PADC_LSB)); 
 
@@ -232,8 +225,8 @@ static uint32_t
 mpl115a_calc(struct mpl115a_softc *sc, uint16_t padc, uint16_t tadc) 
 {
 	int32_t fp_a0, fp_b1, fp_b2, fp_c12, fp_padc, fp_tadc;
+	int64_t pre_kpa;
 	int32_t c12x2, a1, a1x2, y1, a2x2, pcomp;
-	uint32_t pre_kpa1, pre_kpa2, pa;
 
 	/* convert coefficients to common fixed point format */
 	fp_a0 = sc->sc_a0 << 13;	/* 12.3 -> 15.16 */
@@ -252,13 +245,9 @@ mpl115a_calc(struct mpl115a_softc *sc, uint16_t padc, uint16_t tadc)
 	pcomp = y1 + a2x2;
 
 	/* pre_kpa has 16 fractional digits so it's accurate to 1/65536 kPa */
-	pre_kpa1 = pcomp * (115 - 50);
-	pre_kpa2 = pre_kpa1 / 1023 + (50 << 16);
+	pre_kpa = (int64_t)pcomp * (115 - 50) / 1023 + (50 << 16);
 
-	/* but the real accuracy of the sensor is around +/- 1 kPa... */
-	pa = ((pre_kpa2 + 32768) >> 16) * 1000;
-
-	return pa;
+	return (pre_kpa * 1000 + 32768) >> 16;
 }
 
 static void
@@ -268,8 +257,7 @@ mpl115a_envsys_register(struct mpl115a_softc *sc)
 
 	strlcpy(sc->sc_sensor.desc, "Absolute pressure",
 	    sizeof(sc->sc_sensor.desc));
-	/* sc->sc_sensor.units = ENVSYS_SPRESSURE; */ 
-	sc->sc_sensor.units = ENVSYS_INTEGER;
+	sc->sc_sensor.units = ENVSYS_PRESSURE;
 	sc->sc_sensor.state = ENVSYS_SINVALID;
 
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
@@ -295,7 +283,7 @@ mpl115a_envsys_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	mutex_enter(&sc->sc_lock);
 
-	edata->value_cur = mpl115a_pressure(sc);
+	edata->value_cur = mpl115a_pressure(sc) * 100;
 	edata->state = ENVSYS_SVALID;
 
 	mutex_exit(&sc->sc_lock);

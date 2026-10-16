@@ -1,4 +1,4 @@
-/*	$NetBSD: mpl115areg.h,v 1.1 2013/09/08 14:59:42 rkujawa Exp $ */
+/*	$NetBSD: mpl115areg.h,v 1.2 2026/10/16 13:42:24 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,5 +47,7 @@
 #define MPL115A_C12_MSB			0xA
 #define MPL115A_C12_LSB			0xB
 #define MPL115A_CONVERT			0x12
+
+#define MPL115A_CONVERT_US		3000	/* tc max */
 
 #endif /* _MPL115AREG_H_ */
