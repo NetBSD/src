@@ -1561,6 +1561,12 @@ NetBSD_extensions()
 	expect 99.000000	'%f'		'"c'
 	expect 97		'%g'		'"a'
 
+	# arguments using the 'c syntax must be consumed exactly once,
+	# including for floating point conversions
+	expect '65 66'			'%g %g'		"'A" "'B"
+	expect '65.000000 66.000000'	'%f %f'		"'A" "'B"
+	expect '6.500000e+01 6.600000e+01'	'%e %e'	"'A" "'B"
+
 	# NetBSD (non-POSIX) format escape extensions
 	expect ''		'\e'
 	expect ''		'\E'
