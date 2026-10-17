@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.10 2013/05/28 15:25:37 macallan Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.11 2026/10/17 19:39:27 andvar Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -374,7 +374,7 @@ struct cg6_fbc {
 #define GX_BLIT_DST_INTERSECT	0x00000200
 #define GX_BLIT_DST_VISIBLE	0x00000100
 #define GX_DRAW_HARDWARE	0x00000010	/* hardware can draw this */
-#define GX_DRAW_SOFTAWRE	0x00000008	/* software must draw this */
+#define GX_DRAW_SOFTWARE	0x00000008	/* software must draw this */
 #define GX_DRAW_HIDDEN		0x00000004
 #define GX_DRAW_INTERSECT	0x00000002
 #define GX_DRAW_VISIBLE		0x00000001
