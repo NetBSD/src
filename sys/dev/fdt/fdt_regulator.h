@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_regulator.h,v 1.1 2025/09/06 20:11:30 thorpej Exp $	*/
+/*	$NetBSD: fdt_regulator.h,v 1.2 2026/10/17 21:03:45 yurix Exp $	*/
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -55,6 +55,8 @@ int		fdtbus_regulator_enable(struct fdtbus_regulator *);
 int		fdtbus_regulator_disable(struct fdtbus_regulator *);
 int		fdtbus_regulator_set_voltage(struct fdtbus_regulator *,
 		    u_int, u_int);
+int		fdtbus_regulator_set_voltage_triple(struct fdtbus_regulator *,
+    		    u_int, u_int, u_int);
 int		fdtbus_regulator_get_voltage(struct fdtbus_regulator *,
 		    u_int *);
 int		fdtbus_regulator_supports_voltage(struct fdtbus_regulator *,

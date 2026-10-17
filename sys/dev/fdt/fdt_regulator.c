@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_regulator.c,v 1.9 2021/08/08 15:23:42 jmcneill Exp $ */
+/* $NetBSD: fdt_regulator.c,v 1.10 2026/10/17 21:03:45 yurix Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.9 2021/08/08 15:23:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.10 2026/10/17 21:03:45 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -158,6 +158,19 @@ fdtbus_regulator_set_voltage(struct fdtbus_regulator *reg, u_int min_uvol,
 		return EINVAL;
 
 	return rc->rc_funcs->set_voltage(rc->rc_dev, min_uvol, max_uvol);
+}
+
+int
+fdtbus_regulator_set_voltage_triple(struct fdtbus_regulator *reg,
+    u_int target_uvol, u_int min_uvol, u_int max_uvol)
+{
+	if (target_uvol < min_uvol || target_uvol > max_uvol)
+		return EINVAL;
+
+	if (fdtbus_regulator_set_voltage(reg, target_uvol, target_uvol) == 0)
+		return 0;
+
+	return fdtbus_regulator_set_voltage(reg, min_uvol, max_uvol);
 }
 
 int
