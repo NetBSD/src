@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.h,v 1.10 2005/10/26 11:36:49 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.h,v 1.3 2019/06/04 10:15:22 msaitoh Exp $ */
+/*	$NetBSD: dccp_tfrc.h,v 1.4 2026/10/17 19:16:07 andvar Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson 
@@ -123,7 +123,7 @@ void *tfrc_send_init(struct dccpcb *);
 void tfrc_send_free(void *);
 
 /*
- * Ask TFRC wheter one can send a packet or not 
+ * Ask TFRC whether one can send a packet or not 
  * args: ccb  -  ccb block for current connection
  * returns: 1 if ok, else 0.
  */ 

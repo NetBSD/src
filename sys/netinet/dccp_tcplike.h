@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tcplike.h,v 1.10 2005/07/22 09:31:14 nishida Exp $	*/
-/*	$NetBSD: dccp_tcplike.h,v 1.3 2019/06/04 10:15:22 msaitoh Exp $ */
+/*	$NetBSD: dccp_tcplike.h,v 1.4 2026/10/17 19:16:07 andvar Exp $ */
 
 /*
  * Copyright (c) 2003 Magnus Erixzon
@@ -102,7 +102,7 @@ void *tcplike_send_init(struct dccpcb *);
 void tcplike_send_free(void *);
 
 /*
- * Ask TCPlike wheter one can send a packet or not 
+ * Ask TCPlike whether one can send a packet or not 
  * args: ccb  -  ccb block for current connection
  * returns: 0 if ok, else <> 0.
  */ 
