@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.163 2026/09/20 13:43:51 riastradh Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.164 2026/10/17 14:59:45 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.163 2026/09/20 13:43:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.164 2026/10/17 14:59:45 alnsn Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -714,13 +714,21 @@ linux_sys_recvfrom(struct lwp *l, const struct linux_sys_recvfrom_args *uap, reg
 		syscallarg(int *) fromlenaddr;
 	} */
 	int		error;
+	int		bflags;
 	struct sys_recvfrom_args bra;
+
+	/*
+	 * Translate message flags.
+	 */
+	bflags = linux_to_bsd_msg_flags(SCARG(uap, flags));
+	if (bflags < 0)
+		return EINVAL;
 
 	memset(&bra, 0, sizeof(bra));
 	SCARG(&bra, s) = SCARG(uap, s);
 	SCARG(&bra, buf) = SCARG(uap, buf);
 	SCARG(&bra, len) = SCARG(uap, len);
-	SCARG(&bra, flags) = SCARG(uap, flags);
+	SCARG(&bra, flags) = bflags;
 	SCARG(&bra, from) = (struct sockaddr *) SCARG(uap, from);
 	SCARG(&bra, fromlenaddr) = (socklen_t *)SCARG(uap, fromlenaddr);
 
