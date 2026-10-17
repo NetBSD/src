@@ -1,4 +1,4 @@
-.\" $NetBSD: cnmagic.9,v 1.17 2024/09/07 19:13:29 rillig Exp $
+.\" $NetBSD: cnmagic.9,v 1.18 2026/10/17 23:57:32 uwe Exp $
 .\"
 .\" Copyright (c) 2000 Eduardo Horvath
 .\" All rights reserved.
@@ -43,13 +43,13 @@
 .Nm cn_destroy_magic ,
 .Nm cn_set_magic ,
 .Nm cn_get_magic
-.Nd console magic key sequence management
+.Nd console magic sequence management
 .Sh SYNOPSIS
 .In sys/systm.h
 .Ft void
 .Fn cn_init_magic "cnm_state_t *cnms"
 .Ft void
-.Fn cn_trap
+.Fn cn_trap "void"
 .Ft int
 .Fn cn_isconsole "dev_t dev"
 .Ft void
@@ -57,26 +57,26 @@
 .Ft void
 .Fn cn_destroy_magic "cnm_state_t *cnms"
 .Ft int
-.Fn cn_set_magic "char *magic"
+.Fn cn_set_magic "const char *magic"
 .Ft int
 .Fn cn_get_magic "char *magic" "int len"
 .Sh DESCRIPTION
 The
 .Nx
-console magic key sequence management framework is designed to provide
-flexible methods to set, change, and detect magic key sequences on console
+console magic sequence management framework is designed to provide
+flexible methods to set, change, and detect magic sequences on console
 devices and break into the debugger or ROM monitor with a minimum of interrupt
 latency.
 .Pp
 Drivers that generate console input should make use of these routines.
 A different
-.Va cnm_state_t
+.Vt cnm_state_t
 should be used for each separate input stream.
 Multiple devices that share the same input stream, such as USB
 keyboards, can share the same
-.Va cnm_state_t .
+.Vt cnm_state_t .
 Once a
-.Va cnm_state_t
+.Vt cnm_state_t
 is allocated, it should be initialized with
 .Fn cn_init_magic
 so it can be used by
@@ -90,9 +90,9 @@ Whenever the driver receives input, it should call
 to process the data and determine whether the magic sequence has
 been hit.
 .Pp
-The magic key sequence can be accessed through the
+The magic sequence can be read and set through the
 .Va hw.cnmagic
-.Ic sysctl
+.Xr sysctl 7
 variable.
 This is the raw data and may be keycodes rather than
 processed characters, depending on the console device.
@@ -105,7 +105,7 @@ Initialize the console magic state pointed to by
 to a usable state.
 .It Fn cn_trap
 Trap into the kernel debugger or ROM monitor.
-By default this routine is defined to be
+By default this function-like macro is defined to be
 .Fn console_debugger
 but can be overridden in MI header files.
 .It Fn cn_isconsole "dev"
@@ -115,12 +115,18 @@ is the system console.
 This macro tests to see if
 .Fa dev
 is the same as
-.Va cn_tab->cn_dev
+.Va cn_tab\^ Ns Li -> Ns Va cn_dev
 but can be overridden in MI header files.
 .It Fn cn_check_magic "dev" "k" "cnms"
 All input should be passed through
 .Fn cn_check_magic
 so the state machine remains in a consistent state.
+To report serial line
+.Tn BREAK
+condition pass
+.Dv CNC_BREAK
+as input.
+.Pp
 .Fn cn_check_magic
 calls
 .Fn cn_isconsole
@@ -133,19 +139,13 @@ through the state machine.
 If the state machine completes a match of the current console magic sequence
 .Fn cn_trap
 is called.
-Some input may need to be translated to state machine
-values such as the serial line
-.Li BREAK
-sequence.
 .It Fn cn_destroy_magic "cnms"
 This should be called once what
 .Fa cnms
 points to is no longer needed.
 .It Fn cn_set_magic "magic"
 .Fn cn_set_magic
-encodes a
-.Li nul
-terminated arbitrary string into values that can be used by
+encodes a null-terminated arbitrary string into values that can be used by
 the state machine and installs it as the global magic sequence.
 The escape sequence is character value
 .Li 0x27
@@ -157,10 +157,10 @@ The literal value
 .Li 0x27 .
 .It 0x01
 Serial
-.Li BREAK
+.Tn BREAK
 sequence.
 .It 0x02
-.Li Nul
+.Tn NUL
 character.
 .El
 .Pp
@@ -186,13 +186,21 @@ on success or a non-zero error value.
 .Sh HISTORY
 The
 .Nx
-console magic key sequence management framework
+console magic sequence management framework
 first appeared in
 .Nx 1.6 .
 .Sh AUTHORS
 The
 .Nx
-console magic key sequence management framework was designed and
+console magic sequence management framework was designed and
 implemented by
 .An Eduardo Horvath
 .Aq eeh@NetBSD.org .
+.
+.Sh CAVEATS
+.Xr wscons 9
+does
+.Em not
+use
+.Nm cnmagic
+facility.
