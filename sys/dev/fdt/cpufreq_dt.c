@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.20 2025/09/06 21:24:05 thorpej Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.21 2026/10/17 21:04:44 yurix Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.20 2025/09/06 21:24:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.21 2026/10/17 21:04:44 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,9 @@ static kmutex_t cpufreq_dt_tables_lock;
 
 struct cpufreq_dt_opp {
 	u_int			freq_khz;
-	u_int			voltage_uv;
+	u_int			voltage_target_uv;
+	u_int			voltage_min_uv;
+	u_int			voltage_max_uv;
 	u_int			latency_ns;
 };
 
@@ -94,7 +96,7 @@ static int
 cpufreq_dt_set_rate(struct cpufreq_dt_softc *sc, u_int freq_khz)
 {
 	struct cpufreq_dt_opp *opp = NULL;
-	u_int old_rate, new_rate, old_uv, new_uv;
+	u_int old_rate, new_rate, old_uv, target_uv, min_uv, max_uv;
 	uint64_t xc;
 	int error;
 	ssize_t n;
@@ -109,7 +111,9 @@ cpufreq_dt_set_rate(struct cpufreq_dt_softc *sc, u_int freq_khz)
 
 	old_rate = clk_get_rate(sc->sc_clk);
 	new_rate = freq_khz * 1000;
-	new_uv = opp->voltage_uv;
+	target_uv = opp->voltage_target_uv;
+	min_uv = opp->voltage_min_uv;
+	max_uv = opp->voltage_max_uv;
 
 	if (old_rate == new_rate)
 		return 0;
@@ -119,9 +123,9 @@ cpufreq_dt_set_rate(struct cpufreq_dt_softc *sc, u_int freq_khz)
 		if (error != 0)
 			return error;
 
-		if (new_uv > old_uv) {
-			error = fdtbus_regulator_set_voltage(sc->sc_supply,
-			    new_uv, new_uv);
+		if (target_uv > old_uv) {
+			error = fdtbus_regulator_set_voltage_triple(
+			    sc->sc_supply, target_uv, min_uv, max_uv);
 			if (error != 0)
 				return error;
 		}
@@ -136,9 +140,9 @@ cpufreq_dt_set_rate(struct cpufreq_dt_softc *sc, u_int freq_khz)
 		delay(latency_us);
 
 	if (sc->sc_supply != NULL) {
-		if (new_uv < old_uv) {
-			error = fdtbus_regulator_set_voltage(sc->sc_supply,
-			    new_uv, new_uv);
+		if (target_uv < old_uv) {
+			error = fdtbus_regulator_set_voltage_triple(
+			    sc->sc_supply, target_uv, min_uv, max_uv);
 			if (error != 0)
 				return error;
 		}
@@ -351,7 +355,10 @@ cpufreq_dt_parse_opp(struct cpufreq_dt_softc *sc)
 	sc->sc_opp = kmem_zalloc(sizeof(*sc->sc_opp) * sc->sc_nopp, KM_SLEEP);
 	for (i = 0; i < sc->sc_nopp; i++, opp += 2) {
 		sc->sc_opp[i].freq_khz = be32toh(opp[0]);
-		sc->sc_opp[i].voltage_uv = be32toh(opp[1]);
+		u_int voltage_uv =  be32toh(opp[1]);
+		sc->sc_opp[i].voltage_target_uv = voltage_uv;
+		sc->sc_opp[i].voltage_min_uv = voltage_uv;
+		sc->sc_opp[i].voltage_max_uv = voltage_uv;
 	}
 
 	return 0;
@@ -442,14 +449,27 @@ cpufreq_dt_parse_opp_v2(struct cpufreq_dt_softc *sc)
 	for (opp_node = OF_child(opp_table), i = 0; opp_node; opp_node = OF_peer(opp_node), i++) {
 		if (!cpufreq_dt_node_supported(opp_info, opp_table, opp_node))
 			continue;
+
 		if (of_getprop_uint64(opp_node, "opp-hz", &opp_hz) != 0)
 			return EINVAL;
-		opp_uv = fdtbus_get_prop(opp_node, "opp-microvolt", &len);
-		if (opp_uv == NULL || len < 1)
-			return EINVAL;
-		/* Table is in reverse order */
 		sc->sc_opp[index].freq_khz = (u_int)(opp_hz / 1000);
-		sc->sc_opp[index].voltage_uv = be32toh(opp_uv[0]);
+
+		opp_uv = fdtbus_get_prop(opp_node, "opp-microvolt", &len);
+		if (opp_uv == NULL)
+			return EINVAL;
+		if (len == 3 * sizeof(uint32_t)) {
+			sc->sc_opp[index].voltage_target_uv = be32toh(opp_uv[0]);
+			sc->sc_opp[index].voltage_min_uv = be32toh(opp_uv[1]);
+			sc->sc_opp[index].voltage_max_uv = be32toh(opp_uv[2]);
+		} else if (len == sizeof(uint32_t)) {
+			u_int voltage_uv = be32toh(opp_uv[0]);
+			sc->sc_opp[index].voltage_target_uv = voltage_uv;
+			sc->sc_opp[index].voltage_min_uv = voltage_uv;
+			sc->sc_opp[index].voltage_max_uv = voltage_uv;
+		} else {
+			return EINVAL;
+		}
+
 		of_getprop_uint32(opp_node, "clock-latency-ns", &sc->sc_opp[index].latency_ns);
 		--index;
 	}
@@ -497,7 +517,7 @@ cpufreq_dt_parse(struct cpufreq_dt_softc *sc)
 		aprint_debug_dev(sc->sc_dev, "supported rate: %u.%03u MHz, %u uV\n",
 		    sc->sc_opp[i].freq_khz / 1000,
 		    sc->sc_opp[i].freq_khz % 1000,
-		    sc->sc_opp[i].voltage_uv);
+		    sc->sc_opp[i].voltage_target_uv);
 	}
 
 	return 0;
@@ -541,7 +561,8 @@ cpufreq_dt_init(device_t self)
 		struct cpufreq_dt_opp * const opp = &sc->sc_opp[0];
 
 		aprint_normal_dev(sc->sc_dev, "rate: %u.%03u MHz, %u uV\n",
-		    opp->freq_khz / 1000, opp->freq_khz % 1000, opp->voltage_uv);
+		    opp->freq_khz / 1000, opp->freq_khz % 1000,
+		    opp->voltage_target_uv);
 		cpufreq_dt_set_rate(sc, opp->freq_khz);
 	}
 }
