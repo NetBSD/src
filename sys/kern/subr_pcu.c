@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.29 2026/07/17 02:17:12 thorpej Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.30 2026/10/18 20:44:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2014 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.29 2026/07/17 02:17:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.30 2026/10/18 20:44:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -101,7 +101,7 @@ pcu_available_p(struct lwp *l)
 {
 
 	/* XXX Not sure this is safe unless l is locked!  */
-	return (l->l_flag & (LW_SYSTEM|LW_SYSTEM_FPU)) != LW_SYSTEM;
+	return (l->l_flag & (LW_SYSTEM | LW_SYSTEM_FPU)) != LW_SYSTEM;
 }
 
 /*
