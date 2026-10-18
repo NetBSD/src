@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.186 2025/12/10 14:30:33 jkoshy Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.187 2026/10/18 18:51:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1221,12 +1221,32 @@ typedef struct {
  * namesz: 4
  * desc:
  *	a single JSON object encoded as a zero-terminated UTF-8 string
- *	(see https://systemd.io/COREDUMP_PACKAGE_METADATA/)
  * descsz: variable
+ * refs:
+ *	https://uapi-group.org/specifications/specs/package_metadata_for_executable_files/
+ *	https://web.archive.org/web/20261018141345/https://uapi-group.org/specifications/specs/package_metadata_for_executable_files/
  */
 #define	ELF_NOTE_TYPE_FDO_PACKAGING_METADATA	0xcafe1a7e
 #define	ELF_NOTE_FDO_PACKAGING_METADATA_NAMESZ	4
 #define	ELF_NOTE_FDO_PACKAGING_METADATA_NAME	"FDO\0"
+
+/*
+ * FDO-specific note type: dlopen dependencies
+ * name: FDO\0
+ * namesz: 4
+ * desc:
+ *	a single JSON object encoded as a zero-terminated UTF-8 string
+ * descsz: variable
+ * refs:
+ *	https://uapi-group.org/specifications/specs/elf_dlopen_metadata/
+ *	https://web.archive.org/web/20261018142151/https://uapi-group.org/specifications/specs/elf_dlopen_metadata/
+ *	https://www.freedesktop.org/software/systemd/man/261/SD_ELF_NOTE_DLOPEN_TYPE.html
+ *	https://web.archive.org/web/20261018142151/https://www.freedesktop.org/software/systemd/man/261/SD_ELF_NOTE_DLOPEN_TYPE.html
+ *	https://github.com/systemd/systemd/blob/e056e2a7075322b365c41146c1138c4597dd2b11/src/systemd/sd-dlopen.h#L71-L97
+ */
+#define	ELF_NOTE_TYPE_FDO_DLOPEN		0x407c0c0a
+#define	ELF_NOTE_FDO_DLOPEN_NAMESZ		4
+#define	ELF_NOTE_FDO_DLOPEN_NAME		"FDO\0"
 
 /* NetBSD-specific note type: NetBSD ABI version.
  * name: NetBSD\0\0
