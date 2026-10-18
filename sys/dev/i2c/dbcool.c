@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.70 2026/09/03 05:32:06 jdc Exp $ */
+/*	$NetBSD: dbcool.c,v 1.71 2026/10/18 21:08:57 joe Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.70 2026/09/03 05:32:06 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.71 2026/10/18 21:08:57 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2019,7 +2019,7 @@ dbcool_get_volt_limits(struct dbcool_softc *sc, int idx,
 {
 	struct reg_list *reg = sc->sc_regs[idx];
 	int64_t limit;
-	int nom;
+	int64_t nom;
 
 	nom = nominal_voltages[sc->sc_dc.dc_chip->table[idx].nom_volt_index];
 	if (nom < 0)
@@ -2154,7 +2154,7 @@ dbcool_set_volt_limits(struct dbcool_softc *sc, int idx,
 {
 	struct reg_list *reg = sc->sc_regs[idx];
 	int64_t limit;
-	int nom;
+	int64_t nom;
 
 	nom = nominal_voltages[sc->sc_dc.dc_chip->table[idx].nom_volt_index];
 	if (nom < 0)
