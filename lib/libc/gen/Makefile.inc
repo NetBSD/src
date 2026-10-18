@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.232 2026/10/04 03:28:43 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.233 2026/10/18 08:44:45 kre Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -216,8 +216,10 @@ CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
 errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
 
+.if empty(${.TARGET:M*clean*})
 USER_VERSIONS!= DATE=${TOOL_DATE} SED=${TOOL_SED}			\
 	$${HOST_SH:-sh} ${LIBCDIR}/gen/grab-version.sh "${NETBSDSRCDIR}"
+.endif
 
 CPPFLAGS.sysctl.c+=${USER_VERSIONS}
 sysctl.o: /dev/null
