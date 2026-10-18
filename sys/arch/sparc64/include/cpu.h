@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.136 2026/05/29 13:01:42 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.137 2026/10/18 20:27:05 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -214,6 +214,29 @@ struct cpu_info {
 	paddr_t			ci_devmq;  /* device mondo queue address */
 	paddr_t			ci_cpuset; /* mondo recipient address */ 
 	paddr_t			ci_mondo;  /* mondo message address */
+
+#ifdef DEBUG
+	/*
+	 * Debug code for storing register windows 
+	 */
+	int64_t     ci_winregs;
+	int64_t     ci_rw0_local[8]; /* window registers (locals)  - window 0 */
+	int64_t     ci_rw0_in[8];    /* window registers (ins)     - window 0 */
+	int64_t     ci_rw1_local[8]; /* window registers (locals)  - window 1 */
+	int64_t     ci_rw1_in[8];    /* window registers (ins)     - window 1 */
+	int64_t     ci_rw2_local[8]; /* window registers (locals)  - window 2 */
+	int64_t     ci_rw2_in[8];    /* window registers (ins)     - window 2 */
+	int64_t     ci_rw3_local[8]; /* window registers (locals)  - window 3 */
+	int64_t     ci_rw3_in[8];    /* window registers (ins)     - window 3 */
+	int64_t     ci_rw4_local[8]; /* window registers (locals)  - window 4 */
+	int64_t     ci_rw4_in[8];    /* window registers (ins)     - window 4 */
+	int64_t     ci_rw5_local[8]; /* window registers (locals)  - window 5 */
+	int64_t     ci_rw5_in[8];    /* window registers (ins)     - window 5 */
+	int64_t     ci_rw6_local[8]; /* window registers (locals)  - window 6 */
+	int64_t     ci_rw6_in[8];    /* window registers (ins)     - window 6 */
+	int64_t     ci_rw7_local[8]; /* window registers (locals)  - window 7 */
+	int64_t     ci_rw7_in[8];    /* window registers (ins)     - window 7 */
+#endif		
 
 	/* probe fault in PCI config space reads */
 	bool			ci_pci_probe;

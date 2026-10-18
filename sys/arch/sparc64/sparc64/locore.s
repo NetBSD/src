@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.439 2026/03/07 20:48:26 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.440 2026/10/18 20:27:05 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -237,6 +237,227 @@
 	ba,a,pt	%xcc, pcbspill_other
 	 nop
 	.align 128
+	.endm
+	
+	.macro SAVE_WINREGS reg1, reg2
+	
+	! Thrashes all input parameter registers
+	
+#ifdef DEBUG
+	
+	! Save window registers
+	mov	%g0, \reg1
+	rdpr	%cansave, \reg2
+	or	\reg1, \reg2, \reg1
+	sllx	\reg1, 8, \reg1
+	rdpr	%canrestore, \reg2
+	or	\reg1, \reg2, \reg1
+	sllx	\reg1, 8, \reg1
+	rdpr	%otherwin, \reg2
+	or	\reg1, \reg2, \reg1
+	sllx	\reg1, 8, \reg1
+	rdpr	%cleanwin, \reg2
+	or	\reg1, \reg2, \reg1
+	sllx	\reg1, 8, \reg1
+	rdpr	%cwp, \reg2
+	or	\reg1, \reg2, \reg1
+	sllx	\reg1, 8, \reg1
+	rdpr	%wstate, \reg2
+	or	\reg1, \reg2, \reg1
+	!sllx	\reg1, 8, \reg1
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_WINREGS, \reg2
+	stx	\reg1, [\reg2]
+	
+	rdpr	%cwp, \reg1			! save %cwp for later
+	
+	! window 0 - save local and in registers to trapframe
+	wrpr	0, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW0_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW0_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 1 - save local and in registers to trapframe
+	wrpr	1, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW1_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW1_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+	
+	! window 2 - save local and in registers to trapframe
+	wrpr	2, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW2_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW2_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 3 - save local and in registers to trapframe
+	wrpr	3, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW3_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW3_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 4 - save local and in registers to trapframe
+	wrpr	4, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW4_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW4_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 5 - save local and in registers to trapframe
+	wrpr	5, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW5_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW5_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 6 - save local and in registers to trapframe
+	wrpr	6, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW6_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW6_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 7 - save local and in registers to trapframe
+	wrpr	7, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW7_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW7_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	wrpr	\reg1, %cwp			! restore %cwp from previously saved value
+	
+#endif
 	.endm
 	
 #endif

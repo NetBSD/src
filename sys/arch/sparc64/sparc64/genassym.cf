@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.85 2021/04/03 17:01:24 palle Exp $
+#	$NetBSD: genassym.cf,v 1.86 2026/10/18 20:27:05 palle Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -243,6 +243,33 @@ define	TF_OUT		offsetof(struct trapframe64, tf_out)
 ifdef DEBUG
 define	TF_LOCAL	offsetof(struct trapframe64, tf_local)
 define	TF_IN		offsetof(struct trapframe64, tf_in)
+endif
+ifdef DEBUG
+define	CI_RW0_LOCAL offsetof(struct cpu_info, ci_rw0_local)
+define	CI_RW0_IN offsetof(struct cpu_info, ci_rw0_in)
+define	CI_RW1_LOCAL offsetof(struct cpu_info, ci_rw1_local)
+define	CI_RW1_IN offsetof(struct cpu_info, ci_rw1_in)
+define	CI_RW2_LOCAL offsetof(struct cpu_info, ci_rw2_local)
+define	CI_RW2_IN offsetof(struct cpu_info, ci_rw2_in)
+define	CI_RW3_LOCAL offsetof(struct cpu_info, ci_rw3_local)
+define	CI_RW3_IN offsetof(struct cpu_info, ci_rw3_in)
+define	CI_RW4_LOCAL offsetof(struct cpu_info, ci_rw4_local)
+define	CI_RW4_IN offsetof(struct cpu_info, ci_rw4_in)
+define	CI_RW5_LOCAL offsetof(struct cpu_info, ci_rw5_local)
+define	CI_RW5_IN offsetof(struct cpu_info, ci_rw5_in)
+define	CI_RW6_LOCAL offsetof(struct cpu_info, ci_rw6_local)
+define	CI_RW6_IN offsetof(struct cpu_info, ci_rw6_in)
+define	CI_RW7_LOCAL offsetof(struct cpu_info, ci_rw7_local)
+define	CI_RW7_IN offsetof(struct cpu_info, ci_rw7_in)
+if 0
+define	CI_SP offsetof(struct cpu_info, ci_sp)
+define	CI_CTX_PRIMARY offsetof(struct cpu_info, ci_ctx_primary)
+define	CI_CTX_SECONDARY offsetof(struct cpu_info, ci_ctx_secondary)
+define	CI_MMFSA_IFA offsetof(struct cpu_info, ci_mmfsa_ifa)
+define	CI_MMFSA_IFC offsetof(struct cpu_info, ci_mmfsa_ifc)
+define	CI_WINREGS offsetof(struct cpu_info, ci_winregs)
+define	CI_TT offsetof(struct cpu_info, ci_tt)
+endif
 endif
 define	TF_SIZE		sizeof(struct trapframe64)
 
