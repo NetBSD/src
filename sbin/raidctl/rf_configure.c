@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.37 2022/07/21 09:19:53 kre Exp $ */
+/*	$NetBSD: rf_configure.c,v 1.38 2026/10/18 14:56:32 tls Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.37 2022/07/21 09:19:53 kre Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.38 2026/10/18 14:56:32 tls Exp $");
 #endif
 
 
@@ -243,13 +243,17 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 			}
 		}
 #endif
-		cfgPtr->maxOutstandingDiskReqs = val;
-		if (cfgPtr->maxOutstandingDiskReqs != val) {
-			warnx("Queue length for %s out of range"
-			    " [%d interp as %d], assuming 1",
-			    buf1, val, cfgPtr->maxOutstandingDiskReqs);
-			cfgPtr->maxOutstandingDiskReqs = 1;
+		if (val < 1) {
+			warnx("Queue length for %s (%d) must be >= 1, "
+			    "assuming 1", buf1, val);
+			val = 1;
+		} else if (val > RF_MAX_QUEUE_DEPTH) {
+			warnx("Queue length for %s (%d) exceeds maximum %d, "
+			    "clamping to %d", buf1, val,
+			    RF_MAX_QUEUE_DEPTH, RF_MAX_QUEUE_DEPTH);
+			val = RF_MAX_QUEUE_DEPTH;
 		}
+		cfgPtr->maxOutstandingDiskReqs = (uint8_t)val;
 	}
     }
 

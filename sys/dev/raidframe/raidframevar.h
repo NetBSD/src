@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.23 2021/08/07 16:19:15 thorpej Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.24 2026/10/18 14:56:32 tls Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -332,10 +332,11 @@ struct RF_Config_s {
 	RF_StripeNum_t SUsPerRU;/* stripe units per reconstruction unit */
 	RF_ParityConfig_t parityConfig;	/* identifies the RAID architecture to
 					 * be used */
-	RF_DiskQueueType_t diskQueueType;	/* 'f' = fifo, 'c' = cvscan,
-						 * not used in kernel */
+	RF_DiskQueueType_t diskQueueType;	/* 'f' = fifo, 'c' = cvscan */
 	char    maxOutstandingDiskReqs;	/* # concurrent reqs to be sent to a
-					 * disk.  not used in kernel. */
+					 * disk (uint8_t, 1..255). */
+#define RF_MAX_QUEUE_DEPTH	255
+#define RF_DEFAULT_QUEUE_DEPTH	100
 	char    debugVars[RF_MAXDBGV][50];	/* space for specifying debug
 						 * variables & their values */
 	unsigned int layoutSpecificSize;	/* size in bytes of

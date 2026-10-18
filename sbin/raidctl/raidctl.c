@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.89 2026/02/18 19:45:51 joe Exp $   */
+/*      $NetBSD: raidctl.c,v 1.90 2026/10/18 14:56:32 tls Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.89 2026/02/18 19:45:51 joe Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.90 2026/10/18 14:56:32 tls Exp $");
 #endif
 
 
@@ -1342,7 +1342,7 @@ rf_simple_create(int fd, int argc, char *argv[])
 	cfg.SUsPerRU = 1;
 	cfg.parityConfig = '0' + level;
 	strlcpy(cfg.diskQueueType, "fifo", sizeof(cfg.diskQueueType));
-	cfg.maxOutstandingDiskReqs = 1;
+	cfg.maxOutstandingDiskReqs = RF_DEFAULT_QUEUE_DEPTH;
 	cfg.force = 1;
 
 	/* configure... */

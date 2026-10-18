@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.419 2026/10/18 01:39:05 tls Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.420 2026/10/18 14:56:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.419 2026/10/18 01:39:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.420 2026/10/18 14:56:32 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -2645,6 +2645,8 @@ rf_markalldirty(RF_Raid_t *raidPtr)
 				   but whatever you do, don't
 				   try to access it!! */
 			} else {
+				clabel->maxOutstanding =
+				    raidPtr->maxOutstanding;
 				raidmarkdirty(raidPtr, c);
 			}
 		}
@@ -2709,6 +2711,7 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 			clabel = raidget_component_label(raidPtr, c);
 			/* make sure status is noted */
 			clabel->status = rf_ds_optimal;
+			clabel->maxOutstanding = raidPtr->maxOutstanding;
 
 			/* note what unit we are configured as */
 			if ((rs->sc_cflags & RAIDF_UNIT_CHANGED) == 0)
@@ -3365,7 +3368,6 @@ rf_does_it_fit(RF_ConfigSet_t *cset, RF_AutoConfig_t *ac)
 	    (clabel1->SUsPerPU == clabel2->SUsPerPU) &&
 	    (clabel1->SUsPerRU == clabel2->SUsPerRU) &&
 	    (clabel1->parityConfig == clabel2->parityConfig) &&
-	    (clabel1->maxOutstanding == clabel2->maxOutstanding) &&
 	    (clabel1->blockSize == clabel2->blockSize) &&
 	    rf_component_label_numblocks(clabel1) ==
 	    rf_component_label_numblocks(clabel2) &&
@@ -3504,7 +3506,13 @@ rf_create_configuration(RF_AutoConfig_t *ac, RF_Config_t *config,
 	config->parityConfig = clabel->parityConfig;
 	/* XXX... */
 	strcpy(config->diskQueueType,"fifo");
-	config->maxOutstandingDiskReqs = clabel->maxOutstanding;
+	if (clabel->maxOutstanding <= 0)
+		config->maxOutstandingDiskReqs = RF_DEFAULT_QUEUE_DEPTH;
+	else if (clabel->maxOutstanding > RF_MAX_QUEUE_DEPTH)
+		config->maxOutstandingDiskReqs = RF_MAX_QUEUE_DEPTH;
+	else
+		config->maxOutstandingDiskReqs =
+		    (uint8_t)clabel->maxOutstanding;
 	config->layoutSpecificSize = 0; /* XXX ?? */
 
 	while(ac!=NULL) {

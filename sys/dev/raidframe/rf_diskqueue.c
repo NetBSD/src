@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.65 2026/10/18 01:39:05 tls Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.66 2026/10/18 14:56:32 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.65 2026/10/18 01:39:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.66 2026/10/18 14:56:32 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -229,11 +229,9 @@ rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	RF_RowCol_t r,c;
 	int     rc, i;
 
-	raidPtr->maxQueueDepth = cfgPtr->maxOutstandingDiskReqs;
-	if (raidPtr->maxQueueDepth < 1)
-		raidPtr->maxQueueDepth = 1;
-	if (raidPtr->maxQueueDepth > RF_MAX_QUEUE_DEPTH)
-		raidPtr->maxQueueDepth = RF_MAX_QUEUE_DEPTH;
+	raidPtr->maxQueueDepth = (uint8_t)cfgPtr->maxOutstandingDiskReqs;
+	if (raidPtr->maxQueueDepth == 0)
+		raidPtr->maxQueueDepth = RF_DEFAULT_QUEUE_DEPTH;
 
 	for (p = NULL, i = 0; i < NUM_DISK_QUEUE_TYPES; i++) {
 		if (!strcmp(diskqueuesw[i].queueType, cfgPtr->diskQueueType)) {

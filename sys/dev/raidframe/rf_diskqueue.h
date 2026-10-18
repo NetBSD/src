@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.31 2026/10/18 01:39:05 tls Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.32 2026/10/18 14:56:32 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -51,8 +51,6 @@
 
 #define RF_IO_NORMAL_PRIORITY 1
 #define RF_IO_LOW_PRIORITY    0
-
-#define RF_MAX_QUEUE_DEPTH  256
 
 /* the data held by a disk queue entry */
 struct RF_DiskQueueData_s {
