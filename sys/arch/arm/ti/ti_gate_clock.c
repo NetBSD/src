@@ -1,4 +1,4 @@
-/* $NetBSD: ti_gate_clock.c,v 1.1 2025/12/16 12:20:22 skrll Exp $ */
+/* $NetBSD: ti_gate_clock.c,v 1.2 2026/10/18 20:43:09 yurix Exp $ */
 
 /*-
  * Copyright (c) 2025 Rui-Xiang Guo
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_gate_clock.c,v 1.1 2025/12/16 12:20:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gate_clock.c,v 1.2 2026/10/18 20:43:09 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ static void ti_gate_clock_put(void *, struct clk *);
 static int ti_gate_clock_enable(void *, struct clk *);
 static int ti_gate_clock_disable(void *, struct clk *);
 static struct clk *ti_gate_clock_get_parent(void *, struct clk *);
+static u_int ti_gate_clock_get_rate(void *, struct clk *);
 
 static const struct clk_funcs ti_gate_clock_clk_funcs = {
 	.get = ti_gate_clock_get,
@@ -61,6 +62,7 @@ static const struct clk_funcs ti_gate_clock_clk_funcs = {
 	.enable = ti_gate_clock_enable,
 	.disable = ti_gate_clock_disable,
 	.get_parent = ti_gate_clock_get_parent,
+	.get_rate = ti_gate_clock_get_rate,
 };
 
 struct ti_gate_clock_softc {
@@ -196,4 +198,26 @@ ti_gate_clock_get_parent(void *priv, struct clk *clk)
 	struct ti_gate_clock_softc * const sc = priv;
 
 	return fdtbus_clock_get_index(sc->sc_phandle, 0);
+}
+
+static u_int
+ti_gate_clock_get_rate(void *priv, struct clk *clkp)
+{
+	struct ti_gate_clock_softc * const sc = priv;
+
+	/* check if the clock is enabled*/
+	uint32_t status = RD4(sc, 0);
+	if (status & __BIT(sc->sc_shift))
+		return 0;
+
+	struct clk *parent = clk_get_parent(clkp);
+	if (parent == NULL) {
+		/*
+		 * clk_get_parent is allowed to return NULL, in which case there
+		 * is no way to figure out the clock rate.
+		 */
+		return 0;
+	}
+
+	return clk_get_rate(parent);
 }
