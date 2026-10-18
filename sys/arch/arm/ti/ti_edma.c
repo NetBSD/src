@@ -1,4 +1,4 @@
-/* $NetBSD: ti_edma.c,v 1.10 2026/10/02 07:27:39 skrll Exp $ */
+/* $NetBSD: ti_edma.c,v 1.11 2026/10/18 09:17:08 yurix Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.10 2026/10/02 07:27:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.11 2026/10/18 09:17:08 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -705,9 +705,6 @@ edma_transfer_enable(struct edma_channel *ch, uint16_t param_entry)
 		EDMA_WRITE(sc, EDMA_CCERRCLR_REG, ccerr);
 	}
 
-	EDMA_WRITE(sc, EDMA_ECR_REG + off, bit);
-	EDMA_WRITE(sc, EDMA_SECR_REG + off, bit);
-	EDMA_WRITE(sc, EDMA_EMCR_REG + off, bit);
 	EDMA_WRITE(sc, EDMA_EESR_REG + off, bit);
 }
 

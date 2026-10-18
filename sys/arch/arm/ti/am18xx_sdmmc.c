@@ -1,4 +1,4 @@
-/* $NetBSD: am18xx_sdmmc.c,v 1.1 2026/08/19 09:28:39 yurix Exp $ */
+/* $NetBSD: am18xx_sdmmc.c,v 1.2 2026/10/18 09:17:08 yurix Exp $ */
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -384,13 +384,15 @@ am18xx_sdmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 	sc->sc_irq_wait = false;
 
-	/* halt the dma transaction */
-	if (sc->sc_use_dma) {
-		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
-			fdtbus_dma_halt(sc->sc_rx_dma);
-		} else {
-			fdtbus_dma_halt(sc->sc_tx_dma);
-		}
+	/*
+	 * Signal the DMA controller we are done. For some reason, the HW also
+	 * generates DMA events for PIO transfers, meaning we also have to
+	 * signal the DMA controller after a PIO transfer when DMA is available.
+	 */
+	if (sc->sc_rx_dma != NULL && ISSET(cmd->c_flags, SCF_CMD_READ)) {
+		fdtbus_dma_halt(sc->sc_rx_dma);
+	} else if (sc->sc_tx_dma != NULL) {
+		fdtbus_dma_halt(sc->sc_tx_dma);
 	}
 
 	if (cmd->c_error) {
