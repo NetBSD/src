@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1547 2026/09/26 22:20:58 mrg Exp $
+$NetBSD: pcidevs,v 1.1548 2026/10/18 18:49:20 palle Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -9931,6 +9931,7 @@ product TI	PCIXX12FW	0x803a	PCIXX12 IEEE 1394 Host Controller
 product TI	PCIXX12FM	0x803b	PCIXX12 Integrated FlashMedia Controller
 product TI	PCIXX12SD	0x803c	PCIXX12 Secure Digital Host Controller
 product TI	PCIXX12SM	0x803d	PCIXX12 Smart Card
+product TI	XHCI		0x8241	xHCI
 product TI	ACX100A		0x8400	ACX100A 802.11b
 product TI	ACX100B		0x8401	ACX100B 802.11b
 product TI	ACX111		0x9066	ACX111 802.11b/g
