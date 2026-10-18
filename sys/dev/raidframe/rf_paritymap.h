@@ -1,4 +1,4 @@
-/* $NetBSD: rf_paritymap.h,v 1.2 2010/03/14 21:11:41 jld Exp $ */
+/* $NetBSD: rf_paritymap.h,v 1.3 2026/10/18 01:39:05 tls Exp $ */
 
 /*-
  * Copyright (c) 2009 Jed Davis.
@@ -49,10 +49,10 @@ struct rf_paritymap_ondisk
 	volatile char bits[RF_PARITYMAP_NBYTE];
 };
 
-/* In-core per-region state: a byte for each, encoded as follows. */
+/* In-core per-region state: a 16-bit signed count for each, encoded as follows. */
 struct rf_paritymap_current
 {
-	volatile int8_t state[RF_PARITYMAP_NREG];
+	volatile int16_t state[RF_PARITYMAP_NREG];
 	/*
 	 * Values:
 	 * if x == 0, the region may be written out as clean

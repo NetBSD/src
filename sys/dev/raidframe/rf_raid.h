@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.53 2023/09/25 21:59:38 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.54 2026/10/18 01:39:05 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -329,6 +329,9 @@ struct raid_softc {
 #define RAIDF_LOCKED		0x10	/* unit is locked */
 #define RAIDF_UNIT_CHANGED	0x20	/* unit is being changed */
 
+#ifndef RAIDOUTSTANDING
+#define RAIDOUTSTANDING   6
+#endif
 
 int rf_fail_disk(RF_Raid_t *, struct rf_recon_req *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.64 2023/09/17 20:07:39 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.65 2026/10/18 01:39:05 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.64 2023/09/17 20:07:39 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.65 2026/10/18 01:39:05 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -145,11 +145,11 @@ static const RF_DiskQueueSW_t diskqueuesw[] = {
 #define NUM_DISK_QUEUE_TYPES (sizeof(diskqueuesw)/sizeof(RF_DiskQueueSW_t))
 
 
-#define RF_MAX_FREE_DQD 256
+#define RF_MAX_FREE_DQD 512
 #define RF_MIN_FREE_DQD  64
 
 /* XXX: scale these... */
-#define RF_MAX_FREE_BUFIO 256
+#define RF_MAX_FREE_BUFIO 512
 #define RF_MIN_FREE_BUFIO  64
 
 
@@ -230,6 +230,10 @@ rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	int     rc, i;
 
 	raidPtr->maxQueueDepth = cfgPtr->maxOutstandingDiskReqs;
+	if (raidPtr->maxQueueDepth < 1)
+		raidPtr->maxQueueDepth = 1;
+	if (raidPtr->maxQueueDepth > RF_MAX_QUEUE_DEPTH)
+		raidPtr->maxQueueDepth = RF_MAX_QUEUE_DEPTH;
 
 	for (p = NULL, i = 0; i < NUM_DISK_QUEUE_TYPES; i++) {
 		if (!strcmp(diskqueuesw[i].queueType, cfgPtr->diskQueueType)) {
@@ -255,7 +259,7 @@ rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 					   c, p,
 					   raidPtr->sectorsPerDisk,
 					   raidPtr->Disks[c].dev,
-					   cfgPtr->maxOutstandingDiskReqs,
+					   raidPtr->maxQueueDepth,
 					   listp, raidPtr->cleanupList);
 		if (rc)
 			return (rc);
@@ -267,7 +271,7 @@ rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 					   raidPtr->numCol + r, p,
 					   raidPtr->sectorsPerDisk,
 					   raidPtr->Disks[raidPtr->numCol + r].dev,
-					   cfgPtr->maxOutstandingDiskReqs, listp,
+					   raidPtr->maxQueueDepth, listp,
 					   raidPtr->cleanupList);
 		if (rc)
 			return (rc);

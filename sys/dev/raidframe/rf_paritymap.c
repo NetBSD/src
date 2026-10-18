@@ -1,4 +1,4 @@
-/* $NetBSD: rf_paritymap.c,v 1.11 2023/09/25 21:59:38 oster Exp $ */
+/* $NetBSD: rf_paritymap.c,v 1.12 2026/10/18 01:39:05 tls Exp $ */
 
 /*-
  * Copyright (c) 2009 Jed Davis.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.11 2023/09/25 21:59:38 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.12 2026/10/18 01:39:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -132,8 +132,8 @@ rf_paritymap_begin_region(struct rf_paritymap *pm, unsigned region)
 	if (pm->current->state[region] < 0)
 		pm->current->state[region] = 0;
 
-	/* This shouldn't happen unless RAIDOUTSTANDING is set too high. */
-	KASSERT(pm->current->state[region] < 127);
+	/* This shouldn't happen unless openings is set too high. */
+	KASSERT(pm->current->state[region] < INT16_MAX);
 	pm->current->state[region]++;
 
 	needs_write = isclr(pm->disk_now->bits, region);

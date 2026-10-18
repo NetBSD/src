@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.51 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.52 2026/10/18 01:39:05 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.51 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.52 2026/10/18 01:39:05 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -313,13 +313,13 @@ rf_MarkFailuresInASMList(RF_Raid_t *raidPtr,
  *
  ***************************************************************************/
 
-#define RF_MAX_FREE_ASMHDR 128
+#define RF_MAX_FREE_ASMHDR 256
 #define RF_MIN_FREE_ASMHDR  32
 
-#define RF_MAX_FREE_ASM 192
+#define RF_MAX_FREE_ASM 512
 #define RF_MIN_FREE_ASM  64
 
-#define RF_MAX_FREE_PDA 192
+#define RF_MAX_FREE_PDA 512
 #define RF_MIN_FREE_PDA  64
 
 #define RF_MAX_FREE_ASMHLE 64
@@ -331,7 +331,7 @@ rf_MarkFailuresInASMList(RF_Raid_t *raidPtr,
 #define RF_MAX_FREE_VFPLE 128
 #define RF_MIN_FREE_VFPLE  32
 
-#define RF_MAX_FREE_VPLE 128
+#define RF_MAX_FREE_VPLE 512
 #define RF_MIN_FREE_VPLE  32
 
 

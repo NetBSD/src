@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.58 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.59 2026/10/18 01:39:05 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.58 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.59 2026/10/18 01:39:05 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -211,13 +211,13 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 	}
 }
 
-#define RF_MAX_FREE_DAGH 128
+#define RF_MAX_FREE_DAGH 256
 #define RF_MIN_FREE_DAGH  32
 
-#define RF_MAX_FREE_DAGNODE 512 /* XXX Tune this... */
-#define RF_MIN_FREE_DAGNODE 128 /* XXX Tune this... */
+#define RF_MAX_FREE_DAGNODE 1024 /* XXX Tune this... */
+#define RF_MIN_FREE_DAGNODE 128  /* XXX Tune this... */
 
-#define RF_MAX_FREE_DAGLIST 128
+#define RF_MAX_FREE_DAGLIST 256
 #define RF_MIN_FREE_DAGLIST  32
 
 #define RF_MAX_FREE_DAGPCACHE 128
@@ -339,33 +339,34 @@ rf_AllocStripeBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h,
     int size)
 {
 	RF_VoidPointerListElem_t *vple;
-	void *p;
+	void *p = NULL;
 
 	RF_ASSERT((size <= (raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
 					       raidPtr->logBytesPerSector))));
 
-	p =  malloc( raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
-					raidPtr->logBytesPerSector),
-		     M_RAIDFRAME, M_NOWAIT);
-	if (!p) {
-		rf_lock_mutex2(raidPtr->mutex);
-		if (raidPtr->stripebuf_count > 0) {
-			vple = raidPtr->stripebuf;
-			raidPtr->stripebuf = vple->next;
-			p = vple->p;
-			rf_FreeVPListElem(raidPtr, vple);
-			raidPtr->stripebuf_count--;
-		} else {
+	rf_lock_mutex2(raidPtr->mutex);
+	if (raidPtr->stripebuf_count > 0) {
+		vple = raidPtr->stripebuf;
+		raidPtr->stripebuf = vple->next;
+		p = vple->p;
+		rf_FreeVPListElem(raidPtr, vple);
+		raidPtr->stripebuf_count--;
+	} else {
 #ifdef DIAGNOSTIC
-			printf("raid%d: Help!  Out of emergency full-stripe buffers!\n", raidPtr->raidid);
+		printf("raid%d: Help!  Out of emergency full-stripe buffers!\n", raidPtr->raidid);
 #endif
-		}
-		rf_unlock_mutex2(raidPtr->mutex);
+	}
+	rf_unlock_mutex2(raidPtr->mutex);
+	if (!p) {
+		p = malloc(raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
+					      raidPtr->logBytesPerSector),
+			   M_RAIDFRAME, M_NOWAIT);
 		if (!p) {
 			/* We didn't get a buffer... not much we can do other than wait,
 			   and hope that someone frees up memory for us.. */
-			p = malloc( raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
-						       raidPtr->logBytesPerSector), M_RAIDFRAME, M_WAITOK);
+			p = malloc(raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
+						      raidPtr->logBytesPerSector),
+				   M_RAIDFRAME, M_WAITOK);
 		}
 	}
 	memset(p, 0, raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit << raidPtr->logBytesPerSector));
@@ -418,34 +419,34 @@ void *
 rf_AllocIOBuffer(RF_Raid_t *raidPtr, int size)
 {
 	RF_VoidPointerListElem_t *vple;
-	void *p;
+	void *p = NULL;
 
 	RF_ASSERT((size <= (raidPtr->Layout.sectorsPerStripeUnit <<
 			   raidPtr->logBytesPerSector)));
 
-	p =  malloc( raidPtr->Layout.sectorsPerStripeUnit <<
-				 raidPtr->logBytesPerSector,
-				 M_RAIDFRAME, M_NOWAIT);
-	if (!p) {
-		rf_lock_mutex2(raidPtr->mutex);
-		if (raidPtr->iobuf_count > 0) {
-			vple = raidPtr->iobuf;
-			raidPtr->iobuf = vple->next;
-			p = vple->p;
-			rf_FreeVPListElem(raidPtr, vple);
-			raidPtr->iobuf_count--;
-		} else {
+	rf_lock_mutex2(raidPtr->mutex);
+	if (raidPtr->iobuf_count > 0) {
+		vple = raidPtr->iobuf;
+		raidPtr->iobuf = vple->next;
+		p = vple->p;
+		rf_FreeVPListElem(raidPtr, vple);
+		raidPtr->iobuf_count--;
+	} else {
 #ifdef DIAGNOSTIC
-			printf("raid%d: Help!  Out of emergency buffers!\n", raidPtr->raidid);
+		printf("raid%d: Help!  Out of emergency buffers!\n", raidPtr->raidid);
 #endif
-		}
-		rf_unlock_mutex2(raidPtr->mutex);
+	}
+	rf_unlock_mutex2(raidPtr->mutex);
+	if (!p) {
+		p = malloc(raidPtr->Layout.sectorsPerStripeUnit <<
+			   raidPtr->logBytesPerSector,
+			   M_RAIDFRAME, M_NOWAIT);
 		if (!p) {
 			/* We didn't get a buffer... not much we can do other than wait,
 			   and hope that someone frees up memory for us.. */
-			p = malloc( raidPtr->Layout.sectorsPerStripeUnit <<
-				    raidPtr->logBytesPerSector,
-				    M_RAIDFRAME, M_WAITOK);
+			p = malloc(raidPtr->Layout.sectorsPerStripeUnit <<
+				   raidPtr->logBytesPerSector,
+				   M_RAIDFRAME, M_WAITOK);
 		}
 	}
 	memset(p, 0, raidPtr->Layout.sectorsPerStripeUnit << raidPtr->logBytesPerSector);

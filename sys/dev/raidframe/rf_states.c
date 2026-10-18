@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.53 2021/07/23 02:35:14 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.54 2026/10/18 01:39:05 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.53 2021/07/23 02:35:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.54 2026/10/18 01:39:05 tls Exp $");
 
 #include <sys/errno.h>
 
@@ -594,6 +594,7 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 	RF_DagHeader_t *dag_h;
 	int     i, j, done = RF_TRUE;
 	RF_DagList_t *dagList, *temp;
+	RF_VoidPointerListElem_t *tmp;
 
 	/* check to see if this is the last dag */
 	dagList = desc->dagList;
@@ -606,7 +607,7 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 	if (done) {
 		if (desc->status) {
 			/* a dag failed, retry */
-			/* free all dags */
+			/* free all dags and any allocated buffers */
 			dagList = desc->dagList;
 			for (i = 0; i < desc->numStripes; i++) {
 				rf_FreeDAG(dagList->dags);
@@ -615,6 +616,17 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 				rf_FreeDAGList(raidPtr, temp);
 			}
 			desc->dagList = NULL;
+
+			while (desc->iobufs) {
+				tmp = desc->iobufs;
+				desc->iobufs = desc->iobufs->next;
+				rf_FreeIOBuffer(raidPtr, tmp);
+			}
+			while (desc->stripebufs) {
+				tmp = desc->stripebufs;
+				desc->stripebufs = desc->stripebufs->next;
+				rf_FreeStripeBuffer(raidPtr, tmp);
+			}
 
 			rf_MarkFailuresInASMList(raidPtr, asmh);
 

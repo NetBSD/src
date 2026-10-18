@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.144 2024/09/19 06:13:03 andvar Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.145 2026/10/18 01:39:05 tls Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.144 2024/09/19 06:13:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.145 2026/10/18 01:39:05 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.144 2024/09/19 06:13:03 andvar Exp $
 #endif
 
 /* rad == RF_RaidAccessDesc_t */
-#define RF_MAX_FREE_RAD 128
+#define RF_MAX_FREE_RAD 256
 #define RF_MIN_FREE_RAD  32
 
 /* main configuration routines */
@@ -402,7 +402,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	raidPtr->changing_components = 0;
 	raidPtr->recon_in_progress = 0;
 
-	raidPtr->maxOutstanding = cfgPtr->maxOutstandingDiskReqs;
+	raidPtr->maxOutstanding = raidPtr->maxQueueDepth;
 
 	/* autoconfigure and root_partition will actually get filled in
 	   after the config is done */
@@ -415,8 +415,16 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 		raidPtr->keep_acc_totals = 1;
 	}
 
-	/* Allocate a bunch of buffers to be used in low-memory conditions */
+	/*
+	 * Compute top-level I/O openings and allocate emergency buffers
+	 * (if needed by this RAID layout) for low-memory conditions.
+	 */
 	raidPtr->iobuf = NULL;
+	raidPtr->iobuf_count = 0;
+	raidPtr->numEmergencyBuffers = 0;
+	raidPtr->stripebuf = NULL;
+	raidPtr->stripebuf_count = 0;
+	raidPtr->numEmergencyStripeBuffers = 0;
 
 	rc = rf_AllocEmergBuffers(raidPtr);
 	if (rc) {
@@ -470,9 +478,8 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 
 /*
 
-  Routines to allocate and free the "emergency buffers" for a given
-  RAID set.  These emergency buffers will be used when the kernel runs
-  out of kernel memory.
+  Routines to compute top-level openings and allocate/free the
+  per-set I/O and full-stripe buffers used by parity RAID layouts.
 
  */
 
@@ -481,24 +488,63 @@ rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
 {
 	void *tmpbuf;
 	RF_VoidPointerListElem_t *vple;
-	int i;
+	size_t su_bytes, stripe_data_bytes;
+	uint64_t bytes_per_opening, mem_budget, mem_openings;
+	int max_stripes_per_bp, i;
 
-	/* XXX next line needs tuning... */
-	raidPtr->numEmergencyBuffers = 10 * raidPtr->numCol;
+	/*
+	 * Non-parity layouts (RAID 0 has numParityCol == 0; RAID 1 and
+	 * mirror declustering have numDataCol == 1) never allocate
+	 * intermediate iobuf or stripebuf buffers.
+	 */
+	if (raidPtr->Layout.numParityCol == 0) {
+		raidPtr->openings = uimin(
+		    raidPtr->maxQueueDepth * raidPtr->numCol,
+		    RF_MAX_QUEUE_DEPTH);
+		return (0);
+	}
+	if (raidPtr->Layout.numDataCol == 1) {
+		raidPtr->openings = uimin(
+		    raidPtr->maxQueueDepth * uimax(1, raidPtr->numCol / 2),
+		    RF_MAX_QUEUE_DEPTH);
+		return (0);
+	}
+
+	/*
+	 * For parity layouts, bound pre-allocated buffer memory to 1% of
+	 * physical memory (with a floor of RAIDOUTSTANDING openings = 12
+	 * full-stripe buffers), capped at maxQueueDepth.
+	 */
+	su_bytes = (size_t)raidPtr->Layout.sectorsPerStripeUnit <<
+	    raidPtr->logBytesPerSector;
+	stripe_data_bytes = (size_t)raidPtr->Layout.dataSectorsPerStripe <<
+	    raidPtr->logBytesPerSector;
+	max_stripes_per_bp = howmany(MAXPHYS, stripe_data_bytes) + 1;
+
+	bytes_per_opening = (uint64_t)(max_stripes_per_bp + 2) *
+	    raidPtr->numCol * su_bytes;
+	mem_budget = ctob((uint64_t)physmem) / 100;
+	mem_openings = mem_budget / bytes_per_opening;
+	if (mem_openings < RAIDOUTSTANDING)
+		mem_openings = RAIDOUTSTANDING;
+	if (mem_openings > (uint64_t)raidPtr->maxQueueDepth)
+		raidPtr->openings = raidPtr->maxQueueDepth;
+	else
+		raidPtr->openings = (int)mem_openings;
+
+	raidPtr->numEmergencyBuffers = raidPtr->openings *
+	    max_stripes_per_bp * raidPtr->numCol;
 #if DEBUG
-	printf("raid%d: allocating %d buffers of %d bytes.\n",
+	printf("raid%d: allocating %d buffers of %zu bytes.\n",
 	       raidPtr->raidid,
 	       raidPtr->numEmergencyBuffers,
-	       (int)(raidPtr->Layout.sectorsPerStripeUnit <<
-	       raidPtr->logBytesPerSector));
+	       su_bytes);
 #endif
 	for (i = 0; i < raidPtr->numEmergencyBuffers; i++) {
-		tmpbuf = malloc( raidPtr->Layout.sectorsPerStripeUnit <<
-				 raidPtr->logBytesPerSector,
-				 M_RAIDFRAME, M_WAITOK);
+		tmpbuf = malloc(su_bytes, M_RAIDFRAME, M_WAITOK);
 		if (tmpbuf) {
 			vple = rf_AllocVPListElem(raidPtr);
-			vple->p= tmpbuf;
+			vple->p = tmpbuf;
 			vple->next = raidPtr->iobuf;
 			raidPtr->iobuf = vple;
 			raidPtr->iobuf_count++;
@@ -509,24 +555,22 @@ rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
 		}
 	}
 
-	/* XXX next line needs tuning too... */
-	raidPtr->numEmergencyStripeBuffers = 10;
-        for (i = 0; i < raidPtr->numEmergencyStripeBuffers; i++) {
-                tmpbuf = malloc( raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
-                                 raidPtr->logBytesPerSector),
-                                 M_RAIDFRAME, M_WAITOK);
-                if (tmpbuf) {
-                        vple = rf_AllocVPListElem(raidPtr);
-                        vple->p= tmpbuf;
-                        vple->next = raidPtr->stripebuf;
-                        raidPtr->stripebuf = vple;
-                        raidPtr->stripebuf_count++;
-                } else {
-                        printf("raid%d: failed to allocate emergency stripe buffer!\n",
-                               raidPtr->raidid);
+	raidPtr->numEmergencyStripeBuffers = 2 * raidPtr->openings;
+	for (i = 0; i < raidPtr->numEmergencyStripeBuffers; i++) {
+		tmpbuf = malloc(raidPtr->numCol * su_bytes,
+		    M_RAIDFRAME, M_WAITOK);
+		if (tmpbuf) {
+			vple = rf_AllocVPListElem(raidPtr);
+			vple->p = tmpbuf;
+			vple->next = raidPtr->stripebuf;
+			raidPtr->stripebuf = vple;
+			raidPtr->stripebuf_count++;
+		} else {
+			printf("raid%d: failed to allocate emergency stripe buffer!\n",
+			       raidPtr->raidid);
 			return 1;
-                }
-        }
+		}
+	}
 
 	return (0);
 }
