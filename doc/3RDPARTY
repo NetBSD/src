@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2265 2026/10/15 19:49:22 kim Exp $
+#	$NetBSD: 3RDPARTY,v 1.2266 2026/10/19 03:43:02 jnemeth Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -139,11 +139,13 @@ Responsible:	christos
 License:	BSD-like (2-clause) / MPL
 Location:	external/mpl/bind/dist
 Notes:
-First bind2netbsd script to import into src/external/bsd/bind/dist.
+First bind2netbsd script to import into src/external/mpl/bind/dist.
 The Makefiles in src/external/mpl/bind are not handled by the script.
 Build bind to generate the include files.
-Then binclude4netbsd script to import into src/external/bsd/bind/include.
+Then binclude4netbsd script to import into src/external/mpl/bind/include.
 The libc and include parts of the resolver are now part of libbind.
+Check and update src/etc/namedb/bind.keys from
+src/external/mpl/bind/dist/bind.keys if necessary.  Also do pullups
 
 Package:	blocklist
 Version:	current-2020-06-14
