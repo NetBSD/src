@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.264 2026/06/11 19:51:15 rumble Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.265 2026/10/19 03:50:49 jnemeth Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -39,6 +39,9 @@
 ./etc/mail
 ./etc/mtree
 ./etc/namedb
+./etc/namedb/cache	mode=0775 uname=named gname=named
+./etc/namedb/keys	type=dir mode=0775 uname=named gname=named
+./etc/namedb/nta	type=dir mode=0775 uname=named gname=named
 ./etc/nsd
 ./etc/openldap
 ./etc/openssl
