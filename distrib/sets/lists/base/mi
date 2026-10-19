@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1390 2026/08/25 13:39:55 wiz Exp $
+# $NetBSD: mi,v 1.1391 2026/10/19 09:14:45 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -109,6 +109,9 @@
 ./etc/mtree					base-sys-root
 ./etc/mtree/set.base				base-sys-root
 ./etc/namedb					base-bind-root
+./etc/namedb/cache				base-bind-root
+./etc/namedb/keys				base-bind-root
+./etc/namedb/nta				base-bind-root
 ./etc/nsd					base-sys-root
 ./etc/obsolete					base-obsolete		obsolete
 ./etc/openldap					base-ldap-root
@@ -540,6 +543,7 @@
 ./usr/bin/atf2kyua				base-kyua-bin		kyua
 ./usr/bin/atq					base-cron-bin
 ./usr/bin/atrm					base-cron-bin
+./usr/bin/atto					base-util-bin
 ./usr/bin/audiocfg				base-audio-bin		audio
 ./usr/bin/audioctl				base-audio-bin		audio
 ./usr/bin/audioplay				base-audio-bin		audio
