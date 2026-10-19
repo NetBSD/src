@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1391 2026/10/19 09:14:45 martin Exp $
+# $NetBSD: mi,v 1.1392 2026/10/19 09:38:27 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -543,7 +543,6 @@
 ./usr/bin/atf2kyua				base-kyua-bin		kyua
 ./usr/bin/atq					base-cron-bin
 ./usr/bin/atrm					base-cron-bin
-./usr/bin/atto					base-util-bin
 ./usr/bin/audiocfg				base-audio-bin		audio
 ./usr/bin/audioctl				base-audio-bin		audio
 ./usr/bin/audioplay				base-audio-bin		audio
