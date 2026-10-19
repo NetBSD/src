@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.302 2026/10/18 20:17:43 nia Exp $
+#	$NetBSD: Makefile,v 1.303 2026/10/19 07:32:19 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -102,7 +102,7 @@ SUBDIR+=	if_ncm
 SUBDIR+=	if_npflog
 SUBDIR+=	if_ppp
 SUBDIR+=	if_pppoe
-SUBDIR+=	if_rsu
+# SUBDIR+=	if_rsu
 SUBDIR+=	if_run
 SUBDIR+=	if_sl
 SUBDIR+=	if_smsc
