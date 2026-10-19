@@ -1,4 +1,4 @@
-/* $NetBSD: smbios_platform.c,v 1.2 2022/11/25 22:17:20 mrg Exp $ */
+/* $NetBSD: smbios_platform.c,v 1.3 2026/10/19 18:26:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,11 +29,12 @@
 #include "isa.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbios_platform.c,v 1.2 2022/11/25 22:17:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbios_platform.c,v 1.3 2026/10/19 18:26:40 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/sysctl.h>
 #include <sys/uuid.h>
 #include <sys/pmf.h>
@@ -67,7 +68,7 @@ static const char *platform_private_nodes[] = {
 void
 platform_init(void)
 {
-	struct smbtable smbios;
+	struct smbtable *smbios;
 	struct smbios_sys *psys;
 	struct smbios_struct_bios *pbios;
 	struct smbios_board *pboard;
@@ -89,64 +90,66 @@ platform_init(void)
 			printf("platform: sysctl_createv "
 			    "(machdep.smbios) failed, err = %d\n", err);
 	}
-	
-	smbios.cookie = 0;
-	if (smbios_find_table(SMBIOS_TYPE_SYSTEM, &smbios)) {
-		psys = smbios.tblhdr;
 
-		platform_add(&smbios, "system-vendor", psys->vendor);
-		platform_add(&smbios, "system-product", psys->product);
-		platform_add(&smbios, "system-version", psys->version);
-		platform_add(&smbios, "system-serial", psys->serial);
-		platform_add_uuid(&smbios, "system-uuid", psys->uuid);
+	smbios = kmem_alloc(sizeof(*smbios), KM_SLEEP);
+
+	smbios->cookie = 0;
+	if (smbios_find_table(SMBIOS_TYPE_SYSTEM, smbios)) {
+		psys = smbios->tblhdr;
+
+		platform_add(smbios, "system-vendor", psys->vendor);
+		platform_add(smbios, "system-product", psys->product);
+		platform_add(smbios, "system-version", psys->version);
+		platform_add(smbios, "system-serial", psys->serial);
+		platform_add_uuid(smbios, "system-uuid", psys->uuid);
 	}
 
-	smbios.cookie = 0;
-	if (smbios_find_table(SMBIOS_TYPE_BIOS, &smbios)) {
-		pbios = smbios.tblhdr;
+	smbios->cookie = 0;
+	if (smbios_find_table(SMBIOS_TYPE_BIOS, smbios)) {
+		pbios = smbios->tblhdr;
 
-		platform_add(&smbios, "bios-vendor", pbios->vendor);
-		platform_add(&smbios, "bios-version", pbios->version);
-		platform_add_date(&smbios, "bios-date", pbios->release);
+		platform_add(smbios, "bios-vendor", pbios->vendor);
+		platform_add(smbios, "bios-version", pbios->version);
+		platform_add_date(smbios, "bios-date", pbios->release);
 	}
 
-	smbios.cookie = 0;
-	if (smbios_find_table(SMBIOS_TYPE_BASEBOARD, &smbios)) {
-		pboard = smbios.tblhdr;
+	smbios->cookie = 0;
+	if (smbios_find_table(SMBIOS_TYPE_BASEBOARD, smbios)) {
+		pboard = smbios->tblhdr;
 
-		platform_add(&smbios, "board-vendor", pboard->vendor);
-		platform_add(&smbios, "board-product", pboard->product);
-		platform_add(&smbios, "board-version", pboard->version);
-		platform_add(&smbios, "board-serial", pboard->serial);
-		platform_add(&smbios, "board-asset-tag", pboard->asset);
+		platform_add(smbios, "board-vendor", pboard->vendor);
+		platform_add(smbios, "board-product", pboard->product);
+		platform_add(smbios, "board-version", pboard->version);
+		platform_add(smbios, "board-serial", pboard->serial);
+		platform_add(smbios, "board-asset-tag", pboard->asset);
 	}
 
-	smbios.cookie = 0;
-	if (smbios_find_table(SMBIOS_TYPE_ENCLOSURE, &smbios)) {
-		pchassis = smbios.tblhdr;
+	smbios->cookie = 0;
+	if (smbios_find_table(SMBIOS_TYPE_ENCLOSURE, smbios)) {
+		pchassis = smbios->tblhdr;
 
-		platform_add(&smbios, "chassis-vendor", pchassis->vendor);
-		platform_add(&smbios, "chassis-type", pchassis->shape);
-		platform_add(&smbios, "chassis-version", pchassis->version);
-		platform_add(&smbios, "chassis-serial", pchassis->serial);
-		platform_add(&smbios, "chassis-asset-tag", pchassis->asset);
+		platform_add(smbios, "chassis-vendor", pchassis->vendor);
+		platform_add(smbios, "chassis-type", pchassis->shape);
+		platform_add(smbios, "chassis-version", pchassis->version);
+		platform_add(smbios, "chassis-serial", pchassis->serial);
+		platform_add(smbios, "chassis-asset-tag", pchassis->asset);
 	}
 
-	smbios.cookie = 0;
-	if (smbios_find_table(SMBIOS_TYPE_PROCESSOR, &smbios)) {
-		pproc = smbios.tblhdr;
+	smbios->cookie = 0;
+	if (smbios_find_table(SMBIOS_TYPE_PROCESSOR, smbios)) {
+		pproc = smbios->tblhdr;
 
-		platform_add(&smbios, "processor-vendor", pproc->vendor);
-		platform_add(&smbios, "processor-version", pproc->version);
-		platform_add_word(&smbios, "processor-frequency",
+		platform_add(smbios, "processor-vendor", pproc->vendor);
+		platform_add(smbios, "processor-version", pproc->version);
+		platform_add_word(smbios, "processor-frequency",
 			pproc->curspeed, " MHz");
 	}
 
-	smbios.cookie = 0;
+	smbios->cookie = 0;
 	nisa = 0;
 	nother = 0;
-	while (smbios_find_table(SMBIOS_TYPE_SLOTS, &smbios)) {
-		pslot = smbios.tblhdr;
+	while (smbios_find_table(SMBIOS_TYPE_SLOTS, smbios)) {
+		pslot = smbios->tblhdr;
 		switch (pslot->type) {
 		case SMBIOS_SLOT_ISA:
 		case SMBIOS_SLOT_EISA:
@@ -164,6 +167,7 @@ platform_init(void)
 		isa_set_slotcount(nisa);
 	}
 #endif
+	kmem_free(smbios, sizeof(*smbios));
 }
 
 static bool
