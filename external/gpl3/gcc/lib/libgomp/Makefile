@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2026/01/19 02:45:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.30 2026/10/19 22:59:50 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -36,7 +36,10 @@ SHLIB_MINOR=	3
 
 LDFLAGS+=	-Wl,--version-script,${DIST}/libgomp/libgomp.map
 
-.if ${GOMP_MACHINE_ARCH} == ${MACHINE_ARCH:S/earmv5/earm/}
+# This is to avoid installing more than one copy of these files
+# with src/compat subdirs.  For earmv5 and m68ksf, the translation
+# here is necessary.
+.if ${GOMP_MACHINE_ARCH} == ${MACHINE_ARCH:S/earmv5/earm/:S/m68ksf/m68k/}
 # This is where GCC looks for it.
 FILES=		libgomp.spec
 FILESDIR=	${LIBDIR}

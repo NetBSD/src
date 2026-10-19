@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2021/04/25 23:12:54 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2026/10/19 22:59:50 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -12,7 +12,7 @@ UNSUPPORTED_COMPILER.clang=	# defined
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
-GCCARCH=	${.CURDIR}/../../usr.bin/gcc/arch/${MACHINE_ARCH}
+GCCARCH=	${.CURDIR}/../../usr.bin/gcc/arch/${GCC_MACHINE_ARCH}
 
 GALLCFLAGS=	${G_CRTSTUFF_CFLAGS} ${G_CRTSTUFF_T_CFLAGS}
 
@@ -30,9 +30,9 @@ COPTS+=		-finhibit-size-directive \
 
 GCFLAGS=	${GALLCFLAGS:N-D*:N-I*:N-i*:N./*}
 
-DPSRCS+=	${.CURDIR}/arch/${MACHINE_ARCH}.mk tconfig.h
+DPSRCS+=	${.CURDIR}/arch/${GCC_MACHINE_ARCH}.mk tconfig.h
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
+.include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}.mk"
 
 SRCS+=		crtbegin.c crtend.c
 OBJS+=		crtbegin.o crtend.o

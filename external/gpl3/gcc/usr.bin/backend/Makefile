@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.85 2026/10/03 06:29:56 rin Exp $
+#	$NetBSD: Makefile,v 1.86 2026/10/19 22:59:50 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -25,7 +25,7 @@ DPSRCS+=	version.h
 DPSRCS+=	insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 DPSRCS+=	${DIST}/gcc/BASE-VER
 CPPFLAGS+=	-I${DIST}/libgcc
-CPPFLAGS+=	-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${MACHINE_ARCH:S/m68ksf/m68k/}
+CPPFLAGS+=	-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${GCC_MACHINE_ARCH}
 
 CPPFLAGS.cppdefault.cc+=	-DPREFIX=\"/usr\" \
 				-DNATIVE_SYSTEM_HEADER_DIR=\"${G_NATIVE_SYSTEM_HEADER_DIR}\"
