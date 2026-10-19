@@ -1,4 +1,4 @@
-/*	$NetBSD: cbus.c,v 1.9 2026/08/21 18:02:31 palle Exp $	*/
+/*	$NetBSD: cbus.c,v 1.10 2026/10/19 18:59:57 palle Exp $	*/
 /*	$OpenBSD: cbus.c,v 1.15 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -194,12 +194,14 @@ cbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 
 	err = sun4v_intr_setenabled(devhandle, devino, INTR_DISABLED);
 	if (err != H_EOK)
-	  panic("sun4v_intr_setenabled(%lx, %lu) failed - err = %d\n", 
+	  panic("%s: sun4v_intr_setenabled(%lx, %lu) failed - err = %d\n",
+			__FUNCTION__,
 			(long unsigned int)devhandle, (long unsigned int)devino, err);
 
 	err = sun4v_intr_setcookie(devhandle, devino, (vaddr_t)ih);
 	if (err != H_EOK)
-		panic("sun4v_intr_setcookie(%#lx, %#lx, %#lx) failed - err = %d\n", 
+		panic("%s: sun4v_intr_setcookie(%#lx, %#lx, %#lx) failed - err = %d\n",
+			  __FUNCTION__,
 			  (long unsigned int)devhandle,(long unsigned int)devino,
 			  (long unsigned int)ih, err);
 
@@ -207,15 +209,17 @@ cbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 
 	err = sun4v_intr_settarget(devhandle, devino, cpus->ci_cpuid);
 	if (err != H_EOK)
-		panic("sun4v_intr_settarget(%#lx, %#lx, %d) failed - err = %d\n", 
+		panic("%s: sun4v_intr_settarget(%#lx, %#lx, %d) failed - err = %d\n",
+			  __FUNCTION__,
 			  (long unsigned int)devhandle, (long unsigned int)devino,
 			  cpus->ci_cpuid, err);
 
 	/* Clear pending interrupts. */
 	err = sun4v_intr_setstate(devhandle, devino, INTR_IDLE);
 	if (err != H_EOK)
-	  panic("sun4v_intr_setenabled(%lx, %lu) failed - err = %d\n", 
-			(long unsigned int)devhandle, (long unsigned int)devino, err);
+		panic("%s: sun4v_intr_setenabled(%lx, %lu) failed - err = %d\n",
+			  __FUNCTION__,
+			  (long unsigned int)devhandle, (long unsigned int)devino, err);
 
 	return (ih);
 }
