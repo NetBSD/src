@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.13 2019/12/15 16:48:27 tsutsui Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.14 2026/10/19 22:32:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ typedef struct RF_Config50_s {
 	RF_StripeNum_t		SUsPerRU;
 	RF_ParityConfig_t	parityConfig;
 	RF_DiskQueueType_t	diskQueueType;
-	char			maxOutstandingDiskReqs;
+	uint8_t			maxOutstandingDiskReqs;
 	char			debugVars[RF_MAXDBGV][50];
 	unsigned int		layoutSpecificSize;
 	void		       *layoutSpecific;

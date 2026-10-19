@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.24 2026/10/18 14:56:32 tls Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.25 2026/10/19 22:32:04 tls Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -333,7 +333,7 @@ struct RF_Config_s {
 	RF_ParityConfig_t parityConfig;	/* identifies the RAID architecture to
 					 * be used */
 	RF_DiskQueueType_t diskQueueType;	/* 'f' = fifo, 'c' = cvscan */
-	char    maxOutstandingDiskReqs;	/* # concurrent reqs to be sent to a
+	uint8_t	maxOutstandingDiskReqs;	/* # concurrent reqs to be sent to a
 					 * disk (uint8_t, 1..255). */
 #define RF_MAX_QUEUE_DEPTH	255
 #define RF_DEFAULT_QUEUE_DEPTH	100

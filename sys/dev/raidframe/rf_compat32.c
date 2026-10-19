@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat32.c,v 1.9 2021/12/11 19:24:21 mrg Exp $	*/
+/*	$NetBSD: rf_compat32.c,v 1.10 2026/10/19 22:32:04 tls Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -61,7 +61,7 @@ typedef struct RF_Config_s32 {
 					 * be used */
 	RF_DiskQueueType_t diskQueueType;	/* 'f' = fifo, 'c' = cvscan,
 						 * not used in kernel */
-	char    maxOutstandingDiskReqs;	/* # concurrent reqs to be sent to a
+	uint8_t	maxOutstandingDiskReqs;	/* # concurrent reqs to be sent to a
 					 * disk.  not used in kernel. */
 	char    debugVars[RF_MAXDBGV][50];	/* space for specifying debug
 						 * variables & their values */
