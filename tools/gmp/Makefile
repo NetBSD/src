@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2024/09/28 21:18:55 bad Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2026/10/20 19:01:29 martin Exp $
 #
 
 GNUHOSTDIST=   ${.CURDIR}/../../external/lgpl3/gmp/dist
@@ -15,6 +15,15 @@ CPPFLAGS+=	${HOST_CPPFLAGS}
 .if ${BUILD_OSTYPE} == "Darwin"
 BUILD_MACHINE!=	uname -m
 . if ${BUILD_MACHINE} == "x86_64"
+CONFIGURE_ARGS+=	--disable-assembly
+. endif
+#
+# GMP prior to 6.3 misuses register x18 on 64-bit ARM, causing
+# mysterious compiler failures on Darwin where it is zeroed on
+# context switch.  See GMP change 5f32dbc41afc if you want to
+# fix this before upgrading GMP itself.
+#
+. if ${BUILD_MACHINE} == "arm64"
 CONFIGURE_ARGS+=	--disable-assembly
 . endif
 .endif
