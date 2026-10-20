@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.6 2026/10/16 17:49:12 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.7 2026/10/20 06:40:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: netbsd32_machdep.c,v 1.6 2026/10/16 17:49:12 riastradh Exp $");
+__RCSID("$NetBSD: netbsd32_machdep.c,v 1.7 2026/10/20 06:40:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -85,8 +85,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	const struct trapframe * const tf = l->l_md.md_utf;
 
 	/* Save register context. */
-	/* XXX Isn't this missing a lot of registers to save? */
-	for (size_t i = _X_RA; i <= _X_GP; i++) {
+	for (size_t i = _X_RA; i <= _X_T6; i++) {
 		mcp->__gregs[i] = tf->tf_reg[i];
 	}
 	mcp->__gregs[_REG_PC] = tf->tf_pc;
@@ -139,8 +138,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 			return error;
 
 		/* Save register context. */
-		/* XXX Isn't this missing a lot of registers to restore? */
-		for (size_t i = _X_RA; i <= _X_GP; i++) {
+		for (size_t i = _X_RA; i <= _X_T6; i++) {
 			tf->tf_reg[i] = (int32_t)gr[i];
 		}
 		tf->tf_pc = (int32_t) gr[_REG_PC];
