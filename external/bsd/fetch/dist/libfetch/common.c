@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.7 2024/02/02 22:19:05 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.7.4.1 2026/10/20 19:14:08 martin Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -478,6 +478,7 @@ fetch_ssl(conn_t *conn, const struct url *URL, int verbose)
 	}
 	conn->buf_events = 0;
 	SSL_set_fd(conn->ssl, conn->sd);
+	SSL_set1_host(conn->ssl, URL->host);
 #if OPENSSL_VERSION_NUMBER >= 0x0090806fL && !defined(OPENSSL_NO_TLSEXT)
 	if (!SSL_set_tlsext_host_name(conn->ssl, (char *)(uintptr_t)URL->host))
 	{
