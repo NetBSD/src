@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.14 2026/10/15 07:51:43 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.15 2026/10/20 19:33:11 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -204,4 +204,85 @@ common/lib/libc/string/memset2.c		1.12
 
 	mips: PR 60780: fix undefined behaviour.
 	[kre, ticket #1364]
+
+sys/dev/pci/if_vr.c				1.140
+
+	vr(4): PR 60884: fix promiscous mode setting.
+	[andvar, ticket #1365]
+
+tools/gmp/Makefile				1.7
+
+	gcc: PR 60904: fix compiler core dumps on MacOS on Apple Silicon.
+	[tls, ticket #1366]
+
+distrib/sets/lists/base/mi			1.1391,1.1392
+etc/mtree/NetBSD.dist.base			1.265
+etc/namedb/bind.keys				1.3
+
+	named(8): PR 52465, PR 60864: fix config dirs and root keys.
+	[jnemeth, ticket #1367]
+
+external/bsd/fetch/dist/libfetch/common.c	1.14
+
+	libfetch: PR 60878: verify hostname against certificate.
+	[riastradh, ticket #1382]
+
+distrib/sets/lists/base/mi			1.1393 (patch)
+doc/3RDPARTY					1.2267 (patch)
+external/mpl/mozilla-certdata/share/Makefile	1.6
+external/mpl/mozilla-certdata/share/certs/AffirmTrust_Commercial.pem delete
+external/mpl/mozilla-certdata/share/certs/AffirmTrust_Networking.pem delete
+external/mpl/mozilla-certdata/share/certs/AffirmTrust_Premium.pem delete
+external/mpl/mozilla-certdata/share/certs/AffirmTrust_Premium_ECC.pem delete
+external/mpl/mozilla-certdata/share/certs/Baltimore_CyberTrust_Root.pem delete
+external/mpl/mozilla-certdata/share/certs/CommScope_Public_Trust_ECC_Root-01.pem delete
+external/mpl/mozilla-certdata/share/certs/CommScope_Public_Trust_ECC_Root-02.pem delete
+external/mpl/mozilla-certdata/share/certs/CommScope_Public_Trust_RSA_Root-01.pem delete
+external/mpl/mozilla-certdata/share/certs/CommScope_Public_Trust_RSA_Root-02.pem delete
+external/mpl/mozilla-certdata/share/certs/D-TRUST_BR_Root_CA_2_2023.pem 1.1
+external/mpl/mozilla-certdata/share/certs/D-TRUST_EV_Root_CA_2_2023.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Entrust_Root_Certification_Authority.pem delete
+external/mpl/mozilla-certdata/share/certs/Explicitly_Distrust_DigiNotar_Root_CA.pem delete
+external/mpl/mozilla-certdata/share/certs/FIRMAPROFESIONAL_CA_ROOT-A_WEB.pem delete
+external/mpl/mozilla-certdata/share/certs/GLOBALTRUST_2020.pem delete
+external/mpl/mozilla-certdata/share/certs/OISTE_Client_Root_ECC_G1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/OISTE_Client_Root_RSA_G1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/OISTE_Server_Root_ECC_G1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/OISTE_Server_Root_RSA_G1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SECOM_SMIME_RSA_Root_CA_2024.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SECOM_TLS_ECC_Root_CA_2024.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SECOM_TLS_RSA_Root_CA_2024.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SecureSign_RootCA11.pem delete
+external/mpl/mozilla-certdata/share/certs/SecureSign_Root_CA12.pem delete
+external/mpl/mozilla-certdata/share/certs/SecureSign_Root_CA16.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SecureTrust_CA.pem delete
+external/mpl/mozilla-certdata/share/certs/Secure_Global_CA.pem delete
+external/mpl/mozilla-certdata/share/certs/Security_Communication_RootCA3.pem delete
+external/mpl/mozilla-certdata/share/certs/SwissSign_RSA_SMIME_Root_CA_2022_-_1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SwissSign_RSA_TLS_Root_CA_2022_-_1.pem 1.1
+external/mpl/mozilla-certdata/share/certs/SwissSign_Silver_CA_-_G2.pem delete
+external/mpl/mozilla-certdata/share/certs/TeliaSonera_Root_CA_v1.pem delete
+external/mpl/mozilla-certdata/share/certs/Telia_EC_Email_Root_CA_v3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Telia_EC_TLS_Root_CA_v3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Telia_RSA_Email_Root_CA_v3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Telia_RSA_TLS_Root_CA_v3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TrustAsia_SMIME_ECC_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TrustAsia_SMIME_RSA_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TrustAsia_TLS_ECC_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TrustAsia_TLS_RSA_Root_CA.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Trustwave_Global_Certification_Authority.pem delete
+external/mpl/mozilla-certdata/share/certs/Trustwave_Global_ECC_P256_Certification_Authority.pem delete
+external/mpl/mozilla-certdata/share/certs/Trustwave_Global_ECC_P384_Certification_Authority.pem delete
+external/mpl/mozilla-certdata/share/certs/XRamp_Global_CA_Root.pem delete
+external/mpl/mozilla-certdata/share/certs/certSIGN_ROOT_CA.pem delete
+external/mpl/mozilla-certdata/share/certs/e-Szigno_TLS_Root_CA_2023.pem 1.1
+external/mpl/mozilla-certdata/share/certs/ePKI_Root_Certification_Authority.pem delete
+external/mpl/mozilla-certdata/share/certs/emSign_ECC_Root_CA_-_C3.pem delete
+external/mpl/mozilla-certdata/share/certs/emSign_ECC_Root_CA_-_G3.pem delete
+external/mpl/mozilla-certdata/share/certs/emSign_Root_CA_-_C1.pem delete
+external/mpl/mozilla-certdata/share/email.trust	1.4
+external/mpl/mozilla-certdata/share/server.trust 1.4
+
+	mozilla-certdata: PR 60908: update for compromised CA.
+	[riastradh, ticket #1383]
 
