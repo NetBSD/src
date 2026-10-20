@@ -1,4 +1,4 @@
-/*	$NetBSD: t_arc4random.c,v 1.5 2025/03/09 18:11:55 riastradh Exp $	*/
+/*	$NetBSD: t_arc4random.c,v 1.5.2.1 2026/10/20 19:12:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define	_REENTRANT
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_arc4random.c,v 1.5 2025/03/09 18:11:55 riastradh Exp $");
+__RCSID("$NetBSD: t_arc4random.c,v 1.5.2.1 2026/10/20 19:12:06 martin Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -97,6 +97,21 @@ arc4random_prng(void)
 }
 
 /*
+ * setup_thread(cookie)
+ *
+ *	pthread_create start function to call arc4random().
+ */
+static void *
+setup_thread(void *cookie)
+{
+	unsigned char buf[32];
+
+	arc4random_buf(buf, sizeof(buf));
+	ATF_CHECK(!iszero(buf, sizeof(buf)));	/* Pr[fail] = 1/2^256 */
+	return NULL;
+}
+
+/*
  * arc4random_global_buf(buf, len)
  *
  *	Same as arc4random_buf, but force use of the global state.
@@ -105,8 +120,18 @@ arc4random_prng(void)
 static void
 arc4random_global_buf(void *buf, size_t len)
 {
+	pthread_t t;
 	struct rlimit rlim, orlim;
 	struct arc4random_prng *prng;
+
+	/*
+	 * Call arc4random() in another thread to cause it to be
+	 * globally initialized -- just not in this thread -- before we
+	 * clamp down on the address space rlimit deliberately causing
+	 * mmap to fail to allocate a thread-local state.
+	 */
+	RZ(pthread_create(&t, NULL, &setup_thread, NULL));
+	RZ(pthread_join(t, NULL));
 
 	/*
 	 * Save the address space limit.
