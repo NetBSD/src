@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.6 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.7 2026/10/20 06:39:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef CORENAME
-__RCSID("$NetBSD: core_machdep.c,v 1.6 2023/05/07 12:41:48 skrll Exp $");
+__RCSID("$NetBSD: core_machdep.c,v 1.7 2026/10/20 06:39:47 skrll Exp $");
 #endif
 
 #include <sys/param.h>
@@ -80,7 +80,7 @@ CORENAME(cpu_coredump)(struct lwp *l, struct coredump_iostate *iocookie,
 
 	// Can't use structure assignment if this is doing COMPAT_NETBSD32
 	const struct trapframe * const tf = l->l_md.md_utf;
-	for (size_t i = _X_RA; i <= _X_GP; i++) {
+	for (size_t i = _X_RA; i <= _X_T6; i++) {
 		cpustate.tf.tf_reg[i] = tf->tf_reg[i];
 	}
 	cpustate.tf.tf_pc = tf->tf_pc;
