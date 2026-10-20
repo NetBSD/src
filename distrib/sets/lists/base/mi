@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1314.2.11 2025/04/12 12:47:25 martin Exp $
+# $NetBSD: mi,v 1.1314.2.12 2026/10/20 19:08:53 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -109,6 +109,9 @@
 ./etc/mtree					base-sys-root
 ./etc/mtree/set.base				base-sys-root
 ./etc/namedb					base-bind-root
+./etc/namedb/cache				base-bind-root
+./etc/namedb/keys				base-bind-root
+./etc/namedb/nta				base-bind-root
 ./etc/nsd					base-sys-root
 ./etc/obsolete					base-obsolete		obsolete
 ./etc/openldap					base-ldap-root
