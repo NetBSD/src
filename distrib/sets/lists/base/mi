@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1314.2.13 2026/10/20 19:23:13 martin Exp $
+# $NetBSD: mi,v 1.1314.2.14 2026/10/20 19:31:40 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -2061,16 +2061,24 @@
 ./usr/share/certs/mozilla/all/Telekom_Security_SMIME_RSA_Root_2023.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Telekom_Security_TLS_ECC_Root_2020.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Telekom_Security_TLS_RSA_Root_2023.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/TeliaSonera_Root_CA_v1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TeliaSonera_Root_CA_v1.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/Telia_EC_Email_Root_CA_v3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Telia_EC_TLS_Root_CA_v3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Telia_RSA_Email_Root_CA_v3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Telia_RSA_TLS_Root_CA_v3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Telia_Root_CA_v2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/TrustCor_ECA-1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/TrustCor_RootCert_CA-1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/TrustCor_RootCert_CA-2.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/TrustAsia_Global_Root_CA_G3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/TrustAsia_Global_Root_CA_G4.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/Trustwave_Global_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/Trustwave_Global_ECC_P256_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/Trustwave_Global_ECC_P384_Certification_Authority.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TrustAsia_SMIME_ECC_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TrustAsia_SMIME_RSA_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TrustAsia_TLS_ECC_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TrustAsia_TLS_RSA_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Trustwave_Global_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/Trustwave_Global_ECC_P256_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/Trustwave_Global_ECC_P384_Certification_Authority.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/TunTrust_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/UCA_Extended_Validation_Root.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/UCA_Global_G2_Root.pem	base-mozcerts-share	share
