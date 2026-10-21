@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.129 2023/09/17 20:07:39 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.130 2026/10/21 01:19:18 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.129 2023/09/17 20:07:39 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.130 2026/10/21 01:19:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -333,8 +333,9 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		/* Failed disk goes back to "failed" status */
 		raidPtr->Disks[col].status = rf_ds_failed;
 
-		/* Spare disk goes back to "spare" status. */
-		spareDiskPtr->status = rf_ds_spare;
+		/* Spare disk goes back to "spare" status if it didn't fail. */
+		if (spareDiskPtr->status == rf_ds_rebuilding_spare)
+			spareDiskPtr->status = rf_ds_spare;
 		rf_unlock_mutex2(raidPtr->mutex);
 
 	}
@@ -785,6 +786,7 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 			
 			if (status == RF_RECON_WRITE_ERROR) {
 				num_writes++;
+				write_error = 1;
 				recon_error = 1;
 				raidPtr->reconControl->error = 1;
 				/* an error was encountered at the very end... bail */
@@ -827,6 +829,7 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 		status = ProcessReconEvent(raidPtr, event);
 
 		if (status == RF_RECON_WRITE_ERROR) {
+			write_error = 1;
 			recon_error = 1;
 			raidPtr->reconControl->error = 1;
 			/* an error was encountered at the very end... bail */
@@ -883,6 +886,7 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 
 				if (status == RF_RECON_WRITE_ERROR) {
 					raidPtr->reconControl->error = 1;
+					write_error = 1;
 					/* an error was encountered at the very end... bail.
 					   This will be very bad news for the user, since
 					   at this point there will have been a read error
@@ -893,6 +897,12 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 			}
 		}
 
+		if (write_error && col != scol &&
+		    reconDesc->spareDiskPtr != NULL) {
+			rf_lock_mutex2(raidPtr->mutex);
+			reconDesc->spareDiskPtr->status = rf_ds_failed;
+			rf_unlock_mutex2(raidPtr->mutex);
+		}
 
 		/* cleanup */
 

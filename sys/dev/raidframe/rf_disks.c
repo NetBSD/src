@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.97 2026/07/22 20:46:54 joe Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.98 2026/10/21 01:19:18 tls Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.97 2026/07/22 20:46:54 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.98 2026/10/21 01:19:18 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1109,13 +1109,13 @@ int
 rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 {
 	int spare_number;
-	int i;
+	int i, acd;
 	RF_RaidDisk_t *disk;
 	struct vnode *vp;
 	int ret = EINVAL;
 
 	spare_number = sparePtr->column - raidPtr->numCol;
-	if (spare_number < 0 || spare_number > raidPtr->numSpare)
+	if (spare_number < 0 || spare_number >= raidPtr->numSpare)
 		return(ret);
 
 	rf_lock_mutex2(raidPtr->mutex);
@@ -1136,6 +1136,7 @@ rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 	}
 
 	vp = raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp;
+	acd = disk->auto_configured;
 	raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp = NULL;
 	raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_dev = 0;
 
@@ -1143,10 +1144,11 @@ rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 	disk->auto_configured = 0;
 	disk->dev = 0;
 	disk->numBlocks = 0;
+	disk->partitionSize = 0;
 	disk->status = rf_ds_failed;
 	snprintf(disk->devname, sizeof(disk->devname),
 		 "absent_spare%d", spare_number);
-	rf_close_component(raidPtr, vp, 0);
+	rf_close_component(raidPtr, vp, acd);
 
 	rf_lock_mutex2(raidPtr->mutex);
 
@@ -1183,6 +1185,7 @@ rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 	RF_RaidDisk_t *disk;
 	RF_RowCol_t col = component->column;
 	struct vnode *vp;
+	int acd;
 	int ret = EINVAL;
 
 	if (col < 0 || col >= raidPtr->numCol)
@@ -1209,6 +1212,7 @@ rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 	}
 
 	vp = raidPtr->raid_cinfo[col].ci_vp;
+	acd = disk->auto_configured;
 	raidPtr->raid_cinfo[col].ci_vp = NULL;
 	raidPtr->raid_cinfo[col].ci_dev = 0;
 
@@ -1216,9 +1220,10 @@ rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 	disk->auto_configured = 0;
 	disk->dev = 0;
 	disk->numBlocks = 0;
+	disk->partitionSize = 0;
 	snprintf(disk->devname, sizeof(disk->devname), "component%d", col);
 
-	rf_close_component(raidPtr, vp, 0);
+	rf_close_component(raidPtr, vp, acd);
 
 	ret = 0;
 out:
@@ -1258,44 +1263,28 @@ rf_incorporate_hot_spare(RF_Raid_t *raidPtr,
 void
 rf_swap_components(RF_Raid_t *raidPtr, int a, int b)
 {
-	char tmpdevname[56]; /* 56 is from raidframevar.h */
-	RF_ComponentLabel_t tmp_ci_label;
-	dev_t tmp_ci_dev, tmp_dev;
-	int tmp_status;
-	struct vnode *tmp_ci_vp;
-
+	RF_RaidDisk_t tmp_disk;
+	struct raidcinfo tmp_cinfo;
+	dev_t tmp_qdev;
 
 	/* This function *MUST* be called with all IO suspended. */
 	RF_ASSERT(raidPtr->accesses_suspended > 0);
-	
-	/* Swap the component names... */
-	snprintf(tmpdevname, sizeof(tmpdevname), "%s", raidPtr->Disks[a].devname);
-	snprintf(raidPtr->Disks[a].devname, sizeof(raidPtr->Disks[a].devname), "%s", raidPtr->Disks[b].devname);
-	snprintf(raidPtr->Disks[b].devname, sizeof(raidPtr->Disks[b].devname), "%s", tmpdevname);
 
-	/* and the vp */
-	tmp_ci_vp = raidPtr->raid_cinfo[a].ci_vp;
-	raidPtr->raid_cinfo[a].ci_vp = raidPtr->raid_cinfo[b].ci_vp;
-	raidPtr->raid_cinfo[b].ci_vp = tmp_ci_vp;
+	/* Swap the disk structures */
+	tmp_disk = raidPtr->Disks[a];
+	raidPtr->Disks[a] = raidPtr->Disks[b];
+	raidPtr->Disks[b] = tmp_disk;
 
-	/* and the ci dev */
-	tmp_ci_dev = raidPtr->raid_cinfo[a].ci_dev;
-	raidPtr->raid_cinfo[a].ci_dev = raidPtr->raid_cinfo[b].ci_dev;
-	raidPtr->raid_cinfo[b].ci_dev = tmp_ci_dev;
+	/* Swap the raid_cinfo structures (vp, ci_dev, ci_label) */
+	tmp_cinfo = raidPtr->raid_cinfo[a];
+	raidPtr->raid_cinfo[a] = raidPtr->raid_cinfo[b];
+	raidPtr->raid_cinfo[b] = tmp_cinfo;
 
-	/* the dev itself */
-	tmp_dev = raidPtr->Disks[a].dev;
-	raidPtr->Disks[a].dev = raidPtr->Disks[b].dev;
-	raidPtr->Disks[b].dev = tmp_dev;
-
-	/* the component label */
-	tmp_ci_label = raidPtr->raid_cinfo[a].ci_label;
-	raidPtr->raid_cinfo[a].ci_label = raidPtr->raid_cinfo[b].ci_label;
-	raidPtr->raid_cinfo[b].ci_label = tmp_ci_label;
-
-	/* and the status */
-	tmp_status = raidPtr->Disks[a].status;
-	raidPtr->Disks[a].status = raidPtr->Disks[b].status;
-	raidPtr->Disks[b].status = tmp_status;
+	/* Keep the disk queue dev_t in sync */
+	if (raidPtr->Queues != NULL) {
+		tmp_qdev = raidPtr->Queues[a].dev;
+		raidPtr->Queues[a].dev = raidPtr->Queues[b].dev;
+		raidPtr->Queues[b].dev = tmp_qdev;
+	}
 }
 
