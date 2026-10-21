@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.16 2026/10/21 05:02:51 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.17 2026/10/21 19:28:00 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -285,4 +285,59 @@ external/mpl/mozilla-certdata/share/server.trust 1.4
 
 	mozilla-certdata: PR 60908: update for compromised CA.
 	[riastradh, ticket #1383]
+
+share/man/man3/CMSG_DATA.3			1.4-1.6
+
+	cmsg(3): PR 59054: fix some issues in the man page:
+	- Don't use malloc(3) here -- statically sized allocation is fine.
+	- Clarify constancy of CMSG_SPACE/LEN to justify static size.
+	- Handle multiple descriptors -- mandatory because of possible
+	  alignment issues in CMSG_LEN.
+	[riastradh, ticket #1368]
+
+share/man/man4/unix.4				1.31-1.35
+
+	unix(4): PR 32844: fix various issues in man page:
+	- Split walls of prose into itemized lists.
+	- Specify types of options.
+	- Add LOCAL_CONNWAIT, SOL_LOCAL.
+	- Xref cmsg(3).
+	- Fix text about LOCAL_CREDS.
+	- Markup fixes.
+	[riastradh, ticket #1369]
+
+sys/kern/sys_futex.c				1.20-1.22
+tests/lib/libc/sys/t_futex_ops.c		1.6-1.10
+
+	futex(2) [including compat_linux futex(2)]:
+	PR 56828: fix FUTEX_CMP_REQUEUE semantics to correctly match Linux.
+	[riastradh, ticket #1370]
+
+lib/libm/src/s_modfl.c				1.2
+tests/lib/libm/t_fe_round.c			1.20
+tests/lib/libm/t_modf.c				1.6
+
+	modfl(3): PR 58237:: fix modfl(3) on ld128 architectures.
+	[riastradh, ticket #1371]
+
+bin/df/df.c					1.104
+
+	df(1): PR 58718: fix swapped total/free columns in `df -G'
+	[riastradh, ticket #1372]
+
+crypto/external/bsd/heimdal/Makefile.rules.inc	1.11
+
+	heimdal: PR 58771: fix parallel make includes.
+	[riastradh, ticket #1373]
+
+sys/dev/video.c					1.46
+
+	video(4): PR 58898: fix race in read to avoid kernel data
+	structure corruption that leads to panic under use by Chromium.
+	[riastradh, ticket #1374]
+
+common/lib/libc/string/memmem.c			1.6
+
+	memmem(3): PR 58906: avoid undefined behaviour in shift.
+	[riastradh, ticket #1375]
 
