@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.101.2.1 2023/12/18 14:17:42 martin Exp $ */
+/*	$NetBSD: df.c,v 1.101.2.2 2026/10/21 18:58:11 martin Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.101.2.1 2023/12/18 14:17:42 martin Exp $");
+__RCSID("$NetBSD: df.c,v 1.101.2.2 2026/10/21 18:58:11 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -477,7 +477,7 @@ prtstat(const struct statvfs *sfsp, int maxwidth)
 		    (uint64_t)sfsp->f_bavail);
 		(void)printf("%10" PRId64 " total files  %10" PRId64
 		    " free files %12lx filesys id\n",
-		    (uint64_t)sfsp->f_ffree, (uint64_t)sfsp->f_files,
+		    (uint64_t)sfsp->f_files, (uint64_t)sfsp->f_ffree,
 		    sfsp->f_fsid);
 		(void)printf("%10s fstype  %#15lx flag  %17ld filename "
 		    "length\n", sfsp->f_fstypename, sfsp->f_flag,
