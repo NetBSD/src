@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2026/03/31 20:24:19 yurix Exp $
+#	$NetBSD: Makefile,v 1.11 2026/10/21 19:12:55 yurix Exp $
 
 TARGETS+=	dtblist
 
@@ -24,7 +24,7 @@ SUBDIR+=	riscv
 
 TARGET_ARCH_LIST=	earmv5 earmv5hf
 TARGET_ARCH_LIST+=	earmv6 earmv6hf earmv6eb earmv6hfeb
-TARGET_ARCH_LIST+=	earmv7 earmv7hf earmv7hf earmv7hfeb
+TARGET_ARCH_LIST+=	earmv7 earmv7hf earmv7eb earmv7hfeb
 TARGET_ARCH_LIST+=	aarch64 aarch64eb
 TARGET_ARCH_LIST+=	riscv32 riscv64
 
