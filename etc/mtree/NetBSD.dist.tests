@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.216 2026/01/30 09:01:07 wiz Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.217 2026/10/22 17:19:59 riastradh Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -508,6 +508,7 @@
 ./usr/tests/usr.sbin/certctl/certs2
 ./usr/tests/usr.sbin/certctl/certs3
 ./usr/tests/usr.sbin/certctl/certs4
+./usr/tests/usr.sbin/certctl/certs5
 ./usr/tests/usr.sbin/cpuctl
 ./usr/tests/usr.sbin/execsnoop
 ./usr/tests/usr.sbin/inetd
