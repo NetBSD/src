@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.79 2026/08/23 22:08:40 riastradh Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.80 2026/10/22 20:48:19 andvar Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.79 2026/08/23 22:08:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.80 2026/10/22 20:48:19 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1270,7 +1270,7 @@ pmap_table_alloc(pmap_t pmap, bool segtab, bool nowait,
 			if (newptp == NULL) {
 				/*
 				 * If we didn't wait, then no one would
-				 * have allocted one behind our back.
+				 * have allocated one behind our back.
 				 */
 				KASSERT(nowait);
 				return NULL;

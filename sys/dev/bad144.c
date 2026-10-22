@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.1 2026/07/03 21:27:40 thorpej Exp $	*/
+/*	$NetBSD: bad144.c,v 1.2 2026/10/22 20:48:20 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bad144.c,v 1.1 2026/07/03 21:27:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bad144.c,v 1.2 2026/10/22 20:48:20 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -182,7 +182,7 @@ bad144_fini(struct bad144_context * const ctx)
 
 /*
  * bad144_set --
- *	Set the bad144 sector fowarding table from the provided
+ *	Set the bad144 sector forwarding table from the provided
  *	buffer.
  */
 int

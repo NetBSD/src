@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.126 2026/06/06 16:09:21 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.127 2026/10/22 20:48:20 andvar Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.126 2026/06/06 16:09:21 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.127 2026/10/22 20:48:20 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -407,7 +407,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 
 	/*
 	 * Use DMA if the host system and the controller support it.
-	 * Supports integrated or external DMA egine, with or without
+	 * Supports integrated or external DMA engine, with or without
 	 * SDHC_DMA_ENABLE in the command.
 	 */
 	if (ISSET(sc->sc_flags, SDHC_FLAG_FORCE_DMA) ||

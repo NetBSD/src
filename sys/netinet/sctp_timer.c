@@ -1,5 +1,5 @@
 /*	$KAME: sctp_timer.c,v 1.30 2005/06/16 18:29:25 jinmei Exp $	*/
-/*	$NetBSD: sctp_timer.c,v 1.6 2022/02/16 22:00:56 andvar Exp $	*/
+/*	$NetBSD: sctp_timer.c,v 1.7 2026/10/22 20:48:20 andvar Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_timer.c,v 1.6 2022/02/16 22:00:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_timer.c,v 1.7 2026/10/22 20:48:20 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1436,7 +1436,7 @@ sctp_iterator_timer(struct sctp_iterator *it)
 	/* only one iterator can run at a
 	 * time. This is the only way we
 	 * can cleanly pull ep's from underneath
-	 * all the running interators when a
+	 * all the running iterators when a
 	 * ep is freed.
 	 */
  	SCTP_ITERATOR_LOCK();

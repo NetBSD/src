@@ -1,4 +1,4 @@
-/* $NetBSD: apple_intc.c,v 1.9 2022/06/28 10:42:22 jmcneill Exp $ */
+/* $NetBSD: apple_intc.c,v 1.10 2026/10/22 20:48:20 andvar Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.9 2022/06/28 10:42:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.10 2026/10/22 20:48:20 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -241,7 +241,7 @@ apple_intc_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		return intr_establish_xname(intno, ipl, IST_LEVEL | mpsafe,
 		    func, arg, xname);
 
-	/* interate over CPUs for LOCALPIC_SOURCE_TIMER */
+	/* iterate over CPUs for LOCALPIC_SOURCE_TIMER */
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	void *ih = NULL;

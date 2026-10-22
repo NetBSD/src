@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.18 2023/09/04 12:24:07 andvar Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.19 2026/10/22 20:48:19 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2023/09/04 12:24:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 2026/10/22 20:48:19 andvar Exp $");
 
 #define	_EWS4800MIPS_BUS_DMA_PRIVATE
 /* #define	BUS_DMA_DEBUG */
@@ -91,7 +91,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	void *mapstore;
 
 	/*
-	 * Allcoate and initialize the DMA map.  The end of the map
+	 * Allocate and initialize the DMA map.  The end of the map
 	 * is a variable-sized array of segments, so we allocate enough
 	 * room for them in one shot.
 	 *

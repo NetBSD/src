@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.18 2020/07/07 06:27:37 msaitoh Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.19 2026/10/22 20:48:20 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -57,7 +57,7 @@ struct tl_softc {
 	int ctrl_nsegs;
 	char *ctrl;			/* vaddr for ctrl_segs */
 	struct Rx_list *Rx_list;	/* Receive and transmit lists */
-	struct tl_Rx_list *hw_Rx_list;	/* and assocoated hw descriptor */
+	struct tl_Rx_list *hw_Rx_list;	/* and associated hw descriptor */
 	bus_dmamap_t Rx_dmamap;		/* and associated DMA maps */
 	struct Tx_list *Tx_list;
 	struct tl_Tx_list *hw_Tx_list;
