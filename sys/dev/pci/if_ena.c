@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.43 2025/02/26 04:49:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.44 2026/10/22 18:59:25 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1279,21 +1279,20 @@ validate_tx_req_id(struct ena_ring *tx_ring, uint16_t req_id)
 	struct ena_tx_buffer *tx_info = NULL;
 	KASSERT(ENA_RING_MTX_OWNED(tx_ring));
 
-	if (likely(req_id < tx_ring->ring_size)) {
-		tx_info = &tx_ring->tx_buffer_info[req_id];
-		if (tx_info->mbuf != NULL)
-			return (0);
+	if (unlikely(req_id >= tx_ring->ring_size)) {
+		device_printf(adapter->pdev, "Invalid req_id (out of range): %hu\n", req_id);
+		counter_u64_add(tx_ring->tx_stats.bad_req_id, 1);
+		return EFAULT;
 	}
 
-	if (tx_info->mbuf == NULL)
-		device_printf(adapter->pdev,
-		    "tx_info doesn't have valid mbuf\n");
-	else
-		device_printf(adapter->pdev, "Invalid req_id: %hu\n", req_id);
+	tx_info = &tx_ring->tx_buffer_info[req_id];
+	if (tx_info->mbuf == NULL) {
+		device_printf(adapter->pdev, "tx_info doesn't have valid mbuf for req_id: %hu\n", req_id);
+		counter_u64_add(tx_ring->tx_stats.bad_req_id, 1);
+		return EFAULT;
+	}
 
-	counter_u64_add(tx_ring->tx_stats.bad_req_id, 1);
-
-	return (EFAULT);
+	return (0);
 }
 
 static int
