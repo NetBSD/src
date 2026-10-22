@@ -75,6 +75,9 @@ static int	viogpu_cmd_sync(struct viogpu_softc *, void *, size_t, void *,
 				size_t);
 static int	viogpu_cmd_req(struct viogpu_softc *, void *, size_t, size_t);
 static void	viogpu_screen_update(void *);
+static void	viogpu_queue_update(struct viogpu_softc *, uint32_t,
+			    uint32_t, uint32_t, uint32_t);
+static void	viogpu_start_update(struct viogpu_softc *);
 static int	viogpu_vq_done(struct virtqueue *vq);
 
 static int	viogpu_get_display_info(struct viogpu_softc *);
@@ -92,6 +95,7 @@ static int	viogpu_flush_resource(struct viogpu_softc *, uint32_t,
 
 static int	viogpu_wsioctl(void *, void *, u_long, void *, int,
 			       struct lwp *);
+static paddr_t	viogpu_wsmmap(void *, void *, off_t, int);
 
 static void 	viogpu_init_screen(void *, struct vcons_screen *, int, long *);
 
@@ -154,14 +158,16 @@ struct viogpu_softc {
 	void	(*ri_replaceattr)(void *, long, long);
 
 	/*
-	 * sc_mutex protects is_requesting, needs_update, and req_wait. It is
-	 * also held while submitting and reading the return values of
+	 * sc_mutex protects is_requesting, the update rectangles, and req_wait.
+	 * It is also held while submitting and reading the return values of
 	 * asynchronous commands and for the full duration of synchronous
 	 * commands.
 	 */
 	kmutex_t		sc_mutex;
 	bool			is_requesting;
-	bool			needs_update;
+	bool			update_pending;
+	struct wsdisplay_damage	update_rect;
+	struct wsdisplay_damage	active_rect;
 	kcondvar_t		req_wait;
 	void			*update_soft_ih;
 	size_t			cur_cmd_size;
@@ -179,8 +185,7 @@ CFATTACH_DECL_NEW(viogpu, sizeof(struct viogpu_softc),
 
 static struct wsdisplay_accessops viogpu_accessops = {
 	.ioctl        = viogpu_wsioctl,
-	.mmap         = NULL, /* This would require signalling on write to
-	                       * update the screen. */
+	.mmap         = viogpu_wsmmap,
 	.alloc_screen = NULL,
 	.free_screen  = NULL,
 	.show_screen  = NULL,
@@ -220,7 +225,7 @@ viogpu_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->req_wait, "vgpu_req");
 	sc->update_soft_ih = softint_establish(SOFTINT_NET,
 	    viogpu_screen_update, sc);
-	sc->needs_update = false;
+	sc->update_pending = false;
 	sc->is_requesting = false;
 	sc->sc_fence_id = 0;
 
@@ -465,14 +470,61 @@ viogpu_screen_update(void *arg)
 	struct viogpu_softc *sc = arg;
 
 	mutex_enter(&sc->sc_mutex);
-
-	if (sc->is_requesting == false)
-		viogpu_transfer_to_host_2d(sc, 1, 0, 0, sc->sc_fb_width,
-		    sc->sc_fb_height);
-	else
-		sc->needs_update = true;
-
+	viogpu_queue_update(sc, 0, 0, sc->sc_fb_width, sc->sc_fb_height);
 	mutex_exit(&sc->sc_mutex);
+}
+
+/*
+ * Merge an update into the pending rectangle and start it if the control
+ * queue is idle.  sc_mutex must be held.
+ */
+static void
+viogpu_queue_update(struct viogpu_softc *sc, uint32_t x, uint32_t y,
+    uint32_t width, uint32_t height)
+{
+	struct wsdisplay_damage *d = &sc->update_rect;
+	uint32_t x2 = x + width;
+	uint32_t y2 = y + height;
+
+	KASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(width != 0 && height != 0);
+
+	if (!sc->update_pending) {
+		d->x = x;
+		d->y = y;
+		d->width = width;
+		d->height = height;
+		sc->update_pending = true;
+	} else {
+		uint32_t old_x2 = d->x + d->width;
+		uint32_t old_y2 = d->y + d->height;
+
+		d->x = uimin(d->x, x);
+		d->y = uimin(d->y, y);
+		d->width = uimax(old_x2, x2) - d->x;
+		d->height = uimax(old_y2, y2) - d->y;
+	}
+
+	if (!sc->is_requesting)
+		viogpu_start_update(sc);
+}
+
+/* Start the pending update.  sc_mutex must be held and the queue idle. */
+static void
+viogpu_start_update(struct viogpu_softc *sc)
+{
+	struct wsdisplay_damage *d = &sc->update_rect;
+
+	KASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(sc->update_pending);
+
+	sc->active_rect = *d;
+	sc->update_pending = false;
+
+	/* The host is about to read the framebuffer backing store. */
+	bus_dmamap_sync(virtio_dmat(sc->sc_virtio), sc->sc_fb_dma_map, 0,
+	    sc->sc_fb_dma_size, BUS_DMASYNC_PREWRITE);
+	viogpu_transfer_to_host_2d(sc, 1, d->x, d->y, d->width, d->height);
 }
 
 static int
@@ -562,16 +614,20 @@ viogpu_vq_done(struct virtqueue *vq)
 	case VIRTIO_GPU_CMD_TRANSFER_TO_HOST_2D:
 		/* The second command for screen updating must be issued. */
 		if (resp_type == VIRTIO_GPU_RESP_OK_NODATA) {
-			viogpu_flush_resource(sc, 1, 0, 0, sc->sc_fb_width,
-			    sc->sc_fb_height);
+			struct wsdisplay_damage *d = &sc->active_rect;
+
+			viogpu_flush_resource(sc, 1, d->x, d->y, d->width,
+			    d->height);
 			next_req_sent = true;
-		}
+		} else
+			bus_dmamap_sync(virtio_dmat(vsc), sc->sc_fb_dma_map,
+			    0, sc->sc_fb_dma_size, BUS_DMASYNC_POSTWRITE);
 		break;
 	case VIRTIO_GPU_CMD_RESOURCE_FLUSH:
-		if (sc->needs_update == true) {
-			viogpu_transfer_to_host_2d(sc, 1, 0, 0,
-			    sc->sc_fb_width, sc->sc_fb_height);
-			sc->needs_update = false;
+		bus_dmamap_sync(virtio_dmat(vsc), sc->sc_fb_dma_map, 0,
+		    sc->sc_fb_dma_size, BUS_DMASYNC_POSTWRITE);
+		if (sc->update_pending) {
+			viogpu_start_update(sc);
 			next_req_sent = true;
 		}
 		break;
@@ -580,7 +636,16 @@ viogpu_vq_done(struct virtqueue *vq)
 		break;
 	}
 
-	if (next_req_sent == false) {
+	/* On an update error, discard that rectangle but keep later damage. */
+	if (!next_req_sent &&
+	    (cmd_type == VIRTIO_GPU_CMD_TRANSFER_TO_HOST_2D ||
+	     cmd_type == VIRTIO_GPU_CMD_RESOURCE_FLUSH) &&
+	    sc->update_pending) {
+		viogpu_start_update(sc);
+		next_req_sent = true;
+	}
+
+	if (!next_req_sent) {
 		sc->is_requesting = false;
 		cv_broadcast(&sc->req_wait);
 	}
@@ -770,9 +835,13 @@ static int
 viogpu_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	       struct lwp *l)
 {
-	struct rasops_info *ri = v;
+	struct vcons_data *vd = v;
+	struct viogpu_softc *sc = vd->cookie;
+	struct rasops_info *ri = &((struct vcons_screen *)vs)->scr_ri;
+	struct wsdisplay_damage *d;
 	struct wsdisplayio_fbinfo *fbi;
 	struct wsdisplay_fbinfo *wdf;
+	int error;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -780,7 +849,34 @@ viogpu_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return 0;
 	case WSDISPLAYIO_GET_FBINFO:
 		fbi = (struct wsdisplayio_fbinfo *)data;
-		return wsdisplayio_get_fbinfo(ri, fbi);
+		error = wsdisplayio_get_fbinfo(ri, fbi);
+		if (error == 0)
+			fbi->fbi_flags |= WSFB_VRAM_IS_RAM |
+			    WSFB_VRAM_NEEDS_DAMAGE;
+		return error;
+	case WSDISPLAYIO_DAMAGE:
+		d = (struct wsdisplay_damage *)data;
+		if (d->flags & ~WSDISPLAY_DAMAGE_WAIT)
+			return EINVAL;
+		if (d->width != 0 &&
+		    (d->x >= sc->sc_fb_width ||
+		     d->width > sc->sc_fb_width - d->x))
+			return EINVAL;
+		if (d->height != 0 &&
+		    (d->y >= sc->sc_fb_height ||
+		     d->height > sc->sc_fb_height - d->y))
+			return EINVAL;
+
+		mutex_enter(&sc->sc_mutex);
+		if (d->width != 0 && d->height != 0)
+			viogpu_queue_update(sc, d->x, d->y, d->width,
+			    d->height);
+		if (d->flags & WSDISPLAY_DAMAGE_WAIT) {
+			while (sc->is_requesting || sc->update_pending)
+				cv_wait(&sc->req_wait, &sc->sc_mutex);
+		}
+		mutex_exit(&sc->sc_mutex);
+		return 0;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
 		wdf->height = ri->ri_height;
@@ -799,6 +895,19 @@ viogpu_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	}
 
 	return EPASSTHROUGH;
+}
+
+static paddr_t
+viogpu_wsmmap(void *v, void *vs, off_t off, int prot)
+{
+	struct vcons_data *vd = v;
+	struct viogpu_softc *sc = vd->cookie;
+
+	if (off < 0 || off >= sc->sc_fb_dma_size)
+		return -1;
+
+	return bus_dmamem_mmap(virtio_dmat(sc->sc_virtio),
+	    &sc->sc_fb_dma_seg, 1, off, prot, BUS_DMA_WAITOK);
 }
 
 static void
