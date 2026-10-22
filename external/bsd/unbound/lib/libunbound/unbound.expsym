@@ -877,6 +877,7 @@ pending_udp_query
 pending_udp_timer_cb
 pending_udp_timer_delay_cb
 pkt_dname_len
+pkt_dname_len_budget
 pkt_dname_tolower
 pkt_hash_rrset
 pp2_read_header
