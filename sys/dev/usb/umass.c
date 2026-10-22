@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.189 2022/09/22 14:27:52 riastradh Exp $	*/
+/*	$NetBSD: umass.c,v 1.190 2026/10/22 19:20:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.189 2022/09/22 14:27:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.190 2026/10/22 19:20:54 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1300,7 +1300,7 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 	 * Annex A of the Bulk-Only specification.
 	 * Each state first does the error handling of the previous transfer
 	 * and then prepares the next transfer.
-	 * Each transfer is done asynchroneously so after the request/transfer
+	 * Each transfer is done asynchronously so after the request/transfer
 	 * has been submitted you will find a 'return;'.
 	 */
 

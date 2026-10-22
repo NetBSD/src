@@ -1,4 +1,4 @@
-/*	$NetBSD: serreg.h,v 1.2 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: serreg.h,v 1.3 2026/10/22 19:20:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 /* Usart Control Register */
 #define	UCR_PEVEN	0x02	/* Even parity				*/
 #define	UCR_PENAB	0x04	/* Parity enable			*/
-#define	UCR_SYNCH	0x00	/* Synchroneous mode			*/
+#define	UCR_SYNCH	0x00	/* Synchronous mode			*/
 #define	UCR_STOPB1	0x08	/* 1 stopbit				*/
 #define	UCR_STOPB15	0x10	/* 1.5 stopbit				*/
 #define	UCR_STOPB2	0x18	/* 2 stopbits				*/
@@ -47,7 +47,7 @@
 
 /* Receiver Status Register */
 #define	RSR_ENAB	0x01	/* Receiver enabled			*/
-#define	RSR_SS		0x02	/* Synchroneous strip			*/
+#define	RSR_SS		0x02	/* Synchronous strip			*/
 #define	RSR_CIP		0x04	/* Character in progress (async)	*/
 #define	RSR_BREAK	0x08	/* Break (async)			*/
 #define	RSR_MATCH	0x04	/* Character match (sync)		*/

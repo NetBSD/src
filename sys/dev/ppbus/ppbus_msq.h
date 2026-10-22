@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.h,v 1.8 2026/08/14 17:19:04 andvar Exp $ */
+/* $NetBSD: ppbus_msq.h,v 1.9 2026/10/22 19:20:54 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998 Nicolas Souchu
@@ -57,7 +57,7 @@ struct ppbus_microseq {
 	union ppbus_insarg arg[PPBUS_MS_MAXARGS];  /* arguments */
 };
 
-/* Microseqences used for GET/PUT operations */
+/* Microsequences used for GET/PUT operations */
 struct ppbus_xfer {
 	struct ppbus_microseq *loop;            /* the loop microsequence */
 };
@@ -176,10 +176,10 @@ struct ppbus_xfer {
 /* delay in microseconds */
 #define MS_DELAY(udelay) { MS_OP_DELAY, {{ udelay }}}
 
-/* asynchroneous delay in ms */
+/* asynchronous delay in ms */
 #define MS_ADELAY(mdelay) { MS_OP_ADELAY, {{ mdelay }}}
 
-/* return from submicrosequence execution or microseqence execution */
+/* return from submicrosequence execution or microsequence execution */
 #define MS_SUBRET(code)	{ MS_OP_SUBRET,	{{ code }}}
 #define MS_RET(code)	{ MS_OP_RET, {{ code }}}
 

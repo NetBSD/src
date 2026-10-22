@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.h,v 1.6 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: mfp.h,v 1.7 2026/10/22 19:20:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -146,7 +146,7 @@ struct mfp {
 #define	U_EVEN		0x02	/* even parity				*/
 #define	U_PAR		0x04	/* use parity				*/
 /*		0x18		*//* sync/async and stop bits		*/
-#define	U_SYNC		0x00	/* synchrone				*/
+#define	U_SYNC		0x00	/* synchronous				*/
 #define	U_ST1		0x08	/* async, 1 stop bit			*/
 #define	U_ST1_5		0x10	/* async, 1.5 stop bit			*/
 #define	U_ST2		0x18	/* async, 2 stop bits			*/

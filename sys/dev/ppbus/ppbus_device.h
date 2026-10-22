@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_device.h,v 1.6 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: ppbus_device.h,v 1.7 2026/10/22 19:20:54 andvar Exp $ */
 
 #ifndef __PPBUS_DEVICE_H
 #define __PPBUS_DEVICE_H
@@ -13,7 +13,7 @@ struct ppbus_context {
         int valid;                      /* 1 if the struct is valid */
 	int mode;                       /* XXX chipset operating mode */
 	struct microseq *curpc;         /* pc in curmsq */
-	struct microseq *curmsq;        /* currently executed microseqence */
+	struct microseq *curmsq;        /* currently executed microsequence */
 };
 
 /* Parallel Port Bus Device structure. */
