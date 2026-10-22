@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: t_certctl.sh,v 1.11 2026/10/22 17:19:59 riastradh Exp $
+#	$NetBSD: t_certctl.sh,v 1.12 2026/10/22 17:20:22 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -549,14 +549,6 @@ EOF
 	atf_check rm -f email/"$emudhra_g3"
 	atf_check rm -f server/"$emudhra_g3"
 	atf_check rm -f server/"$comodo_aaa"
-
-	# At this point we get stuck: `certctl list' and `certctl
-	# rehash' complain:
-        #
-        #	distrusted certificate not found: Comodo_AAA_Services_root.pem
-	#
-	atf_expect_fail "PR bin/60916:" \
-	    "certctl(8) doesn't gracefully handle deleting untrusted certs"
 
 	# They should also no longer appear in the list.
 	atf_check -o not-match:"$comodo_aaa" $CERTCTL list
