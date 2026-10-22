@@ -1,4 +1,4 @@
-/*	$NetBSD: blake2s.c,v 1.2 2021/10/17 14:45:45 jmcneill Exp $	*/
+/*	$NetBSD: blake2s.c,v 1.3 2026/10/22 17:02:55 joe Exp $	*/
 
 /*-
  * Copyright (c) 2015 Taylor R. Campbell
@@ -29,7 +29,7 @@
 #ifdef _KERNEL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: blake2s.c,v 1.2 2021/10/17 14:45:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: blake2s.c,v 1.3 2026/10/22 17:02:55 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -258,7 +258,7 @@ blake2s_final(struct blake2s *B, void *digest)
 	}
 
 	/* Erase the state.  */
-	(void)explicit_memset(B, 0, sizeof B);
+	(void)explicit_memset(B, 0, sizeof(*B));
 }
 
 void
