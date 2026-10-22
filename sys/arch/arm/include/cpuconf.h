@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.28 2020/09/29 19:58:50 jmcneill Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.29 2026/10/22 19:52:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -165,7 +165,7 @@
  *
  *	ARM_MMU_V6N		ARM v6 MMU with XP bit of CP15 control reg
  *                              set.  New features such as shared-bit
- *                              and excute-never bit are available.
+ *                              and execute-never bit are available.
  *                              Multiprocessor support needs this mode.
  *
  *	ARM_MMU_V7		ARM v7 MMU.

@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.16 2019/05/18 08:49:24 skrll Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.17 2026/10/22 19:52:35 andvar Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -68,7 +68,7 @@
 #include "assym.h"
 
 
-RCSID("$NetBSD: gumstix_start.S,v 1.16 2019/05/18 08:49:24 skrll Exp $")
+RCSID("$NetBSD: gumstix_start.S,v 1.17 2026/10/22 19:52:35 andvar Exp $")
 
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
@@ -90,7 +90,7 @@ RCSID("$NetBSD: gumstix_start.S,v 1.16 2019/05/18 08:49:24 skrll Exp $")
 
 /*
  * Kernel start routine for GUMSTIX
- * this code is excuted at the very first after the kernel is loaded
+ * this code is executed at the very first after the kernel is loaded
  * by U-Boot.
  */
 	.text

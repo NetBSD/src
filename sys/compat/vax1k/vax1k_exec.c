@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.20 2024/09/08 09:36:50 rillig Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.21 2026/10/22 19:52:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 /*
- * Exec glue to provide compatibility with older NetBSD vax1k exectuables.
+ * Exec glue to provide compatibility with older NetBSD vax1k executables.
  *
  * Because NetBSD/vax now uses 4k page size, older binaries (that started
  * on an 1k boundary) cannot be mmap'ed. Therefore they are read in
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.20 2024/09/08 09:36:50 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.21 2026/10/22 19:52:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

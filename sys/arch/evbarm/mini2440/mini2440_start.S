@@ -69,7 +69,7 @@
 	
 /*
  * Kernel start routine for Friendly ARM Mini2440.
- * This code is excuted at the very first after the kernel is loaded
+ * This code is executed at the very first after the kernel is loaded
  * by boot program.
  */
 	.text

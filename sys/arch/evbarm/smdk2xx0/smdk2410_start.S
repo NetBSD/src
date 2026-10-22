@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_start.S,v 1.6 2011/01/31 06:28:05 matt Exp $ */
+/*	$NetBSD: smdk2410_start.S,v 1.7 2026/10/22 19:52:36 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -40,11 +40,11 @@
 
 #include <arm/s3c2xx0/s3c2410reg.h>	/* for S3C2410_SDRAM_START */
 
-RCSID("$NetBSD: smdk2410_start.S,v 1.6 2011/01/31 06:28:05 matt Exp $")
+RCSID("$NetBSD: smdk2410_start.S,v 1.7 2026/10/22 19:52:36 andvar Exp $")
 
 /*
  * Kernel start routine for Samsung SMDK2410.
- * This code is excuted at the very first after the kernel is loaded
+ * This code is executed at the very first after the kernel is loaded
  * by boot program.
  */
 	.text

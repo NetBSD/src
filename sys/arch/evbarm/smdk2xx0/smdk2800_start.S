@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_start.S,v 1.8 2011/01/31 06:28:05 matt Exp $ */
+/*	$NetBSD: smdk2800_start.S,v 1.9 2026/10/22 19:52:36 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2005 Fujitsu Component Limited
@@ -40,11 +40,11 @@
 
 #include <evbarm/smdk2xx0/smdk2800var.h>
 
-RCSID("$NetBSD: smdk2800_start.S,v 1.8 2011/01/31 06:28:05 matt Exp $")
+RCSID("$NetBSD: smdk2800_start.S,v 1.9 2026/10/22 19:52:36 andvar Exp $")
 
 /*
  * Kernel start routine for Samsung SMDK2800.
- * This code is excuted at the very first after the kernel is loaded
+ * This code is executed at the very first after the kernel is loaded
  * by boot program on ROM or gzboot.
  */
 	.text

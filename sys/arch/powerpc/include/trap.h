@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.16 2026/01/09 22:54:33 jmcneill Exp $	*/
+/*	$NetBSD: trap.h,v 1.17 2026/10/22 19:52:36 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -94,7 +94,7 @@
 #define EXC_DSEG	0x380
 #define EXC_ISEG	0x480
 
-/* The IBM 970x define the VMX assist exection to be 0x1700 */
+/* The IBM 970x define the VMX assist execution to be 0x1700 */
 #define EXC_970_VECAST	0x1700
 
 #define	EXC_LAST	0x2f00		/* Last possible exception vector */

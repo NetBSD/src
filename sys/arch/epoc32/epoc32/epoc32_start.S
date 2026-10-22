@@ -1,4 +1,4 @@
-/*	$NetBSD: epoc32_start.S,v 1.1 2013/04/28 12:11:26 kiyohara Exp $	*/
+/*	$NetBSD: epoc32_start.S,v 1.2 2026/10/22 19:52:35 andvar Exp $	*/
 /*
  * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 /*
  * Kernel start routine for EPOC32
- * this code is excuted at the very first after the kernel is loaded.
+ * this code is executed at the very first after the kernel is loaded.
  */
 	.text
 

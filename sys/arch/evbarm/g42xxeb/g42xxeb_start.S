@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_start.S,v 1.3 2011/01/31 06:28:02 matt Exp $ */
+/*	$NetBSD: g42xxeb_start.S,v 1.4 2026/10/22 19:52:35 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -33,7 +33,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: g42xxeb_start.S,v 1.3 2011/01/31 06:28:02 matt Exp $")
+RCSID("$NetBSD: g42xxeb_start.S,v 1.4 2026/10/22 19:52:35 andvar Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0xa0000000
@@ -55,7 +55,7 @@ RCSID("$NetBSD: g42xxeb_start.S,v 1.3 2011/01/31 06:28:02 matt Exp $")
 	
 /*
  * Kernel start routine for G4255EB (TWINTAIL)
- * this code is excuted at the very first after the kernel is loaded
+ * this code is executed at the very first after the kernel is loaded
  * by RedBoot.
  */
 	.text

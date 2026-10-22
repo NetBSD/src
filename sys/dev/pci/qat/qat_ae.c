@@ -1,4 +1,4 @@
-/*	$NetBSD: qat_ae.c,v 1.4 2026/06/03 17:17:38 andvar Exp $	*/
+/*	$NetBSD: qat_ae.c,v 1.5 2026/10/22 19:52:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qat_ae.c,v 1.4 2026/06/03 17:17:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qat_ae.c,v 1.5 2026/10/22 19:52:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1743,7 +1743,7 @@ qat_ae_batch_put_lm(struct qat_softc *sc, u_char ae,
 		insnsz = qat_ae_get_inst_num(qabi->qabi_size);
 		if (insnsz + ninst > alloc_ninst) {
 			aprint_debug_dev(sc->sc_dev,
-			    "code page is full, call exection unit\n");
+			    "code page is full, call execution unit\n");
 			/* add ctx_arb[kill] */
 			ucode[ninst++] = 0x0E000010000ull;
 			execed = 1;

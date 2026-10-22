@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.25 2019/11/20 19:37:53 pgoyette Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.26 2026/10/22 19:52:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 /*
- * Exec glue to provide compatibility with older NetBSD m68k4k exectuables.
+ * Exec glue to provide compatibility with older NetBSD m68k4k executables.
  *
  * Taken directly from kern/exec_aout.c and frobbed to map text and
  * data as m68k4k executables expect.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.25 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.26 2026/10/22 19:52:36 andvar Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
