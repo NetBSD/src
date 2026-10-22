@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2268 2026/10/22 10:21:57 kim Exp $
+#	$NetBSD: 3RDPARTY,v 1.2269 2026/10/22 17:58:28 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -173,7 +173,7 @@ Location:	external/mit/libuv/dist
 Notes:
 
 Package:	unbound
-Version:	1.26.1
+Version:	1.26.2
 Current Vers:	1.26.2
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
@@ -185,7 +185,7 @@ License:	BSD-like
 Location:	external/bsd/unbound/dist
 Vendor tag:	NLNETLABS
 Release tag:	unbound-M-m-t
-Current tag:	unbound-1-26-1
+Current tag:	unbound-1-26-2
 Notes:
 Use cleantags to import
 run configure --with-libevent and update config files in include
