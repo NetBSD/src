@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.108 2026/08/07 13:24:13 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.109 2026/10/22 17:19:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2021, 2022, 2025 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.108 2026/08/07 13:24:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.109 2026/10/22 17:19:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -955,11 +955,19 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 	}
 
 	if (iie->iie_buf != NULL) {
-		buf = kmem_alloc(iie->iie_buflen, KM_SLEEP);
 		if (I2C_OP_WRITE_P(iie->iie_op)) {
+			buf = kmem_alloc(iie->iie_buflen, KM_SLEEP);
 			error = copyin(iie->iie_buf, buf, iie->iie_buflen);
 			if (error)
 				goto out;
+		} else {
+			/*
+			 * Zero the buffer as a defence against drivers
+			 * that don't fully initialize the read result,
+			 * to avoid leaking uninitialized kernel heap
+			 * memory to userland.
+			 */
+			buf = kmem_zalloc(iie->iie_buflen, KM_SLEEP);
 		}
 	}
 
