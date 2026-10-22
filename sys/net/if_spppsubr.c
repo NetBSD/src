@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.308 2026/07/28 07:10:42 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.309 2026/10/22 17:28:25 joe Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.308 2026/07/28 07:10:42 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.309 2026/10/22 17:28:25 joe Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -6532,7 +6532,7 @@ sppp_proto_name(char *buf, size_t buflen, u_short proto)
 	case PPP_IPV6CP: return "ipv6cp";
 	}
 	if (buf != NULL) {
-		snprintf(buf, sizeof(buf), "0x%04x",
+		snprintf(buf, buflen, "0x%04x",
 		    (unsigned)proto);
 	}
 	return buf;
