@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.17 2022/09/24 20:21:46 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.17.2.1 2026/10/23 16:30:36 martin Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: fsmagic.c,v 1.82 2022/04/11 18:14:41 christos Exp $")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.17 2022/09/24 20:21:46 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.17.2.1 2026/10/23 16:30:36 martin Exp $");
 #endif
 #endif	/* lint */
 
@@ -418,6 +418,28 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 				return -1;
 			break;
 		}
+#ifdef HAVE_STRUCT_STAT_ST_FLAGS
+#ifdef SF_SNAPSHOT
+		if ((ms->flags & MAGIC_DEVICES) == 0 &&
+		    (sb->st_flags & SF_SNAPSHOT) != 0) {
+			char tbuf[256];
+
+			if (mime) {
+				if (handle_mime(ms, mime, "x-fs-snapshot")
+				    == -1)
+					return -1;
+			} else if (silent) {
+			} else if (file_printf(ms,
+				"%sinternal file system snapshot taken at %s",
+				COMMA,
+				file_fmtdatetime(tbuf, sizeof(tbuf),
+				    sb->st_mtime, 0))
+			    == -1)
+				return -1;
+			break;
+		}
+#endif
+#endif
 		ret = 0;
 		break;
 
