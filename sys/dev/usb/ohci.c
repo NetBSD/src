@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.332 2026/10/22 19:52:36 andvar Exp $	*/
+/*	$NetBSD: ohci.c,v 1.333 2026/10/23 05:07:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.332 2026/10/22 19:52:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.333 2026/10/23 05:07:17 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1112,12 +1112,14 @@ ohci_allocx(struct usbd_bus *bus, unsigned int nframes)
 	ohci_softc_t *sc = OHCI_BUS2SC(bus);
 	struct usbd_xfer *xfer;
 
-	xfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK | PR_ZERO);
-#ifdef DIAGNOSTIC
+	xfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
 	if (xfer != NULL) {
+		memset(xfer, 0, sizeof(struct ohci_xfer));
+
+#ifdef DIAGNOSTIC
 		xfer->ux_state = XFER_BUSY;
-	}
 #endif
+	}
 	return xfer;
 }
 
