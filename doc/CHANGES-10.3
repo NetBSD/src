@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.19 2026/10/23 16:31:29 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.20 2026/10/23 19:07:05 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -403,4 +403,15 @@ tests/dev/fss/t_fss.sh				1.8 (patch)
 
 	file(1), find(1): PR 60379, PR 60380): recognize snapshots.
 	[riastradh, ticket #1384]
+
+lib/libc/gen/arc4random.c			1.39,1.42,1.44-1.50 (patch)
+lib/libc/include/arc4random.h			1.2-1.4 (patch)
+sys/kern/kern_entropy.c				1.73 (patch)
+sys/sys/sysctl.h				1.240 (patch)
+tests/lib/libc/gen/t_arc4random.c		1.2-1.6 (patch)
+
+	arc4random(3): PR 59117, PR 59124, PR 59148:
+	eliminate various failure modes to make this more
+	reliable in more contexts, and add more tests.
+	[riastradh, ticket #1381]
 
