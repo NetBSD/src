@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.17 2026/10/21 19:28:00 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.18 2026/10/23 16:19:13 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -340,4 +340,58 @@ common/lib/libc/string/memmem.c			1.6
 
 	memmem(3): PR 58906: avoid undefined behaviour in shift.
 	[riastradh, ticket #1375]
+
+share/man/man9/module.9				1.55
+
+	module(9): PR 59102: fix signature of module callback function.
+	[riastradh, ticket #1377]
+
+external/bsd/nvi/dist/regex/regcomp.c		1.9
+
+	vi(1): PR 59103: fix searching for non-ASCII text with `:set extended'
+	[riastradh, ticket #1378]
+
+lib/libc/arch/arm/misc/arm_initfini.c		1.8-1.10
+
+	libc/arm: PR 59063: avoid malloc in ELF constructors, via sysctlbyname.
+	[riastradh, ticket #1379]
+
+distrib/sets/lists/debug/mi			1.466 (patch)
+distrib/sets/lists/tests/mi			1.1359 (patch)
+sys/arch/alpha/alpha/machdep.c			1.380 (patch)
+sys/arch/amd64/amd64/machdep.c			1.372,1.373 (patch)
+sys/arch/hppa/hppa/machdep.c			1.22 (patch)
+sys/arch/i386/i386/machdep.c			1.844,1.845 (patch)
+sys/arch/ia64/ia64/machdep.c			1.46 (patch)
+sys/arch/m68k/m68k/m68k_machdep.c		1.12 (patch)
+sys/arch/mips/mips/mips_machdep.c		1.307 (patch)
+sys/arch/sh3/sh3/sh3_machdep.c			1.114 (patch)
+sys/arch/vax/vax/trap.c				1.139,1.141 (patch)
+tests/kernel/Makefile				1.85-1.87 (patch)
+tests/kernel/arch/aarch64/execregs.c		1.1 (patch)
+tests/kernel/arch/aarch64/execregs.h		1.1 (patch)
+tests/kernel/arch/aarch64/h_execregs.S		1.1,1.2 (patch)
+tests/kernel/arch/hppa/execregs.c		1.1,1.2 (patch)
+tests/kernel/arch/hppa/execregs.h		1.1,1.2 (patch)
+tests/kernel/arch/hppa/h_execregs.S		1.1,1.2 (patch)
+tests/kernel/arch/i386/execregs.c		1.1 (patch)
+tests/kernel/arch/i386/execregs.h		1.1 (patch)
+tests/kernel/arch/i386/h_execregs.S		1.1 (patch)
+tests/kernel/arch/sh3/h_execregs.S		1.1 (patch)
+tests/kernel/arch/vax/execregs.c		1.1 (patch)
+tests/kernel/arch/vax/execregs.h		1.1 (patch)
+tests/kernel/arch/vax/h_execregs.S		1.1 (patch)
+tests/kernel/arch/x86_64/execregs.c		1.1 (patch)
+tests/kernel/arch/x86_64/execregs.h		1.1 (patch)
+tests/kernel/arch/x86_64/h_execregs.S		1.1 (patch)
+tests/kernel/h_execregs_unimpl.c		1.1 (patch)
+tests/kernel/t_execregs.c			1.1-1.5 (patch)
+
+	exec/spawn: PR 59084: don't leak registers to child.
+	[riastradh, ticket #1376]
+
+lib/libc/gen/pthread_atfork.c			1.19
+
+	pthread_atfork(3): PR 59112: libc, libpthread: use mmap, not malloc.
+	[riastradh, ticket #1380]
 
