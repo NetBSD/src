@@ -1,4 +1,4 @@
-/*	$NetBSD: t_arc4random.c,v 1.1.2.2 2024/10/09 13:25:13 martin Exp $	*/
+/*	$NetBSD: t_arc4random.c,v 1.1.2.3 2026/10/23 19:05:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,13 +29,17 @@
 #define	_REENTRANT
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_arc4random.c,v 1.1.2.2 2024/10/09 13:25:13 martin Exp $");
+__RCSID("$NetBSD: t_arc4random.c,v 1.1.2.3 2026/10/23 19:05:12 martin Exp $");
 
 #include <sys/resource.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 
 #include <atf-c.h>
+#include <err.h>
+#include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -79,7 +83,7 @@ arc4random_prng(void)
 	 * (i.e., libc was built with _REENTRANT), get the thread-local
 	 * arc4random state if there is one.
 	 */
-	if (arc4random_global.initialized)
+	if (arc4random_global.per_thread)
 		prng = thr_getspecific(arc4random_global.thread_key);
 
 	/*
@@ -93,6 +97,21 @@ arc4random_prng(void)
 }
 
 /*
+ * setup_thread(cookie)
+ *
+ *	pthread_create start function to call arc4random().
+ */
+static void *
+setup_thread(void *cookie)
+{
+	unsigned char buf[32];
+
+	arc4random_buf(buf, sizeof(buf));
+	ATF_CHECK(!iszero(buf, sizeof(buf)));	/* Pr[fail] = 1/2^256 */
+	return NULL;
+}
+
+/*
  * arc4random_global_buf(buf, len)
  *
  *	Same as arc4random_buf, but force use of the global state.
@@ -101,8 +120,18 @@ arc4random_prng(void)
 static void
 arc4random_global_buf(void *buf, size_t len)
 {
+	pthread_t t;
 	struct rlimit rlim, orlim;
 	struct arc4random_prng *prng;
+
+	/*
+	 * Call arc4random() in another thread to cause it to be
+	 * globally initialized -- just not in this thread -- before we
+	 * clamp down on the address space rlimit deliberately causing
+	 * mmap to fail to allocate a thread-local state.
+	 */
+	RZ(pthread_create(&t, NULL, &setup_thread, NULL));
+	RZ(pthread_join(t, NULL));
 
 	/*
 	 * Save the address space limit.
@@ -277,6 +306,106 @@ ATF_TC_BODY(consolidate, tc)
 	    "global epoch unchanged from %u", globalepoch);
 }
 
+ATF_TC(chroot);
+ATF_TC_HEAD(chroot, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test arc4random in an empty chroot");
+	atf_tc_set_md_var(tc, "require.user", "root");
+}
+ATF_TC_BODY(chroot, tc)
+{
+	pid_t pid;
+	int status;
+
+	/*
+	 * Create an empty chroot.
+	 */
+	RL(mkdir("root", 0500));
+
+	/*
+	 * In a child process, enter the chroot and verify that we
+	 * can't open /dev/urandom but we can use arc4random.
+	 *
+	 * (atf gets unhappy if we chroot in the same process, when it
+	 * later tries to create a results file.)
+	 */
+	RL(pid = fork());
+	if (pid == 0) {
+		unsigned char buf[32] = {0};
+
+		if (chroot("root") == -1)
+			err(1, "chroot");
+		if (open(_PATH_URANDOM, O_RDONLY) != -1)
+			errx(1, "open /dev/urandom must fail in empty chroot");
+		if (errno != ENOENT) {
+			err(1, "expected open to fail with %d=ENOENT, not %d",
+			    ENOENT, errno);
+		}
+		arc4random_buf(buf, sizeof(buf));
+		if (iszero(buf, sizeof(buf))) /* Pr[fail] = 1/2^256 */
+			errx(1, "arc4random returned all-zero");
+		if (arc4random_prng()->arc4_epoch == 0)
+			errx(1, "arc4random failed to observe entropy epoch");
+		_exit(0);
+	}
+
+	/*
+	 * Wait for the child process to finish.
+	 */
+	RL(waitpid(pid, &status, 0));
+	ATF_CHECK_MSG(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+	    "child exited status 0x%x", status);
+}
+
+ATF_TC(fdlimit);
+ATF_TC_HEAD(fdlimit, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test arc4random works even if we have hit the fd limit");
+}
+ATF_TC_BODY(fdlimit, tc)
+{
+	pid_t pid;
+	int status;
+
+	/*
+	 * In a child process, clamp down on the file descriptor
+	 * resource limit and verify that we can't open /dev/urandom
+	 * but we can use arc4random.
+	 *
+	 * (atf gets unhappy if we chroot in the same process, when it
+	 * later tries to create a results file.)
+	 */
+	RL(pid = fork());
+	if (pid == 0) {
+		struct rlimit rlim = {.rlim_cur = 0, .rlim_max = 0};
+		unsigned char buf[32] = {0};
+
+		if (setrlimit(RLIMIT_NOFILE, &rlim) == -1)
+			err(1, "setrlimit(RLIMIT_NOFILE)");
+		if (open(_PATH_URANDOM, O_RDONLY) != -1)
+			errx(1, "open must fail with zero RLIMIT_NOFILE");
+		if (errno != EMFILE) {
+			err(1, "expected open to fail with %d=EMFILE, not %d",
+			    EMFILE, errno);
+		}
+		arc4random_buf(buf, sizeof(buf));
+		if (iszero(buf, sizeof(buf))) /* Pr[fail] = 1/2^256 */
+			errx(1, "arc4random returned all-zero");
+		if (arc4random_prng()->arc4_epoch == 0)
+			errx(1, "arc4random failed to observe entropy epoch");
+		_exit(0);
+	}
+
+	/*
+	 * Wait for the child process to finish.
+	 */
+	RL(waitpid(pid, &status, 0));
+	ATF_CHECK_MSG(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+	    "child exited status 0x%x", status);
+}
+
 ATF_TC(fork);
 ATF_TC_HEAD(fork, tc)
 {
@@ -389,13 +518,13 @@ ATF_TC_BODY(fork, tc)
 	    status);
 }
 
-ATF_TC(global);
-ATF_TC_HEAD(global, tc)
+ATF_TC(global_aslimit);
+ATF_TC_HEAD(global_aslimit, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test the global state is used when address space limit is hit");
 }
-ATF_TC_BODY(global, tc)
+ATF_TC_BODY(global_aslimit, tc)
 {
 	unsigned char buf[32], buf1[32];
 
@@ -417,6 +546,54 @@ ATF_TC_BODY(global, tc)
 	arc4random_buf(buf1, sizeof(buf1));
 	ATF_CHECK(!iszero(buf1, sizeof(buf1)));	/* Pr[fail] = 1/2^256 */
 	ATF_CHECK(memcmp(buf, buf1, sizeof(buf)) != 0);
+}
+
+ATF_TC(global_threadkeylimit);
+ATF_TC_HEAD(global_threadkeylimit, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test the global state is used we run out of thread keys");
+}
+ATF_TC_BODY(global_threadkeylimit, tc)
+{
+	unsigned char buf[32], buf1[32];
+
+	/*
+	 * Get a sample from the global state (and verify it was using
+	 * the global state).
+	 */
+	arc4random_global_buf(buf, sizeof(buf));
+
+	/*
+	 * Verify we got a sample.
+	 */
+	ATF_CHECK(!iszero(buf, sizeof(buf)));	/* Pr[fail] = 1/2^256 */
+
+	/*
+	 * Artificially disable the per-thread state, make it an
+	 * invalid thread key altogether, and clear the epoch.  Make
+	 * sure we're using the global PRNG state now.
+	 */
+	arc4random_global.per_thread = false;
+	memset(&arc4random_global.thread_key, 0x5a,
+	    sizeof(arc4random_global.thread_key));
+	arc4random_global.prng.arc4_epoch = 0;
+	ATF_CHECK(arc4random_prng() == &arc4random_global.prng);
+
+	/*
+	 * Get a sample again and make sure it wasn't repeated, which
+	 * happens only with probability 1/2^256.
+	 */
+	arc4random_buf(buf1, sizeof(buf1));
+	ATF_CHECK(!iszero(buf1, sizeof(buf1)));	/* Pr[fail] = 1/2^256 */
+	ATF_CHECK(memcmp(buf, buf1, sizeof(buf)) != 0);
+
+	/*
+	 * Verify this had the effect of updating the global epoch,
+	 * meaning we used the global state and not the per-thread
+	 * state.
+	 */
+	ATF_CHECK(arc4random_global.prng.arc4_epoch != 0);
 }
 
 ATF_TC(local);
@@ -454,14 +631,65 @@ ATF_TC_BODY(local, tc)
 	ATF_CHECK(memcmp(buf, buf1, sizeof(buf)) != 0);
 }
 
+ATF_TC(stackfallback);
+ATF_TC_HEAD(stackfallback, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test arc4random with pthread_atfork and thr_keycreate failure");
+}
+ATF_TC_BODY(stackfallback, tc)
+{
+	unsigned char buf[32], buf1[32];
+	struct arc4random_prng *local;
+
+	/*
+	 * Get a sample to start things off.  This makes the library
+	 * gets initialized.
+	 */
+	arc4random_buf(buf, sizeof(buf));
+	ATF_CHECK(!iszero(buf, sizeof(buf)));	/* Pr[fail] = 1/2^256 */
+
+	/*
+	 * Clear the arc4random global state, and the local state if it
+	 * exists, and pretend pthread_atfork and thr_keycreate had
+	 * both failed.
+	 */
+	memset(&arc4random_global.prng, 0, sizeof(arc4random_global.prng));
+	if ((local = arc4random_prng()) != NULL)
+		memset(local, 0, sizeof(*local));
+	arc4random_global.forksafe = false;
+	arc4random_global.per_thread = false;
+
+	/*
+	 * Make sure it still works to get a sample.
+	 */
+	arc4random_buf(buf1, sizeof(buf1));
+	ATF_CHECK(!iszero(buf, sizeof(buf)));	/* Pr[fail] = 1/2^256 */
+	ATF_CHECK(memcmp(buf, buf1, sizeof(buf)) != 0);
+
+	/*
+	 * Make sure the global and local epochs did not change.
+	 */
+	ATF_CHECK_EQ_MSG(arc4random_global.prng.arc4_epoch, 0,
+	    "global epoch: %d", arc4random_global.prng.arc4_epoch);
+	if (local != NULL) {
+		ATF_CHECK_EQ_MSG(local->arc4_epoch, 0,
+		    "local epoch: %d", local->arc4_epoch);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, addrandom);
+	ATF_TP_ADD_TC(tp, chroot);
 	ATF_TP_ADD_TC(tp, consolidate);
+	ATF_TP_ADD_TC(tp, fdlimit);
 	ATF_TP_ADD_TC(tp, fork);
-	ATF_TP_ADD_TC(tp, global);
+	ATF_TP_ADD_TC(tp, global_aslimit);
+	ATF_TP_ADD_TC(tp, global_threadkeylimit);
 	ATF_TP_ADD_TC(tp, local);
+	ATF_TP_ADD_TC(tp, stackfallback);
 
 	return atf_no_error();
 }
