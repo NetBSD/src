@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.17 2026/10/13 20:20:46 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.18 2026/10/23 04:19:13 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -456,7 +456,7 @@ fragment:
  * if we don't dup-to, we need processing of the moving mbuf stopped either in a failure or success path
  * since we now care about the copied which is to be sent.
  * just return false and handle the freeing of the moving mbuf,
- * in a dup-to, where both packets leave suucessfuly, we don't free any of them.
+ * in a dup-to, where both packets leave successfully, we don't free any of them.
  */
 bad:
 	if (!consumed)
