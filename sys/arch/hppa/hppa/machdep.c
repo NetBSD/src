@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18.4.2 2026/01/05 14:39:14 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18.4.3 2026/10/23 15:41:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18.4.2 2026/01/05 14:39:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18.4.3 2026/10/23 15:41:46 martin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1894,6 +1894,22 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = lwp_getpcb(l);
 
+	memset(tf, 0, sizeof(*tf));
+
+	/*
+	 * Initialize the External Interrupt Enable Mask, Processor
+	 * Status Word, and NetBSD's floating-point register area
+	 * pointer to the correct defaults for a user process.
+	 *
+	 * XXXMPSAFE If curcpu()->ci_eiem can vary from CPU to CPU, we
+	 * have bigger problems here -- if the lwp is migrated from one
+	 * CPU to another CPU between when the trapframe is saved and
+	 * when the trapframe is restored, it might be invalidated.
+	 */
+	tf->tf_eiem = curcpu()->ci_eiem;
+	tf->tf_ipsw = PSW_MBS | (hppa_cpu_ispa20_p() ? PSW_O : 0);
+	tf->tf_cr30 = (u_int)pcb->pcb_fpregs;
+
 	tf->tf_flags = TFF_SYS|TFF_LAST;
 	tf->tf_iioq_tail = 4 +
 	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
@@ -1911,6 +1927,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	/* reset any of the pending FPU exceptions */
 	hppa_fpu_flush(l);
+	memset(pcb->pcb_fpregs, 0, sizeof(*pcb->pcb_fpregs));
 	pcb->pcb_fpregs->fpr_regs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
 	pcb->pcb_fpregs->fpr_regs[1] = 0;
 	pcb->pcb_fpregs->fpr_regs[2] = 0;

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.394.2.20 2026/07/03 18:06:57 martin Exp $
+# $NetBSD: mi,v 1.394.2.21 2026/10/23 15:41:48 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1767,6 +1767,7 @@
 ./usr/libdata/debug/usr/tests/kernel/arch/i386/t_ptrace_waitid.debug	tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/arch/i386/t_ptrace_waitpid.debug	tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_cloexec.debug			tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/h_execregs.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_fexecve.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_fpufork.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_getprocpath.debug		tests-kernel-tests	debug,atf,compattestfile
@@ -1799,6 +1800,7 @@
 ./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_spawn.debug		tests-obsolete	obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_spawnattr.debug	tests-obsolete	obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_cloexec.debug			tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/t_execregs.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_extattrctl.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_fcntl.debug			tests-kernel-tests	debug,atf

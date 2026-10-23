@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.366.2.1 2025/03/29 10:32:43 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.366.2.2 2026/10/23 15:41:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.366.2.1 2025/03/29 10:32:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.366.2.2 2026/10/23 15:41:47 martin Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1373,6 +1373,9 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	kpreempt_enable();
 
 	tf = l->l_md.md_regs;
+	memset(tf, 0, sizeof(*tf));
+
+	tf->tf_trapno = T_ASTFLT;
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_rdi = 0;

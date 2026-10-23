@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43.30.1 2023/07/31 13:36:30 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43.30.2 2026/10/23 15:41:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -710,6 +710,8 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	vaddr_t uv = uvm_lwp_getuarea(l);
 
 	tf = l->l_md.md_tf;
+	memset(tf, 0, sizeof(*tf));
+
 	regstkp = uv + sizeof(struct pcb);
 
 	ksttop =

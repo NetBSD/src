@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.375 2021/07/22 01:39:18 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.375.10.1 2026/10/23 15:41:45 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.375 2021/07/22 01:39:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.375.10.1 2026/10/23 15:41:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1674,11 +1674,11 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		panic("crash requested by boot flags");
 #endif
 
+	memset(tfp, 0, sizeof(*tfp));
+
 #ifdef DEBUG
 	for (i = 0; i < FRAME_SIZE; i++)
 		tfp->tf_regs[i] = 0xbabefacedeadbeef;
-#else
-	memset(tfp->tf_regs, 0, FRAME_SIZE * sizeof tfp->tf_regs[0]);
 #endif
 	pcb = lwp_getpcb(l);
 	memset(&pcb->pcb_fp, 0, sizeof(pcb->pcb_fp));

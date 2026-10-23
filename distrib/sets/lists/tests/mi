@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238.2.26 2026/09/11 16:22:31 martin Exp $
+# $NetBSD: mi,v 1.1238.2.27 2026/10/23 15:41:45 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2257,6 +2257,7 @@
 ./usr/tests/kernel/arch/i386/t_ptrace_waitpid		tests-obsolete		obsolete
 ./usr/tests/kernel/arch/x86				tests-obsolete		obsolete
 ./usr/tests/kernel/h_cloexec				tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/h_execregs				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_fexecve				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_fpufork				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_getprocpath			tests-kernel-tests	compattestfile,atf
@@ -2303,6 +2304,7 @@
 ./usr/tests/kernel/posix_spawn/t_spawn			tests-obsolete		obsolete
 ./usr/tests/kernel/posix_spawn/t_spawnattr		tests-obsolete		obsolete
 ./usr/tests/kernel/t_cloexec				tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_execregs				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_extattrctl				tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_extent				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_fcntl				tests-kernel-tests	atf

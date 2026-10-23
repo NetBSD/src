@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.70.2.2 2026/06/29 19:55:52 martin Exp $
+# $NetBSD: Makefile,v 1.70.2.3 2026/10/23 15:41:45 martin Exp $
 
 NOMAN=		# defined
 
@@ -8,6 +8,7 @@ TESTSDIR=	${TESTSBASE}/kernel
 
 TESTS_SUBDIRS+=	kqueue
 TESTS_C+=	t_cloexec
+TESTS_C+=	t_execregs
 TESTS_C+=	t_fcntl
 TESTS_C+=	t_lock
 TESTS_C+=	t_lockf
@@ -40,6 +41,7 @@ TESTS_SH+=	t_simplehook
 
 BINDIR=		${TESTSDIR}
 PROGS+=		h_cloexec
+PROGS+=		h_execregs
 PROGS+=		h_fexecve
 PROGS+=		h_ps_strings1
 PROGS+=		h_ps_strings2
@@ -100,5 +102,19 @@ SANITIZER_RENAME_SYMBOL.t_subr_prf+=	vasprintf
 CLEANFILES+=	t_subr_prf.c
 
 LDADD.h_segv+=	-lm
+
+.if exists(arch/${MACHINE_ARCH}/execregs.h)
+ARCHDIR:=		${.PARSEDIR}/arch/${MACHINE_ARCH}
+.PATH:			${ARCHDIR}
+CPPFLAGS.t_execregs.c+=	-I${ARCHDIR}
+CPPFLAGS.t_execregs.c+=	-I${.CURDIR}/../lib/libc/gen # isqemu.h
+CPPFLAGS.t_execregs.c+=	-DHAVE_EXECREGS_TEST
+SRCS.t_execregs+=	t_execregs.c
+SRCS.t_execregs+=	execregs.c
+LDSTATIC.h_execregs=	-static
+LDFLAGS.h_execregs+=	-Wl,-e,execregs_start
+.else
+SRCS.h_execregs=	h_execregs_unimpl.c
+.endif
 
 .include <bsd.test.mk>
