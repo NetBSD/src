@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.22 2026/10/24 14:36:24 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.23 2026/10/24 15:51:14 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -471,4 +471,14 @@ sys/dev/usb/if_zyd.c				1.62
 
 	usbwifi: PR 60665: avoid crash on hotplug.
 	[riastradh, ticket #1391]
+
+distrib/sets/lists/debug/mi			1.521 (patch)
+distrib/sets/lists/tests/mi			1.1432 (patch)
+sys/kern/uipc_socket2.c				1.149 (patch)
+sys/kern/uipc_usrreq.c				1.211 (patch)
+tests/kernel/Makefile				1.103 (patch)
+tests/kernel/t_fdpass.c				1.1-1.4 (patch)
+
+	sendmsg(2): PR 60832: avoid spurious ENOBUFS on fd-passing.
+	[riastradh, ticket #1392]
 
