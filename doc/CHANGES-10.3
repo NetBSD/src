@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.20 2026/10/23 19:07:05 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.21 2026/10/24 11:33:47 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -414,4 +414,44 @@ tests/lib/libc/gen/t_arc4random.c		1.2-1.6 (patch)
 	eliminate various failure modes to make this more
 	reliable in more contexts, and add more tests.
 	[riastradh, ticket #1381]
+
+sys/arch/amd64/amd64/process_machdep.c		1.51
+sys/arch/i386/i386/process_machdep.c		1.98
+sys/arch/x86/include/dbregs.h			1.9
+sys/arch/x86/x86/dbregs.c			1.16
+sys/compat/netbsd32/netbsd32_ptrace.c		1.10,1.11
+sys/kern/sys_process_lwpstatus.c		1.6-1.10
+sys/sys/ptrace.h				1.78
+
+	kernel: PR 60556, PR 60595, PR 60658:
+	Fix locking around ptrace and procfs debug register access.
+	[riastradh, ticket #1385]
+
+sys/compat/linux32/arch/aarch64/linux32_exec_machdep.c 1.3
+sys/compat/netbsd32/netbsd32_signal.c		1.57
+sys/kern/exec_script.c				1.86 (patch)
+sys/kern/exec_subr.c				1.93 (patch)
+sys/kern/kern_exec.c				1.534,1.535 (patch)
+sys/kern/kern_fork.c				1.235
+
+	exec, fork spawn: PR 60653, PR 60657, PR 60877:
+	Fix process stack base and error branches.
+	[riastradh, ticket #1386]
+
+sys/net/if.c					1.539
+
+	ioctl(SIOCSIFGENERIC): PR 60745: check for network interface setpriv.
+	[riastradh, ticket #1387]
+
+sys/net/if_l2tp.c				1.50,1.51
+
+	l2tp(4): PR 60743: block unprivileged config, validate
+	cookie length.
+	[riastradh, ticket #1388]
+
+common/lib/libc/arch/x86_64/string/memchr.S	1.7,1.8 (patch)
+tests/lib/libc/string/t_memchr.c		1.4-1.7 (patch)
+
+	memchr(3): PR 60744: fix case of arbitrary-length inputs
+	[riastradh, ticket #1389]
 
