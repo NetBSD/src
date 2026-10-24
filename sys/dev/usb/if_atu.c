@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.77 2024/07/05 04:31:52 rin Exp $ */
+/*	$NetBSD: if_atu.c,v 1.77.2.1 2026/10/24 14:33:34 martin Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.77 2024/07/05 04:31:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.77.2.1 2026/10/24 14:33:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1449,7 +1449,7 @@ atu_complete_attach(struct atu_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Call MI attach routine. */
-	if_attach(ifp);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 
 	sc->sc_newstate = ic->ic_newstate;
@@ -1464,6 +1464,11 @@ atu_complete_attach(struct atu_softc *sc)
 	usb_init_task(&sc->sc_task, atu_task, sc, 0);
 
 	sc->sc_state = ATU_S_OK;
+
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
+
+	/* XXX ieee80211_announce? */
 }
 
 static int
