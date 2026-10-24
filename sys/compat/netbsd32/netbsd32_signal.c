@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.55 2024/11/22 10:41:50 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.55.2.1 2026/10/24 10:26:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.55 2024/11/22 10:41:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.55.2.1 2026/10/24 10:26:00 martin Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -472,7 +472,8 @@ getucontext32(struct lwp *l, ucontext32_t *ucp)
 	 * the main context stack.
 	 */
 	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
-		ucp->uc_stack.ss_sp = USRSTACK32;
+		ucp->uc_stack.ss_sp =
+		    (uint32_t)(uintptr_t)l->l_proc->p_stackbase;
 		ucp->uc_stack.ss_size = ctob(p->p_vmspace->vm_ssize);
 		ucp->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
 	} else {
