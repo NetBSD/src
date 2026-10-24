@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.257 2026/10/19 18:56:14 palle Exp $ */
+/*	$NetBSD: autoconf.c,v 1.258 2026/10/24 22:04:29 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.257 2026/10/19 18:56:14 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.258 2026/10/24 22:04:29 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -576,26 +576,7 @@ sun4v_set_soft_state(int state, const char *desc)
 void
 sun4v_interrupt_init(void)
 {
-	uint64_t minor;
-
-	if (prom_set_sun4v_api_version(HSVC_GROUP_INTERRUPT, 3, 0, &minor)) {
-		printf("sun4v_interrupt_init: failed to set major to 3\n");
-		if (prom_set_sun4v_api_version(HSVC_GROUP_INTERRUPT, 2, 0, &minor)) {
-			printf("sun4v_interrupt_init: failed to set major to 2\n");
-			if (prom_set_sun4v_api_version(HSVC_GROUP_INTERRUPT, 1, 0, &minor)) {
-				printf("sun4v_interrupt_init: failed to set major to 1\n");
-				sun4v_group_interrupt_major = 0;
-			} else {
-				sun4v_group_interrupt_major = 1;
-			}
-		} else {
-		  sun4v_group_interrupt_major = 2;
-		}
-	} else {
-		sun4v_group_interrupt_major = 3;
-	}
-	printf("sun4v_interrupt_init: hv interrupt api major is now: %lu\n",
-		   (long unsigned int)sun4v_group_interrupt_major);
+	sun4v_group_interrupt_major = 3;
 }
 
 #if 0
