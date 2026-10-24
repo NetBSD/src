@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.60 2021/06/13 09:24:33 mlelstv Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.60.10.1 2026/10/24 14:34:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.60 2021/06/13 09:24:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.60.10.1 2026/10/24 14:34:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -424,7 +424,7 @@ zyd_complete_attach(struct zyd_softc *sc)
 		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	ic->ic_node_alloc = zyd_node_alloc;
 	ic->ic_newassoc = zyd_newassoc;
@@ -449,6 +449,9 @@ zyd_complete_attach(struct zyd_softc *sc)
 	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(ZYD_TX_RADIOTAP_PRESENT);
+
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	ieee80211_announce(ic);
 
