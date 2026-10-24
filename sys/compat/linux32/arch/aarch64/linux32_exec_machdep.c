@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_machdep.c,v 1.1 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: linux32_exec_machdep.c,v 1.1.4.1 2026/10/24 11:07:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_machdep.c,v 1.1 2021/11/25 03:08:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_machdep.c,v 1.1.4.1 2026/10/24 11:07:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -106,8 +106,6 @@ linux32_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	    MIN(l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur, max_stack_size);
 	epp->ep_maxsaddr =
 	    (vaddr_t)STACK_GROW(epp->ep_minsaddr, max_stack_size);
-
-	l->l_proc->p_stackbase = epp->ep_minsaddr;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
