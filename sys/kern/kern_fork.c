@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.229 2022/07/01 09:54:36 prlw1 Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.229.4.1 2026/10/24 10:39:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.229 2022/07/01 09:54:36 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.229.4.1 2026/10/24 10:39:51 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -332,6 +332,14 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	    (unsigned) ((char *)&p2->p_endzero - (char *)&p2->p_startzero));
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((char *)&p2->p_endcopy - (char *)&p2->p_startcopy));
+
+	/*
+	 * Oops -- this wasn't put in the [p_startcopy,p_endcopy)
+	 * region!  We'll fix this on HEAD by rearranging struct proc
+	 * after we fix it on release branches by just explicitly
+	 * copying it here without such rearrangement.
+	 */
+	p2->p_stackbase = p1->p_stackbase;
 
 	TAILQ_INIT(&p2->p_sigpend.sp_info);
 
