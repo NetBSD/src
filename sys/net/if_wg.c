@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.135.2.2 2026/07/03 18:16:51 martin Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.135.2.3 2026/10/24 14:28:09 martin Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.135.2.2 2026/07/03 18:16:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.135.2.3 2026/10/24 14:28:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2945,6 +2945,11 @@ wg_update_endpoint_if_necessary(struct wg_peer *wgp,
 		!sockaddr_port_match(src, wgsatosa(wgsa)))) {
 		/* XXX We can't change the endpoint twice in a short period */
 		if (atomic_swap_uint(&wgp->wgp_endpoint_changing, 1) == 0) {
+			/*
+			 * membar_acquire matches atomic_store_release
+			 * in wg_task_endpoint_changed.
+			 */
+			membar_acquire();
 			wg_change_endpoint(wgp, src);
 		}
 	}
@@ -3557,6 +3562,11 @@ wg_task_endpoint_changed(struct wg_softc *wg, struct wg_peer *wgp)
 		psref_target_init(&wgp->wgp_endpoint0->wgsa_psref,
 		    wg_psref_class);
 		mutex_enter(wgp->wgp_lock);
+
+		/*
+		 * atomic_store_release matches membar_acquire
+		 * in wg_update_endpoint_if_necessary.
+		 */
 		atomic_store_release(&wgp->wgp_endpoint_changing, 0);
 	}
 }
