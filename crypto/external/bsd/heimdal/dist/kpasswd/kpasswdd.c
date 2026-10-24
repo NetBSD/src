@@ -1,4 +1,4 @@
-/*	$NetBSD: kpasswdd.c,v 1.4 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: kpasswdd.c,v 1.4.22.1 2026/10/24 17:14:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -34,7 +34,7 @@
  */
 
 #include "kpasswd_locl.h"
-__RCSID("$NetBSD: kpasswdd.c,v 1.4 2017/01/28 21:31:45 christos Exp $");
+__RCSID("$NetBSD: kpasswdd.c,v 1.4.22.1 2026/10/24 17:14:18 martin Exp $");
 
 #include <kadm5/admin.h>
 #ifdef HAVE_SYS_UN_H
@@ -854,6 +854,9 @@ doit(krb5_keytab keytab, int port)
 
     for (i = 0; i < n; ++i)
 	close(sockets[i]);
+#ifdef INETD_SUPPORT
+    if (!from_inetd)
+#endif
     free(sockets);
 
 #ifdef INETD_SUPPORT
