@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.147 2024/12/07 02:31:14 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.147.2.1 2026/10/24 15:47:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.147 2024/12/07 02:31:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.147.2.1 2026/10/24 15:47:21 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1227,15 +1227,12 @@ int
 sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 {
 	struct mbuf	*m, *mlast, *n;
-	int		space;
 
 	KASSERT(solocked(sb->sb_so));
 
-	space = 0;
 	if (control == NULL)
 		panic("sbappendcontrol");
 	for (m = control; ; m = m->m_next) {
-		space += m->m_len;
 		MCLAIM(m, sb->sb_mowner);
 		if (m->m_next == NULL)
 			break;
@@ -1243,10 +1240,7 @@ sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 	n = m;			/* save pointer to last control buffer */
 	for (m = m0; m; m = m->m_next) {
 		MCLAIM(m, sb->sb_mowner);
-		space += m->m_len;
 	}
-	if (space > sbspace(sb))
-		return (0);
 	n->m_next = m0;			/* concatenate data to control */
 
 	SBLASTRECORDCHK(sb, "sbappendcontrol 1");
