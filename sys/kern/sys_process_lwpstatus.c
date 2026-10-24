@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process_lwpstatus.c,v 1.4.4.1 2025/01/12 12:02:46 martin Exp $	*/
+/*	$NetBSD: sys_process_lwpstatus.c,v 1.4.4.2 2026/10/24 10:18:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.4.4.1 2025/01/12 12:02:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.4.4.2 2026/10/24 10:18:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -142,41 +142,122 @@ process_validdbregs(struct lwp *l)
 }
 
 #ifdef PT_REGISTERS
+/*
+ * Sync with proc_regio in netbsd32_ptrace.c.
+ */
 static int
-proc_regio(struct lwp *l, struct uio *uio, size_t ks, ptrace_regrfunc_t r,
-    ptrace_regwfunc_t w)
+proc_regio(struct lwp *l, struct uio *uio, void *buf, size_t buflen,
+    ptrace_regrfunc_t r, ptrace_regwfunc_t w)
 {
-	char buf[1024] PTRACE_REGS_ALIGN;
 	int error;
 	char *kv;
 	size_t kl;
-
-	if (ks > sizeof(buf))
-		return E2BIG;
+	size_t ks = buflen;
 
 	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)ks)
 		return EINVAL;
 
-	kv = buf + uio->uio_offset;
+	kv = (char *)buf + uio->uio_offset;
 	kl = ks - uio->uio_offset;
 
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	error = (*r)(l, buf, &ks);
-	if (error == 0)
-		error = uiomove(kv, kl, uio);
-	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+	/*
+	 * Read all the registers first, even if the caller is writing
+	 * to them, because the caller might be writing to only a part
+	 * of them.  But if the process is not stopped, refuse.  Must
+	 * hold the lwp lock to verify l->l_stat remains LSSTOP as we
+	 * read.
+	 */
+	lwp_lock(l);
+	if (l->l_stat != LSSTOP)
+		error = EBUSY;
+	else
+		error = (*r)(l, buf, &ks);
+	lwp_unlock(l);
+	if (error)
+		goto out;
+
+	/*
+	 * Copy (part of) the register content to or from the user's
+	 * I/O space.
+	 */
+	error = uiomove(kv, kl, uio);
+	if (error)
+		goto out;
+
+	/*
+	 * If we're writing registers (or part of the registers), write
+	 * them back.  Again, if the process is not stopped, refuse.
+	 * Must hold the lwp lock to verify l->l_stat remains LSSTOP as
+	 * we write.
+	 *
+	 * Note that there is a potential race condition or ABA problem
+	 * here: in the time between the lwp_unlock above and the
+	 * lwp_lock below, l->l_stat could transition from LSSTOP to
+	 * something else back to LSSTOP again, and the register
+	 * content could be scrambled.  We should really fail with
+	 * EBUSY if that happens at all, but there's no easy way to
+	 * detect that case, and we certainly can't hold the lwp locked
+	 * across uiomove(9) which might wait indefinitely for swap
+	 * I/O.
+	 */
+	if (uio->uio_rw == UIO_WRITE) {
+		lwp_lock(l);
 		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
 			error = (*w)(l, buf, ks);
+		lwp_unlock(l);
+		if (error)
+			goto out;
 	}
 
-	uio->uio_offset = 0;
+out:	uio->uio_offset = 0;
 	return error;
 }
 #endif
+
+#if defined(PT_REGS)
+#ifdef COMPAT_NETBSD32
+static int
+process_read_regs32_wrapper(struct lwp *l, void *buf, size_t *sizep)
+{
+	process_reg32 *r32 = buf;
+
+	KASSERT(*sizep == sizeof(*r32));
+	return process_read_regs32(l, buf);
+}
+
+static int
+process_write_regs32_wrapper(struct lwp *l, void *buf, size_t size)
+{
+	process_reg32 *r32 = buf;
+
+	KASSERT(size == sizeof(*r32));
+	return process_write_regs32(l, buf);
+}
+#endif	/* COMPAT_NETBSD32 */
+
+static int
+process_read_regs_wrapper(struct lwp *l, void *buf, size_t *sizep)
+{
+	struct reg *r = buf;
+
+	KASSERT(*sizep == sizeof(*r));
+	return process_read_regs(l, buf);
+}
+
+static int
+process_write_regs_wrapper(struct lwp *l, void *buf, size_t size)
+{
+	struct reg *r = buf;
+
+	KASSERT(size == sizeof(*r));
+	return process_write_regs(l, buf);
+}
+#endif	/* PT_REGS */
 
 int
 process_doregs(struct lwp *curl /*tracer*/,
@@ -184,33 +265,72 @@ process_doregs(struct lwp *curl /*tracer*/,
     struct uio *uio)
 {
 #if defined(PT_REGS)
-	size_t s;
-	ptrace_regrfunc_t r;
-	ptrace_regwfunc_t w;
-
 #ifdef COMPAT_NETBSD32
 	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
+		process_reg32 reg32 PTRACE_REGS_ALIGN;
+
 		if ((l->l_proc->p_flag & PK_32) == 0) {
 			// 32 bit tracer can't trace 64 bit process
 			return EINVAL;
 		}
-		s = sizeof(process_reg32);
-		r = __FPTRCAST(ptrace_regrfunc_t, process_read_regs32);
-		w = __FPTRCAST(ptrace_regwfunc_t, process_write_regs32);
+		return proc_regio(l, uio, &reg32, sizeof(reg32),
+		    process_read_regs32_wrapper,
+		    process_write_regs32_wrapper);
 	} else
 #endif
 	{
-		s = sizeof(struct reg);
-		r = __FPTRCAST(ptrace_regrfunc_t, process_read_regs);
-		w = __FPTRCAST(ptrace_regwfunc_t, process_write_regs);
+		struct reg reg PTRACE_REGS_ALIGN;
+
+		return proc_regio(l, uio, &reg, sizeof(reg),
+		    process_read_regs_wrapper,
+		    process_write_regs_wrapper);
 	}
-	return proc_regio(l, uio, s, r, w);
 #else
 	return EINVAL;
 #endif
 }
+
+#if defined(PT_FPREGS)
+#ifdef COMPAT_NETBSD32
+static int
+process_read_fpregs32_wrapper(struct lwp *l, void *buf, size_t *sizep)
+{
+	process_fpreg32 *r32 = buf;
+
+	KASSERT(*sizep == sizeof(*r32));
+	return process_read_fpregs32(l, buf, sizep);
+}
+
+static int
+process_write_fpregs32_wrapper(struct lwp *l, void *buf, size_t size)
+{
+	process_fpreg32 *r32 = buf;
+
+	KASSERT(size == sizeof(*r32));
+	return process_write_fpregs32(l, buf, size);
+}
+#endif	/* COMPAT_NETBSD32 */
+
+static int
+process_read_fpregs_wrapper(struct lwp *l, void *buf, size_t *sizep)
+{
+	struct fpreg *r = buf;
+
+	KASSERT(*sizep == sizeof(*r));
+	return process_read_fpregs(l, buf, sizep);
+}
+
+static int
+process_write_fpregs_wrapper(struct lwp *l, void *buf, size_t size)
+{
+	struct fpreg *r = buf;
+
+	KASSERT(size == sizeof(*r));
+	return process_write_fpregs(l, buf, size);
+}
+#endif	/* PT_FPREGS */
 
 int
 process_dofpregs(struct lwp *curl /*tracer*/,
@@ -218,34 +338,72 @@ process_dofpregs(struct lwp *curl /*tracer*/,
     struct uio *uio)
 {
 #if defined(PT_FPREGS)
-	size_t s;
-	ptrace_regrfunc_t r;
-	ptrace_regwfunc_t w;
-
 #ifdef COMPAT_NETBSD32
 	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
+		process_fpreg32 fpreg32 PTRACE_REGS_ALIGN;
+
 		if ((l->l_proc->p_flag & PK_32) == 0) {
 			// 32 bit tracer can't trace 64 bit process
 			return EINVAL;
 		}
-		s = sizeof(process_fpreg32);
-		r = (ptrace_regrfunc_t)process_read_fpregs32;
-		w = (ptrace_regwfunc_t)process_write_fpregs32;
+		return proc_regio(l, uio, &fpreg32, sizeof(fpreg32),
+		    process_read_fpregs32_wrapper,
+		    process_write_fpregs32_wrapper);
 	} else
 #endif
 	{
-		s = sizeof(struct fpreg);
-		r = (ptrace_regrfunc_t)process_read_fpregs;
-		w = (ptrace_regwfunc_t)process_write_fpregs;
+		struct fpreg fpreg PTRACE_REGS_ALIGN;
+
+		return proc_regio(l, uio, &fpreg, sizeof(fpreg),
+		    process_read_fpregs_wrapper,
+		    process_write_fpregs_wrapper);
 	}
-	return proc_regio(l, uio, s, r, w);
 #else
 	return EINVAL;
 #endif
 }
 
+#if defined(PT_DBREGS)
+#ifdef COMPAT_NETBSD32
+static int
+process_read_dbregs32_wrapper(struct lwp *l, void *buf, size_t *sizep)
+{
+	process_dbreg32 *r32 = buf;
+
+	KASSERT(*sizep == sizeof(*r32));
+	return process_read_dbregs32(l, buf, sizep);
+}
+
+static int
+process_write_dbregs32_wrapper(struct lwp *l, void *buf, size_t size)
+{
+	process_dbreg32 *r32 = buf;
+
+	KASSERT(size == sizeof(*r32));
+	return process_write_dbregs32(l, buf, size);
+}
+#endif	/* COMPAT_NETBSD32 */
+
+static int
+process_read_dbregs_wrapper(struct lwp *l, void *buf, size_t *sizep)
+{
+	struct dbreg *r = buf;
+
+	KASSERT(*sizep == sizeof(*r));
+	return process_read_dbregs(l, buf, sizep);
+}
+
+static int
+process_write_dbregs_wrapper(struct lwp *l, void *buf, size_t size)
+{
+	struct dbreg *r = buf;
+
+	KASSERT(size == sizeof(*r));
+	return process_write_dbregs(l, buf, size);
+}
+#endif	/* PT_DBREGS */
 
 int
 process_dodbregs(struct lwp *curl /*tracer*/,
@@ -253,29 +411,31 @@ process_dodbregs(struct lwp *curl /*tracer*/,
     struct uio *uio)
 {
 #if defined(PT_DBREGS)
-	size_t s;
-	ptrace_regrfunc_t r;
-	ptrace_regwfunc_t w;
+	KASSERT(rw_lock_held(&l->l_proc->p_reflock));
+	process_alloc_dbregs(l);
 
 #ifdef COMPAT_NETBSD32
 	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
+		process_dbreg32 dbreg32 PTRACE_REGS_ALIGN;
+
 		if ((l->l_proc->p_flag & PK_32) == 0) {
 			// 32 bit tracer can't trace 64 bit process
 			return EINVAL;
 		}
-		s = sizeof(process_dbreg32);
-		r = (ptrace_regrfunc_t)process_read_dbregs32;
-		w = (ptrace_regwfunc_t)process_write_dbregs32;
+		return proc_regio(l, uio, &dbreg32, sizeof(dbreg32),
+		    process_read_dbregs32_wrapper,
+		    process_write_dbregs32_wrapper);
 	} else
 #endif
 	{
-		s = sizeof(struct dbreg);
-		r = (ptrace_regrfunc_t)process_read_dbregs;
-		w = (ptrace_regwfunc_t)process_write_dbregs;
+		struct dbreg dbreg PTRACE_REGS_ALIGN;
+
+		return proc_regio(l, uio, &dbreg, sizeof(dbreg),
+		    process_read_dbregs_wrapper,
+		    process_write_dbregs_wrapper);
 	}
-	return proc_regio(l, uio, s, r, w);
 #else
 	return EINVAL;
 #endif

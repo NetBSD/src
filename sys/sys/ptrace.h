@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.75.4.1 2025/01/12 12:02:46 martin Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.75.4.2 2026/10/24 10:18:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -334,6 +334,10 @@ int	process_write_regs(struct lwp *, const struct reg *);
 #ifndef process_write_regs64
 #define process_write_regs64	process_write_regs
 #endif
+#endif
+
+#if defined PT_GETDBREGS || defined PT_SETDBREGS
+void	process_alloc_dbregs(struct lwp *);
 #endif
 
 int	ptrace_machdep_dorequest(struct lwp *, struct lwp **, int,
