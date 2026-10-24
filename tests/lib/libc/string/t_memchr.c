@@ -1,15 +1,19 @@
-/* $NetBSD: t_memchr.c,v 1.3 2012/04/06 07:53:10 jruoho Exp $ */
+/* $NetBSD: t_memchr.c,v 1.3.42.1 2026/10/24 11:32:37 martin Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
  * Public domain.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_memchr.c,v 1.3.42.1 2026/10/24 11:32:37 martin Exp $");
+
 #include <atf-c.h>
-#include <string.h>
-#include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 ATF_TC(memchr_basic);
 ATF_TC_HEAD(memchr_basic, tc)
@@ -158,6 +162,35 @@ ATF_TC_BODY(memchr_simple, tc)
 
 		i *= 2;
 	}
+
+	for (i = 0; i < 7; i++) {
+		ATF_CHECK_MSG(memchr(buf, '\0', i) == NULL, "i=%d", i);
+		ATF_CHECK_MSG(memchr(buf + i, '\0', 1) == NULL, "i=%d", i);
+	}
+	ATF_CHECK(memchr(buf, '\0', 7) == NULL);
+	ATF_CHECK(memchr(buf + 7, '\0', 1) == buf + 7);
+	for (i = 8; i < 32; i++) {
+		ATF_CHECK_MSG(memchr(buf, '\0', i) == buf + 7, "i=%d", i);
+		ATF_CHECK_MSG(memchr(buf + 7, '\0', i) == buf + 7, "i=%d", i);
+	}
+
+	ATF_CHECK(memchr(buf, '\0', SSIZE_MAX) == buf + 7);
+	ATF_CHECK(memchr(buf, '\0', SIZE_MAX) == buf + 7);
+	ATF_CHECK(memchr(buf, '\0', (size_t)-1) == buf + 7);
+}
+
+ATF_TC(memchr_abuse);
+ATF_TC_HEAD(memchr_abuse, tc)
+{
+        atf_tc_set_md_var(tc, "descr", "Test memchr(3) with unusual arguments");
+}
+
+ATF_TC_BODY(memchr_abuse, tc)
+{
+	const char *emptystring = "";
+
+	ATF_CHECK(memchr(emptystring, 0, -1) == emptystring);
+	ATF_CHECK(memchr(emptystring, 0, SIZE_MAX) == emptystring);
 }
 
 ATF_TC(memrchr_simple);
@@ -188,6 +221,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, memchr_basic);
 	ATF_TP_ADD_TC(tp, memchr_simple);
+	ATF_TP_ADD_TC(tp, memchr_abuse);
 	ATF_TP_ADD_TC(tp, memrchr_simple);
 
 	return atf_no_error();
