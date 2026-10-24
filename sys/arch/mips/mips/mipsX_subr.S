@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.121 2026/09/29 06:03:33 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.122 2026/10/24 14:25:04 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.121 2026/09/29 06:03:33 skrll Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.122 2026/10/24 14:25:04 skrll Exp $")
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2656,7 +2656,7 @@ END(MIPSX(tlb_record_asids))
 /*
  * mipsN_lwp_trampoline()
  *
- * Arrange for a function to be invoked neatly, after a cpu_switch().
+ * Arrange for a function to be invoked neatly, after a cpu_switchto().
  * Call the service function with one argument, specified by the s0
  * and s1 respectively.  There is no need register save operation.
  * XXX - Not profiled because we pass an arg in with v0 which isn't
