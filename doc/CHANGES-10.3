@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.23 2026/10/24 15:51:14 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.24 2026/10/24 17:19:15 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -481,4 +481,14 @@ tests/kernel/t_fdpass.c				1.1-1.4 (patch)
 
 	sendmsg(2): PR 60832: avoid spurious ENOBUFS on fd-passing.
 	[riastradh, ticket #1392]
+
+crypto/external/bsd/heimdal/dist/kpasswd/kpasswdd.c 1.6
+
+	kpasswdd(8): PR 60481: avoid crash on exit in inetd mode.
+	[riastradh, ticket #1393]
+
+crypto/external/bsd/heimdal/dist/kdc/connect.c	1.6
+
+	kdc(8): PR 60841: fix child worker termination.
+	[riastradh, ticket #1394]
 
