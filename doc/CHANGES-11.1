@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.1,v 1.1.2.27 2026/10/23 16:29:28 martin Exp $
+# $NetBSD: CHANGES-11.1,v 1.1.2.28 2026/10/24 11:34:31 martin Exp $
 
 A complete list of changes between the 11.0 release on 2026-07-30
 until the 11.1 release:
@@ -1468,4 +1468,57 @@ tests/dev/fss/t_fss.sh				1.8 (patch)
 
 	file(1), find(1): PR 60379, PR 60380): recognize snapshots.
 	[riastradh, ticket #538]
+
+sys/arch/amd64/amd64/machdep.c			1.381
+
+	amd64: PR 60539: fix ucontext_t FXSAVE area ABI breakage.
+	[riastradh, ticket #539]
+
+sys/arch/amd64/amd64/process_machdep.c		1.51
+sys/arch/i386/i386/process_machdep.c		1.98
+sys/arch/x86/include/dbregs.h			1.9
+sys/arch/x86/x86/dbregs.c			1.16
+sys/compat/netbsd32/netbsd32_ptrace.c		1.10,1.11
+sys/kern/sys_process_lwpstatus.c		1.6-1.10
+sys/sys/ptrace.h				1.78
+
+	kernel: PR 60556, PR 60595, PR 60658:
+	Fix locking around ptrace and procfs debug register access.
+	[riastradh, ticket #540]
+
+distrib/sets/lists/debug/mi			1.518
+distrib/sets/lists/tests/mi			1.1429
+sys/compat/linux32/arch/aarch64/linux32_exec_machdep.c 1.3
+sys/compat/netbsd32/netbsd32_signal.c		1.57
+sys/kern/exec_script.c				1.86
+sys/kern/exec_subr.c				1.93
+sys/kern/kern_exec.c				1.534,1.535
+sys/kern/kern_fork.c				1.235
+tests/kernel/Makefile				1.99,1.100
+tests/kernel/getstack.c				1.1
+tests/kernel/getstack.h				1.1
+tests/kernel/h_getstack.c			1.1
+tests/kernel/t_signal_and_sp.c			1.22-1.24
+
+	exec, fork spawn: PR 60653, PR 60657, PR 60877:
+	Fix process stack base and error branches.
+	[riastradh, ticket #541]
+
+sys/net/if.c					1.539
+
+	ioctl(SIOCSIFGENERIC): PR 60745: check for network interface setpriv.
+	[riastradh, ticket #542]
+
+sys/net/if_l2tp.c				1.50,1.51
+
+	l2tp(4): PR 60743: block unprivileged config, validate
+	cookie length.
+	[riastradh, ticket #543]
+
+common/lib/libc/arch/x86_64/string/memchr.S	1.7,1.8
+tests/lib/libc/string/Makefile			1.16
+tests/lib/libc/string/t_memchr.c		1.4-1.7
+
+	memchr(3): PR 60744: fix case of arbitrary-length inputs
+	[riastradh, ticket #544]
 
