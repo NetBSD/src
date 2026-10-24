@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.43.2.2 2026/05/07 17:49:25 martin Exp $	*/
-/* $OpenBSD: scp.c,v 1.273 2026/04/02 07:42:16 djm Exp $ */
+/*	$NetBSD: scp.c,v 1.43.2.3 2026/10/24 17:33:07 martin Exp $	*/
+/* $OpenBSD: scp.c,v 1.278 2026/10/01 07:10:56 djm Exp $ */
 
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -74,7 +74,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.43.2.2 2026/05/07 17:49:25 martin Exp $");
+__RCSID("$NetBSD: scp.c,v 1.43.2.3 2026/10/24 17:33:07 martin Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -486,6 +486,8 @@ main(int argc, char **argv)
 			throughlocal = 1;
 			break;
 		case 'R':
+			fprintf(stderr, "warning: remote/remote -R copy mode "
+			    "is deprecated and will soon be removed\n");
 			throughlocal = 0;
 			break;
 		case 'o':
@@ -502,7 +504,7 @@ main(int argc, char **argv)
 			mode = MODE_SCP;
 			break;
 		case 's':
-			mode = MODE_SFTP;
+			/* Ignored */
 			break;
 		case 'P':
 			sshport = a2port(optarg);
@@ -1657,8 +1659,8 @@ sink(int argc, char **argv, const char *src)
 	setimes = targisdir = 0;
 	mask = umask(0);
 	if (!pflag) {
-		mask |= 07000;
 		(void) umask(mask);
+		mask |= 07000;
 	}
 	if (argc != 1) {
 		run_err("ambiguous target");
@@ -1688,6 +1690,8 @@ sink(int argc, char **argv, const char *src)
 		do {
 			if (atomicio(read, remin, &ch, sizeof(ch)) != sizeof(ch))
 				SCREWUP("lost connection");
+			if (ch == '\0')
+				SCREWUP("nul byte in filename");
 			*cp++ = ch;
 		} while (cp < &buf[sizeof(buf) - 1] && ch != '\n');
 		*cp = 0;
@@ -1956,8 +1960,9 @@ void
 throughlocal_sftp(struct sftp_conn *from, struct sftp_conn *to,
     char *src, char *targ)
 {
-	char *target = NULL, *filename = NULL, *abs_dst = NULL;
+	char *target = NULL, *abs_dst = NULL;
 	char *abs_src = NULL, *tmp = NULL;
+	const char *filename = NULL;
 	glob_t g;
 	int i, r, targetisdir, err = 0;
 
@@ -2008,6 +2013,10 @@ throughlocal_sftp(struct sftp_conn *from, struct sftp_conn *to,
 			err = -1;
 			goto out;
 		}
+
+		/* Special handling for source of '..' */
+		if (strcmp(filename, "..") == 0)
+			filename = "."; /* Download to dest, not dest/.. */
 
 		if (targetisdir)
 			abs_dst = sftp_path_append(target, filename);
@@ -2082,7 +2091,7 @@ static void
 usage(void)
 {
 	(void) fprintf(stderr,
-	    "usage: scp [-346ABCOpqRrsTv] [-c cipher] [-D sftp_server_path] [-F ssh_config]\n"
+	    "usage: scp [-346ABCOpqRrTv] [-c cipher] [-D sftp_server_path] [-F ssh_config]\n"
 	    "           [-i identity_file] [-J destination] [-l limit] [-o ssh_option]\n"
 	    "           [-P port] [-S program] [-X sftp_option] source ... target\n");
 	exit(1);

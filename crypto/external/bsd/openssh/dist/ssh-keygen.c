@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keygen.c,v 1.49.2.2 2026/05/07 17:49:26 martin Exp $	*/
-/* $OpenBSD: ssh-keygen.c,v 1.490 2026/03/03 09:57:25 dtucker Exp $ */
+/*	$NetBSD: ssh-keygen.c,v 1.49.2.3 2026/10/24 17:33:07 martin Exp $	*/
+/* $OpenBSD: ssh-keygen.c,v 1.496 2026/09/15 08:00:01 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.49.2.2 2026/05/07 17:49:26 martin Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.49.2.3 2026/10/24 17:33:07 martin Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -81,6 +81,8 @@ __RCSID("$NetBSD: ssh-keygen.c,v 1.49.2.2 2026/05/07 17:49:26 martin Exp $");
 #define DEFAULT_BITS		3072
 #define DEFAULT_BITS_ECDSA	256
 
+#define KEY_COMMENT_MAX		(NI_MAXHOST + 1024)
+
 static int quiet = 0;
 
 /* Flag indicating that we just want to see the key fingerprint */
@@ -140,7 +142,8 @@ static size_t ncert_ext;
 enum {
 	FMT_RFC4716,
 	FMT_PKCS8,
-	FMT_PEM
+	FMT_PEM,
+	FMT_HEXDUMP
 } convert_format = FMT_RFC4716;
 
 static const char *key_type_name = NULL;
@@ -267,6 +270,10 @@ ask_filename(struct passwd *pw, const char *prompt)
 		case KEY_ED25519_SK_CERT:
 			name = _PATH_SSH_CLIENT_ID_ED25519_SK;
 			break;
+		case KEY_MLDSA44_ED25519:
+		case KEY_MLDSA44_ED25519_CERT:
+			name = _PATH_SSH_CLIENT_ID_MLDSA44_ED25519;
+			break;
 		default:
 			fatal("bad key type");
 		}
@@ -383,10 +390,34 @@ do_convert_to_pem(struct sshkey *k)
 	}
 }
 
-__dead static void
+static void
+do_convert_to_hexdump(struct sshkey *k)
+{
+	struct sshbuf *b;
+	int r;
+
+	if ((b = sshbuf_new()) == NULL)
+		fatal_f("sshbuf_new failed");
+	/* pubkey */
+	if ((r = sshkey_putb(k, b)) != 0)
+		fatal_fr(r, "serialise private");
+	printf("Public %s key:\n", sshkey_type(k));
+	sshbuf_dump(b, stdout);
+	sshbuf_reset(b);
+	if ((r = sshkey_private_serialize(k, b)) != 0) {
+		debug_fr(r, "serialise private");
+		goto out;
+	}
+	printf("\nPrivate %s key:\n", sshkey_type(k));
+	sshbuf_dump(b, stdout);
+ out:
+	sshbuf_free(b);
+}
+
+static void
 do_convert_to(struct passwd *pw)
 {
-	struct sshkey *k;
+	struct sshkey *k = NULL;
 	struct stat st;
 	int r;
 
@@ -394,8 +425,17 @@ do_convert_to(struct passwd *pw)
 		ask_filename(pw, "Enter file in which the key is");
 	if (stat(identity_file, &st) == -1)
 		fatal("%s: %s: %s", __progname, identity_file, strerror(errno));
-	if ((r = sshkey_load_public(identity_file, &k, NULL)) != 0)
+
+	/* If we're trying to hexdump, then prefer the private key */
+	if (convert_format == FMT_HEXDUMP) {
+		if ((r = sshkey_load_private(identity_file,
+		    NULL, &k, NULL)) != 0 &&
+		    r == SSH_ERR_KEY_WRONG_PASSPHRASE)
+			k = load_identity(identity_file, NULL);
+	}
+	if (k == NULL && (r = sshkey_load_public(identity_file, &k, NULL)) != 0)
 		k = load_identity(identity_file, NULL);
+
 	switch (convert_format) {
 	case FMT_RFC4716:
 		do_convert_to_ssh2(pw, k);
@@ -405,6 +445,9 @@ do_convert_to(struct passwd *pw)
 		break;
 	case FMT_PEM:
 		do_convert_to_pem(k);
+		break;
+	case FMT_HEXDUMP:
+		do_convert_to_hexdump(k);
 		break;
 	default:
 		fatal_f("unknown key format %d", convert_format);
@@ -999,6 +1042,8 @@ do_gen_all_hostkeys(struct passwd *pw)
 		{ "ecdsa", "ECDSA",_PATH_HOST_ECDSA_KEY_FILE },
 #endif /* WITH_OPENSSL */
 		{ "ed25519", "ED25519",_PATH_HOST_ED25519_KEY_FILE },
+		{ "mldsa44-ed25519", "MLDSA44-ED25519",
+		     _PATH_HOST_MLDSA44_ED25519_KEY_FILE },
 		{ NULL, NULL, NULL }
 	};
 
@@ -1006,7 +1051,7 @@ do_gen_all_hostkeys(struct passwd *pw)
 	int first = 0;
 	struct stat st;
 	struct sshkey *private, *public;
-	char comment[1024], *prv_tmp, *pub_tmp, *prv_file, *pub_file;
+	char comment[KEY_COMMENT_MAX], *prv_tmp, *pub_tmp, *prv_file, *pub_file;
 	int i, type, fd, r;
 
 	for (i = 0; key_types[i].key_type; i++) {
@@ -1342,13 +1387,14 @@ do_known_hosts(struct passwd *pw, const char *name, int find_host,
  * for the current user.
  */
 __dead static void
-do_change_passphrase(struct passwd *pw)
+do_change_passphrase(struct passwd *pw, char *const *opts, size_t nopts)
 {
 	char *comment;
 	char *old_passphrase, *passphrase1, *passphrase2;
 	struct stat st;
 	struct sshkey *private;
 	int r;
+	size_t i;
 
 	if (!have_identity)
 		ask_filename(pw, "Enter file in which the key is");
@@ -1374,6 +1420,38 @@ do_change_passphrase(struct passwd *pw)
 	}
 	if (comment)
 		mprintf("Key has comment '%s'\n", comment);
+
+	/* All current -O options relate to FIDO keys only */
+	if (nopts != 0 && !sshkey_is_sk(private)) {
+		fatal("FIDO-specific option requested for non-FIDO key %s",
+		    identity_file);
+	}
+	if (sshkey_is_sk(private)) {
+		debug_f("%s: original FIDO key flags: "
+		    "%stouch-required %sverify-required", identity_file,
+		    (private->sk_flags & SSH_SK_USER_PRESENCE_REQD) ? "": "no-",
+		    (private->sk_flags & SSH_SK_USER_VERIFICATION_REQD) ? "" : "no-");
+	}
+	for (i = 0; i < nopts; i++) {
+		if (strcasecmp(opts[i], "touch-required") == 0)
+			private->sk_flags |= SSH_SK_USER_PRESENCE_REQD;
+		else if (strcasecmp(opts[i], "no-touch-required") == 0)
+			private->sk_flags &= ~SSH_SK_USER_PRESENCE_REQD;
+		else if (strcasecmp(opts[i], "verify-required") == 0)
+			private->sk_flags |= SSH_SK_USER_VERIFICATION_REQD;
+		else if (strcasecmp(opts[i], "no-verify-required") == 0)
+			private->sk_flags &= ~SSH_SK_USER_VERIFICATION_REQD;
+		else {
+			fatal("Option \"%s\" is unsupported for "
+			    "key passphrase change", opts[i]);
+		}
+	}
+	if (sshkey_is_sk(private) && nopts != 0) {
+		debug_f("%s: updated FIDO key flags: "
+		    "%stouch-required %sverify-required", identity_file,
+		    (private->sk_flags & SSH_SK_USER_PRESENCE_REQD) ? "": "no-",
+		    (private->sk_flags & SSH_SK_USER_VERIFICATION_REQD) ? "" : "no-");
+	}
 
 	/* Ask the new passphrase (twice). */
 	if (identity_new_passphrase) {
@@ -1462,7 +1540,7 @@ do_print_resource_record(struct passwd *pw, const char *fname,
 __dead static void
 do_change_comment(struct passwd *pw, const char *identity_comment)
 {
-	char new_comment[1024], *comment, *passphrase;
+	char new_comment[KEY_COMMENT_MAX], *comment, *passphrase;
 	struct sshkey *private;
 	struct sshkey *public;
 	struct stat st;
@@ -2100,6 +2178,8 @@ print_cert(struct sshkey *key)
 		printf("\n");
 		show_options(key->cert->extensions, 0);
 	}
+	free(key_fp);
+	free(ca_fp);
 }
 
 __dead static void
@@ -3224,7 +3304,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: ssh-keygen [-q] [-a rounds] [-b bits] [-C comment] [-f output_keyfile]\n"
 	    "                  [-m format] [-N new_passphrase] [-O option]\n"
-	    "                  [-t ecdsa | ecdsa-sk | ed25519 | ed25519-sk | rsa]\n"
+	    "                  [-t ecdsa|ecdsa-sk|ed25519|ed25519-sk|mldsa44-ed25519|rsa]\n"
 	    "                  [-w provider] [-Z cipher]\n"
 	    "       ssh-keygen -p [-a rounds] [-f keyfile] [-m format] [-N new_passphrase]\n"
 	    "                   [-P old_passphrase] [-Z cipher]\n"
@@ -3273,7 +3353,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	char comment[1024], *passphrase = NULL;
+	char comment[KEY_COMMENT_MAX], *passphrase = NULL;
 	char *rr_hostname = NULL, *ep, *fp, *ra;
 	struct sshkey *private = NULL, *public = NULL;
 	struct passwd *pw;
@@ -3373,6 +3453,10 @@ main(int argc, char **argv)
 			if (strcasecmp(optarg, "PEM") == 0) {
 				convert_format = FMT_PEM;
 				private_key_format = SSHKEY_PRIVATE_PEM;
+				break;
+			}
+			if (strcasecmp(optarg, "hexdump") == 0) {
+				convert_format = FMT_HEXDUMP;
 				break;
 			}
 			fatal("Unsupported conversion format \"%s\"", optarg);
@@ -3682,7 +3766,7 @@ main(int argc, char **argv)
 	if (print_fingerprint || print_bubblebabble)
 		do_fingerprint(pw);
 	if (change_passphrase)
-		do_change_passphrase(pw);
+		do_change_passphrase(pw, opts, nopts);
 	if (change_comment)
 		do_change_comment(pw, identity_comment);
 #ifdef WITH_OPENSSL
@@ -3860,6 +3944,8 @@ main(int argc, char **argv)
 		/* Create default comment field for the passphrase. */
 		snprintf(comment, sizeof comment, "%s@%s", pw->pw_name, hostname);
 	}
+
+
 
 	/* Save the key with the given passphrase and comment. */
 	if ((r = sshkey_save_private(private, identity_file, passphrase,

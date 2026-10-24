@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.24.2.2 2026/05/07 17:49:22 martin Exp $	*/
-/* $OpenBSD: auth.h,v 1.109 2026/02/06 01:24:36 djm Exp $ */
+/*	$NetBSD: auth.h,v 1.24.2.3 2026/10/24 17:33:04 martin Exp $	*/
+/* $OpenBSD: auth.h,v 1.111 2026/09/16 00:16:52 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -60,6 +60,8 @@ struct Authctxt {
 	int		 valid;		/* user exists and is allowed to login */
 	int		 attempt;
 	int		 failures;
+	int		 pk_ok_failures;
+	int		 auth_failure_already_counted;
 	int		 server_caused_failure;
 	int		 force_pwchange;
 	char		*user;		/* username sent by the client */
@@ -171,6 +173,7 @@ void	auth_log(struct ssh *, int, int, const char *, const char *);
 void	auth_maxtries_exceeded(struct ssh *) __attribute__((noreturn));
 void	userauth_finish(struct ssh *, int, const char *, const char *);
 int	auth_root_allowed(struct ssh *, const char *);
+void	auth_failure_delay(Authctxt *, double);
 
 char	*auth2_read_banner(void);
 int	 auth2_methods_valid(const char *, int);

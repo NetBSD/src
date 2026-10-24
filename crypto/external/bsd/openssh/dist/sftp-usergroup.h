@@ -1,3 +1,5 @@
+/*	$NetBSD: sftp-usergroup.h,v 1.1.1.1.8.1 2026/10/24 17:33:07 martin Exp $	*/
+
 /*
  * Copyright (c) 2022 Damien Miller <djm@mindrot.org>
  *

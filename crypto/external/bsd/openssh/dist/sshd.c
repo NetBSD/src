@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd.c,v 1.55.2.2 2026/05/07 17:49:27 martin Exp $	*/
-/* $OpenBSD: sshd.c,v 1.626 2026/02/09 21:21:39 dtucker Exp $ */
+/*	$NetBSD: sshd.c,v 1.55.2.3 2026/10/24 17:33:08 martin Exp $	*/
+/* $OpenBSD: sshd.c,v 1.635 2026/09/16 07:47:29 jsg Exp $ */
 
 /*
  * Copyright (c) 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.55.2.2 2026/05/07 17:49:27 martin Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.55.2.3 2026/10/24 17:33:08 martin Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -82,6 +82,7 @@ __RCSID("$NetBSD: sshd.c,v 1.55.2.2 2026/05/07 17:49:27 martin Exp $");
 #include "ssh-gss.h"
 #endif
 #include "monitor_wrap.h"
+#include "getexecpath.h"
 
 #ifdef LIBWRAP
 #include <tcpd.h>
@@ -117,6 +118,7 @@ ServerOptions options;
 int debug_flag = 0;
 
 /* Saved arguments to main(). */
+static char execpath[PATH_MAX];
 static char **saved_argv;
 
 /*
@@ -530,8 +532,8 @@ sighup_restart(void)
 	close_listen_socks();
 	close_startup_pipes();
 	ssh_signal(SIGHUP, SIG_IGN); /* will be restored after exec */
-	execv(saved_argv[0], saved_argv);
-	logit("RESTART FAILED: av[0]='%.100s', error: %.100s.", saved_argv[0],
+	execv(execpath, saved_argv);
+	logit("RESTART FAILED: execpath='%.100s', error: %.100s.", execpath,
 	    strerror(errno));
 	exit(1);
 }
@@ -620,7 +622,7 @@ drop_connection(int sock, int startups, int notify_pipe)
 		if (!should_drop_connection(startups) &&
 		    srclimit_check_allow(sock, notify_pipe) == 1)
 			return 0;
-		reason = "Maxstartups";
+		reason = "MaxStartups";
 		rl = &ratelimit_maxstartups;
 	}
 
@@ -992,6 +994,12 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s,
 				lameduck = 1;
 			}
 			if (listening <= 0) {
+				/*
+				 * Leave termination signals blocked, so
+				 * they don't get lost across a restart.
+				 */
+				sigaddset(&osigset, SIGTERM);
+				sigaddset(&osigset, SIGQUIT);
 				sigprocmask(SIG_SETMASK, &osigset, NULL);
 				sighup_restart();
 			}
@@ -1272,6 +1280,18 @@ prepare_proctitle(int ac, char **av)
 	return ret;
 }
 
+/* Disconnect from the controlling tty. */
+static void
+disconnect_controlling_tty(void)
+{
+	int fd;
+
+	if ((fd = open(_PATH_TTY, O_RDWR | O_NOCTTY)) >= 0) {
+		(void) ioctl(fd, TIOCNOTTY, NULL);
+		close(fd);
+	}
+}
+
 __dead static void
 print_config(struct connection_info *connection_info)
 {
@@ -1412,7 +1432,8 @@ main(int ac, char **av)
 			have_connection_info = 1;
 			break;
 		case 'u':
-			utmp_len = (u_int)strtonum(optarg, 0, HOST_NAME_MAX+1+1, NULL);
+			utmp_len = (u_int)strtonum(optarg, 0,
+			    HOST_NAME_MAX+1+1, NULL);
 			if (utmp_len > HOST_NAME_MAX+1) {
 				fprintf(stderr, "Invalid utmp length.\n");
 				exit(1);
@@ -1434,7 +1455,15 @@ main(int ac, char **av)
 			break;
 		}
 	}
-	if (!test_flag && !inetd_flag && !do_dump_cfg && !path_absolute(av[0]))
+
+	if (getexecpath(execpath, sizeof execpath) != 0) {
+		if (strlcpy(execpath, av[0], sizeof execpath) >=
+		    sizeof execpath) {
+			fprintf(stderr, "execution path is too long\n");
+			exit(1);
+		}
+	}
+	if (!test_flag && !inetd_flag && !do_dump_cfg && !path_absolute(execpath))
 		fatal("sshd requires execution with an absolute path");
 
 	closefrom(STDERR_FILENO + 1);
@@ -1565,7 +1594,8 @@ main(int ac, char **av)
 		if (options.host_key_files[i] == NULL)
 			continue;
 		if ((r = sshkey_load_private(options.host_key_files[i], "",
-		    &key, NULL)) != 0 && r != SSH_ERR_SYSTEM_ERROR)
+		    &key, NULL)) != 0 &&
+		    r != SSH_ERR_SYSTEM_ERROR && !have_agent)
 			do_log2_r(r, ll, "Unable to load host key \"%s\"",
 			    options.host_key_files[i]);
 		if (sshkey_is_sk(key) &&
@@ -1627,6 +1657,7 @@ main(int ac, char **av)
 		case KEY_RSA:
 		case KEY_ECDSA:
 		case KEY_ED25519:
+		case KEY_MLDSA44_ED25519:
 		case KEY_ECDSA_SK:
 		case KEY_ED25519_SK:
 			if (have_agent || key != NULL)

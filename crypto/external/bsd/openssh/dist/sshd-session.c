@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd-session.c,v 1.10.2.4 2026/07/30 10:59:03 martin Exp $	*/
-/* $OpenBSD: sshd-session.c,v 1.23 2026/03/11 09:10:59 dtucker Exp $ */
+/*	$NetBSD: sshd-session.c,v 1.10.2.5 2026/10/24 17:33:08 martin Exp $	*/
+/* $OpenBSD: sshd-session.c,v 1.26 2026/09/16 00:13:58 djm Exp $ */
 
 /*
  * SSH2 implementation:
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.10.2.4 2026/07/30 10:59:03 martin Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.10.2.5 2026/10/24 17:33:08 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -454,6 +454,7 @@ get_hostkey_by_type(int type, int nid, int need_private, struct ssh *ssh)
 		case KEY_ED25519_CERT:
 		case KEY_ECDSA_SK_CERT:
 		case KEY_ED25519_SK_CERT:
+		case KEY_MLDSA44_ED25519_CERT:
 			key = sensitive_data.host_certificates[i];
 			break;
 		default:
@@ -785,7 +786,7 @@ main(int ac, char **av)
 	struct ssh *ssh = NULL;
 	extern char *optarg;
 	extern int optind;
-	int devnull, r, opt, on = 1, remote_port;
+	int devnull, r, opt, remote_port;
 	int sock_in = -1, sock_out = -1, rexeced_flag = 0, have_key = 0;
 	const char *remote_ip, *rdomain;
 	char *line, *laddr, *logfile = NULL;
@@ -1148,13 +1149,14 @@ main(int ac, char **av)
 	/* Prepare the channels layer */
 	channel_init_channels(ssh);
 	channel_set_af(ssh, options.address_family);
+	channel_set_tcp_keepalives(ssh,
+	    options.tcp_keep_alive == SSH_KEEPALIVES_ALL);
 	server_process_channel_timeouts(ssh);
 	server_process_permitopen(ssh);
 
 	/* Set SO_KEEPALIVE if requested. */
-	if (options.tcp_keep_alive && ssh_packet_connection_is_on_socket(ssh) &&
-	    setsockopt(sock_in, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) == -1)
-		error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
+	if (options.tcp_keep_alive && ssh_packet_connection_is_on_socket(ssh))
+		set_keepalive(sock_in); /* logs errors */
 
 	if ((remote_port = ssh_remote_port(ssh)) < 0) {
 		debug("ssh_remote_port failed");
@@ -1174,6 +1176,7 @@ main(int ac, char **av)
 		/*
 		 * Test with "sshd", instead of "sshd-session";
 		 * the latter is an internal implementation detail.
+		 * See PR bin/60512.
 		 */
 		check_connection("sshd", sock_in);
 	}
@@ -1233,6 +1236,8 @@ main(int ac, char **av)
 		fatal("privsep_preauth failed");
 
 	/* Now user is authenticated */
+
+	setproctitle("%s [postauth]", authctxt->user);
 
 	/*
 	 * Cancel the alarm we set to limit the time taken for
@@ -1344,7 +1349,9 @@ cleanup_exit(int i)
 		pfilter_notify(1);
 		_exit(EXIT_AUTH_ATTEMPTED);
 	}
-	if (i == 255 && monitor_invalid_user())
+	if (i == 255 && monitor_invalid_user()) {
+		pfilter_notify(1);
 		_exit(EXIT_INVALID_USER);
+	}
 	_exit(i);
 }

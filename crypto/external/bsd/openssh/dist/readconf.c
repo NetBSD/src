@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.c,v 1.49.2.2 2026/05/07 17:49:25 martin Exp $	*/
-/* $OpenBSD: readconf.c,v 1.411 2026/03/30 07:18:24 djm Exp $ */
+/*	$NetBSD: readconf.c,v 1.49.2.3 2026/10/24 17:33:07 martin Exp $	*/
+/* $OpenBSD: readconf.c,v 1.419 2026/10/05 06:03:40 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.49.2.2 2026/05/07 17:49:25 martin Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.49.2.3 2026/10/24 17:33:07 martin Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -1129,6 +1129,15 @@ static const struct multistate multistate_compression[] = {
 	{ "no",				COMP_NONE },
 	{ NULL, -1 }
 };
+static const struct multistate multistate_keepalives[] = {
+	{ "true",			SSH_KEEPALIVES_TRANSPORT },
+	{ "false",			SSH_KEEPALIVES_OFF },
+	{ "yes",			SSH_KEEPALIVES_TRANSPORT },
+	{ "no",				SSH_KEEPALIVES_OFF },
+	{ "transport",			SSH_KEEPALIVES_TRANSPORT },
+	{ "all",			SSH_KEEPALIVES_ALL },
+	{ NULL, -1 }
+};
 /* XXX this will need to be replaced with a bitmask if we add more flags */
 static const struct multistate multistate_warnweakcrypto[] = {
 	{ "true",			1 },
@@ -1436,7 +1445,8 @@ parse_time:
 
 	case oTCPKeepAlive:
 		intptr = &options->tcp_keep_alive;
-		goto parse_flag;
+		multistate_ptr = multistate_keepalives;
+		goto parse_multistate;
 
 	case oNoHostAuthenticationForLocalhost:
 		intptr = &options->no_host_authentication_for_localhost;
@@ -1959,7 +1969,7 @@ parse_pubkey_algos:
 
 	case oMatch:
 		if (cmdline) {
-			error("Host directive not supported as a command-line "
+			error("Match directive not supported as a command-line "
 			    "option");
 			goto out;
 		}
@@ -2413,7 +2423,9 @@ parse_pubkey_algos:
 			error("%.200s line %d: Bad mask.", filename, linenum);
 			goto out;
 		}
-		options->fwd_opts.streamlocal_bind_mask = (mode_t)value;
+		if (*activep &&
+		    options->fwd_opts.streamlocal_bind_mask == (mode_t)-1)
+			options->fwd_opts.streamlocal_bind_mask = (mode_t)value;
 		break;
 
 	case oStreamLocalBindUnlink:
@@ -2879,10 +2891,10 @@ initialize_options(Options * options)
 	options->ipv6_prefer_temporary = -1;
 	options->pkcs11_provider = NULL;
 	options->sk_provider = NULL;
-	options->enable_ssh_keysign = - 1;
-	options->no_host_authentication_for_localhost = - 1;
-	options->identities_only = - 1;
-	options->rekey_limit = - 1;
+	options->enable_ssh_keysign = -1;
+	options->no_host_authentication_for_localhost = -1;
+	options->identities_only = -1;
+	options->rekey_limit = -1;
 	options->rekey_interval = -1;
 	options->verify_host_key_dns = -1;
 	options->server_alive_interval = -1;
@@ -2967,7 +2979,7 @@ fill_default_options(Options * options)
 {
 	char *all_cipher, *all_mac, *all_kex, *all_key, *all_sig;
 	char *def_cipher, *def_mac, *def_kex, *def_key, *def_sig;
-	int ret = 0, r;
+	int ret = -1, r;
 
 	if (options->forward_agent == -1)
 		options->forward_agent = 0;
@@ -3031,7 +3043,7 @@ fill_default_options(Options * options)
 	if (options->compression == -1)
 		options->compression = 0;
 	if (options->tcp_keep_alive == -1)
-		options->tcp_keep_alive = 1;
+		options->tcp_keep_alive = SSH_KEEPALIVES_TRANSPORT;
 	if (options->port == -1)
 		options->port = 0;	/* Filled in ssh_connect. */
 	if (options->address_family == -1)
@@ -3054,6 +3066,8 @@ fill_default_options(Options * options)
 		    _PATH_SSH_CLIENT_ID_ED25519, 0);
 		add_identity_file(options, "~/",
 		    _PATH_SSH_CLIENT_ID_ED25519_SK, 0);
+		add_identity_file(options, "~/",
+		    _PATH_SSH_CLIENT_ID_MLDSA44_ED25519, 0);
 	}
 	if (options->escape_char == -1)
 		options->escape_char = '~';
@@ -3082,7 +3096,7 @@ fill_default_options(Options * options)
 		options->log_level = SYSLOG_LEVEL_INFO;
 	if (options->log_facility == SYSLOG_FACILITY_NOT_SET)
 		options->log_facility = SYSLOG_FACILITY_USER;
-	if (options->no_host_authentication_for_localhost == - 1)
+	if (options->no_host_authentication_for_localhost == -1)
 		options->no_host_authentication_for_localhost = 0;
 	if (options->identities_only == -1)
 		options->identities_only = 0;
@@ -3598,13 +3612,10 @@ ssh_valid_ruser(const char *s)
 	for (i = 0; s[i] != 0; i++) {
 		if (iscntrl((u_char)s[i]))
 			return 0;
-		if (strchr("'`\";&<>|(){}", s[i]) != NULL)
+		if (strchr("'`\";&<>|(){}$\\", s[i]) != NULL)
 			return 0;
 		/* Disallow '-' after whitespace */
 		if (isspace((u_char)s[i]) && s[i + 1] == '-')
-			return 0;
-		/* Disallow \ in last position */
-		if (s[i] == '\\' && s[i + 1] == '\0')
 			return 0;
 	}
 	return 1;
@@ -3758,6 +3769,8 @@ fmt_intarg(OpCodes code, int val)
 		return fmt_multistate_int(val, multistate_yesnoaskconfirm);
 	case oPubkeyAuthentication:
 		return fmt_multistate_int(val, multistate_pubkey_auth);
+	case oTCPKeepAlive:
+		return fmt_multistate_int(val, multistate_keepalives);
 	case oFingerprintHash:
 		return ssh_digest_alg_name(val);
 	default:
@@ -4040,7 +4053,7 @@ dump_client_config(Options *o, const char *host)
 	printf("\n");
 
 	/* oCanonicalizePermittedCNAMEs */
-	printf("canonicalizePermittedcnames");
+	printf("canonicalizepermittedcnames");
 	if (o->num_permitted_cnames == 0)
 		printf(" none");
 	for (i = 0; i < o->num_permitted_cnames; i++) {

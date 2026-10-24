@@ -1,6 +1,6 @@
-/*	$NetBSD: auth.c,v 1.38.2.2 2026/05/07 17:49:22 martin Exp $	*/
+/*	$NetBSD: auth.c,v 1.38.2.3 2026/10/24 17:33:04 martin Exp $	*/
 /* $OpenBSD: auth.c,v 1.164 2026/02/11 22:57:16 djm Exp $ */
-
+/* $OpenBSD: auth.c,v 1.165 2026/07/21 06:17:42 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.38.2.2 2026/05/07 17:49:22 martin Exp $");
+__RCSID("$NetBSD: auth.c,v 1.38.2.3 2026/10/24 17:33:04 martin Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -564,7 +564,10 @@ getpwnamallow(struct ssh *ssh, const char *user)
 	log_verbose_reset();
 	for (i = 0; i < options.num_log_verbose; i++)
 		log_verbose_add(options.log_verbose[i]);
+	server_process_channel_timeouts(ssh);
 	server_process_permitopen(ssh);
+	ssh_packet_set_rekey_limits(ssh, options.rekey_limit,
+	    options.rekey_interval);
 
 	pw = getpwnam(user);
 	if (pw == NULL) {

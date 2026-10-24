@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-chall.c,v 1.19.10.2 2026/05/07 17:49:22 martin Exp $	*/
-/* $OpenBSD: auth2-chall.c,v 1.60 2026/03/03 09:57:25 dtucker Exp $ */
+/*	$NetBSD: auth2-chall.c,v 1.19.10.3 2026/10/24 17:33:05 martin Exp $	*/
+/* $OpenBSD: auth2-chall.c,v 1.61 2026/07/06 07:44:48 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-chall.c,v 1.19.10.2 2026/05/07 17:49:22 martin Exp $");
+__RCSID("$NetBSD: auth2-chall.c,v 1.19.10.3 2026/10/24 17:33:05 martin Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -310,6 +310,7 @@ input_userauth_info_response(int type, uint32_t seq, struct ssh *ssh)
 	u_int i, nresp;
 	const char *devicename = NULL;
 	char **response = NULL;
+	double tstart = monotime_double();
 
 	if (authctxt == NULL)
 		fatal_f("no authctxt");
@@ -368,6 +369,9 @@ input_userauth_info_response(int type, uint32_t seq, struct ssh *ssh)
 			auth2_challenge_start(ssh);
 		}
 	}
+
+	if (!authenticated)
+		auth_failure_delay(authctxt, tstart);
 	userauth_finish(ssh, authenticated, "keyboard-interactive",
 	    devicename);
 	return 0;

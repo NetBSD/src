@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.h,v 1.25.2.2 2026/05/07 17:49:24 martin Exp $	*/
-/* $OpenBSD: monitor_wrap.h,v 1.54 2026/03/02 02:40:15 djm Exp $ */
+/*	$NetBSD: monitor_wrap.h,v 1.25.2.3 2026/10/24 17:33:06 martin Exp $	*/
+/* $OpenBSD: monitor_wrap.h,v 1.55 2026/05/31 11:30:50 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -93,8 +93,8 @@ void mm_session_pty_cleanup2(struct Session *);
 void mm_send_keystate(struct ssh *, struct monitor*);
 
 /* state */
-struct include_list;
-void mm_get_state(struct ssh *, struct include_list *, struct sshbuf *,
+struct ServerOptions;
+void mm_get_state(struct ssh *, struct ServerOptions *,
     struct sshbuf **, uint64_t *, struct sshbuf **, struct sshbuf **,
     u_char **, struct sshbuf **, struct sshbuf **);
 

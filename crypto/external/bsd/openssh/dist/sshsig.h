@@ -1,4 +1,6 @@
+/*	$NetBSD: sshsig.h,v 1.1.1.5.8.1 2026/10/24 17:33:09 martin Exp $	*/
 /* $OpenBSD: sshsig.h,v 1.11 2021/11/27 07:14:46 djm Exp $ */
+
 /*
  * Copyright (c) 2019 Google LLC
  *

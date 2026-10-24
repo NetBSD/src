@@ -1,5 +1,5 @@
-/*	$NetBSD: sshbuf.h,v 1.21.2.2 2026/05/07 17:49:26 martin Exp $	*/
-/*	$OpenBSD: sshbuf.h,v 1.35 2026/03/03 09:57:25 dtucker Exp $	*/
+/*	$NetBSD: sshbuf.h,v 1.21.2.3 2026/10/24 17:33:08 martin Exp $	*/
+/*	$OpenBSD: sshbuf.h,v 1.36 2026/04/07 07:40:40 djm Exp $	*/
 
 /*
  * Copyright (c) 2011 Damien Miller
@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #ifdef WITH_OPENSSL
 #include <openssl/bn.h>

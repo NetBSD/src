@@ -1,5 +1,5 @@
-/*	$NetBSD: sshkey.h,v 1.22.2.2 2026/05/07 17:49:27 martin Exp $	*/
-/* $OpenBSD: sshkey.h,v 1.73 2026/03/03 09:57:26 dtucker Exp $ */
+/*	$NetBSD: sshkey.h,v 1.22.2.3 2026/10/24 17:33:09 martin Exp $	*/
+/* $OpenBSD: sshkey.h,v 1.75 2026/09/16 00:31:27 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -63,6 +63,8 @@ enum sshkey_types {
 	KEY_ECDSA_SK_CERT,
 	KEY_ED25519_SK,
 	KEY_ED25519_SK_CERT,
+	KEY_MLDSA44_ED25519,
+	KEY_MLDSA44_ED25519_CERT,
 	KEY_UNSPEC
 };
 
@@ -120,6 +122,9 @@ struct sshkey {
 	/* KEY_ED25519 and KEY_ED25519_SK */
 	u_char	*ed25519_sk;
 	u_char	*ed25519_pk;
+	/* KEY_MLDSA44_ED25519 */
+	u_char	*mldsa_ed25519_sk;
+	u_char	*mldsa_ed25519_pk;
 	/* KEY_ECDSA_SK and KEY_ED25519_SK */
 	char	*sk_application;
 	uint8_t	sk_flags;
@@ -250,6 +255,8 @@ char		*sshkey_alg_list(int, int, int, char);
 
 int	 sshkey_from_blob(const u_char *, size_t, struct sshkey **);
 int	 sshkey_fromb(struct sshbuf *, struct sshkey **);
+int	 sshkey_fromb_allowlist(struct sshbuf *, struct sshkey **,
+    const char *, const char *);
 int	 sshkey_froms(struct sshbuf *, struct sshkey **);
 int	 sshkey_to_blob(const struct sshkey *, u_char **, size_t *);
 int	 sshkey_to_base64(const struct sshkey *, char **);

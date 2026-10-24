@@ -1,3 +1,5 @@
+/*	$NetBSD: srclimit.h,v 1.1.1.3.2.2 2026/10/24 17:33:07 martin Exp $	*/
+
 /*
  * Copyright (c) 2020 Darren Tucker <dtucker@openbsd.org>
  *
