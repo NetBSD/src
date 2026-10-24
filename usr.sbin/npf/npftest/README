@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.7 2018/09/29 14:41:36 rmind Exp $
+$NetBSD: README,v 1.8 2026/10/24 15:54:55 joe Exp $
 
 npftest - a tool for regression testing and debugging NPF.
 It uses RUMP framework to run NPF kernel module in the userspace.
@@ -7,8 +7,16 @@ It uses RUMP framework to run NPF kernel module in the userspace.
 
 Test:
 
-npfctl debug npftest.conf /tmp/npf.nvlist
-npftest -c /tmp/npf.nvlist -t
+npfctl debug -c $test_config -o /tmp/npf.nvlist
+
+$test_config (Test configuration files) are either npftest.conf or npftestl3.conf
+
+npftest.conf - contains rules for layer 2 and 3.
+npftestl3.conf - contains rules for layer 3 only
+
+npftest -c /tmp/npf.nvlist -t   /* for regression in al testnames */
+
+npftest -c /tmp/npf.nvlist -T $testname /* for a specific test */
 
 Stream:
 
