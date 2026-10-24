@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.54 2026/10/18 01:39:05 tls Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.55 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -169,11 +169,11 @@ struct RF_Raid_s {
 
 	RF_VoidPointerListElem_t *iobuf;       /* I/O buffer free list */
 	int iobuf_count;             /* count of I/O buffers on the freelist */
-	int numEmergencyBuffers;     /* number of these buffers to pre-allocate */
+	int numReservedBuffers;      /* number of these buffers to pre-allocate */
 
 	RF_VoidPointerListElem_t *stripebuf;   /* Full-stripe buffer free list */
 	int stripebuf_count;           /* count of full-stripe buffers on the freelist */
-	int numEmergencyStripeBuffers; /* number of these buffers to pre-allocate */
+	int numReservedStripeBuffers;  /* number of these buffers to pre-allocate */
 
 	/*
          * Cleanup stuff

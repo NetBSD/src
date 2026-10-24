@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.h,v 1.6 2002/11/23 02:44:14 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.h,v 1.7 2026/10/24 00:20:23 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -49,6 +49,7 @@ struct RF_AllocListElem_s {
 #define rf_AddToAllocList(_l_,_ptr_,_sz_) rf_real_AddToAllocList((_l_), (_ptr_), (_sz_))
 
 int     rf_ConfigureAllocList(RF_ShutdownList_t ** listp);
+void    rf_GrowAllocListPool(RF_Raid_t * raidPtr);
 
 void    rf_real_AddToAllocList(RF_AllocListElem_t * l, void *p, int size);
 void    rf_FreeAllocList(RF_AllocListElem_t * l);

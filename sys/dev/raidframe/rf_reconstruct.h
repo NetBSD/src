@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.32 2023/05/27 21:38:06 andvar Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.33 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -154,6 +154,8 @@ struct RF_ReconCtrl_s {
 	RF_ReconBuffer_t *committedRbufs;	/* recon buffers that have
 						 * been committed to some
 						 * waiting disk */
+	RF_ReconBuffer_t *forcedRbufs;		/* pre-allocated buffers for
+						 * forced reconstruction */
 	RF_ReconBuffer_t *fullBufferList;	/* full buffers waiting to be
 						 * written out */
 	RF_CallbackValueDesc_t *bufferWaitList;	/* disks that are currently

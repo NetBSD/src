@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.29 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.30 2026/10/24 00:20:23 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,12 +37,13 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.29 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.30 2026/10/24 00:20:23 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_options.h"
 #include "rf_threadstuff.h"
+#include "rf_raid.h"
 #include "rf_alloclist.h"
 #include "rf_debugMem.h"
 #include "rf_etimer.h"
@@ -52,14 +53,16 @@ __KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.29 2021/07/23 00:54:45 oster Exp 
 
 #include <sys/pool.h>
 
-#define RF_AL_FREELIST_MAX 256
-#define RF_AL_FREELIST_MIN 64
+#define RF_AL_INIT_MIN 4
+
+static size_t rf_alloclist_primed;
 
 static void rf_ShutdownAllocList(void *);
 
 static void rf_ShutdownAllocList(void *ignored)
 {
 	pool_destroy(&rf_alloclist_pool);
+	rf_alloclist_primed = 0;
 }
 
 int
@@ -67,12 +70,36 @@ rf_ConfigureAllocList(RF_ShutdownList_t **listp)
 {
 
 	pool_init(&rf_alloclist_pool, sizeof(RF_AllocListElem_t), 0, 0, 0, "rf_alloclist_pl", NULL, IPL_BIO);
-	pool_sethiwat(&rf_alloclist_pool, RF_AL_FREELIST_MAX);
-	pool_prime(&rf_alloclist_pool, RF_AL_FREELIST_MIN);
+	pool_sethiwat(&rf_alloclist_pool, 2 * RF_AL_INIT_MIN);
+	pool_prime(&rf_alloclist_pool, RF_AL_INIT_MIN);
+	rf_alloclist_primed = RF_AL_INIT_MIN;
 
 	rf_ShutdownCreate(listp, rf_ShutdownAllocList, NULL);
 
 	return (0);
+}
+
+/*
+ * Prime rf_alloclist_pool for an array's worst-case concurrent I/Os.
+ * Each admitted I/O uses 1 elem for desc->allocList plus 1 per DAG header,
+ * and parity rewrite / array cleanupList use 3 more.
+ */
+void
+rf_GrowAllocListPool(RF_Raid_t *raidPtr)
+{
+	size_t stripe_data_bytes, needed;
+	u_int max_stripes_per_bp, d, o;
+
+	d = raidPtr->Layout.numDataCol;
+	o = raidPtr->openings;
+	stripe_data_bytes = (size_t)raidPtr->Layout.dataSectorsPerStripe <<
+	    raidPtr->logBytesPerSector;
+	max_stripes_per_bp = howmany(MAXPHYS, stripe_data_bytes) + 1;
+
+	needed = o * (1 + max_stripes_per_bp + 2 * d) + 3;
+	pool_prime(&rf_alloclist_pool, needed);
+	rf_alloclist_primed += needed;
+	pool_sethiwat(&rf_alloclist_pool, 2 * rf_alloclist_primed);
 }
 
 

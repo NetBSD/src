@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.52 2026/10/18 01:39:05 tls Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.53 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.52 2026/10/18 01:39:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.53 2026/10/24 00:20:24 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -313,28 +313,6 @@ rf_MarkFailuresInASMList(RF_Raid_t *raidPtr,
  *
  ***************************************************************************/
 
-#define RF_MAX_FREE_ASMHDR 256
-#define RF_MIN_FREE_ASMHDR  32
-
-#define RF_MAX_FREE_ASM 512
-#define RF_MIN_FREE_ASM  64
-
-#define RF_MAX_FREE_PDA 512
-#define RF_MIN_FREE_PDA  64
-
-#define RF_MAX_FREE_ASMHLE 64
-#define RF_MIN_FREE_ASMHLE 16
-
-#define RF_MAX_FREE_FSS 128
-#define RF_MIN_FREE_FSS  32
-
-#define RF_MAX_FREE_VFPLE 128
-#define RF_MIN_FREE_VFPLE  32
-
-#define RF_MAX_FREE_VPLE 512
-#define RF_MIN_FREE_VPLE  32
-
-
 /* called at shutdown time.  So far, all that is necessary is to
    release all the free lists */
 static void rf_ShutdownMapModule(void *);
@@ -358,21 +336,75 @@ int
 rf_ConfigureMapModule(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		      RF_Config_t *cfgPtr)
 {
+	size_t stripe_data_bytes;
+	u_int max_stripes_per_bp, c, d, o, stripes, reserved_vple;
+	size_t min_asmhdr, max_asmhdr;
+	size_t min_asmap, max_asmap;
+	size_t min_asmhle, max_asmhle;
+	size_t min_pda, max_pda;
+	size_t min_fss, max_fss;
+	size_t min_vfple, max_vfple;
+	size_t min_vple, max_vple;
+
+	c = raidPtr->numCol;
+	d = raidPtr->Layout.numDataCol;
+	o = raidPtr->openings;
+	stripe_data_bytes = (size_t)raidPtr->Layout.dataSectorsPerStripe <<
+	    raidPtr->logBytesPerSector;
+	/* Total active stripes for 'openings' MAXPHYS I/Os + 1 parity op. */
+	max_stripes_per_bp = howmany(MAXPHYS, stripe_data_bytes) + 1;
+	stripes = o * max_stripes_per_bp + 1;
+	/* VPLEs permanently held by pre-allocated buffer free lists. */
+	reserved_vple = raidPtr->numReservedBuffers +
+	    raidPtr->numReservedStripeBuffers;
+
+	/*
+	 * Prime (xmin) for all 'openings' admitted MAXPHYS I/Os + 1 parity op
+	 * so rf_RaidIOThread / rf_EngineThread never block in pool_get(PR_WAITOK)
+	 * while in-flight I/O completions are queued behind them.
+	 */
+	/* Up to 3 ASMs/stripe (main + 2 recovery) + 2*d end-stripe SU splits/IO. */
+	min_asmhdr = 3 * stripes + o * 2 * d;
+	max_asmhdr = 2 * min_asmhdr;
+
+	/* 1 ASM per ASM header in worst case, plus 1/stripe in initial map. */
+	min_asmap = 3 * stripes + o * 2 * d;
+	max_asmap = 2 * min_asmap;
+
+	/* 1 list elem per data col on up to 2 split end stripes per opening. */
+	min_asmhle = o * 2 * d;
+	max_asmhle = 2 * min_asmhle;
+
+	/* Up to 2*c PDAs per active stripe (data + parity + recovery). */
+	min_pda = 2 * c * stripes;
+	max_pda = 2 * min_pda;
+
+	/* Up to 1 failed-stripe descriptor per active stripe. */
+	min_fss = stripes;
+	max_fss = 2 * min_fss;
+
+	/* 1 callback elem per data col on up to 2 split end stripes per opening. */
+	min_vfple = o * 2 * d;
+	max_vfple = 2 * min_vfple;
+
+	/* Reserved buffer list elems + up to c+1 active buffer elems per stripe. */
+	min_vple = reserved_vple + stripes * (c + 1);
+	max_vple = reserved_vple + 2 * stripes * (c + 1);
 
 	rf_pool_init(raidPtr, raidPtr->poolNames.asm_hdr, &raidPtr->pools.asm_hdr, sizeof(RF_AccessStripeMapHeader_t),
-		     "asmhdr", RF_MIN_FREE_ASMHDR, RF_MAX_FREE_ASMHDR);
+		     "asmhdr", min_asmhdr, max_asmhdr);
 	rf_pool_init(raidPtr, raidPtr->poolNames.asmap, &raidPtr->pools.asmap, sizeof(RF_AccessStripeMap_t),
-		     "asmap", RF_MIN_FREE_ASM, RF_MAX_FREE_ASM);
+		     "asmap", min_asmap, max_asmap);
 	rf_pool_init(raidPtr, raidPtr->poolNames.asmhle, &raidPtr->pools.asmhle, sizeof(RF_ASMHeaderListElem_t),
-		     "asmhle", RF_MIN_FREE_ASMHLE, RF_MAX_FREE_ASMHLE);
+		     "asmhle", min_asmhle, max_asmhle);
 	rf_pool_init(raidPtr, raidPtr->poolNames.pda, &raidPtr->pools.pda, sizeof(RF_PhysDiskAddr_t),
-		     "pda", RF_MIN_FREE_PDA, RF_MAX_FREE_PDA);
+		     "pda", min_pda, max_pda);
 	rf_pool_init(raidPtr, raidPtr->poolNames.fss, &raidPtr->pools.fss, sizeof(RF_FailedStripe_t),
-		     "fss", RF_MIN_FREE_FSS, RF_MAX_FREE_FSS);
+		     "fss", min_fss, max_fss);
 	rf_pool_init(raidPtr, raidPtr->poolNames.vfple, &raidPtr->pools.vfple, sizeof(RF_VoidFunctionPointerListElem_t),
-		     "vfple", RF_MIN_FREE_VFPLE, RF_MAX_FREE_VFPLE);
+		     "vfple", min_vfple, max_vfple);
 	rf_pool_init(raidPtr, raidPtr->poolNames.vple, &raidPtr->pools.vple, sizeof(RF_VoidPointerListElem_t),
-		     "vple", RF_MIN_FREE_VPLE, RF_MAX_FREE_VPLE);
+		     "vple", min_vple, max_vple);
 	rf_ShutdownCreate(listp, rf_ShutdownMapModule, raidPtr);
 
 	return (0);

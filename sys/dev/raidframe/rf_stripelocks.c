@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.35 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.36 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.35 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.36 2026/10/24 00:20:24 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -150,9 +150,6 @@ static void PrintLockedStripes(RF_LockTableEntry_t * lockTable);
           )                                                               \
         )
 
-#define RF_MAX_FREE_STRIPELOCK 128
-#define RF_MIN_FREE_STRIPELOCK  32
-
 static void rf_ShutdownStripeLocks(RF_LockTableEntry_t * lockTable);
 static void rf_ShutdownStripeLockFreeList(void *);
 static void rf_RaidShutdownStripeLocks(void *);
@@ -172,9 +169,20 @@ rf_ConfigureStripeLockFreeList(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			       RF_Config_t *cfgPtr)
 {
 	unsigned mask;
+	size_t stripe_data_bytes, min_stripelock, max_stripelock;
+	u_int max_stripes_per_bp;
+
+	stripe_data_bytes = (size_t)raidPtr->Layout.dataSectorsPerStripe <<
+	    raidPtr->logBytesPerSector;
+	/* Max stripes spanned by an unaligned MAXPHYS transfer. */
+	max_stripes_per_bp = howmany(MAXPHYS, stripe_data_bytes) + 1;
+
+	/* 1 lock desc per active stripe ('openings' MAXPHYS I/Os + 1 parity op). */
+	min_stripelock = raidPtr->openings * max_stripes_per_bp + 1;
+	max_stripelock = 2 * min_stripelock;
 
 	rf_pool_init(raidPtr, raidPtr->poolNames.stripelock, &raidPtr->pools.stripelock, sizeof(RF_StripeLockDesc_t),
-		     "strplock", RF_MIN_FREE_STRIPELOCK, RF_MAX_FREE_STRIPELOCK);
+		     "strplock", min_stripelock, max_stripelock);
 	rf_ShutdownCreate(listp, rf_ShutdownStripeLockFreeList, raidPtr);
 
 	for (mask = 0x1; mask; mask <<= 1)

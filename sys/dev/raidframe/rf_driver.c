@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.145 2026/10/18 01:39:05 tls Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.146 2026/10/24 00:20:24 tls Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.145 2026/10/18 01:39:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.146 2026/10/24 00:20:24 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -116,10 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.145 2026/10/18 01:39:05 tls Exp $");
 #define RF_ACCESS_DEBUG 0
 #endif
 
-/* rad == RF_RaidAccessDesc_t */
-#define RF_MAX_FREE_RAD 256
-#define RF_MIN_FREE_RAD  32
-
 /* main configuration routines */
 static int raidframe_booted = 0;
 
@@ -147,8 +143,9 @@ static RF_ShutdownList_t *globalShutdown;	/* non array-specific
 						 * stuff */
 
 static int rf_ConfigureRDFreeList(RF_ShutdownList_t ** listp, RF_Raid_t *raidPtr, RF_Config_t *cfgPtr);
-static int rf_AllocEmergBuffers(RF_Raid_t *);
-static void rf_FreeEmergBuffers(RF_Raid_t *);
+static void rf_ComputeOpenings(RF_Raid_t *);
+static int rf_AllocReservedBuffers(RF_Raid_t *);
+static void rf_FreeReservedBuffers(RF_Raid_t *);
 static void rf_destroy_mutex_cond(RF_Raid_t *);
 static void rf_alloc_mutex_cond(RF_Raid_t *);
 
@@ -253,7 +250,7 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 
 	rf_UnconfigureVnodes(raidPtr);
 
-	rf_FreeEmergBuffers(raidPtr);
+	rf_FreeReservedBuffers(raidPtr);
 
 	rf_ShutdownList(&raidPtr->shutdownList);
 
@@ -279,7 +276,7 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 
 #define DO_RAID_FAIL() { \
 	rf_UnconfigureVnodes(raidPtr); \
-	rf_FreeEmergBuffers(raidPtr); \
+	rf_FreeReservedBuffers(raidPtr); \
 	rf_ShutdownList(&raidPtr->shutdownList); \
 	rf_UnconfigureArray(); \
 	rf_destroy_mutex_cond(raidPtr); \
@@ -351,22 +348,15 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	raidPtr->status = rf_rs_optimal;
 	raidPtr->reconControl = NULL;
 
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureMapModule);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureReconEvent);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureCallback);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureRDFreeList);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureStripeLockFreeList);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureMCPair);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureDAGs);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureReconstruction);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureDiskQueueSystem);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigurePSStatus);
-	
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureEngine);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureStripeLocks);
-
 	raidPtr->nAccOutstanding = 0;
 	raidPtr->waitShutdown = 0;
+
+	raidPtr->iobuf = NULL;
+	raidPtr->iobuf_count = 0;
+	raidPtr->numReservedBuffers = 0;
+	raidPtr->stripebuf = NULL;
+	raidPtr->stripebuf_count = 0;
+	raidPtr->numReservedStripeBuffers = 0;
 
 	if (ac!=NULL) {
 		/* We have an AutoConfig structure..  Don't do the
@@ -383,9 +373,32 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureLayout);
 
+	/*
+	 * Compute openings and buffer counts before sizing per-array pools.
+	 * All per-array pools below are primed (xmin) for raidPtr->openings
+	 * concurrent MAXPHYS I/Os (plus 1 stripe for parity rewrite) because
+	 * rf_RaidIOThread and rf_EngineThread both admit/advance up to
+	 * raidPtr->openings I/Os and drain completions on the same thread;
+	 * if an admitted I/O blocked in pool_get(PR_WAITOK), in-flight I/Os
+	 * could not complete to return items to the pool.
+	 */
+	rf_ComputeOpenings(raidPtr);
+	rf_GrowAllocListPool(raidPtr);
 
+	DO_RAID_INIT_CONFIGURE(rf_ConfigureMapModule);
+	DO_RAID_INIT_CONFIGURE(rf_ConfigureReconEvent);
+	DO_RAID_INIT_CONFIGURE(rf_ConfigureCallback);
+	DO_RAID_INIT_CONFIGURE(rf_ConfigureRDFreeList);
+	DO_RAID_INIT_CONFIGURE(rf_ConfigureStripeLockFreeList);
+	DO_RAID_INIT_CONFIGURE(rf_ConfigureMCPair);
+	DO_RAID_INIT_CONFIGURE(rf_ConfigureDAGs);
+	DO_RAID_INIT_CONFIGURE(rf_ConfigureReconstruction);
+	DO_RAID_INIT_CONFIGURE(rf_ConfigureDiskQueueSystem);
+	DO_RAID_INIT_CONFIGURE(rf_ConfigurePSStatus);
 	
-	
+	DO_RAID_INIT_CONFIGURE(rf_ConfigureEngine);
+	DO_RAID_INIT_CONFIGURE(rf_ConfigureStripeLocks);
+
 	/* Initialize per-RAID PSS bits */
 	rf_InitPSStatus(raidPtr);
 
@@ -416,19 +429,12 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	}
 
 	/*
-	 * Compute top-level I/O openings and allocate emergency buffers
-	 * (if needed by this RAID layout) for low-memory conditions.
+	 * Pre-allocate reserved I/O and stripe buffers (if needed by this
+	 * RAID layout).
 	 */
-	raidPtr->iobuf = NULL;
-	raidPtr->iobuf_count = 0;
-	raidPtr->numEmergencyBuffers = 0;
-	raidPtr->stripebuf = NULL;
-	raidPtr->stripebuf_count = 0;
-	raidPtr->numEmergencyStripeBuffers = 0;
-
-	rc = rf_AllocEmergBuffers(raidPtr);
+	rc = rf_AllocReservedBuffers(raidPtr);
 	if (rc) {
-		printf("raid%d: Unable to allocate emergency buffers.\n",
+		printf("raid%d: Unable to allocate reserved buffers.\n",
 		       raidPtr->raidid);
 		DO_RAID_FAIL();
 		return(rc);
@@ -483,64 +489,114 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 
  */
 
-static int
-rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
+static void
+rf_ComputeOpenings(RF_Raid_t *raidPtr)
 {
-	void *tmpbuf;
-	RF_VoidPointerListElem_t *vple;
-	size_t su_bytes, stripe_data_bytes;
+	size_t su_bytes, stripe_data_bytes, pool_bytes_per_stripe;
 	uint64_t bytes_per_opening, mem_budget, mem_openings;
-	int max_stripes_per_bp, i;
+	u_int max_stripes_per_bp, max_openings, c, d, p;
+	bool need_reserved_bufs;
 
-	/*
-	 * Non-parity layouts (RAID 0 has numParityCol == 0; RAID 1 and
-	 * mirror declustering have numDataCol == 1) never allocate
-	 * intermediate iobuf or stripebuf buffers.
-	 */
-	if (raidPtr->Layout.numParityCol == 0) {
-		raidPtr->openings = uimin(
-		    raidPtr->maxQueueDepth * raidPtr->numCol,
-		    RF_MAX_QUEUE_DEPTH);
-		return (0);
-	}
-	if (raidPtr->Layout.numDataCol == 1) {
-		raidPtr->openings = uimin(
-		    raidPtr->maxQueueDepth * uimax(1, raidPtr->numCol / 2),
-		    RF_MAX_QUEUE_DEPTH);
-		return (0);
-	}
+	char pbuf[9];
 
-	/*
-	 * For parity layouts, bound pre-allocated buffer memory to 1% of
-	 * physical memory (with a floor of RAIDOUTSTANDING openings = 12
-	 * full-stripe buffers), capped at maxQueueDepth.
-	 */
+	c = raidPtr->numCol;
+	d = raidPtr->Layout.numDataCol;
+	p = raidPtr->Layout.numParityCol;
 	su_bytes = (size_t)raidPtr->Layout.sectorsPerStripeUnit <<
 	    raidPtr->logBytesPerSector;
 	stripe_data_bytes = (size_t)raidPtr->Layout.dataSectorsPerStripe <<
 	    raidPtr->logBytesPerSector;
 	max_stripes_per_bp = howmany(MAXPHYS, stripe_data_bytes) + 1;
 
-	bytes_per_opening = (uint64_t)(max_stripes_per_bp + 2) *
-	    raidPtr->numCol * su_bytes;
+	/*
+	 * Non-parity layouts (RAID 0 has numParityCol == 0; RAID 1 and
+	 * mirror declustering have numDataCol == 1) never allocate
+	 * intermediate iobuf or stripebuf buffers.
+	 */
+	if (p == 0) {
+		max_openings = uimin(raidPtr->maxQueueDepth * c,
+		    RF_MAX_QUEUE_DEPTH);
+		need_reserved_bufs = false;
+	} else if (d == 1) {
+		max_openings = uimin(raidPtr->maxQueueDepth * uimax(1, c / 2),
+		    RF_MAX_QUEUE_DEPTH);
+		need_reserved_bufs = false;
+	} else {
+		max_openings = raidPtr->maxQueueDepth;
+		need_reserved_bufs = true;
+	}
+
+	/*
+	 * Approximate per-stripe pool item footprint (DAG nodes, DQDs,
+	 * buf_t's, PDAs, ASMs, etc.) plus reserved data buffers (1 iobuf
+	 * per column and 1 full-stripe buffer per stripe for parity layouts).
+	 * Bound total pre-allocated memory per array to 1% of physmem,
+	 * with a floor of RAIDOUTSTANDING openings.
+	 */
+	pool_bytes_per_stripe =
+	    (2 * d + 3 * p + 3) * sizeof(RF_DagNode_t) +
+	    2 * c * (sizeof(RF_DiskQueueData_t) + sizeof(buf_t) +
+	    sizeof(RF_PhysDiskAddr_t)) +
+	    3 * (sizeof(RF_AccessStripeMapHeader_t) +
+	    sizeof(RF_AccessStripeMap_t)) +
+	    ((2 * d + p > 6) ? 6 * RF_DAGPCACHE_SIZE : 0) +
+	    sizeof(RF_DagHeader_t) + sizeof(RF_AllocListElem_t) +
+	    sizeof(RF_StripeLockDesc_t) + sizeof(RF_FailedStripe_t);
+
+	bytes_per_opening = (uint64_t)max_stripes_per_bp *
+	    pool_bytes_per_stripe + sizeof(RF_RaidAccessDesc_t) +
+	    2 * d * (sizeof(RF_DagHeader_t) + sizeof(RF_AllocListElem_t) +
+	    sizeof(RF_AccessStripeMapHeader_t) + sizeof(RF_AccessStripeMap_t));
+	if (need_reserved_bufs) {
+		bytes_per_opening += (uint64_t)2 * max_stripes_per_bp *
+		    c * su_bytes;
+	}
+
 	mem_budget = ctob((uint64_t)physmem) / 100;
-	mem_openings = mem_budget / bytes_per_opening;
+	mem_openings = mem_budget / uimax(1, bytes_per_opening);
 	if (mem_openings < RAIDOUTSTANDING)
 		mem_openings = RAIDOUTSTANDING;
-	if (mem_openings > (uint64_t)raidPtr->maxQueueDepth)
-		raidPtr->openings = raidPtr->maxQueueDepth;
+	if (mem_openings > max_openings)
+		raidPtr->openings = max_openings;
 	else
 		raidPtr->openings = (int)mem_openings;
 
-	raidPtr->numEmergencyBuffers = raidPtr->openings *
-	    max_stripes_per_bp * raidPtr->numCol;
-#if DEBUG
-	printf("raid%d: allocating %d buffers of %zu bytes.\n",
-	       raidPtr->raidid,
-	       raidPtr->numEmergencyBuffers,
-	       su_bytes);
-#endif
-	for (i = 0; i < raidPtr->numEmergencyBuffers; i++) {
+	if (need_reserved_bufs) {
+		raidPtr->numReservedBuffers = raidPtr->openings *
+		    max_stripes_per_bp * c;
+		raidPtr->numReservedStripeBuffers = raidPtr->openings *
+		    max_stripes_per_bp;
+	}
+
+	aprint_debug("raid%d: max_stripes_per_bp %u, openings %d, "
+	    "maxQueueDepth %d, iobufs %d (%zuB), stripebufs %d (%zuB), "
+	    "bytes_per_opening %" PRIu64 "\n",
+	    raidPtr->raidid, max_stripes_per_bp, raidPtr->openings,
+	    raidPtr->maxQueueDepth, raidPtr->numReservedBuffers, su_bytes,
+	    raidPtr->numReservedStripeBuffers, c * su_bytes,
+	    bytes_per_opening);
+	humanize_number(pbuf, sizeof(pbuf),
+	    (uint64_t)raidPtr->openings * bytes_per_opening +
+	    pool_bytes_per_stripe, "B", 1024);
+	aprint_verbose("raid%d: %d openings, %s reserved\n",
+	    raidPtr->raidid, raidPtr->openings, pbuf);
+}
+
+static int
+rf_AllocReservedBuffers(RF_Raid_t *raidPtr)
+{
+	void *tmpbuf;
+	RF_VoidPointerListElem_t *vple;
+	size_t su_bytes;
+	int i;
+
+	if (raidPtr->numReservedBuffers == 0 &&
+	    raidPtr->numReservedStripeBuffers == 0)
+		return (0);
+
+	su_bytes = (size_t)raidPtr->Layout.sectorsPerStripeUnit <<
+	    raidPtr->logBytesPerSector;
+	for (i = 0; i < raidPtr->numReservedBuffers; i++) {
 		tmpbuf = malloc(su_bytes, M_RAIDFRAME, M_WAITOK);
 		if (tmpbuf) {
 			vple = rf_AllocVPListElem(raidPtr);
@@ -549,14 +605,13 @@ rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
 			raidPtr->iobuf = vple;
 			raidPtr->iobuf_count++;
 		} else {
-			printf("raid%d: failed to allocate emergency buffer!\n",
+			printf("raid%d: failed to allocate reserved buffer!\n",
 			       raidPtr->raidid);
 			return 1;
 		}
 	}
 
-	raidPtr->numEmergencyStripeBuffers = 2 * raidPtr->openings;
-	for (i = 0; i < raidPtr->numEmergencyStripeBuffers; i++) {
+	for (i = 0; i < raidPtr->numReservedStripeBuffers; i++) {
 		tmpbuf = malloc(raidPtr->numCol * su_bytes,
 		    M_RAIDFRAME, M_WAITOK);
 		if (tmpbuf) {
@@ -566,7 +621,7 @@ rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
 			raidPtr->stripebuf = vple;
 			raidPtr->stripebuf_count++;
 		} else {
-			printf("raid%d: failed to allocate emergency stripe buffer!\n",
+			printf("raid%d: failed to allocate reserved stripe buffer!\n",
 			       raidPtr->raidid);
 			return 1;
 		}
@@ -576,11 +631,11 @@ rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
 }
 
 static void
-rf_FreeEmergBuffers(RF_Raid_t *raidPtr)
+rf_FreeReservedBuffers(RF_Raid_t *raidPtr)
 {
 	RF_VoidPointerListElem_t *tmp;
 
-	/* Free the emergency IO buffers */
+	/* Free the reserved I/O buffers */
 	while (raidPtr->iobuf != NULL) {
 		tmp = raidPtr->iobuf;
 		raidPtr->iobuf = raidPtr->iobuf->next;
@@ -588,7 +643,7 @@ rf_FreeEmergBuffers(RF_Raid_t *raidPtr)
 		rf_FreeVPListElem(raidPtr,tmp);
 	}
 
-	/* Free the emergency stripe buffers */
+	/* Free the reserved stripe buffers */
 	while (raidPtr->stripebuf != NULL) {
 		tmp = raidPtr->stripebuf;
 		raidPtr->stripebuf = raidPtr->stripebuf->next;
@@ -612,9 +667,14 @@ static int
 rf_ConfigureRDFreeList(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		       RF_Config_t *cfgPtr)
 {
+	size_t min_rad, max_rad;
+
+	/* 1 access desc per admitted opening + 1 for parity rewrite. */
+	min_rad = raidPtr->openings + 1;
+	max_rad = 2 * min_rad;
 
 	rf_pool_init(raidPtr, raidPtr->poolNames.rad, &raidPtr->pools.rad, sizeof(RF_RaidAccessDesc_t),
-		     "rad", RF_MIN_FREE_RAD, RF_MAX_FREE_RAD);
+		     "rad", min_rad, max_rad);
 	rf_ShutdownCreate(listp, rf_ShutdownRDFreeList, raidPtr);
 	return (0);
 }

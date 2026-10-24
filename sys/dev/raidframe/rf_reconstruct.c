@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.130 2026/10/21 01:19:18 tls Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.131 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.130 2026/10/21 01:19:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.131 2026/10/24 00:20:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -102,9 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.130 2026/10/21 01:19:18 tls Exp
 #define RF_RECON_READ_STOPPED 4
 #define RF_RECON_WRITE_DONE   5
 
-#define RF_MAX_FREE_RECONBUFFER 32
-#define RF_MIN_FREE_RECONBUFFER 16
-
 static RF_RaidReconDesc_t *AllocRaidReconDesc(RF_Raid_t *, RF_RowCol_t,
 					      RF_RaidDisk_t *, int, RF_RowCol_t);
 static void FreeReconDesc(RF_RaidReconDesc_t *);
@@ -158,9 +155,21 @@ int
 rf_ConfigureReconstruction(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			   RF_Config_t *cfgPtr)
 {
+	size_t min_reconbuf, max_reconbuf;
+	u_int c;
+
+	if (raidPtr->Layout.map->SubmitReconBuffer == NULL) {
+		min_reconbuf = 0;
+		max_reconbuf = 0;
+	} else {
+		c = raidPtr->numCol;
+		/* c-1 exclusive + numFloatingReconBufs + c-1 forced rbufs. */
+		min_reconbuf = 2 * (c - 1) + raidPtr->numFloatingReconBufs;
+		max_reconbuf = 2 * min_reconbuf;
+	}
 
 	rf_pool_init(raidPtr, raidPtr->poolNames.reconbuffer, &raidPtr->pools.reconbuffer, sizeof(RF_ReconBuffer_t),
-		     "reconbuf", RF_MIN_FREE_RECONBUFFER, RF_MAX_FREE_RECONBUFFER);
+		     "reconbuf", min_reconbuf, max_reconbuf);
 	rf_ShutdownCreate(listp, rf_ShutdownReconstruction, raidPtr);
 
 	return (0);
@@ -1035,7 +1044,8 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 		raidPtr->reconControl->pending_writes--;
 		rf_unlock_mutex2(raidPtr->reconControl->rb_mutex);
 
-		if (rbuf->type == RF_RBUF_TYPE_FLOATING) {
+		if (rbuf->type == RF_RBUF_TYPE_FLOATING ||
+		    rbuf->type == RF_RBUF_TYPE_FORCED) {
 			rf_lock_mutex2(raidPtr->reconControl->rb_mutex);
 			while(raidPtr->reconControl->rb_lock) {
 				rf_wait_cond2(raidPtr->reconControl->rb_cv,
@@ -1045,17 +1055,17 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 			rf_unlock_mutex2(raidPtr->reconControl->rb_mutex);
 
 			raidPtr->numFullReconBuffers--;
-			rf_ReleaseFloatingReconBuffer(raidPtr, rbuf);
+			if (rbuf->type == RF_RBUF_TYPE_FLOATING)
+				rf_ReleaseFloatingReconBuffer(raidPtr, rbuf);
+			else
+				rf_ReleaseForcedReconBuffer(raidPtr, rbuf);
 
 			rf_lock_mutex2(raidPtr->reconControl->rb_mutex);
 			raidPtr->reconControl->rb_lock = 0;
 			rf_broadcast_cond2(raidPtr->reconControl->rb_cv);
 			rf_unlock_mutex2(raidPtr->reconControl->rb_mutex);
 		} else
-			if (rbuf->type == RF_RBUF_TYPE_FORCED)
-				rf_FreeReconBuffer(rbuf);
-			else
-				RF_ASSERT(0);
+			RF_ASSERT(0);
 		retcode = RF_RECON_WRITE_DONE;
 		break;
 
@@ -1806,34 +1816,60 @@ rf_ForceOrBlockRecon(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	 * low-priority accesses to complete, we force a normal-priority (i.e.
 	 * not low-priority) reconstruction on this RU. */
 	if (!(pssPtr->flags & RF_PSS_FORCED_ON_WRITE) && !(pssPtr->flags & RF_PSS_FORCED_ON_READ)) {
-		DDprintf1("Forcing recon on psid %ld\n", psid);
-		pssPtr->flags |= RF_PSS_FORCED_ON_WRITE;	/* mark this RU as under
-								 * forced recon */
-		pssPtr->flags &= ~RF_PSS_RECON_BLOCKED;	/* clear the blockage
-							 * that we just set */
-		fcol = raidPtr->reconControl->fcol;
+		RF_ReconCtrl_t *reconCtrlPtr = raidPtr->reconControl;
+		RF_RowCol_t stripeWidth =
+		    raidPtr->Layout.numDataCol + raidPtr->Layout.numParityCol;
+		int unissued = 0, avail = 0;
+
+		fcol = reconCtrlPtr->fcol;
 
 		/* get a listing of the disks comprising the indicated stripe */
 		(raidPtr->Layout.map->IdentifyStripe) (raidPtr, asmap->raidAddress, &diskids);
 
+		for (i = 0; i < stripeWidth; i++) {
+			diskno = diskids[i];
+			if (diskno != fcol && !pssPtr->issued[diskno])
+				unissued++;
+		}
+
+		rf_lock_mutex2(reconCtrlPtr->rb_mutex);
+		while (reconCtrlPtr->rb_lock) {
+			rf_wait_cond2(reconCtrlPtr->rb_cv,
+			    reconCtrlPtr->rb_mutex);
+		}
+		reconCtrlPtr->rb_lock = 1;
+		rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
+
+		for (new_rbuf = reconCtrlPtr->forcedRbufs;
+		    new_rbuf != NULL && avail < unissued;
+		    new_rbuf = new_rbuf->next)
+			avail++;
+
+		if (avail >= unissued) {
+			DDprintf1("Forcing recon on psid %ld\n", psid);
+			pssPtr->flags |= RF_PSS_FORCED_ON_WRITE;
+			pssPtr->flags &= ~RF_PSS_RECON_BLOCKED;
+		}
+
 		/* For previously issued reads, elevate them to normal
 		 * priority.  If the I/O has already completed, it won't be
 		 * found in the queue, and hence this will be a no-op. For
-		 * unissued reads, allocate buffers and issue new reads.  The
-		 * fact that we've set the FORCED bit means that the regular
-		 * recon procs will not re-issue these reqs */
-		for (i = 0; i < raidPtr->Layout.numDataCol + raidPtr->Layout.numParityCol; i++)
+		 * unissued reads, pop pre-allocated forced buffers and issue
+		 * new reads if enough forced buffers are available. */
+		for (i = 0; i < stripeWidth; i++)
 			if ((diskno = diskids[i]) != fcol) {
 				if (pssPtr->issued[diskno]) {
 					nPromoted = rf_DiskIOPromote(&raidPtr->Queues[diskno], psid, which_ru);
 					if (rf_reconDebug && nPromoted)
 						printf("raid%d: promoted read from col %d\n", raidPtr->raidid, diskno);
-				} else {
-					new_rbuf = rf_MakeReconBuffer(raidPtr, diskno, RF_RBUF_TYPE_FORCED);	/* create new buf */
+				} else if (avail >= unissued) {
+					new_rbuf = reconCtrlPtr->forcedRbufs;
+					reconCtrlPtr->forcedRbufs = new_rbuf->next;
+					new_rbuf->next = NULL;
+					new_rbuf->col = diskno;
 					ComputePSDiskOffsets(raidPtr, psid, diskno, &offset, &fd_offset,
-					    &new_rbuf->spCol, &new_rbuf->spOffset);	/* find offsets & spare
-													 * location */
-					new_rbuf->parityStripeID = psid;	/* fill in the buffer */
+					    &new_rbuf->spCol, &new_rbuf->spOffset);
+					new_rbuf->parityStripeID = psid;
 					new_rbuf->which_ru = which_ru;
 					new_rbuf->failedDiskSectorOffset = fd_offset;
 					new_rbuf->priority = RF_IO_NORMAL_PRIORITY;
@@ -1847,10 +1883,16 @@ rf_ForceOrBlockRecon(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 					    NULL, (void *) raidPtr, 0, NULL);
 
 					new_rbuf->arg = req;
-					rf_DiskIOEnqueue(&raidPtr->Queues[diskno], req, RF_IO_NORMAL_PRIORITY);	/* enqueue the I/O */
+					rf_DiskIOEnqueue(&raidPtr->Queues[diskno], req, RF_IO_NORMAL_PRIORITY);
 					Dprintf2("raid%d: Issued new read req on col %d\n", raidPtr->raidid, diskno);
 				}
 			}
+
+		rf_lock_mutex2(reconCtrlPtr->rb_mutex);
+		reconCtrlPtr->rb_lock = 0;
+		rf_broadcast_cond2(reconCtrlPtr->rb_cv);
+		rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
+
 		/* if the write is sitting in the disk queue, elevate its
 		 * priority */
 		if (rf_DiskIOPromote(&raidPtr->Queues[fcol], psid, which_ru))

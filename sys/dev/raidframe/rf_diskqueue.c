@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.66 2026/10/18 14:56:32 tls Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.67 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.66 2026/10/18 14:56:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.67 2026/10/24 00:20:24 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -144,16 +144,6 @@ static const RF_DiskQueueSW_t diskqueuesw[] = {
 };
 #define NUM_DISK_QUEUE_TYPES (sizeof(diskqueuesw)/sizeof(RF_DiskQueueSW_t))
 
-
-#define RF_MAX_FREE_DQD 512
-#define RF_MIN_FREE_DQD  64
-
-/* XXX: scale these... */
-#define RF_MAX_FREE_BUFIO 512
-#define RF_MIN_FREE_BUFIO  64
-
-
-
 /* configures a single disk queue */
 
 static void
@@ -210,11 +200,36 @@ rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			    RF_Config_t *cfgPtr)
 
 {
+	size_t stripe_data_bytes, min_dqd, max_dqd, min_bufio, max_bufio;
+	u_int max_stripes_per_bp, c, o, stripes, recon_io;
+
+	c = raidPtr->numCol;
+	o = raidPtr->openings;
+	stripe_data_bytes = (size_t)raidPtr->Layout.dataSectorsPerStripe <<
+	    raidPtr->logBytesPerSector;
+	/* Total active stripes for 'openings' MAXPHYS I/Os + 1 parity op. */
+	max_stripes_per_bp = howmany(MAXPHYS, stripe_data_bytes) + 1;
+	stripes = o * max_stripes_per_bp + 1;
+	/* Active recon reads/writes (c-1 exclusive + c-1 forced + floating). */
+	recon_io = (raidPtr->Layout.map->SubmitReconBuffer == NULL) ?
+	    0 : 2 * (c - 1) + raidPtr->numFloatingReconBufs;
+
+	/*
+	 * Prime (xmin) for up to 2*c disk ops per active stripe + recon I/Os
+	 * so rf_EngineThread / rf_RaidIOThread never block in pool_get(PR_WAITOK).
+	 */
+	min_dqd = 2 * c * stripes + recon_io;
+	max_dqd = uimax(2 * min_dqd,
+	    (raidPtr->numCol + raidPtr->numSpare) * raidPtr->maxQueueDepth);
+
+	/* 1 buf_t per RF_DiskQueueData_t. */
+	min_bufio = min_dqd;
+	max_bufio = max_dqd;
 
 	rf_pool_init(raidPtr, raidPtr->poolNames.dqd, &raidPtr->pools.dqd, sizeof(RF_DiskQueueData_t),
-		     "dqd", RF_MIN_FREE_DQD, RF_MAX_FREE_DQD);
+		     "dqd", min_dqd, max_dqd);
 	rf_pool_init(raidPtr, raidPtr->poolNames.bufio, &raidPtr->pools.bufio, sizeof(buf_t),
-		     "bufio", RF_MIN_FREE_BUFIO, RF_MAX_FREE_BUFIO);
+		     "bufio", min_bufio, max_bufio);
 	rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, raidPtr);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.h,v 1.22 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.h,v 1.23 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -40,6 +40,8 @@
 
 #ifndef _RF__RF_DAGUTILS_H_
 #define _RF__RF_DAGUTILS_H_
+
+#define RF_DAGPCACHE_SIZE ((2*RF_MAXCOL+1*2+1*2*2+3) *(RF_MAX(sizeof(RF_DagParam_t), sizeof(RF_DagNode_t *))))
 
 struct RF_RedFuncs_s {
 	void     (*regular) (RF_DagNode_t *);

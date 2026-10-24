@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.59 2026/10/18 01:39:05 tls Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.60 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.59 2026/10/18 01:39:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.60 2026/10/24 00:20:24 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -78,7 +78,6 @@ on the maximum size needed for RF_DAGPCACHE_SIZE.  For RF_MAXCOL of 40, this str
 would be 534 bytes.  Too much to have on-hand in a RF_DagNode_t, but should be ok to
 have a few kicking around.
 */
-#define RF_DAGPCACHE_SIZE ((2*RF_MAXCOL+1*2+1*2*2+3) *(RF_MAX(sizeof(RF_DagParam_t), sizeof(RF_DagNode_t *))))
 
 
 /******************************************************************************
@@ -211,24 +210,6 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 	}
 }
 
-#define RF_MAX_FREE_DAGH 256
-#define RF_MIN_FREE_DAGH  32
-
-#define RF_MAX_FREE_DAGNODE 1024 /* XXX Tune this... */
-#define RF_MIN_FREE_DAGNODE 128  /* XXX Tune this... */
-
-#define RF_MAX_FREE_DAGLIST 256
-#define RF_MIN_FREE_DAGLIST  32
-
-#define RF_MAX_FREE_DAGPCACHE 128
-#define RF_MIN_FREE_DAGPCACHE   8
-
-#define RF_MAX_FREE_FUNCLIST 128
-#define RF_MIN_FREE_FUNCLIST  32
-
-#define RF_MAX_FREE_BUFFERS 128
-#define RF_MIN_FREE_BUFFERS  32
-
 static void rf_ShutdownDAGs(void *);
 static void
 rf_ShutdownDAGs(void *arg)
@@ -248,17 +229,60 @@ int
 rf_ConfigureDAGs(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		 RF_Config_t *cfgPtr)
 {
+	size_t stripe_data_bytes;
+	u_int max_stripes_per_bp, max_nodes_per_stripe;
+	u_int d, p, o, stripes;
+	size_t min_dagnode, max_dagnode;
+	size_t min_dagh, max_dagh;
+	size_t min_daglist, max_daglist;
+	size_t min_dagpcache, max_dagpcache;
+	size_t min_funclist, max_funclist;
+
+	d = raidPtr->Layout.numDataCol;
+	p = raidPtr->Layout.numParityCol;
+	o = raidPtr->openings;
+	stripe_data_bytes = (size_t)raidPtr->Layout.dataSectorsPerStripe <<
+	    raidPtr->logBytesPerSector;
+	/* Total active stripes for 'openings' MAXPHYS I/Os + 1 parity op. */
+	max_stripes_per_bp = howmany(MAXPHYS, stripe_data_bytes) + 1;
+	stripes = o * max_stripes_per_bp + 1;
+	/* Worst-case DAG nodes per stripe (block, commit, term, data, parity). */
+	max_nodes_per_stripe = 2 * d + 3 * p + 3;
+
+	/*
+	 * Prime (xmin) for all 'openings' admitted MAXPHYS I/Os + 1 parity op
+	 * so rf_RaidIOThread / rf_EngineThread never block in pool_get(PR_WAITOK)
+	 * while in-flight I/O completions are queued behind them.
+	 */
+	min_dagnode = stripes * max_nodes_per_stripe;
+	max_dagnode = 2 * min_dagnode;
+
+	/* 1 DAG hdr/stripe + 2*d if 2 unaligned end stripes split into SU DAGs. */
+	min_dagh = stripes + o * 2 * d;
+	max_dagh = 2 * min_dagh;
+
+	/* 1 daglist per active stripe (links a stripe's DAGs to its rad). */
+	min_daglist = stripes;
+	max_daglist = 2 * min_daglist;
+
+	/* Up to 6 oversized param/ptr arrays per stripe when 2*d + p > 6. */
+	min_dagpcache = (2 * d + p > 6) ? 6 * stripes : 0;
+	max_dagpcache = 2 * min_dagpcache;
+
+	/* 1 stripe-buffer release callback per active stripe. */
+	min_funclist = stripes;
+	max_funclist = 2 * min_funclist;
 
 	rf_pool_init(raidPtr, raidPtr->poolNames.dagnode, &raidPtr->pools.dagnode, sizeof(RF_DagNode_t),
-		     "dagnode", RF_MIN_FREE_DAGNODE, RF_MAX_FREE_DAGNODE);
+		     "dagnode", min_dagnode, max_dagnode);
 	rf_pool_init(raidPtr, raidPtr->poolNames.dagh, &raidPtr->pools.dagh, sizeof(RF_DagHeader_t),
-		     "dagh", RF_MIN_FREE_DAGH, RF_MAX_FREE_DAGH);
+		     "dagh", min_dagh, max_dagh);
 	rf_pool_init(raidPtr, raidPtr->poolNames.daglist, &raidPtr->pools.daglist, sizeof(RF_DagList_t),
-		     "daglist", RF_MIN_FREE_DAGLIST, RF_MAX_FREE_DAGLIST);
+		     "daglist", min_daglist, max_daglist);
 	rf_pool_init(raidPtr, raidPtr->poolNames.dagpcache, &raidPtr->pools.dagpcache, RF_DAGPCACHE_SIZE,
-		     "dagpcache", RF_MIN_FREE_DAGPCACHE, RF_MAX_FREE_DAGPCACHE);
+		     "dagpcache", min_dagpcache, max_dagpcache);
 	rf_pool_init(raidPtr, raidPtr->poolNames.funclist, &raidPtr->pools.funclist, sizeof(RF_FuncList_t),
-		     "funclist", RF_MIN_FREE_FUNCLIST, RF_MAX_FREE_FUNCLIST);
+		     "funclist", min_funclist, max_funclist);
 	rf_ShutdownCreate(listp, rf_ShutdownDAGs, raidPtr);
 
 	return (0);
@@ -353,7 +377,7 @@ rf_AllocStripeBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h,
 		raidPtr->stripebuf_count--;
 	} else {
 #ifdef DIAGNOSTIC
-		printf("raid%d: Help!  Out of emergency full-stripe buffers!\n", raidPtr->raidid);
+		printf("raid%d: Help!  Out of reserved full-stripe buffers!\n", raidPtr->raidid);
 #endif
 	}
 	rf_unlock_mutex2(raidPtr->mutex);
@@ -384,7 +408,7 @@ void
 rf_FreeStripeBuffer(RF_Raid_t *raidPtr, RF_VoidPointerListElem_t *vple)
 {
 	rf_lock_mutex2(raidPtr->mutex);
-	if (raidPtr->stripebuf_count < raidPtr->numEmergencyStripeBuffers) {
+	if (raidPtr->stripebuf_count < raidPtr->numReservedStripeBuffers) {
 		/* just tack it in */
 		vple->next = raidPtr->stripebuf;
 		raidPtr->stripebuf = vple;
@@ -433,7 +457,7 @@ rf_AllocIOBuffer(RF_Raid_t *raidPtr, int size)
 		raidPtr->iobuf_count--;
 	} else {
 #ifdef DIAGNOSTIC
-		printf("raid%d: Help!  Out of emergency buffers!\n", raidPtr->raidid);
+		printf("raid%d: Help!  Out of reserved I/O buffers!\n", raidPtr->raidid);
 #endif
 	}
 	rf_unlock_mutex2(raidPtr->mutex);
@@ -457,7 +481,7 @@ void
 rf_FreeIOBuffer(RF_Raid_t *raidPtr, RF_VoidPointerListElem_t *vple)
 {
 	rf_lock_mutex2(raidPtr->mutex);
-	if (raidPtr->iobuf_count < raidPtr->numEmergencyBuffers) {
+	if (raidPtr->iobuf_count < raidPtr->numReservedBuffers) {
 		/* just tack it in */
 		vple->next = raidPtr->iobuf;
 		raidPtr->iobuf = vple;

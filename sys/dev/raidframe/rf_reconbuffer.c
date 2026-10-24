@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.27 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.28 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.27 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.28 2026/10/24 00:20:24 tls Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -193,11 +193,11 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 		}
 		if (keep_it) {
 			RF_UNLOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
+			rf_ReleaseForcedReconBuffer(raidPtr, rbuf);
 			rf_lock_mutex2(reconCtrlPtr->rb_mutex);
 			reconCtrlPtr->rb_lock = 0;
 			rf_broadcast_cond2(reconCtrlPtr->rb_cv);
 			rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
-			rf_FreeReconBuffer(rbuf);
 			return (retcode);
 		}
 		goto out;
@@ -322,7 +322,7 @@ rf_MultiWayReconXor(RF_Raid_t *raidPtr, RF_ReconParityStripeStatus_t *pssPtr)
 			rf_ReleaseFloatingReconBuffer(raidPtr, rbufs[i]);
 		else
 			if (rbufs[i]->type == RF_RBUF_TYPE_FORCED)
-				rf_FreeReconBuffer(rbufs[i]);
+				rf_ReleaseForcedReconBuffer(raidPtr, rbufs[i]);
 			else
 				RF_ASSERT(0);
 	}
@@ -419,4 +419,18 @@ rf_ReleaseFloatingReconBuffer(RF_Raid_t *raidPtr, RF_ReconBuffer_t *rbuf)
 		rbuf->next = rcPtr->floatingRbufs;
 		rcPtr->floatingRbufs = rbuf;
 	}
+}
+
+/*
+ * Return a pre-allocated forced recon buffer to forcedRbufs.
+ * Assumes rb_lock is held at entry.
+ */
+void
+rf_ReleaseForcedReconBuffer(RF_Raid_t *raidPtr, RF_ReconBuffer_t *rbuf)
+{
+	RF_ReconCtrl_t *rcPtr = raidPtr->reconControl;
+
+	rbuf->pssPtr = NULL;
+	rbuf->next = rcPtr->forcedRbufs;
+	rcPtr->forcedRbufs = rbuf;
 }

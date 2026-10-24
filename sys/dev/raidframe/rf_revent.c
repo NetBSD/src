@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.29 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.30 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.29 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.30 2026/10/24 00:20:24 tls Exp $");
 
 #include <sys/errno.h>
 
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.29 2021/07/23 00:54:45 oster Exp $")
 #include "rf_desc.h"
 #include "rf_shutdown.h"
 
-#define RF_MAX_FREE_REVENT 128
-#define RF_MIN_FREE_REVENT  32
 #define RF_EVENTQ_WAIT 5000
 
 #include <sys/proc.h>
@@ -66,9 +64,26 @@ int
 rf_ConfigureReconEvent(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		       RF_Config_t *cfgPtr)
 {
+	size_t stripe_data_bytes, min_revent, max_revent;
+	u_int max_stripes_per_bp, c;
+
+	if (raidPtr->Layout.map->SubmitReconBuffer == NULL) {
+		min_revent = 0;
+		max_revent = 0;
+	} else {
+		c = raidPtr->numCol;
+		stripe_data_bytes =
+		    (size_t)raidPtr->Layout.dataSectorsPerStripe <<
+		    raidPtr->logBytesPerSector;
+		max_stripes_per_bp = howmany(MAXPHYS, stripe_data_bytes) + 1;
+		/* 1 event/rbuf + c-1 blockclear/forced events per active stripe. */
+		min_revent = 2 * (c - 1) + raidPtr->numFloatingReconBufs +
+		    raidPtr->openings * max_stripes_per_bp * (c - 1);
+		max_revent = 2 * min_revent;
+	}
 
 	rf_pool_init(raidPtr, raidPtr->poolNames.revent, &raidPtr->pools.revent, sizeof(RF_ReconEvent_t),
-		     "revent", RF_MIN_FREE_REVENT, RF_MAX_FREE_REVENT);
+		     "revent", min_revent, max_revent);
 	rf_ShutdownCreate(listp, rf_ShutdownReconEvent, raidPtr);
 
 	return (0);

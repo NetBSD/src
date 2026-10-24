@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.38 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.39 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.38 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.39 2026/10/24 00:20:24 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -138,11 +138,18 @@ rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
 	reconCtrlPtr->fullBufferList = NULL;
 	reconCtrlPtr->floatingRbufs = NULL;
 	reconCtrlPtr->committedRbufs = NULL;
+	reconCtrlPtr->forcedRbufs = NULL;
 	for (i = 0; i < raidPtr->numFloatingReconBufs; i++) {
 		rbuf = rf_MakeReconBuffer(raidPtr, fcol,
 					  RF_RBUF_TYPE_FLOATING);
 		rbuf->next = reconCtrlPtr->floatingRbufs;
 		reconCtrlPtr->floatingRbufs = rbuf;
+	}
+	for (i = 0; i < raidPtr->numCol - 1; i++) {
+		rbuf = rf_MakeReconBuffer(raidPtr, fcol,
+					  RF_RBUF_TYPE_FORCED);
+		rbuf->next = reconCtrlPtr->forcedRbufs;
+		reconCtrlPtr->forcedRbufs = rbuf;
 	}
 
 	/* create the parity stripe status table */
@@ -171,6 +178,13 @@ rf_FreeReconControl(RF_Raid_t *raidPtr)
 		reconCtrlPtr->floatingRbufs = t->next;
 		rf_FreeReconBuffer(t);
 		t = reconCtrlPtr->floatingRbufs;
+	}
+
+	t = reconCtrlPtr->forcedRbufs;
+	while (t) {
+		reconCtrlPtr->forcedRbufs = t->next;
+		rf_FreeReconBuffer(t);
+		t = reconCtrlPtr->forcedRbufs;
 	}
 
 	rf_destroy_mutex2(reconCtrlPtr->eq_mutex);

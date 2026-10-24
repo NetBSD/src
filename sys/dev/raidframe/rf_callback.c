@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.25 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.26 2026/10/24 00:20:23 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.25 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.26 2026/10/24 00:20:23 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -47,9 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.25 2021/07/23 00:54:45 oster Exp $
 #include "rf_shutdown.h"
 #include "rf_netbsd.h"
 #include "rf_raid.h"
-
-#define RF_MAX_FREE_CALLBACK 64
-#define RF_MIN_FREE_CALLBACK 32
 
 static void rf_ShutdownCallback(void *);
 static void
@@ -67,11 +64,27 @@ int
 rf_ConfigureCallback(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		     RF_Config_t *cfgPtr)
 {
+	size_t stripe_data_bytes, min_cbf, max_cbf, min_cbv, max_cbv;
+	u_int max_stripes_per_bp, c;
+
+	c = raidPtr->numCol;
+	stripe_data_bytes = (size_t)raidPtr->Layout.dataSectorsPerStripe <<
+	    raidPtr->logBytesPerSector;
+	max_stripes_per_bp = howmany(MAXPHYS, stripe_data_bytes) + 1;
+
+	/* Up to 2 callbacks (stripe lock + forced recon) per active stripe. */
+	min_cbf = 2 * (raidPtr->openings * max_stripes_per_bp + 1);
+	max_cbf = 2 * min_cbf;
+
+	/* Up to 3 recon wait lists (head-sep, blocked, buffer) per disk. */
+	min_cbv = (raidPtr->Layout.map->SubmitReconBuffer == NULL) ?
+	    0 : 3 * (c - 1);
+	max_cbv = 2 * min_cbv;
 
 	rf_pool_init(raidPtr, raidPtr->poolNames.callbackf, &raidPtr->pools.callbackf, sizeof(RF_CallbackFuncDesc_t),
-		     "callbackf", RF_MIN_FREE_CALLBACK, RF_MAX_FREE_CALLBACK);
+		     "callbackf", min_cbf, max_cbf);
 	rf_pool_init(raidPtr, raidPtr->poolNames.callbackv, &raidPtr->pools.callbackv, sizeof(RF_CallbackValueDesc_t),
-		     "callbackv", RF_MIN_FREE_CALLBACK, RF_MAX_FREE_CALLBACK);
+		     "callbackv", min_cbv, max_cbv);
 	rf_ShutdownCreate(listp, rf_ShutdownCallback, raidPtr);
 
 	return (0);

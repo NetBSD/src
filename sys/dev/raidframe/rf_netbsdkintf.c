@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.421 2026/10/21 01:19:18 tls Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.422 2026/10/24 00:20:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.421 2026/10/21 01:19:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.422 2026/10/24 00:20:24 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -262,9 +262,9 @@ struct rf_recon_req_internal {
 };
 
 /*
- * Minimum number of simultaneous IO's (openings) allowed to a parity RAID
- * device under low-memory conditions.  Actual per-set openings and emergency
- * buffer counts are computed in rf_AllocEmergBuffers().
+ * Minimum number of simultaneous I/Os (openings) allowed to a RAID device
+ * when constrained by the 1% physmem budget.  Actual per-set openings and
+ * reserved buffer counts are computed in rf_ComputeOpenings().
  *
  * For example: with a stripe width of 64 blocks (32k) and 5 disks,
  * a single 64K write will typically require 64K for the old data,
@@ -3769,7 +3769,9 @@ rf_pool_init(RF_Raid_t *raidPtr, char *w_chan, struct pool *p, size_t size, cons
 
 	/* Format: raid%d_foo */
 	snprintf(w_chan, RF_MAX_POOLNAMELEN, "raid%d_%s", raidPtr->raidid, pool_name);
-	
+	aprint_debug("raid%d: pool %s: item %zuB, min %zu, max %zu\n",
+	    raidPtr->raidid, pool_name, size, xmin, xmax);
+
 	pool_init(p, size, 0, 0, 0, w_chan, NULL, IPL_BIO);
 	pool_sethiwat(p, xmax);
 	pool_prime(p, xmin);

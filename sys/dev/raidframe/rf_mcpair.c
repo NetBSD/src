@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.25 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.26 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.25 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.26 2026/10/24 00:20:24 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -47,9 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.25 2021/07/23 00:54:45 oster Exp $")
 
 #include <sys/pool.h>
 #include <sys/proc.h>
-
-#define RF_MAX_FREE_MCPAIR 128
-#define RF_MIN_FREE_MCPAIR  24
 
 static void rf_ShutdownMCPair(void *);
 
@@ -67,9 +64,14 @@ int
 rf_ConfigureMCPair(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		   RF_Config_t *cfgPtr)
 {
+	size_t min_mcpair, max_mcpair;
+
+	/* 1 mcpair per opening + 1 parity op + 1 per col for label/ctl I/O. */
+	min_mcpair = raidPtr->openings + 1 + raidPtr->numCol;
+	max_mcpair = 2 * min_mcpair;
 
 	rf_pool_init(raidPtr, raidPtr->poolNames.mcpair, &raidPtr->pools.mcpair, sizeof(RF_MCPair_t),
-		     "mcpair", RF_MIN_FREE_MCPAIR, RF_MAX_FREE_MCPAIR);
+		     "mcpair", min_mcpair, max_mcpair);
 	rf_ShutdownCreate(listp, rf_ShutdownMCPair, raidPtr);
 
 	return (0);

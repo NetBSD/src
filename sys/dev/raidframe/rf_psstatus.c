@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.39 2024/02/10 09:21:53 andvar Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.40 2026/10/24 00:20:24 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.39 2024/02/10 09:21:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.40 2026/10/24 00:20:24 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -61,9 +61,6 @@ static void
 RealPrintPSStatusTable(RF_Raid_t * raidPtr,
     RF_PSStatusHeader_t * pssTable);
 
-#define RF_MAX_FREE_PSS  32
-#define RF_MIN_FREE_PSS   8
-
 static void rf_ShutdownPSStatus(void *);
 
 static void
@@ -80,9 +77,26 @@ int
 rf_ConfigurePSStatus(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		     RF_Config_t *cfgPtr)
 {
+	size_t stripe_data_bytes, min_pss, max_pss;
+	u_int max_stripes_per_bp, c;
+
+	if (raidPtr->Layout.map->SubmitReconBuffer == NULL) {
+		min_pss = 0;
+		max_pss = 0;
+	} else {
+		c = raidPtr->numCol;
+		stripe_data_bytes =
+		    (size_t)raidPtr->Layout.dataSectorsPerStripe <<
+		    raidPtr->logBytesPerSector;
+		max_stripes_per_bp = howmany(MAXPHYS, stripe_data_bytes) + 1;
+		/* Active recon stripes + stripes blocked by 'openings' writes. */
+		min_pss = (c - 1) + raidPtr->numFloatingReconBufs +
+		    raidPtr->openings * max_stripes_per_bp;
+		max_pss = 2 * min_pss;
+	}
 
 	rf_pool_init(raidPtr, raidPtr->poolNames.pss, &raidPtr->pools.pss, sizeof(RF_ReconParityStripeStatus_t),
-		     "pss", RF_MIN_FREE_PSS, RF_MAX_FREE_PSS);
+		     "pss", min_pss, max_pss);
 	rf_ShutdownCreate(listp, rf_ShutdownPSStatus, raidPtr);
 
 	return (0);
