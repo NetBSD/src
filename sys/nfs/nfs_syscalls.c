@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.163.10.1 2026/06/27 09:47:47 martin Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.163.10.2 2026/10/25 10:50:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,47 +35,50 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.163.10.1 2026/06/27 09:47:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.163.10.2 2026/10/25 10:50:07 martin Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
-#include <sys/kmem.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
+#include <sys/cprng.h>
+#include <sys/domain.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/protosw.h>
+#include <sys/rbtree.h>
+#include <sys/signalvar.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/signalvar.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/namei.h>
-#include <sys/syslog.h>
-#include <sys/filedesc.h>
-#include <sys/kthread.h>
-#include <sys/kauth.h>
+#include <sys/stat.h>
 #include <sys/syscallargs.h>
-#include <sys/cprng.h>
-#include <sys/rbtree.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
+#include <sys/vnode.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <nfs/xdr_subs.h>
-#include <nfs/rpcv2.h>
-#include <nfs/nfsproto.h>
+
 #include <nfs/nfs.h>
+#include <nfs/nfs_var.h>
 #include <nfs/nfsm_subs.h>
-#include <nfs/nfsrvcache.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfsnode.h>
+#include <nfs/nfsproto.h>
 #include <nfs/nfsrtt.h>
-#include <nfs/nfs_var.h>
+#include <nfs/nfsrvcache.h>
+#include <nfs/rpcv2.h>
+#include <nfs/xdr_subs.h>
 
 extern int32_t (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
 						struct nfssvc_sock *,
@@ -99,6 +102,9 @@ int nfsd_head_flag;
 
 struct nfssvc_sock *nfs_udpsock;
 struct nfssvc_sock *nfs_udp6sock;
+
+#define	NFSD_MAXEXPORTSPERMOUNT						      \
+	(65536/sizeof(struct export_args))
 
 static struct nfssvc_sock *nfsrv_sockalloc(void);
 static void nfsrv_sockfree(struct nfssvc_sock *);
@@ -348,6 +354,8 @@ do_nfssvc(struct nfssvc_copy_ops *ops, struct lwp *l, int flag, void *argp, regi
 		if (error != 0)
 			return error;
 
+		if (mel.mel_nexports > NFSD_MAXEXPORTSPERMOUNT)
+			return E2BIG;
 		args = (struct export_args *)malloc(mel.mel_nexports *
 		    sizeof(struct export_args), M_TEMP, M_WAITOK);
 		error = ops->exp_in(args, mel.mel_exports, mel.mel_nexports);
