@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.156 2024/12/07 02:27:38 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.156.2.1 2026/10/25 11:25:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.156 2024/12/07 02:27:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.156.2.1 2026/10/25 11:25:07 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -704,13 +704,10 @@ vdrain_one(u_int target)
 static void
 vdrain_task(struct threadpool_job *job)
 {
-	u_int target;
-
-	target = desiredvnodes - desiredvnodes / 16;
 
 	mutex_enter(&vdrain_lock);
 
-	while (!vdrain_one(target))
+	while (!vdrain_one(desiredvnodes - desiredvnodes / 16))
 		kpause("vdrain", false, 1, &vdrain_lock);
 
 	threadpool_job_done(job);
