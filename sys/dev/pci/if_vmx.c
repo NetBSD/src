@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.17 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.17.2.1 2026/10/25 12:16:19 martin Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.17 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.17.2.1 2026/10/25 12:16:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_vmx.h"
@@ -1019,7 +1019,7 @@ vmxnet3_setup_msi_interrupt(struct vmxnet3_softc *sc)
 		return (-1);
 	}
 
-	for (i = 0; i < MIN(sc->vmx_nrxqueues, sc->vmx_nrxqueues); i++)
+	for (i = 0; i < MIN(sc->vmx_ntxqueues, sc->vmx_nrxqueues); i++)
 		sc->vmx_queue[i].vxq_intr_idx = 0;
 	sc->vmx_event_intr_idx = 0;
 
@@ -1063,7 +1063,7 @@ vmxnet3_setup_legacy_interrupt(struct vmxnet3_softc *sc)
 		return (-1);
 	}
 
-	for (i = 0; i < MIN(sc->vmx_nrxqueues, sc->vmx_nrxqueues); i++)
+	for (i = 0; i < MIN(sc->vmx_ntxqueues, sc->vmx_nrxqueues); i++)
 		sc->vmx_queue[i].vxq_intr_idx = 0;
 	sc->vmx_event_intr_idx = 0;
 
