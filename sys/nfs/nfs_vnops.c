@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.325.4.1 2026/02/02 17:38:30 martin Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.325.4.2 2026/10/25 10:40:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.325.4.1 2026/02/02 17:38:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.325.4.2 2026/10/25 10:40:43 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -47,28 +47,31 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.325.4.1 2026/02/02 17:38:30 martin E
 #endif
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
-#include <sys/resourcevar.h>
-#include <sys/mount.h>
+#include <sys/types.h>
+
+#include <sys/bitops.h>
 #include <sys/buf.h>
 #include <sys/condvar.h>
-#include <sys/disk.h>
-#include <sys/malloc.h>
-#include <sys/kmem.h>
-#include <sys/mbuf.h>
-#include <sys/mutex.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
+#include <sys/cprng.h>
 #include <sys/dirent.h>
+#include <sys/disk.h>
 #include <sys/fcntl.h>
 #include <sys/hash.h>
-#include <sys/lockf.h>
-#include <sys/stat.h>
-#include <sys/unistd.h>
 #include <sys/kauth.h>
-#include <sys/cprng.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/lockf.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/mount.h>
+#include <sys/mutex.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/stat.h>
+#include <sys/systm.h>
+#include <sys/unistd.h>
+#include <sys/vnode.h>
 
 #ifdef UVMHIST
 #include <uvm/uvm.h>
@@ -81,14 +84,14 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.325.4.1 2026/02/02 17:38:30 martin E
 #include <miscfs/genfs/genfs_node.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <nfs/rpcv2.h>
-#include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
-#include <nfs/nfsnode.h>
-#include <nfs/nfsmount.h>
-#include <nfs/xdr_subs.h>
-#include <nfs/nfsm_subs.h>
 #include <nfs/nfs_var.h>
+#include <nfs/nfsm_subs.h>
+#include <nfs/nfsmount.h>
+#include <nfs/nfsnode.h>
+#include <nfs/nfsproto.h>
+#include <nfs/rpcv2.h>
+#include <nfs/xdr_subs.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -3160,11 +3163,6 @@ nfs_pathconf(void *v)
 	u_int32_t *tl;
 	char *bpos, *dpos, *cp, *cp2;
 	int error = 0, attrflag;
-#ifndef NFS_V2_ONLY
-	struct nfsmount *nmp;
-	unsigned int l;
-	u_int64_t maxsize;
-#endif
 	const int v3 = NFS_ISV3(vp);
 	struct nfsnode *np = VTONFS(vp);
 
@@ -3218,15 +3216,30 @@ nfs_pathconf(void *v)
 	case _PC_FILESIZEBITS:
 #ifndef NFS_V2_ONLY
 		if (v3) {
-			nmp = VFSTONFS(vp->v_mount);
+			struct nfsmount *const nmp = VFSTONFS(vp->v_mount);
+
 			if ((nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
 				if ((error = nfs_fsinfo(nmp, vp,
 				    curlwp->l_cred, curlwp)) != 0) /* XXX */
 					break;
-			for (l = 0, maxsize = nmp->nm_maxfilesize;
-			    (maxsize >> l) > 0; l++)
-				;
-			*ap->a_retval = l + 1;
+			/*
+			 * Note: We are specifically supposed to return
+			 * floor(log_2 maxfilesize) + 2.  The `+ 2'
+			 * here is NOT a fencepost error in the
+			 * implementation.  In particular, we need
+			 * floor(log_2 maxfilesize) + 1 bits to store
+			 * _unsigned_ integers up to maxfilesize, but
+			 * file sizes (off_t) are _signed_, so we need
+			 * one more bit for the sign.
+			 *
+			 * Clamp it at the size in bits of off_t,
+			 * though; we certainly can't handle more than
+			 * that, but a server might advertise files up
+			 * to 2^64 - 1 bytes, and this would conclude
+			 * we need 65 bits to represent such sizes.
+			 */
+			*ap->a_retval = MIN(ilog2(nmp->nm_maxfilesize) + 2,
+			    sizeof(off_t)*CHAR_BIT);
 		} else
 #endif
 		{
