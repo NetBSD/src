@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.339 2022/07/26 20:08:56 andvar Exp $ */
+/*	$NetBSD: machdep.c,v 1.339.4.1 2026/10/25 11:22:38 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.339 2022/07/26 20:08:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.339.4.1 2026/10/25 11:22:38 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -487,6 +487,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	size_t ucsz;
 
 	sig = ksi->ksi_signo;
+	catcher = (u_int)SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_tf;
 	oldsp = tf->tf_out[6];
@@ -566,7 +567,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		 * It needs a new stack pointer, a return address and
 		 * three arguments: (signo, siginfo *, ucontext *).
 		 */
-		catcher = (u_int)SIGACTION(p, sig).sa_handler;
+
 		tf->tf_pc = catcher;
 		tf->tf_npc = catcher + 4;
 		tf->tf_out[0] = sig;
