@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238.2.28 2026/10/24 15:50:24 martin Exp $
+# $NetBSD: mi,v 1.1238.2.29 2026/10/25 11:54:49 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7602,6 +7602,10 @@
 ./usr/tests/usr.sbin/certctl/certs4			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/certctl/certs4/AC_RAIZ_FNMT-RCM.pem	tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/certctl/certs4/DigiCert_Global_Root_CA.pem	tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs5			tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs5/Comodo_AAA_Services_root.pem	tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs5/DigiCert_Global_Root_CA.pem	tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/certctl/certs5/emSign_ECC_Root_CA_-_G3.pem	tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/certctl/t_certctl			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/cpuctl				tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/cpuctl/Atffile			tests-usr.sbin-tests	compattestfile,atf
