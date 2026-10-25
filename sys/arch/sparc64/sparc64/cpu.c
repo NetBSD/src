@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.140 2021/04/05 22:36:27 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.141 2026/10/25 17:42:20 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.140 2021/04/05 22:36:27 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.141 2026/10/25 17:42:20 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -836,3 +836,124 @@ cpu_hatch(void)
 	spl0();
 }
 #endif /* MULTIPROCESSOR */
+
+#ifdef DEBUG
+
+void clear_winregs(void)
+{
+	curcpu()->ci_winregs = 0;
+	memset(&(curcpu()->ci_rw0_local[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw0_in[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw1_local[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw1_in[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw2_local[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw2_in[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw3_local[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw3_in[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw4_local[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw4_in[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw5_local[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw5_in[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw6_local[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw6_in[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw7_local[0]), 0, 8*sizeof(int64_t));
+	memset(&(curcpu()->ci_rw7_in[0]), 0, 8*sizeof(int64_t));
+}
+
+void print_winregs(void)
+{
+
+	printf("Register window registers (WINREGS cansave/canrestore/otherwin/cleanwin/cwp/wstate): %016lx\n", curcpu()->ci_winregs);
+
+	/* RW 0 */
+	printf("RW 0 %%i0-%%i7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw0_in[i]);
+	}
+	printf("\n");
+	printf("RW 0 %%l0-%%l7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw0_local[i]);
+	}
+	printf("\n");
+	/* RW 1 */
+	printf("RW 1 %%i0-%%i7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw1_in[i]);
+	}
+	printf("\n");
+	printf("RW 1 %%l0-%%l7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw1_local[i]);
+	}
+	printf("\n");
+	/* RW 2 */
+	printf("RW 2 %%i0-%%i7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw2_in[i]);
+	}
+	printf("\n");
+	printf("RW 2 %%l0-%%l7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw2_local[i]);
+	}
+	printf("\n");
+	/* RW 3 */
+	printf("RW 3 %%i0-%%i7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw3_in[i]);
+	}
+	printf("\n");
+	printf("RW 3 %%l0-%%l7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw3_local[i]);
+	}
+	printf("\n");
+	/* RW 4 */
+	printf("RW 4 %%i0-%%i7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw4_in[i]);
+	}
+	printf("\n");
+	printf("RW 4 %%l0-%%l7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw4_local[i]);
+	}
+	printf("\n");
+	/* RW 5 */
+	printf("RW 5 %%i0-%%i7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw5_in[i]);
+	}
+	printf("\n");
+	printf("RW 5 %%l0-%%l7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw5_local[i]);
+	}
+	printf("\n");
+	/* RW 6 */
+	printf("RW 6 %%i0-%%i7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw6_in[i]);
+	}
+	printf("\n");
+	printf("RW 6 %%l0-%%l7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw6_local[i]);
+	}
+	printf("\n");
+	/* RW 7 */
+	printf("RW 7 %%i0-%%i7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw7_in[i]);
+	}
+	printf("\n");
+	printf("RW 7 %%l0-%%l7 ");
+	for (int i = 0; i < 8; i++) {
+	  printf("%016lx ", curcpu()->ci_rw7_local[i]);
+	}
+	printf("\n");
+
+}
+
+#endif	

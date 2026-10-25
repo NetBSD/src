@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.137 2026/10/18 20:27:05 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.138 2026/10/25 17:42:20 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -484,6 +484,12 @@ void kgdb_panic(void);
 /* emul.c */
 int	fixalign(struct lwp *, struct trapframe64 *);
 int	emulinstr(vaddr_t, struct trapframe64 *);
+
+
+#if DEBUG
+void print_winregs(void);
+void clear_winregs(void);
+#endif
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */
