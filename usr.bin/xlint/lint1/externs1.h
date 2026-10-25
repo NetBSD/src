@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.246 2026/04/20 22:26:43 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.247 2026/10/25 21:42:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -349,6 +349,7 @@ void begin_function(sym_t *);
 void end_function(void);
 void named_label(sym_t *);
 void case_label(tnode_t *);
+void case_label_range(tnode_t *, tnode_t *);
 void default_label(void);
 void stmt_if_expr(tnode_t *);
 void stmt_if_then_stmt(void);

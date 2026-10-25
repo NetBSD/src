@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.538 2026/03/18 06:17:55 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.539 2026/10/25 21:42:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.538 2026/03/18 06:17:55 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.539 2026/10/25 21:42:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2108,12 +2108,9 @@ label:
 	}
 |	T_CASE constant_expression T_COLON {
 		case_label($2);
-		suppress_fallthrough = true;
 	}
 |	T_CASE constant_expression T_ELLIPSIS constant_expression T_COLON {
-		/* XXX: We don't fill all cases */
-		case_label($2);
-		suppress_fallthrough = true;
+		case_label_range($2, $4);
 	}
 |	T_DEFAULT T_COLON {
 		default_label();

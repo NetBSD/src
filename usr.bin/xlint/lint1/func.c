@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.200 2026/06/16 05:27:57 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.201 2026/10/25 21:42:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.200 2026/06/16 05:27:57 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.201 2026/10/25 21:42:57 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -516,6 +516,37 @@ case_label(tnode_t *tn)
 	check_case_label(tn);
 	expr_free_all();
 	set_reached(true);
+	suppress_fallthrough = true;
+}
+
+void
+case_label_range(tnode_t *ln, tnode_t *rn)
+{
+	if (ln->tn_op == CON && rn->tn_op == CON
+	    && ln->tn_type->t_tspec == rn->tn_type->t_tspec
+	    && is_integer(ln->tn_type->t_tspec)) {
+		uint64_t mask = is_uinteger(ln->tn_type->t_tspec)
+		    ? 1ULL << 63 : 0;
+		if (is_integer(ln->tn_type->t_tspec)) {
+			uint64_t lo = (uint64_t)ln->u.value.u.integer ^ mask;
+			uint64_t hi = (uint64_t)rn->u.value.u.integer ^ mask;
+			if (lo < hi && hi - lo > 1000)
+				hi = 0;
+			for (; lo < hi; lo++) {
+				tnode_t *tn = expr_alloc_tnode();
+				tn->tn_sys = ln->tn_sys;
+				tn->tn_op = CON;
+				tn->tn_type = ln->tn_type;
+				tn->u.value.v_tspec = tn->tn_type->t_tspec;
+				tn->u.value.u.integer = (int64_t)(lo ^ mask);
+				check_case_label(tn);
+			}
+		}
+	}
+	check_case_label(rn);
+	expr_free_all();
+	set_reached(true);
+	suppress_fallthrough = true;
 }
 
 void

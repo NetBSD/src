@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc.c,v 1.7 2026/01/20 23:46:36 rillig Exp $	*/
+/*	$NetBSD: gcc.c,v 1.8 2026/10/25 21:42:57 rillig Exp $	*/
 # 3 "gcc.c"
 
 /*
@@ -47,9 +47,28 @@ range_in_case_label(int i)
 	switch (i) {
 	case 1 ... 40:		// This is a GCC extension.
 		return 1;
+	case 1000 ... 2000:
+		return 1000;
+	case 3000 ... 4001:
+		return 3000;
 	default:
 		return 2;
 	}
+}
+
+int
+range_in_case_label_enum(int i)
+{
+	enum {
+		LSB = 0,
+		MSB = 63,
+	} bit = i;
+
+	switch (bit) {
+	case LSB ... MSB:
+		return 1;
+	}
+	return 0;
 }
 
 union {
