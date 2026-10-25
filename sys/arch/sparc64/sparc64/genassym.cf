@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.86 2026/10/18 20:27:05 palle Exp $
+#	$NetBSD: genassym.cf,v 1.87 2026/10/25 17:39:01 palle Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -261,15 +261,7 @@ define	CI_RW6_LOCAL offsetof(struct cpu_info, ci_rw6_local)
 define	CI_RW6_IN offsetof(struct cpu_info, ci_rw6_in)
 define	CI_RW7_LOCAL offsetof(struct cpu_info, ci_rw7_local)
 define	CI_RW7_IN offsetof(struct cpu_info, ci_rw7_in)
-if 0
-define	CI_SP offsetof(struct cpu_info, ci_sp)
-define	CI_CTX_PRIMARY offsetof(struct cpu_info, ci_ctx_primary)
-define	CI_CTX_SECONDARY offsetof(struct cpu_info, ci_ctx_secondary)
-define	CI_MMFSA_IFA offsetof(struct cpu_info, ci_mmfsa_ifa)
-define	CI_MMFSA_IFC offsetof(struct cpu_info, ci_mmfsa_ifc)
 define	CI_WINREGS offsetof(struct cpu_info, ci_winregs)
-define	CI_TT offsetof(struct cpu_info, ci_tt)
-endif
 endif
 define	TF_SIZE		sizeof(struct trapframe64)
 
