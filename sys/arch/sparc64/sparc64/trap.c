@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.199 2024/12/28 13:48:07 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.200 2026/10/25 14:52:54 palle Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.199 2024/12/28 13:48:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.200 2026/10/25 14:52:54 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -381,40 +381,23 @@ print_trapframe(struct trapframe64 *tf)
 	       tf, (u_long)tf->tf_tstate, (u_long)tf->tf_pc, (u_long)tf->tf_npc);
 	printf("fault: %p\ty: %x\t", 
 	       (void *)(u_long)tf->tf_fault, (int)tf->tf_y);
-	printf("pil: %d\toldpil: %d\ttt: %x\nGlobals:\n", 
+	printf("pil: %d\toldpil: %d\ttt: %x\n", 
 	       (int)tf->tf_pil, (int)tf->tf_oldpil, (int)tf->tf_tt);
-	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
+
+	printf("Globals:\t");
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x ",
 	       (u_int)(tf->tf_global[0]>>32), (u_int)tf->tf_global[0],
 	       (u_int)(tf->tf_global[1]>>32), (u_int)tf->tf_global[1],
 	       (u_int)(tf->tf_global[2]>>32), (u_int)tf->tf_global[2],
 	       (u_int)(tf->tf_global[3]>>32), (u_int)tf->tf_global[3]);
-	printf("%08x%08x %08x%08x %08x%08x %08x%08x\nOuts:\n",
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
 	       (u_int)(tf->tf_global[4]>>32), (u_int)tf->tf_global[4],
 	       (u_int)(tf->tf_global[5]>>32), (u_int)tf->tf_global[5],
 	       (u_int)(tf->tf_global[6]>>32), (u_int)tf->tf_global[6],
 	       (u_int)(tf->tf_global[7]>>32), (u_int)tf->tf_global[7]);
-#ifdef DEBUG
-	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
-	       (u_int)(tf->tf_out[0]>>32), (u_int)tf->tf_out[0],
-	       (u_int)(tf->tf_out[1]>>32), (u_int)tf->tf_out[1],
-	       (u_int)(tf->tf_out[2]>>32), (u_int)tf->tf_out[2],
-	       (u_int)(tf->tf_out[3]>>32), (u_int)tf->tf_out[3]);
-	printf("%08x%08x %08x%08x %08x%08x %08x%08x\nLocals:\n",
-	       (u_int)(tf->tf_out[4]>>32), (u_int)tf->tf_out[4],
-	       (u_int)(tf->tf_out[5]>>32), (u_int)tf->tf_out[5],
-	       (u_int)(tf->tf_out[6]>>32), (u_int)tf->tf_out[6],
-	       (u_int)(tf->tf_out[7]>>32), (u_int)tf->tf_out[7]);
-	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
-	       (u_int)(tf->tf_local[0]>>32), (u_int)tf->tf_local[0],
-	       (u_int)(tf->tf_local[1]>>32), (u_int)tf->tf_local[1],
-	       (u_int)(tf->tf_local[2]>>32), (u_int)tf->tf_local[2],
-	       (u_int)(tf->tf_local[3]>>32), (u_int)tf->tf_local[3]);
-	printf("%08x%08x %08x%08x %08x%08x %08x%08x\nIns:\n",
-	       (u_int)(tf->tf_local[4]>>32), (u_int)tf->tf_local[4],
-	       (u_int)(tf->tf_local[5]>>32), (u_int)tf->tf_local[5],
-	       (u_int)(tf->tf_local[6]>>32), (u_int)tf->tf_local[6],
-	       (u_int)(tf->tf_local[7]>>32), (u_int)tf->tf_local[7]);
-	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
+
+	printf("Ins:\t");
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x ",
 	       (u_int)(tf->tf_in[0]>>32), (u_int)tf->tf_in[0],
 	       (u_int)(tf->tf_in[1]>>32), (u_int)tf->tf_in[1],
 	       (u_int)(tf->tf_in[2]>>32), (u_int)tf->tf_in[2],
@@ -424,7 +407,28 @@ print_trapframe(struct trapframe64 *tf)
 	       (u_int)(tf->tf_in[5]>>32), (u_int)tf->tf_in[5],
 	       (u_int)(tf->tf_in[6]>>32), (u_int)tf->tf_in[6],
 	       (u_int)(tf->tf_in[7]>>32), (u_int)tf->tf_in[7]);
-#endif
+	printf("Locals:\t");
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x ",
+	       (u_int)(tf->tf_local[0]>>32), (u_int)tf->tf_local[0],
+	       (u_int)(tf->tf_local[1]>>32), (u_int)tf->tf_local[1],
+	       (u_int)(tf->tf_local[2]>>32), (u_int)tf->tf_local[2],
+	       (u_int)(tf->tf_local[3]>>32), (u_int)tf->tf_local[3]);
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
+	       (u_int)(tf->tf_local[4]>>32), (u_int)tf->tf_local[4],
+	       (u_int)(tf->tf_local[5]>>32), (u_int)tf->tf_local[5],
+	       (u_int)(tf->tf_local[6]>>32), (u_int)tf->tf_local[6],
+	       (u_int)(tf->tf_local[7]>>32), (u_int)tf->tf_local[7]);
+	printf("Outs:\t");
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x ",
+	       (u_int)(tf->tf_out[0]>>32), (u_int)tf->tf_out[0],
+	       (u_int)(tf->tf_out[1]>>32), (u_int)tf->tf_out[1],
+	       (u_int)(tf->tf_out[2]>>32), (u_int)tf->tf_out[2],
+	       (u_int)(tf->tf_out[3]>>32), (u_int)tf->tf_out[3]);
+	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
+	       (u_int)(tf->tf_out[4]>>32), (u_int)tf->tf_out[4],
+	       (u_int)(tf->tf_out[5]>>32), (u_int)tf->tf_out[5],
+	       (u_int)(tf->tf_out[6]>>32), (u_int)tf->tf_out[6],
+	       (u_int)(tf->tf_out[7]>>32), (u_int)tf->tf_out[7]);
 
 }
 #endif
