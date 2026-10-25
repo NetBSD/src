@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.145 2025/09/06 02:53:22 riastradh Exp $ */
+/* $NetBSD: locore.s,v 1.146 2026/10/25 15:01:58 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.145 2025/09/06 02:53:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.146 2026/10/25 15:01:58 andvar Exp $");
 
 #include "assym.h"
 
@@ -197,7 +197,7 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 
 #if defined(MULTIPROCESSOR)
 /*
- * Pull in the multiprocssor glue.
+ * Pull in the multiprocessor glue.
  */
 #include <alpha/alpha/multiproc.s>
 #endif /* MULTIPROCESSOR */
