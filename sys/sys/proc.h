@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.370.4.2 2023/08/09 17:42:01 martin Exp $	*/
+/*	$NetBSD: proc.h,v 1.370.4.3 2026/10/25 11:02:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -496,6 +496,8 @@ extern struct proc	*initproc;	/* Process slots for init, pager */
 extern const struct proclist_desc proclists[];
 
 int		proc_find_locked(struct lwp *, struct proc **, pid_t);
+int		proc_find_reflocked(struct lwp *, struct proc **, pid_t,
+		    krw_t);
 proc_t *	proc_find_raw(pid_t);
 proc_t *	proc_find(pid_t);		/* Find process by ID */
 proc_t *	proc_find_lwpid(pid_t);		/* Find process by LWP ID */

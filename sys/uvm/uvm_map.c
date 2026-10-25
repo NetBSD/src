@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.403.2.4 2025/05/09 12:59:58 martin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.403.2.5 2026/10/25 11:02:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.403.2.4 2025/05/09 12:59:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.403.2.5 2026/10/25 11:02:59 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -5326,15 +5326,28 @@ fill_vmentries(struct lwp *l, pid_t pid, u_int elem_size, void *oldp,
 	} else
 		vmesize = 0;
 
-	if ((error = proc_find_locked(l, &p, pid)) != 0)
+	/*
+	 * Look up the pid and take a read lock on p->p_reflock so the
+	 * process cannot exit while we're still working with it.
+	 */
+	if ((error = proc_find_reflocked(l, &p, pid, RW_READER)) != 0)
 		return error;
+	KASSERT(pid == -1 || rw_read_held(&p->p_reflock));
 
 	vme = NULL;
 	count = 0;
 
+	/*
+	 * Get the process's vmspace so we can iterate over the VM map.
+	 */
 	if ((error = proc_vmspace_getref(p, &vm)) != 0)
 		goto out;
 
+	/*
+	 * Take a read lock on the VM map to iterate over it.
+	 *
+	 * XXX Should we kmem_alloc before locking the VM map?
+	 */
 	map = &vm->vm_map;
 	vm_map_lock_read(map);
 
@@ -5351,12 +5364,13 @@ fill_vmentries(struct lwp *l, pid_t pid, u_int elem_size, void *oldp,
 		}
 		count++;
 	}
+
 	vm_map_unlock_read(map);
 	uvmspace_free(vm);
 
 out:
 	if (pid != -1)
-		mutex_exit(p->p_lock);
+		rw_exit(&p->p_reflock);
 	if (error == 0) {
 		const u_int esize = uimin(sizeof(*vme), elem_size);
 		dp = oldp;
