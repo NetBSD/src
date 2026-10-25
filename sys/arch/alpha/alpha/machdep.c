@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.383 2025/04/25 00:59:26 riastradh Exp $ */
+/* $NetBSD: machdep.c,v 1.383.2.1 2026/10/25 11:44:10 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.383 2025/04/25 00:59:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.383.2.1 2026/10/25 11:44:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -725,7 +725,8 @@ nobootinfo:
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
 	 * and make lwp0's trapframe pointer point to it for sanity.
 	 */
-	pcb0->pcb_hw.apcb_ksp = v + USPACE - sizeof(struct trapframe);
+	pcb0->pcb_hw.apcb_ksp = (v + USPACE - sizeof(struct trapframe)) &
+	    ~STACK_ALIGNBYTES;
 	lwp0.l_md.md_tf = (struct trapframe *)pcb0->pcb_hw.apcb_ksp;
 
 	/* Indicate that lwp0 has a CPU. */
