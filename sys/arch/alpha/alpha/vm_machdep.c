@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.122 2021/12/05 07:53:57 msaitoh Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.122.4.1 2026/10/25 11:46:19 martin Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.122 2021/12/05 07:53:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.122.4.1 2026/10/25 11:46:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,8 +152,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		 * copy trapframe from parent so return to user mode
 		 * will be to right address, with correct registers.
 		 */
-		l2tf = l2->l_md.md_tf = (struct trapframe *)
-		    (uvm_lwp_getuarea(l2) + USPACE - sizeof(struct trapframe));
+		l2tf = l2->l_md.md_tf = (struct trapframe *)((uintptr_t)
+		    (uvm_lwp_getuarea(l2) + USPACE - sizeof(struct trapframe)) &
+			~STACK_ALIGNBYTES);
 		memcpy(l2->l_md.md_tf, l1->l_md.md_tf,
 		    sizeof(struct trapframe));
 
