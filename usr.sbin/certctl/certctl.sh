@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: certctl.sh,v 1.7 2024/03/04 20:37:31 riastradh Exp $
+#	$NetBSD: certctl.sh,v 1.7.4.1 2026/10/25 11:52:39 martin Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -387,9 +387,18 @@ list_trusted()
 		}
 		$1 == "trust"		{ trust[$3] = $2 }
 		$1 == "distrust" && !trust[$3] && !distrust[$3] {
-			printf "%s: distrusted certificate not found: %s\n", \
-			    progname, $3 >"/dev/stderr"
-			status = 1
+			# This case is fine: we check typos when adding
+			# to the list of distrusted certificates, so it
+			# generally means that an already-distrusted
+			# certificate has now been removed in a system
+			# update.  We should not complain about this
+			# because it causes warning fatigue, and we
+			# should not block rehash operations.  See
+			# PR bin/60916 <https://gnats.NetBSD.org/60916>
+			# for more details.
+#			printf "%s: distrusted certificate not found: %s\n", \
+#			    progname, $3 >"/dev/stderr"
+#			status = 1
 		}
 		$1 == "distrust" && $2 in trust && $2 != trust[$3] {
 			printf "%s: distrusted certificate %s" \

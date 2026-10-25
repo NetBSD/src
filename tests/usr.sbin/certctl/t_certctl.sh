@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: t_certctl.sh,v 1.10 2023/09/05 12:32:30 riastradh Exp $
+#	$NetBSD: t_certctl.sh,v 1.10.4.1 2026/10/25 11:52:38 martin Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -468,6 +468,107 @@ prepopulatedcerts_body()
 	check_empty
 }
 
+atf_test_case untrustdelete
+untrustdelete_head()
+{
+	atf_set "descr" "Test what happens when an untrusted cert is deleted"
+}
+untrustdelete_body()
+{
+
+	mkdir all server email
+
+	# Configure the server certificates.
+	cat <<EOF >certs.conf
+netbsd-certctl 20230816
+path $(pwd)/server
+EOF
+	comodo_aaa=Comodo_AAA_Services_root.pem
+	digicert_global=DigiCert_Global_Root_CA.pem
+	emudhra_g3=emSign_ECC_Root_CA_-_G3.pem
+
+	# Note: This test abuses `atf_check -o match:<pattern>';
+	# <pattern> here is a regular expression, and we feed in files
+	# with regular expression metacharacters, namely dot `.'.  This
+	# is fine for the test because a dot matches a single character
+	# including the dot character itself, which is good enough to
+	# avoid confusing the certificate names here, even if it is
+	# abuse of regular expressions.
+
+	# Create a directory of all the certificates.
+	atf_check cp -p "$(atf_get_srcdir)/certs5/$comodo_aaa" all/
+	atf_check cp -p "$(atf_get_srcdir)/certs5/$digicert_global" all/
+	atf_check cp -p "$(atf_get_srcdir)/certs5/$emudhra_g3" all/
+
+	# Link them all up into email/ and server/ directories.
+	atf_check ln -sfn "../all/$comodo_aaa" email/.
+	atf_check ln -sfn "../all/$comodo_aaa" server/.
+	atf_check ln -sfn "../all/$digicert_global" email/.
+	atf_check ln -sfn "../all/$digicert_global" server/.
+	atf_check ln -sfn "../all/$emudhra_g3" email/.
+	atf_check ln -sfn "../all/$emudhra_g3" server/.
+
+	# Verify they're all included in the list, before and after
+	# rehashing.
+	atf_check -o match:"$comodo_aaa" $CERTCTL list
+	atf_check -o match:"$digicert_global" $CERTCTL list
+	atf_check -o match:"$emudhra_g3" $CERTCTL list
+	atf_check $CERTCTL rehash
+	atf_check -o match:"$comodo_aaa" $CERTCTL list
+	atf_check -o match:"$digicert_global" $CERTCTL list
+	atf_check -o match:"$emudhra_g3" $CERTCTL list
+	atf_check test -h certs/"$comodo_aaa"
+	atf_check test -h certs/"$digicert_global"
+	atf_check test -h certs/"$emudhra_g3"
+	atf_check test -r certs/"$comodo_aaa"
+	atf_check test -r certs/"$digicert_global"
+	atf_check test -r certs/"$emudhra_g3"
+
+	# After The Incident (https://emudhra.we-have-a-problem.com),
+	# we no longer trust two of the root CA certs.  They should no
+	# longer appear in the list.  If you typo the cert, though,
+	# `certctl untrust' will detect the mistake.
+	atf_check $CERTCTL untrust "$(pwd)/all/$comodo_aaa"
+	atf_check $CERTCTL untrust "$(pwd)/all/$emudhra_g3"
+	atf_check -s not-exit:0 -e match:'no such certificate' \
+	    $CERTCTL untrust "$(pwd)/all/${emudhra_g3}x"
+
+	atf_check -o not-match:"$comodo_aaa" $CERTCTL list
+	atf_check -o match:"$digicert_global" $CERTCTL list
+	atf_check -o not-match:"$emudhra_g3" $CERTCTL list
+	atf_check test ! -h certs/"$comodo_aaa"
+	atf_check test -h certs/"$digicert_global"
+	atf_check test ! -h certs/"$emudhra_g3"
+	atf_check test ! -r certs/"$comodo_aaa"
+	atf_check test -r certs/"$digicert_global"
+	atf_check test ! -r certs/"$emudhra_g3"
+
+	# Now we upgrade the software.  One of the certs is deleted
+	# altogether; the other one is no longer symlinked.
+	atf_check rm -f all/"$emudhra_g3"
+	atf_check rm -f email/"$emudhra_g3"
+	atf_check rm -f server/"$emudhra_g3"
+	atf_check rm -f server/"$comodo_aaa"
+
+	# They should also no longer appear in the list.
+	atf_check -o not-match:"$comodo_aaa" $CERTCTL list
+	atf_check -o match:"$digicert_global" $CERTCTL list
+	atf_check -o not-match:"$emudhra_g3" $CERTCTL list
+
+	# Rehash should still work and the names should still no longer
+	# appear in the list.
+	atf_check $CERTCTL rehash
+	atf_check -o not-match:"$comodo_aaa" $CERTCTL list
+	atf_check -o match:"$digicert_global" $CERTCTL list
+	atf_check -o not-match:"$emudhra_g3" $CERTCTL list
+	atf_check test ! -h certs/"$comodo_aaa"
+	atf_check test -h certs/"$digicert_global"
+	atf_check test ! -h certs/"$emudhra_g3"
+	atf_check test ! -r certs/"$comodo_aaa"
+	atf_check test -r certs/"$digicert_global"
+	atf_check test ! -r certs/"$emudhra_g3"
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case collidebase
@@ -483,4 +584,5 @@ atf_init_test_cases()
 	atf_add_test_case regularfilecertsdir
 	atf_add_test_case symlinkcertsdir
 	atf_add_test_case twodir
+	atf_add_test_case untrustdelete
 }
