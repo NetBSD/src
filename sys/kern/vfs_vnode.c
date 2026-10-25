@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.156.2.1 2026/10/25 11:25:07 martin Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.156.2.2 2026/10/25 11:29:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.156.2.1 2026/10/25 11:25:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.156.2.2 2026/10/25 11:29:23 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -171,6 +171,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.156.2.1 2026/10/25 11:25:07 martin E
 #include <sys/namei.h>
 #include <sys/pax.h>
 #include <sys/sdt.h>
+#include <sys/stdalign.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -1363,7 +1364,8 @@ static void
 vcache_init(void)
 {
 
-	vcache_pool = pool_cache_init(sizeof(vnode_impl_t), coherency_unit,
+	vcache_pool = pool_cache_init(sizeof(vnode_impl_t), MAX(coherency_unit,
+		alignof(vnode_impl_t)),
 	    0, 0, "vcachepl", NULL, IPL_NONE, NULL, NULL, NULL);
 	KASSERT(vcache_pool != NULL);
 	mutex_init(&vcache_lock, MUTEX_DEFAULT, IPL_NONE);
