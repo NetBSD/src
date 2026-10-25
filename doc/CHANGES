@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3305 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3306 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -449,4 +449,25 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	tzdata: Updated to 2026e (using 2026egtz) [kre 20261001]
 	tzcode: Updated to 2026e. [christos 20261002]
 	ssh(1), sshd(8): Import OpenSSH 10.6. [christos 20261007]
+	httpd(8): Improve documentation of CGI options. [nia 20261007]
+	httpd(8): Per RFC 3875, set the working directory of child CGI
+		processes to the location of the script that is being
+		run when configured with the -c option. Patch from
+		Sunil Nimmagadda. [nia 20261007]
+	wgconfig(8): Increase the size of the ioctl buffer to 16384,
+		allowing wg(4) to be configured for more than 7 hosts.
+		[gdt 20261007]
+	build.sh: Improve support for XCode toolchains. [tls 20261010]
+	amiga: Add a driver for the Individual Computers RapidRoad USB
+		controller; at the moment it only supports controllers
+		connected to the clockport. [rkujawa 20261011]
+	build.sh: Make cross builds from hosts with different libc
+		random(3) implementations reproducible. [tls 20261011]
+	macppc: Add MKREPRO (reproducible builds) support to mkhybrid.
+		[tls 20261013]
+	raid(4): Various performance and reliability improvements,
+		improving write throughput by as much as 25%.
+		[tls 20261018]
+	hppa: Enable FORTIFY_SOURCE in userland. [riastradh 20261019]
+	mozilla-certdata: Update to 20261020. [riastradh 20261020]
 	unbound(8): Import 1.26.2. [christos 20261022]
