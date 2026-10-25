@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrtt.h,v 1.10 2014/09/05 05:34:41 matt Exp $	*/
+/*	$NetBSD: nfsrtt.h,v 1.10.50.1 2026/10/25 10:44:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,9 +34,13 @@
  *	@(#)nfsrtt.h	8.2 (Berkeley) 3/30/95
  */
 
-
 #ifndef _NFS_NFSRTT_H_
-#define _NFS_NFSRTT_H_
+#define	_NFS_NFSRTT_H_
+
+#include <sys/types.h>
+
+#include <sys/fstypes.h>
+#include <sys/time.h>
 
 /*
  * Definitions for performance monitor.
@@ -103,4 +107,4 @@ struct nfsdrt {
 extern int nfsrtton;
 #endif
 
-#endif
+#endif	/* _NFS_NFSRTT_H_ */

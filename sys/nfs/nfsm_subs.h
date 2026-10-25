@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.55.4.1 2023/03/30 11:57:26 martin Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.55.4.2 2026/10/25 10:44:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,7 +33,6 @@
  *
  *	@(#)nfsm_subs.h	8.2 (Berkeley) 3/30/95
  */
-
 
 #ifndef _NFS_NFSM_SUBS_H_
 #define _NFS_NFSM_SUBS_H_
@@ -574,4 +573,4 @@
 			break; \
 		}; }
 
-#endif
+#endif	/* _NFS_NFSM_SUBS_H_ */
