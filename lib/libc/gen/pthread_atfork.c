@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.17.2.1 2026/10/23 16:07:43 martin Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.17.2.2 2026/10/26 06:06:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.17.2.1 2026/10/23 16:07:43 martin Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.17.2.2 2026/10/26 06:06:21 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -88,8 +88,8 @@ af_alloc(void)
 	if (atfork_builtin.fn == NULL)
 		return &atfork_builtin;
 
-	rv = mmap(0, sizeof(atfork_builtin), PROT_READ|PROT_WRITE, MAP_PRIVATE,
-	    -1, 0);
+	rv = mmap(0, sizeof(atfork_builtin), PROT_READ|PROT_WRITE,
+	    MAP_PRIVATE | MAP_ANON, -1, 0);
 	return rv == MAP_FAILED ? NULL : rv;
 }
 
