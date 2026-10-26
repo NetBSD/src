@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.247 2025/12/28 16:50:22 thorpej Exp $
+#	$NetBSD: Makefile,v 1.248 2026/10/26 07:52:39 nia Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
 
-SUBDIR= apply asa at \
+SUBDIR= apply asa at atto \
 	banner base64 basename biff \
 	bzip2 bzip2recover c11 c17 c89 c99 cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp cleantags col colcrt colrm \

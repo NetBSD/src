@@ -1,0 +1,165 @@
+.\" $NetBSD: atto.1,v 1.1 2026/10/26 07:52:39 nia Exp $
+.\" This file is released under the same public domain license as the
+.\" rest of the atto editor.
+.Dd October 15, 2026
+.Dt ATTO 1
+.Os
+.Sh NAME
+.Nm atto
+.Nd simple modeless text editor
+.Sh SYNOPSIS
+.Nm atto
+.Op Fl C
+.Ar
+.Sh DESCRIPTION
+.Nm
+is a screen-based text editor.
+It serves as an alternative to
+.Xr vi 1
+for users who are not accustomed to text editors with separate insertion
+and editing modes, and includes support for editing UTF-8 text.
+.Pp
+Perhaps all that needs to be known to use
+.Nm
+at a basic level is that holding the control key, pressing x,
+then pressing w will write the currently open file, and holding the
+control key, pressing x, then pressing c will exit the editor.
+.Pp
+The options are as follows:
+.Pp
+.Bl -tag -compact -width Fl
+.It Fl C
+Use colours, if available, for basic language-unaware syntax highlighting.
+.El
+.Ss Cursor movement commands
+C is used as an abbreviation for the control key, commonly rendered as
+"ctrl" on English language keyboards.
+.Pp
+Arrow keys or the navigation cluster can also be used to move the
+cursor when the keyboard has such features.
+.Pp
+.Bl -tag -width "xxspacexx" -compact -offset indent
+.It C-a
+move cursor to beginning of current line (i.e. "home")
+.It C-b
+move cursor back one character (i.e. "left")
+.It C-e
+move cursor to end of current line (i.e. "end")
+.It C-f
+move cursor forward one character (i.e. "right")
+.It C-n
+move cursor to next line (i.e. "down")
+.It C-p
+move cursor to previous line (i.e. "up")
+.It C-v
+move cursor to next page of text (i.e. "page down")
+.It Esc-b
+move cursor back one word
+.It Esc-f
+move cursor forward one word
+.It Esc-g
+jump to a specific line number in the file
+.It Esc-v
+move cursor to previous page of text (i.e. "page up")
+.It Esc-<
+jump to the start of the file
+.It Esc->
+jump to the end of the file
+.El
+.Ss Text editing commands
+.Bl -tag -width "xxspacexx" -compact -offset indent
+.It C-d
+delete character under cursor (i.e. "del")
+.It C-h
+move cursor backwards and delete previous character (i.e. "backspace")
+.It C-g
+abort at prompts (cancel task when asked a question)
+.It C-i
+insert tab character
+.It C-j
+insert newline character (i.e. "enter", "return")
+.It C-k
+cut text up to the end of the line (i.e. "kill line")
+.It C-l
+refresh the screen
+.It C-m
+insert carriage return character
+.It C-r
+search for text backwards, jump to next result
+.It C-s
+search for text forwards, jump to next result
+.It C-y
+paste the text in the cut buffer (i.e. "yank")
+.It Esc-r
+search for text and replace it
+.El
+.Ss Buffer commands
+.Nm
+supports multiple editing buffers, allowing users to edit multiple
+files from a single instance of the program.
+.Pp
+.Bl -tag -width "xxspacexx" -compact -offset indent
+.It C-x C-c
+close all open buffers and exit
+.Nm ,
+prompting if changes would be discarded
+.It C-x C-f
+open a file into a new buffer
+.It C-x C-k
+close the current buffer, prompting if changes would be
+discarded (i.e. "kill")
+.It C-x C-s
+save current buffer to disk, overwriting the file
+.It C-x C-w
+save current buffer to disk, prompting for file name ("write")
+.It C-x n
+cycle to next buffer
+.It C-x i
+read another file and insert it into the current buffer
+.It C-x =
+display cursor position in current buffer
+.El
+.Ss Region commands
+As well as cutting text on a line basis (i.e. C-k), a region
+can be selected by setting a mark at the beginning of the
+region, and then moving the cursor to the end of the region.
+.Pp
+.Bl -tag -width "xxspacexx" -compact -offset indent
+.It C-space
+set the beginning of the region at the current position
+.It C-w
+cut the marked region
+.It Esc-w
+copy the marked region without deleting it
+.El
+.Ss Window management commands
+Simple split-screen window management is included.
+For more advanced use cases, consider using
+.Xr tmux 1 .
+.Pp
+.Bl -tag -width "xxspacexx" -compact -offset indent
+.It C-x 1
+delete windows except the currently active one
+.It C-x 2
+split current window into two windows
+.It C-x o
+switch to the next open window
+.El
+.Sh SEE ALSO
+.Xr ed 1 ,
+.Xr ex 1 ,
+.Xr vi 1 ,
+.Xr xedit 1
+.Sh STANDARDS
+.Nm
+is not the standard editor.
+.Sh AUTHORS
+.Nm
+was written primarily by
+.An Hugh Barney ,
+and was originally based on public domain code from Anthony Howe's
+editor (commonly known as Anthony's Editor).
+.Pp
+It has been modified for inclusion in
+.Nx ,
+including with enhanced option handling.

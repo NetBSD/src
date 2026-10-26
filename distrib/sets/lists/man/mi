@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1844 2026/09/07 07:43:42 jdc Exp $
+# $NetBSD: mi,v 1.1845 2026/10/26 07:52:38 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -74,6 +74,7 @@
 ./usr/share/man/cat1/atf2kyua.0			man-kyua-catman		.cat,kyua
 ./usr/share/man/cat1/atq.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atrm.0			man-cron-catman		.cat
+./usr/share/man/cat1/atto.0			man-util-catman		.cat
 ./usr/share/man/cat1/audiocfg.0			man-audio-catman	audio,.cat
 ./usr/share/man/cat1/audioctl.0			man-audio-catman	audio,.cat
 ./usr/share/man/cat1/audioplay.0		man-audio-catman	audio,.cat
@@ -3682,6 +3683,7 @@
 ./usr/share/man/man1/atf2kyua.1			man-kyua-man		.man,kyua
 ./usr/share/man/man1/atq.1			man-cron-man		.man
 ./usr/share/man/man1/atrm.1			man-cron-man		.man
+./usr/share/man/man1/atto.1			man-util-man		.man
 ./usr/share/man/man1/audiocfg.1			man-audio-man		audio,.man
 ./usr/share/man/man1/audioctl.1			man-audio-man		audio,.man
 ./usr/share/man/man1/audioplay.1		man-audio-man		audio,.man

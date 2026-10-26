@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.61 2026/09/07 07:43:42 jdc Exp $
+# $NetBSD: mi,v 1.62 2026/10/26 07:52:39 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -34,6 +34,7 @@
 ./usr/share/man/html1/atf2kyua.html		man-kyua-htmlman	html,kyua
 ./usr/share/man/html1/atq.html			man-cron-htmlman	html
 ./usr/share/man/html1/atrm.html			man-cron-htmlman	html
+./usr/share/man/html1/atto.html			man-util-htmlman	html
 ./usr/share/man/html1/audiocfg.html		man-audio-htmlman	audio,html
 ./usr/share/man/html1/audioctl.html		man-audio-htmlman	audio,html
 ./usr/share/man/html1/audioplay.html		man-audio-htmlman	audio,html
