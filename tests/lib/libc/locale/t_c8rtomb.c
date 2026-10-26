@@ -1,4 +1,4 @@
-/*	$NetBSD: t_c8rtomb.c,v 1.8 2026/07/04 13:21:05 riastradh Exp $	*/
+/*	$NetBSD: t_c8rtomb.c,v 1.9 2026/10/26 06:41:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_c8rtomb.c,v 1.8 2026/07/04 13:21:05 riastradh Exp $");
+__RCSID("$NetBSD: t_c8rtomb.c,v 1.9 2026/10/26 06:41:51 martin Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -364,7 +364,13 @@ ATF_TC_BODY(c8rtomb_utf_8_test, tc)
 	    "buf=[%02x %02x]", buf[0], buf[1]);
 }
 
-ATF_TC_WITHOUT_HEAD(c8rtomb_exhaustive);
+ATF_TC(c8rtomb_exhaustive);
+
+ATF_TC_HEAD(c8rtomb_exhaustive, tc)
+{
+	atf_tc_set_md_var(tc, "timeout", "1500");
+}
+
 ATF_TC_BODY(c8rtomb_exhaustive, tc)
 {
 	const char *all_failures_var =
