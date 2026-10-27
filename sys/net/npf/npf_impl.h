@@ -301,7 +301,8 @@ void		npf_config_destroy(npf_config_t *);
 void		npf_config_load(npf_t *, npf_config_t *, npf_conndb_t *, bool);
 npf_ruleset_t *	npf_config_ruleset(npf_t *npf);
 npf_ruleset_t *	npf_config_natset(npf_t *npf);
-npf_tableset_t *npf_config_tableset(npf_t *npf);
+npf_tableset_t	*npf_config_tableset(npf_t *npf);
+npf_rprocset_t	*npf_config_procset(npf_t *npf);
 bool		npf_default_pass(npf_t *);
 bool		npf_active_p(void);
 

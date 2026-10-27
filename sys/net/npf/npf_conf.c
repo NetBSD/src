@@ -47,7 +47,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.18 2022/02/13 19:20:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.19 2026/10/27 18:44:32 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -265,6 +265,14 @@ npf_config_tableset(npf_t *npf)
 	npf_config_t *config = atomic_load_consume(&npf->config);
 	KASSERT(npf_config_locked_p(npf) || npf_ebr_incrit_p(npf->ebr));
 	return config->tableset;
+}
+
+npf_rprocset_t *
+npf_config_procset(npf_t *npf)
+{
+	npf_config_t *config = atomic_load_consume(&npf->config);
+	KASSERT(npf_config_locked_p(npf) || npf_ebr_incrit_p(npf->ebr));
+	return config->rule_procs;
 }
 
 bool
