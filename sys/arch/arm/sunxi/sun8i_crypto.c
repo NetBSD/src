@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.32 2022/05/22 11:39:26 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.33 2026/10/27 15:32:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -40,10 +40,11 @@
  * AES keys in SRAM (for some kind of HDMI HDCP stuff?).
  *
  * https://linux-sunxi.org/images/b/b4/Allwinner_A64_User_Manual_V1.1.pdf
+ * https://web.archive.org/web/20260825112212/https://linux-sunxi.org/images/b/b4/Allwinner_A64_User_Manual_V1.1.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.32 2022/05/22 11:39:26 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.33 2026/10/27 15:32:24 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
