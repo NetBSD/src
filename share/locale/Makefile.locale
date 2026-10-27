@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.locale,v 1.4 2013/08/19 22:34:41 joerg Exp $
+# $NetBSD: Makefile.locale,v 1.5 2026/10/27 22:58:42 kre Exp $
 
 LANGUAGE=	af be bg ca cs da de el en es \
 		et eu fi fr hr hu hy is it ja \
@@ -25,7 +25,7 @@ LANGUAGE_CZ=	cs
 LANGUAGE_DE=	de
 LANGUAGE_DK=	da
 LANGUAGE_EE=	et
-LANGUAGE_ES=	ca es au
+LANGUAGE_ES=	ca es eu
 LANGUAGE_FI=	fi
 LANGUAGE_FR=	fr
 LANGUAGE_GB=	en
