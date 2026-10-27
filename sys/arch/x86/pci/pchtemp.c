@@ -1,4 +1,4 @@
-/*      $NetBSD: pchtemp.c,v 1.1 2026/02/20 07:54:26 yamt Exp $ */
+/*      $NetBSD: pchtemp.c,v 1.2 2026/10/27 17:23:20 riastradh Exp $ */
 
 /*-
  * Copyright (c)2026 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchtemp.c,v 1.1 2026/02/20 07:54:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchtemp.c,v 1.2 2026/10/27 17:23:20 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -180,6 +180,8 @@ pchtemp_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Intel PCH Temperature Sensor\n");
 
+	pmf_device_register(self, NULL, NULL);
+
 	if (pci_mapreg_map(pa, PCHTEMP_CONF_TBAR,
 		PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->sc_iot,
 		&sc->sc_ioh, NULL, &sc->sc_size)) {
@@ -216,6 +218,7 @@ pchtemp_detach(device_t self, int flags)
 	if (sc->sc_size != 0) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
 	}
+	pmf_device_deregister(self);
 	return 0;
 }
 
