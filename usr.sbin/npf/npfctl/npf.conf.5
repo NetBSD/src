@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.112 2026/10/28 23:31:25 joe Exp $
+.\"    $NetBSD: npf.conf.5,v 1.113 2026/10/28 23:32:27 joe Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -671,7 +671,7 @@ procedure "someproc" {
 .Ed
 .Pp
 In this case, the procedure calls the logging, normalization and routing modules.
-It is good practice to put routing last in a procedure as your packet may be freed.
+It is good practice to put routing last in a procedure as the packet may be freed.
 .Ss Parameter settings
 NPF supports a set of dynamically tunable configuration-wide parameters.
 For example:
