@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.111 2026/10/02 12:46:56 joe Exp $
+.\"    $NetBSD: npf.conf.5,v 1.112 2026/10/28 23:31:25 joe Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -630,13 +630,13 @@ kernel module, which would get auto-loaded by NPF.
 .Pp
 The availabe routing options are:
 .Bl -tag -width Cm -offset indent
-.It Cm \*interface\*q Ar value
+.It Cm \*qinterface\*q Ar value
 Decides which network interface to send the outgoing packet.
-.It Cm \*via\*q Ar value
+.It Cm \*qvia\*q Ar value
 Specifies the gateway address for your IPv4 packet on the specified interface.
-.It Cm \*via6\*q Ar value
+.It Cm \*qvia6\*q Ar value
 Specifies the gateway address for your IPv6 packet on the specified interface.
-.It Cm \*dup-to\*q
+.It Cm \*qdup-to\*q
 Duplicates packet and sends duplicated packet via the defined route without
 interfering with the path of the original packet.
 .El
@@ -666,11 +666,12 @@ For example:
 procedure "someproc" {
 	log: npflog0
 	normalize: "random-id", "min-ttl" 64, "max-mss" 1432
-	route: "interface" bge0, "via" 192.168.64.1, "via6" fe80::1, "dup-to" 
+	route: "interface" bge0, "via" 192.168.64.1, "via6" fe80::1, "dup-to"
 }
 .Ed
 .Pp
 In this case, the procedure calls the logging, normalization and routing modules.
+It is good practice to put routing last in a procedure as your packet may be freed.
 .Ss Parameter settings
 NPF supports a set of dynamically tunable configuration-wide parameters.
 For example:
