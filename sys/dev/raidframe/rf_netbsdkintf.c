@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.422 2026/10/24 00:20:24 tls Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.423 2026/10/28 21:33:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.422 2026/10/24 00:20:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.423 2026/10/28 21:33:13 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -1495,44 +1495,71 @@ rf_rebuild_in_place(RF_Raid_t *raidPtr, RF_SingleComponent_t *componentPtr)
 	component.row = 0; /* we don't support any more */
 	int column = component.column;
 
-	if ((column < 0) || (column >= raidPtr->numCol)) {
+	rf_lock_mutex2(raidPtr->mutex);
+	if ((column < 0) ||
+	    (column >= raidPtr->numCol + raidPtr->numSpare)) {
+		rf_unlock_mutex2(raidPtr->mutex);
 		return EINVAL;
 	}
 
-	rf_lock_mutex2(raidPtr->mutex);
 	if (raidPtr->recon_in_progress != 0) {
 		/* a reconstruct is already in progress! */
 		rf_unlock_mutex2(raidPtr->mutex);
 		return EINVAL;
 	}
-	if ((raidPtr->Disks[column].status == rf_ds_optimal) &&
-	    (raidPtr->numFailures > 0)) {
-		/* XXX 0 above shouldn't be constant!!! */
-		/* some component other than this has failed.
-		   Let's not make things worse than they already
-		   are... */
-		printf("raid%d: Unable to reconstruct to disk at:\n",
-		       raidPtr->raidid);
-		printf("raid%d:     Col: %d   Too many failures.\n",
-		       raidPtr->raidid, column);
-		rf_unlock_mutex2(raidPtr->mutex);
-		return EINVAL;
-	}
 
-	if (raidPtr->Disks[column].status == rf_ds_reconstructing) {
-		printf("raid%d: Unable to reconstruct to disk at:\n",
-		       raidPtr->raidid);
-		printf("raid%d:    Col: %d   "
-		    "Reconstruction already occurring!\n",
-		    raidPtr->raidid, column);
+	if (column < raidPtr->numCol) {
+		if ((raidPtr->Disks[column].status == rf_ds_optimal) &&
+		    (raidPtr->numFailures > 0)) {
+			/* XXX 0 above shouldn't be constant!!! */
+			/* some component other than this has failed.
+			   Let's not make things worse than they already
+			   are... */
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:     Col: %d   Too many failures.\n",
+			       raidPtr->raidid, column);
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
 
-		rf_unlock_mutex2(raidPtr->mutex);
-		return EINVAL;
-	}
+		if (raidPtr->Disks[column].status == rf_ds_reconstructing) {
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:    Col: %d   "
+			    "Reconstruction already occurring!\n",
+			    raidPtr->raidid, column);
 
-	if (raidPtr->Disks[column].status == rf_ds_spared) {
-		rf_unlock_mutex2(raidPtr->mutex);
-		return EINVAL;
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
+
+		if (raidPtr->Disks[column].status == rf_ds_spared) {
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
+	} else {
+		if (raidPtr->Disks[column].status != rf_ds_spared &&
+		    raidPtr->Disks[column].status != rf_ds_spare &&
+		    raidPtr->Disks[column].status != rf_ds_failed) {
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
+		if (raidPtr->numFailures == 0) {
+			printf("raid%d: Unable to reconstruct to disk at "
+			    "col %d: no failed component.\n",
+			    raidPtr->raidid, column);
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
+		if (raidPtr->numFailures > 1) {	/* XXX wrong for RAID6 */
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:     Col: %d   Too many failures.\n",
+			       raidPtr->raidid, column);
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
 	}
 
 	raidPtr->recon_in_progress = 1;
