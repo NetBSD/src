@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1395 2026/10/26 07:52:38 nia Exp $
+# $NetBSD: mi,v 1.1396 2026/10/28 16:29:30 kre Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4666,6 +4666,27 @@
 ./usr/share/locale/uk_UA.UTF-8/LC_MONETARY	base-locale-uk		nls
 ./usr/share/locale/uk_UA.UTF-8/LC_NUMERIC	base-locale-uk		nls
 ./usr/share/locale/uk_UA.UTF-8/LC_TIME		base-locale-uk		nls
+./usr/share/locale/x1_X1.UTF-8			base-locale-x1
+./usr/share/locale/x1_X1.UTF-8/LC_CTYPE		base-locale-x1		nls
+./usr/share/locale/x1_X1.UTF-8/LC_MESSAGES	base-locale-x1		nls
+./usr/share/locale/x1_X1.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-x1	nls
+./usr/share/locale/x1_X1.UTF-8/LC_MONETARY	base-locale-x1		nls
+./usr/share/locale/x1_X1.UTF-8/LC_NUMERIC	base-locale-x1		nls
+./usr/share/locale/x1_X1.UTF-8/LC_TIME		base-locale-x1		nls
+./usr/share/locale/x1_X2.UTF-8			base-locale-x1
+./usr/share/locale/x1_X2.UTF-8/LC_CTYPE		base-locale-x1		nls
+./usr/share/locale/x1_X2.UTF-8/LC_MESSAGES	base-locale-x1		nls
+./usr/share/locale/x1_X2.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-x1	nls
+./usr/share/locale/x1_X2.UTF-8/LC_MONETARY	base-locale-x1		nls
+./usr/share/locale/x1_X2.UTF-8/LC_NUMERIC	base-locale-x1		nls
+./usr/share/locale/x1_X2.UTF-8/LC_TIME		base-locale-x1		nls
+./usr/share/locale/x1_X3.UTF-8			base-locale-x1
+./usr/share/locale/x1_X3.UTF-8/LC_CTYPE		base-locale-x1		nls
+./usr/share/locale/x1_X3.UTF-8/LC_MESSAGES	base-locale-x1		nls
+./usr/share/locale/x1_X3.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-x1	nls
+./usr/share/locale/x1_X3.UTF-8/LC_MONETARY	base-locale-x1		nls
+./usr/share/locale/x1_X3.UTF-8/LC_NUMERIC	base-locale-x1		nls
+./usr/share/locale/x1_X3.UTF-8/LC_TIME		base-locale-x1		nls
 ./usr/share/locale/zh_CN			base-locale-zh
 ./usr/share/locale/zh_CN.GB18030		base-locale-zh
 ./usr/share/locale/zh_CN.GB18030/LC_CTYPE	base-locale-zh		nls

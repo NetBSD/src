@@ -1,15 +1,22 @@
-# $NetBSD: Makefile.locale,v 1.5 2026/10/27 22:58:42 kre Exp $
+# $NetBSD: Makefile.locale,v 1.6 2026/10/28 16:29:30 kre Exp $
+
+# The (fake) x1_X[123] locales are for
+# tests/lib/libc/locale/{t_sprintf,t_strfmon}
 
 LANGUAGE=	af be bg ca cs da de el en es \
 		et eu fi fr hr hu hy is it ja \
 		kk ko lt nb nl nn pt pl ro ru \
 		sk sl sr_Cyrl sr_Latn sv tr uk zh
 
+LANGUAGE+=	x1
+
 TERRITORY=	AM AT AU BE BG BR BY CA CH CN \
 		CZ DE DK EE ES FI FR GB GR HK \
 		HR HU IS IT JP KR KZ LT ME NL \
 		NO NZ PL PT RO RS RU SE SI SK \
 		TR TW US UA ZA
+
+TERRITORY+=	X1 X2 X3
 
 LANGUAGE_AM=	hy
 LANGUAGE_AT=	de
@@ -57,6 +64,10 @@ LANGUAGE_US=	en
 LANGUAGE_UA=	uk
 LANGUAGE_ZA=	af
 
+LANGUAGE_X1=	x1
+LANGUAGE_X2=	x1
+LANGUAGE_X3=	x1
+
 TERRITORY_af=	ZA
 TERRITORY_be=	BY
 TERRITORY_bg=	BG
@@ -95,6 +106,8 @@ TERRITORY_sv=	SE
 TERRITORY_tr=	TR
 TERRITORY_uk=	UA
 TERRITORY_zh=	CN HK TW
+
+TERRITORY_x1=	X1 X2 X3
 
 CODESET_af_ZA=	ISO8859-1 ISO8859-15 UTF-8
 CODESET_be_BY=	ISO8859-5 CP1251 UTF-8
@@ -151,6 +164,10 @@ CODESET_uk_UA=	ISO8859-5 CP1251 KOI8-U UTF-8
 CODESET_zh_CN=	eucCN GB18030 UTF-8
 CODESET_zh_HK=	Big5hkscs UTF-8
 CODESET_zh_TW=	Big5 eucTW UTF-8
+
+CODESET_x1_X1=	UTF-8
+CODESET_x1_X2=	UTF-8
+CODESET_x1_X3=	UTF-8
 
 .for language in ${LANGUAGE}
 .for territory in ${TERRITORY_${language}}
