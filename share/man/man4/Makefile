@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.757 2026/08/29 19:30:13 andvar Exp $
+#	$NetBSD: Makefile,v 1.758 2026/10/29 17:47:36 jdc Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -50,7 +50,8 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	nsclpcsio.4 nside.4 nsphy.4 nsphyter.4 ntwoc.4 null.4 \
 	nvme.4 nvmm.4 nxp75a.4 \
 	oak.4 oosiop.4 opl.4 options.4 optiide.4 osiop.4 otus.4 \
-	pad.4 pas.4 pcagpio.4 pcdisplay.4 pcf8563rtc.4 pcf8574io.4 pchtemp.4 \
+	pad.4 pas.4 pcagpio.4 pcdisplay.4 pcf8563rtc.4 pcf8574io.4 pcfrtc.4 \
+	pchtemp.4 \
 	pciide.4 pckbc.4 pckbd.4  pcn.4 pcppi.4 pcscp.4 pcweasel.4 \
 	pdcide.4 pdcsata.4 piixide.4 piixpcib.4 \
 	piixpm.4 pim.4 plip.4 pm3fb.4 pms.4 pmu.4 pnaphy.4 ppbus.4 ppp.4 \

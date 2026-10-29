@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.62 2026/10/26 07:52:39 nia Exp $
+# $NetBSD: mi,v 1.63 2026/10/29 17:47:36 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1537,6 +1537,7 @@
 ./usr/share/man/html4/pceb.html			man-sys-htmlman		html
 ./usr/share/man/html4/pcf8563rtc.html		man-sys-htmlman		html
 ./usr/share/man/html4/pcf8574io.html		man-sys-htmlman		html
+./usr/share/man/html4/pcfrtc.html		man-sys-htmlman		html
 ./usr/share/man/html4/pchb.html			man-sys-htmlman		html
 ./usr/share/man/html4/pchtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/pci.html			man-sys-htmlman		html
