@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.26 2026/10/26 06:07:14 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.27 2026/10/29 16:18:53 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -1326,4 +1326,15 @@ sys/dev/pci/if_vmx.c				1.19
 
 	vmx(4): fix wrong range from computing the MIN of tx and rx queues.
 	[joe, ticket #1405]
+
+usr.sbin/postinstall/postinstall.in		1.56,1.57,1.73
+
+	postinstall(8): PR 60932: fix obsolete vs opensslcertsrehash
+	ordering.
+	[riastradh, ticket #1406]
+
+sys/net/if_tun.c				1.179
+
+	tun(4): drop spurious EAFNOSUPPORT.
+	[gdt, ticket #1407]
 
