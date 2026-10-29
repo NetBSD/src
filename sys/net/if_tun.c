@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.173.4.3 2024/09/21 12:17:27 martin Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.173.4.4 2026/10/29 16:17:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.173.4.3 2024/09/21 12:17:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.173.4.4 2026/10/29 16:17:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -629,7 +629,6 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		IFQ_ENQUEUE(&ifp->if_snd, m0, error);
 		if (error) {
 			if_statinc(ifp, if_collisions);
-			error = EAFNOSUPPORT;
 			m0 = NULL;
 			goto out;
 		}
