@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.21 2025/09/07 21:45:15 thorpej Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.22 2026/10/29 17:43:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,15 +40,25 @@
  *
  * This driver is partially derived from Ben Harris's PCF8583 driver
  * for NetBSD/acorn26.
+ *
+ * Additional code written by Dave Tyson to support dual addressing 0x50/0x51
+ * and to select chip operating mode using optional flag in kernel config.
+ * Default with no flag set or flag 0 is existing TOD clock mode, flag 1 sets
+ * 50hz input (TOD clock), flag 2 sets counter mode, flag 3 sets test mode.
+ *
+ * Setting counter mode provides an envsys variable mapped to the counter and
+ * exposes a hw syctl variable which can set to 1 to zero the counter registers
+ * after the next envstat call. 
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.21 2025/09/07 21:45:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.22 2026/10/29 17:43:54 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
 #include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
@@ -59,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.21 2025/09/07 21:45:15 thorpej Exp $")
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/pcf8583reg.h>
 #include <dev/i2c/pcf8583var.h>
+#include <dev/sysmon/sysmonvar.h>
 
 #include "ioconf.h"
 
@@ -68,10 +79,15 @@ struct pcfrtc_softc {
 	int sc_address;
 	int sc_open;
 	struct todr_chip_handle sc_todr;
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_counter;
+	struct sysctllog *sc_pcfrtclog;
+	int reset_counter;
 };
 
 static int  pcfrtc_match(device_t, cfdata_t, void *);
 static void pcfrtc_attach(device_t, device_t, void *);
+static int pcfrtc_sysctl_setup(struct pcfrtc_softc *sc);
 
 CFATTACH_DECL_NEW(pcfrtc, sizeof(struct pcfrtc_softc),
 	pcfrtc_match, pcfrtc_attach, NULL, NULL);
@@ -102,13 +118,16 @@ static int pcfrtc_clock_write(struct pcfrtc_softc *, struct clock_ymdhms *,
 			      uint8_t);
 static int pcfrtc_gettime(struct todr_chip_handle *, struct timeval *);
 static int pcfrtc_settime(struct todr_chip_handle *, struct timeval *);
+static void pcfrtc_readcount(struct sysmon_envsys *, envsys_data_t *) ;
+static int pcfrtc_sysctl_check(SYSCTLFN_ARGS);
 
 int
 pcfrtc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if ((ia->ia_addr & PCF8583_ADDRMASK) == PCF8583_ADDR)
+	if ((ia->ia_addr & PCF8583_ADDRMASK) == PCF8583_ADDR ||
+	    (ia->ia_addr & PCF8583_ADDRMASK) == PCF8583_ADDR2)
 		return (I2C_MATCH_ADDRESS_ONLY);
 
 	return (0);
@@ -118,53 +137,104 @@ void
 pcfrtc_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcfrtc_softc *sc = device_private(self);
+	struct cfdata *cf = device_cfdata(self);
 	struct i2c_attach_args *ia = aux;
-	uint8_t cmdbuf[1], csr;
+	uint8_t cmdbuf[1], csr, mode;
+	int error;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
 	sc->sc_dev = self;
 
-	aprint_naive(": Real-time Clock/NVRAM\n");
-	aprint_normal(": PCF8583 Real-time Clock/NVRAM\n");
+	/* if flags set & !zero then need to change device mode */
 
+	if (cf->cf_flags != 0) {
+		mode = cf->cf_flags << 4 & PCF8583_CSR_FN_MASK;
+		cmdbuf[0] = PCF8583_REG_CSR;
+		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
+	    	 cmdbuf, 1, &mode, 1, 0) != 0) {
+			aprint_error_dev(self, "unable to write CSR\n");
+			return;
+		}
+	}
+ 
 	cmdbuf[0] = PCF8583_REG_CSR;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
 	    cmdbuf, 1, &csr, 1, 0) != 0) {
 		aprint_error_dev(self, "unable to read CSR\n");
 		return;
 	}
-	aprint_normal_dev(sc->sc_dev, "");
+
 	switch (csr & PCF8583_CSR_FN_MASK) {
 	case PCF8583_CSR_FN_32768HZ:
-		aprint_normal(" 32.768 kHz clock");
+		aprint_naive(": Mode 0: 32768 Hz TOD Clock");
+		aprint_normal(": PCF8583 Mode 0: 32768 Hz TOD Clock");
 		break;
 
 	case PCF8583_CSR_FN_50HZ:
-		aprint_normal(" 50 Hz clock");
+		aprint_naive(": Mode 1: 50Hz TOD Clock");
+		aprint_normal(": PCF8583 Mode 1: 50Hz TOD Clock");
 		break;
 
 	case PCF8583_CSR_FN_EVENT:
-		aprint_normal(" event counter");
+		aprint_naive(": Mode 2: Counter");
+		aprint_normal(": PCF8583 Mode 2: Counter");
 		break;
 
 	case PCF8583_CSR_FN_TEST:
-		aprint_normal(" test mode");
+		aprint_naive(": Mode 3: Test mode");
+		aprint_normal(": PCF8583 Mode 3: Test mode");
 		break;
 	}
-	if (csr & PCF8583_CSR_STOP)
-		aprint_normal(", stopped");
-	if (csr & PCF8583_CSR_ALARMENABLE)
-		aprint_normal(", alarm enabled");
 	aprint_normal("\n");
 
 	sc->sc_open = 0;
 
-	sc->sc_todr.todr_dev = self;
-	sc->sc_todr.todr_gettime = pcfrtc_gettime;
-	sc->sc_todr.todr_settime = pcfrtc_settime;
+	switch (csr & PCF8583_CSR_FN_MASK) {
 
-	todr_attach(&sc->sc_todr);
+	case PCF8583_CSR_FN_32768HZ:
+	case PCF8583_CSR_FN_50HZ:
+		sc->sc_todr.todr_dev = self;
+		sc->sc_todr.todr_gettime = pcfrtc_gettime;
+		sc->sc_todr.todr_settime = pcfrtc_settime;
+
+		todr_attach(&sc->sc_todr);
+		break;
+
+	case PCF8583_CSR_FN_EVENT:
+		if ((sc->sc_sme = sysmon_envsys_create()) == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			  "unable to create sysmon structure");
+			sc->sc_sme = NULL;
+			return ;
+		}
+		sc->sc_counter.units=ENVSYS_INTEGER;
+		sc->sc_counter.state=ENVSYS_SINVALID;
+		strlcpy(sc->sc_counter.desc, "counter",
+		 sizeof(sc->sc_counter.desc));
+		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_counter)) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+		
+		sc->sc_sme->sme_name = device_xname(self) ;
+		sc->sc_sme->sme_refresh = pcfrtc_readcount;
+		sc->sc_sme->sme_cookie = sc;
+
+		if (sysmon_envsys_register(sc->sc_sme)) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+
+		/* setup sysctl for resetting counter */
+
+		if ((error = pcfrtc_sysctl_setup(sc)) !=0) {
+			aprint_error_dev(sc->sc_dev, "cannot setup sysctl tree (%d)\n", error);
+			sysmon_envsys_destroy(sc->sc_sme);
+		}
+		sc->reset_counter = 0;
+		break ;
+	}
 }
 
 /*ARGSUSED*/
@@ -498,4 +568,97 @@ pcfrtc_bootstrap_write(i2c_tag_t tag, int i2caddr, int offset,
 
 	iic_release_bus(tag, 0);
 	return (0);
+}
+
+int pcfrtc_sysctl_check(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int t, error;
+
+	t = *(int *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (t < 0 || t > 1)
+		return (EINVAL);
+
+	*(int *)rnode->sysctl_data = t;
+	return 0;
+}
+
+static int pcfrtc_sysctl_setup(struct pcfrtc_softc *sc)
+{
+	int error;
+	const struct sysctlnode *cnode;
+	int sysctlroot_num;
+
+	if ((error = sysctl_createv(&sc->sc_pcfrtclog, 0, NULL, &cnode,
+		0, CTLTYPE_NODE, device_xname(sc->sc_dev),
+		SYSCTL_DESCR("pcfrtc counter reset"), NULL, 0, NULL, 0,
+		CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
+		return error;
+	sysctlroot_num = cnode->sysctl_num;
+
+	if ((error = sysctl_createv(&sc->sc_pcfrtclog, 0, NULL, &cnode,
+		CTLFLAG_READWRITE, CTLTYPE_INT, "counter_reset",
+		SYSCTL_DESCR("counter reset"), pcfrtc_sysctl_check, 0,
+		&sc->reset_counter, 0, CTL_HW,
+		sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
+		return error;
+	return 0;
+}
+
+static void pcfrtc_readcount(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	struct pcfrtc_softc *sc = sme->sme_cookie;
+	int err, i;
+	uint8_t bcd[3],cmdbuf[1];
+	uint8_t zero=0;
+ 
+	if ((err = iic_acquire_bus(sc->sc_tag, 0))) {
+		aprint_error_dev(sc->sc_dev,
+		    "pcfrtc_readcount: failed to acquire I2C bus\n");
+		return;
+	}
+
+	for (i = PCF8583_COUNTER0; i <= PCF8583_COUNTER2; i++) {
+                cmdbuf[0] = i;
+                
+                if ((err = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+                             sc->sc_address, cmdbuf, 1,
+                             &bcd[i-1], 1, 0))) {
+                        iic_release_bus(sc->sc_tag, 0);
+                        aprint_error_dev(sc->sc_dev,
+                            "pcfrtc_readcount: failed to read register at %x\n", i);
+                        return;
+                }
+        }
+ 
+
+	edata->value_cur = bcdtobin(bcd[0]) + bcdtobin(bcd[1])*100 + bcdtobin(bcd[2])*10000 ;
+	edata->state = ENVSYS_SVALID ;
+	
+	/* if reset_counter = 1 then clear totals */
+
+	if (sc->reset_counter != 0) {
+		for (i = PCF8583_COUNTER0; i <= PCF8583_COUNTER2; i++) {
+                	cmdbuf[0] = i;
+                
+                	if ((err = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+					sc->sc_address, cmdbuf, 1, &zero, 1, 0))) {
+                        	iic_release_bus(sc->sc_tag, 0);
+                        	aprint_error_dev(sc->sc_dev,
+					"pcfrtc_readcount: failed to write register at %x\n", i);
+				return;
+                	}
+        	}
+ 
+		sc->reset_counter = 0 ;
+	}
+
+	iic_release_bus(sc->sc_tag, 0);
 }

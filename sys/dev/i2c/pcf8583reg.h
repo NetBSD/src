@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583reg.h,v 1.3 2013/08/07 19:38:45 soren Exp $	*/
+/*	$NetBSD: pcf8583reg.h,v 1.4 2026/10/29 17:43:54 jdc Exp $	*/
 
 /*
  * Ben Harris, 2000
@@ -22,6 +22,7 @@
  */
 #define PCF8583_ADDRMASK	0x3ff
 #define PCF8583_ADDR		0x50
+#define PCF8583_ADDR2		0x51
 
 #define PCF8583_REG_CSR		0x00
 #define PCF8583_REG_CENTI	0x01
@@ -86,4 +87,7 @@
 #define PCF8583_ALMCTL_TIMERALM		0x40
 #define PCF8583_ALMCTL_ALMINT		0x80
 
+#define PCF8583_COUNTER0		0x01
+#define PCF8583_COUNTER1		0x02
+#define PCF8583_COUNTER2		0x03
 #endif	/* _PCF8583REG_H */
