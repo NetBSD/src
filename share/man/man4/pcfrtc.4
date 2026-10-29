@@ -1,0 +1,96 @@
+.\"
+.\" Copyright (c) 2026 Dave Tyson <dtyson@anduin.org.uk>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd October 1, 2026
+.Dt PCFRTC
+.Os
+.Sh NAME
+.Nm pcfrtc
+.Nd Driver for NPX PCF8583 Real-Time Clock and Calendar/Counter/240 x 8bit RAM
+via I2C bus
+.Sh SYNOPSIS
+.Cd "pcfrtc* at iic? addr 0x50"
+.Cd "pcfrtc* at iic? addr 0x50 flags x"
+.Cd "pcfrtc* at iic? addr 0x51"
+.Cd "pcfrtc* at iic? addr 0x51 flags x"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports the PCF8583 multifunction chip which can operate in one of
+four modes depending on the value of the flag [if specified]:
+.Bl -tag
+.It mode 0 - Clock & Calendar using a 32768 hz crystal.
+This is the default mode in the absence of a flags field and is the state
+when a power-on reset occurs.
+.It mode 1 - Clock & Calendar using external 50 Hz clock.
+Similar to mode 0, but relies on an external clock source
+rather than a crystal.
+.It mode 2 - Counter for external inputs.
+The clock & calendar are disabled and the device counts external events
+using a 3 byte bcd counter [0-999999].
+.It mode 3 - Test mode.
+This is undocumented and unlikely to be useful.
+.El
+.Pp
+The
+.Nm
+driver is commonly used to support a real-time clock using a 32768 hz
+crystal and a backup battery.
+It also provides a small amount of battery backed RAM which is used,
+for example, for bootstrapping acorn32 system.
+It is possible to use an external 50hz clock by switching to mode 1 \(em
+this might be useful with a European mains derived signal as the long
+term drift is likely to be less than an unstabilised crystal.
+Access methods to retrieve and set date and time are provided through the
+.Em TODR
+interface defined in
+.Xr todr 9 .
+.Pp
+Switching to mode 2 provides access to a 6 digit BCD counter,
+which can be used to count arbitary external events.
+The driver maps this counter to an integer envstat variable,
+which can be read via the normal envstat subsystem, and also exposes
+a sysctl variable to allow the counter to be reset.
+.Sh SYSCTL VARIABLES
+In mode 2 the following
+.Xr sysctl 3
+variables are provided:
+.Bl -tag -width indent
+.It Li hw.pcfrtc1.counter_reset
+If this is set to 1 then the next read of the envstat counter causes
+the BCD counter to be zeroed and resets the sysctl variable back to zero.
+.Sh SEE ALSO
+.Xr todr 9 ,
+.Xr envstat 8 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 1.0 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Steve C. Woodford
+and
+.An Jason R. Thorpe
+for Wasabi Systems, Inc. based on Ben Harris's PCF8583 driver for
+NetBSD/acorn26.
+.Pp
+Subsequent modifications to support other modes by
+.An Dave Tyson Aq Mt dtyson@anduin.org.uk
+.Sh BUGS
+The driver does not support the chip's alarm and timer features.
