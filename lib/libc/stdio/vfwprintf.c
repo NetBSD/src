@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.43 2026/10/13 04:36:54 kre Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.44 2026/10/29 05:47:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.43 2026/10/13 04:36:54 kre Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.44 2026/10/29 05:47:37 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -264,7 +264,7 @@ __ultoa(u_long val, CHAR_T *endp, int base, int octzero, const char *xdigs,
 {
 	CHAR_T *cp = endp;
 	long sval;
-	int ndig;
+	int ndig;	/* for inserting grouping separators */
 
 	/*
 	 * Handle the three cases separately, in the hope of getting
@@ -289,16 +289,15 @@ __ultoa(u_long val, CHAR_T *endp, int base, int octzero, const char *xdigs,
 			sval = val / 10;
 		} else
 			sval = val;
+		/* we enter here knowing that (initially) sval >= 10 */
 		do {
-			*--cp = to_char(sval % 10);
-			ndig++;
 			/*
 			 * If (*grp == CHAR_MAX) then no more grouping
 			 * should be performed.
+			 * Also: either needgrp == 0 || *grp != 0
 			 */
 			if (needgrp && ndig == *grp
-			    && (unsigned char)*grp != (unsigned char)CHAR_MAX
-			    && sval > 9) {
+			    && (unsigned char)*grp != (unsigned char)CHAR_MAX) {
 				cp -= needgrp;
 				memcpy(cp, thousep, needgrp);
 				ndig = 0;
@@ -310,6 +309,9 @@ __ultoa(u_long val, CHAR_T *endp, int base, int octzero, const char *xdigs,
 				if (*(grp+1) != '\0')
 					grp++;
 			}
+
+			ndig++;
+			*--cp = to_char(sval % 10);
 			sval /= 10;
 		} while (sval != 0);
 		break;
@@ -358,21 +360,19 @@ __ujtoa(uintmax_t val, CHAR_T *endp, int base, int octzero,
 		}
 		ndig = 0;
 		if (val > INTMAX_MAX) {
-			*--cp = to_char(val % 10);
 			ndig++;
+			*--cp = to_char(val % 10);
 			sval = val / 10;
 		} else
 			sval = val;
 		do {
-			*--cp = to_char(sval % 10);
-			ndig++;
 			/*
 			 * If (*grp == CHAR_MAX) then no more grouping
 			 * should be performed.
+			 * note: if needgrp then *grp != 0 (always)
 			 */
 			if (needgrp && ndig == *grp
-			    && (unsigned char)*grp != (unsigned char)CHAR_MAX
-			    && sval > 9) {
+			    && (unsigned char)*grp != (unsigned char)CHAR_MAX) {
 				cp -= needgrp;
 				memcpy(cp, thousep, needgrp);
 				ndig = 0;
@@ -384,6 +384,9 @@ __ujtoa(uintmax_t val, CHAR_T *endp, int base, int octzero,
 				if (*(grp+1) != '\0')
 					grp++;
 			}
+
+			ndig++;
+			*--cp = to_char(sval % 10);
 			sval /= 10;
 		} while (sval != 0);
 		break;
