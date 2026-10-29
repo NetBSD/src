@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwscanf.c,v 1.13 2022/04/19 20:32:16 rillig Exp $	*/
+/*	$NetBSD: vfwscanf.c,v 1.14 2026/10/29 05:47:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwscanf.c,v 1.12 2004/05/02 20:13:29 obrien Exp $");
 #else
-__RCSID("$NetBSD: vfwscanf.c,v 1.13 2022/04/19 20:32:16 rillig Exp $");
+__RCSID("$NetBSD: vfwscanf.c,v 1.14 2026/10/29 05:47:56 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -769,8 +769,14 @@ parsefloat(FILE *fp, wchar_t *buf, wchar_t *end, locale_t loc)
 		S_DIGITS, S_FRAC, S_EXP, S_EXPDIGITS
 	} state = S_START;
 	wchar_t c;
-	wchar_t decpt = (wchar_t)(unsigned char)*localeconv_l(loc)->decimal_point;
+	wchar_t decpt;
 	int gotmantdig = 0, ishex = 0;
+	mbstate_t conv_state;
+
+	(void)mbrtowc_l(NULL, NULL, 0, &conv_state, loc);	/* init state */
+	if ((ssize_t)mbrtowc_l(&decpt, localeconv_l(loc)->decimal_point,
+	    MB_CUR_MAX * 4, &conv_state, loc) <= 0)
+		decpt = L'.';	/* a decimal point is required */
 
 	/*
 	 * We set commit = p whenever the string we have read so far
