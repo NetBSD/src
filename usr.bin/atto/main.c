@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 		}
 	} else {
 		curbp = find_buffer("*scratch*", TRUE);
-		snprintf(curbp->b_bname, NAME_MAX, "*scratch*");
+		strlcpy(curbp->b_bname, "*scratch*", sizeof(curbp->b_bname));
 	}
 
 	wheadp = curwp = new_window();
