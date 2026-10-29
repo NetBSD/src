@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.47 2022/05/24 06:27:59 andvar Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.48 2026/10/29 05:47:49 kre Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfscanf.c,v 1.41 2007/01/09 00:28:07 imp Exp $");
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.47 2022/05/24 06:27:59 andvar Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.48 2026/10/29 05:47:49 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -964,10 +964,10 @@ parsefloat(FILE *fp, char *buf, char *end, locale_t loc)
 	int infnanpos = 0;
 	enum {
 		S_START, S_GOTSIGN, S_INF, S_NAN, S_MAYBEHEX,
-		S_DIGITS, S_FRAC, S_EXP, S_EXPDIGITS
+		S_DIGITS, S_FRAC, S_EXP, S_EXPDIGITS, S_DPT
 	} state = S_START;
 	unsigned char c;
-	char decpt = *localeconv_l(loc)->decimal_point;
+	unsigned char *decpt = (unsigned char *)localeconv_l(loc)->decimal_point;
 	_Bool gotmantdig = 0, ishex = 0;
 
 	/*
@@ -1060,11 +1060,26 @@ reswitch:
 				gotmantdig = 1;
 			else {
 				state = S_FRAC;
-				if (c != decpt)
+
+				/* note this does not work if *decpt == 'e' (or  'E' 'p' 'P') */
+				if (*decpt == '\0' || c != *decpt)
 					goto reswitch;
+				if (*++decpt != '\0') {
+					state = S_DPT;
+					break;
+				}
 			}
 			if (gotmantdig)
 				commit = p;
+			break;
+		case S_DPT:
+			if (c != *decpt)
+				goto parsedone;
+			if (*++decpt == '\0') {
+				state = S_FRAC;
+				if (gotmantdig)
+					commit = p;
+			}
 			break;
 		case S_FRAC:
 			if (((c == 'E' || c == 'e') && !ishex) ||
