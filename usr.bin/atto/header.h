@@ -104,10 +104,10 @@ extern int msgflag;             /* True if msgline should be displayed. */
 extern point_t nscrap;          /* Length of scrap buffer. */
 extern char_t *scrap;           /* Allocated scrap buffer. */
 extern char_t *input;
-extern char msgline[];          /* Message line input/output buffer. */
-extern char temp[];             /* Temporary buffer. */
-extern char searchtext[];
-extern char replace[];
+extern char msgline[TEMPBUF];   /* Message line input/output buffer. */
+extern char temp[TEMPBUF];      /* Temporary buffer. */
+extern char searchtext[STRBUF_M];
+extern char replace[STRBUF_M];
 
 extern void fatal(const char *);
 extern void msg(const char *, ...);
@@ -201,3 +201,4 @@ extern void set_parse_state(buffer_t *, point_t);
 extern void set_parse_state2(buffer_t *, point_t);
 extern int parse_text(buffer_t *, point_t);
 extern void resize_terminal(void);
+extern buffer_t *create_scratch(void);

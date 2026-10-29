@@ -18,10 +18,10 @@ void query_replace(void)
 	searchtext[0] = '\0';
 	replace[0] = '\0';
 	
-	if (!getinput("Query replace: ", (char*)searchtext, STRBUF_M, F_CLEAR))
+	if (!getinput("Query replace: ", searchtext, sizeof(searchtext), F_CLEAR))
 		return;
 
-	if (!getinput("With: ", (char*)replace, STRBUF_M, F_CLEAR))
+	if (!getinput("With: ", replace, sizeof(replace), F_CLEAR))
 		return;
 
 	slen = strlen(searchtext);

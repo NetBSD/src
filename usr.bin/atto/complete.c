@@ -5,11 +5,11 @@
 /* basic filename completion, based on code in uemacs/PK */
 int getfilename(const char *prompt, char *buf, int nbuf)
 {
-	static char temp_file[] = TEMPFILE;
+	static char temp_file[STRBUF_S] = TEMPFILE;
 	int cpos = 0;	/* current character position in string */
 	int k = 0, c, fd, didtry, iswild = 0;
 
-	char sys_command[255];
+	char sys_command[TEMPBUF];
 	FILE *fp = NULL;
 	buf[0] ='\0';
 
@@ -51,15 +51,15 @@ do_tab:
 			/* first time retrieval */
 			if (! didtry) {
 				if (fp != NULL) fclose(fp);
-				strcpy(temp_file, TEMPFILE);
+				strlcpy(temp_file, TEMPFILE, sizeof(temp_file));
 				if (-1 == (fd = mkstemp(temp_file)))
 					fatal("%s: Failed to create temp file\n");
-				strcpy(sys_command, "echo ");
-				strcat(sys_command, buf);
-				if (!iswild) strcat(sys_command, "*");
-				strcat(sys_command, " >");
-				strcat(sys_command, temp_file);
-				strcat(sys_command, " 2>&1");
+				strlcpy(sys_command, "echo ", sizeof(sys_command));
+				strlcat(sys_command, buf, sizeof(sys_command));
+				if (!iswild) strlcat(sys_command, "*", sizeof(sys_command));
+				strlcat(sys_command, " >", sizeof(sys_command));
+				strlcat(sys_command, temp_file, sizeof(sys_command));
+				strlcat(sys_command, " 2>&1", sizeof(sys_command));
 				(void) system(sys_command); /* stop compiler unused result warning */
 				fp = fdopen(fd, "r");
 				unlink(temp_file);

@@ -125,3 +125,10 @@ int modified_buffers(void)
 
 	return FALSE;
 }
+
+buffer_t *create_scratch(void)
+{
+	buffer_t *bp = find_buffer("*scratch*", TRUE);
+	strlcpy(bp->b_bname, "*scratch*", sizeof(bp->b_bname));
+	return bp;
+}

@@ -242,7 +242,6 @@ void writefile(void)
 void killbuffer(void)
 {
 	buffer_t *kill_bp = curbp;
-	buffer_t *bp;
 	int bcount = count_buffers();
 
 	/* do nothing if only buffer left is the scratch buffer */
@@ -258,8 +257,7 @@ void killbuffer(void)
 
 	if (bcount == 1) {
 		/* create a scratch buffer */
-		bp = find_buffer("*scratch*", TRUE);
-		strcpy(bp->b_bname, "*scratch*");
+		create_scratch();
 	}
 
 	next_buffer();

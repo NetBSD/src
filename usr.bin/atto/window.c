@@ -16,7 +16,7 @@ window_t* new_window(void)
 	wp->w_top = 0;	
 	wp->w_rows = 0;	
 	wp->w_update = FALSE;
-	sprintf(wp->w_name, "W%d", ++win_cnt);
+	snprintf(wp->w_name, sizeof(wp->w_name), "W%d", ++win_cnt);
 	return wp;
 }
 

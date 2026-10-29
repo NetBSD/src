@@ -72,11 +72,10 @@ int main(int argc, char **argv)
 			curbp = find_buffer(argv[i], TRUE);
 			(void) insert_file(argv[i], FALSE);
 			/* Save filename regardless of load() success. */
-			snprintf(curbp->b_fname, NAME_MAX, "%s", argv[i]);
+			strlcpy(curbp->b_fname, argv[i], sizeof(curbp->b_fname));
 		}
 	} else {
-		curbp = find_buffer("*scratch*", TRUE);
-		strlcpy(curbp->b_bname, "*scratch*", sizeof(curbp->b_bname));
+		curbp = create_scratch();
 	}
 
 	wheadp = curwp = new_window();
@@ -127,7 +126,7 @@ void msg(const char *msg, ...)
 {
 	va_list args;
 	va_start(args, msg);
-	(void)vsprintf(msgline, msg, args);
+	(void)vsnprintf(msgline, sizeof(msgline), msg, args);
 	va_end(args);
 	msgflag = TRUE;
 }
