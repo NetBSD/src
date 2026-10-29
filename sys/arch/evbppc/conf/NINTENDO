@@ -132,7 +132,11 @@ options 	WSDISPLAY_MULTICONS
 
 ahb0 		at mainbus0 irq 14
 si0		at mainbus0 addr 0x0d006400 irq 3	# Serial interface
-uhid*		at si0
+gcport*		at si0
+uhid0		at gcport0
+uhid1		at gcport1
+uhid2		at gcport2
+uhid3		at gcport3
 exi0		at mainbus0 addr 0x0d006800 irq 4	# External interface
 rtcsram0	at exi0					# RTC/SRAM chip
 gecko0		at exi0					# USB Gecko
