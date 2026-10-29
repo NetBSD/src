@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_fdt.c,v 1.2 2026/08/07 14:31:36 thorpej Exp $	*/
+/*	$NetBSD: wdc_fdt.c,v 1.3 2026/10/29 11:27:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_fdt.c,v 1.2 2026/08/07 14:31:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_fdt.c,v 1.3 2026/10/29 11:27:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,10 +95,13 @@ wdc_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (fdtbus_get_reg(phandle, 1, &ctl_addr, &ctl_size) != 0) {
-		aprint_error(": couldn't get control registers\n");
-		return;
-	}
+	/*
+	 * The control block (CS1: device control / alternate status)
+	 * is optional and may not be present on e.g. dedicated
+	 * CompactFlash interfaces.
+	 */
+	const bool have_ctl =
+	    fdtbus_get_reg(phandle, 1, &ctl_addr, &ctl_size) == 0;
 
 	error = bus_space_map(wdr->cmd_iot, cmd_addr, cmd_size, 0,
 			      &wdr->cmd_baseioh);
@@ -108,12 +111,16 @@ wdc_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	error = bus_space_map(wdr->ctl_iot, ctl_addr, ctl_size, 0,
-			      &wdr->ctl_ioh);
-	if (error) {
-		aprint_error(": couldn't map control registers (error=%d)\n",
-		    error);
-		return;
+	if (have_ctl) {
+		error = bus_space_map(wdr->ctl_iot, ctl_addr, ctl_size, 0,
+				      &wdr->ctl_ioh);
+		if (error) {
+			aprint_error(": couldn't map control registers "
+			    "(error=%d)\n", error);
+			return;
+		}
+	} else {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_AUXCTL;
 	}
 
 	bus_size_t data_regsize = 2;
