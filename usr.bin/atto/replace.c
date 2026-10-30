@@ -10,7 +10,7 @@ void query_replace(void)
 	point_t l_point = -1;
 	point_t found;
 	char question[STRBUF_L];
-	int slen, rlen;   /* length of search and replace strings */
+	int slen, rlen, diff;   /* length of search and replace strings */
 	int numsub = 0;   /* number of substitutions */
 	int ask = TRUE;
 	int c;
@@ -76,26 +76,21 @@ void query_replace(void)
 			}
 		}
 		
-		if (rlen > slen) {
+		diff = rlen - slen;
+		if (diff != 0) {
 			movegap(curbp, found);
-			/*check enough space in gap left */
-			if (rlen - slen < curbp->b_egap - curbp->b_gap)
-				growgap(curbp, rlen - slen);
-			/* shrink gap right by r - s */
-			curbp->b_gap = curbp->b_gap + (rlen - slen);
-		} else if (slen > rlen) {
-			movegap(curbp, found);
-			/* stretch gap left by s - r, no need to worry about space */
-			curbp->b_gap = curbp->b_gap - (slen - rlen);
-		} else {
-			/* if rlen = slen, we just overwrite the chars, no need to move gap */		
+			/* check if we need to grow */
+			if (diff > 0 && curbp->b_egap - curbp->b_gap < diff &&
+			    !growgap(curbp, diff))
+				return;
+			curbp->b_gap += diff;
 		}
 
 		/* now just overwrite the chars at point in the buffer */
 		l_point = curbp->b_point;
 		memcpy(ptr(curbp, curbp->b_point), replace, rlen * sizeof (char_t));
 		curbp->b_flags |= B_MODIFIED;
-		curbp->b_point = found - (slen - rlen); /* end of replcement */
+		curbp->b_point = found + diff; /* end of replcement */
 		numsub++;
 	}
 
