@@ -164,7 +164,7 @@ int insert_file(char *fn, int modflag)
 		return (FALSE);
 	}
 	curbp->b_flags &= (modflag ? B_MODIFIED : ~B_MODIFIED);
-	msg("File \"%s\" %ld bytes read.", fn, len);
+	msg("File \"%s\" %zu bytes read.", fn, len);
 	return (TRUE);
 }
 
