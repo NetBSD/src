@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfext_route.c,v 1.3 2026/10/08 09:28:41 joe Exp $");
+__RCSID("$NetBSD: npfext_route.c,v 1.4 2026/10/30 23:06:44 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -77,7 +77,7 @@ npfext_route_param(nl_ext_t *ext, const char *param, const char *val)
 		enum ptype	type;
 		bool		reqval;
 	} params[] = {
-		{ "interface",	PARAM_INTERFACE,	true    },
+		{ "route-interface",	PARAM_INTERFACE,	true    },
 		{ "via",	PARAM_INET4,	true	},
         { "via6",   PARAM_INET6,   true    },
         { "dup-to", PARAM_DUP,  false   },
@@ -100,13 +100,13 @@ npfext_route_param(nl_ext_t *ext, const char *param, const char *val)
             npf_ext_param_bool(ext, name, true);
             break;
         case PARAM_INTERFACE:
-            npf_ext_param_string(ext, "route-interface", val);
+            npf_ext_param_string(ext, name, val);
             break;
         /* catch invalid addresses early */
         case PARAM_INET4:
             if (inet_pton(AF_INET, val, &addr) != 1) {
                 warn("Invalid IPv4 address `%s'", val);
-                return EINVAL;
+                return EINVAL;:q!
             }
             npf_ext_param_binary(ext, name, &addr, sizeof(struct in_addr));
             break;
