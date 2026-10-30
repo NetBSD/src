@@ -1,16 +1,17 @@
 /* complete.c, Atto Emacs, Hugh Barney, Public Domain, 2016 */
 
+#include <glob.h>
 #include "header.h"
 
 /* basic filename completion, based on code in uemacs/PK */
 int getfilename(const char *prompt, char *buf, int nbuf)
 {
-	static char temp_file[STRBUF_S] = TEMPFILE;
+	glob_t gl;
+	char pattern[TEMPBUF];
+	size_t idx = 0;
 	int cpos = 0;	/* current character position in string */
-	int k = 0, c, fd, didtry, iswild = 0;
+	int k = 0, didtry, iswild = 0, have_glob = 0;
 
-	char sys_command[TEMPBUF];
-	FILE *fp = NULL;
 	buf[0] ='\0';
 
 	for (;;) {
@@ -24,7 +25,8 @@ int getfilename(const char *prompt, char *buf, int nbuf)
 			if (cpos > 0 && NULL != strchr(buf, '~')) goto do_tab;
 			/* FALLTHRU */
 		case 0x07: /* ctrl-g, abort */
-			if (fp != NULL) fclose(fp);
+			if (have_glob)
+				globfree(&gl);
 			return (k != 0x07 && cpos > 0);
 
 		case 0x7f: /* del, erase */
@@ -40,38 +42,29 @@ int getfilename(const char *prompt, char *buf, int nbuf)
 
 do_tab: 
 		case 0x09: /* TAB, complete file name */
-			/* scan backwards for a wild card and set */
-			iswild=0;
-			while (cpos > 0) {
-				cpos--;
-				if (buf[cpos] == '*' || buf[cpos] == '?')
-					iswild = 1;
-			}
-
 			/* first time retrieval */
 			if (! didtry) {
-				if (fp != NULL) fclose(fp);
-				strlcpy(temp_file, TEMPFILE, sizeof(temp_file));
-				if (-1 == (fd = mkstemp(temp_file)))
-					fatal("%s: Failed to create temp file\n");
-				strlcpy(sys_command, "echo ", sizeof(sys_command));
-				strlcat(sys_command, buf, sizeof(sys_command));
-				if (!iswild) strlcat(sys_command, "*", sizeof(sys_command));
-				strlcat(sys_command, " >", sizeof(sys_command));
-				strlcat(sys_command, temp_file, sizeof(sys_command));
-				strlcat(sys_command, " 2>&1", sizeof(sys_command));
-				(void) system(sys_command); /* stop compiler unused result warning */
-				fp = fdopen(fd, "r");
-				unlink(temp_file);
+				if (have_glob)
+					globfree(&gl);
+				have_glob = 0;
+				idx = 0;
+				iswild = strpbrk(buf, "*?") != NULL;
+				strlcpy(pattern, buf, sizeof(pattern));
+				if (!iswild)
+					strlcat(pattern, "*", sizeof(pattern));
+				if (glob(pattern, GLOB_TILDE, NULL, &gl) == 0)
+					have_glob = 1;
+				else
+					globfree(&gl);
 			}
 
-			/* copy next filename into buf */
-			while ((c = getc(fp)) != EOF && c != '\n' && c != ' ')
-				if (cpos < nbuf - 1 && c != '*')
-					buf[cpos++] = c;
-
-			buf[cpos] = '\0';
-			if (c != ' ') rewind(fp);
+			if (have_glob && gl.gl_pathc > 0) {
+				/* copy next match into buf */
+				strlcpy(buf, gl.gl_pathv[idx], nbuf);
+				/* cycling through all matches */
+				idx = (idx + 1) % gl.gl_pathc;
+			}
+			cpos = strlen(buf);
 			didtry = 1;
 			break;
 
