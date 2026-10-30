@@ -70,6 +70,9 @@ static const struct mapkey keymap[] = {
 	{"esc @ set-mark           ", "\x1B\x40", iblock },  /* esc-@ */
 	{"esc < beg-of-buf         ", "\x1B\x3C", top },
 	{"esc > end-of-buf         ", "\x1B\x3E", bottom },
+#ifndef SMALL
+	{"esc esc show-menu        ", "\x1B\x1B", menu_escape },
+#endif
 	{"K_ERROR                  ", NULL, NULL }
 };
 

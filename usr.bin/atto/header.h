@@ -101,6 +101,7 @@ extern window_t *wheadp;
 extern int done;                /* Quit flag. */
 extern int use_color;           /* Optional syntax highlighting. */
 extern int msgflag;             /* True if msgline should be displayed. */
+extern int menu_mode;           /* True if menu is open. */
 extern point_t nscrap;          /* Length of scrap buffer. */
 extern char_t *scrap;           /* Allocated scrap buffer. */
 extern char_t *input;
@@ -201,4 +202,7 @@ extern void set_parse_state(buffer_t *, point_t);
 extern void set_parse_state2(buffer_t *, point_t);
 extern int parse_text(buffer_t *, point_t);
 extern void resize_terminal(void);
+extern int create_menu(void);
+extern void handle_menus(int);
+extern void menu_escape(void);
 extern buffer_t *create_scratch(void);

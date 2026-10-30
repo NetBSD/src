@@ -82,10 +82,23 @@ int main(int argc, char **argv)
 	one_window(curwp);
 	associate_b2w(curbp, curwp);
 
+#ifndef SMALL
+	create_menu();
+#endif
+
 	if (!growgap(curbp, CHUNK)) fatal("%s: Failed to allocate required memory.\n");
 
 	while (!done) {
+#ifndef SMALL
+		if (menu_mode) {
+			ch = getch();
+			handle_menus(ch);
+			continue;
+		}
+#endif
+
 		update_display();
+
 		input = get_key(&command);
 
 		if (command != NULL) {
