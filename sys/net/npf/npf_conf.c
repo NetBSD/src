@@ -47,7 +47,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.19 2026/10/27 18:44:32 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.20 2026/10/30 23:36:15 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -282,3 +282,25 @@ npf_default_pass(npf_t *npf)
 	KASSERT(npf_config_locked_p(npf) || npf_ebr_incrit_p(npf->ebr));
 	return config->default_pass;
 }
+
+#if defined(DDB) || defined(_NPF_TESTING)
+
+/* for rump testing, we want to manually
+ * destory everything proc related, rules and procedures
+*/
+void
+npf_config_procs_null(npf_t *npf)
+{
+	npf_config_t *config = atomic_load_consume(&npf->config);
+	KASSERT(npf_config_locked_p(npf) || npf_ebr_incrit_p(npf->ebr));
+	if (config->rule_procs) {
+		npf_rprocset_destroy(config->rule_procs);
+	}
+	config->rule_procs = NULL;
+	if (config->ruleset) {
+		npf_ruleset_destroy(config->ruleset);
+	}
+	config->ruleset = NULL;
+}
+
+#endif

@@ -466,6 +466,7 @@ void		npf_rproc_release(npf_rproc_t *);
 const char *	npf_rproc_getname(const npf_rproc_t *);
 bool		npf_rproc_run(npf_cache_t *, npf_rproc_t *,
 		    const npf_match_info_t *, int *);
+void		npf_config_procs_null(npf_t *);
 
 /* State handling. */
 void		npf_state_sysinit(npf_t *);
