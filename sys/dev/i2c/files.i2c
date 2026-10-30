@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.141 2026/10/13 08:20:08 rkujawa Exp $
+#	$NetBSD: files.i2c,v 1.142 2026/10/30 13:53:09 jdc Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -85,7 +85,7 @@ attach	pcf8563rtc at iic
 file	dev/i2c/pcf8563.c			pcf8563rtc
 
 # Philips PCF8583 Real Time Clock
-device	pcfrtc
+device	pcfrtc: sysmon_envsys
 attach	pcfrtc at iic
 file	dev/i2c/pcf8583.c			pcfrtc
 
