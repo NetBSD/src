@@ -353,10 +353,10 @@ void showpos(void)
 	get_line_stats(&current, &lastln);
 
 	if (curbp->b_point == end_p) {
-		msg("[EOB] Line = %d/%d  Point = %d/%d", current, lastln,
+		msg("[EOB] Line = %d/%d  Point = %ld/%td", current, lastln,
 			curbp->b_point, ((curbp->b_ebuf - curbp->b_buf) - (curbp->b_egap - curbp->b_gap)));
 	} else {
-		msg("Char = %s 0x%x  Line = %d/%d  Point = %d/%d", unctrl(*(ptr(curbp, curbp->b_point))), *(ptr(curbp, curbp->b_point)), 
+		msg("Char = %s 0x%x  Line = %d/%d  Point = %ld/%td", unctrl(*(ptr(curbp, curbp->b_point))), *(ptr(curbp, curbp->b_point)), 
 			current, lastln,
 			curbp->b_point, ((curbp->b_ebuf - curbp->b_buf) - (curbp->b_egap - curbp->b_gap)));
 	}

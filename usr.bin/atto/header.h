@@ -110,7 +110,7 @@ extern char searchtext[STRBUF_M];
 extern char replace[STRBUF_M];
 
 extern void fatal(const char *);
-extern void msg(const char *, ...);
+extern void msg(const char *, ...) __printflike(1, 2);
 extern void display(window_t *, int);
 extern void dispmsg(void);
 extern void modeline(window_t *);
