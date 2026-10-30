@@ -1,7 +1,7 @@
-.\" $NetBSD: atto.1,v 1.1 2026/10/26 07:52:39 nia Exp $
+.\" $NetBSD: atto.1,v 1.2 2026/10/30 16:18:31 nia Exp $
 .\" This file is released under the same public domain license as the
 .\" rest of the atto editor.
-.Dd October 15, 2026
+.Dd October 30, 2026
 .Dt ATTO 1
 .Os
 .Sh NAME
@@ -24,6 +24,13 @@ Perhaps all that needs to be known to use
 at a basic level is that holding the control key, pressing x,
 then pressing w will write the currently open file, and holding the
 control key, pressing x, then pressing c will exit the editor.
+.Pp
+For users who struggle to remember key bindings, the escape key can
+be pressed twice to open a menu which can be navigated with the
+terminal's cursor keys.
+This is only available if the program is not compiled in
+.Dv SMALL
+mode (i.e. it is not part of a ramdisk or similar).
 .Pp
 The options are as follows:
 .Pp
@@ -162,4 +169,4 @@ editor (commonly known as Anthony's Editor).
 .Pp
 It has been modified for inclusion in
 .Nx ,
-including with enhanced option handling.
+including with enhanced option handling and menu support.
