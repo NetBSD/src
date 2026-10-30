@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.407 2026/09/26 04:32:00 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.408 2026/10/30 01:03:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.407 2026/09/26 04:32:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.408 2026/10/30 01:03:04 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -127,6 +127,7 @@ static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 static int lfs_flushfiles(struct mount *, int);
 static int compare_nodes_sd(void *, const void *, const void *);
 static int compare_key_sd(void *, const void *, const void *);
+static void lfs_reclaimd(void *);
 
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
@@ -805,6 +806,10 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 				return error;
 			fs->lfs_ronly = 1;
 
+			/* Wake up reclaimd so it can die */
+			cv_broadcast(&fs->lfs_reclaim_cv);
+			kthread_join(fs->lfs_reclaimd_lwp);
+
 			/*
 			 * Drain pending I/O now that we have declared
 			 * read-only.  We compare against 1 because
@@ -822,6 +827,13 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 * Changing from read-only to read/write.
 			 * Note in the superblocks that we're writing.
 			 */
+
+			/* Start reclaimd */
+			error = kthread_create(PRI_BIO, KTHREAD_MUSTJOIN, NULL,
+				lfs_reclaimd, mp, &fs->lfs_reclaimd_lwp,
+				"lfs_reclaim");
+			if (error)
+				return error;
 
 			/* XXX: quotas should have been on even if readonly */
 			if (fs->lfs_use_quota2) {
@@ -1146,6 +1158,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	cv_init(&fs->lfs_cleanercv, "cleancv");
 	cv_init(&fs->lfs_prelockcv, "prelockcv");
 	cv_init(&fs->lfs_cleanquitcv, "cleanquit");
+	cv_init(&fs->lfs_reclaim_cv, "seg reclaim");
 
 	/* Set the file system readonly/modify bits. */
 	fs->lfs_ronly = ronly;
@@ -1256,6 +1269,14 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		/* Roll forward */
 		lfs_roll_forward(fs, mp, l);
 		lfs_reset_avail(fs);
+	}
+
+	/* Init reclaimd */
+	if (!ronly) {
+		error = kthread_create(PRI_BIO, KTHREAD_MUSTJOIN, NULL,
+			lfs_reclaimd, mp, &fs->lfs_reclaimd_lwp, "lfs_reclaim");
+		if (error != 0)
+			goto out;
 	}
 	fs->lfs_rfpid = 0;
 
@@ -1371,6 +1392,29 @@ out:
 	return (error);
 }
 
+static void
+lfs_reclaimd(void *v)
+{
+	struct mount *mp = (struct mount *)v;
+	struct lfs *fs = VFSTOULFS(mp)->um_lfs;
+
+	for (;;) {
+		mutex_enter(&lfs_lock);
+		cv_wait(&fs->lfs_reclaim_cv, &lfs_lock);
+		if (mp->mnt_iflag & (IMNT_UNMOUNT|IMNT_WANTRDONLY))
+			goto out;
+		mutex_exit(&lfs_lock);
+
+		EXCL_IFLOCK(fs);
+		lfs_auto_segclean(fs);
+		UNEXCL_IFLOCK(fs);
+	}
+
+ out:
+	mutex_exit(&lfs_lock);
+	kthread_exit(0);
+}
+
 void
 lfs_reset_avail(struct lfs *fs)
 {
@@ -1442,6 +1486,12 @@ lfs_unmount(struct mount *mp, int mntflags)
 	ump = VFSTOULFS(mp);
 	fs = ump->um_lfs;
 
+	if (!fs->lfs_ronly) {
+		/* Wake up reclaimd so it can die */
+		cv_broadcast(&fs->lfs_reclaim_cv);
+		kthread_join(fs->lfs_reclaimd_lwp);
+	}
+
 	error = lfs_flushfiles(mp, mntflags & MNT_FORCE ? FORCECLOSE : 0);
 	if (error)
 		return error;
@@ -1483,6 +1533,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 	cv_destroy(&fs->lfs_diropscv);
 	cv_destroy(&fs->lfs_stopcv);
 	cv_destroy(&fs->lfs_nextsegsleep);
+	cv_destroy(&fs->lfs_reclaim_cv);
 
 	rw_destroy(&fs->lfs_fraglock);
 	rw_destroy(&fs->lfs_iflock);

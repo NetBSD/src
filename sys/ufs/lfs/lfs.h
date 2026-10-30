@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.220 2026/08/27 14:33:13 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.221 2026/10/30 01:03:04 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -1154,6 +1154,9 @@ struct lfs {
 
 	/* Last cleaned segment */
 	uint32_t lfs_lastcleaned;
+	kcondvar_t lfs_reclaim_cv;
+	struct lwp *lfs_reclaimd_lwp;
+
 #endif
 };
 

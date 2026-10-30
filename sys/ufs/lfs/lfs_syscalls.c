@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.183 2026/09/23 17:47:52 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.184 2026/10/30 01:03:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.183 2026/09/23 17:47:52 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.184 2026/10/30 01:03:04 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -878,7 +878,7 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum, kauth_cred_t cred, struct 
 		return (EALREADY);
 	}
 
-	lfs_markclean(fs, segnum, sup, cred, l);
+	lfs_markclean(fs, segnum, sup, 1, cred, l);
 	LFS_WRITESEGENTRY(sup, fs, segnum, bp);
 
 	return 0;
@@ -886,7 +886,7 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum, kauth_cred_t cred, struct 
 
 int
 lfs_markclean(struct lfs *fs, unsigned long segnum, SEGUSE *sup,
-	      kauth_cred_t cred, struct lwp *l)
+    int do_wakeup, kauth_cred_t cred, struct lwp *l)
 {
 	extern int lfs_dostats;
 	struct buf *bp;
@@ -894,7 +894,7 @@ lfs_markclean(struct lfs *fs, unsigned long segnum, SEGUSE *sup,
 	int error;
 
 	ASSERT_SEGLOCK(fs);
-	
+
 #ifndef DEBUG
 	error = 0;
 #else /* DEBUG */
@@ -929,13 +929,9 @@ lfs_markclean(struct lfs *fs, unsigned long segnum, SEGUSE *sup,
 	LFS_CLEANERINFO(cip, fs, bp);
 	lfs_ci_shiftdirtytoclean(fs, cip, 1);
 	lfs_sb_setnclean(fs, lfs_ci_getclean(fs, cip));
-	mutex_enter(&lfs_lock);
-	lfs_ci_setbfree(fs, cip, lfs_sb_getbfree(fs));
-	lfs_ci_setavail(fs, cip, lfs_sb_getavail(fs)
-			- fs->lfs_ravail - fs->lfs_favail);
-	wakeup(&fs->lfs_availsleep);
-	mutex_exit(&lfs_lock);
-	(void) LFS_BWRITE_LOG(bp);
+	if (do_wakeup)
+		wakeup(&fs->lfs_availsleep);
+	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
 	if (lfs_dostats)
 		++lfs_stats.segs_reclaimed;

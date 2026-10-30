@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.60 2026/09/27 18:48:21 perseant Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.61 2026/10/30 01:03:04 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -705,6 +705,14 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 			((IN) & (lfs_sb_getsepb(F) - 1)));		\
 	else								\
 		(SP) = (SEGUSE *)(BP)->b_data + ((IN) % lfs_sb_getsepb(F)); \
+} while (0)
+
+#define LFS_SEGENTRY_NEXT(SP, F) do { 					\
+	if (lfs_sb_getversion(F) > 1) {					\
+		(SP) = ((SP) + 1);					\
+	} else {							\
+		(SP) = (SEGUSE *)(((SEGUSE_V1 *)(SP)) + 1);		\
+	}								\
 } while (0)
 
 #define LFS_WRITESEGENTRY(SP, F, IN, BP) do {				\

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.114 2026/10/05 13:49:43 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.115 2026/10/30 01:03:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.114 2026/10/05 13:49:43 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.115 2026/10/30 01:03:04 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,61 +420,75 @@ lfs_unmark_dirop(struct lfs *fs)
 	lfs_destroy_marker(marker);
 }
 
-static void
+/*
+ * Run through the segment list promoting empty segments.
+ *
+ * XXX We should keep a list of segments that have reached
+ * XXX su_nbytes == 0 (or blocks containing their SEGUSEs)
+ * XXX and process that, presumably much smaller, list
+ * XXX instead of always looking at every segment.
+ */
+void
 lfs_auto_segclean(struct lfs *fs)
 {
-	int i, waited, changed;
+	int i, j, waited, changed, any_changed;
 	SEGUSE *sup;
 	struct buf *bp;
 
-	ASSERT_SEGLOCK(fs);
-	/*
-	 * Now that we've swapped lfs_activesb, but while we still
-	 * hold the segment lock, run through the segment list promoting
-	 * empty segments.
-	 * XXX - do we really need to do them all at once?
-	 */
 	waited = 0;
-	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
-		changed = 0;
+	any_changed = 0;
+	for (i = 0; i < lfs_sb_getnseg(fs); i+= lfs_sb_getsepb(fs)) {
 		LFS_SEGENTRY(sup, fs, i, bp);
-		if (sup->su_nbytes == 0) {
-			switch (sup->su_flags & (SEGUSE_ACTIVE
-						 | SEGUSE_DIRTY
-						 | SEGUSE_EMPTY
-						 | SEGUSE_READY)) {
-			case SEGUSE_DIRTY:
-				sup->su_flags |= SEGUSE_EMPTY;
-				++changed;
-				break;
-				
-			case SEGUSE_DIRTY | SEGUSE_EMPTY:
-				sup->su_flags |= SEGUSE_READY;
-				++changed;
-				break;
-				
-			case SEGUSE_DIRTY | SEGUSE_EMPTY | SEGUSE_READY:
-				/* Make sure the sb is written */
-				mutex_enter(&lfs_lock);
-				while (waited == 0 && fs->lfs_sbactive)
-					mtsleep(&fs->lfs_sbactive, PRIBIO+1,
-						"lfs asb", 0, &lfs_lock);
-				mutex_exit(&lfs_lock);
-				waited = 1;
+		changed = 0;
+		for (j = 0; j < lfs_sb_getsepb(fs); j++) {
+			if (sup->su_nbytes == 0) {
+				switch (sup->su_flags & (SEGUSE_ACTIVE
+					| SEGUSE_DIRTY
+					| SEGUSE_EMPTY
+					| SEGUSE_READY)) {
+				case SEGUSE_DIRTY:
+					sup->su_flags |= SEGUSE_EMPTY;
+					++changed;
+					break;
 
-				lfs_markclean(fs, i, sup, NOCRED, curlwp);
-				++changed;
-				break;
-				
-			default:
-				break;
+				case SEGUSE_DIRTY | SEGUSE_EMPTY:
+					sup->su_flags |= SEGUSE_READY;
+					++changed;
+					break;
+
+				case SEGUSE_DIRTY
+					| SEGUSE_EMPTY
+					| SEGUSE_READY:
+					/* Make sure the sb is written */
+					mutex_enter(&lfs_lock);
+					while (waited == 0
+					       && fs->lfs_sbactive) {
+						mtsleep(&fs->lfs_sbactive,
+							PRIBIO+1, "lfs asb",
+							0, &lfs_lock);
+					}
+					mutex_exit(&lfs_lock);
+					waited = 1;
+
+					lfs_markclean(fs, i + j, sup, 0,
+						      NOCRED, curlwp);
+					++changed;
+					break;
+
+				default:
+					break;
+				}
 			}
+			LFS_SEGENTRY_NEXT(sup, fs);
 		}
-		if (changed)
+		if (changed) {
+			++any_changed;
 			LFS_WRITESEGENTRY(sup, fs, i, bp);
-		else
-			brelse(bp, 0);
+		} else
+			LFS_RELEASESEGENTRY(sup, fs, i, bp);
 	}
+	if (any_changed)
+		wakeup(&fs->lfs_availsleep);
 }
 
 bool
