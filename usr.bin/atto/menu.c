@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.1 2026/10/30 16:14:35 nia Exp $	*/
+/*	$NetBSD: menu.c,v 1.2 2026/10/30 22:26:44 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -161,7 +161,6 @@ handle_menu_popup(MENU *menu, WINDOW *popup, const char *name)
 		return;
 	}
 
-	wrefresh(popup);
 	do {
 		c = wgetch(popup);
 		switch (c) {
@@ -205,12 +204,13 @@ handle_menu_popup(MENU *menu, WINDOW *popup, const char *name)
 			menu_driver(menu, c);
 			break;
 		}
-
+		touchwin(popup);
 		wrefresh(popup);
-	} while (isdone == 0);
+	} while (!isdone);
 
+	werase(popup);
+	wrefresh(popup);
 	unpost_menu(menu);
-	return;
 }
 
 /*
@@ -371,14 +371,14 @@ static void
 file_item_callback(MENU *parent)
 {
 	WINDOW *file_popup;
- 
-	if ((file_popup = create_menu_popup(parent, file_menu, 1, -1, -1, -1))
-	    == NULL) {
+
+	file_popup = create_menu_popup(parent, file_menu, 1, -1, -1, -1);
+
+	if (file_popup != NULL) {
+		handle_menu_popup(file_menu, file_popup, "file");
+	} else {
 		fatal("%s: File menu popup failed.\n");
-		return;
 	}
- 
-	handle_menu_popup(file_menu, file_popup, "file");
 }
 
 static void
@@ -386,27 +386,27 @@ edit_item_callback(MENU *parent)
 {
 	WINDOW *edit_popup;
  
-	if ((edit_popup = create_menu_popup(parent, edit_menu, 1, -1, -1, -1))
-	    == NULL) {
+	edit_popup = create_menu_popup(parent, edit_menu, 1, -1, -1, -1);
+
+	if (edit_popup != NULL) {
+		handle_menu_popup(edit_menu, edit_popup, "edit");
+	} else {
 		fatal("%s: Edit menu popup failed.\n");
-		return;
 	}
- 
-	handle_menu_popup(edit_menu, edit_popup, "edit");
 }
 
 static void
 view_item_callback(MENU *parent)
 {
-	WINDOW *view_popup;
- 
-	if ((view_popup = create_menu_popup(parent, view_menu, 1, -1, -1, -1))
-	    == NULL) {
+	WINDOW *view_popup = NULL;
+
+	view_popup = create_menu_popup(parent, view_menu, 1, -1, -1, -1);
+
+	if (view_popup != NULL) {
+		handle_menu_popup(view_menu, view_popup, "view");
+	} else {
 		fatal("%s: View menu popup failed.\n");
-		return;
 	}
- 
-	handle_menu_popup(view_menu, view_popup, "view");
 }
 
 int
@@ -423,17 +423,17 @@ create_menu(void)
 	menu_opts_on(NULL, O_IGNORECASE | O_SHOWMATCH);
 
 	if ((top_items[0] = new_item(__UNCONST("File"),
-	    __UNCONST("File Menu"))) == NULL) {
+	    __UNCONST(""))) == NULL) {
 		return -1;
 	}
 
 	if ((top_items[1] = new_item(__UNCONST("Edit"),
-	    __UNCONST("Edit Menu"))) == NULL) {
+	    __UNCONST(""))) == NULL) {
 		return -1;
 	}
 
 	if ((top_items[2] = new_item(__UNCONST("View"),
-	    __UNCONST("View Menu"))) == NULL) {
+	    __UNCONST(""))) == NULL) {
 		return -1;
 	}
 
