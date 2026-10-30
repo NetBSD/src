@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.49 2026/07/05 17:29:13 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.50 2026/10/30 21:23:29 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2015 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.49 2026/07/05 17:29:13 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.50 2026/10/30 21:23:29 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.49 2026/07/05 17:29:13 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.50 2026/10/30 21:23:29 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1419,11 +1419,19 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 				*initmask |= invalid & BJ_INIT_XBIT;
 			}
 
-			if (BPF_OP(insns[i].code) == BPF_JA) {
+			switch (BPF_OP(insns[i].code)) {
+			case BPF_JA:
 				jt = jf = insns[i].k;
-			} else {
+				break;
+			case BPF_JEQ:
+			case BPF_JGT:
+			case BPF_JGE:
+			case BPF_JSET:
 				jt = insns[i].jt;
 				jf = insns[i].jf;
+				break;
+			default:
+				return false;
 			}
 
 			if (jt >= insn_count - (i + 1) ||
@@ -1597,7 +1605,11 @@ optimize(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 static bool
 alu_to_op(const struct bpf_insn *pc, int *res)
 {
-	const uint32_t k = pc->k;
+	/*
+	 * bpf_validate() accepts all shifts, bpfjit doesn't
+	 * accept shifts by a constant K greater than 31.
+	 */
+	const bool valid_shift = BPF_SRC(pc->code) != BPF_K || pc->k < 32;
 
 	/*
 	 * Note: all supported 64bit arches have 32bit multiply
@@ -1623,11 +1635,11 @@ alu_to_op(const struct bpf_insn *pc, int *res)
 		*res = SLJIT_AND;
 		return true;
 	case BPF_LSH:
-		*res = SLJIT_SHL;
-		return k < 32;
+		*res = SLJIT_SHL|SLJIT_I32_OP;
+		return valid_shift;
 	case BPF_RSH:
 		*res = SLJIT_LSHR|SLJIT_I32_OP;
-		return k < 32;
+		return valid_shift;
 	default:
 		return false;
 	}

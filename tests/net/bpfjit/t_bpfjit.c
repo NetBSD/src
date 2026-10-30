@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.13 2026/07/05 17:29:14 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.14 2026/10/30 21:23:29 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014-2015 Alexander Nasonov.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.13 2026/07/05 17:29:14 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.14 2026/10/30 21:23:29 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -1641,11 +1641,37 @@ ATF_TC_BODY(bpfjit_alu_lsh_x, tc)
 	ATF_CHECK(exec_prog(insns, insn_count, pkt, 1) == 0xbeef0000);
 }
 
+ATF_TC(bpfjit_alu_lsh_x_junk_k);
+ATF_TC_HEAD(bpfjit_alu_lsh_x_junk_k, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test JIT compilation of BPF_ALU+BPF_LSH+BPF_X with k=1023");
+}
+
+ATF_TC_BODY(bpfjit_alu_lsh_x_junk_k, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
+		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 16),
+		BPF_STMT(BPF_ALU+BPF_LSH+BPF_X, 1023),
+		BPF_STMT(BPF_RET+BPF_A, 0)
+	};
+
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	RZ(rump_init());
+
+	ATF_CHECK(prog_validate(insns, insn_count));
+	ATF_CHECK(exec_prog(insns, insn_count, pkt, 1) == 0xbeef0000);
+}
+
 ATF_TC(bpfjit_alu_lsh0_x);
 ATF_TC_HEAD(bpfjit_alu_lsh0_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Test JIT compilation of BPF_ALU+BPF_LSH+BPF_X with k=0");
+	    "Test JIT compilation of BPF_ALU+BPF_LSH+BPF_X with X=0");
 }
 
 ATF_TC_BODY(bpfjit_alu_lsh0_x, tc)
@@ -1665,6 +1691,38 @@ ATF_TC_BODY(bpfjit_alu_lsh0_x, tc)
 
 	ATF_CHECK(prog_validate(insns, insn_count));
 	ATF_CHECK(exec_prog(insns, insn_count, pkt, 1) == 0xdeadbeef);
+}
+
+ATF_TC(bpfjit_alu_lsh32_x);
+ATF_TC_HEAD(bpfjit_alu_lsh32_x, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test JIT compilation of BPF_ALU+BPF_LSH+BPF_X with X=32");
+}
+
+ATF_TC_BODY(bpfjit_alu_lsh32_x, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
+		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 32),
+		BPF_STMT(BPF_ALU+BPF_LSH+BPF_X, 0),
+		BPF_STMT(BPF_RET+BPF_A, 0)
+	};
+
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	RZ(rump_init());
+
+	/*
+	 * A << X with X > 31 is undefined in C and is documented as
+	 * undefined in sljit. Hoping that 'shl reg, reg' is compiled
+	 * the same way on both sides.
+	 */
+	ATF_CHECK(prog_validate(insns, insn_count));
+	ATF_CHECK(exec_prog(insns, insn_count, pkt, 1) ==
+	    interp_prog_mchain2(insns, pkt, 1, 1));
 }
 
 ATF_TC(bpfjit_alu_rsh_x);
@@ -1693,11 +1751,37 @@ ATF_TC_BODY(bpfjit_alu_rsh_x, tc)
 	ATF_CHECK(exec_prog(insns, insn_count, pkt, 1) == 0x0000dead);
 }
 
+ATF_TC(bpfjit_alu_rsh_x_junk_k);
+ATF_TC_HEAD(bpfjit_alu_rsh_x_junk_k, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test JIT compilation of BPF_ALU+BPF_RSH+BPF_X with k=1023");
+}
+
+ATF_TC_BODY(bpfjit_alu_rsh_x_junk_k, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
+		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 16),
+		BPF_STMT(BPF_ALU+BPF_RSH+BPF_X, 1023),
+		BPF_STMT(BPF_RET+BPF_A, 0)
+	};
+
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	RZ(rump_init());
+
+	ATF_CHECK(prog_validate(insns, insn_count));
+	ATF_CHECK(exec_prog(insns, insn_count, pkt, 1) == 0x0000dead);
+}
+
 ATF_TC(bpfjit_alu_rsh0_x);
 ATF_TC_HEAD(bpfjit_alu_rsh0_x, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Test JIT compilation of BPF_ALU+BPF_RSH+BPF_X with k=0");
+	    "Test JIT compilation of BPF_ALU+BPF_RSH+BPF_X with X=0");
 }
 
 ATF_TC_BODY(bpfjit_alu_rsh0_x, tc)
@@ -1717,6 +1801,38 @@ ATF_TC_BODY(bpfjit_alu_rsh0_x, tc)
 
 	ATF_CHECK(prog_validate(insns, insn_count));
 	ATF_CHECK(exec_prog(insns, insn_count, pkt, 1) == 0xdeadbeef);
+}
+
+ATF_TC(bpfjit_alu_rsh32_x);
+ATF_TC_HEAD(bpfjit_alu_rsh32_x, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test JIT compilation of BPF_ALU+BPF_RSH+BPF_X with X=32");
+}
+
+ATF_TC_BODY(bpfjit_alu_rsh32_x, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
+		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 32),
+		BPF_STMT(BPF_ALU+BPF_RSH+BPF_X, 0),
+		BPF_STMT(BPF_RET+BPF_A, 0)
+	};
+
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	RZ(rump_init());
+
+	/*
+	 * A << X with X > 31 is undefined in C and is documented as
+	 * undefined in sljit. Hoping that 'shl reg, reg' is compiled
+	 * the same way on both sides.
+	 */
+	ATF_CHECK(prog_validate(insns, insn_count));
+	ATF_CHECK(exec_prog(insns, insn_count, pkt, 1) ==
+	    interp_prog_mchain2(insns, pkt, 1, 1));
 }
 
 ATF_TC(bpfjit_alu_modulo_x);
@@ -2610,6 +2726,64 @@ ATF_TC_BODY(bpfjit_jmp_modulo_x, tc)
 
 	ATF_CHECK(prog_validate(insns, insn_count));
 	ATF_CHECK(exec_prog(insns, insn_count, pkt, 1) == UINT32_MAX);
+}
+
+ATF_TC(bpfjit_jmp_invalid_opcode_jt_ne_jf);
+ATF_TC_HEAD(bpfjit_jmp_invalid_opcode_jt_ne_jf, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test JIT compilation "
+	    "of BPF_JMP with invalid opcode and different targets");
+}
+
+ATF_TC_BODY(bpfjit_jmp_invalid_opcode_jt_ne_jf, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_LEN, 0), /* A > 0 */
+		BPF_JUMP(BPF_JMP+0xf0+BPF_K, 7, 0, 1), /* 0xf0 is invalid jump opcode */
+		BPF_STMT(BPF_RET+BPF_K, 10),
+		BPF_STMT(BPF_RET+BPF_K, 11)
+	};
+
+	bpfjit_func_t code;
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	RZ(rump_init());
+
+	ATF_CHECK(!prog_validate(insns, insn_count));
+
+	rump_schedule();
+	code = rumpns_bpfjit_generate_code(NULL, insns, insn_count);
+	rump_unschedule();
+	ATF_CHECK(code == NULL);
+}
+
+ATF_TC(bpfjit_jmp_invalid_opcode_jt_eq_jf);
+ATF_TC_HEAD(bpfjit_jmp_invalid_opcode_jt_eq_jf, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test JIT compilation "
+	    "of BPF_JMP with invalid opcode and same targets");
+}
+
+ATF_TC_BODY(bpfjit_jmp_invalid_opcode_jt_eq_jf, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_LEN, 0), /* A > 0 */
+		BPF_JUMP(BPF_JMP+0xf0+BPF_K, 7, 1, 1), /* 0xf0 is invalid jump opcode */
+		BPF_STMT(BPF_RET+BPF_K, 10),
+		BPF_STMT(BPF_RET+BPF_K, 11)
+	};
+
+	bpfjit_func_t code;
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	RZ(rump_init());
+
+	ATF_CHECK(!prog_validate(insns, insn_count));
+
+	rump_schedule();
+	code = rumpns_bpfjit_generate_code(NULL, insns, insn_count);
+	rump_unschedule();
+	ATF_CHECK(code == NULL);
 }
 
 ATF_TC(bpfjit_ld_abs);
@@ -4810,9 +4984,13 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, bpfjit_alu_or_x);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_xor_x);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh_x);
+	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh_x_junk_k);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh0_x);
+	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh32_x);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_rsh_x);
+	ATF_TP_ADD_TC(tp, bpfjit_alu_rsh_x_junk_k);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_rsh0_x);
+	ATF_TP_ADD_TC(tp, bpfjit_alu_rsh32_x);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_modulo_x);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_neg);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_ja);
@@ -4831,6 +5009,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_jeq_x_noinit_a);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_jeq_x_noinit_x);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_modulo_x);
+	ATF_TP_ADD_TC(tp, bpfjit_jmp_invalid_opcode_jt_eq_jf);
+	ATF_TP_ADD_TC(tp, bpfjit_jmp_invalid_opcode_jt_ne_jf);
 	ATF_TP_ADD_TC(tp, bpfjit_ld_abs);
 	ATF_TP_ADD_TC(tp, bpfjit_ld_abs_k_overflow);
 	ATF_TP_ADD_TC(tp, bpfjit_ld_ind);
