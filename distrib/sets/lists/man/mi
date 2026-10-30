@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1846 2026/10/29 17:47:37 jdc Exp $
+# $NetBSD: mi,v 1.1847 2026/10/30 22:32:03 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -380,6 +380,7 @@
 ./usr/share/man/cat1/named-compilezone.0	man-bind-catman		bind,.cat
 ./usr/share/man/cat1/named-journalprint.0	man-bind-catman		bind,.cat
 ./usr/share/man/cat1/named-rrchecker.0		man-bind-catman		bind,.cat
+./usr/share/man/cat1/natto.0			man-util-catman		.cat
 ./usr/share/man/cat1/nbsvtool.0			man-crypto-catman	.cat
 ./usr/share/man/cat1/nc.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/netgroup.0			man-nis-catman		.cat
@@ -3990,6 +3991,7 @@
 ./usr/share/man/man1/named-compilezone.1	man-bind-man		bind,.man
 ./usr/share/man/man1/named-journalprint.1	man-bind-man		bind,.man
 ./usr/share/man/man1/named-rrchecker.1		man-bind-man		bind,.man
+./usr/share/man/man1/natto.1			man-util-man		.man
 ./usr/share/man/man1/nbsvtool.1			man-crypto-man		.man
 ./usr/share/man/man1/nc.1			man-netutil-man		.man
 ./usr/share/man/man1/netgroup.1			man-nis-man		.man

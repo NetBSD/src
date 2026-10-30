@@ -208,7 +208,7 @@ void modeline(window_t *wp)
 	mch = ((wp->w_bufp->b_flags & B_MODIFIED) ? '*' : lch);
 	och = ((wp->w_bufp->b_flags & B_OVERWRITE) ? 'O' : lch);
 
-	snprintf(temp, sizeof(temp), "%c%c%c Atto: %c%c %s",  lch,och,mch,lch,lch, get_buffer_name(wp->w_bufp));
+	snprintf(temp, sizeof(temp), "%c%c%c Natto: %c%c %s",  lch,och,mch,lch,lch, get_buffer_name(wp->w_bufp));
 	addstr(temp);
 
 	for (i = strlen(temp) + 1; i <= COLS; i++)

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.8 2026/10/27 13:30:19 nia Exp $
+# $NetBSD: mi,v 1.9 2026/10/30 22:32:03 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -107,6 +107,7 @@
 ./rescue/mount_union				base-rescue-root	unionfs
 ./rescue/mt					base-rescue-root
 ./rescue/mv					base-rescue-root
+./rescue/natto					base-rescue-root
 ./rescue/newfs					base-rescue-root
 ./rescue/newfs_lfs				base-rescue-root	lfs
 ./rescue/newfs_msdos				base-rescue-root	msdosfs

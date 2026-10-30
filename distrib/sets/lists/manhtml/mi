@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.63 2026/10/29 17:47:36 jdc Exp $
+# $NetBSD: mi,v 1.64 2026/10/30 22:32:03 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -324,6 +324,7 @@
 ./usr/share/man/html1/named-compilezone.html	man-bind-htmlman	bind,html
 ./usr/share/man/html1/named-journalprint.html	man-bind-htmlman	bind,html
 ./usr/share/man/html1/named-rrchecker.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/natto.html		man-util-htmlman	html
 ./usr/share/man/html1/nbsvtool.html		man-crypto-htmlman	html
 ./usr/share/man/html1/nc.html			man-netutil-htmlman	html
 ./usr/share/man/html1/netgroup.html		man-nis-htmlman		html

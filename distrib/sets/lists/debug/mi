@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.522 2026/10/26 07:52:38 nia Exp $
+# $NetBSD: mi,v 1.523 2026/10/30 22:32:03 nia Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -717,6 +717,7 @@
 ./usr/libdata/debug/usr/bin/msgs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/msgunfmt.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/msguniq.debug	comp-c-debug		debug
+./usr/libdata/debug/usr/bin/natto.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/nbperf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/nbsvtool.debug	comp-crypto-debug	debug
 ./usr/libdata/debug/usr/bin/nc.debug		comp-netutil-debug	debug

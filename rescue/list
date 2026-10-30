@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.61 2026/10/27 13:30:19 nia Exp $
+#	$NetBSD: list,v 1.62 2026/10/30 22:32:03 nia Exp $
 
 # Touching this file for:
 #
@@ -98,7 +98,7 @@ PROG	wsconsctl
 
 SRCDIRS	usr.bin
 
-PROG	atto
+PROG	atto		natto
 PROG	bzip2		bunzip2 bzcat
 PROG	ftp
 PROG	grep		egrep fgrep zgrep zegrep zfgrep
@@ -131,4 +131,4 @@ PROG	tetris
 SRCDIRS	libexec
 
 LIBS	liboverride.o
-LIBS	-lbz2 -llzma -lcrypt -ledit -lkvm -ll -lm -lrmt -lcurses -lterminfo -lutil -lz -levent -lprop
+LIBS	-lbz2 -llzma -lcrypt -ledit -lkvm -ll -lm -lrmt -lcurses -lterminfo -lutil -lz -levent -lprop -lmenu
