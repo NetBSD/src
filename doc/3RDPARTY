@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2270 2026/10/29 15:40:43 kre Exp $
+#	$NetBSD: 3RDPARTY,v 1.2271 2026/10/30 06:53:51 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2491,3 +2491,23 @@ Vendor tag:	FreeBSD
 Release tag:	CDDL-FreeBSD-rNNNN
 Notes:
 Our upstream is currently FreeBSD, part of dtrace/zfs...
+
+Package:	brotli
+Version:	1.2.1
+Current Vers:	1.2.1
+Maintainer:	Google, Inc.
+Archive Site:	https://github.com/google/brotli
+Home Page:	https://github.com/google/brotli
+Date:		2026-10-28
+Mailing List:
+License:	MIT-like
+Responsible:	mrg
+Location:	xsrc/external/mit/brotli
+Vendor tag:	GOOGLE
+Release tag:	brotli-
+Notes:
+Generic-purpose lossless compression algorithm, used by freetype.
+This is embedded directly into freetype, using identifier renames
+to make sure it can't conflict with other installations.
+When importing, delete the c/enc/, go/, and python/ subdirectories,
+they are not used.
