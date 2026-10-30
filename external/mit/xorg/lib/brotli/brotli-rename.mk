@@ -1,4 +1,4 @@
-#	$NetBSD: brotli-rename.mk,v 1.1 2023/01/29 07:54:11 mrg Exp $
+#	$NetBSD: brotli-rename.mk,v 1.1.4.1 2026/10/30 09:26:49 martin Exp $
 
 #
 # functions exported by freetype's private brotli copy are renamed to have
@@ -9,16 +9,20 @@ RENAME_FUNCS= \
 	BrotliBuildCodeLengthsHuffmanTable \
 	BrotliBuildHuffmanTable \
 	BrotliBuildSimpleHuffmanTable \
+	BrotliCalculateRingBufferSize \
+	BrotliDecoderAttachDictionary \
 	BrotliDecoderCreateInstance \
 	BrotliDecoderDecompress \
 	BrotliDecoderDecompressStream \
 	BrotliDecoderDestroyInstance \
+	BrotliDecoderEnsureStaticInit \
 	BrotliDecoderErrorString \
 	BrotliDecoderGetErrorCode \
 	BrotliDecoderHasMoreOutput \
 	BrotliDecoderHuffmanTreeGroupInit \
 	BrotliDecoderIsFinished \
 	BrotliDecoderIsUsed \
+	BrotliDecoderSetMetadataCallbacks \
 	BrotliDecoderSetParameter \
 	BrotliDecoderStateCleanup \
 	BrotliDecoderStateCleanupAfterMetablock \
@@ -28,13 +32,23 @@ RENAME_FUNCS= \
 	BrotliDecoderVersion \
 	BrotliDefaultAllocFunc \
 	BrotliDefaultFreeFunc \
+	BrotliEnsureRingBuffer \
 	BrotliGetDictionary \
 	BrotliGetTransforms \
 	BrotliInitBitReader \
 	BrotliSafeReadBits32Slow \
 	BrotliSetDictionaryData \
+	BrotliSharedDictionaryAttach \
+	BrotliSharedDictionaryCreateInstance \
+	BrotliSharedDictionaryDestroyInstance \
 	BrotliTransformDictionaryWord \
 	BrotliWarmupBitReader \
+	_kBrotliContextLookupTable \
+	_kBrotliPrefixCodeRanges \
+	kBrotliBitMask \
+	kBrotliDictionary \
+	kBrotliDictionaryData \
+	kBrotliTransforms \
 
 .for _f in ${RENAME_FUNCS}
 CPPFLAGS+= -D${_f}=nbft_${_f}

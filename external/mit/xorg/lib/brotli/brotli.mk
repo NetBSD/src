@@ -1,4 +1,4 @@
-#	$NetBSD: brotli.mk,v 1.1 2023/01/29 07:54:11 mrg Exp $
+#	$NetBSD: brotli.mk,v 1.1.4.1 2026/10/30 09:26:49 martin Exp $
 
 # makefile fragment to build brotlidec for freetype2
 
@@ -6,6 +6,7 @@
 
 BROTLI_SRCS=	bit_reader.c decode.c huffman.c state.c
 BROTLI_SRCS+=	constants.c context.c dictionary.c platform.c transform.c
+BROTLI_SRCS+=	prefix.c static_init.c shared_dictionary.c
 
 SRCS+=		${BROTLI_SRCS}
 
