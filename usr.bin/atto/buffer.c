@@ -69,6 +69,7 @@ buffer_t* find_buffer (const char *fname, int cflag)
 int delete_buffer (buffer_t *bp)
 {
 	buffer_t *sb = NULL;
+	window_t *wp;
 
 	/* we must have switched to a different buffer first */
 	assert(bp != curbp);
@@ -83,6 +84,17 @@ int delete_buffer (buffer_t *bp)
 		assert(sb->b_next == bp || sb->b_next == NULL);
 		sb->b_next = bp->b_next;
 	}
+
+	/* repoint any other window still showing bp at the current buffer */
+	for (wp = wheadp; wp != NULL; wp = wp->w_next) {
+		if (wp->w_bufp != bp)
+			continue;
+		disassociate_b(wp);
+		associate_b2w(curbp, wp);
+		b2w(wp);
+		wp->w_update = TRUE;
+	}
+	assert(bp->b_cnt == 0);
 
 	/* now we can delete */
 	free(bp->b_buf);
