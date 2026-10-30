@@ -1,5 +1,6 @@
 /* command.c, Atto Emacs, Public Domain, Hugh Barney, 2016, Derived from: Anthony's Editor January 93 */
 
+#include <sys/param.h> // for MIN()
 #include "header.h"
 
 void quit(void) { done = 1; }
@@ -159,7 +160,8 @@ void delete(void)
 {
 	curbp->b_point = movegap(curbp, curbp->b_point);
 	if (curbp->b_egap < curbp->b_ebuf) {
-		curbp->b_egap += utf8_size(*curbp->b_egap);
+		curbp->b_egap += MIN(utf8_size(*curbp->b_egap),
+		    curbp->b_ebuf - curbp->b_egap);
 		curbp->b_point = pos(curbp, curbp->b_egap);
 		curbp->b_flags |= B_MODIFIED;
 	}
