@@ -46,7 +46,7 @@ void query_replace(void)
 		curbp->b_point -= slen;
 
 		if (ask == TRUE) {
-			msg(question);
+			msg("%s", question);
 			clrtoeol();
 			
 		qprompt:
