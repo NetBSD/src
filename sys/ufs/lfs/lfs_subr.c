@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.115 2026/10/30 01:03:04 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.116 2026/10/30 03:40:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.115 2026/10/30 01:03:04 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.116 2026/10/30 03:40:41 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,6 +441,8 @@ lfs_auto_segclean(struct lfs *fs)
 		LFS_SEGENTRY(sup, fs, i, bp);
 		changed = 0;
 		for (j = 0; j < lfs_sb_getsepb(fs); j++) {
+			if (i + j >= lfs_sb_getnseg(fs))
+				break;
 			if (sup->su_nbytes == 0) {
 				switch (sup->su_flags & (SEGUSE_ACTIVE
 					| SEGUSE_DIRTY
