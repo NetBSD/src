@@ -31,6 +31,7 @@ int getfilename(const char *prompt, char *buf, int nbuf)
 
 		case 0x7f: /* del, erase */
 		case 0x08: /* backspace */
+		case KEY_BACKSPACE:
 			if (cpos == 0) continue;
 			buf[--cpos] = '\0';
 			break;

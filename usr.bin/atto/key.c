@@ -173,6 +173,7 @@ int getinput(const char *prompt, char *buf, int nbuf, int flag)
 
 		case 0x7f: /* del, erase */
 		case 0x08: /* backspace */
+		case KEY_BACKSPACE:
 			if (cpos == 0)
 				continue;
 
@@ -183,6 +184,8 @@ int getinput(const char *prompt, char *buf, int nbuf, int flag)
 			break;
 
 		default:
+			if (c > 255)	/* function key, not a character */
+				break;
 			if (cpos < nbuf -1) {
 				addch(c);
 				buf[cpos++] = c;
