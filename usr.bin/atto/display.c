@@ -150,11 +150,18 @@ void display(window_t *wp, int flag)
 					/* reset if invalid multi-byte character */
 
 					mbtowc(NULL, NULL, 0);
-					c = 0;
+					w = -1;
+				} else {
+					w = wcwidth(c);
 				}
-				w = wcwidth(c);
-				j += w < 0 ? 1 : w;
-				display_utf8(bp, nch);
+				if (w < 0) {
+					/* invalid or non-printable */
+					addch('?');
+					j += 1;
+				} else {
+					j += w;
+					display_utf8(bp, nch);
+				}
 			} else if (isprint(*p) || *p == '\t' || *p == '\n') {
 				j += *p == '\t' ? 8-(j&7) : 1;
 				if (use_color) {
