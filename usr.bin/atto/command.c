@@ -58,6 +58,8 @@ void left(void)
 
 void right(void)
 {
+	if (curbp->b_point >= pos(curbp, curbp->b_ebuf))
+		return;
 	int n = utf8_size(*ptr(curbp,curbp->b_point));
 	while ((curbp->b_point < pos(curbp, curbp->b_ebuf)) && n-- > 0)
 		++curbp->b_point;
@@ -118,10 +120,10 @@ void pgup(void)
 
 void wright(void)
 {
-	char_t *p;
-	while (!isspace(*(p = ptr(curbp, curbp->b_point))) && p < curbp->b_ebuf)
+	point_t end_p = pos(curbp, curbp->b_ebuf);
+	while (curbp->b_point < end_p && !isspace(*ptr(curbp, curbp->b_point)))
 		++curbp->b_point;
-	while (isspace(*(p = ptr(curbp, curbp->b_point))) && p < curbp->b_ebuf)
+	while (curbp->b_point < end_p && isspace(*ptr(curbp, curbp->b_point)))
 		++curbp->b_point;
 }
 
@@ -133,7 +135,7 @@ void insert(void)
 	curbp->b_point = movegap(curbp, curbp->b_point);
 
 	/* overwrite if mid line, not EOL or EOF, CR will insert as normal */
-	if ((curbp->b_flags & B_OVERWRITE) && *input != '\r' && *(ptr(curbp, curbp->b_point)) != '\n' && curbp->b_point < pos(curbp,curbp->b_ebuf) ) {
+	if ((curbp->b_flags & B_OVERWRITE) && *input != '\r' && curbp->b_point < pos(curbp,curbp->b_ebuf) && *(ptr(curbp, curbp->b_point)) != '\n') {
 		*(ptr(curbp, curbp->b_point)) = *input;
 		if (curbp->b_point < pos(curbp, curbp->b_ebuf))
 			++curbp->b_point;
