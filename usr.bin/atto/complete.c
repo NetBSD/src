@@ -60,7 +60,10 @@ do_tab:
 
 			if (have_glob && gl.gl_pathc > 0) {
 				/* copy next match into buf */
-				strlcpy(buf, gl.gl_pathv[idx], nbuf);
+				if (strlen(gl.gl_pathv[idx]) < (size_t)nbuf)
+					strlcpy(buf, gl.gl_pathv[idx], nbuf);
+				else
+					beep();
 				/* cycling through all matches */
 				idx = (idx + 1) % gl.gl_pathc;
 			}

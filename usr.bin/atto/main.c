@@ -69,6 +69,8 @@ int main(int argc, char **argv)
 
 	if (argc) {
 		for (i = 0; i < argc; ++i) {
+			if (strlen(argv[i]) >= sizeof(curbp->b_fname))
+				fatal("%s: File name too long.\n");
 			curbp = find_buffer(argv[i], TRUE);
 			(void) insert_file(argv[i], FALSE);
 			/* Save filename regardless of load() success. */

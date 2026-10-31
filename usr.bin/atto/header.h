@@ -63,7 +63,7 @@ typedef struct buffer_t
 	char_t *b_egap;           /* end of gap */
 	int b_row;                /* cursor row */
 	int b_col;                /* cursor col */
-	char b_fname[NAME_MAX + 1]; /* filename */
+	char b_fname[PATH_MAX];   /* filename (full path) */
 	char b_bname[STRBUF_S];   /* buffer name */
 	char b_flags;             /* buffer flags */
 } buffer_t;

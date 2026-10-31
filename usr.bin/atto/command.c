@@ -194,7 +194,7 @@ void gotoline(void)
 
 void insertfile(void)
 {
-	if (getfilename("Insert file: ", temp, NAME_MAX))
+	if (getfilename("Insert file: ", temp, sizeof(temp)))
 		(void)insert_file(temp, TRUE);
 }
 
@@ -203,8 +203,7 @@ void readfile(void)
 	buffer_t *bp;
 	
 	temp[0] = '\0';
-	int result = getfilename("Find file: ", (char*)temp, NAME_MAX);
-	/* int result = getinput("Find file: ", (char*)temp, NAME_MAX, F_CLEAR); */
+	int result = getfilename("Find file: ", (char*)temp, sizeof(temp));
 
 	if (result) {
 		bp = find_buffer(temp, TRUE);
@@ -217,7 +216,7 @@ void readfile(void)
 			if (!load_file(temp)) {
 				msg("New file %s", temp);
 			}
-			strlcpy(curbp->b_fname, temp, NAME_MAX);
+			strlcpy(curbp->b_fname, temp, sizeof(curbp->b_fname));
 		}
 	}
 }
@@ -235,10 +234,10 @@ void savebuffer(void)
 
 void writefile(void)
 {
-	strlcpy(temp, curbp->b_fname, NAME_MAX);
-	if (getinput("Write file: ", temp, NAME_MAX, F_NONE))
+	strlcpy(temp, curbp->b_fname, sizeof(temp));
+	if (getinput("Write file: ", temp, sizeof(temp), F_NONE))
 		if (save(temp) == TRUE)
-			strlcpy(curbp->b_fname, temp, NAME_MAX);
+			strlcpy(curbp->b_fname, temp, sizeof(curbp->b_fname));
 }
 
 void killbuffer(void)
