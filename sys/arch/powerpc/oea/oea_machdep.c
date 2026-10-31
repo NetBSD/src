@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.88 2026/03/30 10:27:45 jmcneill Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.89 2026/10/31 19:00:23 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.88 2026/03/30 10:27:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.89 2026/10/31 19:00:23 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -996,7 +996,7 @@ oea_startup(const char *model)
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,  
 				UVM_ADV_NORMAL, UVM_FLAG_FIXED));
 		if (error != 0 || minaddr != 0xDEAC0000)
-			printf("oea_startup: failed to allocate DEAD "
+			aprint_debug("oea_startup: failed to allocate DEAD "
 			    "ZONE: error=%d\n", error);
 	}
  
