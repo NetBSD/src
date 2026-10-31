@@ -209,12 +209,16 @@ void readfile(void)
 
 	if (result) {
 		bp = find_buffer(temp, TRUE);
+		if (bp == NULL) {
+			msg("Failed to allocate buffer.");
+			return;
+		}
 		disassociate_b(curwp); /* we are leaving the old buffer for a new one */
 		curbp = bp;
 		associate_b2w(curbp, curwp);
 
 		/* load the file if not already loaded */
-		if (bp != NULL && bp->b_fname[0] == '\0') {
+		if (bp->b_fname[0] == '\0') {
 			if (!load_file(temp)) {
 				msg("New file %s", temp);
 			}
@@ -260,7 +264,10 @@ void killbuffer(void)
 
 	if (bcount == 1) {
 		/* create a scratch buffer */
-		create_scratch();
+		if (create_scratch() == NULL) {
+			msg("Failed to allocate buffer.");
+			return;
+		}
 	}
 
 	next_buffer();

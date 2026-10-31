@@ -72,12 +72,16 @@ int main(int argc, char **argv)
 			if (strlen(argv[i]) >= sizeof(curbp->b_fname))
 				fatal("%s: File name too long.\n");
 			curbp = find_buffer(argv[i], TRUE);
+			if (curbp == NULL)
+				fatal("%s: Failed to allocate required memory.\n");
 			(void) insert_file(argv[i], FALSE);
 			/* Save filename regardless of load() success. */
 			strlcpy(curbp->b_fname, argv[i], sizeof(curbp->b_fname));
 		}
 	} else {
 		curbp = create_scratch();
+		if (curbp == NULL)
+			fatal("%s: Failed to allocate required memory.\n");
 	}
 
 	wheadp = curwp = new_window();
