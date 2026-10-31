@@ -100,30 +100,73 @@ int posix_file(char *fn)
 int save(char *fn)
 {
 	FILE *fp;
+	int fd;
 	point_t length;
-		
+	mode_t mode;
+	struct stat sb;
+	char tmpname[PATH_MAX + 16];
+	const char *slash;
+	int dirlen;
+
 	if (!posix_file(fn)) {
 		msg("Not a portable POSIX file name.");
 		return (FALSE);
 	}
-	fp = fopen(fn, "w");
-	if (fp == NULL) {
-		msg("Failed to open file \"%s\".", fn);
-		return (FALSE);
+
+	/* keep the mode of the existing file, if cannot obtain it,
+	   honour the umask */
+	if (stat(fn, &sb) == -1) {
+		mode = umask(0);
+		(void) umask(mode);
+		mode = 0666 & ~mode;
+	} else {
+		mode = sb.st_mode & 07777;
 	}
-	(void) movegap(curbp, (point_t) 0);
-	length = (point_t) (curbp->b_ebuf - curbp->b_egap);
-	if (fwrite(curbp->b_egap, sizeof (char), (size_t) length, fp) != (size_t)length) {
+
+	/* temp file in the same directory so rename() is atomic */
+	slash = strrchr(fn, '/');
+	dirlen = slash == NULL ? 0 : (int)(slash - fn) + 1;
+	if (snprintf(tmpname, sizeof(tmpname), "%.*s.%s.XXXXXX", dirlen, fn,
+	    fn + dirlen) >= (int)sizeof(tmpname)) {
+		msg("File name too long \"%s\".", fn);
+		return FALSE;
+	}
+	if ((fd = mkstemp(tmpname)) < 0) {
+		msg("Failed to open file \"%s\".", fn);
+		return FALSE;
+	}
+	if ((fp = fdopen(fd, "w")) == NULL) {
+		msg("Failed to open file \"%s\".", fn);
+		close(fd);
+		goto bad1;
+	}
+
+	(void) movegap(curbp, (point_t)0);
+	length = (point_t)(curbp->b_ebuf - curbp->b_egap);
+	if (fwrite(curbp->b_egap, sizeof(char), (size_t)length, fp) != (size_t)length) {
 		msg("Failed to write file \"%s\".", fn);
-		return (FALSE);
+		goto bad;
+	}
+	if (fchmod(fd, mode) == -1) {
+		msg("Failed to restore permissions on file \"%s\".", fn);
+		goto bad1;
 	}
 	if (fclose(fp) != 0) {
 		msg("Failed to close file \"%s\".", fn);
-		return (FALSE);
+		goto bad;
+	}
+	if (rename(tmpname, fn) == -1) {
+		msg("Failed to rename file \"%s\".", fn);
+		goto bad1;
 	}
 	curbp->b_flags &= ~B_MODIFIED;
 	msg("File \"%s\" %ld bytes saved.", fn, pos(curbp, curbp->b_ebuf));
-	return (TRUE);
+	return TRUE;
+bad:
+	fclose(fp);
+bad1:
+	unlink(tmpname);
+	return FALSE;
 }
 
 int load_file(char *fn)
