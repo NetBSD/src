@@ -11,6 +11,8 @@ static int is_symbol(char_t);
 
 static char_t get_at(buffer_t *bp, point_t pt)
 {
+	if (pt >= pos(bp, bp->b_ebuf))
+		return '\0';
 	return (*ptr(bp, pt));
 }
 
