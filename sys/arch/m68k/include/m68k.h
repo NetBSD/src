@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.38 2026/04/28 03:29:09 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.39 2026/10/31 20:59:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -149,8 +149,8 @@ void	zeropage(void *addr);
 
 /* switch_subr.s */
 void	lwp_trampoline(void);
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
+void	fpu_save(struct fpframe *);
+void	fpu_restore(struct fpframe *);
 void	savectx(struct pcb *);
 
 /* w16copy.s */

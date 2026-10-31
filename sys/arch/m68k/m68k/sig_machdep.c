@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.55 2026/10/31 20:53:49 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.56 2026/10/31 20:59:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.55 2026/10/31 20:53:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.56 2026/10/31 20:59:27 thorpej Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
@@ -271,7 +271,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, u_int *flags)
 	 * store in its PCB.
 	 */
 	if (fputype != FPU_NONE && l == curlwp) {
-		m68881_save(fpf);
+		fpu_save(fpf);
 	}
 
 	mcp->__mc_pad.__mc_frame.__mcf_fpf_u1 = fpf->FPF_u1;
@@ -436,7 +436,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, u_int flags)
 	 * (from the PCB) when this lwp is given the CPU.
 	 */
 	if (fputype != FPU_NONE && l == curlwp) {
-		m68881_restore(fpf);
+		fpu_restore(fpf);
 	}
 #endif /* M68K_FPCOPROC */
 

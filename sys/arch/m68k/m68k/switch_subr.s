@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.47 2026/10/31 20:53:49 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.48 2026/10/31 20:59:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -258,7 +258,7 @@ ENTRY(fpu_make_idle_frame)
 /*
  * Save and restore 68881 state.
  */
-ENTRY(m68881_save)
+ENTRY(fpu_save)
 	movl	4(%sp),%a0		| save area pointer
 	fsave	(%a0)			| save state
 #if defined(M68020) || defined(M68030) || defined(M68040)
@@ -286,7 +286,7 @@ ENTRY(m68881_save)
         rts
 #endif
 
-ENTRY(m68881_restore)
+ENTRY(fpu_restore)
 	movl	4(%sp),%a0		| save area pointer
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
@@ -323,8 +323,8 @@ ENTRY(m68881_restore)
 	.even
 #endif
 
-ENTRY_NOPROFILE(m68881_save)
-GLOBAL(m68881_restore)
+ENTRY_NOPROFILE(fpu_save)
+GLOBAL(fpu_restore)
 #ifdef  DIAGNOSTIC
 	pea	.L68881panic
 	jbsr	_C_LABEL(panic)

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.25 2026/10/31 11:50:18 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.26 2026/10/31 20:59:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2026 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.25 2026/10/31 11:50:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.26 2026/10/31 20:59:27 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -700,7 +700,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	pcb->pcb_fpregs.fpf_null = 0;
 #if !defined(__mc68010__)
 	if (fputype)
-		m68881_restore(&pcb->pcb_fpregs);
+		fpu_restore(&pcb->pcb_fpregs);
 #endif
 
 #ifdef COMPAT_SUNOS
