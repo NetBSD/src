@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.46 2026/03/29 13:41:37 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.47 2026/10/31 20:53:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -226,14 +226,14 @@ ENTRY(savectx)
 
 #ifdef M68K_FPCOPROC
 /*
- * void m68k_make_fpu_idle_frame(void)
+ * void fpu_make_idle_frame(void)
  *
  * On machines with an FPU, generate an "idle" state frame to be
  * used by cpu_setmcontext().
  *
  * Before calling, make sure the machine actually has an FPU ...
  */
-ENTRY(m68k_make_fpu_idle_frame)
+ENTRY(fpu_make_idle_frame)
 	clrl	-(%sp)
 	fnop
 
@@ -245,7 +245,7 @@ ENTRY(m68k_make_fpu_idle_frame)
 	fnop
 
 	/* Save the resulting idle frame into the buffer */
-	lea	_C_LABEL(m68k_cached_fpu_idle_frame),%a0
+	lea	_C_LABEL(fpu_idle_frame),%a0
 	fsave	(%a0)
 	fnop
 

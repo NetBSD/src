@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.54 2026/10/31 20:14:20 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.55 2026/10/31 20:53:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.54 2026/10/31 20:14:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.55 2026/10/31 20:53:49 thorpej Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
@@ -74,7 +74,7 @@ int sigpid = 0;
 #endif
 
 #ifdef M68K_FPCOPROC
-struct fpframe m68k_cached_fpu_idle_frame;
+struct fpframe fpu_idle_frame;
 
 /*
  * Test for a null floating point frame given a pointer to the start
@@ -412,8 +412,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, u_int flags)
 		 * "idle" when the frame was created, so use the
 		 * cached idle frame.
 		 */
-		fpf->FPF_u1 = m68k_cached_fpu_idle_frame.FPF_u1;
-		fpf->FPF_u2 = m68k_cached_fpu_idle_frame.FPF_u2;
+		fpf->FPF_u1 = fpu_idle_frame.FPF_u1;
+		fpf->FPF_u2 = fpu_idle_frame.FPF_u2;
 		(void)memcpy(fpf->fpf_regs, fpr->__fp_fpregs,
 		    sizeof(fpf->fpf_regs));
 		fpf->fpf_fpcr = fpr->__fp_pcr;
