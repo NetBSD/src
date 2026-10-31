@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfext_route.c,v 1.4 2026/10/30 23:06:44 joe Exp $");
+__RCSID("$NetBSD: npfext_route.c,v 1.5 2026/10/31 08:04:12 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -106,7 +106,7 @@ npfext_route_param(nl_ext_t *ext, const char *param, const char *val)
         case PARAM_INET4:
             if (inet_pton(AF_INET, val, &addr) != 1) {
                 warn("Invalid IPv4 address `%s'", val);
-                return EINVAL;:q!
+                return EINVAL;
             }
             npf_ext_param_binary(ext, name, &addr, sizeof(struct in_addr));
             break;
