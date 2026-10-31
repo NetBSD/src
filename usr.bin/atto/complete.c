@@ -69,7 +69,9 @@ do_tab:
 			break;
 
 		default:
-			if (cpos < nbuf - 1) {
+			if (k >= 0x0100)
+				beep();
+			else if (cpos < nbuf - 1) {
 				  buf[cpos++] = k;
 				  buf[cpos] = '\0';
 			}
