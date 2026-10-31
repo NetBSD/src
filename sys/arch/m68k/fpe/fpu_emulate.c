@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.49 2025/01/06 07:34:24 isaki Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.50 2026/10/31 20:14:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.49 2025/01/06 07:34:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.50 2026/10/31 20:14:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -148,6 +148,20 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 		DPRINTF(("%s: fault reading word1\n", __func__));
 		fpe_abort(frame, ksi, SIGSEGV, SEGV_ACCERR);
 	}
+
+	/*
+	 * At this point, we know we're going to execute some sort of
+	 * FP instruction.  Set the FP frame state to mimic 68881
+	 * idle state so that other logic elsewhere can interact with
+	 * the FP state in the PCB in natural way.
+	 *
+	 * If a program never executes an (emulated) FP instruction, then
+	 * the version field will remain 0, and e.g. cpu_getmcontext()
+	 * won't bother to save it.
+	 */
+	fpf->fpf_version = 0x1f;
+	fpf->fpf_fsize = 0x18;
+
 	insn.is_word1 = sval;
 	/* all FPU instructions are at least 4-byte long */
 	insn.is_advance = 4;
