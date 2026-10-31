@@ -73,8 +73,7 @@ point_t movegap(buffer_t *bp, point_t offset)
 /* Given a buffer offset, convert it to a pointer into the buffer */
 char_t * ptr(buffer_t *bp, point_t offset)
 {
-	if (offset < 0)
-		return (bp->b_buf);
+	assert(offset >= 0);
 	return (bp->b_buf+offset + (bp->b_buf + offset < bp->b_gap ? 0 : bp->b_egap-bp->b_gap));
 }
 

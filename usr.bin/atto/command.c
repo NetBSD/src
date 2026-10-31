@@ -94,10 +94,9 @@ void lnend(void)
 
 void wleft(void)
 {
-	char_t *p;
-	while (!isspace(*(p = ptr(curbp, curbp->b_point))) && curbp->b_buf < p)
+	while (curbp->b_point > 0 && !isspace(*ptr(curbp, curbp->b_point)))
 		--curbp->b_point;
-	while (isspace(*(p = ptr(curbp, curbp->b_point))) && curbp->b_buf < p)
+	while (curbp->b_point > 0 && isspace(*ptr(curbp, curbp->b_point)))
 		--curbp->b_point;
 }
 

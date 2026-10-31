@@ -5,11 +5,12 @@
 /* Reverse scan for start of logical line containing offset */
 point_t lnstart(buffer_t *bp, point_t off)
 {
-	char_t *p;
-	do
-		p = ptr(bp, --off);
-	while (bp->b_buf < p && *p != '\n');
-	return (bp->b_buf < p ? ++off : 0);
+	while (off > 0) {
+		if (*ptr(bp, off - 1) == '\n')
+			return off;
+		--off;
+	}
+	return 0;
 }
 
 /* Forward scan for start of logical line segment (corresponds to screen line)  containing 'finish' */
