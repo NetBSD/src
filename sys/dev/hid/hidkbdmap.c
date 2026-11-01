@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.16 2025/05/24 16:50:54 nia Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.17 2026/11/01 17:09:51 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.16 2025/05/24 16:50:54 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.17 2026/11/01 17:09:51 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -142,13 +142,12 @@ Static const keysym_t hidkbd_keydesc_us[] = {
     KC(99), 			KS_KP_Delete,	KS_KP_Decimal,
     KC(100),			KS_backslash,	KS_bar,
     KC(101),			KS_Menu,
+    KC(102),			KS_Power,
 /* ... */
     KC(104), 			KS_f13,
     KC(105), 			KS_f14,
     KC(106), 			KS_f15,
     KC(107), 			KS_f16,
-/* ... */
-    KC(109),			KS_Power,
 /* ... many unmapped keys ... */
     KC(224),  KS_Cmd1,		KS_Control_L,
     KC(225), 			KS_Shift_L,
