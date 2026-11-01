@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.23 2022/01/26 11:48:53 andvar Exp $
+.\" $NetBSD: secmodel.9,v 1.24 2026/11/01 00:29:45 gutteridge Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -353,7 +353,8 @@ the fall-back security model.
 .Pp
 Here is example code that implements the above:
 .Bd -literal
-#include <secmodel/bsd44/bsd44.h>
+#include <secmodel/suser/suser.h>
+#include <secmodel/securelevel/securelevel.h>
 
 /*
  * Internal fall-back scope for the network scope.
@@ -372,7 +373,7 @@ secmodel_jenna_start(void)
 	    JENNA_ISCOPE_NETWORK, NULL, NULL);
 
 	kauth_listen_scope(JENNA_ISCOPE_NETWORK,
-	    secmodel_bsd44_suser_network_cb, NULL);
+	    secmodel_suser_network_cb, NULL);
 	kauth_listen_scope(JENNA_ISCOPE_NETWORK,
 	    secmodel_securelevel_network_cb, NULL);
 }
@@ -405,7 +406,7 @@ secmodel_jenna_network_cb(kauth_cred_t cred, kauth_action_t action,
 	}
 
 	/*
-	 * If we have don't have a decision, fall-back to the bsd44
+	 * If we don't have a decision, fall back to the underlying
 	 * security model.
 	 */
 	if (result == KAUTH_RESULT_DEFER)
@@ -443,11 +444,11 @@ secmodel_jenna_network_cb(kauth_cred_t cred, kauth_action_t action,
 	}
 
 	/*
-	 * If we have don't have a decision, fall-back to the bsd44
-	 * security model's suser behavior.
+	 * If we don't have a decision, fall back to the suser
+	 * security model's behavior.
 	 */
 	if (result == KAUTH_RESULT_DEFER)
-		result = secmodel_bsd44_suser_network_cb(cred, action,
+		result = secmodel_suser_network_cb(cred, action,
 		    cookie, arg0, arg1, arg2, arg3);
 
 	return (result);
