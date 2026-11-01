@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.22 2025/10/06 13:12:29 riastradh Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.23 2026/11/01 18:04:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.22 2025/10/06 13:12:29 riastradh Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.23 2026/11/01 18:04:17 kre Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -480,6 +480,9 @@ pthread_attr_getname_np(const pthread_attr_t *attr, char *name, size_t len,
 
 	pthread__error(EINVAL, "Invalid attribute",
 	    attr->pta_magic == PT_ATTR_MAGIC);
+
+	if (len == 0)
+		return EINVAL;
 
 	if ((p = attr->pta_private) == NULL) {
 		name[0] = '\0';

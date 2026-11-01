@@ -1,4 +1,4 @@
-.\"     $NetBSD: pthread_attr_getname_np.3,v 1.7 2017/10/22 16:37:24 abhinav Exp $
+.\"     $NetBSD: pthread_attr_getname_np.3,v 1.8 2026/11/01 18:04:17 kre Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd July 7, 2010
+.Dd November 1, 2026
 .Dt PTHREAD_ATTR_GETNAME_NP 3
 .Os
 .Sh NAME
@@ -72,7 +72,7 @@ The attribute whose descriptive name will be set.
 The
 .Xr printf 3
 format string to be used to construct the descriptive name of the attribute.
-The resulted descriptive name should be shorter than
+The resulting descriptive name should be shorter than
 .Dv PTHREAD_MAX_NAMELEN_NP .
 .It Fa arg
 The
@@ -89,8 +89,18 @@ Otherwise, an error number is returned.
 Both functions are non-standard extensions.
 .\" ------------------------------------------------------------
 .Sh ERRORS
-No errors are defined for
-.Fn pthread_attr_getname_np .
+The
+.Fn pthread_attr_getname_np
+function will fail, if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The supplied
+.Fa attr
+does not represent a valid attribute,
+or if
+.Fa len
+is givan as zero.
+.El
 .Pp
 The
 .Fn pthread_attr_setname_np
@@ -99,7 +109,8 @@ function may fail if:
 .It Bq Er EINVAL
 The supplied descriptive
 .Fa name
-was longer than
+(once formatted)
+is longer than
 .Dv PTHREAD_MAX_NAMELEN_NP .
 .It Bq Er ENOMEM
 There was insufficient memory for the operation.

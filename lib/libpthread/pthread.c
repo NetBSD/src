@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.196 2026/05/05 12:27:25 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.197 2026/11/01 18:04:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.196 2026/05/05 12:27:25 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.197 2026/11/01 18:04:17 kre Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -810,6 +810,9 @@ pthread_getname_np(pthread_t thread, char *name, size_t len)
 
 	pthread__error(EINVAL, "Invalid thread",
 	    thread->pt_magic == PT_MAGIC);
+
+	if (len == 0)
+		return EINVAL;
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
