@@ -766,8 +766,10 @@ getdouble(void)
 		return 0.0;
 
 	/* This is a NetBSD extension, not required by POSIX (it is useless) */
-	if (*(ep = *gargv) == '\"' || *ep == '\'')
+	if (*(ep = *gargv) == '\"' || *ep == '\'') {
+		gargv++;
 		return (long double)wide_char(ep, 1);
+	}
 
 	errno = 0;
 	val = strtold(*gargv, &ep);
