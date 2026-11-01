@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.28 2024/12/28 03:11:09 isaki Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.29 2026/11/01 12:13:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -34,7 +34,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.28 2024/12/28 03:11:09 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.29 2026/11/01 12:13:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -327,7 +327,9 @@ fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 		}
 #endif
 		src = (char *)ea->ea_fea;
-		copyin(src + ea->ea_moffs, dst, len);
+		if (copyin(src + ea->ea_moffs, dst, len) != 0) {
+			return SIGSEGV;
+		}
 		if (ea->ea_flags & EA_PREDECR) {
 			frame->f_regs[ea->ea_regnum] = ea->ea_fea;
 			ea->ea_fea -= step;
@@ -375,7 +377,9 @@ fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 	} else if (ea->ea_flags & EA_ABS) {
 		DPRINTF(("%s: abs addr %08x\n", __func__, ea->ea_absaddr));
 		src = (char *)ea->ea_absaddr;
-		copyin(src, dst, len);
+		if (copyin(src, dst, len) != 0) {
+			return SIGSEGV;
+		}
 	} else /* register indirect */ {
 		if (ea->ea_flags & EA_PC_REL) {
 			DPRINTF(("%s: using PC\n", __func__));
@@ -410,7 +414,9 @@ fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 		if (sig)
 			return sig;
 
-		copyin(src + ea->ea_moffs, dst, len);
+		if (copyin(src + ea->ea_moffs, dst, len) != 0) {
+			return SIGSEGV;
+		}
 
 		/* do post-increment */
 		if (ea->ea_flags & EA_POSTINCR) {
@@ -472,7 +478,9 @@ fpu_store_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 		}
 #endif
 		dst = (char *)ea->ea_fea;
-		copyout(src, dst + ea->ea_moffs, len);
+		if (copyout(src, dst + ea->ea_moffs, len) != 0) {
+			return SIGSEGV;
+		}
 		if (ea->ea_flags & EA_PREDECR) {
 			frame->f_regs[ea->ea_regnum] = ea->ea_fea;
 			ea->ea_fea -= step;
@@ -488,7 +496,9 @@ fpu_store_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 	} else if (ea->ea_flags & EA_ABS) {
 		DPRINTF(("%s: abs addr %08x\n", __func__, ea->ea_absaddr));
 		dst = (char *)ea->ea_absaddr;
-		copyout(src, dst + ea->ea_moffs, len);
+		if (copyout(src, dst + ea->ea_moffs, len) != 0) {
+			return SIGSEGV;
+		}
 		ea->ea_moffs += len;
 	} else if (ea->ea_flags & EA_DIRECT) {
 		if (len > 4) {
@@ -530,7 +540,9 @@ fpu_store_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
 			return sig;
 
 		DPRINTF(("%s: dst addr=%p+%d\n", __func__, dst, ea->ea_moffs));
-		copyout(src, dst + ea->ea_moffs, len);
+		if (copyout(src, dst + ea->ea_moffs, len) != 0) {
+			return SIGSEGV;
+		}
 
 		/* do post-increment */
 		if (ea->ea_flags & EA_POSTINCR) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fscale.c,v 1.17 2025/01/06 07:34:24 isaki Exp $	*/
+/*	$NetBSD: fpu_fscale.c,v 1.18 2026/11/01 12:13:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fscale.c,v 1.17 2025/01/06 07:34:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fscale.c,v 1.18 2026/11/01 12:13:24 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -165,7 +165,13 @@ fpu_emul_fscale(struct fpemu *fe, struct instruction *insn)
 			printf("%c%d@\n", regname, insn->is_ea.ea_regnum & 7);
 		}
 #endif
-		fpu_load_ea(frame, insn, &insn->is_ea, (char*)buf);
+		sig = fpu_load_ea(frame, insn, &insn->is_ea, (char*)buf);
+		if (sig) {
+#if DEBUG_FPE
+			printf("fpu_emul_fscale: error in load_ea\n");
+#endif
+			return sig;
+		}
 
 #if DEBUG_FPE
 		printf("fpu_emul_fscale: src = %08x%08x%08x, siz = %d\n",

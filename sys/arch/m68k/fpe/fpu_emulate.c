@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.50 2026/10/31 20:14:20 thorpej Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.51 2026/11/01 12:13:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.50 2026/10/31 20:14:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.51 2026/11/01 12:13:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -728,7 +728,11 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 		}
 #endif /* DEBUG_FPE */
 
-		fpu_load_ea(frame, insn, &insn->is_ea, (char*)buf);
+		sig = fpu_load_ea(frame, insn, &insn->is_ea, (char*)buf);
+		if (sig) {
+			DPRINTF(("%s: error in fpu_load_ea\n", __func__));
+			return sig;
+		}
 		if (format == FTYPE_WRD) {
 			/* sign-extend */
 			buf[0] &= 0xffff;

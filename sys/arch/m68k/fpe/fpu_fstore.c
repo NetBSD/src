@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.17 2025/01/06 06:14:17 isaki Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.18 2026/11/01 12:13:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.17 2025/01/06 06:14:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.18 2026/11/01 12:13:24 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -132,7 +132,13 @@ fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 #endif
 	fpu_implode(fe, &fe->fe_f3, format, buf);
 
-	fpu_store_ea(frame, insn, &insn->is_ea, (char *)buf);
+	sig = fpu_store_ea(frame, insn, &insn->is_ea, (char *)buf);
+	if (sig) {
+#if DEBUG_FPE
+		printf("  fpu_emul_fstore: failed in store_ea sig=%d\n", sig);
+#endif
+		return sig;
+	}
 #if DEBUG_FPE
 	printf("  fpu_emul_fstore: %08x,%08x,%08x size %d\n",
 	    buf[0], buf[1], buf[2], insn->is_datasize);
