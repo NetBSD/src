@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.28 2026/03/28 01:44:36 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.29 2026/11/01 16:38:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -253,8 +253,13 @@ ENTRY_NOPROFILE(fpunsupp_4060)
 ENTRY_NOPROFILE(fpfline)
 	clrl	-(%sp)			| stack adjust count
 	moveml	#0xFFFF,-(%sp)		| save registers
-	moveq	#T_FPEMULI,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
+	movl	%usp,%a0		| get and save
+	movl	%a0,FR_SP(%sp)		|   the user stack pointer
+	clrl	-(%sp)			| no VA arg
+	clrl	-(%sp)			| or code arg
+	movl	#T_FPEMULI,-(%sp)	| push trap type
+	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack
+					|   adjustments
 
 #ifdef M68K_FPCOPROC
 /*
