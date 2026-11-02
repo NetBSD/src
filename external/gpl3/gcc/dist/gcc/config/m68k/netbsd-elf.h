@@ -92,7 +92,7 @@ along with GCC; see the file COPYING3.  If not see
 #define FUNCTION_PROFILER(FILE, LABELNO)				\
 do									\
   {									\
-    if (TARGET_COLDFIRE)						\
+    if (TARGET_COLDFIRE || TARGET_68010)				\
       {									\
         asm_fprintf (FILE, "\tmovea.l #%LLP%d-.,%Ra1\n", (LABELNO));	\
         asm_fprintf (FILE, "\tlea (-6,%Rpc,%Ra1),%Ra1\n");	\
