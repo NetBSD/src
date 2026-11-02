@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.9 2026/11/01 10:52:49 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.10 2026/11/02 11:37:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -134,7 +134,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.9 2026/11/01 10:52:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.10 2026/11/02 11:37:19 riastradh Exp $");
 
 #include <linux/interrupt.h>
 
@@ -1415,8 +1415,8 @@ static inline void write_desc(struct intel_engine_execlists *execlists, u64 desc
 {
 #ifdef __NetBSD__
 	if (execlists->ctrl_reg) {
-		bus_space_write_4(execlists->bst, execlists->bsh, execlists->submit_reg + port * 2 * sizeof(u32), lower_32_bits(desc));
-		bus_space_write_4(execlists->bst, execlists->bsh, execlists->submit_reg + port * 2 * sizeof(u32) + 1, upper_32_bits(desc));
+		bus_space_write_4(execlists->bst, execlists->bsh, execlists->submit_reg + sizeof(u32) * (port * 2), lower_32_bits(desc));
+		bus_space_write_4(execlists->bst, execlists->bsh, execlists->submit_reg + sizeof(u32) * (port * 2 + 1), upper_32_bits(desc));
 	} else {
 		bus_space_write_4(execlists->bst, execlists->bsh, execlists->submit_reg, upper_32_bits(desc));
 		bus_space_write_4(execlists->bst, execlists->bsh, execlists->submit_reg, lower_32_bits(desc));
