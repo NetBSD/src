@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.60 2026/08/05 01:01:47 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.61 2026/11/02 13:04:43 thorpej Exp $
 #
 # INSTALL
 
@@ -6,9 +6,8 @@ include	"arch/mac68k/conf/std.mac68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os -fno-omit-frame-pointer"
-	# Optimise for space. Implies -O2. -fno-omit-frame-pointer is
-	# necessary for backtraces in DDB.
+makeoptions	COPTS="-Os"
+	# Optimise for space. Implies -O2.
 
 maxusers	8		# estimated number of users
 

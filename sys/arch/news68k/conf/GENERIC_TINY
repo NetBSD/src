@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.95 2026/09/20 10:29:11 tsutsui Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.96 2026/11/02 13:04:44 thorpej Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,11 +6,9 @@ include 	"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.95 $"
+#ident 		"GENERIC_TINY-$Revision: 1.96 $"
 
-makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
-	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
-	# backtraces in DDB.
+makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables"
 
 maxusers	4
 

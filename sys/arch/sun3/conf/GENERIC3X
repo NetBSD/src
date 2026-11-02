@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.141 2022/08/17 19:13:05 tsutsui Exp $
+# $NetBSD: GENERIC3X,v 1.142 2026/11/02 13:04:44 thorpej Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -7,11 +7,10 @@ include 	"arch/sun3/conf/std.sun3x"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC3X-$Revision: 1.141 $"
+#ident		"GENERIC3X-$Revision: 1.142 $"
 
-makeoptions	COPTS="-Os -fno-unwind-tables -fno-omit-frame-pointer"
-	# Bootloader has size limit (~2MB). -fno-omit-frame-pointer is
-	# necessary for backtraces in DDB.
+makeoptions	COPTS="-Os -fno-unwind-tables"
+	# Bootloader has size limit (~2MB).
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE	# XXX - Ever needed?

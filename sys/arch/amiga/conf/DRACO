@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.203 2026/08/05 01:01:46 thorpej Exp $
+# $NetBSD: DRACO,v 1.204 2026/11/02 13:04:42 thorpej Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,11 +29,9 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.203 $"
+#ident 		"GENERIC-$Revision: 1.204 $"
 
-makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
-	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
-	# backtraces in DDB.
+makeoptions	COPTS="-O2 -fno-reorder-blocks"
 
 maxusers	8
 options 	RTC_OFFSET=0
