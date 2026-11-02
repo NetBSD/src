@@ -321,7 +321,7 @@ void copy_cut(int cut)
 		p = ptr(curbp, curbp->b_mark);
 		nscrap = curbp->b_point - curbp->b_mark;
 	}
-	if ((scrap = (char_t*) malloc(nscrap)) == NULL) {
+	if ((scrap = malloc(nscrap)) == NULL) {
 		nscrap = 0;
 		msg("No more memory available.");
 	} else {

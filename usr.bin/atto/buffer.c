@@ -40,7 +40,7 @@ buffer_t* find_buffer (const char *fname, int cflag)
 	}
 
 	if (cflag != FALSE) {
-		if ((bp = (buffer_t *) malloc (sizeof (buffer_t))) == NULL)
+		if ((bp = malloc (sizeof (buffer_t))) == NULL)
 			return (0);
 
 		buffer_init(bp);
