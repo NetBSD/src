@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.73 2026/08/05 01:01:46 thorpej Exp $
+# $NetBSD: INSTALL,v 1.74 2026/11/02 13:43:37 thorpej Exp $
 #
 # INSTALL machine description file
 #
@@ -10,7 +10,7 @@ include 	"arch/hp300/conf/std.hp300"
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Optimize for space.
-makeoptions	COPTS="-Os -fno-unwind-tables"
+makeoptions	COPTS="-Os"
 
 maxusers	8		# estimated number of users
 

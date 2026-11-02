@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.144 2026/11/02 13:04:44 thorpej Exp $
+# $NetBSD: GENERIC,v 1.145 2026/11/02 13:43:38 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,9 +22,9 @@ include 	"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.144 $"
+#ident 		"GENERIC-$Revision: 1.145 $"
 
-makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables"
+makeoptions	COPTS="-O2 -fno-reorder-blocks"
 
 maxusers	8
 

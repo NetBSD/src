@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.127 2026/11/02 13:04:43 thorpej Exp $
+# $NetBSD: ATARITT,v 1.128 2026/11/02 13:43:37 thorpej Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -8,7 +8,7 @@
 #		NetBSD: GENERIC.in,v 1.124 2022/08/07 02:52:24 simonb Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
-makeoptions COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables"
+makeoptions COPTS="-O2 -fno-reorder-blocks"
 maxusers 16
 options HZ=64 # Set the clock-rate (48/64/96)
 options INSECURE # disable kernel security levels

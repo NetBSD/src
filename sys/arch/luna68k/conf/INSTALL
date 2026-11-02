@@ -1,10 +1,10 @@
-# $NetBSD: INSTALL,v 1.37 2026/08/05 01:01:46 thorpej Exp $
+# $NetBSD: INSTALL,v 1.38 2026/11/02 13:43:37 thorpej Exp $
 #
 # config for installation ramdisk kernel
 #
 include 	"arch/luna68k/conf/std.luna68k"
 
-makeoptions	COPTS="-Os -fno-unwind-tables"	# Optimise for space.
+makeoptions	COPTS="-Os"	# Optimise for space.
 
 maxusers	4
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.m68k.inc,v 1.3 2026/11/02 12:27:22 thorpej Exp $
+#	$NetBSD: Makefile.kern.m68k.inc,v 1.4 2026/11/02 13:43:39 thorpej Exp $
 
 # Special make rule to build fpu files in the kernel and avoid passing
 # -msoft-float.  Use this with config(1) file, eg:
@@ -14,3 +14,9 @@ HAVE_KGDB!=	grep '\#define[ 	]*KGDB' opt_kgdb.h 2>/dev/null || echo no
 .if defined(PROF) || ${HAVE_DDB} != "no" || ${HAVE_KGDB} != "no"
 CFLAGS+=	-fno-omit-frame-pointer
 .endif
+
+#
+# Turn off all unwind tables; they're not terribly useful in our
+# kernel environment and add a lot of needless bulk.
+#
+CFLAGS+=	-fno-unwind-tables

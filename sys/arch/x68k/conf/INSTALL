@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.124 2026/08/05 01:01:47 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.125 2026/11/02 13:43:38 thorpej Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,9 +8,9 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.124 $"
+#ident 		"INSTALL-$Revision: 1.125 $"
 
-makeoptions	COPTS="-Os -fno-unwind-tables" # Optimise for space. Implies -O2
+makeoptions	COPTS="-Os" # Optimise for space. Implies -O2
 
 maxusers	4
 
