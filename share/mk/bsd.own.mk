@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1492 2026/10/31 14:35:59 tsutsui Exp $
+#      $NetBSD: bsd.own.mk,v 1.1493 2026/11/02 23:47:33 thorpej Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -986,11 +986,6 @@ MKPROFILE.or1k=	no
 .if ${MACHINE_ARCH} == "m68000"
 NOPIC=		# defined
 MKISCSI=	no
-# XXX GCC 4 outputs mcount() calling sequences that try to load values
-# from over 64KB away and this fails to assemble.
-.if defined(HAVE_GCC)
-NOPROFILE=	# defined
-.endif
 .endif
 
 #
