@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.578.2.6 2026/07/19 15:44:35 martin Exp $
+.\"	$NetBSD: main,v 1.578.2.7 2026/11/02 16:25:40 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -502,27 +502,27 @@ possible,
 .Nx
 would not exist.
 .
-.if \n[FOR_RELEASE] \{\
-.Ss "Dedication"
-.Pp
-.
-.Nx
-\n[major].0 is dedicated to the memories of Alan P Barrett, who
-passed away in May 2026, and Berndt Josef Wulf, who died
-in June 2023, but we only discovered recently.
-.Pp
-Alan joined the NetBSD project in 2005 and was a member of the
-core team from 2011 to 2016.
-Over the years he commited nearly 1200 changes to NetBSD,
-all over the source tree.
-.Pp
-Berndt joined in 1999 an made more than 100 changes both
-to pkgsrc and the base system.
-.Pp
-Both were smart, friendly and willing to share their knowledge.
-The project lost two excellent contributors.
-.Pp
-.\} \"  \n[FOR_RELEASE]
+.\" .if \n[FOR_RELEASE] \{\
+.\" .Ss "Dedication"
+.\" .Pp
+.\" .
+.\" .Nx
+.\" \n[major].0 is dedicated to the memories of Alan P Barrett, who
+.\" passed away in May 2026, and Berndt Josef Wulf, who died
+.\" in June 2023, but we only discovered recently.
+.\" .Pp
+.\" Alan joined the NetBSD project in 2005 and was a member of the
+.\" core team from 2011 to 2016.
+.\" Over the years he commited nearly 1200 changes to NetBSD,
+.\" all over the source tree.
+.\" .Pp
+.\" Berndt joined in 1999 an made more than 100 changes both
+.\" to pkgsrc and the base system.
+.\" .Pp
+.\" Both were smart, friendly and willing to share their knowledge.
+.\" The project lost two excellent contributors.
+.\" .Pp
+.\" .\} \"  \n[FOR_RELEASE]
 .ie \n[RELEASE_BRANCH] .Ss Changes Between The NetBSD \n[oldvers] \
 and \n[major] Releases
 .el .Ss Changes Between The NetBSD \n[oldvers] and \
