@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.2 2026/10/30 22:26:44 nia Exp $	*/
+/*	$NetBSD: menu.c,v 1.3 2026/11/02 08:33:37 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -121,7 +121,7 @@ create_menu_popup(MENU *parent, MENU *child, int y, int x,
 		lhs = x;
 	} else {
 		if (parent == NULL) {
-			fatal("%s: Bad parent in create_menu_popup\n");
+			fatal("Bad parent in create_menu_popup");
 		}
 
 		index = item_index(current_item(parent));
@@ -131,7 +131,7 @@ create_menu_popup(MENU *parent, MENU *child, int y, int x,
 	}
 
 	if ((popup = newwin(rows, cols, y, lhs)) == NULL) {
-		fatal("%s: Could not create popup win\n");
+		fatal("Could not create popup win");
 	}
 
 	assert(popup != NULL);
@@ -157,7 +157,7 @@ handle_menu_popup(MENU *menu, WINDOW *popup, const char *name)
 
 	(void)name;
 	if ((status = post_menu(menu)) < 0) {
-		fatal("%s: Post of popup menu failed\n");
+		fatal("Post of popup menu failed");
 		return;
 	}
 
@@ -334,7 +334,7 @@ edit_item_init(void)
 	edit_items[5] = NULL;
 
 	if ((edit_menu = new_menu(edit_items)) == NULL)
-		fatal("%s: Failed to create edit menu\n");
+		fatal("Failed to create edit menu");
 
 	set_menu_format(edit_menu, 5, 1);
 	menu_opts_on(edit_menu, O_SHOWDESC);
@@ -359,7 +359,7 @@ view_item_init(void)
 	view_items[2] = NULL;
 
 	if ((view_menu = new_menu(view_items)) == NULL)
-		fatal("%s: Failed to create view menu\n");
+		fatal("Failed to create view menu");
 
 	set_menu_format(view_menu, 2, 1);
 	menu_opts_on(view_menu, O_SHOWDESC);
@@ -377,7 +377,7 @@ file_item_callback(MENU *parent)
 	if (file_popup != NULL) {
 		handle_menu_popup(file_menu, file_popup, "file");
 	} else {
-		fatal("%s: File menu popup failed.\n");
+		fatal("File menu popup failed.");
 	}
 }
 
@@ -391,7 +391,7 @@ edit_item_callback(MENU *parent)
 	if (edit_popup != NULL) {
 		handle_menu_popup(edit_menu, edit_popup, "edit");
 	} else {
-		fatal("%s: Edit menu popup failed.\n");
+		fatal("Edit menu popup failed.");
 	}
 }
 
@@ -405,7 +405,7 @@ view_item_callback(MENU *parent)
 	if (view_popup != NULL) {
 		handle_menu_popup(view_menu, view_popup, "view");
 	} else {
-		fatal("%s: View menu popup failed.\n");
+		fatal("View menu popup failed.");
 	}
 }
 

@@ -23,10 +23,10 @@ int growgap(buffer_t *bp, point_t n)
 
 	if (buflen == 0) {
 		if (newlen < 0 || MAX_SIZE_T < (size_t) newlen)
-			fatal("%s: Failed to allocate required memory.\n");
+			fatal("Failed to allocate required memory.");
 		new = malloc((size_t) newlen);
 		if (new == NULL)			
-			fatal("%s: Failed to allocate required memory.\n");	/* Cannot edit a file without a buffer. */
+			fatal("Failed to allocate required memory.");	/* Cannot edit a file without a buffer. */
 	} else {
 		if (newlen < 0 || MAX_SIZE_T < (size_t) newlen) {
 			msg("Failed to allocate required memory");
