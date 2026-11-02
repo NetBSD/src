@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.34 2026/04/25 01:07:09 thorpej Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.35 2026/11/02 15:53:01 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.34 2026/04/25 01:07:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.35 2026/11/02 15:53:01 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -135,7 +135,7 @@ paddr_t rom_reboot_vect;
 int turbo;
 int iscolor;
 
-void
+void  __attribute__((no_instrument_function))
 next68k_bootargs(unsigned char **args)
 {
 #ifdef DDB
