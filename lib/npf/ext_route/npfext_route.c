@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfext_route.c,v 1.6 2026/11/02 12:01:13 joe Exp $");
+__RCSID("$NetBSD: npfext_route.c,v 1.7 2026/11/02 12:09:32 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -100,7 +100,7 @@ npfext_route_param(nl_ext_t *ext, const char *param, const char *val)
             npf_ext_param_bool(ext, name, true);
             break;
         case PARAM_INTERFACE:
-            npf_ext_param_string(ext, "route-interface", val);
+            npf_ext_param_string(ext, name, val);
             break;
         /* catch invalid addresses early */
         case PARAM_INET4:
