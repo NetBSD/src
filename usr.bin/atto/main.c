@@ -89,7 +89,9 @@ int main(int argc, char **argv)
 	associate_b2w(curbp, curwp);
 
 #ifndef SMALL
-	create_menu();
+	if (create_menu() == -1) {
+		msg("Warning: couldn't initialize menu.");
+	}
 #endif
 
 	if (!growgap(curbp, CHUNK)) fatal("Failed to allocate required memory.");

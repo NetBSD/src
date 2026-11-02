@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.3 2026/11/02 08:33:37 nia Exp $	*/
+/*	$NetBSD: menu.c,v 1.4 2026/11/02 08:44:55 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -121,7 +121,8 @@ create_menu_popup(MENU *parent, MENU *child, int y, int x,
 		lhs = x;
 	} else {
 		if (parent == NULL) {
-			fatal("Bad parent in create_menu_popup");
+			msg("Bad parent in create_menu_popup");
+			return NULL;
 		}
 
 		index = item_index(current_item(parent));
@@ -130,11 +131,8 @@ create_menu_popup(MENU *parent, MENU *child, int y, int x,
 			lhs = COLS - cols;
 	}
 
-	if ((popup = newwin(rows, cols, y, lhs)) == NULL) {
-		fatal("Could not create popup win");
-	}
-
-	assert(popup != NULL);
+	if ((popup = newwin(rows, cols, y, lhs)) == NULL)
+		return NULL;
 
 	keypad(popup, TRUE);
 	nodelay(popup, FALSE);
@@ -157,7 +155,7 @@ handle_menu_popup(MENU *menu, WINDOW *popup, const char *name)
 
 	(void)name;
 	if ((status = post_menu(menu)) < 0) {
-		fatal("Post of popup menu failed");
+		msg("Post of popup menu failed");
 		return;
 	}
 
@@ -222,6 +220,8 @@ handle_menus(int c)
 	Menu_Hook cb;
 	ITEM *current;
 
+	if (!menu_ready) return;
+
 	post_menu(top_menu);
 	touchwin(top_win);
 	wrefresh(top_win);
@@ -242,7 +242,6 @@ handle_menus(int c)
 			cb = (Menu_Hook) item_userptr(current);
 			if (cb != NULL) {
 				cb(top_menu);
-				//refresh_screen();
 			}
 		}
 		break;
@@ -267,21 +266,23 @@ handle_menus(int c)
 static int
 file_item_init(void)
 {
+	size_t i;
+
 	if ((file_items[0] = new_item(__UNCONST("Open"),
 	    __UNCONST("C-x c-f"))) == NULL) {
 		return -1;
 	}
 	if ((file_items[1] = new_item(__UNCONST("Save"),
 	    __UNCONST("C-x c-s"))) == NULL) {
-		return -1;
+		goto fail;
 	}
 	if ((file_items[2] = new_item(__UNCONST("Save As..."),
 	    __UNCONST("C-x c-w"))) == NULL) {
-		return -1;
+		goto fail;
 	}
 	if ((file_items[3] = new_item(__UNCONST("Quit"),
 	    __UNCONST("C-x c-c"))) == NULL) {
-		return -1;
+		goto fail;
 	}
 
 	file_items[4] = NULL;
@@ -291,38 +292,45 @@ file_item_init(void)
 	set_item_userptr(file_items[2], (char *) &saveas_item_callback);
 	set_item_userptr(file_items[3], (char *) &quit_item_callback);
 
-	if ((file_menu = new_menu(file_items)) == NULL) {
-		return -1;
-	}
+	if ((file_menu = new_menu(file_items)) == NULL)
+		goto fail;
 
 	set_menu_format(file_menu, 4, 1);
 	menu_opts_on(file_menu, O_SHOWDESC);
 
 	return 0;
+fail:
+	for (i = 0; i < __arraycount(file_items); ++i) {
+		free_item(file_items[i]);
+		file_items[i] = NULL;
+	}
+	return -1;
 }
 
 static int
 edit_item_init(void)
 {
+	size_t i;
+
 	if ((edit_items[0] = new_item(__UNCONST("Cut line"),
 	    __UNCONST("Ctrl-K"))) == NULL) {
 		return -1;
 	}
 	if ((edit_items[1] = new_item(__UNCONST("Paste"),
 	    __UNCONST("Ctrl-Y"))) == NULL) {
-		return -1;
+		goto fail;
 	}
 	if ((edit_items[2] = new_item(__UNCONST("Find..."),
 	    __UNCONST("Ctrl-S"))) == NULL) {
-		return -1;
+		goto fail;
 	}
 	if ((edit_items[3] = new_item(__UNCONST("Find & Replace"),
 	    __UNCONST("Ctrl-R"))) == NULL) {
-		return -1;
+		goto fail;
 	}
 	if ((edit_items[4] = new_item(__UNCONST("Go To..."),
 	    __UNCONST("Esc-G"))) == NULL) {
-		return -1;
+		goto fail;
 	}
 
 	set_item_userptr(edit_items[0], (char *) &cut_item_callback);
@@ -334,23 +342,31 @@ edit_item_init(void)
 	edit_items[5] = NULL;
 
 	if ((edit_menu = new_menu(edit_items)) == NULL)
-		fatal("Failed to create edit menu");
+		goto fail;
 
 	set_menu_format(edit_menu, 5, 1);
 	menu_opts_on(edit_menu, O_SHOWDESC);
 	return 0;
+fail:
+	for (i = 0; i < __arraycount(edit_items); ++i) {
+		free_item(edit_items[i]);
+		edit_items[i] = NULL;
+	}
+	return -1;
 }
 
 static int
 view_item_init(void)
 {
+	size_t i;
+
 	if ((view_items[0] = new_item(__UNCONST("Next buffer"),
 	    __UNCONST("C-x n"))) == NULL) {
 		return -1;
 	}
 	if ((view_items[1] = new_item(__UNCONST("Status line"),
 	    __UNCONST("C-x ="))) == NULL) {
-		return -1;
+		goto fail;
 	}
 
 	set_item_userptr(view_items[0], (char *) &next_item_callback);
@@ -359,11 +375,17 @@ view_item_init(void)
 	view_items[2] = NULL;
 
 	if ((view_menu = new_menu(view_items)) == NULL)
-		fatal("Failed to create view menu");
+		goto fail;
 
 	set_menu_format(view_menu, 2, 1);
 	menu_opts_on(view_menu, O_SHOWDESC);
 	return 0;
+fail:
+	for (i = 0; i < __arraycount(view_items); ++i) {
+		free_item(view_items[i]);
+		view_items[i] = NULL;
+	}
+	return -1;
 }
 
 
@@ -377,7 +399,7 @@ file_item_callback(MENU *parent)
 	if (file_popup != NULL) {
 		handle_menu_popup(file_menu, file_popup, "file");
 	} else {
-		fatal("File menu popup failed.");
+		msg("File menu popup failed.");
 	}
 }
 
@@ -391,7 +413,7 @@ edit_item_callback(MENU *parent)
 	if (edit_popup != NULL) {
 		handle_menu_popup(edit_menu, edit_popup, "edit");
 	} else {
-		fatal("Edit menu popup failed.");
+		msg("Edit menu popup failed.");
 	}
 }
 
@@ -405,7 +427,7 @@ view_item_callback(MENU *parent)
 	if (view_popup != NULL) {
 		handle_menu_popup(view_menu, view_popup, "view");
 	} else {
-		fatal("View menu popup failed.");
+		msg("View menu popup failed.");
 	}
 }
 
