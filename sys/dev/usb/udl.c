@@ -90,9 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.35 2024/10/02 17:22:45 tsutsui Exp $");
 #include <dev/rasops/rasops.h>
 
 #include <dev/usb/udl.h>
-#ifdef notyet
-#include <dev/usb/udlio.h>
-#endif
 
 /*
  * Defines.
@@ -147,21 +144,19 @@ static void		udl_copy_rect(struct udl_softc *, int, int, int, int,
 			    int, int);
 static void		udl_fill_rect(struct udl_softc *, uint16_t, int, int,
 			    int, int);
-#ifdef notyet
 static void		udl_draw_rect(struct udl_softc *,
-			    struct udl_ioctl_damage *);
+			    const struct wsdisplay_damage *);
 static void		udl_draw_rect_comp(struct udl_softc *,
-			    struct udl_ioctl_damage *);
-#endif
+			    const struct wsdisplay_damage *);
 
 static inline void	udl_copy_line(struct udl_softc *, int, int, int);
 static inline void	udl_fill_line(struct udl_softc *, uint16_t, int, int);
 static inline void	udl_draw_line(struct udl_softc *, uint16_t *, int,
 			    int);
-#ifdef notyet
-static inline void	udl_draw_line_comp(struct udl_softc *, uint16_t *, int,
+static inline int	udl_cmd_add_buf_comp(struct udl_softc *, uint16_t *,
 			    int);
-#endif
+static inline void	udl_draw_line_comp(struct udl_softc *, uint16_t *,
+			    int, int);
 
 static int		udl_cmd_send(struct udl_softc *);
 static void		udl_cmd_send_async(struct udl_softc *);
@@ -566,10 +561,10 @@ static int
 udl_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct udl_softc *sc = v;
-#ifdef notyet
-	struct udl_ioctl_damage *d;
-#endif
+	struct wsdisplay_damage *d;
+	struct wsdisplayio_fbinfo *fbi;
 	struct wsdisplay_fbinfo *wdf;
+	int error;
 	u_int mode;
 
 	switch (cmd) {
@@ -584,6 +579,14 @@ udl_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		wdf->depth = sc->sc_depth;
 		wdf->cmsize = 0;
 		return 0;
+
+	case WSDISPLAYIO_GET_FBINFO:
+		fbi = (struct wsdisplayio_fbinfo *)data;
+		error = wsdisplayio_get_fbinfo(&sc->sc_ri, fbi);
+		if (error == 0)
+			fbi->fbi_flags |= WSFB_VRAM_IS_RAM |
+			    WSFB_VRAM_NEEDS_DAMAGE;
+		return error;
 
 	case WSDISPLAYIO_GVIDEO:
 		*(u_int *)data = sc->sc_blank;
@@ -630,7 +633,8 @@ udl_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 				udl_cmd_send_async(sc);
 			udl_cmdq_flush(sc);
 			udl_comp_load(sc);
-			udl_startstop(sc, false);
+			/* Updates are submitted with WSDISPLAYIO_DAMAGE. */
+			udl_startstop(sc, true);
 			break;
 		default:
 			return EINVAL;
@@ -642,25 +646,30 @@ udl_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		*(u_int *)data = sc->sc_width * (sc->sc_depth / 8);
 		return 0;
 
-#ifdef notyet
-	/*
-	 * XXX
-	 * OpenBSD allows device specific ioctl()s and use this
-	 * UDLIO_DAMAGE for the damage extension ops of X servers.
-	 * Before blindly pulling such interfaces, probably we should
-	 * discuss how such devices should be handled which have
-	 * in-direct framebuffer memories that should be transferred
-	 * per updated rectangle regions via MI wscons APIs.
-	 */
-	case UDLIO_DAMAGE:
-		d = (struct udl_ioctl_damage *)data;
-		d->status = UDLIO_STATUS_OK;
-		if (sc->sc_flags & UDL_COMPRDY)
-			udl_draw_rect_comp(sc, d);
-		else
-			udl_draw_rect(sc, d);
+	case WSDISPLAYIO_DAMAGE:
+		d = (struct wsdisplay_damage *)data;
+		if (d->flags & ~WSDISPLAY_DAMAGE_WAIT)
+			return EINVAL;
+		if (d->width != 0 &&
+		    (d->x >= sc->sc_width ||
+		     d->width > sc->sc_width - d->x))
+			return EINVAL;
+		if (d->height != 0 &&
+		    (d->y >= sc->sc_height ||
+		     d->height > sc->sc_height - d->y))
+			return EINVAL;
+		if (sc->sc_mode != WSDISPLAYIO_MODE_DUMBFB ||
+		    sc->sc_fbmem == NULL)
+			return EBUSY;
+		if (d->width != 0 && d->height != 0) {
+			if (sc->sc_flags & UDL_COMPRDY)
+				udl_draw_rect_comp(sc, d);
+			else
+				udl_draw_rect(sc, d);
+		}
+		if (d->flags & WSDISPLAY_DAMAGE_WAIT)
+			udl_cmdq_flush(sc);
 		return 0;
-#endif
 	}
 
 	return EPASSTHROUGH;
@@ -674,14 +683,12 @@ udl_mmap(void *v, void *vs, off_t off, int prot)
 	paddr_t paddr;
 	bool rv __diagused;
 
-	if (off < 0 || off > roundup2(UDL_FBMEM_SIZE(sc), PAGE_SIZE))
+	if (off < 0 || off >= roundup2(UDL_FBMEM_SIZE(sc), PAGE_SIZE))
 		return -1;
 
 	/* allocate framebuffer memory */
 	if (udl_fbmem_alloc(sc) != 0)
 		return -1;
-
-	udl_startstop(sc, false);
 
 	vaddr = (vaddr_t)sc->sc_fbmem + off;
 	rv = pmap_extract(pmap_kernel(), vaddr, &paddr);
@@ -1259,16 +1266,15 @@ udl_fill_rect(struct udl_softc *sc, uint16_t rgb16, int x, int y, int width,
 	}
 }
 
-#ifdef notyet
 static void
-udl_draw_rect(struct udl_softc *sc, struct udl_ioctl_damage *d)
+udl_draw_rect(struct udl_softc *sc, const struct wsdisplay_damage *d)
 {
 	int sbase, soff, ebase, eoff, x, y, width, width_cur, height;
 
-	x = d->x1;
-	y = d->y1;
-	width = d->x2 - d->x1;
-	height = d->y2 - d->y1;
+	x = d->x;
+	y = d->y;
+	width = d->width;
+	height = d->height;
 	sbase = y * sc->sc_width;
 	ebase = (y + height) * sc->sc_width;
 
@@ -1295,14 +1301,15 @@ udl_draw_rect(struct udl_softc *sc, struct udl_ioctl_damage *d)
 }
 
 static void
-udl_draw_rect_comp(struct udl_softc *sc, struct udl_ioctl_damage *d)
+udl_draw_rect_comp(struct udl_softc *sc,
+    const struct wsdisplay_damage *d)
 {
 	int soff, eoff, x, y, width, height;
 
-	x = d->x1;
-	y = d->y1;
-	width = d->x2 - d->x1;
-	height = d->y2 - d->y1;
+	x = d->x;
+	y = d->y;
+	width = d->width;
+	height = d->height;
 	soff = y * sc->sc_width + x;
 	eoff = (y + height) * sc->sc_width + x;
 
@@ -1317,7 +1324,6 @@ udl_draw_rect_comp(struct udl_softc *sc, struct udl_ioctl_damage *d)
 
 	udl_cmd_send_async(sc);
 }
-#endif
 
 static inline void
 udl_copy_line(struct udl_softc *sc, int soff, int doff, int width)
@@ -1363,7 +1369,6 @@ udl_draw_line(struct udl_softc *sc, uint16_t *buf, int off, int width)
 	udl_cmd_add_buf(sc, buf, width);
 }
 
-#ifdef notyet
 static inline int
 udl_cmd_add_buf_comp(struct udl_softc *sc, uint16_t *buf, int width)
 {
@@ -1473,7 +1478,6 @@ udl_draw_line_comp(struct udl_softc *sc, uint16_t *buf, int off, int width)
 		width -= width_cur;
 	}
 }
-#endif
 
 static int
 udl_cmd_send(struct udl_softc *sc)

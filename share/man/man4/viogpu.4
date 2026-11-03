@@ -31,21 +31,21 @@ driver provides support for the
 .Xr virtio 4
 GPU interface provided by QEMU and other virtual machines to create a
 .Xr wscons 4
-console. It does not provide access to the 3D functionality of the virtio GPU
-device. It does not support mapping the framebuffer for generic graphics use
-by drivers such as
+console.
+The framebuffer can be mapped for generic graphics use by drivers such as
 .Xr wsfb 4 .
-.El
+The driver does not provide access to the 3D functionality of the virtio GPU
+device.
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr virtio 4
+.Xr virtio 4 ,
 .Xr wscons 4 ,
-.Xr wsdisplay 4 ,
+.Xr wsdisplay 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Ox 7.4 
+.Ox 7.4
 and was ported for
 .Nx 11 .
 .Sh AUTHORS
