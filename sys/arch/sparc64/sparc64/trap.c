@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.201 2026/11/03 18:11:42 palle Exp $ */
+/*	$NetBSD: trap.c,v 1.202 2026/11/03 18:32:27 palle Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.201 2026/11/03 18:11:42 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.202 2026/11/03 18:32:27 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -715,17 +715,13 @@ dopanic:
 			if (dsfsr & SFSR_FV)
 				dsfar = ldxa(SFAR, ASI_DMMU);
 		} else {
-			paddr_t mmu_fsa_dfa = cpus->ci_mmufsa
-			  + offsetof(struct mmufsa, dfa);
-			dsfar = ldxa(mmu_fsa_dfa, ASI_PHYS_CACHED);
+			/* TODO handle sun4v scenario properly */
 		}
 #ifdef DEBUG
 		if (!CPU_ISSUN4V) {
 			isfsr = ldxa(SFSR, ASI_IMMU);
 		} else {
-		  paddr_t mmu_fsa_ifa = cpus->ci_mmufsa
-		    + offsetof(struct mmufsa, ifa);
-			isfsr = ldxa(mmu_fsa_ifa, ASI_PHYS_CACHED);
+			/* TODO handle sun4v scenario properly */
 		}
 #endif
 		/* 
@@ -746,15 +742,9 @@ dopanic:
 			       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, fmt64(dsfsr), fmt64(dsfar),
 			       fmt64(isfsr), pc);
 		} else {
-
+			/* TODO handle sun4v scenario properly */
 			printf("Alignment error: pid=%d.%d comm=%s pc=%lx\n",
 			       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, pc);
-			paddr_t mmufsa_dfa_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, dfa);
-			paddr_t mmufsa_dfc_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, dfc);
-			int64_t dfa = ldxa(mmufsa_dfa_addr, ASI_PHYS_CACHED);
-			printf("dfa = %016lx\n", dfa);
-			int64_t dfc = ldxa(mmufsa_dfc_addr, ASI_PHYS_CACHED);
-			printf("dfc = %016lx\n", dfc);
 		}
 #endif
 		
