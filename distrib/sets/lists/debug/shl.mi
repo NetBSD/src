@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.417 2026/10/22 17:57:09 christos Exp $
+# $NetBSD: shl.mi,v 1.418 2026/11/03 22:12:14 nia Exp $
 #
 # Note: Like base/shl.mi, entries here for shared libraries should
 #       generally NOT be marked `obsolete' and instead should be
@@ -168,7 +168,7 @@
 ./usr/libdata/debug/usr/lib/liblzma.so.2.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libm.so.0.14.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmagic.so.9.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libmenu.so.8.0.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libmenu.so.9.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmj.so.1.0.debug			comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libnetpgp.so.4.0.debug		comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libnetpgpverify.so.5.0.debug	comp-crypto-debug	debug,compatfile
