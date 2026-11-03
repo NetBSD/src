@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.200 2026/10/25 14:52:54 palle Exp $ */
+/*	$NetBSD: trap.c,v 1.201 2026/11/03 18:11:42 palle Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.200 2026/10/25 14:52:54 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.201 2026/11/03 18:11:42 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -376,7 +376,6 @@ void print_trapframe(struct trapframe64 *);
 void
 print_trapframe(struct trapframe64 *tf)
 {
-
 	printf("Trapframe %p:\ttstate: %lx\tpc: %lx\tnpc: %lx\n",
 	       tf, (u_long)tf->tf_tstate, (u_long)tf->tf_pc, (u_long)tf->tf_npc);
 	printf("fault: %p\ty: %x\t", 
@@ -384,7 +383,7 @@ print_trapframe(struct trapframe64 *tf)
 	printf("pil: %d\toldpil: %d\ttt: %x\n", 
 	       (int)tf->tf_pil, (int)tf->tf_oldpil, (int)tf->tf_tt);
 
-	printf("Globals:\t");
+	printf("Globals: ");
 	printf("%08x%08x %08x%08x %08x%08x %08x%08x ",
 	       (u_int)(tf->tf_global[0]>>32), (u_int)tf->tf_global[0],
 	       (u_int)(tf->tf_global[1]>>32), (u_int)tf->tf_global[1],
@@ -396,7 +395,7 @@ print_trapframe(struct trapframe64 *tf)
 	       (u_int)(tf->tf_global[6]>>32), (u_int)tf->tf_global[6],
 	       (u_int)(tf->tf_global[7]>>32), (u_int)tf->tf_global[7]);
 
-	printf("Ins:\t");
+	printf("Ins:     ");
 	printf("%08x%08x %08x%08x %08x%08x %08x%08x ",
 	       (u_int)(tf->tf_in[0]>>32), (u_int)tf->tf_in[0],
 	       (u_int)(tf->tf_in[1]>>32), (u_int)tf->tf_in[1],
@@ -407,7 +406,7 @@ print_trapframe(struct trapframe64 *tf)
 	       (u_int)(tf->tf_in[5]>>32), (u_int)tf->tf_in[5],
 	       (u_int)(tf->tf_in[6]>>32), (u_int)tf->tf_in[6],
 	       (u_int)(tf->tf_in[7]>>32), (u_int)tf->tf_in[7]);
-	printf("Locals:\t");
+	printf("Locals:  ");
 	printf("%08x%08x %08x%08x %08x%08x %08x%08x ",
 	       (u_int)(tf->tf_local[0]>>32), (u_int)tf->tf_local[0],
 	       (u_int)(tf->tf_local[1]>>32), (u_int)tf->tf_local[1],
@@ -418,7 +417,7 @@ print_trapframe(struct trapframe64 *tf)
 	       (u_int)(tf->tf_local[5]>>32), (u_int)tf->tf_local[5],
 	       (u_int)(tf->tf_local[6]>>32), (u_int)tf->tf_local[6],
 	       (u_int)(tf->tf_local[7]>>32), (u_int)tf->tf_local[7]);
-	printf("Outs:\t");
+	printf("Outs:    ");
 	printf("%08x%08x %08x%08x %08x%08x %08x%08x ",
 	       (u_int)(tf->tf_out[0]>>32), (u_int)tf->tf_out[0],
 	       (u_int)(tf->tf_out[1]>>32), (u_int)tf->tf_out[1],
@@ -429,7 +428,6 @@ print_trapframe(struct trapframe64 *tf)
 	       (u_int)(tf->tf_out[5]>>32), (u_int)tf->tf_out[5],
 	       (u_int)(tf->tf_out[6]>>32), (u_int)tf->tf_out[6],
 	       (u_int)(tf->tf_out[7]>>32), (u_int)tf->tf_out[7]);
-
 }
 #endif
 
@@ -748,7 +746,7 @@ dopanic:
 			       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, fmt64(dsfsr), fmt64(dsfar),
 			       fmt64(isfsr), pc);
 		} else {
-		  
+
 			printf("Alignment error: pid=%d.%d comm=%s pc=%lx\n",
 			       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, pc);
 			paddr_t mmufsa_dfa_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, dfa);
