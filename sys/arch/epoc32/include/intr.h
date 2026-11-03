@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2021/09/24 08:07:40 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2026/11/03 06:56:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -57,8 +57,6 @@
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
-
-#define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
 
 #define ARM_IRQ_HANDLER	_C_LABEL(epoc32_irq_handler)
 
