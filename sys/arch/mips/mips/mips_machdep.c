@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.312 2026/10/24 14:23:54 skrll Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.313 2026/11/03 06:54:14 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.312 2026/10/24 14:23:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.313 2026/11/03 06:54:14 skrll Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1108,7 +1108,7 @@ mips64r2_vector_init(const struct splsw *splsw)
 
 	/*
 	 * If this CPU doesn't have a COP0 USERLOCAL register, at the end
-	 * of cpu_switch resume overwrite the instructions which update it.
+	 * of cpu_switch_resume overwrite the instructions which update it.
 	 */
 	if (!MIPS_HAS_USERLOCAL && cpunum == 0) {
 		extern uint32_t mips64r2_cpu_switch_resume[];
