@@ -66,16 +66,19 @@ test_bpf_code(void *code, size_t size)
 	bc_args.mem = memstore;
 	bc_args.arg = npc;
 
+	/* BPF byte code */
 	ret = npf_bpf_filter(&bc_args, code, NULL);
 
 	/* JIT-compiled code. */
 	jcode = npf_bpf_compile(code, size);
-	if (jcode) {
-		jret = npf_bpf_filter(&bc_args, NULL, jcode);
-		assert(ret == jret); (void)jret;
-		bpf_jit_freecode(jcode);
-	} else if (lverbose) {
-		printf("JIT-compilation failed\n");
+	assert(jcode);
+	jret = npf_bpf_filter(&bc_args, NULL, jcode);
+
+	assert(ret == jret); (void)jret;
+	bpf_jit_freecode(jcode);
+
+	if (lverbose) {
+		printf("JIT-compilation succeeded\n");
 	}
 	put_cached_pkt(npc);
 	return ret;
