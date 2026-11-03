@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.h,v 1.13 2004/03/22 19:01:09 jdc Exp $	*/
+/*	$NetBSD: menu.h,v 1.14 2026/11/03 18:47:02 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -82,7 +82,7 @@ typedef void (*Menu_Hook) (MENU *);
 struct __item {
         MENU_STR name;
         MENU_STR description;
-        char *userptr;
+        void *userptr;
         int visible;  /* set if item is visible */
         int selected; /* set if item has been selected */
 	int row; /* menu row this item is on */
@@ -116,7 +116,7 @@ struct __menu {
         attr_t back; /* menu background */
         attr_t grey; /* greyed out (nonselectable) menu item */
         int pad;  /* filler char between name and description */
-        char *userptr;
+        void *userptr;
 	int top_row; /* the row that is at the top of the menu */
 	int max_item_width; /* widest item */
 	int col_width; /* width of the menu columns - this is not always
@@ -160,7 +160,7 @@ char *menu_pattern(MENU *);
 WINDOW *menu_sub(MENU *);
 Menu_Hook menu_term(MENU *);
 char *menu_unmark (MENU *);
-char *menu_userptr(MENU *);
+void *menu_userptr(MENU *);
 WINDOW *menu_win(MENU *);
 MENU *new_menu(ITEM **);
 int post_menu(MENU *);
@@ -170,14 +170,14 @@ int set_menu_format(MENU *, int, int);
 int set_menu_grey(MENU *, attr_t);
 int set_menu_init(MENU *, Menu_Hook);
 int set_menu_items(MENU *, ITEM **);
-int set_menu_mark(MENU *, char *);
+int set_menu_mark(MENU *, const char *);
 int set_menu_opts(MENU *, OPTIONS);
 int set_menu_pad(MENU *, int);
-int set_menu_pattern(MENU *, char *);
+int set_menu_pattern(MENU *, const char *);
 int set_menu_sub(MENU *, WINDOW *);
 int set_menu_term(MENU *, Menu_Hook);
-int set_menu_unmark(MENU *, char *);
-int set_menu_userptr(MENU *, char *);
+int set_menu_unmark(MENU *, const char *);
+int set_menu_userptr(MENU *, void *);
 int  set_menu_win(MENU *, WINDOW *);
 int unpost_menu(MENU *);
 
@@ -193,16 +193,16 @@ int item_opts_off(ITEM *, OPTIONS);
 int item_opts_on(ITEM *, OPTIONS);
 int item_selected(MENU *, int **); /* return the item index of selected */
 Menu_Hook item_term(MENU *);
-char *item_userptr(ITEM *);
+void *item_userptr(ITEM *);
 int item_value(ITEM *);
 int item_visible(ITEM *);
 ITEM **menu_items(MENU *);
-ITEM *new_item(char *, char *);
+ITEM *new_item(const char *, const char *);
 int set_current_item(MENU *, ITEM *);
 int set_item_init(MENU *, Menu_Hook);
 int set_item_opts(ITEM *, OPTIONS);
 int set_item_term(MENU *, Menu_Hook);
-int set_item_userptr(ITEM *, char *);
+int set_item_userptr(ITEM *, void *);
 int set_item_value(ITEM *, int);
 
 __END_DECLS

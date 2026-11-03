@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.18 2012/12/30 12:27:09 blymn Exp $	*/
+/*	$NetBSD: menu.c,v 1.19 2026/11/03 18:47:02 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: menu.c,v 1.18 2012/12/30 12:27:09 blymn Exp $");
+__RCSID("$NetBSD: menu.c,v 1.19 2026/11/03 18:47:02 nia Exp $");
 
 #include <ctype.h>
 #include <menu.h>
@@ -76,7 +76,7 @@ MENU _menui_default_menu = {
  * Set the menu mark character
  */
 int
-set_menu_mark(MENU *m, char *mark)
+set_menu_mark(MENU *m, const char *mark)
 {
 	MENU *menu = m;
 	
@@ -112,7 +112,7 @@ menu_mark(MENU *menu)
  * Set the menu unmark character
  */
 int
-set_menu_unmark(MENU *m, char *mark)
+set_menu_unmark(MENU *m, const char *mark)
 {
 	MENU *menu = m;
 
@@ -418,10 +418,10 @@ menu_pattern(MENU *menu)
  * the item list.
  */
 int
-set_menu_pattern(MENU *param_menu, char *pat)
+set_menu_pattern(MENU *param_menu, const char *pat)
 {
 	MENU *menu = (param_menu != NULL) ? param_menu : &_menui_default_menu;
-	char *p = pat;
+	const char *p = pat;
 	
 	  /* check pattern is all printable characters */
 	while (*p)

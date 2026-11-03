@@ -1,4 +1,4 @@
-/*	$NetBSD: item.c,v 1.12 2012/03/21 05:33:27 matt Exp $	*/
+/*	$NetBSD: item.c,v 1.13 2026/11/03 18:47:02 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: item.c,v 1.12 2012/03/21 05:33:27 matt Exp $");
+__RCSID("$NetBSD: item.c,v 1.13 2026/11/03 18:47:02 nia Exp $");
 
 #include <menu.h>
 #include <stdlib.h>
@@ -280,7 +280,7 @@ item_value(ITEM *item)
  * structure.
  */
 ITEM *
-new_item(char *name, char *description)
+new_item(const char *name, const char *description)
 {
         ITEM *new_one;
 

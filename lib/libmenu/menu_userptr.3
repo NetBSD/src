@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_userptr.3,v 1.9 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: menu_userptr.3,v 1.10 2026/11/03 18:47:02 nia Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 10, 1999
+.Dd October 31, 2026
 .Dt MENU_USERPTR 3
 .Os
 .Sh NAME
@@ -40,10 +40,10 @@
 .Lb libmenu
 .Sh SYNOPSIS
 .In menu.h
-.Ft char *
+.Ft void *
 .Fn menu_userptr "MENU *menu"
 .Ft int
-.Fn set_menu_userptr "MENU *menu" "char *ptr"
+.Fn set_menu_userptr "MENU *menu" "void *ptr"
 .Sh DESCRIPTION
 The
 .Fn menu_userptr
@@ -61,6 +61,19 @@ The function was successful.
 .It Er E_SYSTEM_ERROR
 There was a system error during the call.
 .El
+.Sh COMPATIBILITY
+The historical prototypes used
+.Vt char *
+arguments for the
+.Va userptr .
+Certain versions such as the SVR4-derived libmenu included with
+Solaris and illumos may retain this function signature, as well as
+.Nx 11.0
+and earlier releases.
+.Pp
+To maximize compatibility, arguments should be cast to
+.Vt char *
+before being passed to these functions.
 .Sh SEE ALSO
 .Xr curses 3 ,
 .Xr menus 3
