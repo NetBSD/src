@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.141 2026/10/25 17:42:20 palle Exp $ */
+/*	$NetBSD: cpu.c,v 1.142 2026/11/03 19:31:59 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.141 2026/10/25 17:42:20 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.142 2026/11/03 19:31:59 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -863,7 +863,14 @@ void clear_winregs(void)
 void print_winregs(void)
 {
 
-	printf("Register window registers (WINREGS cansave/canrestore/otherwin/cleanwin/cwp/wstate): %016lx\n", curcpu()->ci_winregs);
+	printf("Register window registers (WINREGS cansave/canrestore/otherwin/cleanwin/cwp/wstate): "
+		   "%02x/%02x/%02x/%02x/%02x/%02x\n",
+		   (unsigned int)(curcpu()->ci_winregs >> 40) & 0xff,
+		   (unsigned int)(curcpu()->ci_winregs >> 32) & 0xff,
+		   (unsigned int)(curcpu()->ci_winregs >> 24) & 0xff,
+		   (unsigned int)(curcpu()->ci_winregs >> 16) & 0xff,
+		   (unsigned int)(curcpu()->ci_winregs >>  8) & 0xff,
+		   (unsigned int)(curcpu()->ci_winregs >>  0) & 0xff);
 
 	/* RW 0 */
 	printf("RW 0 %%i0-%%i7 ");
