@@ -19,6 +19,7 @@ buffer_t *bheadp;			/* head of list of buffers */
 window_t *curwp;
 window_t *wheadp;
 
+__dead
 static void
 usage(void)
 {
@@ -130,6 +131,7 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+__dead
 void fatal(const char *msg)
 {
 	if (curscr != NULL) {
