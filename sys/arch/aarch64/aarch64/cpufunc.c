@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.38 2026/05/31 09:04:28 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.39 2026/11/03 06:52:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.38 2026/05/31 09:04:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.39 2026/11/03 06:52:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -316,9 +316,11 @@ ln_dcache_wb_all(int level, struct aarch64_cache_unit *cunit)
 		for (set = 0; set < cunit->cache_sets; set++) {
 			x = (way << wayshift) | (set << setshift) |
 			    (level << 1);
-			__asm __volatile ("dc csw, %0; dsb sy" :: "r"(x));
+			__asm __volatile ("dc csw, %0" :: "r"(x));
 		}
 	}
+	/* Complete all set/way operations for this cache level. */
+	dsb(sy);
 }
 
 static inline void
@@ -334,9 +336,11 @@ ln_dcache_wbinv_all(int level, struct aarch64_cache_unit *cunit)
 		for (set = 0; set < cunit->cache_sets; set++) {
 			x = (way << wayshift) | (set << setshift) |
 			    (level << 1);
-			__asm __volatile ("dc cisw, %0; dsb sy" :: "r"(x));
+			__asm __volatile ("dc cisw, %0" :: "r"(x));
 		}
 	}
+	/* Complete all set/way operations for this cache level. */
+	dsb(sy);
 }
 
 static inline void
@@ -352,9 +356,11 @@ ln_dcache_inv_all(int level, struct aarch64_cache_unit *cunit)
 		for (set = 0; set < cunit->cache_sets; set++) {
 			x = (way << wayshift) | (set << setshift) |
 			    (level << 1);
-			__asm __volatile ("dc isw, %0; dsb sy" :: "r"(x));
+			__asm __volatile ("dc isw, %0" :: "r"(x));
 		}
 	}
+	/* Complete all set/way operations for this cache level. */
+	dsb(sy);
 }
 
 void
