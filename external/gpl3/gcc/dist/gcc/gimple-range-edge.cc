@@ -1,5 +1,5 @@
-/* Gimple range edge functionaluity.
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+/* Gimple range edge functionality.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
    Contributed by Andrew MacLeod <amacleod@redhat.com>
    and Aldy Hernandez <aldyh@redhat.com>.
 
@@ -31,8 +31,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple-iterator.h"
 #include "tree-cfg.h"
 #include "gimple-range.h"
+#include "value-range-storage.h"
 
-// If there is a range control statment at the end of block BB, return it.
+// If there is a range control statement at the end of block BB, return it.
 // Otherwise return NULL.
 
 gimple *
@@ -42,10 +43,9 @@ gimple_outgoing_range_stmt_p (basic_block bb)
   if (!gsi_end_p (gsi))
     {
       gimple *s = gsi_stmt (gsi);
-      if (is_a<gcond *> (s) && gimple_range_handler (s))
+      if (is_a<gcond *> (s) && gimple_range_op_handler::supported_p (s))
 	return gsi_stmt (gsi);
-      gswitch *sw = dyn_cast<gswitch *> (s);
-      if (sw && irange::supports_type_p (TREE_TYPE (gimple_switch_index (sw))))
+      if (is_a <gswitch *> (s))
 	return gsi_stmt (gsi);
     }
   return NULL;
@@ -59,9 +59,9 @@ gcond_edge_range (irange &r, edge e)
 {
   gcc_checking_assert (e->flags & (EDGE_TRUE_VALUE | EDGE_FALSE_VALUE));
   if (e->flags & EDGE_TRUE_VALUE)
-    r = int_range<2> (boolean_true_node, boolean_true_node);
+    r = range_true ();
   else
-    r = int_range<2> (boolean_false_node, boolean_false_node);
+    r = range_false ();
 }
 
 
@@ -69,6 +69,7 @@ gimple_outgoing_range::gimple_outgoing_range (int max_sw_edges)
 {
   m_edge_table = NULL;
   m_max_edges = max_sw_edges;
+  m_range_allocator = new vrange_allocator;
 }
 
 
@@ -76,6 +77,7 @@ gimple_outgoing_range::~gimple_outgoing_range ()
 {
   if (m_edge_table)
     delete m_edge_table;
+  delete m_range_allocator;
 }
 
 
@@ -83,31 +85,28 @@ gimple_outgoing_range::~gimple_outgoing_range ()
 // Use a cached value if it exists, or calculate it if not.
 
 bool
-gimple_outgoing_range::get_edge_range (irange &r, gimple *s, edge e)
+gimple_outgoing_range::switch_edge_range (irange &r, gswitch *sw, edge e)
 {
-  gcc_checking_assert (is_a<gswitch *> (s));
-  gswitch *sw = as_a<gswitch *> (s);
-
   // ADA currently has cases where the index is 64 bits and the case
   // arguments are 32 bit, causing a trap when we create a case_range.
   // Until this is resolved (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87798)
-  // punt on switches where the labels dont match the argument.
+  // punt on switches where the labels don't match the argument.
   if (gimple_switch_num_labels (sw) > 1 && 
       TYPE_PRECISION (TREE_TYPE (CASE_LOW (gimple_switch_label (sw, 1)))) !=
       TYPE_PRECISION (TREE_TYPE (gimple_switch_index (sw))))
     return false;
 
    if (!m_edge_table)
-     m_edge_table = new hash_map<edge, irange *> (n_edges_for_fn (cfun));
+     m_edge_table = new hash_map<edge, vrange_storage *> (n_edges_for_fn (cfun));
 
-   irange **val = m_edge_table->get (e);
+   vrange_storage **val = m_edge_table->get (e);
    if (!val)
      {
        calc_switch_ranges (sw);
        val = m_edge_table->get (e);
        gcc_checking_assert (val);
      }
-    r = **val;
+   (*val)->get_vrange (r, TREE_TYPE (gimple_switch_index (sw)));
   return true;
 }
 
@@ -137,13 +136,16 @@ gimple_outgoing_range::calc_switch_ranges (gswitch *sw)
       if (e == default_edge)
 	continue;
 
-      tree low = CASE_LOW (gimple_switch_label (sw, x));
-      tree high = CASE_HIGH (gimple_switch_label (sw, x));
-      if (!high)
+      wide_int low = wi::to_wide (CASE_LOW (gimple_switch_label (sw, x)));
+      wide_int high;
+      tree tree_high = CASE_HIGH (gimple_switch_label (sw, x));
+      if (tree_high)
+	high = wi::to_wide (tree_high);
+      else
 	high = low;
 
       // Remove the case range from the default case.
-      int_range_max def_range (low, high);
+      int_range_max def_range (type, low, high);
       range_cast (def_range, type);
       // If all possible values are taken, set default_range to UNDEFINED.
       if (def_range.varying_p ())
@@ -155,34 +157,37 @@ gimple_outgoing_range::calc_switch_ranges (gswitch *sw)
 	}
 
       // Create/union this case with anything on else on the edge.
-      int_range_max case_range (low, high);
+      int_range_max case_range (type, low, high);
       range_cast (case_range, type);
-      irange *&slot = m_edge_table->get_or_insert (e, &existed);
+      vrange_storage *&slot = m_edge_table->get_or_insert (e, &existed);
       if (existed)
 	{
-	  case_range.union_ (*slot);
+	  // If this doesn't change the value, move on.
+	  int_range_max tmp;
+	  slot->get_vrange (tmp, type);
+	  if (!case_range.union_ (tmp))
+	   continue;
 	  if (slot->fits_p (case_range))
 	    {
-	      *slot = case_range;
+	      slot->set_vrange (case_range);
 	      continue;
 	    }
 	}
       // If there was an existing range and it doesn't fit, we lose the memory.
       // It'll get reclaimed when the obstack is freed.  This seems less
       // intrusive than allocating max ranges for each case.
-      slot = m_range_allocator.allocate (case_range);
+      slot = m_range_allocator->clone (case_range);
     }
 
-  irange *&slot = m_edge_table->get_or_insert (default_edge, &existed);
+  vrange_storage *&slot = m_edge_table->get_or_insert (default_edge, &existed);
   // This should be the first call into this switch.
   gcc_checking_assert (!existed);
-  irange *dr = m_range_allocator.allocate (default_range);
-  slot = dr;
+  slot = m_range_allocator->clone (default_range);
 }
 
 
 // Calculate the range forced on on edge E by control flow, return it
-// in R.  Return the statment which defines the range, otherwise
+// in R.  Return the statement which defines the range, otherwise
 // return NULL
 
 gimple *
@@ -208,12 +213,9 @@ gimple_outgoing_range::edge_range_p (irange &r, edge e)
 
   gcc_checking_assert (is_a<gswitch *> (s));
   gswitch *sw = as_a<gswitch *> (s);
-  tree type = TREE_TYPE (gimple_switch_index (sw));
 
-  if (!irange::supports_type_p (type))
-    return NULL;
-
-  if (get_edge_range (r, sw, e))
+  // Switches can only be integers.
+  if (switch_edge_range (as_a <irange> (r), sw, e))
     return s;
 
   return NULL;

@@ -1,5 +1,5 @@
 /* -Wnonnull-compare warning support.
-   Copyright (C) 2016-2022 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>
 
 This file is part of GCC.
@@ -126,9 +126,9 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return warn_nonnull_compare; }
+  bool gate (function *) final override { return warn_nonnull_compare; }
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_warn_nonnull_compare
 

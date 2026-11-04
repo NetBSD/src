@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler for Xilinx MicroBlaze.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    Contributed by Michael Eager <eager@eagercon.com>.
 
@@ -39,7 +39,7 @@ extern char microblaze_print_operand_punct[];
 extern int microblaze_section_threshold;
 
 /* Map register # to debug register # */
-extern int microblaze_dbx_regno[];
+extern int microblaze_debugger_regno[];
 
 extern int microblaze_no_unsafe_delay;
 extern int microblaze_has_clz;
@@ -163,8 +163,8 @@ extern enum pipeline_type microblaze_pipe;
 
 /* Debug stuff.  */
 
-/* How to renumber registers for dbx and gdb.  */
-#define DBX_REGISTER_NUMBER(REGNO) microblaze_dbx_regno[(REGNO)]
+/* How to renumber registers for gdb.  */
+#define DEBUGGER_REGNO(REGNO) microblaze_debugger_regno[(REGNO)]
 
 /* Generate DWARF exception handling info.  */
 #define DWARF2_UNWIND_INFO 1
@@ -276,7 +276,7 @@ extern enum pipeline_type microblaze_pipe;
 #define GP_REG_FIRST    0
 #define GP_REG_LAST     31
 #define GP_REG_NUM      (GP_REG_LAST - GP_REG_FIRST + 1)
-#define GP_DBX_FIRST    0
+#define GP_DEBUGGER_FIRST    0
 
 #define ST_REG		32
 #define AP_REG_NUM      33
@@ -372,9 +372,8 @@ extern enum reg_class microblaze_regno_to_class[];
    since they may change into reg + const, which the patterns
    can't handle yet.  */
 #define CALL_INSN_OP(X) (CONSTANT_ADDRESS_P (X) \
-                         || (GET_CODE (X) == REG && X != arg_pointer_rtx\
-                             && ! (REGNO (X) >= FIRST_PSEUDO_REGISTER	\
-                             && REGNO (X) <= LAST_VIRTUAL_REGISTER)))
+			 || (GET_CODE (X) == REG && X != arg_pointer_rtx \
+			     && ! VIRTUAL_REGISTER_P (X)))
 
 /* True if VALUE is a signed 16-bit number.  */
 #define SMALL_OPERAND(VALUE) 						\

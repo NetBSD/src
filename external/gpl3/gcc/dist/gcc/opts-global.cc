@@ -1,6 +1,6 @@
 /* Command line option handling.  Code involving global state that
    should not be shared with the driver.
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -61,7 +61,9 @@ write_langs (unsigned int mask)
     if (mask & (1U << n))
       len += strlen (lang_name) + 1;
 
-  result = XNEWVEC (char, len);
+  /* Allocate at least one character as we'll terminate the string
+     at the very end of this function.  */
+  result = XNEWVEC (char, MAX (1, len));
   len = 0;
   for (n = 0; (lang_name = lang_names[n]) != 0; n++)
     if (mask & (1U << n))
@@ -88,6 +90,9 @@ complain_wrong_lang (const struct cl_decoded_option *decoded,
   const char *text = decoded->orig_option_with_args_text;
   char *ok_langs = NULL, *bad_lang = NULL;
   unsigned int opt_flags = option->flags;
+
+  if (!warn_complain_wrong_lang)
+    return;
 
   if (!lang_hooks.complain_wrong_lang_p (option))
     return;
@@ -362,6 +367,7 @@ handle_common_deferred_options (void)
   if (flag_opt_info)
     opt_info_switch_p (NULL);
 
+  flag_canon_prefix_map = false;
   FOR_EACH_VEC_ELT (v, i, opt)
     {
       switch (opt->opt_index)
@@ -394,8 +400,12 @@ handle_common_deferred_options (void)
 	  add_profile_prefix_map (opt->arg);
 	  break;
 
+	case OPT_fcanon_prefix_map:
+	  flag_canon_prefix_map = opt->value;
+	  break;
+
 	case OPT_fdump_:
-	  g->get_dumps ()->dump_switch_p (opt->arg);
+	  /* Deferred until plugins initialized.  */
 	  break;
 
         case OPT_fopt_info_:
@@ -487,4 +497,22 @@ handle_common_deferred_options (void)
 	  gcc_unreachable ();
 	}
     }
+}
+
+/* Handle deferred dump options.  */
+
+void
+handle_deferred_dump_options (void)
+{
+  unsigned int i;
+  cl_deferred_option *opt;
+  vec<cl_deferred_option> v;
+
+  if (common_deferred_options)
+    v = *((vec<cl_deferred_option> *) common_deferred_options);
+  else
+    v = vNULL;
+  FOR_EACH_VEC_ELT (v, i, opt)
+    if (opt->opt_index == OPT_fdump_)
+      g->get_dumps ()->dump_switch_p (opt->arg);
 }

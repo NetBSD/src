@@ -1,6 +1,6 @@
 // <algorithm> Forward declarations  -*- C++ -*-
 
-// Copyright (C) 2007-2022 Free Software Foundation, Inc.
+// Copyright (C) 2007-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -190,10 +190,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    */
 
   // adjacent_find
-
-#if __cplusplus > 201703L
-#  define __cpp_lib_constexpr_algorithms 201806L
-#endif
 
 #if __cplusplus >= 201103L
   template<typename _IIter, typename _Predicate>
@@ -622,7 +618,7 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
   // set_symmetric_difference
   // set_union
 
-#if (__cplusplus >= 201103L) && defined(_GLIBCXX_USE_C99_STDINT_TR1)
+#if __cplusplus >= 201103L
   template<typename _RAIter, typename _UGenerator>
     void
     shuffle(_RAIter, _RAIter, _UGenerator&&);
@@ -638,9 +634,11 @@ _GLIBCXX_END_INLINE_ABI_NAMESPACE(_V2)
     void
     sort_heap(_RAIter, _RAIter, _Compare);
 
+#if _GLIBCXX_HOSTED
   template<typename _BIter, typename _Predicate>
     _BIter
     stable_partition(_BIter, _BIter, _Predicate);
+#endif
 
 #if __cplusplus < 201103L
   // For C++11 swap() is declared in <type_traits>.
@@ -828,6 +826,7 @@ _GLIBCXX_BEGIN_NAMESPACE_ALGO
     _BIter
     partition(_BIter, _BIter, _Predicate);
 
+#if _GLIBCXX_HOSTED
   template<typename _RAIter>
     _GLIBCXX14_DEPRECATED_SUGGEST("std::shuffle")
     void
@@ -842,6 +841,7 @@ _GLIBCXX_BEGIN_NAMESPACE_ALGO
 #else
 		   _Generator&);
 #endif
+#endif // HOSTED
 
   template<typename _FIter, typename _Tp>
     _GLIBCXX20_CONSTEXPR

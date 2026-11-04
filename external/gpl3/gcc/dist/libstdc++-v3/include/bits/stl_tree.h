@@ -1,6 +1,6 @@
 // RB tree implementation -*- C++ -*-
 
-// Copyright (C) 2001-2022 Free Software Foundation, Inc.
+// Copyright (C) 2001-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -68,17 +68,13 @@
 #if __cplusplus >= 201103L
 # include <ext/aligned_buffer.h>
 #endif
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17
 # include <bits/node_handle.h>
 #endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
-
-#if __cplusplus > 201103L
-# define __cpp_lib_generic_associative_lookup 201304L
-#endif
 
   // Red-black tree class, designed for use in implementing STL
   // associative containers (set, multiset, map, and multimap). The
@@ -417,7 +413,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   _Rb_tree_rebalance_for_erase(_Rb_tree_node_base* const __z,
 			       _Rb_tree_node_base& __header) throw ();
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17
   template<typename _Tree1, typename _Cmp2>
     struct _Rb_tree_merge_helper { };
 #endif
@@ -820,7 +816,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef std::reverse_iterator<iterator>       reverse_iterator;
       typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17
       using node_type = _Node_handle<_Key, _Val, _Node_allocator>;
       using insert_return_type = _Node_insert_return<
 	__conditional_t<is_same_v<_Key, _Val>, const_iterator, iterator>,
@@ -1125,7 +1121,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	__enable_if_t<!__same_value_type<_InputIterator>::value>
 	_M_insert_range_equal(_InputIterator __first, _InputIterator __last)
 	{
-	  _Alloc_node __an(*this);
 	  for (; __first != __last; ++__first)
 	    _M_emplace_equal(*__first);
 	}
@@ -1436,7 +1431,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _M_move_assign(_Rb_tree&, false_type);
 #endif
 
-#if __cplusplus > 201404L
+#if __glibcxx_node_extract // >= C++17
     public:
       /// Re-insert an extracted node.
       insert_return_type
@@ -1600,7 +1595,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		}
 	    }
 	}
-#endif // C++17
+#endif // C++17 node_extract
 
       friend bool
       operator==(const _Rb_tree& __x, const _Rb_tree& __y)
@@ -2094,7 +2089,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  std::swap(this->_M_impl._M_node_count, __t._M_impl._M_node_count);
 	}
       // No need to swap header's color as it does not change.
-      std::swap(this->_M_impl._M_key_compare, __t._M_impl._M_key_compare);
+
+      using std::swap;
+      swap(this->_M_impl._M_key_compare, __t._M_impl._M_key_compare);
 
       _Alloc_traits::_S_on_swap(_M_get_Node_allocator(),
 				__t._M_get_Node_allocator());
@@ -2602,7 +2599,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return true;
     }
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17
   // Allow access to internals of compatible _Rb_tree specializations.
   template<typename _Key, typename _Val, typename _Sel, typename _Cmp1,
 	   typename _Alloc, typename _Cmp2>

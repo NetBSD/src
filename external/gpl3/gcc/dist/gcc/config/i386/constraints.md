@@ -1,5 +1,5 @@
 ;; Constraint definitions for IA-32 and x86-64.
-;; Copyright (C) 2006-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2024 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -19,11 +19,11 @@
 
 ;;; Unused letters:
 ;;;           H
-;;;           h j               z
+;;;                             z
 
 ;; Integer register constraints.
 ;; It is not necessary to define 'r' here.
-(define_register_constraint "R" "LEGACY_REGS"
+(define_register_constraint "R" "LEGACY_GENERAL_REGS"
  "Legacy register---the eight integer registers available on all
   i386 processors (@code{a}, @code{b}, @code{c}, @code{d},
   @code{si}, @code{di}, @code{bp}, @code{sp}).")
@@ -162,12 +162,17 @@
 ;;  g  GOT memory operand.
 ;;  m  Vector memory operand
 ;;  c  Constant memory operand
+;;  k  TLS address that allows insn using non-integer registers
 ;;  n  Memory operand without REX prefix
+;;  r  Broadcast memory operand
 ;;  s  Sibcall memory operand, not valid for TARGET_X32
 ;;  w  Call memory operand, not valid for TARGET_X32
 ;;  z  Constant call address operand.
 ;;  C  Integer SSE constant with all bits set operand.
 ;;  F  Floating-point SSE constant with all bits set operand.
+;;  H  Integer SSE constant that is 128/256bit all ones
+;;     and zero-extand to 256/512bit, or 128bit all ones
+;;     and zero-extend to 512bit.
 ;;  M  x86-64 memory operand.
 
 (define_constraint "Bf"
@@ -182,11 +187,6 @@
   "@internal Vector memory operand."
   (match_operand 0 "vector_memory_operand"))
 
-(define_special_memory_constraint "Bc"
-  "@internal Constant memory operand."
-  (and (match_operand 0 "memory_operand")
-       (match_test "constant_address_p (XEXP (op, 0))")))
-
 (define_special_memory_constraint "Bk"
   "@internal TLS address that allows insn using non-integer registers."
   (and (match_operand 0 "memory_operand")
@@ -194,7 +194,8 @@
 
 (define_special_memory_constraint "Bn"
   "@internal Memory operand without REX prefix."
-  (match_operand 0 "norex_memory_operand"))
+  (and (match_operand 0 "memory_operand")
+       (not (match_test "x86_extended_reg_mentioned_p (op)"))))
 
 (define_special_memory_constraint "Br"
   "@internal bcst memory operand."
@@ -232,6 +233,11 @@
   "@internal floating-point SSE constant with all bits set operand."
   (and (match_test "TARGET_SSE")
        (match_operand 0 "float_vector_all_ones_operand")))
+
+(define_constraint "BH"
+  "@internal integer constant with last half/quarter bits set operand."
+  (ior (match_operand 0 "vector_all_ones_zero_extend_half_operand")
+       (match_operand 0 "vector_all_ones_zero_extend_quarter_operand")))
 
 ;; NB: Similar to 'm', but don't use define_memory_constraint on x86-64
 ;; to prevent LRA from converting the operand to the form '(mem (reg X))'
@@ -274,7 +280,7 @@
   (and (match_code "const_int")
        (ior (match_test "ival == 0xff")
 	    (match_test "ival == 0xffff")
-	    (match_test "ival == (HOST_WIDE_INT) 0xffffffff"))))
+	    (match_test "ival == HOST_WIDE_INT_C (0xffffffff)"))))
 
 (define_constraint "M"
   "0, 1, 2, or 3 (shifts for the @code{lea} instruction)."
@@ -342,6 +348,10 @@
    to double word size."
   (match_operand 0 "x86_64_dwzext_immediate_operand"))
 
+(define_constraint "Ws"
+  "A symbolic reference or label reference."
+  (match_code "const,symbol_ref,label_ref"))
+
 (define_constraint "Z"
   "32-bit unsigned integer constant, or a symbolic reference known
    to fit that range (for immediate operands in zero-extending x86-64
@@ -361,3 +371,100 @@
 (define_address_constraint "Ts"
   "Address operand without segment register"
   (match_operand 0 "address_no_seg_operand"))
+
+;; j prefix is used for APX operand constraints.
+;;  <  Auto-dec memory operand without GPR32.
+;;  >  Auto-inc memory operand without GPR32.
+;;  a  Vector memory operand without GPR32.
+;;  b  VSIB address operand without EGPR.
+;;  c  Integer register.  GENERAL_GPR16 for TARGET_APX_EGPR and
+;;     !TARGET_AVX, otherwise GENERAL_REGS.
+;;  e  Memory operand for APX NDD ADD.
+;;  j  Integer register.  GENERAL_GPR16 for TARGET_APX_EGPR, otherwise
+;;     GENERAL_REGS.
+;;  o  Offsetable memory operand without GPR32.
+;;  p  General address operand without GPR32.
+;;  m  Memory operand without GPR32.
+;;  M  Memory operand, with APX NDD check.
+;;  R  Integer register.  GENERAL_REGS.
+;;  O  Offsettable memory operand, with APX NDD check.
+;;  V  Non-offsetable memory operand without GPR32.
+
+;; Constraint that force to use EGPR, can only adopt to register class.
+(define_register_constraint  "jR" "GENERAL_REGS")
+
+(define_register_constraint  "jr"
+ "TARGET_APX_EGPR ? GENERAL_GPR16 : GENERAL_REGS")
+
+(define_memory_constraint "jm"
+  "@internal memory operand without GPR32."
+  (and (match_operand 0 "memory_operand")
+       (not (and (match_test "TARGET_APX_EGPR")
+		 (match_test "x86_extended_rex2reg_mentioned_p (op)")))))
+
+(define_constraint "j<"
+  "@internal auto-dec memory operand without GPR32."
+  (and (and (match_code "mem")
+	    (ior (match_test "GET_CODE (XEXP (op, 0)) == PRE_DEC")
+	         (match_test "GET_CODE (XEXP (op, 0)) == POST_DEC")))
+       (not (and (match_test "TARGET_APX_EGPR")
+		 (match_test "x86_extended_rex2reg_mentioned_p (op)")))))
+
+(define_constraint "j>"
+  "@internal auto-inc memory operand without GPR32."
+  (and (and (match_code "mem")
+	    (ior (match_test "GET_CODE (XEXP (op, 0)) == PRE_INC")
+	         (match_test "GET_CODE (XEXP (op, 0)) == POST_INC")))
+       (not (and (match_test "TARGET_APX_EGPR")
+		 (match_test "x86_extended_rex2reg_mentioned_p (op)")))))
+
+(define_memory_constraint "jo"
+  "@internal offsetable memory operand without GPR32."
+  (and (and (match_code "mem")
+	    (match_test "offsettable_nonstrict_memref_p (op)"))
+       (not (and (match_test "TARGET_APX_EGPR")
+		 (match_test "x86_extended_rex2reg_mentioned_p (op)")))))
+
+(define_constraint "jV"
+  "@internal non-offsetable memory operand without GPR32."
+  (and (and (match_code "mem")
+	    (match_test "memory_address_addr_space_p (GET_MODE (op),
+						      XEXP (op, 0),
+						      MEM_ADDR_SPACE (op))")
+	    (not (match_test "offsettable_nonstrict_memref_p (op)")))
+       (not (and (match_test "TARGET_APX_EGPR")
+		 (match_test "x86_extended_rex2reg_mentioned_p (op)")))))
+
+(define_address_constraint "jp"
+  "@internal general address operand without GPR32"
+  (and (match_test "address_operand (op, VOIDmode)")
+       (not (and (match_test "TARGET_APX_EGPR")
+		 (match_test "x86_extended_rex2reg_mentioned_p (op)")))))
+
+(define_special_memory_constraint "ja"
+  "@internal vector memory operand without GPR32."
+  (and (match_operand 0 "vector_memory_operand")
+       (not (and (match_test "TARGET_APX_EGPR")
+		 (match_test "x86_extended_rex2reg_mentioned_p (op)")))))
+
+(define_address_constraint "jb"
+  "VSIB address operand without EGPR"
+  (and (match_operand 0 "vsib_address_operand")
+       (not (and (match_test "TARGET_APX_EGPR")
+		 (match_test "x86_extended_rex2reg_mentioned_p (op)")))))
+
+(define_register_constraint  "jc"
+ "TARGET_APX_EGPR && !TARGET_AVX ? GENERAL_GPR16 : GENERAL_REGS")
+
+(define_memory_constraint "je"
+  "@internal Memory operand for APX NDD ADD."
+  (match_operand 0 "apx_ndd_add_memory_operand"))
+
+(define_memory_constraint "jM"
+  "@internal Memory operand, with APX NDD check."
+  (match_operand 0 "apx_ndd_memory_operand"))
+
+(define_memory_constraint "jO"
+  "@internal Offsettable memory operand, with APX NDD check."
+  (and (match_operand 0 "apx_ndd_memory_operand")
+	   (match_test "offsettable_nonstrict_memref_p (op)")))

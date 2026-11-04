@@ -1,6 +1,6 @@
 /* Operating system specific defines to be used when targeting GCC for any
    Solaris 2 system.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -381,9 +381,6 @@ along with GCC; see the file COPYING3.  If not see
   { "endfile_vtv",		ENDFILE_VTV_SPEC },		\
   SUBTARGET_CPU_EXTRA_SPECS
 
-/* C++11 programs need -lrt for nanosleep.  */
-#define TIME_LIBRARY "rt"
-
 #ifndef USE_GLD
 /* With Sun ld, -rdynamic is a no-op.  */
 #define RDYNAMIC_SPEC ""
@@ -452,7 +449,7 @@ along with GCC; see the file COPYING3.  If not see
   "%{no-pie:} %{pie:%e-pie is not supported in this configuration} "
 #endif
 
-/* collect2.c can only parse GNU nm -n output.  Solaris nm needs -png to
+/* collect2.cc can only parse GNU nm -n output.  Solaris nm needs -png to
    produce the same format.  */
 #define NM_FLAGS "-png"
 
@@ -469,7 +466,7 @@ along with GCC; see the file COPYING3.  If not see
   { "fini",      0, 0, true,  false,  false, false, NULL, NULL }
 
 /* Solaris-specific #pragmas are implemented on top of attributes.  Hook in
-   the bits from config/sol2.c.  */
+   the bits from config/sol2.cc.  */
 #define SUBTARGET_INSERT_ATTRIBUTES solaris_insert_attributes
 #define SUBTARGET_ATTRIBUTE_TABLE SOLARIS_ATTRIBUTE_TABLE
 

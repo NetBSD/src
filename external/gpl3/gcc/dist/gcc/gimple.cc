@@ -1,6 +1,6 @@
 /* Gimple IR support functions.
 
-   Copyright (C) 2007-2022 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>
 
 This file is part of GCC.
@@ -44,6 +44,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "stringpool.h"
 #include "attribs.h"
 #include "asan.h"
+#include "ubsan.h"
 #include "langhooks.h"
 #include "attr-fnspec.h"
 #include "ipa-modref-tree.h"
@@ -398,6 +399,10 @@ gimple_build_call_from_tree (tree t, tree fnptrtype)
     gimple_call_set_from_thunk (call, CALL_FROM_THUNK_P (t));
   gimple_call_set_va_arg_pack (call, CALL_EXPR_VA_ARG_PACK (t));
   gimple_call_set_nothrow (call, TREE_NOTHROW (t));
+  if (fndecl)
+    gimple_call_set_expected_throw (call,
+				    flags_from_decl_or_type (fndecl)
+				    & ECF_XTHROW);
   gimple_call_set_by_descriptor (call, CALL_EXPR_BY_DESCRIPTOR (t));
   copy_warning (call, t);
 
@@ -414,13 +419,26 @@ gimple_build_call_from_tree (tree t, tree fnptrtype)
 	  tree fntype = TREE_TYPE (fnptrtype);
 
 	  if (lookup_attribute ("nocf_check", TYPE_ATTRIBUTES (fntype)))
-	    gimple_call_set_nocf_check (call, TRUE);
+	    gimple_call_set_nocf_check (call, true);
 	}
     }
 
   return call;
 }
 
+/* Build a gcall to __builtin_unreachable as rewritten by
+   -fsanitize=unreachable.  */
+
+gcall *
+gimple_build_builtin_unreachable (location_t loc)
+{
+  tree data = NULL_TREE;
+  tree fn = sanitize_unreachable_fn (&data, loc);
+  gcall *g = gimple_build_call (fn, data != NULL_TREE, data);
+  gimple_call_set_ctrl_altering (g, true);
+  gimple_set_location (g, loc);
+  return g;
+}
 
 /* Build a GIMPLE_ASSIGN statement.
 
@@ -1024,6 +1042,21 @@ gimple_build_omp_section (gimple_seq body)
 }
 
 
+/* Build a GIMPLE_OMP_STRUCTURED_BLOCK statement.
+
+   BODY is the structured block sequence.  */
+
+gimple *
+gimple_build_omp_structured_block (gimple_seq body)
+{
+  gimple *p = gimple_alloc (GIMPLE_OMP_STRUCTURED_BLOCK, 0);
+  if (body)
+    gimple_omp_set_body (p, body);
+
+  return p;
+}
+
+
 /* Build a GIMPLE_OMP_MASTER statement.
 
    BODY is the sequence of statements to be executed by just the master.  */
@@ -1264,6 +1297,18 @@ gimple_build_omp_atomic_store (tree val, enum omp_memory_order mo)
     = as_a <gomp_atomic_store *> (gimple_alloc (GIMPLE_OMP_ATOMIC_STORE, 0));
   gimple_omp_atomic_store_set_val (p, val);
   gimple_omp_atomic_set_memory_order (p, mo);
+  return p;
+}
+
+/* Build a GIMPLE_ASSUME statement.  */
+
+gimple *
+gimple_build_assume (tree guard, gimple_seq body)
+{
+  gimple_statement_assume *p
+    = as_a <gimple_statement_assume *> (gimple_alloc (GIMPLE_ASSUME, 0));
+  gimple_assume_set_guard (p, guard);
+  *gimple_assume_body_ptr (p) = body;
   return p;
 }
 
@@ -1509,6 +1554,8 @@ gimple_call_flags (const gimple *stmt)
 
   if (stmt->subcode & GF_CALL_NOTHROW)
     flags |= ECF_NOTHROW;
+  if (stmt->subcode & GF_CALL_XTHROW)
+    flags |= ECF_XTHROW;
 
   if (stmt->subcode & GF_CALL_BY_DESCRIPTOR)
     flags |= ECF_BY_DESCRIPTOR;
@@ -1761,6 +1808,26 @@ gimple_assign_unary_nop_p (gimple *gs)
           && (TYPE_MODE (TREE_TYPE (gimple_assign_lhs (gs)))
               == TYPE_MODE (TREE_TYPE (gimple_assign_rhs1 (gs)))));
 }
+
+/* Return true if GS is an assignment that loads from its rhs1.  */
+
+bool
+gimple_assign_load_p (const gimple *gs)
+{
+  tree rhs;
+  if (!gimple_assign_single_p (gs))
+    return false;
+  rhs = gimple_assign_rhs1 (gs);
+  if (TREE_CODE (rhs) == WITH_SIZE_EXPR)
+    return true;
+  if (handled_component_p (rhs))
+    rhs = TREE_OPERAND (rhs, 0);
+  return (handled_component_p (rhs)
+	  || DECL_P (rhs)
+	  || TREE_CODE (rhs) == MEM_REF
+	  || TREE_CODE (rhs) == TARGET_MEM_REF);
+}
+
 
 /* Set BB to be the basic block holding G.  */
 
@@ -2102,6 +2169,7 @@ gimple_copy (gimple *stmt)
 
 	case GIMPLE_OMP_SECTION:
 	case GIMPLE_OMP_MASTER:
+	case GIMPLE_OMP_STRUCTURED_BLOCK:
 	copy_omp_body:
 	  new_seq = gimple_seq_copy (gimple_omp_body (stmt));
 	  gimple_omp_set_body (copy, new_seq);
@@ -2111,6 +2179,13 @@ gimple_copy (gimple *stmt)
 	  t = unshare_expr (gimple_omp_masked_clauses (stmt));
 	  gimple_omp_masked_set_clauses (copy, t);
 	  goto copy_omp_body;
+
+	case GIMPLE_ASSUME:
+	  new_seq = gimple_seq_copy (gimple_assume_body (stmt));
+	  *gimple_assume_body_ptr (copy) = new_seq;
+	  gimple_assume_set_guard (copy,
+				   unshare_expr (gimple_assume_guard (stmt)));
+	  break;
 
 	case GIMPLE_TRANSACTION:
 	  new_seq = gimple_seq_copy (gimple_transaction_body (
@@ -2366,7 +2441,6 @@ get_gimple_rhs_num_ops (enum tree_code code)
       || (SYM) == BIT_INSERT_EXPR) ? GIMPLE_TERNARY_RHS			    \
    : ((SYM) == CONSTRUCTOR						    \
       || (SYM) == OBJ_TYPE_REF						    \
-      || (SYM) == ASSERT_EXPR						    \
       || (SYM) == ADDR_EXPR						    \
       || (SYM) == WITH_SIZE_EXPR					    \
       || (SYM) == SSA_NAME) ? GIMPLE_SINGLE_RHS				    \
@@ -2379,48 +2453,6 @@ const unsigned char gimple_rhs_class_table[] = {
 
 #undef DEFTREECODE
 #undef END_OF_BASE_TREE_CODES
-
-/* Canonicalize a tree T for use in a COND_EXPR as conditional.  Returns
-   a canonicalized tree that is valid for a COND_EXPR or NULL_TREE, if
-   we failed to create one.  */
-
-tree
-canonicalize_cond_expr_cond (tree t)
-{
-  /* Strip conversions around boolean operations.  */
-  if (CONVERT_EXPR_P (t)
-      && (truth_value_p (TREE_CODE (TREE_OPERAND (t, 0)))
-          || TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0)))
-	     == BOOLEAN_TYPE))
-    t = TREE_OPERAND (t, 0);
-
-  /* For !x use x == 0.  */
-  if (TREE_CODE (t) == TRUTH_NOT_EXPR)
-    {
-      tree top0 = TREE_OPERAND (t, 0);
-      t = build2 (EQ_EXPR, TREE_TYPE (t),
-		  top0, build_int_cst (TREE_TYPE (top0), 0));
-    }
-  /* For cmp ? 1 : 0 use cmp.  */
-  else if (TREE_CODE (t) == COND_EXPR
-	   && COMPARISON_CLASS_P (TREE_OPERAND (t, 0))
-	   && integer_onep (TREE_OPERAND (t, 1))
-	   && integer_zerop (TREE_OPERAND (t, 2)))
-    {
-      tree top0 = TREE_OPERAND (t, 0);
-      t = build2 (TREE_CODE (top0), TREE_TYPE (t),
-		  TREE_OPERAND (top0, 0), TREE_OPERAND (top0, 1));
-    }
-  /* For x ^ y use x != y.  */
-  else if (TREE_CODE (t) == BIT_XOR_EXPR)
-    t = build2 (NE_EXPR, TREE_TYPE (t),
-		TREE_OPERAND (t, 0), TREE_OPERAND (t, 1));
-  
-  if (is_gimple_condexpr (t))
-    return t;
-
-  return NULL_TREE;
-}
 
 /* Build a GIMPLE_CALL identical to STMT but skipping the arguments in
    the positions marked by the set ARGS_TO_SKIP.  */
@@ -2956,6 +2988,8 @@ nonfreeing_call_p (gimple *call)
 	case BUILT_IN_TM_FREE:
 	case BUILT_IN_REALLOC:
 	case BUILT_IN_STACK_RESTORE:
+	case BUILT_IN_GOMP_FREE:
+	case BUILT_IN_GOMP_REALLOC:
 	  return false;
 	default:
 	  return true;
@@ -3177,7 +3211,7 @@ preprocess_case_label_vec_for_gimple (vec<tree> &labels,
       tree elt = labels[i];
       tree low = CASE_LOW (elt);
       tree high = CASE_HIGH (elt);
-      bool remove_element = FALSE;
+      bool remove_element = false;
 
       if (low)
 	{
@@ -3201,7 +3235,7 @@ preprocess_case_label_vec_for_gimple (vec<tree> &labels,
 		 into a simple (one-value) case.  */
 	      int cmp = tree_int_cst_compare (high, low);
 	      if (cmp < 0)
-		remove_element = TRUE;
+		remove_element = true;
 	      else if (cmp == 0)
 		high = NULL_TREE;
 	    }
@@ -3213,7 +3247,7 @@ preprocess_case_label_vec_for_gimple (vec<tree> &labels,
 		   && tree_int_cst_compare (low, min_value) < 0)
 		  || (TREE_CODE (max_value) == INTEGER_CST
 		      && tree_int_cst_compare (low, max_value) > 0))
-		remove_element = TRUE;
+		remove_element = true;
 	      else
 		low = fold_convert (index_type, low);
 	    }
@@ -3224,7 +3258,7 @@ preprocess_case_label_vec_for_gimple (vec<tree> &labels,
 		   && tree_int_cst_compare (high, min_value) < 0)
 		  || (TREE_CODE (max_value) == INTEGER_CST
 		      && tree_int_cst_compare (low, max_value) > 0))
-		remove_element = TRUE;
+		remove_element = true;
 	      else
 		{
 		  /* If the lower bound is less than the index type's
@@ -3259,7 +3293,7 @@ preprocess_case_label_vec_for_gimple (vec<tree> &labels,
 	     is NULL, we do not remove the default case (it would
 	     be completely lost).  */
 	  if (default_casep)
-	    remove_element = TRUE;
+	    remove_element = true;
 	}
 
       if (remove_element)

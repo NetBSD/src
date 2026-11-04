@@ -1,5 +1,5 @@
 /* Interprocedural semantic function equality pass
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    Contributed by Jan Hubicka <hubicka@ucw.cz> and Martin Liska <mliska@suse.cz>
 
@@ -39,7 +39,7 @@ along with GCC; see the file COPYING3.  If not see
 /* Logs a MESSAGE to dump_file if exists and returns false. FUNC is name
    of function and LINE is location in the source file.  */
 
-static inline bool
+inline bool
 return_false_with_message_1 (const char *message, const char *filename,
 			     const char *func, unsigned int line)
 {
@@ -59,7 +59,7 @@ return_false_with_message_1 (const char *message, const char *filename,
 /* Logs return value if RESULT is false. FUNC is name of function and LINE
    is location in the source file.  */
 
-static inline bool
+inline bool
 return_with_result (bool result, const char *filename,
 		    const char *func, unsigned int line)
 {
@@ -77,7 +77,7 @@ return_with_result (bool result, const char *filename,
 /* Verbose logging function logging statements S1 and S2 of a CODE.
    FUNC is name of function and LINE is location in the source file.  */
 
-static inline bool
+inline bool
 return_different_stmts_1 (gimple *s1, gimple *s2, const char *code,
 			  const char *func, unsigned int line)
 {
@@ -125,7 +125,8 @@ public:
   func_checker ():
     m_source_func_decl (NULL_TREE), m_target_func_decl (NULL_TREE),
     m_ignored_source_nodes (NULL), m_ignored_target_nodes (NULL),
-    m_ignore_labels (false), m_tbaa (true)
+    m_ignore_labels (false), m_tbaa (true),
+    m_total_scalarization_limit_known_p (false)
   {
     m_source_ssa_names.create (0);
     m_target_ssa_names.create (0);
@@ -205,6 +206,10 @@ public:
   enum operand_access_type {OP_MEMORY, OP_NORMAL};
   typedef hash_set<tree> operand_access_type_map;
 
+  /* Return true if either T1 and T2 cannot be totally scalarized or if doing
+     so would result in copying the same memory.  Otherwise return false.  */
+  bool safe_for_total_scalarization_p (tree t1, tree t2);
+
   /* Function responsible for comparison of various operands T1 and T2.
      If these components, from functions FUNC1 and FUNC2, are equal, true
      is returned.  */
@@ -279,14 +284,24 @@ private:
   /* Flag if we should compare type based alias analysis info.  */
   bool m_tbaa;
 
+  /* Set to true when total scalarization size has already been determined for
+     the functions.  */
+  bool m_total_scalarization_limit_known_p;
+
+  /* When the above it set to true the determiend total scalarization
+     limit.  */
+  unsigned HOST_WIDE_INT m_total_scalarization_limit;
+
 public:
   /* Return true if two operands are equal.  The flags fields can be used
      to specify OEP flags described above.  */
-  virtual bool operand_equal_p (const_tree, const_tree, unsigned int flags);
+  bool operand_equal_p (const_tree, const_tree, unsigned int flags)
+    final override;
 
   /* Generate a hash value for an expression.  This can be used iteratively
      by passing a previous result as the HSTATE argument.  */
-  virtual void hash_operand (const_tree, inchash::hash &, unsigned flags);
+  void hash_operand (const_tree, inchash::hash &, unsigned flags)
+    final override;
   void hash_operand (const_tree, inchash::hash &, unsigned flags,
 		     operand_access_type access);
 };

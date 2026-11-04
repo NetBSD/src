@@ -1,6 +1,6 @@
 // Input streams -*- C++ -*-
 
-// Copyright (C) 1997-2022 Free Software Foundation, Inc.
+// Copyright (C) 1997-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -34,6 +34,8 @@
 #define _GLIBCXX_ISTREAM 1
 
 #pragma GCC system_header
+
+#include <bits/requires_hosted.h> // iostreams
 
 #include <ios>
 #include <ostream>
@@ -191,6 +193,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       { return _M_extract(__n); }
 
 #ifdef _GLIBCXX_USE_LONG_LONG
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wlong-long"
       __istream_type&
       operator>>(long long& __n)
       { return _M_extract(__n); }
@@ -198,6 +202,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __istream_type&
       operator>>(unsigned long long& __n)
       { return _M_extract(__n); }
+#pragma GCC diagnostic pop
 #endif
       ///@}
 
@@ -222,6 +227,94 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator>>(long double& __f)
       { return _M_extract(__f); }
       ///@}
+
+#if defined(__STDCPP_FLOAT16_T__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
+      __attribute__((__always_inline__))
+      __istream_type&
+      operator>>(_Float16& __f)
+      {
+	float __flt;
+	__istream_type& __ret = _M_extract(__flt);
+	ios_base::iostate __err = ios_base::goodbit;
+	if (__flt < -__FLT16_MAX__)
+	  {
+	    __f = -__FLT16_MAX__;
+	    __err = ios_base::failbit;
+	  }
+	else if (__flt > __FLT16_MAX__)
+	  {
+	    __f = __FLT16_MAX__;
+	    __err = ios_base::failbit;
+	  }
+	else
+	  __f = static_cast<_Float16>(__flt);
+	if (__err)
+	  this->setstate(__err);
+	return __ret;
+      }
+#endif
+
+#if defined(__STDCPP_FLOAT32_T__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
+      __attribute__((__always_inline__))
+      __istream_type&
+      operator>>(_Float32& __f)
+      {
+	float __flt;
+	__istream_type& __ret = _M_extract(__flt);
+	__f = static_cast<_Float32> (__flt);
+	return __ret;
+      }
+#endif
+
+#if defined(__STDCPP_FLOAT64_T__) && defined(_GLIBCXX_DOUBLE_IS_IEEE_BINARY64)
+      __attribute__((__always_inline__))
+      __istream_type&
+      operator>>(_Float64& __f)
+      {
+	double __dbl;
+	__istream_type& __ret = _M_extract(__dbl);
+	__f = static_cast<_Float64> (__dbl);
+	return __ret;
+      }
+#endif
+
+#if defined(__STDCPP_FLOAT128_T__) && defined(_GLIBCXX_LDOUBLE_IS_IEEE_BINARY128)
+      __attribute__((__always_inline__))
+      __istream_type&
+      operator>>(_Float128& __f)
+      {
+	long double __ldbl;
+	__istream_type& __ret = _M_extract(__ldbl);
+	__f = static_cast<_Float128> (__ldbl);
+	return __ret;
+      }
+#endif
+
+#if defined(__STDCPP_BFLOAT16_T__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
+      __attribute__((__always_inline__))
+      __istream_type&
+      operator>>(__gnu_cxx::__bfloat16_t & __f)
+      {
+	float __flt;
+	__istream_type& __ret = _M_extract(__flt);
+	ios_base::iostate __err = ios_base::goodbit;
+	if (__flt < -__BFLT16_MAX__)
+	  {
+	    __f = -__BFLT16_MAX__;
+	    __err = ios_base::failbit;
+	  }
+	else if (__flt > __BFLT16_MAX__)
+	  {
+	    __f = __BFLT16_MAX__;
+	    __err = ios_base::failbit;
+	  }
+	else
+	  __f = static_cast<__gnu_cxx::__bfloat16_t>(__flt);
+	if (__err)
+	  this->setstate(__err);
+	return __ret;
+      }
+#endif
 
       /**
        *  @brief  Basic arithmetic extractors
@@ -819,7 +912,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  __n /= sizeof(_CharT);
 	  streamsize __w = __in.width();
 	  std::__istream_extract(__in, __s, __n);
-	  if (__in.good() && (__w <= 0 || __n < __w))
+	  if (__in.good() && (__w <= 0 || __n < (size_t)__w))
 	    {
 	      // Stopped extracting early to avoid overflowing the buffer,
 	      // but might have stopped anyway (and set eofbit) if at EOF.
@@ -979,7 +1072,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   // 2328. Rvalue stream extraction should use perfect forwarding
   // 1203. More useful rvalue stream insertion
 
-#if __cpp_lib_concepts
+#if __cpp_concepts >= 201907L && __glibcxx_type_trait_variable_templates
   template<typename _Is, typename _Tp>
     requires __derived_from_ios_base<_Is>
       && requires (_Is& __is, _Tp&& __t) { __is >> std::forward<_Tp>(__t); }

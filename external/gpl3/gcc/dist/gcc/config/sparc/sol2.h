@@ -1,5 +1,5 @@
 /* Definitions of target machine for GCC, for SPARC running Solaris 2
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
    Contributed by Ron Guilmette (rfg@netcom.com).
    Additional changes by David V. Henkel-Wallace (gumby@cygnus.com).
 
@@ -456,3 +456,6 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 
 #undef SPARC_LOW_FE_EXCEPT_VALUES
 #define SPARC_LOW_FE_EXCEPT_VALUES 1
+
+#undef SUN_V9_ABI_COMPATIBILITY
+#define SUN_V9_ABI_COMPATIBILITY 1

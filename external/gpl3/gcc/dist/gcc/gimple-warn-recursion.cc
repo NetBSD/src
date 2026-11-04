@@ -1,5 +1,5 @@
 /* -Winfinite-recursion support.
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Martin Sebor <msebor@redhat.com>
 
    This file is part of GCC.
@@ -52,9 +52,9 @@ public:
   pass_warn_recursion (gcc::context *);
 
 private:
-  virtual bool gate (function *) { return warn_infinite_recursion; }
+  bool gate (function *) final override { return warn_infinite_recursion; }
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
   bool find_function_exit (basic_block);
 

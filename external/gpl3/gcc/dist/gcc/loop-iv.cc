@@ -1,5 +1,5 @@
 /* Rtl-level induction variable analysis.
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -637,7 +637,7 @@ get_biv_step_1 (df_ref def, scalar_int_mode outer_mode, rtx reg,
 {
   rtx set, rhs, op0 = NULL_RTX, op1 = NULL_RTX;
   rtx next, nextr;
-  enum rtx_code code;
+  enum rtx_code code, prev_code = UNKNOWN;
   rtx_insn *insn = DF_REF_INSN (def);
   df_ref next_def;
   enum iv_grd_result res;
@@ -697,6 +697,28 @@ get_biv_step_1 (df_ref def, scalar_int_mode outer_mode, rtx reg,
 	return false;
 
       op0 = XEXP (rhs, 0);
+
+      /* rv64 wraps SImode arithmetic inside an extension to DImode.
+	 This matches the actual hardware semantics.  So peek inside
+	 the extension and see if we have simple arithmetic that we
+	 can analyze.  */
+      if (GET_CODE (op0) == PLUS)
+	{
+	  rhs = op0;
+	  op0 = XEXP (rhs, 0);
+	  op1 = XEXP (rhs, 1);
+
+	  if (CONSTANT_P (op0))
+	    std::swap (op0, op1);
+
+	  if (!simple_reg_p (op0) || !CONSTANT_P (op1))
+	    return false;
+
+	  op1 = simplify_gen_unary (code, outer_mode, op1, GET_MODE (rhs));
+	  prev_code = code;
+	  code = PLUS;
+	}
+
       if (!simple_reg_p (op0))
 	return false;
 
@@ -769,6 +791,11 @@ get_biv_step_1 (df_ref def, scalar_int_mode outer_mode, rtx reg,
       else
 	*outer_step = simplify_gen_binary (code, outer_mode,
 					   *outer_step, op1);
+
+      if (prev_code == SIGN_EXTEND)
+	*extend = IV_SIGN_EXTEND;
+      else if (prev_code == ZERO_EXTEND)
+	*extend = IV_ZERO_EXTEND;
       break;
 
     case SIGN_EXTEND:
@@ -1378,49 +1405,6 @@ simple_rhs_p (rtx rhs)
     }
 }
 
-/* If REGNO has a single definition, return its known value, otherwise return
-   null.  */
-
-static rtx
-find_single_def_src (unsigned int regno)
-{
-  rtx src = NULL_RTX;
-
-  /* Don't look through unbounded number of single definition REG copies,
-     there might be loops for sources with uninitialized variables.  */
-  for (int cnt = 0; cnt < 128; cnt++)
-    {
-      df_ref adef = DF_REG_DEF_CHAIN (regno);
-      if (adef == NULL || DF_REF_NEXT_REG (adef) != NULL
-	  || DF_REF_IS_ARTIFICIAL (adef))
-	return NULL_RTX;
-
-      rtx set = single_set (DF_REF_INSN (adef));
-      if (set == NULL || !REG_P (SET_DEST (set))
-	  || REGNO (SET_DEST (set)) != regno)
-	return NULL_RTX;
-
-      rtx note = find_reg_equal_equiv_note (DF_REF_INSN (adef));
-      if (note && function_invariant_p (XEXP (note, 0)))
-	{
-	  src = XEXP (note, 0);
-	  break;
-	}
-      src = SET_SRC (set);
-
-      if (REG_P (src))
-	{
-	  regno = REGNO (src);
-	  continue;
-	}
-      break;
-    }
-  if (!function_invariant_p (src))
-    return NULL_RTX;
-
-  return src;
-}
-
 /* If any registers in *EXPR that have a single definition, try to replace
    them with the known-equivalent values.  */
 
@@ -1433,7 +1417,7 @@ replace_single_def_regs (rtx *expr)
     {
       rtx x = *iter;
       if (REG_P (x))
-	if (rtx new_x = find_single_def_src (REGNO (x)))
+	if (rtx new_x = df_find_single_def_src (x))
 	  {
 	    *expr = simplify_replace_rtx (*expr, x, new_x);
 	    goto repeat;
@@ -1594,7 +1578,7 @@ implies_p (rtx a, rtx b)
       && CONST_INT_P (XEXP (opb0, 1))
       /* Avoid overflows.  */
       && ((unsigned HOST_WIDE_INT) INTVAL (XEXP (opb0, 1))
-	  != ((unsigned HOST_WIDE_INT)1
+	  != (HOST_WIDE_INT_1U
 	      << (HOST_BITS_PER_WIDE_INT - 1)) - 1)
       && INTVAL (XEXP (opb0, 1)) + 1 == -INTVAL (op1))
     return rtx_equal_p (op0, XEXP (opb0, 0));
@@ -2660,7 +2644,7 @@ iv_number_of_iterations (class loop *loop, rtx_insn *insn, rtx condition,
 	  d *= 2;
 	  size--;
 	}
-      bound = GEN_INT (((uint64_t) 1 << (size - 1 ) << 1) - 1);
+      bound = gen_int_mode (((uint64_t) 1 << (size - 1) << 1) - 1, mode);
 
       tmp1 = lowpart_subreg (mode, iv1.base, comp_mode);
       tmp = simplify_gen_binary (UMOD, mode, tmp1, gen_int_mode (d, mode));

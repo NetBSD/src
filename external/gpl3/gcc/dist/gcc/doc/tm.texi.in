@@ -1,4 +1,4 @@
-@c Copyright (C) 1988-2022 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2024 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -53,6 +53,7 @@ through the macros defined in the @file{.h} file.
 * PCH Target::          Validity checking for precompiled headers.
 * C++ ABI::             Controlling C++ ABI changes.
 * D Language and ABI::  Controlling D ABI changes.
+* Rust Language and ABI:: Controlling Rust ABI changes.
 * Named Address Spaces:: Adding support for named address spaces
 * Misc::                Everything else.
 @end menu
@@ -114,6 +115,14 @@ This is declared in @file{d/d-target.h}, the initializer
 initialize @code{targetdm} themselves, they should set
 @code{target_has_targetdm=yes} in @file{config.gcc}; otherwise a default
 definition is used.
+
+Similarly, there is a @code{targetrustm} variable for hooks that are
+specific to the Rust language front end, documented as ``Rust Target
+Hook''.  This is declared in @file{rust/rust-target.h}, the initializer
+@code{TARGETRUSTM_INITIALIZER} in @file{rust/rust-target-def.h}.
+If targets initialize @code{targetrustm} themselves, they should set
+@code{target_has_targetrustm=yes} in @file{config.gcc}; otherwise a
+default definition is used.
 
 @node Driver
 @section Controlling the Compilation Driver, @file{gcc}
@@ -736,6 +745,9 @@ options are changed via @code{#pragma GCC optimize} or by using the
 
 @hook TARGET_OPTION_INIT_STRUCT
 
+@hook TARGET_COMPUTE_MULTILIB
+
+
 @defmac SWITCHABLE_TARGET
 Some targets need to switch between substantially different subtargets
 during compilation.  For example, the MIPS target has one subtarget for
@@ -932,6 +944,8 @@ Do not define this macro if it would never modify @var{m}.
 Return a value, with the same meaning as the C99 macro
 @code{FLT_EVAL_METHOD} that describes which excess precision should be
 applied.
+
+@hook TARGET_C_BITINT_TYPE_INFO
 
 @hook TARGET_PROMOTE_FUNCTION_MODE
 
@@ -1282,6 +1296,8 @@ pattern needs to support both a 32- and a 64-bit mode.
 @hook TARGET_INSTANTIATE_DECLS
 
 @hook TARGET_MANGLE_TYPE
+
+@hook TARGET_EMIT_SUPPORT_TINFOS
 
 @node Type Layout
 @section Layout of Source Language Data Types
@@ -2044,7 +2060,8 @@ When a value occupying several consecutive registers is expected in a
 certain class, all the registers used must belong to that class.
 Therefore, register classes cannot be used to enforce a requirement for
 a register pair to start with an even-numbered register.  The way to
-specify this requirement is with @code{TARGET_HARD_REGNO_MODE_OK}.
+specify this requirement is with @code{TARGET_HARD_REGNO_MODE_OK},
+or with a filter expression in a @code{define_register_constraint}.
 
 Register classes used for input-operands of bitwise-and or shift
 instructions have a special requirement: each such class must have, for
@@ -2134,11 +2151,28 @@ of an address, @code{ADDRESS} for something that occurs in an
 index expression if @var{outer_code} is @code{PLUS}; @code{SCRATCH} otherwise.
 @end defmac
 
+@defmac INSN_BASE_REG_CLASS (@var{insn})
+A C expression whose value is the register class to which a valid
+base register for a specified @var{insn} must belong. This macro is
+used when some backend insns may have limited usage of base register
+compared with other insns. If you define this macro, the compiler will
+use it instead of all other defined macros that relate to
+BASE_REG_CLASS.
+@end defmac
+
 @defmac INDEX_REG_CLASS
 A macro whose definition is the name of the class to which a valid
 index register must belong.  An index register is one used in an
 address where its value is either multiplied by a scale factor or
 added to another register (as well as added to a displacement).
+@end defmac
+
+@defmac INSN_INDEX_REG_CLASS (@var{insn})
+A C expression whose value is the register class to which a valid
+index register for a specified @var{insn} must belong. This macro is
+used when some backend insns may have limited usage of index register
+compared with other insns. If you defined this macro, the compiler
+will use it instead of @code{INDEX_REG_CLASS}.
 @end defmac
 
 @defmac REGNO_OK_FOR_BASE_P (@var{num})
@@ -2182,6 +2216,15 @@ address, @code{ADDRESS} for something that occurs in an
 corresponding index expression if @var{outer_code} is @code{PLUS};
 @code{SCRATCH} otherwise.  The mode may be @code{VOIDmode} for addresses
 that appear outside a @code{MEM}, i.e., as an @code{address_operand}.
+@end defmac
+
+@defmac REGNO_OK_FOR_INSN_BASE_P (@var{num}, @var{insn})
+A C expression which is nonzero if register number @var{num} is
+suitable for use as a base register in operand addresses for a specified
+@var{insn}. This macro is used when some backend insn may have limited
+usage of base register compared with other insns. If you define this
+macro, the compiler will use it instead of all other defined macros
+that relate to REGNO_OK_FOR_BASE_P.
 @end defmac
 
 @defmac REGNO_OK_FOR_INDEX_P (@var{num})
@@ -2572,6 +2615,12 @@ someone decided it was a good idea to use that register number to
 terminate the stack backtrace.  New ports should avoid this.
 @end defmac
 
+@defmac DWARF_VERSION_DEFAULT
+A C expression whose value is the default dwarf standard version we'll honor
+and advertise when generating dwarf debug information, in absence of
+an explicit @option{-gdwarf-@var{version}} option on the command line.
+@end defmac
+
 @hook TARGET_DWARF_HANDLE_FRAME_UNSPEC
 
 @hook TARGET_DWARF_POLY_INDETERMINATE_VALUE
@@ -2637,6 +2686,56 @@ in DWARF 2 debug information.  The default is zero.  A different value
 may reduce the size of debug information on some ports.
 @end defmac
 
+@hook TARGET_HAVE_STRUB_SUPPORT_FOR
+
+@defmac STACK_ADDRESS_OFFSET
+Offset from the stack pointer register to the boundary address between
+the stack area claimed by an active function, and stack ranges that
+could get clobbered if it called another function.  It should NOT
+encompass any stack red zone, that is used in leaf functions.
+
+This value is added to the stack pointer register to compute the address
+returned by @code{__builtin_stack_address}, and this is its only use.
+If this macro is not defined, no offset is added.  Defining it like
+@code{STACK_POINTER_OFFSET} may be appropriate for many machines, but
+not all.
+
+On SPARC, for example, the register save area is *not* considered active
+or used by the active function, but rather as akin to the area in which
+call-preserved registers are saved by callees, so the stack address is
+above that area, even though the (unbiased) stack pointer points below
+it.  This enables @code{__strub_leave} to clear what would otherwise
+overlap with its own register save area.
+
+On PowerPC, @code{STACK_POINTER_OFFSET} also reserves space for a save
+area, but that area is used by the caller rather than the callee, so the
+boundary address is below it.
+
+If the address is computed too high or too low, parts of a stack range
+that should be scrubbed may be left unscrubbed, scrubbing may corrupt
+active portions of the stack frame, and stack ranges may be
+doubly-scrubbed by caller and callee.
+@end defmac
+
+@defmac TARGET_STRUB_USE_DYNAMIC_ARRAY
+If defined to nonzero, @code{__strub_leave} will allocate a dynamic
+array covering the stack range that needs scrubbing before clearing it.
+Allocating the array tends to make scrubbing slower, but it enables the
+scrubbing to be safely implemented with a @code{memset} call, which
+could make up for the difference.
+@end defmac
+
+@defmac TARGET_STRUB_MAY_USE_MEMSET
+If defined to nonzero, enable @code{__strub_leave} to be optimized so as
+to call @code{memset} for stack scrubbing.  This is only enabled by
+default if @code{TARGET_STRUB_USE_DYNAMIC_ARRAY} is enabled; it's not
+advisable to enable it otherwise, since @code{memset} would then likely
+overwrite its own stack frame, but it might work if the target ABI
+enables @code{memset} to not use the stack at all, not even for
+arguments or its return address, and its implementation is trivial
+enough that it doesn't use a stack frame.
+@end defmac
+
 @node Exception Handling
 @subsection Exception Handling Support
 @cindex exception handling
@@ -2692,6 +2791,18 @@ the @code{eh_return} instruction pattern should be used instead.
 
 If you want to support call frame exception handling, you must
 define either this macro or the @code{eh_return} instruction pattern.
+@end defmac
+
+@defmac EH_RETURN_TAKEN_RTX
+A C expression whose value is RTL representing a location in which
+to store if the EH return path was taken instead of a normal return.
+This macro allows conditionally executing different code in the
+epilogue for the EH and normal return cases.
+
+When this macro is defined, the macros @code{EH_RETURN_STACKADJ_RTX}
+and @code{EH_RETURN_HANDLER_RTX} are only meaningful in the epilogue
+when 1 is stored to the specified location. The value 0 means normal
+return.
 @end defmac
 
 @defmac RETURN_ADDR_OFFSET
@@ -3009,7 +3120,7 @@ Define this macro if the target's representation for dwarf registers
 used in .eh_frame or .debug_frame is different from that used in other
 debug info sections.  Given a GCC hard register number, this macro
 should return the .eh_frame register number.  The default is
-@code{DBX_REGISTER_NUMBER (@var{regno})}.
+@code{DEBUGGER_REGNO (@var{regno})}.
 
 @end defmac
 
@@ -3363,6 +3474,8 @@ stack.
 
 @hook TARGET_VECTOR_MODE_SUPPORTED_P
 
+@hook TARGET_VECTOR_MODE_SUPPORTED_ANY_TARGET_P
+
 @hook TARGET_COMPATIBLE_VECTOR_TYPES_P
 
 @hook TARGET_ARRAY_MODE
@@ -3525,9 +3638,9 @@ This section describes the macros that output function entry
 @hook TARGET_ASM_FUNCTION_EPILOGUE
 
 @itemize @bullet
-@item
 @findex pretend_args_size
 @findex crtl->args.pretend_args_size
+@item
 A region of @code{crtl->args.pretend_args_size} bytes of
 uninitialized space just underneath the first argument arriving on the
 stack.  (This may not be at the very start of the allocated stack region
@@ -3552,8 +3665,8 @@ boundary, to contain the local variables of the function.  On some machines,
 this region and the save area may occur in the opposite order, with the
 save area closer to the top of the stack.
 
-@item
 @cindex @code{ACCUMULATE_OUTGOING_ARGS} and stack frames
+@item
 Optionally, when @code{ACCUMULATE_OUTGOING_ARGS} is defined, a region of
 @code{crtl->outgoing_args_size} bytes to be used for outgoing
 argument lists of the function.  @xref{Stack Arguments}.
@@ -3774,6 +3887,8 @@ These machine description macros help implement varargs:
 
 @hook TARGET_STRICT_ARGUMENT_NAMING
 
+@hook TARGET_START_CALL_ARGS
+
 @hook TARGET_CALL_ARGS
 
 @hook TARGET_END_CALL_ARGS
@@ -3993,11 +4108,15 @@ macro, a reasonable default is used.
 
 @hook TARGET_LIBC_HAS_FAST_FUNCTION
 
+@hook TARGET_FORTIFY_SOURCE_DEFAULT_LEVEL
+
+@hook TARGET_LIBM_FUNCTION_MAX_ERROR
+
 @defmac NEXT_OBJC_RUNTIME
 Set this macro to 1 to use the "NeXT" Objective-C message sending conventions
 by default.  This calling convention involves passing the object, the selector
 and the method arguments all at once to the method-lookup library function.
-This is the usual setting when targeting Darwin/Mac OS X systems, which have
+This is the usual setting when targeting Darwin / macOS systems, which have
 the NeXT runtime installed.
 
 If the macro is set to 0, the "GNU" Objective-C message sending convention
@@ -4163,6 +4282,8 @@ address;  but often a machine-dependent strategy can generate better code.
 @hook TARGET_VECTORIZE_VECTOR_ALIGNMENT_REACHABLE
 
 @hook TARGET_VECTORIZE_VEC_PERM_CONST
+
+@hook TARGET_VECTORIZE_PREFERRED_DIV_AS_SHIFTS_OVER_MULT
 
 @hook TARGET_VECTORIZE_BUILTIN_VECTORIZED_FUNCTION
 
@@ -6603,9 +6724,6 @@ This describes how to specify debugging information.
 
 @menu
 * All Debuggers::      Macros that affect all debugging formats uniformly.
-* DBX Options::        Macros enabling specific options in DBX format.
-* DBX Hooks::          Hook macros for varying DBX format.
-* File Names and DBX:: Macros controlling output of file names in DBX format.
 * DWARF::              Macros for DWARF format.
 * VMS Debug::          Macros for VMS debug format.
 * CTF Debug::          Macros for CTF debug format.
@@ -6618,21 +6736,21 @@ This describes how to specify debugging information.
 @c prevent bad page break with this line
 These macros affect all debugging formats.
 
-@defmac DBX_REGISTER_NUMBER (@var{regno})
-A C expression that returns the DBX register number for the compiler
+@defmac DEBUGGER_REGNO (@var{regno})
+A C expression that returns the debugger register number for the compiler
 register number @var{regno}.  In the default macro provided, the value
 of this expression will be @var{regno} itself.  But sometimes there are
-some registers that the compiler knows about and DBX does not, or vice
+some registers that the compiler knows about and debugger does not, or vice
 versa.  In such cases, some register may need to have one number in the
-compiler and another for DBX@.
+compiler and another for debugger@.
 
 If two registers have consecutive numbers inside GCC, and they can be
 used as a pair to hold a multiword value, then they @emph{must} have
-consecutive numbers after renumbering with @code{DBX_REGISTER_NUMBER}.
+consecutive numbers after renumbering with @code{DEBUGGER_REGNO}.
 Otherwise, debuggers will be unable to access such a pair, because they
 expect register pairs to be consecutive in their own numbering scheme.
 
-If you find yourself defining @code{DBX_REGISTER_NUMBER} in way that
+If you find yourself defining @code{DEBUGGER_REGNO} in way that
 does not preserve register pairs, then what you must do instead is
 redefine the actual register numbering scheme.
 @end defmac
@@ -6642,7 +6760,7 @@ A C expression that returns the integer offset value for an automatic
 variable having address @var{x} (an RTL expression).  The default
 computation assumes that @var{x} is based on the frame-pointer and
 gives the offset from the frame-pointer.  This is required for targets
-that produce debugging output for DBX and allow the frame-pointer to be
+that produce debugging output for debugger and allow the frame-pointer to be
 eliminated when the @option{-g} option is used.
 @end defmac
 
@@ -6656,233 +6774,25 @@ having address @var{x} (an RTL expression).  The nominal offset is
 A C expression that returns the type of debugging output GCC should
 produce when the user specifies just @option{-g}.  Define
 this if you have arranged for GCC to support more than one format of
-debugging output.  Currently, the allowable values are @code{DBX_DEBUG},
-@code{DWARF2_DEBUG}, @code{XCOFF_DEBUG}, @code{VMS_DEBUG},
+debugging output.  Currently, the allowable values are
+@code{DWARF2_DEBUG}, @code{VMS_DEBUG},
 and @code{VMS_AND_DWARF2_DEBUG}.
 
 When the user specifies @option{-ggdb}, GCC normally also uses the
 value of this macro to select the debugging output format, but with two
 exceptions.  If @code{DWARF2_DEBUGGING_INFO} is defined, GCC uses the
-value @code{DWARF2_DEBUG}.  Otherwise, if @code{DBX_DEBUGGING_INFO} is
-defined, GCC uses @code{DBX_DEBUG}.
+value @code{DWARF2_DEBUG}.
 
 The value of this macro only affects the default debugging output; the
-user can always get a specific type of output by using @option{-gstabs},
-@option{-gdwarf-2}, @option{-gxcoff}, or @option{-gvms}.
-@end defmac
-
-@node DBX Options
-@subsection Specific Options for DBX Output
-
-@c prevent bad page break with this line
-These are specific options for DBX output.
-
-@defmac DBX_DEBUGGING_INFO
-Define this macro if GCC should produce debugging output for DBX
-in response to the @option{-g} option.
-@end defmac
-
-@defmac XCOFF_DEBUGGING_INFO
-Define this macro if GCC should produce XCOFF format debugging output
-in response to the @option{-g} option.  This is a variant of DBX format.
+user can always get a specific type of output by using  @option{-gdwarf-2},
+or @option{-gvms}.
 @end defmac
 
 @defmac DEFAULT_GDB_EXTENSIONS
 Define this macro to control whether GCC should by default generate
-GDB's extended version of DBX debugging information (assuming DBX-format
-debugging information is enabled at all).  If you don't define the
+GDB's extended version of debugging information.  If you don't define the
 macro, the default is 1: always generate the extended information
 if there is any occasion to.
-@end defmac
-
-@defmac DEBUG_SYMS_TEXT
-Define this macro if all @code{.stabs} commands should be output while
-in the text section.
-@end defmac
-
-@defmac ASM_STABS_OP
-A C string constant, including spacing, naming the assembler pseudo op to
-use instead of @code{"\t.stabs\t"} to define an ordinary debugging symbol.
-If you don't define this macro, @code{"\t.stabs\t"} is used.  This macro
-applies only to DBX debugging information format.
-@end defmac
-
-@defmac ASM_STABD_OP
-A C string constant, including spacing, naming the assembler pseudo op to
-use instead of @code{"\t.stabd\t"} to define a debugging symbol whose
-value is the current location.  If you don't define this macro,
-@code{"\t.stabd\t"} is used.  This macro applies only to DBX debugging
-information format.
-@end defmac
-
-@defmac ASM_STABN_OP
-A C string constant, including spacing, naming the assembler pseudo op to
-use instead of @code{"\t.stabn\t"} to define a debugging symbol with no
-name.  If you don't define this macro, @code{"\t.stabn\t"} is used.  This
-macro applies only to DBX debugging information format.
-@end defmac
-
-@defmac DBX_NO_XREFS
-Define this macro if DBX on your system does not support the construct
-@samp{xs@var{tagname}}.  On some systems, this construct is used to
-describe a forward reference to a structure named @var{tagname}.
-On other systems, this construct is not supported at all.
-@end defmac
-
-@defmac DBX_CONTIN_LENGTH
-A symbol name in DBX-format debugging information is normally
-continued (split into two separate @code{.stabs} directives) when it
-exceeds a certain length (by default, 80 characters).  On some
-operating systems, DBX requires this splitting; on others, splitting
-must not be done.  You can inhibit splitting by defining this macro
-with the value zero.  You can override the default splitting-length by
-defining this macro as an expression for the length you desire.
-@end defmac
-
-@defmac DBX_CONTIN_CHAR
-Normally continuation is indicated by adding a @samp{\} character to
-the end of a @code{.stabs} string when a continuation follows.  To use
-a different character instead, define this macro as a character
-constant for the character you want to use.  Do not define this macro
-if backslash is correct for your system.
-@end defmac
-
-@defmac DBX_STATIC_STAB_DATA_SECTION
-Define this macro if it is necessary to go to the data section before
-outputting the @samp{.stabs} pseudo-op for a non-global static
-variable.
-@end defmac
-
-@defmac DBX_TYPE_DECL_STABS_CODE
-The value to use in the ``code'' field of the @code{.stabs} directive
-for a typedef.  The default is @code{N_LSYM}.
-@end defmac
-
-@defmac DBX_STATIC_CONST_VAR_CODE
-The value to use in the ``code'' field of the @code{.stabs} directive
-for a static variable located in the text section.  DBX format does not
-provide any ``right'' way to do this.  The default is @code{N_FUN}.
-@end defmac
-
-@defmac DBX_REGPARM_STABS_CODE
-The value to use in the ``code'' field of the @code{.stabs} directive
-for a parameter passed in registers.  DBX format does not provide any
-``right'' way to do this.  The default is @code{N_RSYM}.
-@end defmac
-
-@defmac DBX_REGPARM_STABS_LETTER
-The letter to use in DBX symbol data to identify a symbol as a parameter
-passed in registers.  DBX format does not customarily provide any way to
-do this.  The default is @code{'P'}.
-@end defmac
-
-@defmac DBX_FUNCTION_FIRST
-Define this macro if the DBX information for a function and its
-arguments should precede the assembler code for the function.  Normally,
-in DBX format, the debugging information entirely follows the assembler
-code.
-@end defmac
-
-@defmac DBX_BLOCKS_FUNCTION_RELATIVE
-Define this macro, with value 1, if the value of a symbol describing
-the scope of a block (@code{N_LBRAC} or @code{N_RBRAC}) should be
-relative to the start of the enclosing function.  Normally, GCC uses
-an absolute address.
-@end defmac
-
-@defmac DBX_LINES_FUNCTION_RELATIVE
-Define this macro, with value 1, if the value of a symbol indicating
-the current line number (@code{N_SLINE}) should be relative to the
-start of the enclosing function.  Normally, GCC uses an absolute address.
-@end defmac
-
-@defmac DBX_USE_BINCL
-Define this macro if GCC should generate @code{N_BINCL} and
-@code{N_EINCL} stabs for included header files, as on Sun systems.  This
-macro also directs GCC to output a type number as a pair of a file
-number and a type number within the file.  Normally, GCC does not
-generate @code{N_BINCL} or @code{N_EINCL} stabs, and it outputs a single
-number for a type number.
-@end defmac
-
-@node DBX Hooks
-@subsection Open-Ended Hooks for DBX Format
-
-@c prevent bad page break with this line
-These are hooks for DBX format.
-
-@defmac DBX_OUTPUT_SOURCE_LINE (@var{stream}, @var{line}, @var{counter})
-A C statement to output DBX debugging information before code for line
-number @var{line} of the current source file to the stdio stream
-@var{stream}.  @var{counter} is the number of time the macro was
-invoked, including the current invocation; it is intended to generate
-unique labels in the assembly output.
-
-This macro should not be defined if the default output is correct, or
-if it can be made correct by defining @code{DBX_LINES_FUNCTION_RELATIVE}.
-@end defmac
-
-@defmac NO_DBX_FUNCTION_END
-Some stabs encapsulation formats (in particular ECOFF), cannot handle the
-@code{.stabs "",N_FUN,,0,0,Lscope-function-1} gdb dbx extension construct.
-On those machines, define this macro to turn this feature off without
-disturbing the rest of the gdb extensions.
-@end defmac
-
-@defmac NO_DBX_BNSYM_ENSYM
-Some assemblers cannot handle the @code{.stabd BNSYM/ENSYM,0,0} gdb dbx
-extension construct.  On those machines, define this macro to turn this
-feature off without disturbing the rest of the gdb extensions.
-@end defmac
-
-@node File Names and DBX
-@subsection File Names in DBX Format
-
-@c prevent bad page break with this line
-This describes file names in DBX format.
-
-@defmac DBX_OUTPUT_MAIN_SOURCE_FILENAME (@var{stream}, @var{name})
-A C statement to output DBX debugging information to the stdio stream
-@var{stream}, which indicates that file @var{name} is the main source
-file---the file specified as the input file for compilation.
-This macro is called only once, at the beginning of compilation.
-
-This macro need not be defined if the standard form of output
-for DBX debugging information is appropriate.
-
-It may be necessary to refer to a label equal to the beginning of the
-text section.  You can use @samp{assemble_name (stream, ltext_label_name)}
-to do so.  If you do this, you must also set the variable
-@var{used_ltext_label_name} to @code{true}.
-@end defmac
-
-@defmac NO_DBX_MAIN_SOURCE_DIRECTORY
-Define this macro, with value 1, if GCC should not emit an indication
-of the current directory for compilation and current source language at
-the beginning of the file.
-@end defmac
-
-@defmac NO_DBX_GCC_MARKER
-Define this macro, with value 1, if GCC should not emit an indication
-that this object file was compiled by GCC@.  The default is to emit
-an @code{N_OPT} stab at the beginning of every source file, with
-@samp{gcc2_compiled.} for the string and value 0.
-@end defmac
-
-@defmac DBX_OUTPUT_MAIN_SOURCE_FILE_END (@var{stream}, @var{name})
-A C statement to output DBX debugging information at the end of
-compilation of the main source file @var{name}.  Output should be
-written to the stdio stream @var{stream}.
-
-If you don't define this macro, nothing special is output at the end
-of compilation, which is correct for most machines.
-@end defmac
-
-@defmac DBX_OUTPUT_NULL_N_SO_AT_MAIN_SOURCE_FILE_END
-Define this macro @emph{instead of} defining
-@code{DBX_OUTPUT_MAIN_SOURCE_FILE_END}, if what needs to be output at
-the end of compilation is an @code{N_SO} stab with an empty string,
-whose value is the highest absolute text address in the file.
 @end defmac
 
 @need 2000
@@ -6896,14 +6806,14 @@ Here are macros for DWARF output.
 Define this macro if GCC should produce dwarf version 2 format
 debugging output in response to the @option{-g} option.
 
-@hook TARGET_DWARF_CALLING_CONVENTION
-
 To support optional call frame debugging information, you must also
 define @code{INCOMING_RETURN_ADDR_RTX} and either set
 @code{RTX_FRAME_RELATED_P} on the prologue insns if you use RTL for the
 prologue, or call @code{dwarf2out_def_cfa} and @code{dwarf2out_reg_save}
 as appropriate from @code{TARGET_ASM_FUNCTION_PROLOGUE} if you don't.
 @end defmac
+
+@hook TARGET_DWARF_CALLING_CONVENTION
 
 @defmac DWARF2_FRAME_INFO
 Define this macro to a nonzero value if GCC should always output
@@ -7089,7 +6999,7 @@ The following macros control mode switching optimizations:
 
 @defmac OPTIMIZE_MODE_SWITCHING (@var{entity})
 Define this macro if the port needs extra instructions inserted for mode
-switching in an optimizing compilation.
+switching.
 
 For an example, the SH4 can perform both single and double precision
 floating point operations, but to perform a single precision operation,
@@ -7099,27 +7009,31 @@ purpose register as a scratch register, hence these FPSCR sets have to
 be inserted before reload, i.e.@: you cannot put this into instruction emitting
 or @code{TARGET_MACHINE_DEPENDENT_REORG}.
 
-You can have multiple entities that are mode-switched, and select at run time
-which entities actually need it.  @code{OPTIMIZE_MODE_SWITCHING} should
-return nonzero for any @var{entity} that needs mode-switching.
+You can have multiple entities that are mode-switched, some of which might
+only be needed conditionally.  The entities are identified by their index
+into the @code{NUM_MODES_FOR_MODE_SWITCHING} initializer, with the length
+of the initializer determining the number of entities.
+
+@code{OPTIMIZE_MODE_SWITCHING} should return nonzero for any @var{entity}
+that needs mode-switching.
+
 If you define this macro, you also have to define
 @code{NUM_MODES_FOR_MODE_SWITCHING}, @code{TARGET_MODE_NEEDED},
 @code{TARGET_MODE_PRIORITY} and @code{TARGET_MODE_EMIT}.
-@code{TARGET_MODE_AFTER}, @code{TARGET_MODE_ENTRY}, and @code{TARGET_MODE_EXIT}
-are optional.
+The other macros in this section are optional.
 @end defmac
 
 @defmac NUM_MODES_FOR_MODE_SWITCHING
 If you define @code{OPTIMIZE_MODE_SWITCHING}, you have to define this as
 initializer for an array of integers.  Each initializer element
 N refers to an entity that needs mode switching, and specifies the number
-of different modes that might need to be set for this entity.
-The position of the initializer in the initializer---starting counting at
+of different modes that are defined for that entity.
+The position of the element in the initializer---starting counting at
 zero---determines the integer that is used to refer to the mode-switched
 entity in question.
-In macros that take mode arguments / yield a mode result, modes are
-represented as numbers 0 @dots{} N @minus{} 1.  N is used to specify that no mode
-switch is needed / supplied.
+Modes are represented as numbers 0 @dots{} N @minus{} 1.
+In mode arguments and return values, N either represents an unknown
+mode or ``no mode'', depending on context.
 @end defmac
 
 @hook TARGET_MODE_EMIT
@@ -7128,9 +7042,15 @@ switch is needed / supplied.
 
 @hook TARGET_MODE_AFTER
 
+@hook TARGET_MODE_CONFLUENCE
+
+@hook TARGET_MODE_BACKPROP
+
 @hook TARGET_MODE_ENTRY
 
 @hook TARGET_MODE_EXIT
+
+@hook TARGET_MODE_EH_HANDLER
 
 @hook TARGET_MODE_PRIORITY
 
@@ -7174,6 +7094,8 @@ on this implementation detail.
 @hook TARGET_FUNCTION_ATTRIBUTE_INLINABLE_P
 
 @hook TARGET_OPTION_VALID_ATTRIBUTE_P
+
+@hook TARGET_OPTION_VALID_VERSION_ATTRIBUTE_P
 
 @hook TARGET_OPTION_SAVE
 
@@ -7301,6 +7223,8 @@ floating-point support; they are not included in this mechanism.
 
 @hook TARGET_CXX_USE_ATEXIT_FOR_CXA_ATEXIT
 
+@hook TARGET_CXX_ADJUST_CDTOR_CALLABI_FNTYPE
+
 @hook TARGET_CXX_ADJUST_CLASS_AT_DEFINITION
 
 @hook TARGET_CXX_DECL_MANGLING_CONTEXT
@@ -7319,13 +7243,21 @@ floating-point support; they are not included in this mechanism.
 
 @hook TARGET_D_MINFO_SECTION
 
-@hook TARGET_D_MINFO_START_NAME
+@hook TARGET_D_MINFO_SECTION_START
 
-@hook TARGET_D_MINFO_END_NAME
+@hook TARGET_D_MINFO_SECTION_END
 
 @hook TARGET_D_HAS_STDCALL_CONVENTION
 
 @hook TARGET_D_TEMPLATES_ALWAYS_COMDAT
+
+@node Rust Language and ABI
+@section Rust ABI parameters
+@cindex parameters, rust abi
+
+@hook TARGET_RUST_CPU_INFO
+
+@hook TARGET_RUST_OS_INFO
 
 @node Named Address Spaces
 @section Adding support for named address spaces
@@ -7908,6 +7840,10 @@ of the if-block in the @code{struct ce_if_block} structure that is pointed
 to by @var{ce_info}.
 @end defmac
 
+@hook TARGET_USE_LATE_PROLOGUE_EPILOGUE
+
+@hook TARGET_EMIT_EPILOGUE_FOR_SIBCALL
+
 @hook TARGET_MACHINE_DEPENDENT_REORG
 
 @hook TARGET_INIT_BUILTINS
@@ -7987,8 +7923,6 @@ lists.
 
 @hook TARGET_GEN_CCMP_NEXT
 
-@hook TARGET_GEN_MEMSET_SCRATCH_RTX
-
 @hook TARGET_LOOP_UNROLL_ADJUST
 
 @defmac POWI_MAX_MULTS
@@ -8046,7 +7980,8 @@ If defined, this macro is the number of entries in
 If defined, this macro is the name of a global variable containing
 target-specific format overrides for the @option{-Wformat} option. The
 default is to have no target-specific format overrides. If defined,
-@code{TARGET_FORMAT_TYPES} must be defined, too.
+@code{TARGET_FORMAT_TYPES} and @code{TARGET_OVERRIDES_FORMAT_ATTRIBUTES_COUNT}
+must be defined, too.
 @end defmac
 
 @defmac TARGET_OVERRIDES_FORMAT_ATTRIBUTES_COUNT
@@ -8182,6 +8117,6 @@ maintainer is familiar with.
 
 @hook TARGET_MEMTAG_UNTAGGED_POINTER
 
-@hook TARGET_GCOV_TYPE_SIZE
-
 @hook TARGET_HAVE_SHADOW_CALL_STACK
+
+@hook TARGET_HAVE_LIBATOMIC

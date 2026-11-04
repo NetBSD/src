@@ -1,5 +1,5 @@
 /* Prototypes.
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -19,4 +19,4 @@ along with GCC; see the file COPYING3.  If not see
 
 extern bool linux_has_ifunc_p (void);
 
-extern bool linux_libc_has_function (enum function_class fn_class);
+extern bool linux_libc_has_function (enum function_class fn_class, tree);

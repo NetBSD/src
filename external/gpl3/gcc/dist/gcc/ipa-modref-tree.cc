@@ -1,5 +1,5 @@
 /* Data structure for the modref pass.
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
    Contributed by David Cepelik and Jan Hubicka
 
 This file is part of GCC.
@@ -59,7 +59,7 @@ modref_access_node::operator == (modref_access_node &a) const
 bool
 modref_access_node::contains (const modref_access_node &a) const
 {
-  poly_int64 aoffset_adj = 0;
+  poly_offset_int aoffset_adj = 0;
   if (parm_index != MODREF_UNKNOWN_PARM)
     {
       if (parm_index != a.parm_index)
@@ -80,7 +80,8 @@ modref_access_node::contains (const modref_access_node &a) const
 	      a.offset may result in non-negative offset again.
 	      Ubsan fails on val << LOG_BITS_PER_UNIT where val
 	      is negative.  */
-	   aoffset_adj = (a.parm_offset - parm_offset)
+	   aoffset_adj = (poly_offset_int::from (a.parm_offset, SIGNED)
+			  - poly_offset_int::from (parm_offset, SIGNED))
 			 * BITS_PER_UNIT;
 	}
     }
@@ -96,10 +97,14 @@ modref_access_node::contains (const modref_access_node &a) const
 	      || !known_le (size, a.size)))
 	return false;
       if (known_size_p (max_size))
-	return known_subrange_p (a.offset + aoffset_adj,
-				 a.max_size, offset, max_size);
+	return known_subrange_p (poly_offset_int::from (a.offset, SIGNED)
+				 + aoffset_adj, a.max_size,
+				 poly_offset_int::from (offset, SIGNED),
+				 max_size);
       else
-	return known_le (offset, a.offset + aoffset_adj);
+	return known_le (poly_offset_int::from (offset, SIGNED),
+			 poly_offset_int::from (a.offset, SIGNED)
+			 + aoffset_adj);
     }
   return true;
 }
@@ -653,17 +658,17 @@ modref_access_node::dump (FILE *out)
       if (parm_offset_known)
 	{
 	  fprintf (out, " param offset:");
-	  print_dec ((poly_int64_pod)parm_offset, out, SIGNED);
+	  print_dec ((poly_int64)parm_offset, out, SIGNED);
 	}
     }
   if (range_info_useful_p ())
     {
       fprintf (out, " offset:");
-      print_dec ((poly_int64_pod)offset, out, SIGNED);
+      print_dec ((poly_int64)offset, out, SIGNED);
       fprintf (out, " size:");
-      print_dec ((poly_int64_pod)size, out, SIGNED);
+      print_dec ((poly_int64)size, out, SIGNED);
       fprintf (out, " max_size:");
-      print_dec ((poly_int64_pod)max_size, out, SIGNED);
+      print_dec ((poly_int64)max_size, out, SIGNED);
       if (adjustments)
 	fprintf (out, " adjusted %i times", adjustments);
     }

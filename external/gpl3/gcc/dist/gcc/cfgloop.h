@@ -1,5 +1,5 @@
 /* Natural loop functions
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -44,6 +44,9 @@ enum iv_extend_code
   IV_UNKNOWN_EXTEND
 };
 
+typedef generic_wide_int <fixed_wide_int_storage <WIDE_INT_MAX_INL_PRECISION> >
+  bound_wide_int;
+
 /* The structure describing a bound on number of iterations of a loop.  */
 
 class GTY ((chain_next ("%h.next"))) nb_iter_bound {
@@ -58,7 +61,7 @@ public:
         overflows (as MAX + 1 is sometimes produced as the estimate on number
 	of executions of STMT).
      b) it is consistent with the result of number_of_iterations_exit.  */
-  widest_int bound;
+  bound_wide_int bound;
 
   /* True if, after executing the statement BOUND + 1 times, we will
      leave the loop; that is, all the statements after it are executed at most
@@ -148,7 +151,7 @@ public:
   class loop *next;
 
   /* Auxiliary info specific to a pass.  */
-  PTR GTY ((skip (""))) aux;
+  void *GTY ((skip (""))) aux;
 
   /* The number of times the latch of the loop is executed.  This can be an
      INTEGER_CST, or a symbolic expression representing the number of
@@ -161,14 +164,14 @@ public:
 
   /* An integer guaranteed to be greater or equal to nb_iterations.  Only
      valid if any_upper_bound is true.  */
-  widest_int nb_iterations_upper_bound;
+  bound_wide_int nb_iterations_upper_bound;
 
-  widest_int nb_iterations_likely_upper_bound;
+  bound_wide_int nb_iterations_likely_upper_bound;
 
   /* An integer giving an estimate on nb_iterations.  Unlike
      nb_iterations_upper_bound, there is no guarantee that it is at least
      nb_iterations.  */
-  widest_int nb_iterations_estimate;
+  bound_wide_int nb_iterations_estimate;
 
   /* If > 0, an integer, where the user asserted that for any
      I in [ 0, nb_iterations ) and for any J in
@@ -280,21 +283,21 @@ public:
 #define LOOP_C_FINITE		(1 << 1)
 
 /* Set C to the LOOP constraint.  */
-static inline void
+inline void
 loop_constraint_set (class loop *loop, unsigned c)
 {
   loop->constraints |= c;
 }
 
 /* Clear C from the LOOP constraint.  */
-static inline void
+inline void
 loop_constraint_clear (class loop *loop, unsigned c)
 {
   loop->constraints &= ~c;
 }
 
 /* Check if C is set in the LOOP constraint.  */
-static inline bool
+inline bool
 loop_constraint_set_p (class loop *loop, unsigned c)
 {
   return (loop->constraints & c) == c;
@@ -403,11 +406,16 @@ extern void verify_loop_structure (void);
 /* Loop analysis.  */
 extern bool just_once_each_iteration_p (const class loop *, const_basic_block);
 gcov_type expected_loop_iterations_unbounded (const class loop *,
-					      bool *read_profile_p = NULL, bool by_profile_only = false);
+					      bool *read_profile_p = NULL);
+extern bool expected_loop_iterations_by_profile (const class loop *loop,
+						 sreal *ret,
+						 bool *reliable = NULL);
+extern bool maybe_flat_loop_profile (const class loop *);
 extern unsigned expected_loop_iterations (class loop *);
 extern rtx doloop_condition_get (rtx_insn *);
 
 void mark_loop_for_removal (loop_p);
+void print_loop_info (FILE *file, const class loop *loop, const char *);
 
 /* Induction variable analysis.  */
 
@@ -508,7 +516,7 @@ extern void iv_analysis_done (void);
 extern class niter_desc *get_simple_loop_desc (class loop *loop);
 extern void free_simple_loop_desc (class loop *loop);
 
-static inline class niter_desc *
+inline class niter_desc *
 simple_loop_desc (class loop *loop)
 {
   return loop->simple_loop_desc;
@@ -518,7 +526,7 @@ simple_loop_desc (class loop *loop)
 
 /* Returns the loop with index NUM from FNs loop tree.  */
 
-static inline class loop *
+inline class loop *
 get_loop (struct function *fn, unsigned num)
 {
   return (*loops_for_fn (fn)->larray)[num];
@@ -526,7 +534,7 @@ get_loop (struct function *fn, unsigned num)
 
 /* Returns the number of superloops of LOOP.  */
 
-static inline unsigned
+inline unsigned
 loop_depth (const class loop *loop)
 {
   return vec_safe_length (loop->superloops);
@@ -535,7 +543,7 @@ loop_depth (const class loop *loop)
 /* Returns the immediate superloop of LOOP, or NULL if LOOP is the outermost
    loop.  */
 
-static inline class loop *
+inline class loop *
 loop_outer (const class loop *loop)
 {
   unsigned n = vec_safe_length (loop->superloops);
@@ -548,7 +556,7 @@ loop_outer (const class loop *loop)
 
 /* Returns true if LOOP has at least one exit edge.  */
 
-static inline bool
+inline bool
 loop_has_exit_edges (const class loop *loop)
 {
   return loop->exits->next->e != NULL;
@@ -569,7 +577,7 @@ get_loops (struct function *fn)
 /* Returns the number of loops in FN (including the removed
    ones and the fake loop that forms the root of the loop tree).  */
 
-static inline unsigned
+inline unsigned
 number_of_loops (struct function *fn)
 {
   struct loops *loops = loops_for_fn (fn);
@@ -582,13 +590,13 @@ number_of_loops (struct function *fn)
 /* Returns true if state of the loops satisfies all properties
    described by FLAGS.  */
 
-static inline bool
+inline bool
 loops_state_satisfies_p (function *fn, unsigned flags)
 {
   return (loops_for_fn (fn)->state & flags) == flags;
 }
 
-static inline bool
+inline bool
 loops_state_satisfies_p (unsigned flags)
 {
   return loops_state_satisfies_p (cfun, flags);
@@ -596,13 +604,13 @@ loops_state_satisfies_p (unsigned flags)
 
 /* Sets FLAGS to the loops state.  */
 
-static inline void
+inline void
 loops_state_set (function *fn, unsigned flags)
 {
   loops_for_fn (fn)->state |= flags;
 }
 
-static inline void
+inline void
 loops_state_set (unsigned flags)
 {
   loops_state_set (cfun, flags);
@@ -610,13 +618,13 @@ loops_state_set (unsigned flags)
 
 /* Clears FLAGS from the loops state.  */
 
-static inline void
+inline void
 loops_state_clear (function *fn, unsigned flags)
 {
   loops_for_fn (fn)->state &= ~flags;
 }
 
-static inline void
+inline void
 loops_state_clear (unsigned flags)
 {
   if (!current_loops)
@@ -627,7 +635,7 @@ loops_state_clear (unsigned flags)
 /* Check loop structure invariants, if internal consistency checks are
    enabled.  */
 
-static inline void
+inline void
 checking_verify_loop_structure (void)
 {
   /* VERIFY_LOOP_STRUCTURE essentially asserts that no loops need fixups.
@@ -897,7 +905,7 @@ extern void move_loop_invariants (void);
 extern auto_vec<basic_block> get_loop_hot_path (const class loop *loop);
 
 /* Returns the outermost loop of the loop nest that contains LOOP.*/
-static inline class loop *
+inline class loop *
 loop_outermost (class loop *loop)
 {
   unsigned n = vec_safe_length (loop->superloops);
@@ -916,10 +924,12 @@ extern bool get_estimated_loop_iterations (class loop *loop, widest_int *nit);
 extern bool get_max_loop_iterations (const class loop *loop, widest_int *nit);
 extern bool get_likely_max_loop_iterations (class loop *loop, widest_int *nit);
 extern int bb_loop_depth (const_basic_block);
+extern edge single_dom_exit (class loop *);
+extern profile_count loop_count_in (const class loop *loop);
 
 /* Converts VAL to widest_int.  */
 
-static inline widest_int
+inline widest_int
 gcov_type_to_wide_int (gcov_type val)
 {
   HOST_WIDE_INT a[2];

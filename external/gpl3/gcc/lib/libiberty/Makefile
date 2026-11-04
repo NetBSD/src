@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2023/06/03 09:09:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2026/11/04 22:52:45 perseant Exp $
 
+NOLINT=yes	# XXX: too-many-errors
 LIBISPRIVATE=	yes
 
 .include <bsd.init.mk>
@@ -13,8 +14,8 @@ LIB=		iberty
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
-SRCS=		${G_REQUIRED_OFILES:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
-		${G_LIBOBJS:.o=.c} ${G_ALLOCA:.o=.c}
+SRCS=		${G_REQUIRED_OFILES:Nalloca.o:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
+		${G_LIBOBJS:.o=.c}
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${GCC_MACHINE_ARCH} \
 		-I${DIST}/include

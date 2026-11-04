@@ -1,5 +1,5 @@
 /* Subroutines used for code generation for eBPF.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -69,20 +69,14 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimplify.h"
 #include "gimplify-me.h"
 
-#include "ctfc.h"
-#include "btf.h"
-
-#include "coreout.h"
+#include "core-builtins.h"
+#include "opts.h"
 
 /* Per-function machine data.  */
 struct GTY(()) machine_function
 {
   /* Number of bytes saved on the stack for local variables.  */
   int local_vars_size;
-
-  /* Number of bytes saved on the stack for callee-saved
-     registers.  */
-  int callee_saved_reg_size;
 };
 
 /* Handle an attribute requiring a FUNCTION_DECL;
@@ -146,7 +140,7 @@ bpf_handle_preserve_access_index_attribute (tree *node, tree name,
 
 /* Target-specific attributes.  */
 
-static const struct attribute_spec bpf_attribute_table[] =
+TARGET_GNU_ATTRIBUTES (bpf_attribute_table,
 {
   /* Syntax: { name, min_len, max_len, decl_required, type_required,
 	       function_type_required, affects_type_identity, handler,
@@ -161,9 +155,10 @@ static const struct attribute_spec bpf_attribute_table[] =
  { "preserve_access_index", 0, -1, false, true, false, true,
    bpf_handle_preserve_access_index_attribute, NULL },
 
- /* The last attribute spec is set to be NULL.  */
- { NULL,	0,  0, false, false, false, false, NULL, NULL }
-};
+ /* Support for `naked' function attribute.  */
+ { "naked", 0, 1, false, false, false, false,
+   bpf_handle_fndecl_attribute, NULL }
+});
 
 #undef TARGET_ATTRIBUTE_TABLE
 #define TARGET_ATTRIBUTE_TABLE bpf_attribute_table
@@ -174,22 +169,7 @@ static const struct attribute_spec bpf_attribute_table[] =
    one.  */
 #define BPF_BUILTIN_MAX_ARGS 5
 
-enum bpf_builtins
-{
-  BPF_BUILTIN_UNUSED = 0,
-  /* Built-ins for non-generic loads and stores.  */
-  BPF_BUILTIN_LOAD_BYTE,
-  BPF_BUILTIN_LOAD_HALF,
-  BPF_BUILTIN_LOAD_WORD,
-
-  /* Compile Once - Run Everywhere (CO-RE) support.  */
-  BPF_BUILTIN_PRESERVE_ACCESS_INDEX,
-
-  BPF_BUILTIN_MAX,
-};
-
-static GTY (()) tree bpf_builtins[(int) BPF_BUILTIN_MAX];
-
+GTY (()) tree bpf_builtins[(int) BPF_BUILTIN_MAX];
 
 void bpf_register_coreattr_pass (void);
 
@@ -212,13 +192,12 @@ bpf_option_override (void)
   init_machine_status = bpf_init_machine_status;
 
   /* BPF CO-RE support requires BTF debug info generation.  */
-  if (TARGET_BPF_CORE && !btf_debuginfo_p ())
+  if (TARGET_BPF_CORE
+      && (!btf_debuginfo_p () || (debug_info_level < DINFO_LEVEL_NORMAL)))
     error ("BPF CO-RE requires BTF debugging information, use %<-gbtf%>");
 
-  /* To support the portability needs of BPF CO-RE approach, BTF debug
-     information includes the BPF CO-RE relocations.  */
-  if (TARGET_BPF_CORE)
-    write_symbols |= BTF_WITH_CORE_DEBUG;
+  /* BPF applications always generate .BTF.ext.  */
+  write_symbols |= BTF_WITH_CORE_DEBUG;
 
   /* Unlike much of the other BTF debug information, the information necessary
      for CO-RE relocations is added to the CTF container by the BPF backend.
@@ -237,11 +216,10 @@ bpf_option_override (void)
 
   /* -gbtf implies -mcore when using the BPF backend, unless -mno-co-re
      is specified.  */
-  if (btf_debuginfo_p () && !(target_flags_explicit & MASK_BPF_CORE))
-    {
-      target_flags |= MASK_BPF_CORE;
-      write_symbols |= BTF_WITH_CORE_DEBUG;
-    }
+  if (btf_debuginfo_p ()
+      && (debug_info_level >= DINFO_LEVEL_NORMAL)
+      && !(target_flags_explicit & MASK_BPF_CORE))
+    target_flags |= MASK_BPF_CORE;
 
   /* Determine available features from ISA setting (-mcpu=).  */
   if (bpf_has_jmpext == -1)
@@ -253,6 +231,30 @@ bpf_option_override (void)
   if (bpf_has_jmp32 == -1)
     bpf_has_jmp32 = (bpf_isa >= ISA_V3);
 
+  if (bpf_has_v3_atomics == -1)
+    bpf_has_v3_atomics = (bpf_isa >= ISA_V3);
+
+  if (bpf_has_bswap == -1)
+    bpf_has_bswap = (bpf_isa >= ISA_V4);
+
+  if (bpf_has_sdiv == -1)
+    bpf_has_sdiv = (bpf_isa >= ISA_V4);
+
+  if (bpf_has_smov == -1)
+    bpf_has_smov = (bpf_isa >= ISA_V4);
+
+  /* Disable -fstack-protector as it is not supported in BPF.  */
+  if (flag_stack_protect)
+    {
+      if (!flag_stack_protector_set_by_fhardened_p)
+	inform (input_location,
+		"%<-fstack-protector%> does not work "
+		"on this architecture");
+      flag_stack_protect = 0;
+    }
+
+  /* The BPF target does not support tail call optimization.  */
+  flag_optimize_sibling_calls = 0;
 }
 
 #undef TARGET_OPTION_OVERRIDE
@@ -263,7 +265,7 @@ bpf_option_override (void)
 static void
 bpf_asm_init_sections (void)
 {
-  if (TARGET_BPF_CORE)
+  if (btf_debuginfo_p () && btf_with_core_debuginfo_p ())
     btf_ext_init ();
 }
 
@@ -275,68 +277,15 @@ bpf_asm_init_sections (void)
 static void
 bpf_file_end (void)
 {
-  if (TARGET_BPF_CORE)
-    btf_ext_output ();
+  if (btf_debuginfo_p () && btf_with_core_debuginfo_p ())
+    {
+      btf_ext_output ();
+      btf_finalize ();
+    }
 }
 
 #undef TARGET_ASM_FILE_END
 #define TARGET_ASM_FILE_END bpf_file_end
-
-/* Define target-specific CPP macros.  This function in used in the
-   definition of TARGET_CPU_CPP_BUILTINS in bpf.h */
-
-#define builtin_define(TXT) cpp_define (pfile, TXT)
-
-void
-bpf_target_macros (cpp_reader *pfile)
-{
-  builtin_define ("__BPF__");
-
-  if (TARGET_BIG_ENDIAN)
-    builtin_define ("__BPF_BIG_ENDIAN__");
-  else
-    builtin_define ("__BPF_LITTLE_ENDIAN__");
-
-  /* Define BPF_KERNEL_VERSION_CODE */
-  {
-    const char *version_code;
-    char *kernel_version_code;
-
-    switch (bpf_kernel)
-      {
-      case LINUX_V4_0: version_code = "0x40000"; break;
-      case LINUX_V4_1: version_code = "0x40100"; break;
-      case LINUX_V4_2: version_code = "0x40200"; break;
-      case LINUX_V4_3: version_code = "0x40300"; break;
-      case LINUX_V4_4: version_code = "0x40400"; break;
-      case LINUX_V4_5: version_code = "0x40500"; break;
-      case LINUX_V4_6: version_code = "0x40600"; break;
-      case LINUX_V4_7: version_code = "0x40700"; break;
-      case LINUX_V4_8: version_code = "0x40800"; break;
-      case LINUX_V4_9: version_code = "0x40900"; break;
-      case LINUX_V4_10: version_code = "0x40a00"; break;
-      case LINUX_V4_11: version_code = "0x40b00"; break;
-      case LINUX_V4_12: version_code = "0x40c00"; break;
-      case LINUX_V4_13: version_code = "0x40d00"; break;
-      case LINUX_V4_14: version_code = "0x40e00"; break;
-      case LINUX_V4_15: version_code = "0x40f00"; break;
-      case LINUX_V4_16: version_code = "0x41000"; break;
-      case LINUX_V4_17: version_code = "0x42000"; break;
-      case LINUX_V4_18: version_code = "0x43000"; break;
-      case LINUX_V4_19: version_code = "0x44000"; break;
-      case LINUX_V4_20: version_code = "0x45000"; break;
-      case LINUX_V5_0: version_code = "0x50000"; break;
-      case LINUX_V5_1: version_code = "0x50100"; break;
-      case LINUX_V5_2: version_code = "0x50200"; break;
-      default:
-	gcc_unreachable ();
-      }
-
-    kernel_version_code = ACONCAT (("__BPF_KERNEL_VERSION_CODE__=",
-				    version_code, NULL));
-    builtin_define (kernel_version_code);
-  }
-}
 
 /* Return an RTX representing the place where a function returns or
    receives a value of data type RET_TYPE, a tree node representing a
@@ -373,6 +322,21 @@ bpf_function_value_regno_p (const unsigned int regno)
 #undef TARGET_FUNCTION_VALUE_REGNO_P
 #define TARGET_FUNCTION_VALUE_REGNO_P bpf_function_value_regno_p
 
+
+/* Determine whether to warn about lack of return statement in a
+   function.  */
+
+static bool
+bpf_warn_func_return (tree decl)
+{
+  /* Naked functions are implemented entirely in assembly, including
+     the return instructions.  */
+  return lookup_attribute ("naked", DECL_ATTRIBUTES (decl)) == NULL_TREE;
+}
+
+#undef TARGET_WARN_FUNC_RETURN
+#define TARGET_WARN_FUNC_RETURN bpf_warn_func_return
+
 /* Compute the size of the function's stack frame, including the local
    area and the register-save area.  */
 
@@ -380,7 +344,7 @@ static void
 bpf_compute_frame_layout (void)
 {
   int stack_alignment = STACK_BOUNDARY / BITS_PER_UNIT;
-  int padding_locals, regno;
+  int padding_locals;
 
   /* Set the space used in the stack by local variables.  This is
      rounded up to respect the minimum stack alignment.  */
@@ -392,23 +356,9 @@ bpf_compute_frame_layout (void)
 
   cfun->machine->local_vars_size += padding_locals;
 
-  if (TARGET_XBPF)
-    {
-      /* Set the space used in the stack by callee-saved used
-	 registers in the current function.  There is no need to round
-	 up, since the registers are all 8 bytes wide.  */
-      for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
-	if ((df_regs_ever_live_p (regno)
-	     && !call_used_or_fixed_reg_p (regno))
-	    || (cfun->calls_alloca
-		&& regno == STACK_POINTER_REGNUM))
-	  cfun->machine->callee_saved_reg_size += 8;
-    }
-
   /* Check that the total size of the frame doesn't exceed the limit
      imposed by eBPF.  */
-  if ((cfun->machine->local_vars_size
-       + cfun->machine->callee_saved_reg_size) > bpf_frame_limit)
+  if (cfun->machine->local_vars_size > bpf_frame_limit)
     {
       static int stack_limit_exceeded = 0;
 
@@ -421,76 +371,40 @@ bpf_compute_frame_layout (void)
 #undef TARGET_COMPUTE_FRAME_LAYOUT
 #define TARGET_COMPUTE_FRAME_LAYOUT bpf_compute_frame_layout
 
+/* Defined to initialize data for func_info region in .BTF.ext section.  */
+
+static void
+bpf_function_prologue (FILE *f ATTRIBUTE_UNUSED)
+{
+  if (btf_debuginfo_p ())
+    btf_add_func_info_for (cfun->decl, current_function_func_begin_label);
+}
+
+#undef TARGET_ASM_FUNCTION_PROLOGUE
+#define TARGET_ASM_FUNCTION_PROLOGUE bpf_function_prologue
+
 /* Expand to the instructions in a function prologue.  This function
    is called when expanding the 'prologue' pattern in bpf.md.  */
 
 void
 bpf_expand_prologue (void)
 {
-  rtx insn;
-  HOST_WIDE_INT size;
-
-  size = (cfun->machine->local_vars_size
-	  + cfun->machine->callee_saved_reg_size);
-
   /* The BPF "hardware" provides a fresh new set of registers for each
      called function, some of which are initialized to the values of
      the arguments passed in the first five registers.  In doing so,
-     it saves the values of the registers of the caller, and restored
+     it saves the values of the registers of the caller, and restores
      them upon returning.  Therefore, there is no need to save the
-     callee-saved registers here.  What is worse, the kernel
-     implementation refuses to run programs in which registers are
-     referred before being initialized.  */
-  if (TARGET_XBPF)
-    {
-      int regno;
-      int fp_offset = -cfun->machine->local_vars_size;
+     callee-saved registers here.  In fact, the kernel implementation
+     refuses to run programs in which registers are referred before
+     being initialized.  */
 
-      /* Save callee-saved hard registes.  The register-save-area
-	 starts right after the local variables.  */
-      for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
-	{
-	  if ((df_regs_ever_live_p (regno)
-	       && !call_used_or_fixed_reg_p (regno))
-	      || (cfun->calls_alloca
-		  && regno == STACK_POINTER_REGNUM))
-	    {
-	      rtx mem;
+  /* BPF does not support functions that allocate stack space
+     dynamically.  This should have been checked already and an error
+     emitted.  */
+  gcc_assert (!cfun->calls_alloca);
 
-	      if (!IN_RANGE (fp_offset, -1 - 0x7fff, 0x7fff))
-		/* This has been already reported as an error in
-		   bpf_compute_frame_layout. */
-		break;
-	      else
-		{
-		  mem = gen_frame_mem (DImode,
-				       plus_constant (DImode,
-						      hard_frame_pointer_rtx,
-						      fp_offset - 8));
-		  insn = emit_move_insn (mem, gen_rtx_REG (DImode, regno));
-		  fp_offset -= 8;
-		}
-	    }
-	}
-    }
-
-  /* Set the stack pointer, if the function allocates space
-     dynamically.  Note that the value of %sp should be directly
-     derived from %fp, for the kernel verifier to track it as a stack
-     accessor.  */
-  if (cfun->calls_alloca)
-    {
-      insn = emit_move_insn (stack_pointer_rtx,
-			     hard_frame_pointer_rtx);
-
-      if (size > 0)
-	{
-	  insn = emit_insn (gen_rtx_SET (stack_pointer_rtx,
-					 gen_rtx_PLUS (Pmode,
-						       stack_pointer_rtx,
-						       GEN_INT (-size))));
-	}
-    }
+  /* If we ever need to have a proper prologue here, please mind the
+     `naked' function attribute.  */
 }
 
 /* Expand to the instructions in a function epilogue.  This function
@@ -501,39 +415,9 @@ bpf_expand_epilogue (void)
 {
   /* See note in bpf_expand_prologue for an explanation on why we are
      not restoring callee-saved registers in BPF.  */
-  if (TARGET_XBPF)
-    {
-      rtx insn;
-      int regno;
-      int fp_offset = -cfun->machine->local_vars_size;
 
-      /* Restore callee-saved hard registes from the stack.  */
-      for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
-	{
-	  if ((df_regs_ever_live_p (regno)
-	       && !call_used_or_fixed_reg_p (regno))
-	      || (cfun->calls_alloca
-		  && regno == STACK_POINTER_REGNUM))
-	    {
-	      rtx mem;
-
-	      if (!IN_RANGE (fp_offset, -1 - 0x7fff, 0x7fff))
-		/* This has been already reported as an error in
-		   bpf_compute_frame_layout. */
-		break;
-	      else
-		{
-		  mem = gen_frame_mem (DImode,
-				       plus_constant (DImode,
-						      hard_frame_pointer_rtx,
-						      fp_offset - 8));
-		  insn = emit_move_insn (gen_rtx_REG (DImode, regno), mem);
-		  fp_offset -= 8;
-		}
-	    }
-	}
-    }
-
+  if (lookup_attribute ("naked", DECL_ATTRIBUTES (cfun->decl)) != NULL_TREE)
+    return;
   emit_jump_insn (gen_exit ());
 }
 
@@ -579,11 +463,10 @@ bpf_initial_elimination_offset (int from, int to)
 {
   HOST_WIDE_INT ret;
 
-  if (from == ARG_POINTER_REGNUM && to == STACK_POINTER_REGNUM)
-    ret = (cfun->machine->local_vars_size
-	   + cfun->machine->callee_saved_reg_size);
-  else if (from == ARG_POINTER_REGNUM && to == FRAME_POINTER_REGNUM)
+  if (from == ARG_POINTER_REGNUM && to == FRAME_POINTER_REGNUM)
     ret = 0;
+  else if (from == STACK_POINTER_REGNUM && to == FRAME_POINTER_REGNUM)
+    ret = -(cfun->machine->local_vars_size);
   else
     gcc_unreachable ();
 
@@ -659,12 +542,16 @@ bpf_address_base_p (rtx x, bool strict)
    target machine for a memory operand of mode MODE.  */
 
 static bool
-bpf_legitimate_address_p (machine_mode mode ATTRIBUTE_UNUSED,
+bpf_legitimate_address_p (machine_mode mode,
 			  rtx x,
-			  bool strict)
+			  bool strict,
+			  code_helper = ERROR_MARK)
 {
   switch (GET_CODE (x))
     {
+    case CONST_INT:
+      return (mode == FUNCTION_MODE);
+
     case REG:
       return bpf_address_base_p (x, strict);
 
@@ -682,6 +569,16 @@ bpf_legitimate_address_p (machine_mode mode ATTRIBUTE_UNUSED,
 
 	if (bpf_address_base_p (x0, strict) && GET_CODE (x1) == CONST_INT)
 	  return IN_RANGE (INTVAL (x1), -1 - 0x7fff, 0x7fff);
+
+	/* Check if any of the PLUS operation operands is a CORE unspec, and at
+	   least the local value for the offset fits in the 16 bits available
+	   in the encoding.  */
+	if (bpf_address_base_p (x1, strict)
+	    && GET_CODE (x0) == UNSPEC && XINT (x0, 1) == UNSPEC_CORE_RELOC)
+	      return IN_RANGE (INTVAL (XVECEXP (x0, 0, 0)), -1 - 0x7fff, 0x7fff);
+	if (bpf_address_base_p (x0, strict)
+	    && GET_CODE (x1) == UNSPEC && XINT (x1, 1) == UNSPEC_CORE_RELOC)
+	      return IN_RANGE (INTVAL (XVECEXP (x1, 0, 0)), -1 - 0x7fff, 0x7fff);
 
 	break;
       }
@@ -713,6 +610,21 @@ bpf_rtx_costs (rtx x ATTRIBUTE_UNUSED,
 
 #undef TARGET_RTX_COSTS
 #define TARGET_RTX_COSTS bpf_rtx_costs
+
+static int
+bpf_insn_cost (rtx_insn *insn, bool speed ATTRIBUTE_UNUSED)
+{
+  rtx pat = PATTERN (insn);
+  if(GET_CODE (pat) == SET
+     && GET_CODE (XEXP (pat, 1)) == UNSPEC
+     && XINT (XEXP (pat, 1), 1) == UNSPEC_CORE_RELOC)
+    return COSTS_N_INSNS (100);
+
+  return COSTS_N_INSNS (1);
+}
+
+#undef TARGET_INSN_COST
+#define TARGET_INSN_COST bpf_insn_cost
 
 /* Return true if an argument at the position indicated by CUM should
    be passed by reference.  If the hook returns true, a copy of that
@@ -764,7 +676,14 @@ bpf_function_arg_advance (cumulative_args_t ca,
   unsigned num_words = CEIL (num_bytes, UNITS_PER_WORD);
 
   if (*cum <= 5 && *cum + num_words > 5)
-    error ("too many function arguments for eBPF");
+    {
+      /* Too many arguments for BPF.  However, if the function is
+         gonna be inline for sure, we let it pass.  Otherwise, issue
+         an error.  */
+      if (!lookup_attribute ("always_inline",
+                             DECL_ATTRIBUTES (cfun->decl)))
+        error ("too many function arguments for eBPF");
+    }
 
   *cum += num_words;
 }
@@ -863,28 +782,99 @@ bpf_output_call (rtx target)
   return "";
 }
 
+const char *
+bpf_output_move (rtx *operands, const char *templ)
+{
+  bpf_output_core_reloc (operands, 2);
+  return templ;
+}
+
+/* Print register name according to assembly dialect.  In normal
+   syntax registers are printed like %rN where N is the register
+   number.
+
+   In pseudoc syntax, the register names do not feature a '%' prefix.
+   Additionally, the code 'w' denotes that the register should be
+   printed as wN instead of rN, where N is the register number, but
+   only when the value stored in the operand OP is 32-bit wide.
+   Finally, the code 'W' denotes that the register should be printed
+   as wN instead of rN, in all cases, regardless of the mode of the
+   value stored in the operand.  */
+
+static void
+bpf_print_register (FILE *file, rtx op, int code)
+{
+  if(asm_dialect == ASM_NORMAL)
+    fprintf (file, "%s", reg_names[REGNO (op)]);
+  else
+    {
+      if (code == 'W' || (code == 'w' && GET_MODE_SIZE (GET_MODE (op)) <= 4))
+	{
+	  if (REGNO (op) == BPF_FP)
+	    fprintf (file, "w10");
+	  else
+	    fprintf (file, "w%s", reg_names[REGNO (op)]+2);
+	}
+      else
+	{
+	  if (REGNO (op) == BPF_FP)
+	    fprintf (file, "r10");
+	  else
+	    fprintf (file, "%s", reg_names[REGNO (op)]+1);
+	}
+    }
+}
+
 /* Print an instruction operand.  This function is called in the macro
    PRINT_OPERAND defined in bpf.h */
 
 void
-bpf_print_operand (FILE *file, rtx op, int code ATTRIBUTE_UNUSED)
+bpf_print_operand (FILE *file, rtx op, int code)
 {
   switch (GET_CODE (op))
     {
     case REG:
-      fprintf (file, "%s", reg_names[REGNO (op)]);
+      bpf_print_register (file, op, code);
       break;
     case MEM:
       output_address (GET_MODE (op), XEXP (op, 0));
       break;
     case CONST_DOUBLE:
-      if (CONST_DOUBLE_HIGH (op))
-	fprintf (file, HOST_WIDE_INT_PRINT_DOUBLE_HEX,
-		 CONST_DOUBLE_HIGH (op), CONST_DOUBLE_LOW (op));
-      else if (CONST_DOUBLE_LOW (op) < 0)
-	fprintf (file, HOST_WIDE_INT_PRINT_HEX, CONST_DOUBLE_LOW (op));
+      if (GET_MODE (op) == VOIDmode)
+	{
+	  if (CONST_DOUBLE_HIGH (op))
+	    fprintf (file, HOST_WIDE_INT_PRINT_DOUBLE_HEX,
+		     CONST_DOUBLE_HIGH (op), CONST_DOUBLE_LOW (op));
+	  else if (CONST_DOUBLE_LOW (op) < 0)
+	    fprintf (file, HOST_WIDE_INT_PRINT_HEX, CONST_DOUBLE_LOW (op));
+	  else
+	    fprintf (file, HOST_WIDE_INT_PRINT_DEC, CONST_DOUBLE_LOW (op));
+	}
       else
-	fprintf (file, HOST_WIDE_INT_PRINT_DEC, CONST_DOUBLE_LOW (op));
+	{
+	  long vals[2];
+	  real_to_target (vals, CONST_DOUBLE_REAL_VALUE (op), GET_MODE (op));
+	  vals[0] &= 0xffffffff;
+	  vals[1] &= 0xffffffff;
+	  if (GET_MODE (op) == SFmode)
+	    fprintf (file, "0x%08lx", vals[0]);
+	  else if (GET_MODE (op) == DFmode)
+	    {
+	      /* Note: real_to_target puts vals in target word order.  */
+	      if (WORDS_BIG_ENDIAN)
+		fprintf (file, "0x%08lx%08lx", vals[0], vals[1]);
+	      else
+		fprintf (file, "0x%08lx%08lx", vals[1], vals[0]);
+	    }
+	  else
+	    gcc_unreachable ();
+	}
+      break;
+    case UNSPEC:
+      if (XINT (op, 1) == UNSPEC_CORE_RELOC)
+	bpf_print_operand (file, XVECEXP (op, 0, 0), code);
+      else
+	gcc_unreachable ();
       break;
     default:
       output_addr_const (file, op);
@@ -904,18 +894,36 @@ bpf_print_operand_address (FILE *file, rtx addr)
   switch (GET_CODE (addr))
     {
     case REG:
-      fprintf (file, "[%s+0]", reg_names[REGNO (addr)]);
+      if (asm_dialect == ASM_NORMAL)
+	fprintf (file, "[");
+      bpf_print_register (file, addr, 0);
+      fprintf (file, asm_dialect == ASM_NORMAL ? "+0]" : "+0");
       break;
     case PLUS:
       {
 	rtx op0 = XEXP (addr, 0);
 	rtx op1 = XEXP (addr, 1);
 
-	if (GET_CODE (op0) == REG && GET_CODE (op1) == CONST_INT)
+	if (GET_CODE (op1) == REG) {
+	  op0 = op1;
+	  op1 = XEXP (addr, 0);
+	}
+
+	if (GET_CODE (op0) == REG
+	    && (GET_CODE (op1) == CONST_INT
+		|| (GET_CODE (op1) == UNSPEC
+		    && XINT (op1, 1) == UNSPEC_CORE_RELOC)))
 	  {
-	    fprintf (file, "[%s+", reg_names[REGNO (op0)]);
-	    output_addr_const (file, op1);
-	    fputs ("]", file);
+	    if (asm_dialect == ASM_NORMAL)
+	      fprintf (file, "[");
+	    bpf_print_register (file, op0, 0);
+	    fprintf (file, "+");
+	    if (GET_CODE (op1) == UNSPEC)
+	      output_addr_const (file, XVECEXP (op1, 0, 0));
+	    else
+	      output_addr_const (file, op1);
+	    if (asm_dialect == ASM_NORMAL)
+	      fprintf (file, "]");
 	  }
 	else
 	  fatal_insn ("invalid address in operand", addr);
@@ -936,13 +944,14 @@ bpf_print_operand_address (FILE *file, rtx addr)
 /* Add a BPF builtin function with NAME, CODE and TYPE.  Return
    the function decl or NULL_TREE if the builtin was not added.  */
 
-static tree
+static inline tree
 def_builtin (const char *name, enum bpf_builtins code, tree type)
 {
   tree t
-    = add_builtin_function (name, type, code, BUILT_IN_MD, NULL, NULL_TREE);
+    = add_builtin_function (name, type, code, BUILT_IN_MD, NULL, NULL);
 
   bpf_builtins[code] = t;
+
   return t;
 }
 
@@ -961,17 +970,40 @@ bpf_init_builtins (void)
 	       build_function_type_list (ullt, ullt, 0));
   def_builtin ("__builtin_bpf_load_word", BPF_BUILTIN_LOAD_WORD,
 	       build_function_type_list (ullt, ullt, 0));
+
   def_builtin ("__builtin_preserve_access_index",
 	       BPF_BUILTIN_PRESERVE_ACCESS_INDEX,
 	       build_function_type_list (ptr_type_node, ptr_type_node, 0));
+  def_builtin ("__builtin_preserve_field_info",
+	       BPF_BUILTIN_PRESERVE_FIELD_INFO,
+	       build_function_type_list (unsigned_type_node, ptr_type_node,
+					 unsigned_type_node, 0));
+  def_builtin ("__builtin_btf_type_id",
+	       BPF_BUILTIN_BTF_TYPE_ID,
+	       build_function_type_list (integer_type_node, ptr_type_node,
+					 integer_type_node, 0));
+  def_builtin ("__builtin_preserve_type_info",
+	       BPF_BUILTIN_PRESERVE_TYPE_INFO,
+	       build_function_type_list (integer_type_node, ptr_type_node,
+					 integer_type_node, 0));
+  def_builtin ("__builtin_preserve_enum_value",
+	       BPF_BUILTIN_PRESERVE_ENUM_VALUE,
+	       build_function_type_list (integer_type_node, ptr_type_node,
+					 integer_type_node, integer_type_node,
+					 0));
+
+  def_builtin ("__builtin_core_reloc",
+	       BPF_BUILTIN_CORE_RELOC,
+	       build_function_type_list (integer_type_node,integer_type_node,
+					 0));
+  DECL_PURE_P (bpf_builtins[BPF_BUILTIN_CORE_RELOC]) = 1;
+  TREE_NOTHROW (bpf_builtins[BPF_BUILTIN_CORE_RELOC]) = 1;
+
+  bpf_init_core_builtins ();
 }
 
 #undef TARGET_INIT_BUILTINS
 #define TARGET_INIT_BUILTINS bpf_init_builtins
-
-static tree bpf_core_compute (tree, vec<unsigned int> *);
-static int bpf_core_get_index (const tree);
-static bool is_attr_preserve_access (tree);
 
 /* Expand a call to a BPF-specific built-in function that was set up
    with bpf_init_builtins.  */
@@ -1023,80 +1055,45 @@ bpf_expand_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
       /* The result of the load is in R0.  */
       return gen_rtx_REG (ops[0].mode, BPF_R0);
     }
-  else if (code == -1)
+  else
     {
-      /* A resolved overloaded builtin, e.g. __bpf_preserve_access_index_si */
-      tree arg = CALL_EXPR_ARG (exp, 0);
-
-      if (arg == NULL_TREE)
-	return NULL_RTX;
-
-      auto_vec<unsigned int, 16> accessors;
-      tree container;
-
-      if (TREE_CODE (arg) == SSA_NAME)
-	{
-	  gimple *def_stmt = SSA_NAME_DEF_STMT (arg);
-
-	  if (is_gimple_assign (def_stmt))
-	    arg = gimple_assign_rhs1 (def_stmt);
-	  else
-	    return expand_normal (arg);
-	}
-
-      /* Avoid double-recording information if the argument is an access to
-	 a struct/union marked __attribute__((preserve_access_index)). This
-	 Will be handled by the attribute handling pass.  */
-      if (is_attr_preserve_access (arg))
-	return expand_normal (arg);
-
-      container = bpf_core_compute (arg, &accessors);
-
-      /* Any valid use of the builtin must have at least one access. Otherwise,
-	 there is nothing to record and nothing to do. This is primarily a
-	 guard against optimizations leading to unexpected expressions in the
-	 argument of the builtin. For example, if the builtin is used to read
-	 a field of a structure which can be statically determined to hold a
-	 constant value, the argument to the builtin will be optimized to that
-	 constant. This is OK, and means the builtin call is superfluous.
-	 e.g.
-	   struct S foo;
-	   foo.a = 5;
-	   int x = __preserve_access_index (foo.a);
-	   ... do stuff with x
-	 'foo.a' in the builtin argument will be optimized to '5' with -01+.
-	 This sequence does not warrant recording a CO-RE relocation.  */
-
-      if (accessors.length () < 1)
-	return expand_normal (arg);
-
-      accessors.reverse ();
-
-      container = TREE_TYPE (container);
-
-      rtx_code_label *label = gen_label_rtx ();
-      LABEL_PRESERVE_P (label) = 1;
-      emit_label (label);
-
-      /* Determine what output section this relocation will apply to.
-	 If this function is associated with a section, use that. Otherwise,
-	 fall back on '.text'.  */
-      const char * section_name;
-      if (current_function_decl && DECL_SECTION_NAME (current_function_decl))
-	section_name = DECL_SECTION_NAME (current_function_decl);
-      else
-	section_name = ".text";
-
-      /* Add the CO-RE relocation information to the BTF container.  */
-      bpf_core_reloc_add (container, section_name, &accessors, label);
-
-      return expand_normal (arg);
+      rtx ret = bpf_expand_core_builtin (exp, (enum bpf_builtins) code);
+      if (ret != NULL_RTX)
+	return ret;
     }
+
+  error ("invalid built-in function at expansion");
   gcc_unreachable ();
 }
 
 #undef TARGET_EXPAND_BUILTIN
 #define TARGET_EXPAND_BUILTIN bpf_expand_builtin
+
+static tree
+bpf_resolve_overloaded_builtin (location_t loc, tree fndecl, void *arglist)
+{
+  int code = DECL_MD_FUNCTION_CODE (fndecl);
+  if (code > BPF_CORE_BUILTINS_MARKER)
+    return bpf_resolve_overloaded_core_builtin (loc, fndecl, arglist);
+  else
+    return NULL_TREE;
+}
+
+#undef TARGET_RESOLVE_OVERLOADED_BUILTIN
+#define TARGET_RESOLVE_OVERLOADED_BUILTIN bpf_resolve_overloaded_builtin
+
+static rtx
+bpf_delegitimize_address (rtx rtl)
+{
+  if (GET_CODE (rtl) == UNSPEC
+      && XINT (rtl, 1) == UNSPEC_CORE_RELOC)
+    return XVECEXP (rtl, 0, 0);
+
+  return rtl;
+}
+
+#undef TARGET_DELEGITIMIZE_ADDRESS
+#define TARGET_DELEGITIMIZE_ADDRESS bpf_delegitimize_address
 
 /* Initialize target-specific function library calls.  This is mainly
    used to call library-provided soft-fp operations, since eBPF
@@ -1145,422 +1142,297 @@ bpf_debug_unwind_info ()
 #undef TARGET_ASM_ALIGNED_DI_OP
 #define TARGET_ASM_ALIGNED_DI_OP "\t.dword\t"
 
-
-/* BPF Compile Once - Run Everywhere (CO-RE) support routines.
-
-   BPF CO-RE is supported in two forms:
-   - A target builtin, __builtin_preserve_access_index
-
-     This builtin accepts a single argument. Any access to an aggregate data
-     structure (struct, union or array) within the argument will be recorded by
-     the CO-RE machinery, resulting in a relocation record being placed in the
-     .BTF.ext section of the output.
-
-     It is implemented in bpf_resolve_overloaded_builtin () and
-     bpf_expand_builtin (), using the supporting routines below.
-
-   - An attribute, __attribute__((preserve_access_index))
-
-     This attribute can be applied to struct and union types. Any access to a
-     type with this attribute will be recorded by the CO-RE machinery.
-
-     The pass pass_bpf_core_attr, below, implements support for
-     this attribute.  */
-
-/* Traverse the subtree under NODE, which is expected to be some form of
-   aggregate access the CO-RE machinery cares about (like a read of a member of
-   a struct or union), collecting access indices for the components and storing
-   them in the vector referenced by ACCESSORS.
-
-   Return the ultimate (top-level) container of the aggregate access. In general,
-   this will be a VAR_DECL or some kind of REF.
-
-   Note that the accessors are computed *in reverse order* of how the BPF
-   CO-RE machinery defines them. The vector needs to be reversed (or simply
-   output in reverse order) for the .BTF.ext relocation information.  */
-
-static tree
-bpf_core_compute (tree node, vec<unsigned int> *accessors)
-{
-
-  if (TREE_CODE (node) == ADDR_EXPR)
-    node = TREE_OPERAND (node, 0);
-
-  else if (TREE_CODE (node) == INDIRECT_REF
-	   || TREE_CODE (node) == POINTER_PLUS_EXPR)
-    {
-      accessors->safe_push (0);
-      return TREE_OPERAND (node, 0);
-    }
-
-  while (1)
-    {
-      switch (TREE_CODE (node))
-	{
-	case COMPONENT_REF:
-	  accessors->safe_push (bpf_core_get_index (TREE_OPERAND (node, 1)));
-	  break;
-
-	case ARRAY_REF:
-	case ARRAY_RANGE_REF:
-	  accessors->safe_push (bpf_core_get_index (node));
-	  break;
-
-	case MEM_REF:
-	  accessors->safe_push (bpf_core_get_index (node));
-	  if (TREE_CODE (TREE_OPERAND (node, 0)) == ADDR_EXPR)
-	    node = TREE_OPERAND (TREE_OPERAND (node, 0), 0);
-	  goto done;
-
-	default:
-	  goto done;
-	}
-      node = TREE_OPERAND (node, 0);
-    }
- done:
-  return node;
-
-}
-
-/* Compute the index of the NODE in its immediate container.
-   NODE should be a FIELD_DECL (i.e. of struct or union), or an ARRAY_REF. */
-static int
-bpf_core_get_index (const tree node)
-{
-  enum tree_code code = TREE_CODE (node);
-
-  if (code == FIELD_DECL)
-    {
-      /* Lookup the index from the BTF information.  Some struct/union members
-	 may not be emitted in BTF; only the BTF container has enough
-	 information to compute the correct index.  */
-      int idx = bpf_core_get_sou_member_index (ctf_get_tu_ctfc (), node);
-      if (idx >= 0)
-	return idx;
-    }
-
-  else if (code == ARRAY_REF || code == ARRAY_RANGE_REF || code == MEM_REF)
-    {
-      /* For array accesses, the index is operand 1.  */
-      tree index = TREE_OPERAND (node, 1);
-
-      /* If the indexing operand is a constant, extracting is trivial.  */
-      if (TREE_CODE (index) == INTEGER_CST && tree_fits_shwi_p (index))
-	return tree_to_shwi (index);
-    }
-
-  return -1;
-}
-
-/* Synthesize a new builtin function declaration with signature TYPE.
-   Used by bpf_resolve_overloaded_builtin to resolve calls to
-   __builtin_preserve_access_index.  */
-
-static tree
-bpf_core_newdecl (tree type)
-{
-  tree rettype = build_function_type_list (type, type, NULL);
-  char name[80];
-  int len = snprintf (name, sizeof (name), "%s", "__builtin_pai_");
-
-  static unsigned long cnt = 0;
-  len = snprintf (name + len, sizeof (name) - len, "%lu", cnt++);
-
-  return add_builtin_function_ext_scope (name, rettype, -1, BUILT_IN_MD, NULL,
-					 NULL_TREE);
-}
-
-/* Return whether EXPR could access some aggregate data structure that
-   BPF CO-RE support needs to know about.  */
-
-static int
-bpf_core_is_maybe_aggregate_access (tree expr)
-{
-  enum tree_code code = TREE_CODE (expr);
-  if (code == COMPONENT_REF || code == ARRAY_REF)
-    return 1;
-
-  if (code == ADDR_EXPR)
-      return bpf_core_is_maybe_aggregate_access (TREE_OPERAND (expr, 0));
-
-  return 0;
-}
-
-/* Callback function used with walk_tree from bpf_resolve_overloaded_builtin.  */
-
-static tree
-bpf_core_walk (tree *tp, int *walk_subtrees, void *data)
-{
-  location_t loc = *((location_t *) data);
-
-  /* If this is a type, don't do anything. */
-  if (TYPE_P (*tp))
-    {
-      *walk_subtrees = 0;
-      return NULL_TREE;
-    }
-
-  if (bpf_core_is_maybe_aggregate_access (*tp))
-    {
-      tree newdecl = bpf_core_newdecl (TREE_TYPE (*tp));
-      tree newcall = build_call_expr_loc (loc, newdecl, 1, *tp);
-      *tp = newcall;
-      *walk_subtrees = 0;
-    }
-
-  return NULL_TREE;
-}
-
-
-/* Implement TARGET_RESOLVE_OVERLOADED_BUILTIN (see gccint manual section
-   Target Macros::Misc.).
-   We use this for the __builtin_preserve_access_index builtin for CO-RE
-   support.
-
-   FNDECL is the declaration of the builtin, and ARGLIST is the list of
-   arguments passed to it, and is really a vec<tree,_> *.
-
-   In this case, the 'operation' implemented by the builtin is a no-op;
-   the builtin is just a marker. So, the result is simply the argument.  */
-
-static tree
-bpf_resolve_overloaded_builtin (location_t loc, tree fndecl, void *arglist)
-{
-  if (DECL_MD_FUNCTION_CODE (fndecl) != BPF_BUILTIN_PRESERVE_ACCESS_INDEX)
-    return NULL_TREE;
-
-  /* We only expect one argument, but it may be an arbitrarily-complicated
-     statement-expression. */
-  vec<tree, va_gc> *params = static_cast<vec<tree, va_gc> *> (arglist);
-  unsigned n_params = params ? params->length() : 0;
-
-  if (n_params != 1)
-    {
-      error_at (loc, "expected exactly 1 argument");
-      return NULL_TREE;
-    }
-
-  tree param = (*params)[0];
-
-  /* If not generating BPF_CORE information, the builtin does nothing.  */
-  if (!TARGET_BPF_CORE)
-    return param;
-
-  /* Do remove_c_maybe_const_expr for the arg.
-     TODO: WHY do we have to do this here? Why doesn't c-typeck take care
-     of it before or after this hook? */
-  if (TREE_CODE (param) == C_MAYBE_CONST_EXPR)
-    param = C_MAYBE_CONST_EXPR_EXPR (param);
-
-  /* Construct a new function declaration with the correct type, and return
-     a call to it.
-
-     Calls with statement-expressions, for example:
-     _(({ foo->a = 1; foo->u[2].b = 2; }))
-     require special handling.
-
-     We rearrange this into a new block scope in which each statement
-     becomes a unique builtin call:
-     {
-       _ ({ foo->a = 1;});
-       _ ({ foo->u[2].b = 2;});
-     }
-
-     This ensures that all the relevant information remains within the
-     expression trees the builtin finally gets.  */
-
-  walk_tree (&param, bpf_core_walk, (void *) &loc, NULL);
-
-  return param;
-}
-
-#undef TARGET_RESOLVE_OVERLOADED_BUILTIN
-#define TARGET_RESOLVE_OVERLOADED_BUILTIN bpf_resolve_overloaded_builtin
-
-
-/* Handling for __attribute__((preserve_access_index)) for BPF CO-RE support.
-
-   This attribute marks a structure/union/array type as "preseve", so that
-   every access to that type should be recorded and replayed by the BPF loader;
-   this is just the same functionality as __builtin_preserve_access_index,
-   but in the form of an attribute for an entire aggregate type.
-
-   Note also that nested structs behave as though they all have the attribute.
-   For example:
-     struct X { int a; };
-     struct Y { struct X bar} __attribute__((preserve_access_index));
-     struct Y foo;
-     foo.bar.a;
-   will record access all the way to 'a', even though struct X does not have
-   the preserve_access_index attribute.
-
-   This is to follow LLVM behavior.
-
-   This pass finds all accesses to objects of types marked with the attribute,
-   and wraps them in the same "low-level" builtins used by the builtin version.
-   All logic afterwards is therefore identical to the builtin version of
-   preserve_access_index.  */
-
-/* True iff tree T accesses any member of a struct/union/class which is marked
-   with the PRESERVE_ACCESS_INDEX attribute.  */
-
-static bool
-is_attr_preserve_access (tree t)
-{
-  if (t == NULL_TREE)
-    return false;
-
-  poly_int64 bitsize, bitpos;
-  tree var_off;
-  machine_mode mode;
-  int sign, reverse, vol;
-
-  tree base = get_inner_reference (t, &bitsize, &bitpos, &var_off, &mode,
-				   &sign, &reverse, &vol);
-
-  if (TREE_CODE (base) == MEM_REF)
-    {
-      return lookup_attribute ("preserve_access_index",
-			       TYPE_ATTRIBUTES (TREE_TYPE (base)));
-    }
-
-  if (TREE_CODE (t) == COMPONENT_REF)
-    {
-      /* preserve_access_index propegates into nested structures,
-	 so check whether this is a component of another component
-	 which in turn is part of such a struct.  */
-
-      const tree op = TREE_OPERAND (t, 0);
-
-      if (TREE_CODE (op) == COMPONENT_REF)
-	return is_attr_preserve_access (op);
-
-      const tree container = DECL_CONTEXT (TREE_OPERAND (t, 1));
-
-      return lookup_attribute ("preserve_access_index",
-			       TYPE_ATTRIBUTES (container));
-    }
-
-  else if (TREE_CODE (t) == ADDR_EXPR)
-    return is_attr_preserve_access (TREE_OPERAND (t, 0));
-
-  return false;
-}
-
-/* The body of pass_bpf_core_attr. Scan RTL for accesses to structs/unions
-   marked with __attribute__((preserve_access_index)) and generate a CO-RE
-   relocation for any such access.  */
+/* Implement target hook TARGET_ASM_NAMED_SECTION.  */
 
 static void
-handle_attr_preserve (function *fn)
+bpf_asm_named_section (const char *name, unsigned int flags,
+                       tree decl)
 {
-  basic_block bb;
-  rtx_insn *insn;
-  rtx_code_label *label;
-  FOR_EACH_BB_FN (bb, fn)
+  /* In BPF section names are used to encode the kind of BPF program
+     and other metadata, involving all sort of non alphanumeric
+     characters.  This includes for example names like /foo//bar/baz.
+     This makes it necessary to quote section names to make sure the
+     assembler doesn't get confused.  For example, the example above
+     would be interpreted unqouted as a section name "/foo" followed
+     by a line comment "//bar/baz".
+
+     Note that we only quote the section name if it contains any
+     character not in the set [0-9a-zA-Z_].  This is because
+     default_elf_asm_named_section generally expects unquoted names
+     and checks for particular names like
+     __patchable_function_entries.  */
+
+  bool needs_quoting = false;
+
+  for (const char *p = name; *p != '\0'; ++p)
+    if (!(*p == '_'
+          || (*p >= '0' && *p <= '9')
+          || (*p >= 'a' && *p <= 'z')
+          || (*p >= 'A' && *p <= 'Z')))
+      needs_quoting = true;
+
+  if (needs_quoting)
     {
-      FOR_BB_INSNS (bb, insn)
-	{
-	  if (!NONJUMP_INSN_P (insn))
-	    continue;
-	  rtx pat = PATTERN (insn);
-	  if (GET_CODE (pat) != SET)
-	    continue;
+      char *quoted_name
+        = (char *) xcalloc (1, strlen (name) * 2 + 2);
+      char *q = quoted_name;
 
-	  start_sequence();
+      *(q++) = '"';
+      for (const char *p = name; *p != '\0'; ++p)
+        {
+          if (*p == '"' || *p == '\\')
+            *(q++) = '\\';
+          *(q++) = *p;
+        }
+      *(q++) = '"';
+      *(q++) = '\0';
 
-	  for (int i = 0; i < 2; i++)
-	    {
-	      rtx mem = XEXP (pat, i);
-	      if (MEM_P (mem))
-		{
-		  tree expr = MEM_EXPR (mem);
-		  if (!expr)
-		    continue;
+      default_elf_asm_named_section (quoted_name, flags, decl);
+      free (quoted_name);
+    }
+  else
+    default_elf_asm_named_section (name, flags, decl);
+}
 
-		  if (TREE_CODE (expr) == MEM_REF
-		      && TREE_CODE (TREE_OPERAND (expr, 0)) == SSA_NAME)
-		    {
-		      gimple *def_stmt = SSA_NAME_DEF_STMT (TREE_OPERAND (expr, 0));
-		      if (def_stmt && is_gimple_assign (def_stmt))
-			expr = gimple_assign_rhs1 (def_stmt);
-		    }
+#undef TARGET_ASM_NAMED_SECTION
+#define TARGET_ASM_NAMED_SECTION bpf_asm_named_section
 
-		  if (is_attr_preserve_access (expr))
-		    {
-		      auto_vec<unsigned int, 16> accessors;
-		      tree container = bpf_core_compute (expr, &accessors);
-		      if (accessors.length () < 1)
-			continue;
-		      accessors.reverse ();
+/* Implement target hook small_register_classes_for_mode_p.  */
 
-		      container = TREE_TYPE (container);
-		      const char * section_name;
-		      if (DECL_SECTION_NAME (fn->decl))
-			section_name = DECL_SECTION_NAME (fn->decl);
-		      else
-			section_name = ".text";
+static bool
+bpf_small_register_classes_for_mode_p (machine_mode mode)
+{
+  if (TARGET_XBPF)
+    return 1;
+  else
+    /* Avoid putting function addresses in registers, as calling these
+       is not supported in eBPF.  */
+    return (mode != FUNCTION_MODE);
+}
 
-		      label = gen_label_rtx ();
-		      LABEL_PRESERVE_P (label) = 1;
-		      emit_label (label);
+#undef TARGET_SMALL_REGISTER_CLASSES_FOR_MODE_P
+#define TARGET_SMALL_REGISTER_CLASSES_FOR_MODE_P \
+  bpf_small_register_classes_for_mode_p
 
-		      /* Add the CO-RE relocation information to the BTF container.  */
-		      bpf_core_reloc_add (container, section_name, &accessors, label);
-		    }
-		}
-	    }
-	  rtx_insn *seq = get_insns ();
-	  end_sequence ();
-	  emit_insn_before (seq, insn);
-	}
+static bool
+bpf_use_by_pieces_infrastructure_p (unsigned HOST_WIDE_INT size,
+				    unsigned int align ATTRIBUTE_UNUSED,
+				    enum by_pieces_operation op,
+				    bool speed_p)
+{
+  if (op != COMPARE_BY_PIECES)
+    return default_use_by_pieces_infrastructure_p (size, align, op, speed_p);
+
+  return size <= COMPARE_MAX_PIECES;
+}
+
+#undef TARGET_USE_BY_PIECES_INFRASTRUCTURE_P
+#define TARGET_USE_BY_PIECES_INFRASTRUCTURE_P \
+  bpf_use_by_pieces_infrastructure_p
+
+/* Helper for bpf_expand_cpymem.  Emit an unrolled loop moving the bytes
+   from SRC to DST.  */
+
+static void
+emit_move_loop (rtx src, rtx dst, machine_mode mode, int offset, int inc,
+		unsigned iters, unsigned remainder)
+{
+  rtx reg = gen_reg_rtx (mode);
+
+  /* First copy in chunks as large as alignment permits.  */
+  for (unsigned int i = 0; i < iters; i++)
+    {
+      emit_move_insn (reg, adjust_address (src, mode, offset));
+      emit_move_insn (adjust_address (dst, mode, offset), reg);
+      offset += inc;
+    }
+
+  /* Handle remaining bytes which might be smaller than the chunks
+     used above.  */
+  if (remainder & 4)
+    {
+      emit_move_insn (reg, adjust_address (src, SImode, offset));
+      emit_move_insn (adjust_address (dst, SImode, offset), reg);
+      offset += (inc < 0 ? -4 : 4);
+      remainder -= 4;
+    }
+  if (remainder & 2)
+    {
+      emit_move_insn (reg, adjust_address (src, HImode, offset));
+      emit_move_insn (adjust_address (dst, HImode, offset), reg);
+      offset += (inc < 0 ? -2 : 2);
+      remainder -= 2;
+    }
+  if (remainder & 1)
+    {
+      emit_move_insn (reg, adjust_address (src, QImode, offset));
+      emit_move_insn (adjust_address (dst, QImode, offset), reg);
     }
 }
 
+/* Expand cpymem/movmem, as from __builtin_memcpy/memmove.
+   OPERANDS are the same as the cpymem/movmem patterns.
+   IS_MOVE is true if this is a memmove, false for memcpy.
+   Return true if we successfully expanded, or false if we cannot
+   and must punt to a libcall.  */
 
-/* This pass finds accesses to structures marked with the BPF target attribute
-   __attribute__((preserve_access_index)). For every such access, a CO-RE
-   relocation record is generated, to be output in the .BTF.ext section.  */
-
-namespace {
-
-const pass_data pass_data_bpf_core_attr =
+bool
+bpf_expand_cpymem (rtx *operands, bool is_move)
 {
-  RTL_PASS, /* type */
-  "bpf_core_attr", /* name */
-  OPTGROUP_NONE, /* optinfo_flags */
-  TV_NONE, /* tv_id */
-  0, /* properties_required */
-  0, /* properties_provided */
-  0, /* properties_destroyed */
-  0, /* todo_flags_start */
-  0, /* todo_flags_finish */
-};
+  /* Size must be constant for this expansion to work.  */
+  const char *name = is_move ? "memmove" : "memcpy";
+  if (!CONST_INT_P (operands[2]))
+    {
+      if (flag_building_libgcc)
+	warning (0, "could not inline call to %<__builtin_%s%>: "
+		 "size must be constant", name);
+      else
+	error ("could not inline call to %<__builtin_%s%>: "
+	       "size must be constant", name);
+      return false;
+    }
 
-class pass_bpf_core_attr : public rtl_opt_pass
-{
-public:
-  pass_bpf_core_attr (gcc::context *ctxt)
-    : rtl_opt_pass (pass_data_bpf_core_attr, ctxt)
-  {}
+  /* Alignment is a CONST_INT.  */
+  gcc_assert (CONST_INT_P (operands[3]));
 
-  virtual bool gate (function *) { return TARGET_BPF_CORE; }
-  virtual unsigned int execute (function *);
-};
+  rtx dst = operands[0];
+  rtx src = operands[1];
+  rtx size = operands[2];
+  unsigned HOST_WIDE_INT size_bytes = UINTVAL (size);
+  unsigned align = UINTVAL (operands[3]);
+  enum machine_mode mode;
+  switch (align)
+    {
+    case 1: mode = QImode; break;
+    case 2: mode = HImode; break;
+    case 4: mode = SImode; break;
+    case 8: mode = DImode; break;
+    default:
+      gcc_unreachable ();
+    }
 
-unsigned int
-pass_bpf_core_attr::execute (function *fn)
-{
-  handle_attr_preserve (fn);
-  return 0;
+  /* For sizes above threshold, always use a libcall.  */
+  if (size_bytes > (unsigned HOST_WIDE_INT) bpf_inline_memops_threshold)
+    {
+      if (flag_building_libgcc)
+	warning (0, "could not inline call to %<__builtin_%s%>: "
+		 "too many bytes, use %<-minline-memops-threshold%>", name);
+      else
+	error ("could not inline call to %<__builtin_%s%>: "
+	       "too many bytes, use %<-minline-memops-threshold%>", name);
+      return false;
+    }
+
+  unsigned iters = size_bytes >> ceil_log2 (align);
+  unsigned remainder = size_bytes & (align - 1);
+
+  int inc = GET_MODE_SIZE (mode);
+  rtx_code_label *fwd_label, *done_label;
+  if (is_move)
+    {
+      /* For memmove, be careful of overlap.  It is not a concern for memcpy.
+	 To handle overlap, we check (at runtime) if SRC < DST, and if so do
+	 the move "backwards" starting from SRC + SIZE.  */
+      fwd_label = gen_label_rtx ();
+      done_label = gen_label_rtx ();
+
+      rtx dst_addr = copy_to_mode_reg (Pmode, XEXP (dst, 0));
+      rtx src_addr = copy_to_mode_reg (Pmode, XEXP (src, 0));
+      emit_cmp_and_jump_insns (src_addr, dst_addr, GEU, NULL_RTX, Pmode,
+			       true, fwd_label, profile_probability::even ());
+
+      /* Emit the "backwards" unrolled loop.  */
+      emit_move_loop (src, dst, mode, size_bytes, -inc, iters, remainder);
+      emit_jump_insn (gen_jump (done_label));
+      emit_barrier ();
+
+      emit_label (fwd_label);
+    }
+
+  emit_move_loop (src, dst, mode, 0, inc, iters, remainder);
+
+  if (is_move)
+    emit_label (done_label);
+
+  return true;
 }
 
-} /* Anonymous namespace.  */
+/* Expand setmem, as from __builtin_memset.
+   OPERANDS are the same as the setmem pattern.
+   Return true if the expansion was successful, false otherwise.  */
 
-rtl_opt_pass *
-make_pass_bpf_core_attr (gcc::context *ctxt)
+bool
+bpf_expand_setmem (rtx *operands)
 {
-  return new pass_bpf_core_attr (ctxt);
+  /* Size must be constant for this expansion to work.  */
+  if (!CONST_INT_P (operands[1]))
+    {
+      if (flag_building_libgcc)
+	warning (0, "could not inline call to %<__builtin_memset%>: "
+		 "size must be constant");
+      else
+	error ("could not inline call to %<__builtin_memset%>: "
+	       "size must be constant");
+      return false;
+    }
+
+  /* Alignment is a CONST_INT.  */
+  gcc_assert (CONST_INT_P (operands[3]));
+
+  rtx dst = operands[0];
+  rtx size = operands[1];
+  rtx val = operands[2];
+  unsigned HOST_WIDE_INT size_bytes = UINTVAL (size);
+  unsigned align = UINTVAL (operands[3]);
+  enum machine_mode mode;
+  switch (align)
+    {
+    case 1: mode = QImode; break;
+    case 2: mode = HImode; break;
+    case 4: mode = SImode; break;
+    case 8: mode = DImode; break;
+    default:
+      gcc_unreachable ();
+    }
+
+  /* For sizes above threshold, always use a libcall.  */
+  if (size_bytes > (unsigned HOST_WIDE_INT) bpf_inline_memops_threshold)
+    {
+      if (flag_building_libgcc)
+	warning (0, "could not inline call to %<__builtin_memset%>: "
+		 "too many bytes, use %<-minline-memops-threshold%>");
+      else
+	error ("could not inline call to %<__builtin_memset%>: "
+	       "too many bytes, use %<-minline-memops-threshold%>");
+      return false;
+    }
+
+  unsigned iters = size_bytes >> ceil_log2 (align);
+  unsigned remainder = size_bytes & (align - 1);
+  unsigned inc = GET_MODE_SIZE (mode);
+  unsigned offset = 0;
+
+  for (unsigned int i = 0; i < iters; i++)
+    {
+      emit_move_insn (adjust_address (dst, mode, offset), val);
+      offset += inc;
+    }
+  if (remainder & 4)
+    {
+      emit_move_insn (adjust_address (dst, SImode, offset), val);
+      offset += 4;
+      remainder -= 4;
+    }
+  if (remainder & 2)
+    {
+      emit_move_insn (adjust_address (dst, HImode, offset), val);
+      offset += 2;
+      remainder -= 2;
+    }
+  if (remainder & 1)
+    emit_move_insn (adjust_address (dst, QImode, offset), val);
+
+  return true;
 }
 
 /* Finally, build the GCC target.  */

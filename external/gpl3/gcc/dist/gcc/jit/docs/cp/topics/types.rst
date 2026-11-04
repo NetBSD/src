@@ -1,4 +1,4 @@
-.. Copyright (C) 2014-2022 Free Software Foundation, Inc.
+.. Copyright (C) 2014-2024 Free Software Foundation, Inc.
    Originally contributed by David Malcolm <dmalcolm@redhat.com>
 
    This is free software: you can redistribute it and/or modify it
@@ -65,7 +65,7 @@ Standard types
 
    Access the integer type of the given size.
 
-.. function:: gccjit::type \
+.. function:: template<typename T> gccjit::type \
               gccjit::context::get_int_type <T> ()
 
    Access the given integer type.  For example, you could map the

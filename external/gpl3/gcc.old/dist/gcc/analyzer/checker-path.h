@@ -1,5 +1,5 @@
 /* Subclasses of diagnostic_path and diagnostic_event for analyzer diagnostics.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -31,12 +31,15 @@ enum event_kind
   EK_DEBUG,
   EK_CUSTOM,
   EK_STMT,
+  EK_REGION_CREATION,
   EK_FUNCTION_ENTRY,
   EK_STATE_CHANGE,
   EK_START_CFG_EDGE,
   EK_END_CFG_EDGE,
   EK_CALL_EDGE,
   EK_RETURN_EDGE,
+  EK_START_CONSOLIDATED_CFG_EDGES,
+  EK_END_CONSOLIDATED_CFG_EDGES,
   EK_SETJMP,
   EK_REWIND_FROM_LONGJMP,
   EK_REWIND_TO_SETJMP,
@@ -54,7 +57,9 @@ extern const char *event_kind_to_string (enum event_kind ek);
      checker_event
        debug_event (EK_DEBUG)
        custom_event (EK_CUSTOM)
+	 precanned_custom_event
        statement_event (EK_STMT)
+       region_creation_event (EK_REGION_CREATION)
        function_entry_event (EK_FUNCTION_ENTRY)
        state_change_event (EK_STATE_CHANGE)
        superedge_event
@@ -63,6 +68,8 @@ extern const char *event_kind_to_string (enum event_kind ek);
 	   end_cfg_edge_event (EK_END_CFG_EDGE)
          call_event (EK_CALL_EDGE)
          return_edge (EK_RETURN_EDGE)
+       start_consolidated_cfg_edges_event (EK_START_CONSOLIDATED_CFG_EDGES)
+       end_consolidated_cfg_edges_event (EK_END_CONSOLIDATED_CFG_EDGES)
        setjmp_event (EK_SETJMP)
        rewind_event
          rewind_from_longjmp_event (EK_REWIND_FROM_LONGJMP)
@@ -97,7 +104,15 @@ public:
   virtual bool is_function_entry_p () const  { return false; }
   virtual bool is_return_p () const  { return false; }
 
+  /* For use with %@.  */
+  const diagnostic_event_id_t *get_id_ptr () const
+  {
+    return &m_emission_id;
+  }
+
   void dump (pretty_printer *pp) const;
+
+  void set_location (location_t loc) { m_loc = loc; }
 
  public:
   const enum event_kind m_kind;
@@ -132,19 +147,30 @@ private:
   char *m_desc;
 };
 
-/* A concrete event subclass for custom events.  These are not filtered,
+/* An abstract event subclass for custom events.  These are not filtered,
    as they are likely to be pertinent to the diagnostic.  */
 
 class custom_event : public checker_event
 {
+protected:
+  custom_event (location_t loc, tree fndecl, int depth)
+  : checker_event (EK_CUSTOM, loc, fndecl, depth)
+  {
+  }
+};
+
+/* A concrete custom_event subclass with a precanned message.  */
+
+class precanned_custom_event : public custom_event
+{
 public:
-  custom_event (location_t loc, tree fndecl, int depth,
-		const char *desc)
-  : checker_event (EK_CUSTOM, loc, fndecl, depth),
+  precanned_custom_event (location_t loc, tree fndecl, int depth,
+			  const char *desc)
+  : custom_event (loc, fndecl, depth),
     m_desc (xstrdup (desc))
   {
   }
-  ~custom_event ()
+  ~precanned_custom_event ()
   {
     free (m_desc);
   }
@@ -170,6 +196,21 @@ public:
   const program_state m_dst_state;
 };
 
+/* A concrete event subclass describing the creation of a region that
+   is significant for a diagnostic  e.g. "region created on stack here".  */
+
+class region_creation_event : public checker_event
+{
+public:
+  region_creation_event (const region *reg,
+			 location_t loc, tree fndecl, int depth);
+
+  label_text get_desc (bool) const FINAL OVERRIDE;
+
+private:
+  const region *m_reg;
+};
+
 /* An event subclass describing the entry to a function.  */
 
 class function_entry_event : public checker_event
@@ -193,26 +234,26 @@ public:
   state_change_event (const supernode *node, const gimple *stmt,
 		      int stack_depth,
 		      const state_machine &sm,
-		      tree var,
+		      const svalue *sval,
 		      state_machine::state_t from,
 		      state_machine::state_t to,
-		      tree origin,
+		      const svalue *origin,
 		      const program_state &dst_state);
 
   label_text get_desc (bool can_colorize) const FINAL OVERRIDE;
 
-  region_id get_lvalue (tree expr, region_model_context *ctxt) const
+  function *get_dest_function () const
   {
-    return m_dst_state.m_region_model->get_lvalue (expr, ctxt);
+    return m_dst_state.get_current_function ();
   }
 
   const supernode *m_node;
   const gimple *m_stmt;
   const state_machine &m_sm;
-  tree m_var;
+  const svalue *m_sval;
   state_machine::state_t m_from;
   state_machine::state_t m_to;
-  tree m_origin;
+  const svalue *m_origin;
   program_state m_dst_state;
 };
 
@@ -314,6 +355,9 @@ public:
   label_text get_desc (bool can_colorize) const FINAL OVERRIDE;
 
   bool is_call_p () const FINAL OVERRIDE;
+
+  const supernode *m_src_snode;
+  const supernode *m_dest_snode;
 };
 
 /* A concrete event subclass for an interprocedural return.  */
@@ -327,6 +371,45 @@ public:
   label_text get_desc (bool can_colorize) const FINAL OVERRIDE;
 
   bool is_return_p () const FINAL OVERRIDE;
+
+  const supernode *m_src_snode;
+  const supernode *m_dest_snode;
+};
+
+/* A concrete event subclass for the start of a consolidated run of CFG
+   edges all either TRUE or FALSE e.g. "following 'false' branch...'.  */
+
+class start_consolidated_cfg_edges_event : public checker_event
+{
+public:
+  start_consolidated_cfg_edges_event (location_t loc, tree fndecl, int depth,
+				      bool edge_sense)
+  : checker_event (EK_START_CONSOLIDATED_CFG_EDGES, loc, fndecl, depth),
+    m_edge_sense (edge_sense)
+  {
+  }
+
+  label_text get_desc (bool can_colorize) const FINAL OVERRIDE;
+
+ private:
+  bool m_edge_sense;
+};
+
+/* A concrete event subclass for the end of a consolidated run of
+   CFG edges e.g. "...to here'.  */
+
+class end_consolidated_cfg_edges_event : public checker_event
+{
+public:
+  end_consolidated_cfg_edges_event (location_t loc, tree fndecl, int depth)
+  : checker_event (EK_END_CONSOLIDATED_CFG_EDGES, loc, fndecl, depth)
+  {
+  }
+
+  label_text get_desc (bool /*can_colorize*/) const FINAL OVERRIDE
+  {
+    return label_text::borrow ("...to here");
+  }
 };
 
 /* A concrete event subclass for a setjmp or sigsetjmp call.  */
@@ -482,6 +565,23 @@ public:
     delete event;
   }
 
+  void delete_events (unsigned start_idx, unsigned len)
+  {
+    for (unsigned i = start_idx; i < start_idx + len; i++)
+      delete m_events[i];
+    m_events.block_remove (start_idx, len);
+  }
+
+  void replace_event (unsigned idx, checker_event *new_event)
+  {
+    delete m_events[idx];
+    m_events[idx] = new_event;
+  }
+
+  void add_region_creation_event (const region *reg,
+				  location_t loc,
+				  tree fndecl, int depth);
+
   void add_final_event (const state_machine *sm,
 			const exploded_node *enode, const gimple *stmt,
 			tree var, state_machine::state_t state);
@@ -497,6 +597,8 @@ public:
     FOR_EACH_VEC_ELT (m_events, i, e)
       e->prepare_for_emission (this, pd, diagnostic_event_id_t (i));
   }
+
+  void fixup_locations (pending_diagnostic *pd);
 
   void record_setjmp_event (const exploded_node *enode,
 			    diagnostic_event_id_t setjmp_emission_id)
@@ -514,6 +616,8 @@ public:
       }
     return false;
   }
+
+  bool cfg_edge_pair_at_p (unsigned idx) const;
 
 private:
   DISABLE_COPY_AND_ASSIGN(checker_path);

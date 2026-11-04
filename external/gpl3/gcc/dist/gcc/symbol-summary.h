@@ -1,5 +1,5 @@
 /* Callgraph summary data structure.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
    Contributed by Martin Liska
 
 This file is part of GCC.
@@ -71,7 +71,7 @@ public:
 	= m_symtab->add_cgraph_insertion_hook (m_symtab_insertion, this);
   }
 
-  /* Enable insertion hook invocation.  */
+  /* Disable insertion hook invocation.  */
   void disable_insertion_hook ()
   {
     if (m_symtab_insertion_hook != NULL)
@@ -248,7 +248,7 @@ protected:
 
 private:
   /* Indication if we use ggc summary.  */
-  virtual bool is_ggc ()
+  bool is_ggc () final override
   {
     return m_ggc;
   }
@@ -439,7 +439,7 @@ public:
 				  void *data);
 
 private:
-  virtual bool is_ggc ();
+  bool is_ggc () final override;
 
   /* Summary is stored in the vector.  */
   vec <T *, V> *m_vector;
@@ -744,7 +744,7 @@ protected:
 
 private:
   /* Indication if we use ggc summary.  */
-  virtual bool is_ggc ()
+  bool is_ggc () final override
   {
     return m_ggc;
   }
@@ -910,7 +910,7 @@ public:
 				  void *data);
 
 private:
-  virtual bool is_ggc ();
+  bool is_ggc () final override;
 
   /* Summary is stored in the vector.  */
   vec <T *, V> *m_vector;

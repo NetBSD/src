@@ -1,6 +1,6 @@
 // Filesystem directory utilities -*- C++ -*-
 
-// Copyright (C) 2014-2022 Free Software Foundation, Inc.
+// Copyright (C) 2014-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -450,10 +450,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
     }
 
 #if __cplusplus >= 202002L
-      // _GLIBCXX_RESOLVE_LIB_DEFECTS
-      // 3719. Directory iterators should be usable with default sentinel
-      bool operator==(default_sentinel_t) const noexcept
-      { return *this == directory_iterator(); }
+    // _GLIBCXX_RESOLVE_LIB_DEFECTS
+    // 3719. Directory iterators should be usable with default sentinel
+    bool operator==(default_sentinel_t) const noexcept
+    { return !_M_dir; }
 #endif
 
 #if __cpp_impl_three_way_comparison < 201907L
@@ -566,10 +566,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
     }
 
 #if __cplusplus >= 202002L
-      // _GLIBCXX_RESOLVE_LIB_DEFECTS
-      // 3719. Directory iterators should be usable with default sentinel
-      bool operator==(default_sentinel_t) const noexcept
-      { return *this == recursive_directory_iterator(); }
+    // _GLIBCXX_RESOLVE_LIB_DEFECTS
+    // 3719. Directory iterators should be usable with default sentinel
+    bool operator==(default_sentinel_t) const noexcept
+    { return !_M_dirs; }
 #endif
 
 #if __cpp_impl_three_way_comparison < 201907L
@@ -627,7 +627,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
   extern template class
     __shared_ptr<filesystem::recursive_directory_iterator::_Dir_stack>;
 
-#ifdef __cpp_lib_concepts // >= C++20
+#if __glibcxx_ranges // >= C++20
 // _GLIBCXX_RESOLVE_LIB_DEFECTS
 // 3480. directory_iterator and recursive_directory_iterator are not ranges
 namespace ranges
@@ -646,7 +646,7 @@ namespace ranges
     inline constexpr bool
     enable_view<filesystem::recursive_directory_iterator> = true;
 } // namespace ranges
-#endif // concepts
+#endif // ranges
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std

@@ -1,4 +1,4 @@
-.. Copyright (C) 2014-2022 Free Software Foundation, Inc.
+.. Copyright (C) 2014-2024 Free Software Foundation, Inc.
    Originally contributed by David Malcolm <dmalcolm@redhat.com>
 
    This is free software: you can redistribute it and/or modify it
@@ -60,7 +60,7 @@ Simple expressions
                                                    int value)
 
    Given a numeric type (integer or floating point), build an rvalue for
-   the given constant :c:type:`int` value.
+   the given constant :expr:`int` value.
 
 .. function:: gcc_jit_rvalue *\
               gcc_jit_context_new_rvalue_from_long (gcc_jit_context *ctxt, \
@@ -68,7 +68,7 @@ Simple expressions
                                                     long value)
 
    Given a numeric type (integer or floating point), build an rvalue for
-   the given constant :c:type:`long` value.
+   the given constant :expr:`long` value.
 
 .. function::  gcc_jit_rvalue *gcc_jit_context_zero (gcc_jit_context *ctxt, \
                                                      gcc_jit_type *numeric_type)
@@ -96,7 +96,7 @@ Simple expressions
                                                        double value)
 
    Given a numeric type (integer or floating point), build an rvalue for
-   the given constant :c:type:`double` value.
+   the given constant :expr:`double` value.
 
 .. function:: gcc_jit_rvalue *\
               gcc_jit_context_new_rvalue_from_ptr (gcc_jit_context *ctxt, \
@@ -125,6 +125,20 @@ Simple expressions
    The parameter ``value`` must be non-NULL.  The call takes a copy of the
    underlying string, so it is valid to pass in a pointer to an on-stack
    buffer.
+
+.. function:: gcc_jit_rvalue *\
+              gcc_jit_context_new_sizeof (gcc_jit_context *ctxt, \
+                                          gcc_jit_type *type)
+
+   Generate an rvalue that is equal to the size of ``type``.
+
+   The parameter ``type`` must be non-NULL.
+
+   This is equivalent to this C code:
+
+   .. code-block:: c
+
+     sizeof (type)
 
 Constructor expressions
 ***********************
@@ -224,7 +238,7 @@ Constructor expressions
    The fields in ``fields`` need to be the same objects that were used
    to create the struct.
 
-   Each value has to have have the same unqualified type as the field
+   Each value has to have the same unqualified type as the field
    it is applied to.
 
    A NULL value element  in ``values`` is a shorthand for zero initialization
@@ -309,18 +323,24 @@ Unary Operations
 
    The parameter ``result_type`` must be a numeric type.
 
-.. type:: enum gcc_jit_unary_op
+.. enum:: gcc_jit_unary_op
 
 The available unary operations are:
 
-==========================================  ============
-Unary Operation                             C equivalent
-==========================================  ============
-:c:macro:`GCC_JIT_UNARY_OP_MINUS`           `-(EXPR)`
-:c:macro:`GCC_JIT_UNARY_OP_BITWISE_NEGATE`  `~(EXPR)`
-:c:macro:`GCC_JIT_UNARY_OP_LOGICAL_NEGATE`  `!(EXPR)`
-:c:macro:`GCC_JIT_UNARY_OP_ABS`             `abs (EXPR)`
-==========================================  ============
+.. list-table::
+   :header-rows: 1
+
+   * - Unary Operation
+     - C equivalent
+
+   * - :c:macro:`GCC_JIT_UNARY_OP_MINUS`
+     - `-(EXPR)`
+   * - :c:macro:`GCC_JIT_UNARY_OP_BITWISE_NEGATE`
+     - `~(EXPR)`
+   * - :c:macro:`GCC_JIT_UNARY_OP_LOGICAL_NEGATE`
+     - `!(EXPR)`
+   * - :c:macro:`GCC_JIT_UNARY_OP_ABS`
+     - `abs (EXPR)`
 
 .. c:macro:: GCC_JIT_UNARY_OP_MINUS
 
@@ -376,26 +396,40 @@ Binary Operations
 
    The parameter ``result_type`` must be a numeric type.
 
-.. type:: enum gcc_jit_binary_op
+.. enum:: gcc_jit_binary_op
 
 The available binary operations are:
 
-========================================  ============
-Binary Operation                          C equivalent
-========================================  ============
-:c:macro:`GCC_JIT_BINARY_OP_PLUS`         `x + y`
-:c:macro:`GCC_JIT_BINARY_OP_MINUS`        `x - y`
-:c:macro:`GCC_JIT_BINARY_OP_MULT`         `x * y`
-:c:macro:`GCC_JIT_BINARY_OP_DIVIDE`       `x / y`
-:c:macro:`GCC_JIT_BINARY_OP_MODULO`       `x % y`
-:c:macro:`GCC_JIT_BINARY_OP_BITWISE_AND`  `x & y`
-:c:macro:`GCC_JIT_BINARY_OP_BITWISE_XOR`  `x ^ y`
-:c:macro:`GCC_JIT_BINARY_OP_BITWISE_OR`   `x | y`
-:c:macro:`GCC_JIT_BINARY_OP_LOGICAL_AND`  `x && y`
-:c:macro:`GCC_JIT_BINARY_OP_LOGICAL_OR`   `x || y`
-:c:macro:`GCC_JIT_BINARY_OP_LSHIFT`       `x << y`
-:c:macro:`GCC_JIT_BINARY_OP_RSHIFT`       `x >> y`
-========================================  ============
+.. list-table::
+   :header-rows: 1
+
+   * - Binary Operation
+     - C equivalent
+
+   * - :c:macro:`GCC_JIT_BINARY_OP_PLUS`
+     - `x + y`
+   * - :c:macro:`GCC_JIT_BINARY_OP_MINUS`
+     - `x - y`
+   * - :c:macro:`GCC_JIT_BINARY_OP_MULT`
+     - `x * y`
+   * - :c:macro:`GCC_JIT_BINARY_OP_DIVIDE`
+     - `x / y`
+   * - :c:macro:`GCC_JIT_BINARY_OP_MODULO`
+     - `x % y`
+   * - :c:macro:`GCC_JIT_BINARY_OP_BITWISE_AND`
+     - `x & y`
+   * - :c:macro:`GCC_JIT_BINARY_OP_BITWISE_XOR`
+     - `x ^ y`
+   * - :c:macro:`GCC_JIT_BINARY_OP_BITWISE_OR`
+     - `x | y`
+   * - :c:macro:`GCC_JIT_BINARY_OP_LOGICAL_AND`
+     - `x && y`
+   * - :c:macro:`GCC_JIT_BINARY_OP_LOGICAL_OR`
+     - `x || y`
+   * - :c:macro:`GCC_JIT_BINARY_OP_LSHIFT`
+     - `x << y`
+   * - :c:macro:`GCC_JIT_BINARY_OP_RSHIFT`
+     - `x >> y`
 
 .. c:macro:: GCC_JIT_BINARY_OP_PLUS
 
@@ -534,19 +568,26 @@ Comparisons
 
    Build a boolean rvalue out of the comparison of two other rvalues.
 
-.. type:: enum gcc_jit_comparison
+.. enum:: gcc_jit_comparison
 
-=======================================  ============
-Comparison                               C equivalent
-=======================================  ============
-:c:macro:`GCC_JIT_COMPARISON_EQ`         `x == y`
-:c:macro:`GCC_JIT_COMPARISON_NE`         `x != y`
-:c:macro:`GCC_JIT_COMPARISON_LT`         `x < y`
-:c:macro:`GCC_JIT_COMPARISON_LE`         `x <= y`
-:c:macro:`GCC_JIT_COMPARISON_GT`         `x > y`
-:c:macro:`GCC_JIT_COMPARISON_GE`         `x >= y`
-=======================================  ============
+.. list-table::
+   :header-rows: 1
 
+   * - Comparison
+     - C equivalent
+
+   * - :c:macro:`GCC_JIT_COMPARISON_EQ`
+     - `x == y`
+   * - :c:macro:`GCC_JIT_COMPARISON_NE`
+     - `x != y`
+   * - :c:macro:`GCC_JIT_COMPARISON_LT`
+     - `x < y`
+   * - :c:macro:`GCC_JIT_COMPARISON_LE`
+     - `x <= y`
+   * - :c:macro:`GCC_JIT_COMPARISON_GT`
+     - `x > y`
+   * - :c:macro:`GCC_JIT_COMPARISON_GE`
+     - `x >= y`
 
 Function calls
 **************
@@ -711,7 +752,7 @@ where the rvalue is computed by reading from the storage area.
 
    The "model" parameter determines the thread-local storage model of the "lvalue":
 
-   .. type:: enum gcc_jit_tls_model
+   .. enum:: gcc_jit_tls_model
 
    .. c:macro:: GCC_JIT_TLS_MODEL_NONE
 
@@ -841,7 +882,7 @@ Global variables
    The "kind" parameter determines the visibility of the "global" outside
    of the :c:type:`gcc_jit_result`:
 
-   .. type:: enum gcc_jit_global_kind
+   .. enum:: gcc_jit_global_kind
 
    .. c:macro:: GCC_JIT_GLOBAL_EXPORTED
 
@@ -916,6 +957,23 @@ Global variables
    .. code-block:: c
 
       #ifdef LIBGCCJIT_HAVE_CTORS
+
+Variables
+*********
+
+.. function::  void\
+               gcc_jit_lvalue_add_string_attribute (gcc_jit_lvalue *variable,
+                                                    enum gcc_jit_variable_attribute attribute,
+                                                    const char *value)
+
+     Add an attribute ``attribute`` with value ``value`` to a variable ``variable``.
+
+   This entrypoint was added in :ref:`LIBGCCJIT_ABI_26`; you can test for
+   its presence using
+
+   .. code-block:: c
+
+      #ifdef LIBGCCJIT_HAVE_ATTRIBUTES
 
 Working with pointers, structs and unions
 -----------------------------------------

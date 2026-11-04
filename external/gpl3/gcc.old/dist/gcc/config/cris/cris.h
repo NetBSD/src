@@ -1,5 +1,5 @@
 /* Definitions for GCC.  Part of the machine description for CRIS.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Contributed by Axis Communications.  Written by Hans-Peter Nilsson.
 
 This file is part of GCC.
@@ -39,7 +39,7 @@ along with GCC; see the file COPYING3.  If not see
 /* We don't want to use gcc_assert for everything, as that can be
    compiled out.  */
 #define CRIS_ASSERT(x) \
- do { if (!(x)) internal_error ("CRIS-port assertion failed: " #x); } while (0)
+ do { if (!(x)) internal_error ("CRIS-port assertion failed: %s", #x); } while (0)
 
 /* Replacement for REG_P since it does not match SUBREGs.  Happens for
    testcase Axis-20000320 with gcc-2.9x.  */
@@ -63,15 +63,6 @@ along with GCC; see the file COPYING3.  If not see
    prefer the DCCR number, which is a DMA pointer in pre-v8, so we'll
    never clash with it for GCC purposes.  */
 #define CRIS_CANONICAL_CC0_REGNUM (16 + 13)
-
-/* When generating PIC, these suffixes are added to the names of non-local
-   functions when being output.  Contrary to other ports, we have offsets
-   relative to the GOT, not the PC.  We might implement PC-relative PLT
-   semantics later for the general case; they are used in some cases right
-   now, such as MI thunks.  */
-#define CRIS_GOTPLT_SUFFIX ":GOTPLT"
-#define CRIS_PLT_GOTOFFSET_SUFFIX ":PLTG"
-#define CRIS_PLT_PCOFFSET_SUFFIX ":PLT"
 
 #define CRIS_FUNCTION_ARG_SIZE(MODE, TYPE)	\
   ((MODE) != BLKmode ? GET_MODE_SIZE (MODE)	\
@@ -115,17 +106,8 @@ extern int cris_cpu_version;
 #define CRIS_DEFAULT_ASM_ARCH_OPTION ""
 
 #ifdef TARGET_CPU_DEFAULT
-#if TARGET_CPU_DEFAULT != 32 && TARGET_CPU_DEFAULT != 10
+#if TARGET_CPU_DEFAULT != 10
  #error "Due to '()'; e.g. '#define TARGET_CPU_DEFAULT (10)', stringize TARGET_CPU_DEFAULT isn't useful: update manually."
-#endif
-
-#if TARGET_CPU_DEFAULT == 32
-#undef CRIS_DEFAULT_TUNE
-#define CRIS_DEFAULT_TUNE "32"
-/* To enable use of "generic" cris-axis-elf binutils, always pass the
-   architecture option to GAS.  (We don't do this for non-v32.)  */
-#undef CRIS_DEFAULT_ASM_ARCH_OPTION
-#define CRIS_DEFAULT_ASM_ARCH_OPTION "--march=v32"
 #endif
 
 #undef CRIS_ARCH_CPP_DEFAULT
@@ -171,7 +153,9 @@ extern int cris_cpu_version;
 
 #ifdef HAVE_AS_NO_MUL_BUG_ABORT_OPTION
 #define MAYBE_AS_NO_MUL_BUG_ABORT \
- "%{mno-mul-bug-workaround:-no-mul-bug-abort} "
+ "%{mno-mul-bug-workaround:-no-mul-bug-abort} " \
+ "%{mmul-bug-workaround:-mul-bug-abort} " \
+ "%{!mmul-bug-workaround:%{!mno-mul-bug-workaround:" MUL_BUG_ASM_DEFAULT "}} "
 #else
 #define MAYBE_AS_NO_MUL_BUG_ABORT
 #endif
@@ -183,8 +167,7 @@ extern int cris_cpu_version;
  "%(asm_subtarget)\
  %{march=*:%{mcpu=*:%edo not specify both -march=... and -mcpu=...}}\
  %{march=v0|mcpu=v0|march=v3|mcpu=v3|march=v8|mcpu=v8:--march=v0_v10}\
- %{march=v10|mcpu=v10:--march=v10}\
- %{march=v32|mcpu=v32:--march=v32}"
+ %{march=v10|mcpu=v10:--march=v10}"
 
 /* For the cris-*-elf subtarget.  */
 #define CRIS_ASM_SUBTARGET_SPEC \
@@ -252,10 +235,6 @@ extern int cris_cpu_version;
     }						\
   while (0)
 
-/* Previously controlled by target_flags.  Note that this is *not* set
-   for -melinux.  */
-#define TARGET_LINUX 0
-
 /* For the cris-*-elf subtarget.  */
 #define CRIS_SUBTARGET_DEFAULT 0
 
@@ -263,35 +242,39 @@ extern int cris_cpu_version;
 #define CRIS_CPU_ETRAX4 3	/* Just lz added.  */
 #define CRIS_CPU_SVINTO 8	/* Added swap, jsrc & Co., 32-bit accesses.  */
 #define CRIS_CPU_NG 10		/* Added mul[su].  */
-#define CRIS_CPU_V32 32		/* Major changes.  */
 
 #ifndef TARGET_CPU_DEFAULT
 #define TARGET_CPU_DEFAULT CRIS_CPU_BASE
 #endif
 
 /* Default target_flags if no switches specified.
-   The alignment-by-32 is to make builtin atomic support for v10 and v32
+   The alignment-by-32 is to make builtin atomic support for v10
    work for *-elf for types without specified alignment (like plain
    "int").  See top comment in sync.md.  */
 #ifndef TARGET_DEFAULT
-# if TARGET_CPU_DEFAULT == 32
-#  define TARGET_DEFAULT \
- (MASK_STACK_ALIGN \
-  + MASK_CONST_ALIGN + MASK_DATA_ALIGN \
-  + MASK_ALIGN_BY_32 \
-  + MASK_PROLOGUE_EPILOGUE)
-# elif TARGET_CPU_DEFAULT == 10
+# if TARGET_CPU_DEFAULT == 10
 #  define TARGET_DEFAULT \
  (MASK_SIDE_EFFECT_PREFIXES + MASK_STACK_ALIGN \
   + MASK_CONST_ALIGN + MASK_DATA_ALIGN \
   + MASK_ALIGN_BY_32 \
-  + MASK_PROLOGUE_EPILOGUE + MASK_MUL_BUG)
+  + MASK_PROLOGUE_EPILOGUE)
 # else  /* 0 */
 #  define TARGET_DEFAULT \
  (MASK_SIDE_EFFECT_PREFIXES + MASK_STACK_ALIGN \
   + MASK_CONST_ALIGN + MASK_DATA_ALIGN \
-  + MASK_PROLOGUE_EPILOGUE + MASK_MUL_BUG)
+  + MASK_PROLOGUE_EPILOGUE)
 # endif
+#endif
+
+/* Don't depend on the assembler default setting for the errata machinery;
+   always pass the option to turn it on or off explicitly.  But, we have to
+   decide on which is the *GCC* default, and for that we should only need to
+   consider what's in TARGET_DEFAULT; no other changes should be necessary.  */
+
+#if (TARGET_DEFAULT & MASK_MUL_BUG)
+#define MUL_BUG_ASM_DEFAULT "-mul-bug-abort"
+#else
+#define MUL_BUG_ASM_DEFAULT "-no-mul-bug-abort"
 #endif
 
 /* Local, providing a default for cris_cpu_version.  */
@@ -301,16 +284,15 @@ extern int cris_cpu_version;
 #define TARGET_HAS_LZ (cris_cpu_version >= CRIS_CPU_ETRAX4)
 #define TARGET_HAS_BREAK (cris_cpu_version >= CRIS_CPU_ETRAX4)
 #define TARGET_HAS_SWAP (cris_cpu_version >= CRIS_CPU_SVINTO)
-#define TARGET_V32 (cris_cpu_version >= CRIS_CPU_V32)
 
 /* The "break" instruction was introduced with ETRAX 4.  */
 #define TARGET_TRAP_USING_BREAK8 \
  (cris_trap_using_break8 == 2 ? TARGET_HAS_BREAK : cris_trap_using_break8)
 
-/* Call library functions by default for GNU/Linux.  */
+/* This condition controls whether to expand atomics inline or call
+   library functions. */
 #define TARGET_ATOMICS_MAY_CALL_LIBFUNCS		\
- (cris_atomics_calling_libfunc == 2			\
-  ? TARGET_LINUX : cris_atomics_calling_libfunc)
+ (cris_atomics_calling_libfunc != 2 && cris_atomics_calling_libfunc != 0)
 
 /* The < v10 atomics turn off interrupts, so they don't need alignment.
    Incidentally, by default alignment is off there causing variables to
@@ -319,7 +301,7 @@ extern int cris_cpu_version;
    specify as aligned.  */
 #define TARGET_TRAP_UNALIGNED_ATOMIC		\
  (cris_trap_unaligned_atomic == 2		\
-  ? (TARGET_V32 || cris_cpu_version == 10)	\
+  ? cris_cpu_version == 10			\
   : cris_trap_unaligned_atomic)
 
 /* Node: Storage Layout */
@@ -348,7 +330,7 @@ extern int cris_cpu_version;
     Note that to make this macro affect the alignment of stack
    locals, a fix was required, and special precautions when handling
    the stack pointer in various other macros (TARGET_ASM_FUNCTION_PROLOGUE
-   et al) were required.  See file "function.c".  If you would just define
+   et al) were required.  See file "function.cc".  If you would just define
    this macro, it would only affect the builtin alloca and variable
    local data (non-ANSI, non-K&R, Gnu C extension).  */
 #define STACK_BOUNDARY \
@@ -383,13 +365,6 @@ extern int cris_cpu_version;
    with other GNU/Linux ports (i.e. elfos.h users).  */
 #undef PCC_BITFIELD_TYPE_MATTERS
 
-/* This is only used for non-scalars.  Strange stuff happens to structs
-   (FIXME: What?) if we use anything larger than largest actually used
-   datum size, so lets make it 32.  The type "long long" will still work
-   as usual.  We can still have DImode insns, but they will only be used
-   for scalar data (i.e. long long).  */
-#define MAX_FIXED_MODE_SIZE 32
-
 
 /* Node: Type Layout */
 
@@ -411,8 +386,8 @@ extern int cris_cpu_version;
 /* Node: Register Basics */
 
 /*  We count all 16 non-special registers, SRP, a faked argument
-    pointer register, MOF and CCR/DCCR.  */
-#define FIRST_PSEUDO_REGISTER (16 + 1 + 1 + 1 + 1)
+    pointer register, MOF, CCR/DCCR, and the faked frame-pointer.  */
+#define FIRST_PSEUDO_REGISTER (16 + 1 + 1 + 1 + 1 + 1)
 
 /* For CRIS, these are r15 (pc) and r14 (sp). Register r8 is used as a
    frame-pointer, but is not fixed.  SRP is not included in general
@@ -420,12 +395,12 @@ extern int cris_cpu_version;
    registers are fixed at the moment.  The faked argument pointer register
    is fixed too.  */
 #define FIXED_REGISTERS \
- {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1}
+ {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1}
 
 /* Register r9 is used for structure-address, r10-r13 for parameters,
    r10- for return values.  */
 #define CALL_USED_REGISTERS \
- {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1}
+ {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1}
 
 /* Node: Allocation Order */
 
@@ -448,14 +423,8 @@ extern int cris_cpu_version;
     Use struct-return address first, since very few functions use
    structure return values so it is likely to be available.  */
 #define REG_ALLOC_ORDER \
- {9, 13, 12, 11, 10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 17, 16, 18, 19}
-
-/* Use MOF and ACR.  Prefer ACR before any other register.  Prefer MOF
-   then SRP after saved registers.  The *after* is because they're only
-   useful for storage, not for things being computed, which is
-   apparently more common.  */
-#define REG_ALLOC_ORDER_V32 \
- {15, 9, 13, 12, 11, 10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 17, 16, 14, 18, 19}
+ {9, 13, 12, 11, 10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 17, 16, 18, 19,	\
+  20}
 
 
 /* Node: Leaf Functions */
@@ -467,19 +436,15 @@ extern int cris_cpu_version;
 
 /* Node: Register Classes */
 
-/* We need a separate register class to handle register allocation for
-   ACR, since it can't be used for post-increment.
-
-   It's not obvious, but having subunions of all movable-between
+/* It's not obvious, but having subunions of all movable-between
    register classes does really help register allocation (pre-IRA
    comment).  */
 enum reg_class
   {
     NO_REGS,
-    ACR_REGS, MOF_REGS, SRP_REGS, CC0_REGS,
+    MOF_REGS, SRP_REGS, CC0_REGS,
     MOF_SRP_REGS, SPECIAL_REGS,
-    SPEC_ACR_REGS, GENNONACR_REGS,
-    SPEC_GENNONACR_REGS, GENERAL_REGS,
+    GENERAL_REGS,
     ALL_REGS,
     LIM_REG_CLASSES
   };
@@ -488,67 +453,51 @@ enum reg_class
 
 #define REG_CLASS_NAMES						\
   {"NO_REGS",							\
-   "ACR_REGS", "MOF_REGS", "SRP_REGS", "CC0_REGS",		\
+   "MOF_REGS", "SRP_REGS", "CC0_REGS",				\
    "MOF_SRP_REGS", "SPECIAL_REGS",				\
-   "SPEC_ACR_REGS", "GENNONACR_REGS", "SPEC_GENNONACR_REGS",	\
    "GENERAL_REGS", "ALL_REGS"}
 
 #define CRIS_SPECIAL_REGS_CONTENTS					\
  ((1 << CRIS_SRP_REGNUM) | (1 << CRIS_MOF_REGNUM) | (1 << CRIS_CC0_REGNUM))
 
+#define CRIS_FAKED_REGS_CONTENTS \
+ ((1 << CRIS_AP_REGNUM) | (1 << CRIS_FP_REGNUM))
+
 /* Count in the faked argument register in GENERAL_REGS.  Keep out SRP.  */
 #define REG_CLASS_CONTENTS			\
   {						\
    {0},						\
-   {1 << CRIS_ACR_REGNUM},			\
    {1 << CRIS_MOF_REGNUM},			\
    {1 << CRIS_SRP_REGNUM},			\
    {1 << CRIS_CC0_REGNUM},			\
    {(1 << CRIS_MOF_REGNUM)			\
     | (1 << CRIS_SRP_REGNUM)},			\
    {CRIS_SPECIAL_REGS_CONTENTS},		\
-   {CRIS_SPECIAL_REGS_CONTENTS			\
-    | (1 << CRIS_ACR_REGNUM)},			\
-   {(0xffff | (1 << CRIS_AP_REGNUM))		\
-    & ~(1 << CRIS_ACR_REGNUM)},			\
-   {(0xffff | (1 << CRIS_AP_REGNUM)		\
-    | CRIS_SPECIAL_REGS_CONTENTS)		\
-    & ~(1 << CRIS_ACR_REGNUM)},			\
-   {0xffff | (1 << CRIS_AP_REGNUM)},		\
-   {0xffff | (1 << CRIS_AP_REGNUM)		\
+   {0xffff | CRIS_FAKED_REGS_CONTENTS},		\
+   {0xffff | CRIS_FAKED_REGS_CONTENTS		\
     | CRIS_SPECIAL_REGS_CONTENTS}		\
   }
 
 #define REGNO_REG_CLASS(REGNO)			\
-  ((REGNO) == CRIS_ACR_REGNUM ? ACR_REGS :	\
-   (REGNO) == CRIS_MOF_REGNUM ? MOF_REGS :	\
+  ((REGNO) == CRIS_MOF_REGNUM ? MOF_REGS :	\
    (REGNO) == CRIS_SRP_REGNUM ? SRP_REGS :	\
    (REGNO) == CRIS_CC0_REGNUM ? CC0_REGS :	\
    GENERAL_REGS)
 
 #define BASE_REG_CLASS GENERAL_REGS
 
-#define MODE_CODE_BASE_REG_CLASS(MODE, AS, OCODE, ICODE)	\
-  ((OCODE) != POST_INC ? BASE_REG_CLASS : GENNONACR_REGS)
-
 #define INDEX_REG_CLASS GENERAL_REGS
 
 /* Since it uses reg_renumber, it is safe only once reg_renumber
-   has been allocated, which happens in reginfo.c during register
+   has been allocated, which happens in reginfo.cc during register
    allocation.  */
 #define REGNO_OK_FOR_BASE_P(REGNO)					\
  ((REGNO) <= CRIS_LAST_GENERAL_REGISTER					\
+  || (REGNO) == FRAME_POINTER_REGNUM					\
   || (REGNO) == ARG_POINTER_REGNUM					\
   || (unsigned) reg_renumber[REGNO] <= CRIS_LAST_GENERAL_REGISTER	\
+  || (unsigned) reg_renumber[REGNO] == FRAME_POINTER_REGNUM		\
   || (unsigned) reg_renumber[REGNO] == ARG_POINTER_REGNUM)
-
-/* REGNO_OK_FOR_BASE_P seems to be obsolete wrt. this one, but not yet
-   documented as such.  */
-#define REGNO_MODE_CODE_OK_FOR_BASE_P(REGNO, MODE, AS, OCODE, ICODE)	\
- (REGNO_OK_FOR_BASE_P (REGNO)						\
-  && ((OCODE) != POST_INC						\
-      || !((REGNO) == CRIS_ACR_REGNUM					\
-	   || (unsigned) reg_renumber[REGNO] == CRIS_ACR_REGNUM)))
 
 /* See REGNO_OK_FOR_BASE_P.  */
 #define REGNO_OK_FOR_INDEX_P(REGNO) REGNO_OK_FOR_BASE_P(REGNO)
@@ -565,11 +514,6 @@ enum reg_class
        || !reg_classes_intersect_p (REGNO_REG_CLASS (true_regnum (X)),	\
 				    GENERAL_REGS)))			\
    ? GENERAL_REGS : NO_REGS)
-
-/* FIXME: Fix regrename.c; it should check validity of replacements,
-   not just with a silly pass-specific macro.  We may miss some
-   opportunities, but we must stop regrename from creating acr++.  */
-#define HARD_REGNO_RENAME_OK(FROM, TO) ((TO) != CRIS_ACR_REGNUM)
 
 /* For CRIS, this is always the size of MODE in words,
    since all registers are the same size.  To use omitted modes in
@@ -624,7 +568,7 @@ enum reg_class
    number and dwarf frame register, we would either need to include all
    registers in the gcc description (with some marked fixed of course), or
    an inverse mapping from dwarf register to gcc register.  There is one
-   need in dwarf2out.c:expand_builtin_init_dwarf_reg_sizes.  Right now, I
+   need in dwarf2out.cc:expand_builtin_init_dwarf_reg_sizes.  Right now, I
    don't see that we need exact correspondence between DWARF *frame*
    registers and DBX_REGISTER_NUMBER, so map them onto GCC registers.  */
 #define DWARF_FRAME_REGNUM(REG) (REG)
@@ -638,6 +582,9 @@ enum reg_class
 
 /* Register used for frame pointer.  This is also the last of the saved
    registers, when a frame pointer is not used.  */
+#define HARD_FRAME_POINTER_REGNUM CRIS_REAL_FP_REGNUM
+
+/* Faked register, is always eliminated to at least CRIS_REAL_FP_REGNUM.  */
 #define FRAME_POINTER_REGNUM CRIS_FP_REGNUM
 
 /* Faked register, is always eliminated.  We need it to eliminate
@@ -646,13 +593,17 @@ enum reg_class
 
 #define STATIC_CHAIN_REGNUM CRIS_STATIC_CHAIN_REGNUM
 
+/* No unwind context is needed for faked registers nor DCCR.  Currently not MOF
+   too, but let's keep that open.  */
+#define DWARF_FRAME_REGISTERS (CRIS_MOF_REGNUM + 1)
 
 /* Node: Elimination */
 
 #define ELIMINABLE_REGS				\
  {{ARG_POINTER_REGNUM, STACK_POINTER_REGNUM},	\
-  {ARG_POINTER_REGNUM, FRAME_POINTER_REGNUM},	\
-  {FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM}}
+  {ARG_POINTER_REGNUM, HARD_FRAME_POINTER_REGNUM},	\
+  {FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM},	\
+  {FRAME_POINTER_REGNUM, HARD_FRAME_POINTER_REGNUM}}
 
 #define INITIAL_ELIMINATION_OFFSET(FROM, TO, OFFSET) \
  (OFFSET) = cris_initial_elimination_offset (FROM, TO)
@@ -702,13 +653,13 @@ struct cum_args {int regs;};
 
 /* Node: Function entry */
 
-/* See cris.c for TARGET_ASM_FUNCTION_PROLOGUE and
+/* See cris.cc for TARGET_ASM_FUNCTION_PROLOGUE and
    TARGET_ASM_FUNCTION_EPILOGUE.  */
 
 /* Node: Profiling */
 
 #define FUNCTION_PROFILER(FILE, LABELNO)  \
- error ("no FUNCTION_PROFILER for CRIS")
+ error ("no %<FUNCTION_PROFILER%> for CRIS")
 
 /* FIXME: Some of the undefined macros might be mandatory.  If so, fix
    documentation.  */
@@ -716,7 +667,7 @@ struct cum_args {int regs;};
 
 /* Node: Trampolines */
 
-#define TRAMPOLINE_SIZE (TARGET_V32 ? 58 : 32)
+#define TRAMPOLINE_SIZE 32
 
 /* CRIS wants instructions on word-boundary.  */
 #define TRAMPOLINE_ALIGNMENT 16
@@ -735,8 +686,6 @@ struct cum_args {int regs;};
 #define CONSTANT_ADDRESS_P(X) \
   (CONSTANT_P (X) && cris_legitimate_address_p (QImode, X, false))
 
-/* Must be a compile-time constant, so we go with the highest value
-   among all CRIS variants.  */
 #define MAX_REGS_PER_ADDRESS 2
 
 /* Fix reloads known to cause suboptimal spilling.  */
@@ -748,21 +697,17 @@ struct cum_args {int regs;};
     }									\
   while (0)
 
-/* The mode argument to cris_legitimate_constant_p isn't used, so just
-   pass a cheap dummy.  N.B. we have to cast away const from the
-   parameter rather than adjust the parameter, as it's type is mandated
-   by the TARGET_LEGITIMATE_CONSTANT_P target hook interface.  */
-#define CRIS_CONSTANT_P(X) \
-  (CONSTANT_P (X) && cris_legitimate_constant_p (VOIDmode, CONST_CAST_RTX (X)))
 
 /* Node: Condition Code */
 
-#define NOTICE_UPDATE_CC(EXP, INSN) cris_notice_update_cc (EXP, INSN)
+/* FIXME: Maybe define TARGET_CANONICALIZE_COMPARISON later, when
+   playing with optimizations.  */
 
-/* FIXME: Maybe define CANONICALIZE_COMPARISON later, when playing with
-   optimizations.  It is needed; currently we do this with instruction
-   patterns and NOTICE_UPDATE_CC.  */
+#define SELECT_CC_MODE(op, x, y) cris_select_cc_mode(op, x, y)
 
+#define REVERSIBLE_CC_MODE(MODE) true
+
+/* No known need to define REVERSE_CONDITION, the default is good.  */
 
 /* Node: Costs */
 
@@ -787,25 +732,6 @@ struct cum_args {int regs;};
 
 /* The jump table is immediately connected to the preceding insn.  */
 #define JUMP_TABLES_IN_TEXT_SECTION 1
-
-
-/* Node: PIC */
-
-/* Helper type.  */
-
-enum cris_symbol_type
-  {
-    cris_no_symbol = 0,
-    cris_got_symbol = 1,
-    cris_rel_symbol = 2,
-    cris_got_symbol_needing_fixup = 3,
-    cris_unspec = 7,
-    cris_offsettable_symbol = 8
-  };
-
-#define PIC_OFFSET_TABLE_REGNUM (flag_pic ? CRIS_GOT_REGNUM : INVALID_REGNUM)
-
-#define LEGITIMATE_PIC_OPERAND_P(X) cris_legitimate_pic_operand (X)
 
 
 /* Node: File Framework */
@@ -898,10 +824,11 @@ enum cris_symbol_type
 
 #define REGISTER_NAMES					\
  {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8",	\
-  "r9", "r10", "r11", "r12", "r13", "sp", "acr", "srp", "mof", "faked_ap", "dccr"}
+  "r9", "r10", "r11", "r12", "r13", "sp", "pc", "srp",	\
+  "mof", "faked_ap", "dccr", "faked_fp"}
 
 #define ADDITIONAL_REGISTER_NAMES \
- {{"r14", 14}, {"r15", 15}, {"pc", 15}}
+ {{"r14", 14}, {"r15", 15}}
 
 /* Output an empty line to illustrate the presence of the delay slot.  */
 #define DBR_OUTPUT_SEQEND(FILE) \
@@ -922,10 +849,7 @@ enum cris_symbol_type
 #define USER_LABEL_PREFIX "_"
 
 #define ASM_OUTPUT_REG_PUSH(FILE, REGNO)				\
-  fprintf (FILE,							\
-	   TARGET_V32							\
-	   ? "\tsubq 4,$sp\n\tmove $%s,[$sp]\n" : "\tpush $%s\n",	\
-	   reg_names[REGNO])
+  fprintf (FILE, "\tpush $%s\n", reg_names[REGNO])
 
 #define ASM_OUTPUT_REG_POP(FILE, REGNO) \
   fprintf (FILE, "\tmove [$sp+],$%s\n", reg_names[REGNO])
@@ -934,14 +858,7 @@ enum cris_symbol_type
 /* Node: Dispatch Tables */
 
 #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)		\
-  do									\
-    {									\
-      if (TARGET_V32)							\
-       asm_fprintf (FILE, "\t.word %LL%d-.\n", VALUE);			\
-      else								\
-       asm_fprintf (FILE, "\t.word %LL%d-%LL%d\n", VALUE, REL);		\
-    }									\
-  while (0)
+  asm_fprintf (FILE, "\t.word %LL%d-%LL%d\n", VALUE, REL)
 
 #define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE)  \
   asm_fprintf (FILE, "\t.dword %LL%d\n", VALUE)
@@ -978,24 +895,6 @@ enum cris_symbol_type
  (REGNO))
 
 /* FIXME: Investigate DEBUGGER_AUTO_OFFSET, DEBUGGER_ARG_OFFSET.  */
-
-
-/* Node: DBX Options */
-
-/* Is this correct? Check later.  */
-#define DBX_NO_XREFS
-
-#define DBX_CONTIN_LENGTH 0
-
-/* FIXME: Is this needed when we have 0 DBX_CONTIN_LENGTH?  */
-#define DBX_CONTIN_CHAR '?'
-
-
-/* Node: DBX Hooks */
-/* (no definitions) */
-
-/* Node: File names and DBX */
-/* (no definitions) */
 
 
 /* Node: DWARF */

@@ -1,5 +1,5 @@
 /* GNU compiler vector extension intrinsics
-   Copyright (C) 2015-2022 Free Software Foundation, Inc.
+   Copyright (C) 2015-2024 Free Software Foundation, Inc.
    Contributed by Andreas Krebbel (Andreas.Krebbel@de.ibm.com)
 
 This file is part of GCC.
@@ -59,8 +59,8 @@ along with GCC; see the file COPYING3.  If not see
 				    | __VEC_CLASS_FP_INFINITY)
 
 /* This also accepts a type for its parameter, so it is not enough
-   to #define vec_step to __builtin_vec_step.  */
-#define vec_step(x) __builtin_vec_step (* (__typeof__ (x) *) 0)
+   to #define vec_step to __builtin_s390_vec_step.  */
+#define vec_step(x) __builtin_s390_vec_step (* (__typeof__ (x) *) 0)
 
 static inline int
 __lcbb(const void *ptr, int bndry)
@@ -98,8 +98,8 @@ __lcbb(const void *ptr, int bndry)
 #define vec_splat_u64 __builtin_s390_vec_splat_u64
 #define vec_splat_s64 __builtin_s390_vec_splat_s64
 #define vec_checksum __builtin_s390_vcksm
-#define vec_gfmsum_128 __builtin_s390_vgfmg
-#define vec_gfmsum_accum_128 __builtin_s390_vgfmag
+#define vec_gfmsum_128 __builtin_s390_vgfmg_128
+#define vec_gfmsum_accum_128 __builtin_s390_vgfmag_128
 #define vec_ceil(X)   __builtin_s390_vfi((X), 4, 6)
 #define vec_roundp(X) __builtin_s390_vfi((X), 4, 6)
 #define vec_floor(X)  __builtin_s390_vfi((X), 4, 7)

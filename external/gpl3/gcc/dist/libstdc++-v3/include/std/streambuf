@@ -1,6 +1,6 @@
 // Stream buffer classes -*- C++ -*-
 
-// Copyright (C) 1997-2022 Free Software Foundation, Inc.
+// Copyright (C) 1997-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -34,6 +34,8 @@
 #define _GLIBXX_STREAMBUF 1
 
 #pragma GCC system_header
+
+#include <bits/requires_hosted.h> // iostreams
 
 #include <bits/c++config.h>
 #include <iosfwd>
@@ -486,6 +488,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       char_type*
       eback() const { return _M_in_beg; }
 
+// Required to silence false-positive warnings originating from istream_iterator::operator++,
+// see PR105580.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
       char_type*
       gptr()  const { return _M_in_cur;  }
 
@@ -501,6 +507,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       */
       void
       gbump(int __n) { _M_in_cur += __n; }
+#pragma GCC diagnostic pop
 
       /**
        *  @brief  Setting the three read area pointers.

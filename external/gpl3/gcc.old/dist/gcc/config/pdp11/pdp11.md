@@ -1,5 +1,5 @@
 ;;- Machine description for the pdp11 for GNU C compiler
-;; Copyright (C) 1994-2020 Free Software Foundation, Inc.
+;; Copyright (C) 1994-2022 Free Software Foundation, Inc.
 ;; Contributed by Michael K. Gschwind (mike@vlsivie.tuwien.ac.at).
 
 ;; This file is part of GCC.
@@ -82,6 +82,8 @@
 
 (define_code_iterator SHF [ashift ashiftrt lshiftrt])
 
+(define_mode_iterator PDPfp [SF DF])
+
 ;; Substitution to turn a CC clobber into a CC setter.  We have four of
 ;; these: for CCmode vs. CCNZmode, and for CC_REGNUM vs. FCC_REGNUM.
 (define_subst "cc_cc"
@@ -101,19 +103,19 @@
    (set (match_dup 0) (match_dup 1))])
 
 (define_subst "fcc_cc"
-  [(set (match_operand 0 "") (match_operand 1 ""))
+  [(set (match_operand:PDPfp 0 "") (match_operand:PDPfp 1 ""))
    (clobber (reg FCC_REGNUM))]
   ""
   [(set (reg:CC FCC_REGNUM)
-	(compare:CC (match_dup 1) (const_int 0)))
+	(compare:CC (match_dup 1) (const_double_zero:PDPfp)))
    (set (match_dup 0) (match_dup 1))])
 
 (define_subst "fcc_ccnz"
-  [(set (match_operand 0 "") (match_operand 1 ""))
+  [(set (match_operand:PDPfp 0 "") (match_operand:PDPfp 1 ""))
    (clobber (reg FCC_REGNUM))]
   ""
   [(set (reg:CCNZ FCC_REGNUM)
-	(compare:CCNZ (match_dup 1) (const_int 0)))
+	(compare:CCNZ (match_dup 1) (const_double_zero:PDPfp)))
    (set (match_dup 0) (match_dup 1))])
 
 (define_subst_attr "cc_cc" "cc_cc" "_nocc" "_cc")
@@ -2152,7 +2154,7 @@
 
 ;; Note that there is no corresponding CC setter pattern.
 ;; The reason is that it won't be generated, because
-;; compare-elim.c only does the transformation on input
+;; compare-elim.cc only does the transformation on input
 ;; insns that have a two-element PARALLEL, as opposed to
 ;; the three-element one we have here.     
 (define_insn "divmodhi4_nocc"

@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Offloading and Multi Processing Library
@@ -112,11 +112,8 @@ extern void gomp_aligned_free (void *);
 /* Optimized allocators for team-specific data that will die with the team.  */
 
 #ifdef __AMDGCN__
+#include "libgomp-gcn.h"
 /* The arena is initialized in config/gcn/team.c.  */
-#define TEAM_ARENA_SIZE  64*1024  /* Must match the value in plugin-gcn.c.  */
-#define TEAM_ARENA_START 16  /* LDS offset of free pointer.  */
-#define TEAM_ARENA_FREE  24  /* LDS offset of free pointer.  */
-#define TEAM_ARENA_END   32  /* LDS offset of end pointer.  */
 
 static inline void * __attribute__((malloc))
 team_malloc (size_t size)
@@ -135,7 +132,8 @@ team_malloc (size_t size)
     {
       /* While this is experimental, let's make sure we know when OOM
 	 happens.  */
-      const char msg[] = "GCN team arena exhausted\n";
+      const char msg[] = "GCN team arena exhausted;"
+			 " configure with GCN_TEAM_ARENA_SIZE=bytes\n";
       write (2, msg, sizeof(msg)-1);
 
       /* Fall back to using the heap (slowly).  */
@@ -453,6 +451,38 @@ struct gomp_team_state
 
 struct target_mem_desc;
 
+enum gomp_icvs
+{
+   GOMP_ICV_NTEAMS = 1,
+   GOMP_ICV_SCHEDULE = 2,
+   GOMP_ICV_SCHEDULE_CHUNK_SIZE = 3,
+   GOMP_ICV_DYNAMIC = 4,
+   GOMP_ICV_TEAMS_THREAD_LIMIT = 5,
+   GOMP_ICV_THREAD_LIMIT = 6,
+   GOMP_ICV_NTHREADS = 7,
+   GOMP_ICV_NTHREADS_LIST = 8,
+   GOMP_ICV_NTHREADS_LIST_LEN = 9,
+   GOMP_ICV_BIND = 10,
+   GOMP_ICV_BIND_LIST = 11,
+   GOMP_ICV_BIND_LIST_LEN = 12,
+   GOMP_ICV_MAX_ACTIVE_LEVELS = 13,
+   GOMP_ICV_WAIT_POLICY = 14,
+   GOMP_ICV_STACKSIZE = 15,
+   GOMP_ICV_DEFAULT_DEVICE = 16,
+   GOMP_ICV_CANCELLATION = 17,
+   GOMP_ICV_DISPLAY_AFFINITY = 18,
+   GOMP_ICV_TARGET_OFFLOAD = 19,
+   GOMP_ICV_MAX_TASK_PRIORITY = 20,
+   GOMP_ICV_ALLOCATOR = 21
+};
+
+enum gomp_device_num
+{
+  GOMP_DEVICE_NUM_FOR_DEV = -1,
+  GOMP_DEVICE_NUM_FOR_ALL = -2,
+  GOMP_DEVICE_NUM_FOR_NO_SUFFIX = -3
+};
+
 /* These are the OpenMP 4.0 Internal Control Variables described in
    section 2.3.1.  Those described as having one copy per task are
    stored within the structure; those described as having one copy
@@ -470,6 +500,80 @@ struct gomp_task_icv
   char bind_var;
   /* Internal ICV.  */
   struct target_mem_desc *target_data;
+};
+
+enum gomp_env_suffix
+{
+  GOMP_ENV_SUFFIX_UNKNOWN = 0,
+  GOMP_ENV_SUFFIX_NONE = 1,
+  GOMP_ENV_SUFFIX_DEV = 2,
+  GOMP_ENV_SUFFIX_ALL = 4,
+  GOMP_ENV_SUFFIX_DEV_X = 8
+};
+
+/* Struct that contains all ICVs for which we need to store initial values.
+   Keeping the initial values is needed for omp_display_env.  Moreover initial
+   _DEV and _ALL variants of environment variables are also used to determine
+   actually used values for devices and for the host.  */
+struct gomp_initial_icvs
+{
+  unsigned long *nthreads_var_list;
+  char *bind_var_list;
+  unsigned long nthreads_var;
+  unsigned long nthreads_var_list_len;
+  unsigned long bind_var_list_len;
+  unsigned long stacksize;
+  int run_sched_chunk_size;
+  int default_device_var;
+  int nteams_var;
+  int teams_thread_limit_var;
+  int wait_policy;
+  unsigned int thread_limit_var;
+  enum gomp_schedule_type run_sched_var;
+  bool dyn_var;
+  unsigned char max_active_levels_var;
+  char bind_var;
+};
+
+struct gomp_default_icv
+{
+  unsigned long nthreads_var;
+  enum gomp_schedule_type run_sched_var;
+  int run_sched_chunk_size;
+  int default_device_var;
+  unsigned int thread_limit_var;
+  int nteams_var;
+  int teams_thread_limit_var;
+  bool dyn_var;
+  unsigned char max_active_levels_var;
+  char bind_var;
+};
+
+/*  DEVICE_NUM "-1" is reserved for "_DEV" icvs.
+    DEVICE_NUM "-2" is reserved for "_ALL" icvs.
+    DEVICE_NUM "-3" is reserved for ICVs without suffix.
+    Non-negative DEVICE_NUM is for "_DEV_X" icvs.  */
+struct gomp_icv_list
+{
+  int device_num;
+  uint32_t flags;
+  struct gomp_initial_icvs icvs;
+  struct gomp_icv_list *next;
+};
+
+struct gomp_offload_icvs
+{
+  int device_num;
+  int default_device;
+  int nteams;
+  int teams_thread_limit;
+};
+
+struct gomp_offload_icv_list
+{
+  int device_num;
+  struct gomp_offload_icvs icvs;
+  struct gomp_offload_icv_list *next;
 };
 
 enum gomp_target_offload_t
@@ -503,6 +607,9 @@ extern bool gomp_display_affinity_var;
 extern char *gomp_affinity_format_var;
 extern size_t gomp_affinity_format_len;
 extern uintptr_t gomp_def_allocator;
+extern const struct gomp_default_icv gomp_default_icv_values;
+extern struct gomp_icv_list *gomp_initial_icv_list;
+extern struct gomp_offload_icv_list *gomp_offload_icv_list;
 extern int goacc_device_num;
 extern char *goacc_device_type;
 extern int goacc_default_dims[GOMP_DIM_MAX];
@@ -535,8 +642,8 @@ struct gomp_task_depend_entry
   struct gomp_task_depend_entry *prev;
   /* Task that provides the dependency in ADDR.  */
   struct gomp_task *task;
-  /* Depend entry is of type "IN".  */
-  bool is_in;
+  /* Depend entry is of type "IN" (1) or "INOUTSET" (2).  */
+  unsigned char is_in;
   bool redundant;
   bool redundant_out;
 };
@@ -573,6 +680,8 @@ struct gomp_task
   struct gomp_dependers_vec *dependers;
   struct htab *depend_hash;
   struct gomp_taskwait *taskwait;
+  /* Last depend({,in}out:omp_all_memory) child if any.  */
+  struct gomp_task *depend_all_memory;
   /* Number of items in DEPEND.  */
   size_t depend_count;
   /* Number of tasks this task depends on.  Once this counter reaches
@@ -925,6 +1034,11 @@ extern void gomp_display_affinity_thread (gomp_thread_handle,
 					  struct gomp_team_state *,
 					  unsigned int) __attribute__((cold));
 
+/* env.c */
+
+extern struct gomp_icv_list *gomp_get_initial_icv_item (int dev_num);
+extern bool gomp_get_icv_flag (uint32_t value, enum gomp_icvs icv);
+
 /* iter.c */
 
 extern int gomp_iter_static_next (long *, long *);
@@ -1012,6 +1126,8 @@ extern int gomp_pause_host (void);
 extern void gomp_init_targets_once (void);
 extern int gomp_get_num_devices (void);
 extern bool gomp_target_task_fn (void *);
+extern void gomp_target_rev (uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+			     int, struct goacc_asyncqueue *);
 
 /* Splay tree definitions.  */
 typedef struct splay_tree_node_s *splay_tree_node;
@@ -1036,29 +1152,7 @@ struct target_var_desc {
   uintptr_t length;
 };
 
-struct target_mem_desc {
-  /* Reference count.  */
-  uintptr_t refcount;
-  /* All the splay nodes allocated together.  */
-  splay_tree_node array;
-  /* Start of the target region.  */
-  uintptr_t tgt_start;
-  /* End of the targer region.  */
-  uintptr_t tgt_end;
-  /* Handle to free.  */
-  void *to_free;
-  /* Previous target_mem_desc.  */
-  struct target_mem_desc *prev;
-  /* Number of items in following list.  */
-  size_t list_count;
-
-  /* Corresponding target device descriptor.  */
-  struct gomp_device_descr *device_descr;
-
-  /* List of target items to remove (or decrease refcount)
-     at the end of region.  */
-  struct target_var_desc list[];
-};
+struct target_mem_desc;
 
 /* Special value for refcount - mask to indicate existence of special
    values. Right now we allocate 3 bits.  */
@@ -1069,6 +1163,8 @@ struct target_mem_desc {
 /* Special value for refcount - tgt_offset contains target address of the
    artificial pointer to "omp declare target link" object.  */
 #define REFCOUNT_LINK     (REFCOUNT_SPECIAL | 1)
+/* Special value for refcount - created through acc_map_data.  */
+#define REFCOUNT_ACC_MAP_DATA (REFCOUNT_SPECIAL | 2)
 
 /* Special value for refcount - structure element sibling list items.
    All such key refounts have REFCOUNT_STRUCTELEM bits set, with _FLAG_FIRST
@@ -1151,6 +1247,82 @@ splay_compare (splay_tree_key x, splay_tree_key y)
 }
 
 #include "splay-tree.h"
+
+/* Reverse offload splay-tree handling (functions only). */
+
+struct reverse_splay_tree_key_s {
+  /* Address of the device object.  */
+  uint64_t dev;
+  splay_tree_key k;
+};
+
+typedef struct reverse_splay_tree_node_s *reverse_splay_tree_node;
+typedef struct reverse_splay_tree_s *reverse_splay_tree;
+typedef struct reverse_splay_tree_key_s *reverse_splay_tree_key;
+
+static inline int
+reverse_splay_compare (reverse_splay_tree_key x, reverse_splay_tree_key y)
+{
+  if (x->dev < y->dev)
+    return -1;
+  if (x->dev > y->dev)
+    return 1;
+  return 0;
+}
+
+#define splay_tree_prefix reverse
+#define splay_tree_static
+#include "splay-tree.h"
+
+/* Indirect target function splay-tree handling.  */
+
+struct indirect_splay_tree_key_s {
+  uint64_t host_addr, target_addr;
+};
+
+typedef struct indirect_splay_tree_node_s *indirect_splay_tree_node;
+typedef struct indirect_splay_tree_s *indirect_splay_tree;
+typedef struct indirect_splay_tree_key_s *indirect_splay_tree_key;
+
+static inline int
+indirect_splay_compare (indirect_splay_tree_key x, indirect_splay_tree_key y)
+{
+  if (x->host_addr < y->host_addr)
+    return -1;
+  if (x->host_addr > y->host_addr)
+    return 1;
+  return 0;
+}
+
+#define splay_tree_prefix indirect
+#include "splay-tree.h"
+
+struct target_mem_desc {
+  /* Reference count.  */
+  uintptr_t refcount;
+  /* All the splay nodes allocated together.  */
+  splay_tree_node array;
+  /* Likewise for the reverse lookup device->host for reverse offload. */
+  reverse_splay_tree_node rev_array;
+  /* Start of the target region.  */
+  uintptr_t tgt_start;
+  /* End of the targer region.  */
+  uintptr_t tgt_end;
+  /* Handle to free.  */
+  void *to_free;
+  /* Previous target_mem_desc.  */
+  struct target_mem_desc *prev;
+  /* Number of items in following list.  */
+  size_t list_count;
+
+  /* Corresponding target device descriptor.  */
+  struct gomp_device_descr *device_descr;
+
+  /* List of target items to remove (or decrease refcount)
+     at the end of region.  */
+  struct target_var_desc list[];
+};
+
 
 typedef struct acc_dispatch_t
 {
@@ -1239,6 +1411,8 @@ struct gomp_device_descr
   __typeof (GOMP_OFFLOAD_free) *free_func;
   __typeof (GOMP_OFFLOAD_dev2host) *dev2host_func;
   __typeof (GOMP_OFFLOAD_host2dev) *host2dev_func;
+  __typeof (GOMP_OFFLOAD_memcpy2d) *memcpy2d_func;
+  __typeof (GOMP_OFFLOAD_memcpy3d) *memcpy3d_func;
   __typeof (GOMP_OFFLOAD_dev2dev) *dev2dev_func;
   __typeof (GOMP_OFFLOAD_can_run) *can_run_func;
   __typeof (GOMP_OFFLOAD_run) *run_func;
@@ -1246,6 +1420,7 @@ struct gomp_device_descr
 
   /* Splay tree containing information about mapped memory regions.  */
   struct splay_tree_s mem_map;
+  struct reverse_splay_tree_s mem_map_rev;
 
   /* Mutex for the mutable data.  */
   gomp_mutex_t lock;

@@ -1,5 +1,5 @@
 ;; Machine description for AArch64 architecture.
-;; Copyright (C) 2009-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2022 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 ;;
 ;; This file is part of GCC.
@@ -151,6 +151,14 @@
   (and (match_code "const,symbol_ref,label_ref")
        (match_test "aarch64_symbolic_address_p (op)")
        (match_test "aarch64_mov_operand_p (op, GET_MODE (op))")))
+
+;; const is needed here to support UNSPEC_SALT_ADDR.
+(define_constraint "Usw"
+  "@internal
+   A constraint that matches a small GOT access."
+  (and (match_code "const,symbol_ref")
+       (match_test "aarch64_classify_symbolic_expression (op)
+		     == SYMBOL_SMALL_GOT_4G")))
 
 (define_constraint "Uss"
   "@internal
@@ -323,7 +331,7 @@
   (and (match_code "mem")
        (match_test "aarch64_simd_mem_operand_p (op)")))
 
-(define_memory_constraint "Utq"
+(define_relaxed_memory_constraint "Utq"
   "@internal
    An address valid for loading or storing a 128-bit AdvSIMD register"
   (and (match_code "mem")
@@ -332,38 +340,38 @@
        (match_test "aarch64_legitimate_address_p (V2DImode,
 						  XEXP (op, 0), 1)")))
 
-(define_memory_constraint "UtQ"
+(define_relaxed_memory_constraint "UtQ"
   "@internal
    An address valid for SVE LD1RQs."
   (and (match_code "mem")
        (match_test "aarch64_sve_ld1rq_operand_p (op)")))
 
-(define_memory_constraint "UOb"
+(define_relaxed_memory_constraint "UOb"
   "@internal
    An address valid for SVE LD1ROH."
   (and (match_code "mem")
        (match_test "aarch64_sve_ld1ro_operand_p (op, QImode)")))
 
-(define_memory_constraint "UOh"
+(define_relaxed_memory_constraint "UOh"
   "@internal
    An address valid for SVE LD1ROH."
   (and (match_code "mem")
        (match_test "aarch64_sve_ld1ro_operand_p (op, HImode)")))
 
 
-(define_memory_constraint "UOw"
+(define_relaxed_memory_constraint "UOw"
   "@internal
    An address valid for SVE LD1ROW."
   (and (match_code "mem")
        (match_test "aarch64_sve_ld1ro_operand_p (op, SImode)")))
 
-(define_memory_constraint "UOd"
+(define_relaxed_memory_constraint "UOd"
   "@internal
    An address valid for SVE LD1ROD."
   (and (match_code "mem")
        (match_test "aarch64_sve_ld1ro_operand_p (op, DImode)")))
 
-(define_memory_constraint "Uty"
+(define_relaxed_memory_constraint "Uty"
   "@internal
    An address valid for SVE LD1Rs."
   (and (match_code "mem")
@@ -436,6 +444,14 @@
  (and (match_code "const,const_vector")
       (match_test "aarch64_simd_shift_imm_p (op, GET_MODE (op),
 						 true)")))
+
+(define_constraint "D1"
+  "@internal
+ A constraint that matches vector of immediates that is bits(mode)-1."
+ (and (match_code "const,const_vector")
+      (match_test "aarch64_const_vec_all_same_in_range_p (op,
+			GET_MODE_UNIT_BITSIZE (mode) - 1,
+			GET_MODE_UNIT_BITSIZE (mode) - 1)")))
 
 (define_constraint "Dr"
   "@internal

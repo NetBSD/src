@@ -1,5 +1,5 @@
 /* All matcher functions.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
    Contributed by Steven Bosscher
 
 This file is part of GCC.
@@ -45,14 +45,14 @@ extern gfc_access gfc_typebound_default_access;
 match gfc_match_special_char (gfc_char_t *);
 match gfc_match_space (void);
 match gfc_match_eos (void);
-match gfc_match_small_literal_int (int *, int *);
+match gfc_match_small_literal_int (int *, int *, bool = true);
 match gfc_match_st_label (gfc_st_label **);
 match gfc_match_small_int (int *);
-match gfc_match_name (char *);
+match gfc_match_name (char *, bool = true);
 match gfc_match_symbol (gfc_symbol **, int);
 match gfc_match_sym_tree (gfc_symtree **, int);
 match gfc_match_intrinsic_op (gfc_intrinsic_op *);
-match gfc_match_char (char);
+match gfc_match_char (char, bool = true);
 match gfc_match (const char *, ...);
 match gfc_match_iterator (gfc_iterator *, int);
 match gfc_match_parens (void);
@@ -149,6 +149,10 @@ match gfc_match_oacc_routine (void);
 
 /* OpenMP directive matchers.  */
 match gfc_match_omp_eos_error (void);
+match gfc_match_omp_allocate (void);
+match gfc_match_omp_allocators (void);
+match gfc_match_omp_assume (void);
+match gfc_match_omp_assumes (void);
 match gfc_match_omp_atomic (void);
 match gfc_match_omp_barrier (void);
 match gfc_match_omp_cancel (void);

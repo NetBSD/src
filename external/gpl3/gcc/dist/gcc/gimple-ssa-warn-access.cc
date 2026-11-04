@@ -1,7 +1,7 @@
 /* Pass to detect and issue warnings for invalid accesses, including
    invalid or mismatched allocation/deallocation calls.
 
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
    Contributed by Martin Sebor <msebor@redhat.com>.
 
    This file is part of GCC.
@@ -36,8 +36,8 @@
 #include "gimple-ssa-warn-restrict.h"
 #include "diagnostic-core.h"
 #include "fold-const.h"
-#include "gimple-fold.h"
 #include "gimple-iterator.h"
+#include "gimple-fold.h"
 #include "langhooks.h"
 #include "memmodel.h"
 #include "target.h"
@@ -159,6 +159,8 @@ warn_string_no_nul (location_t loc, GimpleOrTree expr, const char *fname,
 		 (unsigned long long) bndrng[0].to_uhwi (),
 		 (unsigned long long) bndrng[1].to_uhwi ());
     }
+
+  auto_diagnostic_group d;
 
   const tree maxobjsize = max_object_size ();
   const wide_int maxsiz = wi::to_wide (maxobjsize);
@@ -328,11 +330,11 @@ check_nul_terminated_array (GimpleOrTree expr, tree src, tree bound)
   wide_int bndrng[2];
   if (bound)
     {
-      value_range r;
+      Value_Range r (TREE_TYPE (bound));
 
-      get_global_range_query ()->range_of_expr (r, bound);
+      get_range_query (cfun)->range_of_expr (r, bound);
 
-      if (r.kind () != VR_RANGE)
+      if (r.undefined_p () || r.varying_p ())
 	return true;
 
       bndrng[0] = r.lower_bound ();
@@ -719,6 +721,7 @@ maybe_warn_for_bound (opt_code opt, location_t loc, GimpleOrTree exp, tree func,
 	    maybe = false;
 	}
 
+      auto_diagnostic_group d;
       if (tree_int_cst_lt (maxobjsize, bndrng[0]))
 	{
 	  if (bndrng[0] == bndrng[1])
@@ -1196,10 +1199,10 @@ warn_for_access (location_t loc, tree func, tree expr, int opt,
 
 static void
 get_size_range (range_query *query, tree bound, gimple *stmt, tree range[2],
-		const offset_int bndrng[2])
+		int flags, const offset_int bndrng[2])
 {
   if (bound)
-    get_size_range (query, bound, stmt, range);
+    get_size_range (query, bound, stmt, range, flags);
 
   if (!bndrng || (bndrng[0] == 0 && bndrng[1] == HOST_WIDE_INT_M1U))
     return;
@@ -1345,7 +1348,12 @@ check_access (GimpleOrTree exp, tree dstwrite,
   /* Set RANGE to that of DSTWRITE if non-null, bounded by PAD->DST_BNDRNG
      if valid.  */
   gimple *stmt = pad ? pad->stmt : nullptr;
-  get_size_range (rvals, dstwrite, stmt, range, pad ? pad->dst_bndrng : NULL);
+  get_size_range (rvals, dstwrite, stmt, range,
+		  /* If the destination has known zero size prefer a zero
+		     size range to avoid false positives if that's a
+		     possibility.  */
+		  integer_zerop (dstsize) ? SR_ALLOW_ZERO : 0,
+		  pad ? pad->dst_bndrng : NULL);
 
   tree func = get_callee_fndecl (exp);
   /* Read vs write access by built-ins can be determined from the const
@@ -1388,6 +1396,7 @@ check_access (GimpleOrTree exp, tree dstwrite,
 		  && warning_suppressed_p (pad->dst.ref, opt)))
 	    return false;
 
+	  auto_diagnostic_group d;
 	  location_t loc = get_location (exp);
 	  bool warned = false;
 	  if (dstwrite == slen && at_least_one)
@@ -1439,7 +1448,8 @@ check_access (GimpleOrTree exp, tree dstwrite,
     {
       /* Set RANGE to that of MAXREAD, bounded by PAD->SRC_BNDRNG if
 	 PAD is nonnull and BNDRNG is valid.  */
-      get_size_range (rvals, maxread, stmt, range, pad ? pad->src_bndrng : NULL);
+      get_size_range (rvals, maxread, stmt, range, 0,
+		      pad ? pad->src_bndrng : NULL);
 
       location_t loc = get_location (exp);
       tree size = dstsize;
@@ -1486,7 +1496,8 @@ check_access (GimpleOrTree exp, tree dstwrite,
     {
       /* Set RANGE to that of MAXREAD, bounded by PAD->SRC_BNDRNG if
 	 PAD is nonnull and BNDRNG is valid.  */
-      get_size_range (rvals, maxread, stmt, range, pad ? pad->src_bndrng : NULL);
+      get_size_range (rvals, maxread, stmt, range, 0,
+		      pad ? pad->src_bndrng : NULL);
       /* Set OVERREAD for reads starting just past the end of an object.  */
       overread = pad->src.sizrng[1] - pad->src.offrng[0] < pad->src_bndrng[0];
       range[0] = wide_int_to_tree (sizetype, pad->src_bndrng[0]);
@@ -1506,6 +1517,7 @@ check_access (GimpleOrTree exp, tree dstwrite,
       const bool read
 	= mode == access_read_only || mode == access_read_write;
       const bool maybe = pad && pad->dst.parmarray;
+      auto_diagnostic_group d;
       if (warn_for_access (loc, func, exp, opt, range, slen, false, read,
 			   maybe))
 	{
@@ -1563,6 +1575,7 @@ fndecl_alloc_p (tree fndecl, bool all_alloc)
 	case BUILT_IN_ALIGNED_ALLOC:
 	case BUILT_IN_CALLOC:
 	case BUILT_IN_GOMP_ALLOC:
+	case BUILT_IN_GOMP_REALLOC:
 	case BUILT_IN_MALLOC:
 	case BUILT_IN_REALLOC:
 	case BUILT_IN_STRDUP:
@@ -1750,7 +1763,7 @@ new_delete_mismatch_p (tree new_decl, tree delete_decl)
   void *np = NULL, *dp = NULL;
   demangle_component *ndc = cplus_demangle_v3_components (new_str, 0, &np);
   demangle_component *ddc = cplus_demangle_v3_components (del_str, 0, &dp);
-  bool mismatch = new_delete_mismatch_p (*ndc, *ddc);
+  bool mismatch = ndc && ddc && new_delete_mismatch_p (*ndc, *ddc);
   free (np);
   free (dp);
   return mismatch;
@@ -1777,8 +1790,7 @@ matching_alloc_calls_p (tree alloc_decl, tree dealloc_decl)
 
       /* Return false for deallocation functions that are known not
 	 to match.  */
-      if (fndecl_built_in_p (dealloc_decl, BUILT_IN_FREE)
-	  || fndecl_built_in_p (dealloc_decl, BUILT_IN_REALLOC))
+      if (fndecl_built_in_p (dealloc_decl, BUILT_IN_FREE, BUILT_IN_REALLOC))
 	return false;
       /* Otherwise proceed below to check the deallocation function's
 	 "*dealloc" attributes to look for one that mentions this operator
@@ -1792,9 +1804,20 @@ matching_alloc_calls_p (tree alloc_decl, tree dealloc_decl)
 	case BUILT_IN_ALLOCA_WITH_ALIGN:
 	  return false;
 
+	case BUILT_IN_GOMP_ALLOC:
+	case BUILT_IN_GOMP_REALLOC:
+	  if (DECL_IS_OPERATOR_DELETE_P (dealloc_decl))
+	    return false;
+
+	  if (fndecl_built_in_p (dealloc_decl, BUILT_IN_GOMP_FREE,
+					       BUILT_IN_GOMP_REALLOC))
+	    return true;
+
+	  alloc_dealloc_kind = alloc_kind_t::builtin;
+	  break;
+
 	case BUILT_IN_ALIGNED_ALLOC:
 	case BUILT_IN_CALLOC:
-	case BUILT_IN_GOMP_ALLOC:
 	case BUILT_IN_MALLOC:
 	case BUILT_IN_REALLOC:
 	case BUILT_IN_STRDUP:
@@ -1802,8 +1825,8 @@ matching_alloc_calls_p (tree alloc_decl, tree dealloc_decl)
 	  if (DECL_IS_OPERATOR_DELETE_P (dealloc_decl))
 	    return false;
 
-	  if (fndecl_built_in_p (dealloc_decl, BUILT_IN_FREE)
-	      || fndecl_built_in_p (dealloc_decl, BUILT_IN_REALLOC))
+	  if (fndecl_built_in_p (dealloc_decl, BUILT_IN_FREE,
+					       BUILT_IN_REALLOC))
 	    return true;
 
 	  alloc_dealloc_kind = alloc_kind_t::builtin;
@@ -1820,7 +1843,8 @@ matching_alloc_calls_p (tree alloc_decl, tree dealloc_decl)
   if (fndecl_built_in_p (dealloc_decl, BUILT_IN_NORMAL))
     {
       built_in_function dealloc_code = DECL_FUNCTION_CODE (dealloc_decl);
-      if (dealloc_code == BUILT_IN_REALLOC)
+      if (dealloc_code == BUILT_IN_REALLOC
+	  || dealloc_code == BUILT_IN_GOMP_REALLOC)
 	realloc_kind = alloc_kind_t::builtin;
 
       for (tree amats = DECL_ATTRIBUTES (alloc_decl);
@@ -1873,6 +1897,7 @@ matching_alloc_calls_p (tree alloc_decl, tree dealloc_decl)
 	    case BUILT_IN_ALIGNED_ALLOC:
 	    case BUILT_IN_CALLOC:
 	    case BUILT_IN_GOMP_ALLOC:
+	    case BUILT_IN_GOMP_REALLOC:
 	    case BUILT_IN_MALLOC:
 	    case BUILT_IN_REALLOC:
 	    case BUILT_IN_STRDUP:
@@ -2018,6 +2043,7 @@ warn_dealloc_offset (location_t loc, gimple *call, const access_ref &aref)
 		 (long long)aref.offrng[1].to_shwi ());
     }
 
+  auto_diagnostic_group d;
   if (!warning_at (loc, OPT_Wfree_nonheap_object,
 		   "%qD called on pointer %qE with nonzero offset%s",
 		   dealloc_decl, aref.ref, offstr))
@@ -2068,13 +2094,13 @@ class pass_waccess : public gimple_opt_pass
 
   ~pass_waccess ();
 
-  opt_pass *clone ();
+  opt_pass *clone () final override;
 
-  virtual bool gate (function *);
+  bool gate (function *) final override;
 
-  void set_pass_param (unsigned, bool);
+  void set_pass_param (unsigned, bool) final override;
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 private:
   /* Not copyable or assignable.  */
@@ -2128,7 +2154,7 @@ private:
   void check_dangling_uses (tree, tree, bool = false, bool = false);
   void check_dangling_uses ();
   void check_dangling_stores ();
-  void check_dangling_stores (basic_block, hash_set<tree> &, auto_bitmap &);
+  bool check_dangling_stores (basic_block, hash_set<tree> &);
 
   void warn_invalid_pointer (tree, gimple *, gimple *, tree, bool, bool = false);
 
@@ -2672,7 +2698,7 @@ pass_waccess::check_strncmp (gcall *stmt)
   /* Determine the range of the bound first and bail if it fails; it's
      cheaper than computing the size of the objects.  */
   tree bndrng[2] = { NULL_TREE, NULL_TREE };
-  get_size_range (m_ptr_qry.rvals, bound, stmt, bndrng, adata1.src_bndrng);
+  get_size_range (m_ptr_qry.rvals, bound, stmt, bndrng, 0, adata1.src_bndrng);
   if (!bndrng[0] || integer_zerop (bndrng[0]))
     return;
 
@@ -2788,9 +2814,8 @@ memmodel_to_uhwi (tree ord, gimple *stmt, unsigned HOST_WIDE_INT *cstval)
     {
       /* Use the range query to determine constant values in the absence
 	 of constant propagation (such as at -O0).  */
-      value_range rng;
+      Value_Range rng (TREE_TYPE (ord));
       if (!get_range_query (cfun)->range_of_expr (rng, ord, stmt)
-	  || !rng.constant_p ()
 	  || !rng.singleton_p (&ord))
 	return false;
 
@@ -2851,7 +2876,7 @@ memmodel_name (unsigned HOST_WIDE_INT val)
 {
   val = memmodel_base (val);
 
-  for (unsigned i = 0; i != sizeof memory_models / sizeof *memory_models; ++i)
+  for (unsigned i = 0; i != ARRAY_SIZE (memory_models); ++i)
     {
       if (val == memory_models[i].modval)
 	return memory_models[i].modname;
@@ -2901,6 +2926,7 @@ pass_waccess::maybe_warn_memmodel (gimple *stmt, tree ord_sucs,
   if (!is_valid)
     {
       bool warned = false;
+      auto_diagnostic_group d;
       if (const char *modname = memmodel_name (sucs))
 	warned = warning_at (loc, OPT_Winvalid_memory_model,
 			     "invalid memory model %qs for %qD",
@@ -2934,6 +2960,7 @@ pass_waccess::maybe_warn_memmodel (gimple *stmt, tree ord_sucs,
       {
 	/* If both memory model arguments are valid but their combination
 	   is not, use their names in the warning.  */
+	auto_diagnostic_group d;
 	if (!warning_at (loc, OPT_Winvalid_memory_model,
 			 "invalid failure memory model %qs for %qD",
 			 failname, fndecl))
@@ -2954,6 +2981,7 @@ pass_waccess::maybe_warn_memmodel (gimple *stmt, tree ord_sucs,
       {
 	/* If both memory model arguments are valid but their combination
 	   is not, use their names in the warning.  */
+	auto_diagnostic_group d;
 	if (!warning_at (loc, OPT_Winvalid_memory_model,
 			 "failure memory model %qs cannot be stronger "
 			 "than success memory model %qs for %qD",
@@ -3377,6 +3405,15 @@ pass_waccess::maybe_check_access_sizes (rdwr_map *rwm, tree fndecl, tree fntype,
       else
 	access_nelts = rwm->get (sizidx)->size;
 
+      /* If access_nelts is e.g. a PARM_DECL with larger precision than
+	 sizetype, such as __int128 or _BitInt(34123) parameters,
+	 cast it to sizetype.  */
+      if (access_nelts
+	  && INTEGRAL_TYPE_P (TREE_TYPE (access_nelts))
+	  && (TYPE_PRECISION (TREE_TYPE (access_nelts))
+	      > TYPE_PRECISION (sizetype)))
+	access_nelts = fold_convert (sizetype, access_nelts);
+
       /* Format the value or range to avoid an explosion of messages.  */
       char sizstr[80];
       tree sizrng[2] = { size_zero_node, build_all_ones_cst (sizetype) };
@@ -3462,41 +3499,18 @@ pass_waccess::maybe_check_access_sizes (rdwr_map *rwm, tree fndecl, tree fntype,
 
       if (integer_zerop (ptr))
 	{
-	  if (sizidx >= 0 && tree_int_cst_sgn (sizrng[0]) > 0)
+	  if (!access.second.internal_p
+	      && sizidx >= 0 && tree_int_cst_sgn (sizrng[0]) > 0)
 	    {
 	      /* Warn about null pointers with positive sizes.  This is
 		 different from also declaring the pointer argument with
 		 attribute nonnull when the function accepts null pointers
 		 only when the corresponding size is zero.  */
-	      if (access.second.internal_p)
-		{
-		  const std::string argtypestr
-		    = access.second.array_as_string (ptrtype);
-
-		  if (warning_at (loc, OPT_Wnonnull,
-				  "argument %i of variable length "
-				  "array %s is null but "
-				  "the corresponding bound argument "
-				  "%i value is %s",
-				  ptridx + 1, argtypestr.c_str (),
-				  sizidx + 1, sizstr))
-		    arg_warned = OPT_Wnonnull;
-		}
-	      else if (warning_at (loc, OPT_Wnonnull,
+	      if (warning_at (loc, OPT_Wnonnull,
 				   "argument %i is null but "
 				   "the corresponding size argument "
 				   "%i value is %s",
 				   ptridx + 1, sizidx + 1, sizstr))
-		arg_warned = OPT_Wnonnull;
-	    }
-	  else if (access_size && access.second.static_p)
-	    {
-	      /* Warn about null pointers for [static N] array arguments
-		 but do not warn for ordinary (i.e., nonstatic) arrays.  */
-	      if (warning_at (loc, OPT_Wnonnull,
-			      "argument %i to %<%T[static %E]%> "
-			      "is null where non-null expected",
-			      ptridx + 1, argtype, access_nelts))
 		arg_warned = OPT_Wnonnull;
 	    }
 
@@ -3687,13 +3701,16 @@ pass_waccess::maybe_check_dealloc_call (gcall *call)
   if (DECL_P (ref) || EXPR_P (ref))
     {
       /* Diagnose freeing a declared object.  */
-      if (aref.ref_declared ()
-	  && warning_at (loc, OPT_Wfree_nonheap_object,
-			 "%qD called on unallocated object %qD",
-			 dealloc_decl, ref))
+      if (aref.ref_declared ())
 	{
-	  inform (get_location (ref), "declared here");
-	  return;
+	  auto_diagnostic_group d;
+	  if (warning_at (loc, OPT_Wfree_nonheap_object,
+			  "%qD called on unallocated object %qD",
+			  dealloc_decl, ref))
+	    {
+	      inform (get_location (ref), "declared here");
+	      return;
+	    }
 	}
 
       /* Diagnose freeing a pointer that includes a positive offset.
@@ -3705,6 +3722,7 @@ pass_waccess::maybe_check_dealloc_call (gcall *call)
     }
   else if (CONSTANT_CLASS_P (ref))
     {
+      auto_diagnostic_group d;
       if (warning_at (loc, OPT_Wfree_nonheap_object,
 		      "%qD called on a pointer to an unallocated "
 		      "object %qE", dealloc_decl, ref))
@@ -3849,13 +3867,7 @@ pass_waccess::use_after_inval_p (gimple *inval_stmt, gimple *use_stmt,
        to consecutive statements in it.  Use the ids to determine which
        precedes which.  This avoids the linear traversal on subsequent
        visits to the same block.  */
-    for (auto si = gsi_start_bb (inval_bb); !gsi_end_p (si);
-	 gsi_next_nondebug (&si))
-      {
-	gimple *stmt = gsi_stmt (si);
-	unsigned uid = inc_gimple_stmt_max_uid (m_func);
-	gimple_set_uid (stmt, uid);
-      }
+    renumber_gimple_stmt_uids_in_block (m_func, inval_bb);
 
   return gimple_uid (inval_stmt) < gimple_uid (use_stmt);
 }
@@ -3900,13 +3912,15 @@ pass_waccess::warn_invalid_pointer (tree ref, gimple *use_stmt,
 
   if (is_gimple_call (inval_stmt))
     {
-      if ((equality && warn_use_after_free < 3)
+      if (!m_early_checks_p
+	  || (equality && warn_use_after_free < 3)
 	  || (maybe && warn_use_after_free < 2)
 	  || warning_suppressed_p (use_stmt, OPT_Wuse_after_free))
 	return;
 
       const tree inval_decl = gimple_call_fndecl (inval_stmt);
 
+      auto_diagnostic_group d;
       if ((ref && warning_at (use_loc, OPT_Wuse_after_free,
 			      (maybe
 			       ? G_("pointer %qE may be used after %qD")
@@ -3932,6 +3946,7 @@ pass_waccess::warn_invalid_pointer (tree ref, gimple *use_stmt,
 
   if (DECL_NAME (var))
     {
+      auto_diagnostic_group d;
       if ((ref
 	   && warning_at (use_loc, OPT_Wdangling_pointer_,
 			  (maybe
@@ -4156,8 +4171,9 @@ pass_waccess::check_pointer_uses (gimple *stmt, tree ptr,
 
   auto_bitmap visited;
 
-  auto_vec<tree> pointers;
-  pointers.safe_push (ptr);
+  auto_vec<tree, 8> pointers;
+  pointers.quick_push (ptr);
+  hash_map<tree, int> *phi_map = nullptr;
 
   /* Starting with PTR, iterate over POINTERS added by the loop, and
      either warn for their uses in basic blocks dominated by the STMT
@@ -4177,6 +4193,10 @@ pass_waccess::check_pointer_uses (gimple *stmt, tree ptr,
 	{
 	  gimple *use_stmt = USE_STMT (use_p);
 	  if (use_stmt == stmt || is_gimple_debug (use_stmt))
+	    continue;
+
+	  /* A clobber isn't a use.  */
+	  if (gimple_clobber_p (use_stmt))
 	    continue;
 
 	  if (realloc_lhs)
@@ -4220,27 +4240,56 @@ pass_waccess::check_pointer_uses (gimple *stmt, tree ptr,
 	      tree_code code = gimple_cond_code (cond);
 	      equality = code == EQ_EXPR || code == NE_EXPR;
 	    }
+	  else if (gphi *phi = dyn_cast <gphi *> (use_stmt))
+	    {
+	      /* Only add a PHI result to POINTERS if all its
+		 operands are related to PTR, otherwise continue.  The
+		 PHI result is related once we've reached all arguments
+		 through this iteration.  That also means any invariant
+		 argument will make the PHI not related.  For arguments
+		 flowing over natural loop backedges we are optimistic
+		 (and diagnose the first iteration).  */
+	      tree lhs = gimple_phi_result (phi);
+	      if (!phi_map)
+		phi_map = new hash_map<tree, int>;
+	      bool existed_p;
+	      int &related = phi_map->get_or_insert (lhs, &existed_p);
+	      if (!existed_p)
+		{
+		  related = gimple_phi_num_args (phi) - 1;
+		  for (unsigned j = 0; j < gimple_phi_num_args (phi); ++j)
+		    {
+		      if ((unsigned) phi_arg_index_from_use (use_p) == j)
+			continue;
+		      tree arg = gimple_phi_arg_def (phi, j);
+		      edge e = gimple_phi_arg_edge (phi, j);
+		      basic_block arg_bb;
+		      if (dominated_by_p (CDI_DOMINATORS, e->src, e->dest)
+			  /* Make sure we are not forward visiting a
+			     backedge argument.  */
+			  && (TREE_CODE (arg) != SSA_NAME
+			      || (!SSA_NAME_IS_DEFAULT_DEF (arg)
+				  && ((arg_bb
+					 = gimple_bb (SSA_NAME_DEF_STMT (arg)))
+				      != e->dest)
+				  && !dominated_by_p (CDI_DOMINATORS,
+						      e->dest, arg_bb))))
+			related--;
+		    }
+		}
+	      else
+		related--;
+
+	      if (related == 0)
+		pointers.safe_push (lhs);
+	      continue;
+	    }
 
 	  /* Warn if USE_STMT is dominated by the deallocation STMT.
 	     Otherwise, add the pointer to POINTERS so that the uses
 	     of any other pointers derived from it can be checked.  */
 	  if (use_after_inval_p (stmt, use_stmt, check_dangling))
 	    {
-	      if (gimple_code (use_stmt) == GIMPLE_PHI)
-		{
-		  /* Only add a PHI result to POINTERS if all its
-		     operands are related to PTR, otherwise continue.  */
-		  tree lhs = gimple_phi_result (use_stmt);
-		  if (!pointers_related_p (stmt, lhs, ptr, m_ptr_qry))
-		    continue;
-
-		  if (TREE_CODE (lhs) == SSA_NAME)
-		    {
-		      pointers.safe_push (lhs);
-		      continue;
-		    }
-		}
-
 	      basic_block use_bb = gimple_bb (use_stmt);
 	      bool this_maybe
 		= (maybe
@@ -4272,6 +4321,9 @@ pass_waccess::check_pointer_uses (gimple *stmt, tree ptr,
 	    }
 	}
     }
+
+  if (phi_map)
+    delete phi_map;
 }
 
 /* Check call STMT for invalid accesses.  */
@@ -4279,27 +4331,30 @@ pass_waccess::check_pointer_uses (gimple *stmt, tree ptr,
 void
 pass_waccess::check_call (gcall *stmt)
 {
-  if (gimple_call_builtin_p (stmt, BUILT_IN_NORMAL))
-    check_builtin (stmt);
+  /* Skip special calls generated by the compiler.  */
+  if (gimple_call_from_thunk_p (stmt))
+    return;
 
   /* .ASAN_MARK doesn't access any vars, only modifies shadow memory.  */
   if (gimple_call_internal_p (stmt)
       && gimple_call_internal_fn (stmt) == IFN_ASAN_MARK)
     return;
 
-  if (!m_early_checks_p)
-    if (tree callee = gimple_call_fndecl (stmt))
-      {
-	/* Check for uses of the pointer passed to either a standard
-	   or a user-defined deallocation function.  */
-	unsigned argno = fndecl_dealloc_argno (callee);
-	if (argno < (unsigned) call_nargs (stmt))
-	  {
-	    tree arg = call_arg (stmt, argno);
-	    if (TREE_CODE (arg) == SSA_NAME)
-	      check_pointer_uses (stmt, arg);
-	  }
-      }
+  if (gimple_call_builtin_p (stmt, BUILT_IN_NORMAL))
+    check_builtin (stmt);
+
+  if (tree callee = gimple_call_fndecl (stmt))
+    {
+      /* Check for uses of the pointer passed to either a standard
+	 or a user-defined deallocation function.  */
+      unsigned argno = fndecl_dealloc_argno (callee);
+      if (argno < (unsigned) call_nargs (stmt))
+	{
+	  tree arg = call_arg (stmt, argno);
+	  if (TREE_CODE (arg) == SSA_NAME)
+	    check_pointer_uses (stmt, arg);
+	}
+    }
 
   check_call_access (stmt);
   check_call_dangling (stmt);
@@ -4317,7 +4372,7 @@ void
 pass_waccess::check_stmt (gimple *stmt)
 {
   if (m_check_dangling_p
-      && gimple_clobber_p (stmt, CLOBBER_EOL))
+      && gimple_clobber_p (stmt, CLOBBER_STORAGE_END))
     {
       /* Ignore clobber statements in blocks with exceptional edges.  */
       basic_block bb = gimple_bb (stmt);
@@ -4468,17 +4523,13 @@ pass_waccess::check_dangling_uses (tree var, tree decl, bool maybe /* = false */
 
 /* Diagnose stores in BB and (recursively) its predecessors of the addresses
    of local variables into nonlocal pointers that are left dangling after
-   the function returns.  BBS is a bitmap of basic blocks visited.  */
+   the function returns.  Returns true when we can continue walking
+   the CFG to predecessors.  */
 
-void
+bool
 pass_waccess::check_dangling_stores (basic_block bb,
-				     hash_set<tree> &stores,
-				     auto_bitmap &bbs)
+				     hash_set<tree> &stores)
 {
-  if (!bitmap_set_bit (bbs, bb->index))
-    /* Avoid cycles. */
-    return;
-
   /* Iterate backwards over the statements looking for a store of
      the address of a local variable into a nonlocal pointer.  */
   for (auto gsi = gsi_last_nondebug_bb (bb); ; gsi_prev_nondebug (&gsi))
@@ -4494,9 +4545,10 @@ pass_waccess::check_dangling_stores (basic_block bb,
 	  && !(gimple_call_flags (stmt) & (ECF_CONST | ECF_PURE)))
 	/* Avoid looking before nonconst, nonpure calls since those might
 	   use the escaped locals.  */
-	return;
+	return false;
 
-      if (!is_gimple_assign (stmt) || gimple_clobber_p (stmt))
+      if (!is_gimple_assign (stmt) || gimple_clobber_p (stmt)
+	  || !gimple_store_p (stmt))
 	continue;
 
       access_ref lhs_ref;
@@ -4504,39 +4556,34 @@ pass_waccess::check_dangling_stores (basic_block bb,
       if (!m_ptr_qry.get_ref (lhs, stmt, &lhs_ref, 0))
 	continue;
 
-      if (auto_var_p (lhs_ref.ref))
-	continue;
-
-      if (DECL_P (lhs_ref.ref))
+      if (TREE_CODE (lhs_ref.ref) == MEM_REF)
 	{
-	  if (!POINTER_TYPE_P (TREE_TYPE (lhs_ref.ref))
-	      || lhs_ref.deref > 0)
-	    continue;
+	  lhs_ref.ref = TREE_OPERAND (lhs_ref.ref, 0);
+	  ++lhs_ref.deref;
 	}
-      else if (TREE_CODE (lhs_ref.ref) == SSA_NAME)
+      if (TREE_CODE (lhs_ref.ref) == ADDR_EXPR)
+	{
+	  lhs_ref.ref = TREE_OPERAND (lhs_ref.ref, 0);
+	  --lhs_ref.deref;
+	}
+      if (TREE_CODE (lhs_ref.ref) == SSA_NAME)
 	{
 	  gimple *def_stmt = SSA_NAME_DEF_STMT (lhs_ref.ref);
 	  if (!gimple_nop_p (def_stmt))
 	    /* Avoid looking at or before stores into unknown objects.  */
-	    return;
+	    return false;
 
-	  tree var = SSA_NAME_VAR (lhs_ref.ref);
-	  if (TREE_CODE (var) == PARM_DECL && DECL_BY_REFERENCE (var))
-	    /* Avoid by-value arguments transformed into by-reference.  */
-	    continue;
+	  lhs_ref.ref = SSA_NAME_VAR (lhs_ref.ref);
+	}
 
-	}
-      else if (TREE_CODE (lhs_ref.ref) == MEM_REF)
-	{
-	  tree arg = TREE_OPERAND (lhs_ref.ref, 0);
-	  if (TREE_CODE (arg) == SSA_NAME)
-	    {
-	      gimple *def_stmt = SSA_NAME_DEF_STMT (arg);
-	      if (!gimple_nop_p (def_stmt))
-		return;
-	    }
-	}
+      if (TREE_CODE (lhs_ref.ref) == PARM_DECL
+	  && (lhs_ref.deref - DECL_BY_REFERENCE (lhs_ref.ref)) > 0)
+	/* Assignment through a (real) pointer/reference parameter.  */;
+      else if (VAR_P (lhs_ref.ref)
+	       && !auto_var_p (lhs_ref.ref))
+	/* Assignment to/through a non-local variable.  */;
       else
+	/* Something else, don't warn.  */
 	continue;
 
       if (stores.add (lhs_ref.ref))
@@ -4552,6 +4599,7 @@ pass_waccess::check_dangling_stores (basic_block bb,
       if (!auto_var_p (rhs_ref.ref))
 	continue;
 
+      auto_diagnostic_group d;
       location_t loc = gimple_location (stmt);
       if (warning_at (loc, OPT_Wdangling_pointer_,
 		      "storing the address of local variable %qD in %qE",
@@ -4562,23 +4610,12 @@ pass_waccess::check_dangling_stores (basic_block bb,
 	  location_t loc = DECL_SOURCE_LOCATION (rhs_ref.ref);
 	  inform (loc, "%qD declared here", rhs_ref.ref);
 
-	  if (DECL_P (lhs_ref.ref))
-	    loc = DECL_SOURCE_LOCATION (lhs_ref.ref);
-	  else if (EXPR_HAS_LOCATION (lhs_ref.ref))
-	    loc = EXPR_LOCATION (lhs_ref.ref);
-
-	  if (loc != UNKNOWN_LOCATION)
-	    inform (loc, "%qE declared here", lhs_ref.ref);
+	  loc = DECL_SOURCE_LOCATION (lhs_ref.ref);
+	  inform (loc, "%qD declared here", lhs_ref.ref);
 	}
     }
 
-  edge e;
-  edge_iterator ei;
-  FOR_EACH_EDGE (e, ei, bb->preds)
-    {
-      basic_block pred = e->src;
-      check_dangling_stores (pred, stores, bbs);
-    }
+  return true;
 }
 
 /* Diagnose stores of the addresses of local variables into nonlocal
@@ -4587,9 +4624,32 @@ pass_waccess::check_dangling_stores (basic_block bb,
 void
 pass_waccess::check_dangling_stores ()
 {
+  if (EDGE_COUNT (EXIT_BLOCK_PTR_FOR_FN (m_func)->preds) == 0)
+    return;
+
   auto_bitmap bbs;
   hash_set<tree> stores;
-  check_dangling_stores (EXIT_BLOCK_PTR_FOR_FN (m_func), stores, bbs);
+  auto_vec<edge_iterator, 8> worklist (n_basic_blocks_for_fn (cfun) + 1);
+  worklist.quick_push (ei_start (EXIT_BLOCK_PTR_FOR_FN (m_func)->preds));
+  do
+    {
+      edge_iterator ei = worklist.last ();
+      basic_block src = ei_edge (ei)->src;
+      if (bitmap_set_bit (bbs, src->index))
+	{
+	  if (check_dangling_stores (src, stores)
+	      && EDGE_COUNT (src->preds) > 0)
+	    worklist.quick_push (ei_start (src->preds));
+	}
+      else
+	{
+	  if (ei_one_before_end_p (ei))
+	    worklist.pop ();
+	  else
+	    ei_next (&worklist.last ());
+	}
+    }
+  while (!worklist.is_empty ());
 }
 
 /* Check for and diagnose uses of dangling pointers to auto objects

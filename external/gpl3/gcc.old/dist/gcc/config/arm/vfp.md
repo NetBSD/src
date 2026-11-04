@@ -1,5 +1,5 @@
 ;; ARM VFP instruction patterns
-;; Copyright (C) 2003-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2022 Free Software Foundation, Inc.
 ;; Written by CodeSourcery.
 ;;
 ;; This file is part of GCC.
@@ -73,20 +73,25 @@
 
 (define_insn "*thumb2_movhi_vfp"
  [(set
-   (match_operand:HI 0 "nonimmediate_operand"
+   (match_operand:MVE_7_HI 0 "nonimmediate_operand"
     "=rk, r, l, r, m, r, *t, r, *t, Up, r")
-   (match_operand:HI 1 "general_operand"
-    "rk, I, Py, n, r, m, r, *t, *t, r, Up"))]
+   (match_operand:MVE_7_HI 1 "general_operand"
+    "rk, IDB, Py, n, r, m, r, *t, *t, r, Up"))]
  "TARGET_THUMB2 && TARGET_VFP_BASE
   && !TARGET_VFP_FP16INST
-  && (register_operand (operands[0], HImode)
-       || register_operand (operands[1], HImode))"
+  && (register_operand (operands[0], <MODE>mode)
+       || register_operand (operands[1], <MODE>mode))"
 {
   switch (which_alternative)
     {
     case 0:
-    case 1:
     case 2:
+      return "mov%?\t%0, %1\t%@ movhi";
+    case 1:
+      if (GET_MODE_CLASS (GET_MODE (operands[1])) == MODE_VECTOR_BOOL)
+        operands[1] = mve_bool_vec_to_const (operands[1]);
+      else
+        operands[1] = gen_lowpart (HImode, operands[1]);
       return "mov%?\t%0, %1\t%@ movhi";
     case 3:
       return "movw%?\t%0, %L1\t%@ movhi";
@@ -100,9 +105,9 @@
     case 8:
       return "vmov%?.f32\t%0, %1\t%@ int";
     case 9:
-      return "vmsr%?\t P0, %1\t@ movhi";
+      return "vmsr%?\tp0, %1\t@ movhi";
     case 10:
-      return "vmrs%?\t %0, P0\t@ movhi";
+      return "vmrs%?\t%0, p0\t@ movhi";
     default:
       gcc_unreachable ();
     }
@@ -173,19 +178,24 @@
 
 (define_insn "*thumb2_movhi_fp16"
  [(set
-   (match_operand:HI 0 "nonimmediate_operand"
+   (match_operand:MVE_7_HI 0 "nonimmediate_operand"
     "=rk, r, l, r, m, r, *t, r, *t, Up, r")
-   (match_operand:HI 1 "general_operand"
-    "rk, I, Py, n, r, m, r, *t, *t, r, Up"))]
+   (match_operand:MVE_7_HI 1 "general_operand"
+    "rk, IDB, Py, n, r, m, r, *t, *t, r, Up"))]
  "TARGET_THUMB2 && (TARGET_VFP_FP16INST || TARGET_HAVE_MVE)
-  && (register_operand (operands[0], HImode)
-       || register_operand (operands[1], HImode))"
+  && (register_operand (operands[0], <MODE>mode)
+       || register_operand (operands[1], <MODE>mode))"
 {
   switch (which_alternative)
     {
     case 0:
-    case 1:
     case 2:
+      return "mov%?\t%0, %1\t%@ movhi";
+    case 1:
+      if (GET_MODE_CLASS (GET_MODE (operands[1])) == MODE_VECTOR_BOOL)
+        operands[1] = mve_bool_vec_to_const (operands[1]);
+      else
+        operands[1] = gen_lowpart (HImode, operands[1]);
       return "mov%?\t%0, %1\t%@ movhi";
     case 3:
       return "movw%?\t%0, %L1\t%@ movhi";
@@ -199,9 +209,9 @@
     case 8:
       return "vmov%?.f32\t%0, %1\t%@ int";
     case 9:
-      return "vmsr%?\t P0, %1\t%@ movhi";
+      return "vmsr%?\tp0, %1\t%@ movhi";
     case 10:
-      return "vmrs%?\t%0, P0\t%@ movhi";
+      return "vmrs%?\t%0, p0\t%@ movhi";
     default:
       gcc_unreachable ();
     }
@@ -224,7 +234,7 @@
 ;; problems because small constants get converted into adds.
 (define_insn "*arm_movsi_vfp"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=rk,r,r,r,rk,m ,*t,r,*t,*t, *Uv")
-      (match_operand:SI 1 "general_operand"	   "rk, I,K,j,mi,rk,r,*t,*t,*Uvi,*t"))]
+      (match_operand:SI 1 "general_operand"	   "rk, I,K,j,mi,rk,r,t,*t,*Uvi,*t"))]
   "TARGET_ARM && TARGET_HARD_FLOAT
    && (   s_register_operand (operands[0], SImode)
        || s_register_operand (operands[1], SImode))"
@@ -302,9 +312,9 @@
     case 12: case 13:
       return output_move_vfp (operands);
     case 14:
-      return \"vmsr\\t P0, %1\";
+      return \"vmsr\\tp0, %1\";
     case 15:
-      return \"vmrs\\t %0, P0\";
+      return \"vmrs\\t%0, p0\";
     case 16:
       return \"mcr\\tp10, 7, %1, cr1, cr0, 0\\t @SET_FPSCR\";
     case 17:
@@ -2128,13 +2138,13 @@
 (define_insn_and_split "no_literal_pool_df_immediate"
   [(set (match_operand:DF 0 "s_register_operand" "=w")
 	(match_operand:DF 1 "const_double_operand" "F"))
-   (clobber (match_operand:DF 2 "s_register_operand" "=r"))]
+   (clobber (match_operand:DI 2 "s_register_operand" "=r"))]
   "arm_disable_literal_pool
    && TARGET_VFP_BASE
    && !arm_const_double_rtx (operands[1])
    && !(TARGET_VFP_DOUBLE && vfp3_const_double_rtx (operands[1]))"
   "#"
-  ""
+  "&& 1"
   [(const_int 0)]
 {
   long buf[2];
@@ -2143,8 +2153,9 @@
   unsigned HOST_WIDE_INT ival = zext_hwi (buf[order], 32);
   ival |= (zext_hwi (buf[1 - order], 32) << 32);
   rtx cst = gen_int_mode (ival, DImode);
-  emit_move_insn (simplify_gen_subreg (DImode, operands[2], DFmode, 0), cst);
-  emit_move_insn (operands[0], operands[2]);
+  emit_move_insn (operands[2], cst);
+  emit_move_insn (operands[0],
+		  simplify_gen_subreg (DFmode, operands[2], DImode, 0));
   DONE;
 }
 )
@@ -2159,7 +2170,7 @@
    && TARGET_VFP_BASE
    && !vfp3_const_double_rtx (operands[1])"
   "#"
-  ""
+  "&& 1"
   [(const_int 0)]
 {
   long buf;

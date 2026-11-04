@@ -1,5 +1,5 @@
 /* Loop invariant motion.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -48,6 +48,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-dfa.h"
 #include "tree-ssa.h"
 #include "dbgcnt.h"
+#include "insn-codes.h"
+#include "optabs-tree.h"
 
 /* TODO:  Support for predicated code motion.  I.e.
 
@@ -400,6 +402,24 @@ movement_possibility_1 (gimple *stmt)
       || gimple_could_trap_p (stmt))
     return MOVE_PRESERVE_EXECUTION;
 
+  if (is_gimple_assign (stmt))
+    {
+      auto code = gimple_assign_rhs_code (stmt);
+      tree type = TREE_TYPE (gimple_assign_rhs1 (stmt));
+      /* For shifts and rotates and possibly out-of-bound shift operands
+	 we currently cannot rewrite them into something unconditionally
+	 well-defined.  */
+      if ((code == LSHIFT_EXPR
+	   || code == RSHIFT_EXPR
+	   || code == LROTATE_EXPR
+	   || code == RROTATE_EXPR)
+	  && (TREE_CODE (gimple_assign_rhs2 (stmt)) != INTEGER_CST
+	      /* We cannot use ranges at 'stmt' here.  */
+	      || wi::ltu_p (wi::to_wide (gimple_assign_rhs2 (stmt)),
+			    element_precision (type))))
+	ret = MOVE_PRESERVE_EXECUTION;
+    }
+
   /* Non local loads in a transaction cannot be hoisted out.  Well,
      unless the load happens on every path out of the loop, but we
      don't take this into account yet.  */
@@ -617,7 +637,8 @@ stmt_cost (gimple *stmt)
   if (gimple_code (stmt) != GIMPLE_ASSIGN)
     return 1;
 
-  switch (gimple_assign_rhs_code (stmt))
+  enum tree_code code = gimple_assign_rhs_code (stmt);
+  switch (code)
     {
     case MULT_EXPR:
     case WIDEN_MULT_EXPR:
@@ -645,6 +666,11 @@ stmt_cost (gimple *stmt)
       /* Shifts and rotates are usually expensive.  */
       return LIM_EXPENSIVE;
 
+    case COND_EXPR:
+    case VEC_COND_EXPR:
+      /* Conditionals are expensive.  */
+      return LIM_EXPENSIVE;
+
     case CONSTRUCTOR:
       /* Make vector construction cost proportional to the number
          of elements.  */
@@ -658,6 +684,9 @@ stmt_cost (gimple *stmt)
       return 0;
 
     default:
+      /* Comparisons are usually expensive.  */
+      if (TREE_CODE_CLASS (code) == tcc_comparison)
+	return LIM_EXPENSIVE;
       return 1;
     }
 }
@@ -825,6 +854,17 @@ determine_max_movement (gimple *stmt, bool must_preserve_exec)
 	  if (!extract_true_false_args_from_phi (dom, phi, NULL, NULL))
 	    return false;
 
+	/* Check if one of the depedent statement is a vector compare whether
+	   the target supports it,  otherwise it's invalid to hoist it out of
+	   the gcond it belonged to.  */
+	if (VECTOR_TYPE_P (TREE_TYPE (gimple_cond_lhs (cond))))
+	  {
+	    tree type = TREE_TYPE (gimple_cond_lhs (cond));
+	    auto code = gimple_cond_code (cond);
+	    if (!target_supports_op_p (type, code, optab_vector))
+	      return false;
+	  }
+
 	  /* Fold in dependencies and cost of the condition.  */
 	  FOR_EACH_SSA_TREE_OPERAND (val, cond, iter, SSA_OP_USE)
 	    {
@@ -853,10 +893,15 @@ determine_max_movement (gimple *stmt, bool must_preserve_exec)
 
       return true;
     }
-  else
-    FOR_EACH_SSA_TREE_OPERAND (val, stmt, iter, SSA_OP_USE)
-      if (!add_dependency (val, lim_data, loop, true))
-	return false;
+
+  /* A stmt that receives abnormal edges cannot be hoisted.  */
+  if (is_a <gcall *> (stmt)
+      && (gimple_call_flags (stmt) & ECF_RETURNS_TWICE))
+    return false;
+
+  FOR_EACH_SSA_TREE_OPERAND (val, stmt, iter, SSA_OP_USE)
+    if (!add_dependency (val, lim_data, loop, true))
+      return false;
 
   if (gimple_vuse (stmt))
     {
@@ -1259,8 +1304,11 @@ move_computations_worker (basic_block bb)
 	     edges of COND.  */
 	  extract_true_false_args_from_phi (dom, stmt, &arg0, &arg1);
 	  gcc_assert (arg0 && arg1);
-	  t = build2 (gimple_cond_code (cond), boolean_type_node,
-		      gimple_cond_lhs (cond), gimple_cond_rhs (cond));
+	  t = make_ssa_name (boolean_type_node);
+	  new_stmt = gimple_build_assign (t, gimple_cond_code (cond),
+					  gimple_cond_lhs (cond),
+					  gimple_cond_rhs (cond));
+	  gsi_insert_on_edge (loop_preheader_edge (level), new_stmt);
 	  new_stmt = gimple_build_assign (gimple_phi_result (stmt),
 					  COND_EXPR, t, arg0, arg1);
 	  todo |= TODO_cleanup_cfg;
@@ -2052,7 +2100,8 @@ execute_sm_if_changed (edge ex, tree mem, tree tmp_var, tree flag,
        nbbs++;
     }
 
-  profile_probability cap = profile_probability::always ().apply_scale (2, 3);
+  profile_probability cap
+	  = profile_probability::guessed_always ().apply_scale (2, 3);
 
   if (flag_probability.initialized_p ())
     ;
@@ -2096,6 +2145,8 @@ execute_sm_if_changed (edge ex, tree mem, tree tmp_var, tree flag,
 
   old_dest = ex->dest;
   new_bb = split_edge (ex);
+  if (append_cond_position)
+    new_bb->count += last_cond_fallthru->count ();
   then_bb = create_empty_bb (new_bb);
   then_bb->count = new_bb->count.apply_probability (flag_probability);
   if (irr)
@@ -2304,7 +2355,7 @@ execute_sm (class loop *loop, im_mem_ref *ref,
 enum sm_kind { sm_ord, sm_unord, sm_other };
 struct seq_entry
 {
-  seq_entry () {}
+  seq_entry () = default;
   seq_entry (unsigned f, sm_kind k, tree fr = NULL)
     : first (f), second (k), from (fr) {}
   unsigned first;
@@ -3172,7 +3223,8 @@ can_sm_ref_p (class loop *loop, im_mem_ref *ref)
      explicitly.  */
   base = get_base_address (ref->mem.ref);
   if ((tree_could_trap_p (ref->mem.ref)
-       || (DECL_P (base) && TREE_READONLY (base)))
+       || (DECL_P (base) && TREE_READONLY (base))
+       || TREE_CODE (base) == STRING_CST)
       /* ???  We can at least use false here, allowing loads?  We
 	 are forcing conditional stores if the ref is not always
 	 stored to later anyway.  So this would only guard
@@ -3293,94 +3345,96 @@ fill_always_executed_in_1 (class loop *loop, sbitmap contains_call)
   edge e;
   class loop *inn_loop = loop;
 
-  if (ALWAYS_EXECUTED_IN (loop->header) == NULL)
+  for (class loop *inner = loop->inner; inner; inner = inner->next)
+    fill_always_executed_in_1 (inner, contains_call);
+
+  auto_vec<basic_block, 64> worklist;
+  worklist.reserve_exact (loop->num_nodes);
+  worklist.quick_push (loop->header);
+  do
     {
-      auto_vec<basic_block, 64> worklist;
-      worklist.reserve_exact (loop->num_nodes);
-      worklist.quick_push (loop->header);
-      do
+      edge_iterator ei;
+      bb = worklist.pop ();
+
+      if (!flow_bb_inside_loop_p (inn_loop, bb))
 	{
-	  edge_iterator ei;
-	  bb = worklist.pop ();
-
-	  if (!flow_bb_inside_loop_p (inn_loop, bb))
-	    {
-	      /* When we are leaving a possibly infinite inner loop
-		 we have to stop processing.  */
-	      if (!finite_loop_p (inn_loop))
-		break;
-	      /* If the loop was finite we can continue with processing
-		 the loop we exited to.  */
-	      inn_loop = bb->loop_father;
-	    }
-
-	  if (dominated_by_p (CDI_DOMINATORS, loop->latch, bb))
-	    last = bb;
-
-	  if (bitmap_bit_p (contains_call, bb->index))
+	  /* When we are leaving a possibly infinite inner loop
+	     we have to stop processing.  */
+	  if (!finite_loop_p (inn_loop))
 	    break;
-
-	  /* If LOOP exits from this BB stop processing.  */
-	  FOR_EACH_EDGE (e, ei, bb->succs)
-	    if (!flow_bb_inside_loop_p (loop, e->dest))
-	      break;
-	  if (e)
-	    break;
-
-	  /* A loop might be infinite (TODO use simple loop analysis
-	     to disprove this if possible).  */
-	  if (bb->flags & BB_IRREDUCIBLE_LOOP)
-	    break;
-
-	  if (bb->loop_father->header == bb)
-	    /* Record that we enter into a subloop since it might not
-	       be finite.  */
-	    /* ???  Entering into a not always executed subloop makes
-	       fill_always_executed_in quadratic in loop depth since
-	       we walk those loops N times.  This is not a problem
-	       in practice though, see PR102253 for a worst-case testcase.  */
-	    inn_loop = bb->loop_father;
-
-	  /* Walk the body of LOOP sorted by dominance relation.  Additionally,
-	     if a basic block S dominates the latch, then only blocks dominated
-	     by S are after it.
-	     This is get_loop_body_in_dom_order using a worklist algorithm and
-	     stopping once we are no longer interested in visiting further
-	     blocks.  */
-	  unsigned old_len = worklist.length ();
-	  unsigned postpone = 0;
-	  for (basic_block son = first_dom_son (CDI_DOMINATORS, bb);
-	       son;
-	       son = next_dom_son (CDI_DOMINATORS, son))
-	    {
-	      if (!flow_bb_inside_loop_p (loop, son))
-		continue;
-	      if (dominated_by_p (CDI_DOMINATORS, loop->latch, son))
-		postpone = worklist.length ();
-	      worklist.quick_push (son);
-	    }
-	  if (postpone)
-	    /* Postponing the block that dominates the latch means
-	       processing it last and thus putting it earliest in the
-	       worklist.  */
-	    std::swap (worklist[old_len], worklist[postpone]);
+	  /* If the loop was finite we can continue with processing
+	     the loop we exited to.  */
+	  inn_loop = bb->loop_father;
 	}
-      while (!worklist.is_empty ());
 
-      while (1)
+      if (dominated_by_p (CDI_DOMINATORS, loop->latch, bb))
+	last = bb;
+
+      if (bitmap_bit_p (contains_call, bb->index))
+	break;
+
+      /* If LOOP exits from this BB stop processing.  */
+      FOR_EACH_EDGE (e, ei, bb->succs)
+	if (!flow_bb_inside_loop_p (loop, e->dest))
+	  break;
+      if (e)
+	break;
+
+      /* A loop might be infinite (TODO use simple loop analysis
+	 to disprove this if possible).  */
+      if (bb->flags & BB_IRREDUCIBLE_LOOP)
+	break;
+
+      if (bb->loop_father->header == bb)
+	/* Record that we enter into a subloop since it might not
+	   be finite.  */
+	/* ???  Entering into a not always executed subloop makes
+	   fill_always_executed_in quadratic in loop depth since
+	   we walk those loops N times.  This is not a problem
+	   in practice though, see PR102253 for a worst-case testcase.  */
+	inn_loop = bb->loop_father;
+
+      /* Walk the body of LOOP sorted by dominance relation.  Additionally,
+	 if a basic block S dominates the latch, then only blocks dominated
+	 by S are after it.
+	 This is get_loop_body_in_dom_order using a worklist algorithm and
+	 stopping once we are no longer interested in visiting further
+	 blocks.  */
+      unsigned old_len = worklist.length ();
+      unsigned postpone = 0;
+      for (basic_block son = first_dom_son (CDI_DOMINATORS, bb);
+	   son;
+	   son = next_dom_son (CDI_DOMINATORS, son))
+	{
+	  if (!flow_bb_inside_loop_p (loop, son))
+	    continue;
+	  if (dominated_by_p (CDI_DOMINATORS, loop->latch, son))
+	    postpone = worklist.length ();
+	  worklist.quick_push (son);
+	}
+      if (postpone)
+	/* Postponing the block that dominates the latch means
+	   processing it last and thus putting it earliest in the
+	   worklist.  */
+	std::swap (worklist[old_len], worklist[postpone]);
+    }
+  while (!worklist.is_empty ());
+
+  while (1)
+    {
+      if (last->loop_father == loop
+	  || (ALWAYS_EXECUTED_IN (last)
+	      && loop_outer (ALWAYS_EXECUTED_IN (last)) == loop))
 	{
 	  if (dump_enabled_p ())
 	    dump_printf (MSG_NOTE, "BB %d is always executed in loop %d\n",
 			 last->index, loop->num);
 	  SET_ALWAYS_EXECUTED_IN (last, loop);
-	  if (last == loop->header)
-	    break;
-	  last = get_immediate_dominator (CDI_DOMINATORS, last);
 	}
+      if (last == loop->header)
+	break;
+      last = get_immediate_dominator (CDI_DOMINATORS, last);
     }
-
-  for (loop = loop->inner; loop; loop = loop->next)
-    fill_always_executed_in_1 (loop, contains_call);
 }
 
 /* Fills ALWAYS_EXECUTED_IN information for basic blocks, i.e.
@@ -3476,13 +3530,13 @@ tree_ssa_lim_initialize (bool store_motion)
     (mem_ref_alloc (NULL, 0, UNANALYZABLE_MEM_ID));
 
   memory_accesses.refs_loaded_in_loop.create (number_of_loops (cfun));
-  memory_accesses.refs_loaded_in_loop.quick_grow (number_of_loops (cfun));
+  memory_accesses.refs_loaded_in_loop.quick_grow_cleared (number_of_loops (cfun));
   memory_accesses.refs_stored_in_loop.create (number_of_loops (cfun));
-  memory_accesses.refs_stored_in_loop.quick_grow (number_of_loops (cfun));
+  memory_accesses.refs_stored_in_loop.quick_grow_cleared (number_of_loops (cfun));
   if (store_motion)
     {
       memory_accesses.all_refs_stored_in_loop.create (number_of_loops (cfun));
-      memory_accesses.all_refs_stored_in_loop.quick_grow
+      memory_accesses.all_refs_stored_in_loop.quick_grow_cleared
 						      (number_of_loops (cfun));
     }
 
@@ -3629,9 +3683,9 @@ public:
   {}
 
   /* opt_pass methods: */
-  opt_pass * clone () { return new pass_lim (m_ctxt); }
-  virtual bool gate (function *) { return flag_tree_loop_im != 0; }
-  virtual unsigned int execute (function *);
+  opt_pass * clone () final override { return new pass_lim (m_ctxt); }
+  bool gate (function *) final override { return flag_tree_loop_im != 0; }
+  unsigned int execute (function *) final override;
 
 }; // class pass_lim
 

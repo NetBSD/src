@@ -9,6 +9,8 @@ F7_PREFIX = __f7_
 include $(libf7)/libf7-common.mk
 
 LIBF7_DF_CONV +=  floatundidf floatdidf # floatunsidf floatsidf
+LIBF7_DF_CONV +=  fractdfda fractdfta fractdfdq
+LIBF7_DF_CONV +=  fractdfuda fractdfuta fractdfudq
 
 # Wrappers like f7_lt_impl for f7_lt etc. because the latter is inline.
 LIBF7_DF_CMP  += lt le gt ge ne eq unord
@@ -86,7 +88,7 @@ F7_C_FLAGS +=   $(F7_FLAGS) \
 		-fno-tree-loop-optimize \
 		-fno-tree-loop-im -fno-move-loop-invariants
 
-F7_ASM_FLAGS +=	$(F7_FLAGS)
+F7_ASM_FLAGS +=	$(F7_FLAGS) -g0
 
 $(patsubst %, f7_c_%.o, $(CALL_PROLOGUES)) \
 	: F7_C_FLAGS += -mcall-prologues

@@ -1,5 +1,5 @@
 /* Symbol table.
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -896,7 +896,8 @@ symtab_node::dump_base (FILE *f)
   };
 
   fprintf (f, "%s (%s)", dump_asm_name (), name ());
-  dump_addr (f, " @", (void *)this);
+  if (dump_flags & TDF_ADDRESS)
+    dump_addr (f, " @", (void *)this);
   fprintf (f, "\n  Type: %s", symtab_type_names[type]);
 
   if (definition)

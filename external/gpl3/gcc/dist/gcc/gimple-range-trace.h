@@ -1,5 +1,5 @@
-/* Header file for the GIMPLE range tracing/debugging facilties.
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+/* Header file for the GIMPLE range tracing/debugging facilities.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Andrew MacLeod <amacleod@redhat.com>
    and Aldy Hernandez <aldyh@redhat.com>.
 
@@ -32,7 +32,7 @@ public:
   range_tracer (const char *name = "");
   unsigned header (const char *str);
   void trailer (unsigned counter, const char *caller, bool result, tree name,
-		const irange &r);
+		const vrange &r);
   void print (unsigned counter, const char *str);
   inline void enable_trace () { tracing = true; }
   inline void disable_trace () { tracing = false; }

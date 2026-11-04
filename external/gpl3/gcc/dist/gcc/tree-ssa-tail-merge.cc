@@ -1,5 +1,5 @@
 /* Tail merging for gimple.
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
    Contributed by Tom de Vries (tom@codesourcery.com)
 
 This file is part of GCC.
@@ -336,10 +336,13 @@ stmt_local_def (gimple *stmt)
 
   def_bb = gimple_bb (stmt);
 
+  bool any_use = false;
   FOR_EACH_IMM_USE_FAST (use_p, iter, val)
     {
       if (is_gimple_debug (USE_STMT (use_p)))
 	continue;
+
+      any_use = true;
       bb = gimple_bb (USE_STMT (use_p));
       if (bb == def_bb)
 	continue;
@@ -350,6 +353,11 @@ stmt_local_def (gimple *stmt)
 
       return false;
     }
+
+  /* When there is no use avoid making the stmt live on other paths.
+     This can happen with DCE disabled or not done as seen in PR98845.  */
+  if (!any_use)
+    return false;
 
   return true;
 }
@@ -474,6 +482,9 @@ same_succ_hash (const same_succ *e)
        !gsi_end_p (gsi); gsi_next_nondebug (&gsi))
     {
       stmt = gsi_stmt (gsi);
+      if (is_gimple_debug (stmt))
+	continue;
+
       stmt_update_dep_bb (stmt);
       if (stmt_local_def (stmt))
 	continue;
@@ -1605,7 +1616,7 @@ replace_block_by (basic_block bb1, basic_block bb2)
 
 	/* If probabilities are same, we are done.
 	   If counts are nonzero we can distribute accordingly. In remaining
-	   cases just avreage the values and hope for the best.  */
+	   cases just average the values and hope for the best.  */
 	e2->probability = e1->probability.combine_with_count
 	                     (bb1->count, e2->probability, bb2->count);
       }

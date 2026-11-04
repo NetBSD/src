@@ -1,7 +1,7 @@
 /* Configuration common to all targets running the GNU system.  */
 
 /*
-Copyright (C) 1994-2022 Free Software Foundation, Inc.
+Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -19,6 +19,10 @@ You should have received a copy of the GNU General Public License
 along with GCC.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/* C libraries used on GNU/Hurd.  */
+#define OPTION_GLIBC_P(opts)	(DEFAULT_LIBC == LIBC_GLIBC)
+#define OPTION_GLIBC		OPTION_GLIBC_P (&global_options)
+
 #undef GNU_USER_TARGET_OS_CPP_BUILTINS
 #define GNU_USER_TARGET_OS_CPP_BUILTINS()		\
     do {					\
@@ -32,8 +36,18 @@ along with GCC.  If not, see <http://www.gnu.org/licenses/>.
 	builtin_assert ("system=posix");	\
     } while (0)
 
-#define GNU_USER_TARGET_D_OS_VERSIONS()		\
-    do {					\
-	builtin_version ("Hurd");		\
-	builtin_version ("CRuntime_Glibc");	\
-    } while (0)
+
+#ifndef GNU_USER_TARGET_STARTFILE_SPEC
+# warning This file should be included after gnu-user.h, to override its STARTFILE_SPEC
+#endif
+
+#undef	STARTFILE_SPEC
+#if defined HAVE_LD_PIE
+#define STARTFILE_SPEC \
+  "%{!shared: %{pg|p|profile:%{static-pie:grcrt0.o%s;static:gcrt0.o%s;:gcrt1.o%s};static-pie:rcrt0.o%s;static:crt0.o%s;" PIE_SPEC ":Scrt1.o%s;:crt1.o%s}} \
+   crti.o%s %{static:crtbeginT.o%s;shared|static-pie|" PIE_SPEC ":crtbeginS.o%s;:crtbegin.o%s}"
+#else
+#define STARTFILE_SPEC \
+  "%{!shared: %{pg|p|profile:%{static:gcrt0.o%s;:gcrt1.o%s};static:crt0.o%s;:crt1.o%s}} \
+   crti.o%s %{static:crtbeginT.o%s;shared:crtbeginS.o%s;:crtbegin.o%s}"
+#endif

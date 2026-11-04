@@ -1,5 +1,5 @@
 /* "Supergraph" classes that combine CFGs and callgraph into one digraph.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -20,6 +20,13 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef GCC_ANALYZER_SUPERGRAPH_H
 #define GCC_ANALYZER_SUPERGRAPH_H
+
+#include "ordered-hash-map.h"
+#include "cfg.h"
+#include "basic-block.h"
+#include "gimple.h"
+#include "gimple-iterator.h"
+#include "digraph.h"
 
 using namespace ana;
 
@@ -104,14 +111,14 @@ public:
   supergraph (logger *logger);
   ~supergraph ();
 
-  supernode *get_node_for_function_entry (function *fun) const
+  supernode *get_node_for_function_entry (const function &fun) const
   {
-    return get_node_for_block (ENTRY_BLOCK_PTR_FOR_FN (fun));
+    return get_node_for_block (ENTRY_BLOCK_PTR_FOR_FN (&fun));
   }
 
-  supernode *get_node_for_function_exit (function *fun) const
+  supernode *get_node_for_function_exit (const function &fun) const
   {
-    return get_node_for_block (EXIT_BLOCK_PTR_FOR_FN (fun));
+    return get_node_for_block (EXIT_BLOCK_PTR_FOR_FN (&fun));
   }
 
   supernode *get_node_for_block (basic_block bb) const
@@ -245,7 +252,7 @@ class supernode : public dnode<supergraph_traits>
     return m_bb == EXIT_BLOCK_PTR_FOR_FN (m_fun);
   }
 
-  void dump_dot (graphviz_out *gv, const dump_args_t &args) const OVERRIDE;
+  void dump_dot (graphviz_out *gv, const dump_args_t &args) const override;
   void dump_dot_id (pretty_printer *pp) const;
 
   json::object *to_json () const;
@@ -290,6 +297,8 @@ class supernode : public dnode<supergraph_traits>
 
   unsigned int get_stmt_index (const gimple *stmt) const;
 
+  tree get_label () const;
+
   function * const m_fun; // alternatively could be stored as runs of indices within the supergraph
   const basic_block m_bb;
   gcall * const m_returning_call; // for handling the result of a returned call
@@ -308,7 +317,8 @@ class superedge : public dedge<supergraph_traits>
 
   void dump (pretty_printer *pp) const;
   void dump () const;
-  void dump_dot (graphviz_out *gv, const dump_args_t &args) const;
+  void dump_dot (graphviz_out *gv, const dump_args_t &args)
+    const final override;
 
   virtual void dump_label_to_pp (pretty_printer *pp,
 				 bool user_facing) const = 0;
@@ -330,7 +340,7 @@ class superedge : public dedge<supergraph_traits>
   ::edge get_any_cfg_edge () const;
   cgraph_edge *get_any_callgraph_edge () const;
 
-  char *get_description (bool user_facing) const;
+  label_text get_description (bool user_facing) const;
 
  protected:
   superedge (supernode *src, supernode *dest, enum edge_kind kind)
@@ -389,14 +399,14 @@ class callgraph_superedge : public superedge
   {}
 
   void dump_label_to_pp (pretty_printer *pp, bool user_facing) const
-    FINAL OVERRIDE;
+    final override;
 
-  callgraph_superedge *dyn_cast_callgraph_superedge () FINAL OVERRIDE
+  callgraph_superedge *dyn_cast_callgraph_superedge () final override
   {
     return this;
   }
   const callgraph_superedge *dyn_cast_callgraph_superedge () const
-    FINAL OVERRIDE
+    final override
   {
     return this;
   }
@@ -439,11 +449,11 @@ class call_superedge : public callgraph_superedge
   : callgraph_superedge (src, dst, SUPEREDGE_CALL, cedge)
   {}
 
-  call_superedge *dyn_cast_call_superedge () FINAL OVERRIDE
+  call_superedge *dyn_cast_call_superedge () final override
   {
     return this;
   }
-  const call_superedge *dyn_cast_call_superedge () const FINAL OVERRIDE
+  const call_superedge *dyn_cast_call_superedge () const final override
   {
     return this;
   }
@@ -475,8 +485,8 @@ class return_superedge : public callgraph_superedge
   : callgraph_superedge (src, dst, SUPEREDGE_RETURN, cedge)
   {}
 
-  return_superedge *dyn_cast_return_superedge () FINAL OVERRIDE { return this; }
-  const return_superedge *dyn_cast_return_superedge () const FINAL OVERRIDE
+  return_superedge *dyn_cast_return_superedge () final override { return this; }
+  const return_superedge *dyn_cast_return_superedge () const final override
   {
     return this;
   }
@@ -509,9 +519,9 @@ class cfg_superedge : public superedge
     m_cfg_edge (e)
   {}
 
-  void dump_label_to_pp (pretty_printer *pp, bool user_facing) const OVERRIDE;
-  cfg_superedge *dyn_cast_cfg_superedge () FINAL OVERRIDE { return this; }
-  const cfg_superedge *dyn_cast_cfg_superedge () const FINAL OVERRIDE { return this; }
+  void dump_label_to_pp (pretty_printer *pp, bool user_facing) const override;
+  cfg_superedge *dyn_cast_cfg_superedge () final override { return this; }
+  const cfg_superedge *dyn_cast_cfg_superedge () const final override { return this; }
 
   ::edge get_cfg_edge () const { return m_cfg_edge; }
   int get_flags () const { return m_cfg_edge->flags; }
@@ -521,6 +531,8 @@ class cfg_superedge : public superedge
 
   size_t get_phi_arg_idx () const;
   tree get_phi_arg (const gphi *phi) const;
+
+  location_t get_goto_locus () const { return m_cfg_edge->goto_locus; }
 
  private:
   const ::edge m_cfg_edge;
@@ -547,13 +559,13 @@ class switch_cfg_superedge : public cfg_superedge {
   switch_cfg_superedge (supernode *src, supernode *dst, ::edge e);
 
   const switch_cfg_superedge *dyn_cast_switch_cfg_superedge () const
-    FINAL OVERRIDE
+    final override
   {
     return this;
   }
 
   void dump_label_to_pp (pretty_printer *pp, bool user_facing) const
-    FINAL OVERRIDE;
+    final override;
 
   gswitch *get_switch_stmt () const
   {
@@ -561,6 +573,8 @@ class switch_cfg_superedge : public cfg_superedge {
   }
 
   const vec<tree> &get_case_labels () const { return m_case_labels; }
+
+  bool implicitly_created_default_p () const;
 
 private:
   auto_vec<tree> m_case_labels;
@@ -604,7 +618,8 @@ class dot_annotator
   }
 };
 
-extern cgraph_edge *supergraph_call_edge (function *fun, gimple *stmt);
+extern cgraph_edge *supergraph_call_edge (function *fun, const gimple *stmt);
+extern function *get_ultimate_function_for_cgraph_edge (cgraph_edge *edge);
 
 } // namespace ana
 

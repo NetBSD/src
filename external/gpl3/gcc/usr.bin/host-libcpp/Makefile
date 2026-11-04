@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2025/08/02 05:26:14 perseant Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2026/11/04 22:53:25 perseant Exp $
+
+# Build a host-libcpp for genmatch.
 
 BUILD_ENV= \
 		AR=${HOST_AR:Q} \
@@ -22,13 +24,16 @@ BUILD_ENV= \
 # libcpp needs a C++11 compiler
 HOST_CXXFLAGS+= -std=c++11
 
+# Don't need NLS to build genmatch.
+CONFIGURE_ARGS=	-v am_cv_func_iconv=no --disable-nls
+
 GMAKE_J_ARGS?=	${MAKEFLAGS:[*]:M*-j*:C/(^|.* )(-j ?[0-9][0-9]*).*/\2/W}
 BUILD_COMMAND=	/usr/bin/env -i ${BUILD_ENV} ${TOOL_GMAKE} ${GMAKE_J_ARGS} -e
 
 libcpp/libcpp.a:
 	[ ! -d libcpp ] && mkdir libcpp || true
 	(cd libcpp && ${BUILD_ENV} \
-		${HOST_SH} ${DIST}/libcpp/configure -v am_cv_func_iconv=no \
+		${HOST_SH} ${DIST}/libcpp/configure ${CONFIGURE_ARGS} \
 		&& ${BUILD_COMMAND})
 
 cleandir:

@@ -1,5 +1,5 @@
 /* Definitions for GCC.  Part of the machine description for CRIS.
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Axis Communications.  Written by Hans-Peter Nilsson.
 
 This file is part of GCC.
@@ -551,8 +551,7 @@ enum reg_class
 #define CRIS_STACKADJ_REG CRIS_STRUCT_VALUE_REGNUM
 #define EH_RETURN_STACKADJ_RTX gen_rtx_REG (SImode, CRIS_STACKADJ_REG)
 
-#define EH_RETURN_HANDLER_RTX \
-  cris_return_addr_rtx (0, NULL)
+#define EH_RETURN_HANDLER_RTX cris_eh_return_handler_rtx ()
 
 #define INIT_EXPANDERS cris_init_expanders ()
 
@@ -570,7 +569,7 @@ enum reg_class
    an inverse mapping from dwarf register to gcc register.  There is one
    need in dwarf2out.cc:expand_builtin_init_dwarf_reg_sizes.  Right now, I
    don't see that we need exact correspondence between DWARF *frame*
-   registers and DBX_REGISTER_NUMBER, so map them onto GCC registers.  */
+   registers and DEBUGGER_REGNO, so map them onto GCC registers.  */
 #define DWARF_FRAME_REGNUM(REG) (REG)
 
 /* Node: Stack Checking */
@@ -888,7 +887,7 @@ struct cum_args {int regs;};
 
 /* Node: All Debuggers */
 
-#define DBX_REGISTER_NUMBER(REGNO)				\
+#define DEBUGGER_REGNO(REGNO)				\
  ((REGNO) == CRIS_SRP_REGNUM ? CRIS_CANONICAL_SRP_REGNUM :	\
   (REGNO) == CRIS_MOF_REGNUM ? CRIS_CANONICAL_MOF_REGNUM :	\
   (REGNO) == CRIS_CC0_REGNUM ? CRIS_CANONICAL_CC0_REGNUM :	\

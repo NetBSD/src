@@ -1,5 +1,5 @@
 ;; Machine description for GNU compiler, VAX Version
-;; Copyright (C) 1987-2022 Free Software Foundation, Inc.
+;; Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
 ;; This file is part of GCC.
 
@@ -751,6 +751,29 @@
 	   (float:VAXfp (match_dup 1)))
       (clobber (reg:CC VAX_PSL_REGNUM))])]
   "")
+
+;; special case for known constant source operand
+(define_insn_and_split "*float<VAXint:mode><VAXfp:mode>2"
+  [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g")
+	(float:VAXfp (match_operand:VAXint 1 "const_int_operand" "n")))
+   ]
+  ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 2))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "
+{
+  const enum machine_mode m = GET_MODE(operands[0]);
+  HOST_WIDE_INT i = INTVAL(operands[1]);
+  REAL_VALUE_TYPE r;
+
+  real_from_integer(&r, m, i, SIGNED);
+  operands[2] = const_double_from_real_value(r, m);
+}")
+
 
 (define_insn "*float<VAXint:mode><VAXfp:mode>2<fccn><fccnz><fccz>"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g")
@@ -1809,7 +1832,7 @@
 }")
 
 (define_insn_and_split "*extzv_aligned"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=&g")
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(zero_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
 			 (match_operand:QI 2 "const_int_operand" "n")
 			 (match_operand:SI 3 "const_int_operand" "n")))]
@@ -1835,7 +1858,7 @@
   "")
 
 (define_insn "*extzv_aligned_2<ccn><ccnz><ccz>"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=&g")
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(zero_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
 			 (match_operand:QI 2 "const_int_operand" "n")
 			 (match_operand:SI 3 "const_int_operand" "n")))

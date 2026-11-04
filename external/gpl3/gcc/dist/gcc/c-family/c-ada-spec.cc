@@ -1,6 +1,6 @@
 /* Print GENERIC declaration (functions, variables, types) trees coming from
    the C and C++ front-ends as well as macros in Ada syntax.
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Adapted from tree-pretty-print.cc by Arnaud Charlet  <charlet@adacore.com>
 
 This file is part of GCC.
@@ -1051,7 +1051,7 @@ has_static_fields (const_tree type)
     return false;
 
   for (tree fld = TYPE_FIELDS (type); fld; fld = TREE_CHAIN (fld))
-    if (TREE_CODE (fld) == VAR_DECL && DECL_NAME (fld))
+    if (VAR_P (fld) && DECL_NAME (fld))
       return true;
 
   return false;
@@ -1566,6 +1566,8 @@ check_type_name_conflict (pretty_printer *buffer, tree t)
 	s = "";
       else if (TREE_CODE (TYPE_NAME (tmp)) == IDENTIFIER_NODE)
 	s = IDENTIFIER_POINTER (TYPE_NAME (tmp));
+      else if (!DECL_NAME (TYPE_NAME (tmp)))
+	s = "";
       else
 	s = IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (tmp)));
 
@@ -1850,7 +1852,8 @@ dump_template_types (pretty_printer *buffer, tree types, int spc)
       if (!dump_ada_node (buffer, elem, NULL_TREE, spc, false, true))
 	{
 	  pp_string (buffer, "unknown");
-	  pp_scalar (buffer, "%lu", (unsigned long) TREE_HASH (elem));
+	  pp_scalar (buffer, HOST_SIZE_T_PRINT_UNSIGNED,
+		     (fmt_size_t) TREE_HASH (elem));
 	}
     }
 }
@@ -2030,7 +2033,39 @@ dump_ada_enum_type (pretty_printer *buffer, tree node, tree type, int spc)
     }
 }
 
-/* Return true if NODE is the __float128/_Float128 type.  */
+/* Return true if NODE is the _Float32/_Float32x type.  */
+
+static bool
+is_float32 (tree node)
+{
+  if (!TYPE_NAME (node) || TREE_CODE (TYPE_NAME (node)) != TYPE_DECL)
+    return false;
+
+  tree name = DECL_NAME (TYPE_NAME (node));
+
+  if (IDENTIFIER_POINTER (name) [0] != '_')
+    return false;
+
+  return id_equal (name, "_Float32") || id_equal (name, "_Float32x");
+}
+
+/* Return true if NODE is the _Float64/_Float64x type.  */
+
+static bool
+is_float64 (tree node)
+{
+  if (!TYPE_NAME (node) || TREE_CODE (TYPE_NAME (node)) != TYPE_DECL)
+    return false;
+
+  tree name = DECL_NAME (TYPE_NAME (node));
+
+  if (IDENTIFIER_POINTER (name) [0] != '_')
+    return false;
+
+  return id_equal (name, "_Float64") || id_equal (name, "_Float64x");
+}
+
+/* Return true if NODE is the __float128/_Float128/_Float128x type.  */
 
 static bool
 is_float128 (tree node)
@@ -2043,7 +2078,9 @@ is_float128 (tree node)
   if (IDENTIFIER_POINTER (name) [0] != '_')
     return false;
 
-  return id_equal (name, "__float128") || id_equal (name, "_Float128");
+  return id_equal (name, "__float128")
+	 || id_equal (name, "_Float128")
+	 || id_equal (name, "_Float128x");
 }
 
 static bool bitfield_used = false;
@@ -2132,7 +2169,17 @@ dump_ada_node (pretty_printer *buffer, tree node, tree type, int spc,
       break;
 
     case REAL_TYPE:
-      if (is_float128 (node))
+      if (is_float32 (node))
+	{
+	  pp_string (buffer, "Float");
+	  break;
+	}
+      else if (is_float64 (node))
+	{
+	  pp_string (buffer, "Long_Float");
+	  break;
+	}
+      else if (is_float128 (node))
 	{
 	  append_withs ("Interfaces.C.Extensions", false);
 	  pp_string (buffer, "Extensions.Float_128");
@@ -2146,8 +2193,8 @@ dump_ada_node (pretty_printer *buffer, tree node, tree type, int spc,
     case BOOLEAN_TYPE:
       if (TYPE_NAME (node)
 	  && !(TREE_CODE (TYPE_NAME (node)) == TYPE_DECL
-	       && !strcmp (IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (node))),
-			   "__int128")))
+	       && !strncmp (IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (node))),
+			   "__int128", 8)))
 	{
 	  if (TREE_CODE (TYPE_NAME (node)) == IDENTIFIER_NODE)
 	    pp_ada_tree_identifier (buffer, TYPE_NAME (node), node,
@@ -3200,7 +3247,7 @@ dump_ada_declaration (pretty_printer *buffer, tree t, tree type, int spc)
       if (need_indent)
 	INDENT (spc);
 
-      if ((TREE_CODE (t) == FIELD_DECL || TREE_CODE (t) == VAR_DECL)
+      if ((TREE_CODE (t) == FIELD_DECL || VAR_P (t))
 	  && DECL_NAME (t))
 	check_type_name_conflict (buffer, t);
 
@@ -3418,7 +3465,7 @@ dump_ada_structure (pretty_printer *buffer, tree node, tree type, bool nested,
   /* Print the static fields of the structure, if any.  */
   for (tree tmp = TYPE_FIELDS (node); tmp; tmp = TREE_CHAIN (tmp))
     {
-      if (TREE_CODE (tmp) == VAR_DECL && DECL_NAME (tmp))
+      if (VAR_P (tmp) && DECL_NAME (tmp))
 	{
 	  if (need_semicolon)
 	    {

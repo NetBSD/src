@@ -1,5 +1,5 @@
 /* A graph for exploring trees of feasible paths through the egraph.
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -19,6 +19,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
+#define INCLUDE_MEMORY
 #include "system.h"
 #include "coretypes.h"
 #include "tree.h"
@@ -29,15 +30,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "diagnostic-core.h"
 #include "diagnostic-event-id.h"
 #include "diagnostic-path.h"
-#include "alloc-pool.h"
-#include "fibonacci_heap.h"
-#include "shortest-paths.h"
-#include "sbitmap.h"
 #include "bitmap.h"
-#include "tristate.h"
-#include "selftest.h"
 #include "ordered-hash-map.h"
-#include "json.h"
 #include "analyzer/analyzer.h"
 #include "analyzer/analyzer-logging.h"
 #include "analyzer/sm.h"
@@ -110,6 +104,36 @@ feasible_node::dump_dot (graphviz_out *gv,
   pp_flush (pp);
 }
 
+/* Attempt to get the region_model for this node's state at TARGET_STMT.
+   Return true and write to *OUT if found.
+   Return false if there's a problem.  */
+
+bool
+feasible_node::get_state_at_stmt (const gimple *target_stmt,
+				  region_model *out) const
+{
+  if (!target_stmt)
+    return false;
+
+  feasibility_state result (m_state);
+
+  /* Update state for the stmts that were processed in each enode.  */
+  for (unsigned stmt_idx = 0; stmt_idx < m_inner_node->m_num_processed_stmts;
+       stmt_idx++)
+    {
+      const gimple *stmt = m_inner_node->get_processed_stmt (stmt_idx);
+      if (stmt == target_stmt)
+	{
+	  *out = result.get_model ();
+	  return true;
+	}
+      result.update_for_stmt (stmt);
+    }
+
+  /* TARGET_STMT not found; wrong node?  */
+  return false;
+}
+
 /* Implementation of dump_dot vfunc for infeasible_node.
    In particular, show the rejected constraint.  */
 
@@ -178,16 +202,15 @@ feasible_graph::add_node (const exploded_node *enode,
 }
 
 /* Add an infeasible_node to this graph and an infeasible_edge connecting
-   to it from SRC_FNODE, capturing a failure of RC along EEDGE.
-   Takes ownership of RC.  */
+   to it from SRC_FNODE, capturing a failure of RC along EEDGE.  */
 
 void
 feasible_graph::add_feasibility_problem (feasible_node *src_fnode,
 					 const exploded_edge *eedge,
-					 rejected_constraint *rc)
+					 std::unique_ptr<rejected_constraint> rc)
 {
   infeasible_node *dst_fnode
-    = new infeasible_node (eedge->m_dest, m_nodes.length (), rc);
+    = new infeasible_node (eedge->m_dest, m_nodes.length (), std::move (rc));
   digraph<fg_traits>::add_node (dst_fnode);
   add_edge (new infeasible_edge (src_fnode, dst_fnode, eedge));
   m_num_infeasible++;
@@ -196,10 +219,10 @@ feasible_graph::add_feasibility_problem (feasible_node *src_fnode,
 /* Make an exploded_path from the origin to FNODE's exploded_node,
    following the edges in the feasible_graph.  */
 
-exploded_path *
+std::unique_ptr<exploded_path>
 feasible_graph::make_epath (feasible_node *fnode) const
 {
-  exploded_path *epath = new exploded_path ();
+  std::unique_ptr<exploded_path> epath (new exploded_path ());
 
   /* FG is actually a tree.  Built the path backwards, by walking
      backwards from FNODE until we reach the origin.  */

@@ -235,8 +235,9 @@ static T AtomicLoad(ThreadState *thr, uptr pc, const volatile T *a, morder mo) {
   T v = NoTsanAtomicLoad(a, mo);
   SyncVar *s = ctx->metamap.GetSyncIfExists((uptr)a);
   if (s) {
-    ReadLock l(&s->mtx);
-    AcquireImpl(thr, pc, &s->clock);
+    SlotLocker locker(thr);
+    ReadLock lock(&s->mtx);
+    thr->clock.Acquire(s->clock);
     // Re-read under sync mutex because we need a consistent snapshot
     // of the value and the clock we acquire.
     v = NoTsanAtomicLoad(a, mo);
@@ -270,14 +271,14 @@ static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
     NoTsanAtomicStore(a, v, mo);
     return;
   }
-  __sync_synchronize();
-  SyncVar *s = ctx->metamap.GetSyncOrCreate(thr, pc, (uptr)a, false);
-  Lock l(&s->mtx);
-  thr->fast_state.IncrementEpoch();
-  // Can't increment epoch w/o writing to the trace as well.
-  TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
-  ReleaseStoreImpl(thr, pc, &s->clock);
-  NoTsanAtomicStore(a, v, mo);
+  SlotLocker locker(thr);
+  {
+    auto s = ctx->metamap.GetSyncOrCreate(thr, pc, (uptr)a, false);
+    Lock lock(&s->mtx);
+    thr->clock.ReleaseStore(&s->clock);
+    NoTsanAtomicStore(a, v, mo);
+  }
+  IncrementEpoch(thr);
 }
 
 template <typename T, T (*F)(volatile T *v, T op)>
@@ -285,18 +286,21 @@ static T AtomicRMW(ThreadState *thr, uptr pc, volatile T *a, T v, morder mo) {
   MemoryAccess(thr, pc, (uptr)a, AccessSize<T>(), kAccessWrite | kAccessAtomic);
   if (LIKELY(mo == mo_relaxed))
     return F(a, v);
-  SyncVar *s = ctx->metamap.GetSyncOrCreate(thr, pc, (uptr)a, false);
-  Lock l(&s->mtx);
-  thr->fast_state.IncrementEpoch();
-  // Can't increment epoch w/o writing to the trace as well.
-  TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
-  if (IsAcqRelOrder(mo))
-    AcquireReleaseImpl(thr, pc, &s->clock);
-  else if (IsReleaseOrder(mo))
-    ReleaseImpl(thr, pc, &s->clock);
-  else if (IsAcquireOrder(mo))
-    AcquireImpl(thr, pc, &s->clock);
-  return F(a, v);
+  SlotLocker locker(thr);
+  {
+    auto s = ctx->metamap.GetSyncOrCreate(thr, pc, (uptr)a, false);
+    RWLock lock(&s->mtx, IsReleaseOrder(mo));
+    if (IsAcqRelOrder(mo))
+      thr->clock.ReleaseAcquire(&s->clock);
+    else if (IsReleaseOrder(mo))
+      thr->clock.Release(&s->clock);
+    else if (IsAcquireOrder(mo))
+      thr->clock.Acquire(s->clock);
+    v = F(a, v);
+  }
+  if (IsReleaseOrder(mo))
+    IncrementEpoch(thr);
+  return v;
 }
 
 template<typename T>
@@ -416,27 +420,28 @@ static bool AtomicCAS(ThreadState *thr, uptr pc, volatile T *a, T *c, T v,
     *c = pr;
     return false;
   }
-
+  SlotLocker locker(thr);
   bool release = IsReleaseOrder(mo);
-  SyncVar *s = ctx->metamap.GetSyncOrCreate(thr, pc, (uptr)a, false);
-  RWLock l(&s->mtx, release);
-  T cc = *c;
-  T pr = func_cas(a, cc, v);
-  bool success = pr == cc;
-  if (!success) {
-    *c = pr;
-    mo = fmo;
+  bool success;
+  {
+    auto s = ctx->metamap.GetSyncOrCreate(thr, pc, (uptr)a, false);
+    RWLock lock(&s->mtx, release);
+    T cc = *c;
+    T pr = func_cas(a, cc, v);
+    success = pr == cc;
+    if (!success) {
+      *c = pr;
+      mo = fmo;
+    }
+    if (success && IsAcqRelOrder(mo))
+      thr->clock.ReleaseAcquire(&s->clock);
+    else if (success && IsReleaseOrder(mo))
+      thr->clock.Release(&s->clock);
+    else if (IsAcquireOrder(mo))
+      thr->clock.Acquire(s->clock);
   }
-  thr->fast_state.IncrementEpoch();
-  // Can't increment epoch w/o writing to the trace as well.
-  TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
-
-  if (success && IsAcqRelOrder(mo))
-    AcquireReleaseImpl(thr, pc, &s->clock);
-  else if (success && IsReleaseOrder(mo))
-    ReleaseImpl(thr, pc, &s->clock);
-  else if (IsAcquireOrder(mo))
-    AcquireImpl(thr, pc, &s->clock);
+  if (success && release)
+    IncrementEpoch(thr);
   return success;
 }
 
@@ -887,6 +892,30 @@ void __tsan_go_atomic32_fetch_add(ThreadState *thr, uptr cpc, uptr pc, u8 *a) {
 SANITIZER_INTERFACE_ATTRIBUTE
 void __tsan_go_atomic64_fetch_add(ThreadState *thr, uptr cpc, uptr pc, u8 *a) {
   ATOMIC_RET(FetchAdd, *(a64*)(a+16), *(a64**)a, *(a64*)(a+8), mo_acq_rel);
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __tsan_go_atomic32_fetch_and(ThreadState *thr, uptr cpc, uptr pc, u8 *a) {
+  ATOMIC_RET(FetchAnd, *(a32 *)(a + 16), *(a32 **)a, *(a32 *)(a + 8),
+             mo_acq_rel);
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __tsan_go_atomic64_fetch_and(ThreadState *thr, uptr cpc, uptr pc, u8 *a) {
+  ATOMIC_RET(FetchAnd, *(a64 *)(a + 16), *(a64 **)a, *(a64 *)(a + 8),
+             mo_acq_rel);
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __tsan_go_atomic32_fetch_or(ThreadState *thr, uptr cpc, uptr pc, u8 *a) {
+  ATOMIC_RET(FetchOr, *(a32 *)(a + 16), *(a32 **)a, *(a32 *)(a + 8),
+             mo_acq_rel);
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __tsan_go_atomic64_fetch_or(ThreadState *thr, uptr cpc, uptr pc, u8 *a) {
+  ATOMIC_RET(FetchOr, *(a64 *)(a + 16), *(a64 **)a, *(a64 *)(a + 8),
+             mo_acq_rel);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE

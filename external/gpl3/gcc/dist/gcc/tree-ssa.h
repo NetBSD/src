@@ -1,5 +1,5 @@
 /* Header file for any pass which requires SSA routines.
-   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -54,7 +54,6 @@ extern tree find_released_ssa_name (tree *, int *, void *);
 
 extern bool ssa_defined_default_def_p (tree t);
 extern bool ssa_undefined_value_p (tree, bool = true);
-extern bool gimple_uses_undefined_value_p (gimple *);
 
 
 bool ssa_name_any_use_dominates_bb_p (tree var, basic_block bb);
@@ -63,7 +62,7 @@ extern void mark_ssa_maybe_undefs (void);
 /* Return TRUE iff VAR is marked as maybe-undefined.  See
    mark_ssa_maybe_undefs.  */
 
-static inline bool
+inline bool
 ssa_name_maybe_undef_p (tree var)
 {
   gcc_checking_assert (TREE_CODE (var) == SSA_NAME);
@@ -72,7 +71,7 @@ ssa_name_maybe_undef_p (tree var)
 
 /* Set (or clear, depending on VALUE) VAR's maybe-undefined mark.  */
 
-static inline void
+inline void
 ssa_name_set_maybe_undef (tree var, bool value = true)
 {
   gcc_checking_assert (TREE_CODE (var) == SSA_NAME);
@@ -84,7 +83,7 @@ extern void execute_update_addresses_taken (void);
 
 /* Given an edge_var_map V, return the PHI arg definition.  */
 
-static inline tree
+inline tree
 redirect_edge_var_map_def (edge_var_map *v)
 {
   return v->def;
@@ -92,7 +91,7 @@ redirect_edge_var_map_def (edge_var_map *v)
 
 /* Given an edge_var_map V, return the PHI result.  */
 
-static inline tree
+inline tree
 redirect_edge_var_map_result (edge_var_map *v)
 {
   return v->result;
@@ -100,7 +99,7 @@ redirect_edge_var_map_result (edge_var_map *v)
 
 /* Given an edge_var_map V, return the PHI arg location.  */
 
-static inline location_t
+inline location_t
 redirect_edge_var_map_location (edge_var_map *v)
 {
   return v->locus;
@@ -108,7 +107,7 @@ redirect_edge_var_map_location (edge_var_map *v)
 
 /* Verify SSA invariants, if internal consistency checks are enabled.  */
 
-static inline void
+inline void
 checking_verify_ssa (bool check_modified_stmt, bool check_ssa_operands)
 {
   if (flag_checking)

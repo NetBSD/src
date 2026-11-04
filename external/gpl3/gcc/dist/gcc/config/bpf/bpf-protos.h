@@ -1,5 +1,5 @@
 /* Definition of eBPF target for GNU compiler.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -30,7 +30,12 @@ extern void bpf_print_operand_address (FILE *, rtx);
 extern void bpf_expand_prologue (void);
 extern void bpf_expand_epilogue (void);
 extern void bpf_expand_cbranch (machine_mode, rtx *);
+const char *bpf_output_move (rtx *operands, const char *templ);
 
-rtl_opt_pass * make_pass_bpf_core_attr (gcc::context *);
+class gimple_opt_pass;
+gimple_opt_pass *make_pass_lower_bpf_core (gcc::context *ctxt);
+
+bool bpf_expand_cpymem (rtx *, bool);
+bool bpf_expand_setmem (rtx *);
 
 #endif /* ! GCC_BPF_PROTOS_H */

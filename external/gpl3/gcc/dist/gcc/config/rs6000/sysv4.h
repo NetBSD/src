@@ -1,5 +1,5 @@
 /* Target definitions for GNU compiler for PowerPC running System V.4
-   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GCC.
@@ -503,9 +503,6 @@ extern int fixuplabelno;
 #undef  PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 
-/* Historically we have also supported stabs debugging.  */
-#define DBX_DEBUGGING_INFO 1
-
 #define TARGET_ENCODE_SECTION_INFO  rs6000_elf_encode_section_info
 #define TARGET_IN_SMALL_DATA_P  rs6000_elf_in_small_data_p
 
@@ -513,11 +510,6 @@ extern int fixuplabelno;
 
 #define	RS6000_OUTPUT_BASENAME(FILE, NAME)	\
     assemble_name (FILE, NAME)
-
-/* We have to output the stabs for the function name *first*, before
-   outputting its label.  */
-
-#define	DBX_FUNCTION_FIRST
 
 /* This is the end of what might become sysv4dbx.h.  */
 
@@ -756,6 +748,7 @@ GNU_USER_TARGET_CC1_SPEC
 
 #define LINK_OS_FREEBSD_SPEC "\
   %{p:%nconsider using '-pg' instead of '-p' with gprof(1)} \
+  " FBSD_LINK_PG_NOTE " \
   %{v:-V} \
   %{assert*} %{R*} %{rpath*} %{defsym*} \
   %{shared:-Bshareable %{h*} %{soname*}} \

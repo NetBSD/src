@@ -1,5 +1,5 @@
 /* Building internal representation for IRA.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -498,6 +498,7 @@ ira_create_allocno (int regno, bool cap_p,
   ALLOCNO_NREFS (a) = 0;
   ALLOCNO_FREQ (a) = 0;
   ALLOCNO_MIGHT_CONFLICT_WITH_PARENT_P (a) = false;
+  ALLOCNO_SET_REGISTER_FILTERS (a, 0);
   ALLOCNO_HARD_REGNO (a) = -1;
   ALLOCNO_CALL_FREQ (a) = 0;
   ALLOCNO_CALLS_CROSSED_NUM (a) = 0;
@@ -902,6 +903,7 @@ create_cap_allocno (ira_allocno_t a)
   ALLOCNO_NREFS (cap) = ALLOCNO_NREFS (a);
   ALLOCNO_FREQ (cap) = ALLOCNO_FREQ (a);
   ALLOCNO_CALL_FREQ (cap) = ALLOCNO_CALL_FREQ (a);
+  ALLOCNO_SET_REGISTER_FILTERS (cap, ALLOCNO_REGISTER_FILTERS (a));
 
   merge_hard_reg_conflicts (a, cap, false);
 
@@ -1832,7 +1834,7 @@ static basic_block curr_bb;
 
 /* This recursive function creates allocnos corresponding to
    pseudo-registers containing in X.  True OUTPUT_P means that X is
-   an lvalue.  PARENT corresponds to the parent expression of X.  */
+   an lvalue.  OUTER corresponds to the parent expression of X.  */
 static void
 create_insn_allocnos (rtx x, rtx outer, bool output_p)
 {
@@ -2064,6 +2066,9 @@ propagate_allocno_info (void)
 	    ALLOCNO_BAD_SPILL_P (parent_a) = false;
 	  ALLOCNO_NREFS (parent_a) += ALLOCNO_NREFS (a);
 	  ALLOCNO_FREQ (parent_a) += ALLOCNO_FREQ (a);
+	  ALLOCNO_SET_REGISTER_FILTERS (parent_a,
+					ALLOCNO_REGISTER_FILTERS (parent_a)
+					| ALLOCNO_REGISTER_FILTERS (a));
 
 	  /* If A's allocation can differ from PARENT_A's, we can if necessary
 	     spill PARENT_A on entry to A's loop and restore it afterwards.
@@ -2465,6 +2470,9 @@ propagate_some_info_from_allocno (ira_allocno_t a, ira_allocno_t from_a)
   ALLOCNO_CROSSED_CALLS_ABIS (a) |= ALLOCNO_CROSSED_CALLS_ABIS (from_a);
   ALLOCNO_CROSSED_CALLS_CLOBBERED_REGS (a)
     |= ALLOCNO_CROSSED_CALLS_CLOBBERED_REGS (from_a);
+  ALLOCNO_SET_REGISTER_FILTERS (a,
+				ALLOCNO_REGISTER_FILTERS (from_a)
+				| ALLOCNO_REGISTER_FILTERS (a));
 
   ALLOCNO_EXCESS_PRESSURE_POINTS_NUM (a)
     += ALLOCNO_EXCESS_PRESSURE_POINTS_NUM (from_a);

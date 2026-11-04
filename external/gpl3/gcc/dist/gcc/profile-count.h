@@ -1,5 +1,5 @@
 /* Profile counter container type.
-   Copyright (C) 2017-2022 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -185,7 +185,7 @@ public:
   static profile_probability very_unlikely ()
     {
       /* Be consistent with PROB_VERY_UNLIKELY in predict.h.  */
-      profile_probability r = guessed_always ().apply_scale (1, 2000);
+      profile_probability r = guessed_always () / 2000;
       r.m_val--;
       return r;
     }
@@ -193,14 +193,14 @@ public:
   static profile_probability unlikely ()
     {
       /* Be consistent with PROB_VERY_LIKELY in predict.h.  */
-      profile_probability r = guessed_always ().apply_scale (1, 5);
+      profile_probability r = guessed_always () / 5;
       r.m_val--;
       return r;
     }
 
   static profile_probability even ()
     {
-      return guessed_always ().apply_scale (1, 2);
+      return guessed_always () / 2;
     }
 
   static profile_probability very_likely ()
@@ -211,6 +211,11 @@ public:
   static profile_probability likely ()
     {
       return always () - unlikely ();
+    }
+  /* Return true when value is not zero and can be used for scaling.   */
+  bool nonzero_p () const
+    {
+      return initialized_p () && m_val != 0;
     }
 
   static profile_probability guessed_always ()
@@ -541,6 +546,29 @@ public:
       return ret;
     }
 
+  /* Return *THIS * NUM / DEN.  */
+  profile_probability apply_scale (profile_probability num,
+				   profile_probability den) const
+    {
+      if (*this == never ())
+	return *this;
+      if (num == never ())
+	return num;
+      if (!initialized_p () || !num.initialized_p () || !den.initialized_p ())
+	return uninitialized ();
+      if (num == den)
+	return *this;
+      gcc_checking_assert (den.m_val);
+
+      profile_probability ret;
+      uint64_t val;
+      safe_scale_64bit (m_val, num.m_val, den.m_val, &val);
+      ret.m_val = MIN (val, max_probability);
+      ret.m_quality = MIN (MIN (MIN (m_quality, ADJUSTED),
+				     num.m_quality), den.m_quality);
+      return ret;
+    }
+
   /* Return true when the probability of edge is reliable.
 
      The profile guessing code is good at predicting branch outcome (i.e.
@@ -599,6 +627,34 @@ public:
     {
       return initialized_p () && other.initialized_p () && m_val >= other.m_val;
     }
+
+  profile_probability operator* (int64_t num) const
+    {
+      return apply_scale (num, 1);
+    }
+
+  profile_probability operator*= (int64_t num)
+    {
+      *this = apply_scale (num, 1);
+      return *this;
+    }
+
+  profile_probability operator/ (int64_t den) const
+    {
+      return apply_scale (1, den);
+    }
+
+  profile_probability operator/= (int64_t den)
+    {
+      *this = apply_scale (1, den);
+      return *this;
+    }
+
+  /* Compute n-th power.  */
+  profile_probability pow (int) const;
+
+  /* Compute sware root.  */
+  profile_probability sqrt () const;
 
   /* Get the value of the count.  */
   uint32_t value () const { return m_val; }
@@ -854,7 +910,8 @@ public:
 
       profile_count ret;
       gcc_checking_assert (compatible_p (other));
-      ret.m_val = m_val + other.m_val;
+      uint64_t ret_val = m_val + other.m_val;
+      ret.m_val = MIN (ret_val, max_count);
       ret.m_quality = MIN (m_quality, other.m_quality);
       return ret;
     }
@@ -873,7 +930,8 @@ public:
       else
 	{
           gcc_checking_assert (compatible_p (other));
-	  m_val += other.m_val;
+	  uint64_t ret_val = m_val + other.m_val;
+	  m_val = MIN (ret_val, max_count);
 	  m_quality = MIN (m_quality, other.m_quality);
 	}
       return *this;
@@ -901,7 +959,7 @@ public:
       else
 	{
           gcc_checking_assert (compatible_p (other));
-	  m_val = m_val >= other.m_val ? m_val - other.m_val: 0;
+	  m_val = m_val >= other.m_val ? m_val - other.m_val : 0;
 	  m_quality = MIN (m_quality, other.m_quality);
 	}
       return *this;
@@ -992,6 +1050,28 @@ public:
       return ipa ().initialized_p () && ipa ().m_val >= (uint64_t) other;
     }
 
+  profile_count operator* (int64_t num) const
+    {
+      return apply_scale (num, 1);
+    }
+
+  profile_count operator*= (int64_t num)
+    {
+      *this = apply_scale (num, 1);
+      return *this;
+    }
+
+  profile_count operator/ (int64_t den) const
+    {
+      return apply_scale (1, den);
+    }
+
+  profile_count operator/= (int64_t den)
+    {
+      *this = apply_scale (1, den);
+      return *this;
+    }
+
   /* Return true when value is not zero and can be used for scaling. 
      This is different from *this > 0 because that requires counter to
      be IPA.  */
@@ -1049,7 +1129,9 @@ public:
       if (!initialized_p ())
 	return uninitialized ();
       profile_count ret;
-      ret.m_val = RDIV (m_val * prob, REG_BR_PROB_BASE);
+      uint64_t tmp;
+      safe_scale_64bit (m_val, prob, REG_BR_PROB_BASE, &tmp);
+      ret.m_val = tmp;
       ret.m_quality = MIN (m_quality, ADJUSTED);
       return ret;
     }
@@ -1057,11 +1139,11 @@ public:
   /* Scale counter according to PROB.  */
   profile_count apply_probability (profile_probability prob) const
     {
-      if (*this == zero ())
+      if (*this == zero () || prob == profile_probability::always ())
 	return *this;
       if (prob == profile_probability::never ())
 	return zero ();
-      if (!initialized_p ())
+      if (!initialized_p () || !prob.initialized_p ())
 	return uninitialized ();
       profile_count ret;
       uint64_t tmp;
@@ -1204,15 +1286,22 @@ public:
       return ret;
     }
 
+  /* Return true if profile count is very large, so we risk overflows
+     with loop transformations.  */
+  bool
+  very_large_p ()
+  {
+    if (!initialized_p ())
+      return false;
+    return m_val > max_count / 65536;
+  }
+
   int to_frequency (struct function *fun) const;
   int to_cgraph_frequency (profile_count entry_bb_count) const;
   sreal to_sreal_scale (profile_count in, bool *known = NULL) const;
 
   /* Output THIS to F.  */
-  void dump (FILE *f) const;
-
-  /* Output THIS to BUFFER.  */
-  void dump (char *buffer) const;
+  void dump (FILE *f, struct function *fun = NULL) const;
 
   /* Print THIS to stderr.  */
   void debug () const;

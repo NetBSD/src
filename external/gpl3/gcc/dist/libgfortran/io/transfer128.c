@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
 This file is part of the GNU Fortran runtime library (libgfortran).
 
@@ -65,7 +65,9 @@ export_proto(transfer_complex128_write);
    write_float; the pointer assignment with USED attribute make sure
    that there is a non-weakref dependence if the quadmath functions
    are used. That avoids segfault when libquadmath is statically linked.  */
-# if !defined(HAVE_GFC_REAL_17) || !defined(POWER_IEEE128)
+# if (defined(HAVE_GFC_REAL_17) && !defined(POWER_IEEE128) \
+      && !defined(GFC_REAL_17_USE_IEC_60559)) \
+     || (!defined(HAVE_GFC_REAL_17) && !defined(GFC_REAL_16_USE_IEC_60559))
 static void __attribute__((used)) *tmp1 = strtoflt128;
 static void __attribute__((used)) *tmp2 = quadmath_snprintf;
 # endif

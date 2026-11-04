@@ -1,5 +1,5 @@
 /* Language hooks common to C and ObjC front ends.
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
    Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 This file is part of GCC.
@@ -21,11 +21,16 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_C_OBJC_COMMON
 #define GCC_C_OBJC_COMMON
 
+/* Implemented in c-objc-common.cc.  */
+extern void c_register_features ();
+
 /* Lang hooks that are shared between C and ObjC are defined here.  Hooks
    specific to C or ObjC go in c-lang.cc and objc/objc-lang.cc, respectively.  */
 
 #undef LANG_HOOKS_IDENTIFIER_SIZE
 #define LANG_HOOKS_IDENTIFIER_SIZE C_SIZEOF_STRUCT_LANG_IDENTIFIER
+#undef LANG_HOOKS_TREE_SIZE
+#define LANG_HOOKS_TREE_SIZE c_tree_size
 #undef LANG_HOOKS_FINISH
 #define LANG_HOOKS_FINISH c_common_finish
 #undef LANG_HOOKS_OPTION_LANG_MASK
@@ -69,12 +74,18 @@ along with GCC; see the file COPYING3.  If not see
 #define LANG_HOOKS_EMITS_BEGIN_STMT true
 #undef LANG_HOOKS_FINALIZE_EARLY_DEBUG
 #define LANG_HOOKS_FINALIZE_EARLY_DEBUG c_common_finalize_early_debug
+#undef LANG_HOOKS_RECONSTRUCT_COMPLEX_TYPE
+#define LANG_HOOKS_RECONSTRUCT_COMPLEX_TYPE c_reconstruct_complex_type
 
-/* Attribute hooks.  */
-#undef LANG_HOOKS_COMMON_ATTRIBUTE_TABLE
-#define LANG_HOOKS_COMMON_ATTRIBUTE_TABLE c_common_attribute_table
-#undef LANG_HOOKS_FORMAT_ATTRIBUTE_TABLE
-#define LANG_HOOKS_FORMAT_ATTRIBUTE_TABLE c_common_format_attribute_table
+static const scoped_attribute_specs *const c_objc_attribute_table[] =
+{
+  &std_attribute_table,
+  &c_common_gnu_attribute_table,
+  &c_common_format_attribute_table
+};
+
+#undef LANG_HOOKS_ATTRIBUTE_TABLE
+#define LANG_HOOKS_ATTRIBUTE_TABLE c_objc_attribute_table
 
 #undef LANG_HOOKS_TREE_DUMP_DUMP_TREE_FN
 #define LANG_HOOKS_TREE_DUMP_DUMP_TREE_FN c_dump_tree
@@ -110,6 +121,9 @@ along with GCC; see the file COPYING3.  If not see
 #undef LANG_HOOKS_GIMPLIFY_EXPR
 #define LANG_HOOKS_GIMPLIFY_EXPR c_gimplify_expr
 
+#undef LANG_HOOKS_TYPE_DWARF_ATTRIBUTE
+#define LANG_HOOKS_TYPE_DWARF_ATTRIBUTE c_type_dwarf_attribute
+
 #undef LANG_HOOKS_OMP_PREDETERMINED_SHARING
 #define LANG_HOOKS_OMP_PREDETERMINED_SHARING c_omp_predetermined_sharing
 
@@ -123,5 +137,5 @@ along with GCC; see the file COPYING3.  If not see
 #define LANG_HOOKS_OMP_CLAUSE_ASSIGN_OP c_omp_clause_copy_ctor
 
 #undef LANG_HOOKS_TREE_INLINING_VAR_MOD_TYPE_P
-#define LANG_HOOKS_TREE_INLINING_VAR_MOD_TYPE_P c_vla_unspec_p
+#define LANG_HOOKS_TREE_INLINING_VAR_MOD_TYPE_P c_var_mod_p
 #endif /* GCC_C_OBJC_COMMON */

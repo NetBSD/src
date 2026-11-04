@@ -1,5 +1,5 @@
 /* Combining of if-expressions on trees.
-   Copyright (C) 2007-2022 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
    Contributed by Richard Guenther <rguenther@suse.de>
 
 This file is part of GCC.
@@ -35,8 +35,8 @@ along with GCC; see the file COPYING3.  If not see
    BRANCH_COST.  */
 #include "fold-const.h"
 #include "cfganal.h"
-#include "gimple-fold.h"
 #include "gimple-iterator.h"
+#include "gimple-fold.h"
 #include "gimplify-me.h"
 #include "tree-cfg.h"
 #include "tree-ssa.h"
@@ -125,10 +125,25 @@ bb_no_side_effects_p (basic_block bb)
       if (is_gimple_debug (stmt))
 	continue;
 
+      gassign *ass;
+      enum tree_code rhs_code;
       if (gimple_has_side_effects (stmt)
-	  || gimple_uses_undefined_value_p (stmt)
 	  || gimple_could_trap_p (stmt)
 	  || gimple_vuse (stmt)
+	  /* We need to rewrite stmts with undefined overflow to use
+	     unsigned arithmetic but cannot do so for signed division.  */
+	  || ((ass = dyn_cast <gassign *> (stmt))
+	      && INTEGRAL_TYPE_P (TREE_TYPE (gimple_assign_lhs (ass)))
+	      && TYPE_OVERFLOW_UNDEFINED (TREE_TYPE (gimple_assign_lhs (ass)))
+	      && ((rhs_code = gimple_assign_rhs_code (ass)), true)
+	      && (rhs_code == TRUNC_DIV_EXPR
+		  || rhs_code == CEIL_DIV_EXPR
+		  || rhs_code == FLOOR_DIV_EXPR
+		  || rhs_code == ROUND_DIV_EXPR)
+	      /* We cannot use expr_not_equal_to since we'd have to restrict
+		 flow-sensitive info to whats known at the outer if.  */
+	      && (TREE_CODE (gimple_assign_rhs2 (ass)) != INTEGER_CST
+		  || !integer_minus_onep (gimple_assign_rhs2 (ass))))
 	  /* const calls don't match any of the above, yet they could
 	     still have some side-effects - they could contain
 	     gimple_could_trap_p statements, like floating point
@@ -137,6 +152,12 @@ bb_no_side_effects_p (basic_block bb)
 	     should handle this.  */
 	  || is_gimple_call (stmt))
 	return false;
+
+      ssa_op_iter it;
+      tree use;
+      FOR_EACH_SSA_TREE_OPERAND (use, stmt, it, SSA_OP_USE)
+	if (ssa_name_maybe_undef_p (use))
+	  return false;
     }
 
   return true;
@@ -389,21 +410,15 @@ ifcombine_ifandif (basic_block inner_cond_bb, bool inner_inv,
 		   basic_block outer_cond_bb, bool outer_inv, bool result_inv)
 {
   gimple_stmt_iterator gsi;
-  gimple *inner_stmt, *outer_stmt;
-  gcond *inner_cond, *outer_cond;
   tree name1, name2, bit1, bit2, bits1, bits2;
 
-  inner_stmt = last_stmt (inner_cond_bb);
-  if (!inner_stmt
-      || gimple_code (inner_stmt) != GIMPLE_COND)
+  gcond *inner_cond = safe_dyn_cast <gcond *> (*gsi_last_bb (inner_cond_bb));
+  if (!inner_cond)
     return false;
-  inner_cond = as_a <gcond *> (inner_stmt);
 
-  outer_stmt = last_stmt (outer_cond_bb);
-  if (!outer_stmt
-      || gimple_code (outer_stmt) != GIMPLE_COND)
+  gcond *outer_cond = safe_dyn_cast <gcond *> (*gsi_last_bb (outer_cond_bb));
+  if (!outer_cond)
     return false;
-  outer_cond = as_a <gcond *> (outer_stmt);
 
   /* See if we test a single bit of the same name in both tests.  In
      that case remove the outer test, merging both else edges,
@@ -436,6 +451,12 @@ ifcombine_ifandif (basic_block inner_cond_bb, bool inner_inv,
       t = canonicalize_cond_expr_cond (t);
       if (!t)
 	return false;
+      if (!is_gimple_condexpr_for_cond (t))
+	{
+	  gsi = gsi_for_stmt (inner_cond);
+	  t = force_gimple_operand_gsi_1 (&gsi, t, is_gimple_condexpr_for_cond,
+					  NULL, true, GSI_SAME_STMT);
+	}
       gimple_cond_set_condition_from_tree (inner_cond, t);
       update_stmt (inner_cond);
 
@@ -522,6 +543,12 @@ ifcombine_ifandif (basic_block inner_cond_bb, bool inner_inv,
       t = canonicalize_cond_expr_cond (t);
       if (!t)
 	return false;
+      if (!is_gimple_condexpr_for_cond (t))
+	{
+	  gsi = gsi_for_stmt (inner_cond);
+	  t = force_gimple_operand_gsi_1 (&gsi, t, is_gimple_condexpr_for_cond,
+					  NULL, true, GSI_SAME_STMT);
+	}
       gimple_cond_set_condition_from_tree (inner_cond, t);
       update_stmt (inner_cond);
 
@@ -603,8 +630,8 @@ ifcombine_ifandif (basic_block inner_cond_bb, bool inner_inv,
 	      result_inv = false;
 	    }
 	  gsi = gsi_for_stmt (inner_cond);
-	  t = force_gimple_operand_gsi_1 (&gsi, t, is_gimple_condexpr, NULL, true,
-					  GSI_SAME_STMT);
+	  t = force_gimple_operand_gsi_1 (&gsi, t, is_gimple_condexpr_for_cond,
+					  NULL, true, GSI_SAME_STMT);
         }
       if (result_inv)
 	t = fold_build1 (TRUTH_NOT_EXPR, TREE_TYPE (t), t);
@@ -811,7 +838,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_tree_ifcombine
 
@@ -824,6 +851,7 @@ pass_tree_ifcombine::execute (function *fun)
 
   bbs = single_pred_before_succ_order ();
   calculate_dominance_info (CDI_DOMINATORS);
+  mark_ssa_maybe_undefs ();
 
   /* Search every basic block for COND_EXPR we may be able to optimize.
 
@@ -836,15 +864,26 @@ pass_tree_ifcombine::execute (function *fun)
   for (i = n_basic_blocks_for_fn (fun) - NUM_FIXED_BLOCKS - 1; i >= 0; i--)
     {
       basic_block bb = bbs[i];
-      gimple *stmt = last_stmt (bb);
 
-      if (stmt
-	  && gimple_code (stmt) == GIMPLE_COND)
+      if (safe_is_a <gcond *> (*gsi_last_bb (bb)))
 	if (tree_ssa_ifcombine_bb (bb))
 	  {
 	    /* Clear range info from all stmts in BB which is now executed
 	       conditional on a always true/false condition.  */
 	    reset_flow_sensitive_info_in_bb (bb);
+	    for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
+		 gsi_next (&gsi))
+	      {
+		gassign *ass = dyn_cast <gassign *> (gsi_stmt (gsi));
+		if (!ass)
+		  continue;
+		tree lhs = gimple_assign_lhs (ass);
+		if ((INTEGRAL_TYPE_P (TREE_TYPE (lhs))
+		     || POINTER_TYPE_P (TREE_TYPE (lhs)))
+		    && arith_code_with_undefined_signed_overflow
+			 (gimple_assign_rhs_code (ass)))
+		  rewrite_to_defined_overflow (&gsi);
+	      }
 	    cfg_changed |= true;
 	  }
     }

@@ -1,5 +1,5 @@
 /* Definition of RISC-V target for GNU compiler.
-   Copyright (C) 2016-2022 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
    Contributed by Andrew Waterman (andrew@sifive.com).
 
 This file is part of GCC.
@@ -27,6 +27,7 @@ enum riscv_abi_type {
   ABI_ILP32F,
   ABI_ILP32D,
   ABI_LP64,
+  ABI_LP64E,
   ABI_LP64F,
   ABI_LP64D
 };
@@ -35,6 +36,7 @@ extern enum riscv_abi_type riscv_abi;
 enum riscv_code_model {
   CM_MEDLOW,
   CM_MEDANY,
+  CM_LARGE,
   CM_PIC
 };
 extern enum riscv_code_model riscv_cmodel;
@@ -52,7 +54,11 @@ extern enum riscv_isa_spec_class riscv_isa_spec;
 /* Keep this list in sync with define_attr "tune" in riscv.md.  */
 enum riscv_microarchitecture_type {
   generic,
-  sifive_7
+  sifive_7,
+  sifive_p400,
+  sifive_p600,
+  xiangshan,
+  generic_ooo
 };
 extern enum riscv_microarchitecture_type riscv_microarchitecture;
 
@@ -67,83 +73,65 @@ enum stack_protector_guard {
   SSP_GLOBAL			/* global canary */
 };
 
-#define MASK_ZICSR    (1 << 0)
-#define MASK_ZIFENCEI (1 << 1)
+/* RISC-V auto-vectorization RVV LMUL.  */
+enum rvv_max_lmul_enum {
+  RVV_M1 = 1,
+  RVV_M2 = 2,
+  RVV_M4 = 4,
+  RVV_M8 = 8,
+  /* For dynamic LMUL, we compare COST start with LMUL8.  */
+  RVV_DYNAMIC = 9
+};
 
-#define TARGET_ZICSR    ((riscv_zi_subext & MASK_ZICSR) != 0)
-#define TARGET_ZIFENCEI ((riscv_zi_subext & MASK_ZIFENCEI) != 0)
+enum riscv_multilib_select_kind {
+  /* Select multilib by builtin way.  */
+  select_by_builtin,
+  /* Select multilib by ABI, arch and code model.  */
+  select_by_abi_arch_cmodel,
+  /* Select multilib by ABI only.  */
+  select_by_abi,
+};
 
-#define MASK_ZBA      (1 << 0)
-#define MASK_ZBB      (1 << 1)
-#define MASK_ZBC      (1 << 2)
-#define MASK_ZBS      (1 << 3)
+/* ENTITIES in mode switching.  */
+enum riscv_entity
+{
+  RISCV_VXRM = 0,
+  RISCV_FRM,
+  MAX_RISCV_ENTITIES
+};
 
-#define TARGET_ZBA    ((riscv_zb_subext & MASK_ZBA) != 0)
-#define TARGET_ZBB    ((riscv_zb_subext & MASK_ZBB) != 0)
-#define TARGET_ZBC    ((riscv_zb_subext & MASK_ZBC) != 0)
-#define TARGET_ZBS    ((riscv_zb_subext & MASK_ZBS) != 0)
+/* RISC-V stringop strategy. */
+enum stringop_strategy_enum {
+  /* No expansion. */
+  STRATEGY_LIBCALL = 1,
+  /* Use scalar expansion if possible. */
+  STRATEGY_SCALAR = 2,
+  /* Only vector expansion if possible. */
+  STRATEGY_VECTOR = 4,
+  /* Use any. */
+  STRATEGY_AUTO = STRATEGY_SCALAR | STRATEGY_VECTOR
+};
 
-#define MASK_ZBKB     (1 << 0)
-#define MASK_ZBKC     (1 << 1)
-#define MASK_ZBKX     (1 << 2)
-#define MASK_ZKNE     (1 << 3)
-#define MASK_ZKND     (1 << 4)
-#define MASK_ZKNH     (1 << 5)
-#define MASK_ZKR      (1 << 6)
-#define MASK_ZKSED    (1 << 7)
-#define MASK_ZKSH     (1 << 8)
-#define MASK_ZKT      (1 << 9)
+/* Behavior of VSETVL Pass.  */
+enum vsetvl_strategy_enum {
+  /* Optimized: Run LCM dataflow analysis to reduce vsetvl* insns and
+     delete any redundant ones generated in the process.  */
+  VSETVL_OPT,
+  /* Simple: Insert a vsetvl* instruction for each Vector instruction.  */
+  VSETVL_SIMPLE,
+  /* No fusion: Disable Phase 2 earliest global fusion.  */
+  VSETVL_OPT_NO_FUSION,
+};
 
-#define TARGET_ZBKB   ((riscv_zk_subext & MASK_ZBKB) != 0)
-#define TARGET_ZBKC   ((riscv_zk_subext & MASK_ZBKC) != 0)
-#define TARGET_ZBKX   ((riscv_zk_subext & MASK_ZBKX) != 0)
-#define TARGET_ZKNE   ((riscv_zk_subext & MASK_ZKNE) != 0)
-#define TARGET_ZKND   ((riscv_zk_subext & MASK_ZKND) != 0)
-#define TARGET_ZKNH   ((riscv_zk_subext & MASK_ZKNH) != 0)
-#define TARGET_ZKR    ((riscv_zk_subext & MASK_ZKR) != 0)
-#define TARGET_ZKSED  ((riscv_zk_subext & MASK_ZKSED) != 0)
-#define TARGET_ZKSH   ((riscv_zk_subext & MASK_ZKSH) != 0)
-#define TARGET_ZKT    ((riscv_zk_subext & MASK_ZKT) != 0)
+/* RVV vector bits for option -mrvv-vector-bits, default is scalable.  */
+enum rvv_vector_bits_enum {
+  /* scalable indicates taking the value of zvl*b as the minimal vlen.  */
+  RVV_VECTOR_BITS_SCALABLE,
+  /* zvl indicates taking the value of zvl*b as the exactly vlen.  */
+  RVV_VECTOR_BITS_ZVL,
+};
 
-#define MASK_VECTOR_ELEN_32    (1 << 0)
-#define MASK_VECTOR_ELEN_64    (1 << 1)
-#define MASK_VECTOR_ELEN_FP_32 (1 << 2)
-#define MASK_VECTOR_ELEN_FP_64 (1 << 3)
-
-#define TARGET_VECTOR_ELEN_32 \
-  ((riscv_vector_elen_flags & MASK_VECTOR_ELEN_32) != 0)
-#define TARGET_VECTOR_ELEN_64 \
-  ((riscv_vector_elen_flags & MASK_VECTOR_ELEN_64) != 0)
-#define TARGET_VECTOR_ELEN_FP_32 \
-  ((riscv_vector_elen_flags & MASK_VECTOR_ELEN_FP_32) != 0)
-#define TARGET_VECTOR_ELEN_FP_64 \
-  ((riscv_vector_elen_flags & MASK_VECTOR_ELEN_FP_64) != 0)
-
-#define MASK_ZVL32B    (1 <<  0)
-#define MASK_ZVL64B    (1 <<  1)
-#define MASK_ZVL128B   (1 <<  2)
-#define MASK_ZVL256B   (1 <<  3)
-#define MASK_ZVL512B   (1 <<  4)
-#define MASK_ZVL1024B  (1 <<  5)
-#define MASK_ZVL2048B  (1 <<  6)
-#define MASK_ZVL4096B  (1 <<  7)
-#define MASK_ZVL8192B  (1 <<  8)
-#define MASK_ZVL16384B (1 <<  9)
-#define MASK_ZVL32768B (1 << 10)
-#define MASK_ZVL65536B (1 << 11)
-
-#define TARGET_ZVL32B    ((riscv_zvl_flags & MASK_ZVL32B) != 0)
-#define TARGET_ZVL64B    ((riscv_zvl_flags & MASK_ZVL64B) != 0)
-#define TARGET_ZVL128B   ((riscv_zvl_flags & MASK_ZVL128B) != 0)
-#define TARGET_ZVL256B   ((riscv_zvl_flags & MASK_ZVL256B) != 0)
-#define TARGET_ZVL512B   ((riscv_zvl_flags & MASK_ZVL512B) != 0)
-#define TARGET_ZVL1024B  ((riscv_zvl_flags & MASK_ZVL1024B) != 0)
-#define TARGET_ZVL2048B  ((riscv_zvl_flags & MASK_ZVL2048B) != 0)
-#define TARGET_ZVL4096B  ((riscv_zvl_flags & MASK_ZVL4096B) != 0)
-#define TARGET_ZVL8192B  ((riscv_zvl_flags & MASK_ZVL8192B) != 0)
-#define TARGET_ZVL16384B ((riscv_zvl_flags & MASK_ZVL16384B) != 0)
-#define TARGET_ZVL32768B ((riscv_zvl_flags & MASK_ZVL32768B) != 0)
-#define TARGET_ZVL65536B ((riscv_zvl_flags & MASK_ZVL65536B) != 0)
+#define TARGET_ZICOND_LIKE (TARGET_ZICOND || (TARGET_XVENTANACONDOPS && TARGET_64BIT))
 
 /* Bit of riscv_zvl_flags will set contintuly, N-1 bit will set if N-bit is
    set, e.g. MASK_ZVL64B has set then MASK_ZVL32B is set, so we can use
@@ -152,5 +140,24 @@ enum stack_protector_guard {
   ((riscv_zvl_flags == 0) \
    ? 0 \
    : 32 << (__builtin_popcount (riscv_zvl_flags) - 1))
+
+/* Same as TARGET_MIN_VLEN, but take an OPTS as gcc_options.  */
+#define TARGET_MIN_VLEN_OPTS(opts)                                             \
+  ((opts->x_riscv_zvl_flags == 0)                                              \
+     ? 0                                                                       \
+     : 32 << (__builtin_popcount (opts->x_riscv_zvl_flags) - 1))
+
+/* TODO: Enable RVV movmisalign by default for now.  */
+#define TARGET_VECTOR_MISALIGN_SUPPORTED 1
+
+/* The maximmum LMUL according to user configuration.  */
+#define TARGET_MAX_LMUL                                                        \
+  (int) (rvv_max_lmul == RVV_DYNAMIC ? RVV_M8 : rvv_max_lmul)
+
+/* TLS types.  */
+enum riscv_tls_type {
+  TLS_TRADITIONAL,
+  TLS_DESCRIPTORS
+};
 
 #endif /* ! GCC_RISCV_OPTS_H */

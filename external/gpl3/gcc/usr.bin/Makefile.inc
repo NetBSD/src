@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.39 2023/08/04 17:17:06 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.39.2.1 2026/11/04 22:53:07 perseant Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -9,7 +9,7 @@ NOCTF=	# defined
 
 .sinclude "../../Makefile.gcc_path"
 
-GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
+GCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 .include "../../../lgpl3/gmp/Makefile.arch"
 
 TOP=		${NETBSDSRCDIR}
@@ -46,6 +46,8 @@ NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 CXXFLAGS+=      -g1
 .endif
 
+CXXFLAGS+=      -fno-exceptions -fno-rtti -fasynchronous-unwind-tables
+
 GNUHOSTDIST=	${DIST}
 BUILD_PREFIX=	${C_BUILD_PREFIX}
 
@@ -76,6 +78,10 @@ CPPFLAGS+=	-DNO_SHARED_LIBGCC_MULTILIB
 .endif
 .endif
 
+.for _f in ${G_ALL_HOST_FRONTEND_OBJS:.o=.cc}
+COPTS.${_f}+=	-DIN_GCC_FRONTEND
+.endfor
+
 NOCLANGERROR=	# defined
 
 WARNS=1
@@ -90,6 +96,18 @@ CFLAGS+=	-Wno-format-diag
 COPTS.c-omp.cc+=-fno-jump-tables
 COPTS.generic-match.cc+=-fno-jump-tables
 COPTS.gimple-match.cc+=-fno-jump-tables
+.if ${HAVE_GCC:U0} >= 14
+COPTS.generic-match-1.cc+=-fno-jump-tables
+COPTS.generic-match-4.cc+=-fno-jump-tables
+COPTS.generic-match-5.cc+=-fno-jump-tables
+COPTS.generic-match-6.cc+=-fno-jump-tables
+COPTS.generic-match-10.cc+=-fno-jump-tables
+COPTS.gimple-match-1.cc+=-fno-jump-tables
+COPTS.gimple-match-2.cc+=-fno-jump-tables
+COPTS.gimple-match-4.cc+=-fno-jump-tables
+COPTS.gimple-match-7.cc+=-fno-jump-tables
+COPTS.gimple-match-9.cc+=-fno-jump-tables
+.endif
 .endif
 
 .endif

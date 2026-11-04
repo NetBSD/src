@@ -1,5 +1,5 @@
 /* Pass computing data for optimizing stdarg functions.
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>
 
 This file is part of GCC.
@@ -867,8 +867,8 @@ optimize_va_list_gpr_fpr_size (function *fun)
 	      tree callee = gimple_call_fndecl (stmt);
 
 	      if (callee
-		  && (fndecl_built_in_p (callee, BUILT_IN_VA_START)
-		      || fndecl_built_in_p (callee, BUILT_IN_VA_END)))
+		  && fndecl_built_in_p (callee, BUILT_IN_VA_START,
+						BUILT_IN_VA_END))
 		continue;
 	    }
 
@@ -1126,7 +1126,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *)
+  bool gate (function *) final override
     {
       /* Always run this pass, in order to expand va_arg internal_fns.  We
 	 also need to do that if fun->stdarg == 0, because a va_arg may also
@@ -1135,7 +1135,7 @@ public:
       return true;
     }
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_stdarg
 
@@ -1185,12 +1185,12 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *)
+  bool gate (function *) final override
     {
       return (cfun->curr_properties & PROP_gimple_lva) == 0;
     }
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_lower_vaarg
 

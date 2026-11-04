@@ -1,6 +1,6 @@
 /* Pass to detect and issue warnings for violations of the restrict
    qualifier.
-   Copyright (C) 2017-2022 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
    Contributed by Martin Sebor <msebor@redhat.com>.
 
    This file is part of GCC.
@@ -64,8 +64,8 @@ class pass_wrestrict : public gimple_opt_pass
  public:
   pass_wrestrict (gcc::context *);
 
-  virtual bool gate (function *);
-  virtual unsigned int execute (function *);
+  bool gate (function *) final override;
+  unsigned int execute (function *) final override;
 
   void check_call (gimple *);
 
@@ -296,8 +296,9 @@ builtin_memref::builtin_memref (pointer_query &ptrqry, gimple *stmt, tree expr,
   tree basetype = TREE_TYPE (base);
   if (TREE_CODE (basetype) == ARRAY_TYPE)
     {
-      if (ref && array_at_struct_end_p (ref))
-	;   /* Use the maximum possible offset for last member arrays.  */
+      if (ref && array_ref_flexible_size_p (ref))
+	;   /* Use the maximum possible offset for an array that might
+	       have flexible size.  */
       else if (tree basesize = TYPE_SIZE_UNIT (basetype))
 	if (TREE_CODE (basesize) == INTEGER_CST)
 	  /* Size could be non-constant for a variable-length type such
@@ -354,11 +355,12 @@ builtin_memref::extend_offset_range (tree offset)
       value_range vr;
       if (m_ptr_qry.rvals->range_of_expr (vr, offset, stmt))
 	{
-	  rng = vr.kind ();
+	  tree vr_min, vr_max;
+	  rng = get_legacy_range (vr, vr_min, vr_max);
 	  if (!vr.undefined_p ())
 	    {
-	      min = wi::to_wide (vr.min ());
-	      max = wi::to_wide (vr.max ());
+	      min = wi::to_wide (vr_min);
+	      max = wi::to_wide (vr_max);
 	    }
 	}
 
@@ -389,7 +391,8 @@ builtin_memref::extend_offset_range (tree offset)
       tree type;
       if (is_gimple_assign (stmt)
 	  && (type = TREE_TYPE (gimple_assign_rhs1 (stmt)))
-	  && INTEGRAL_TYPE_P (type))
+	  && INTEGRAL_TYPE_P (type)
+	  && TYPE_PRECISION (type) <= TYPE_PRECISION (TREE_TYPE (offset)))
 	{
 	  tree_code code = gimple_assign_rhs_code (stmt);
 	  if (code == NOP_EXPR)
@@ -430,7 +433,7 @@ builtin_memref::set_base_and_offset (tree expr)
       else if (is_gimple_assign (stmt))
 	{
 	  tree_code code = gimple_assign_rhs_code (stmt);
-	  if (code == NOP_EXPR)
+	  if (CONVERT_EXPR_CODE_P (code))
 	    {
 	      tree rhs = gimple_assign_rhs1 (stmt);
 	      if (POINTER_TYPE_P (TREE_TYPE (rhs)))
@@ -1733,7 +1736,7 @@ maybe_diag_access_bounds (gimple *call, tree func, int strict,
   if (!oobref)
     return no_warning;
 
-  const opt_code opt = OPT_Warray_bounds;
+  const opt_code opt = OPT_Warray_bounds_;
   /* Return true without issuing a warning.  */
   if (!do_warn)
     return opt;

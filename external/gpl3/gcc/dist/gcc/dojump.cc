@@ -1,5 +1,5 @@
 /* Convert tree expression to rtl instructions, for GNU compiler.
-   Copyright (C) 1988-2022 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -421,14 +421,12 @@ do_jump (tree exp, rtx_code_label *if_false_label,
       break;
 #endif
 
-    case NOP_EXPR:
+    CASE_CONVERT:
       if (TREE_CODE (TREE_OPERAND (exp, 0)) == COMPONENT_REF
           || TREE_CODE (TREE_OPERAND (exp, 0)) == BIT_FIELD_REF
           || TREE_CODE (TREE_OPERAND (exp, 0)) == ARRAY_REF
           || TREE_CODE (TREE_OPERAND (exp, 0)) == ARRAY_RANGE_REF)
         goto normal;
-      /* FALLTHRU */
-    case CONVERT_EXPR:
       /* If we are narrowing the operand, we have to do the compare in the
          narrower mode.  */
       if ((TYPE_PRECISION (TREE_TYPE (exp))
@@ -621,7 +619,7 @@ do_jump (tree exp, rtx_code_label *if_false_label,
 	}
       do_compare_rtx_and_jump (temp, CONST0_RTX (GET_MODE (temp)),
 			       NE, TYPE_UNSIGNED (TREE_TYPE (exp)),
-			       GET_MODE (temp), NULL_RTX,
+			       exp, GET_MODE (temp), NULL_RTX,
 			       if_false_label, if_true_label, prob);
     }
 
@@ -689,7 +687,7 @@ do_jump_by_parts_greater_rtx (scalar_int_mode mode, int unsignedp, rtx op0,
 
       /* All but high-order word must be compared as unsigned.  */
       do_compare_rtx_and_jump (op0_word, op1_word, code, (unsignedp || i > 0),
-			       word_mode, NULL_RTX, NULL, if_true_label,
+			       NULL, word_mode, NULL_RTX, NULL, if_true_label,
 			       prob);
 
       /* Emit only one comparison for 0.  Do not emit the last cond jump.  */
@@ -697,8 +695,8 @@ do_jump_by_parts_greater_rtx (scalar_int_mode mode, int unsignedp, rtx op0,
 	break;
 
       /* Consider lower words only if these are equal.  */
-      do_compare_rtx_and_jump (op0_word, op1_word, NE, unsignedp, word_mode,
-			       NULL_RTX, NULL, if_false_label,
+      do_compare_rtx_and_jump (op0_word, op1_word, NE, unsignedp, NULL,
+			       word_mode, NULL_RTX, NULL, if_false_label,
 			       prob.invert ());
     }
 
@@ -757,7 +755,7 @@ do_jump_by_parts_zero_rtx (scalar_int_mode mode, rtx op0,
 
   if (part != 0)
     {
-      do_compare_rtx_and_jump (part, const0_rtx, EQ, 1, word_mode,
+      do_compare_rtx_and_jump (part, const0_rtx, EQ, 1, NULL, word_mode,
 			       NULL_RTX, if_false_label, if_true_label, prob);
       return;
     }
@@ -768,7 +766,7 @@ do_jump_by_parts_zero_rtx (scalar_int_mode mode, rtx op0,
 
   for (i = 0; i < nwords; i++)
     do_compare_rtx_and_jump (operand_subword_force (op0, i, mode),
-                             const0_rtx, EQ, 1, word_mode, NULL_RTX,
+			     const0_rtx, EQ, 1, NULL, word_mode, NULL_RTX,
 			     if_false_label, NULL, prob);
 
   if (if_true_label)
@@ -811,8 +809,8 @@ do_jump_by_parts_equality_rtx (scalar_int_mode mode, rtx op0, rtx op1,
 
   for (i = 0; i < nwords; i++)
     do_compare_rtx_and_jump (operand_subword_force (op0, i, mode),
-                             operand_subword_force (op1, i, mode),
-                             EQ, 0, word_mode, NULL_RTX,
+			     operand_subword_force (op1, i, mode),
+			     EQ, 0, NULL, word_mode, NULL_RTX,
 			     if_false_label, NULL, prob);
 
   if (if_true_label)
@@ -961,6 +959,23 @@ jumpifnot_1 (enum tree_code code, tree op0, tree op1, rtx_code_label *label,
 void
 do_compare_rtx_and_jump (rtx op0, rtx op1, enum rtx_code code, int unsignedp,
 			 machine_mode mode, rtx size,
+			 rtx_code_label *if_false_label,
+			 rtx_code_label *if_true_label,
+			 profile_probability prob)
+{
+  do_compare_rtx_and_jump (op0, op1, code, unsignedp, NULL, mode, size,
+			  if_false_label, if_true_label, prob);
+}
+
+/* Like do_compare_and_jump but expects the values to compare as two rtx's.
+   The decision as to signed or unsigned comparison must be made by the caller.
+
+   If MODE is BLKmode, SIZE is an RTX giving the size of the objects being
+   compared.  */
+
+void
+do_compare_rtx_and_jump (rtx op0, rtx op1, enum rtx_code code, int unsignedp,
+			 tree val, machine_mode mode, rtx size,
 			 rtx_code_label *if_false_label,
 			 rtx_code_label *if_true_label,
 			 profile_probability prob)
@@ -1133,7 +1148,7 @@ do_compare_rtx_and_jump (rtx op0, rtx op1, enum rtx_code code, int unsignedp,
 	      profile_probability cprob
 		= profile_probability::guessed_always ();
 	      if (first_code == UNORDERED)
-		cprob = cprob.apply_scale (1, 100);
+		cprob /= 100;
 	      else if (first_code == ORDERED)
 		cprob = cprob.apply_scale (99, 100);
 	      else
@@ -1179,8 +1194,10 @@ do_compare_rtx_and_jump (rtx op0, rtx op1, enum rtx_code code, int unsignedp,
 		    }
 		  else
 		    dest_label = if_false_label;
-                  do_compare_rtx_and_jump (op0, op1, first_code, unsignedp, mode,
-					   size, dest_label, NULL, first_prob);
+
+		  do_compare_rtx_and_jump (op0, op1, first_code, unsignedp,
+					   val, mode, size, dest_label, NULL,
+					   first_prob);
 		}
 	      /* For !and_them we want to split:
 		 if (x) goto t; // prob;
@@ -1194,8 +1211,9 @@ do_compare_rtx_and_jump (rtx op0, rtx op1, enum rtx_code code, int unsignedp,
               else
 		{
 		  profile_probability first_prob = prob.split (cprob);
-		  do_compare_rtx_and_jump (op0, op1, first_code, unsignedp, mode,
-					   size, NULL, if_true_label, first_prob);
+		  do_compare_rtx_and_jump (op0, op1, first_code, unsignedp,
+					   val, mode, size, NULL,
+					   if_true_label, first_prob);
 		  if (orig_code == NE && can_compare_p (UNEQ, mode, ccp_jump))
 		    {
 		      /* x != y can be split into x unord y || x ltgt y
@@ -1217,7 +1235,25 @@ do_compare_rtx_and_jump (rtx op0, rtx op1, enum rtx_code code, int unsignedp,
 	    }
 	}
 
-      emit_cmp_and_jump_insns (op0, op1, code, size, mode, unsignedp,
+      /* For boolean vectors with less than mode precision
+	 make sure to fill padding with consistent values.  */
+      if (val
+	  && VECTOR_BOOLEAN_TYPE_P (TREE_TYPE (val))
+	  && SCALAR_INT_MODE_P (mode))
+	{
+	  auto nunits = TYPE_VECTOR_SUBPARTS (TREE_TYPE (val)).to_constant ();
+	  if (maybe_ne (GET_MODE_PRECISION (mode), nunits))
+	    {
+	      op0 = expand_binop (mode, and_optab, op0,
+				  GEN_INT ((HOST_WIDE_INT_1U << nunits) - 1),
+				  NULL_RTX, true, OPTAB_WIDEN);
+	      op1 = expand_binop (mode, and_optab, op1,
+				  GEN_INT ((HOST_WIDE_INT_1U << nunits) - 1),
+				  NULL_RTX, true, OPTAB_WIDEN);
+	    }
+	}
+
+      emit_cmp_and_jump_insns (op0, op1, code, size, mode, unsignedp, val,
 			       if_true_label, prob);
     }
 
@@ -1291,9 +1327,9 @@ do_compare_and_jump (tree treeop0, tree treeop1, enum rtx_code signed_code,
       op1 = new_op1;
     }
 
-  do_compare_rtx_and_jump (op0, op1, code, unsignedp, mode,
-                           ((mode == BLKmode)
-                            ? expr_size (treeop0) : NULL_RTX),
+  do_compare_rtx_and_jump (op0, op1, code, unsignedp, treeop0, mode,
+			   ((mode == BLKmode)
+			    ? expr_size (treeop0) : NULL_RTX),
 			   if_false_label, if_true_label, prob);
 }
 

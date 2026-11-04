@@ -1,5 +1,5 @@
 /* Internals of libgccjit: classes for playing back recorded API calls.
-   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -19,7 +19,9 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
-#define INCLUDE_PTHREAD_H
+#define INCLUDE_MUTEX
+#define INCLUDE_DLFCN_H
+#include "libgccjit.h"
 #include "system.h"
 #include "coretypes.h"
 #include "target.h"
@@ -499,6 +501,54 @@ new_param (location *loc,
   return new param (this, inner);
 }
 
+const char* fn_attribute_to_string (gcc_jit_fn_attribute attr)
+{
+  switch (attr)
+  {
+    case GCC_JIT_FN_ATTRIBUTE_ALIAS:
+      return "alias";
+    case GCC_JIT_FN_ATTRIBUTE_ALWAYS_INLINE:
+      return "always_inline";
+    case GCC_JIT_FN_ATTRIBUTE_INLINE:
+      return NULL;
+    case GCC_JIT_FN_ATTRIBUTE_NOINLINE:
+      return "noinline";
+    case GCC_JIT_FN_ATTRIBUTE_TARGET:
+      return "target";
+    case GCC_JIT_FN_ATTRIBUTE_USED:
+      return "used";
+    case GCC_JIT_FN_ATTRIBUTE_VISIBILITY:
+      return "visibility";
+    case GCC_JIT_FN_ATTRIBUTE_COLD:
+      return "cold";
+    case GCC_JIT_FN_ATTRIBUTE_RETURNS_TWICE:
+      return "returns_twice";
+    case GCC_JIT_FN_ATTRIBUTE_PURE:
+      return "pure";
+    case GCC_JIT_FN_ATTRIBUTE_CONST:
+      return "const";
+    case GCC_JIT_FN_ATTRIBUTE_WEAK:
+      return "weak";
+    case GCC_JIT_FN_ATTRIBUTE_NONNULL:
+      return "nonnull";
+    case GCC_JIT_FN_ATTRIBUTE_MAX:
+      return NULL;
+  }
+  return NULL;
+}
+
+const char* variable_attribute_to_string (gcc_jit_variable_attribute attr)
+{
+  switch (attr)
+  {
+    case GCC_JIT_VARIABLE_ATTRIBUTE_VISIBILITY:
+      return "visibility";
+    case GCC_JIT_VARIABLE_ATTRIBUTE_MAX:
+      return NULL;
+  }
+  return NULL;
+}
+
 /* Construct a playback::function instance.  */
 
 playback::function *
@@ -509,7 +559,13 @@ new_function (location *loc,
 	      const char *name,
 	      const auto_vec<param *> *params,
 	      int is_variadic,
-	      enum built_in_function builtin_id)
+	      enum built_in_function builtin_id,
+	      const std::vector<gcc_jit_fn_attribute> &attributes,
+	      const std::vector<std::pair<gcc_jit_fn_attribute,
+					  std::string>> &string_attributes,
+	      const std::vector<std::pair<gcc_jit_fn_attribute,
+					  std::vector<int>>>
+					  &int_array_attributes)
 {
   int i;
   param *param;
@@ -542,6 +598,8 @@ new_function (location *loc,
   DECL_IGNORED_P (resdecl) = 1;
   DECL_RESULT (fndecl) = resdecl;
   DECL_CONTEXT (resdecl) = fndecl;
+
+  tree fn_attributes = NULL_TREE;
 
   if (builtin_id)
     {
@@ -588,12 +646,62 @@ new_function (location *loc,
       DECL_DECLARED_INLINE_P (fndecl) = 1;
 
       /* Add attribute "always_inline": */
-      DECL_ATTRIBUTES (fndecl) =
-	tree_cons (get_identifier ("always_inline"),
-		   NULL,
-		   DECL_ATTRIBUTES (fndecl));
+      fn_attributes = tree_cons (get_identifier ("always_inline"),
+				 NULL,
+				 fn_attributes);
     }
 
+  /* All attributes need to be declared in `dummy-frontend.cc` and more
+     specifically in `jit_attribute_table`. */
+  for (auto attr: attributes)
+  {
+    if (attr == GCC_JIT_FN_ATTRIBUTE_INLINE)
+      DECL_DECLARED_INLINE_P (fndecl) = 1;
+
+    const char* attribute = fn_attribute_to_string (attr);
+    if (attribute)
+    {
+      tree ident = get_identifier (attribute);
+      fn_attributes = tree_cons (ident, NULL_TREE, fn_attributes);
+    }
+  }
+
+  for (auto attr: string_attributes)
+  {
+    gcc_jit_fn_attribute& name = std::get<0>(attr);
+    std::string& value = std::get<1>(attr);
+    tree attribute_value = build_tree_list (NULL_TREE,
+	::build_string (value.length () + 1, value.c_str ()));
+    const char* attribute = fn_attribute_to_string (name);
+    tree ident = attribute ? get_identifier (attribute) : NULL;
+
+    if (ident)
+      fn_attributes = tree_cons (ident, attribute_value, fn_attributes);
+  }
+
+  for (auto attr: int_array_attributes)
+  {
+    gcc_jit_fn_attribute& name = std::get<0>(attr);
+    std::vector<int>& values = std::get<1>(attr);
+
+    const char* attribute = fn_attribute_to_string (name);
+    tree ident = attribute ? get_identifier (attribute) : NULL;
+
+    if (!ident)
+      continue;
+
+    tree tree_list = NULL_TREE;
+    tree *p_tree_list = &tree_list;
+    for (auto value : values)
+    {
+      tree int_value = build_int_cst (integer_type_node, value);
+      *p_tree_list = build_tree_list (NULL, int_value);
+      p_tree_list = &TREE_CHAIN (*p_tree_list);
+    }
+    fn_attributes = tree_cons (ident, tree_list, fn_attributes);
+  }
+
+  decl_attributes (&fndecl, fn_attributes, 0);
   function *func = new function (this, fndecl, kind);
   m_functions.safe_push (func);
   return func;
@@ -607,7 +715,9 @@ global_new_decl (location *loc,
 		 enum gcc_jit_global_kind kind,
 		 type *type,
 		 const char *name,
-		 enum global_var_flags flags)
+		 enum global_var_flags flags,
+		 const std::vector<std::pair<gcc_jit_variable_attribute,
+					     std::string>> &attributes)
 {
   gcc_assert (type);
   gcc_assert (name);
@@ -652,7 +762,30 @@ global_new_decl (location *loc,
   if (loc)
     set_tree_location (inner, loc);
 
+  set_variable_string_attribute (attributes, inner);
+
   return inner;
+}
+
+void
+playback::
+set_variable_string_attribute (
+  const std::vector<std::pair<gcc_jit_variable_attribute,
+			       std::string>> &string_attributes,
+  tree decl)
+{
+  tree var_attributes = NULL_TREE;
+  for (auto attr: string_attributes)
+  {
+    gcc_jit_variable_attribute& name = std::get<0>(attr);
+    std::string& value = std::get<1>(attr);
+    tree attribute_value = build_tree_list (NULL_TREE,
+	::build_string (value.length () + 1, value.c_str ()));
+    tree ident = get_identifier (variable_attribute_to_string (name));
+    if (ident)
+      var_attributes = tree_cons (ident, attribute_value, var_attributes);
+  }
+  decl_attributes (&decl, var_attributes, 0);
 }
 
 /* In use by new_global and new_global_initialized.  */
@@ -674,10 +807,12 @@ new_global (location *loc,
 	    enum gcc_jit_global_kind kind,
 	    type *type,
 	    const char *name,
-	    enum global_var_flags flags)
+	    enum global_var_flags flags,
+	    const std::vector<std::pair<gcc_jit_variable_attribute,
+					std::string>> &attributes)
 {
   tree inner =
-    global_new_decl (loc, kind, type, name, flags);
+    global_new_decl (loc, kind, type, name, flags, attributes);
 
   return global_finalize_lvalue (inner);
 }
@@ -818,13 +953,15 @@ playback::context::
 new_global_initialized (location *loc,
 			enum gcc_jit_global_kind kind,
 			type *type,
-                        size_t element_size,
+			size_t element_size,
 			size_t initializer_num_elem,
 			const void *initializer,
 			const char *name,
-			enum global_var_flags flags)
+			enum global_var_flags flags,
+			const std::vector<std::pair<gcc_jit_variable_attribute,
+						    std::string>> &attributes)
 {
-  tree inner = global_new_decl (loc, kind, type, name, flags);
+  tree inner = global_new_decl (loc, kind, type, name, flags, attributes);
 
   vec<constructor_elt, va_gc> *constructor_elements = NULL;
 
@@ -976,6 +1113,16 @@ new_rvalue_from_const <void *> (type *type,
 
 playback::rvalue *
 playback::context::
+new_sizeof (type *type)
+{
+  tree inner = TYPE_SIZE_UNIT (type->as_tree ());
+  return new rvalue (this, inner);
+}
+
+/* Construct a playback::rvalue instance (wrapping a tree).  */
+
+playback::rvalue *
+playback::context::
 new_string_literal (const char *value)
 {
   /* Compare with c-family/c-common.cc: fix_string_type.  */
@@ -1024,8 +1171,9 @@ as_truth_value (tree expr, location *loc)
   if (loc)
     set_tree_location (typed_zero, loc);
 
+  tree type = TREE_TYPE (expr);
   expr = fold_build2_loc (UNKNOWN_LOCATION,
-    NE_EXPR, integer_type_node, expr, typed_zero);
+    NE_EXPR, type, expr, typed_zero);
   if (loc)
     set_tree_location (expr, loc);
 
@@ -1212,7 +1360,7 @@ playback::rvalue *
 playback::context::
 new_comparison (location *loc,
 		enum gcc_jit_comparison op,
-		rvalue *a, rvalue *b)
+		rvalue *a, rvalue *b, type *vec_result_type)
 {
   // FIXME: type-checking, or coercion?
   enum tree_code inner_op;
@@ -1251,10 +1399,27 @@ new_comparison (location *loc,
   tree node_b = b->as_tree ();
   node_b = fold_const_var (node_b);
 
-  tree inner_expr = build2 (inner_op,
-			    boolean_type_node,
-			    node_a,
-			    node_b);
+  tree inner_expr;
+  tree a_type = TREE_TYPE (node_a);
+  if (VECTOR_TYPE_P (a_type))
+  {
+    /* Build a vector comparison.  See build_vec_cmp in c-typeck.cc for
+       reference.  */
+    tree t_vec_result_type = vec_result_type->as_tree ();
+    tree zero_vec = build_zero_cst (t_vec_result_type);
+    tree minus_one_vec = build_minus_one_cst (t_vec_result_type);
+    tree cmp_type = truth_type_for (a_type);
+    tree cmp = build2 (inner_op, cmp_type, node_a, node_b);
+    inner_expr = build3 (VEC_COND_EXPR, t_vec_result_type, cmp, minus_one_vec,
+			 zero_vec);
+  }
+  else
+  {
+    inner_expr = build2 (inner_op,
+			 boolean_type_node,
+			 node_a,
+			 node_b);
+  }
 
   /* Try to fold.  */
   inner_expr = fold (inner_expr);
@@ -1438,11 +1603,11 @@ new_bitcast (location *loc,
   {
     active_playback_ctxt->add_error (loc,
       "bitcast with types of different sizes");
-    fprintf (stderr, "input expression (size: %ld):\n",
-      (long) tree_to_uhwi (expr_size));
+    fprintf (stderr, "input expression (size: " HOST_WIDE_INT_PRINT_DEC "):\n",
+	     tree_to_uhwi (expr_size));
     debug_tree (t_expr);
-    fprintf (stderr, "requested type (size: %ld):\n",
-      (long) tree_to_uhwi (type_size));
+    fprintf (stderr, "requested type (size: " HOST_WIDE_INT_PRINT_DEC "):\n",
+	     tree_to_uhwi (type_size));
     debug_tree (t_dst_type);
   }
   tree t_bitcast = build1 (VIEW_CONVERT_EXPR, t_dst_type, t_expr);
@@ -1646,7 +1811,7 @@ bool
 playback::lvalue::
 mark_addressable (location *loc)
 {
-  tree x = as_tree ();;
+  tree x = as_tree ();
 
   while (1)
     switch (TREE_CODE (x))
@@ -1794,7 +1959,9 @@ playback::lvalue *
 playback::function::
 new_local (location *loc,
 	   type *type,
-	   const char *name)
+	   const char *name,
+	   const std::vector<std::pair<gcc_jit_variable_attribute,
+				       std::string>> &attributes)
 {
   gcc_assert (type);
   gcc_assert (name);
@@ -1806,6 +1973,8 @@ new_local (location *loc,
   /* Prepend to BIND_EXPR_VARS: */
   DECL_CHAIN (inner) = BIND_EXPR_VARS (m_inner_bind_expr);
   BIND_EXPR_VARS (m_inner_bind_expr) = inner;
+
+  set_variable_string_attribute (attributes, inner);
 
   if (loc)
     set_tree_location (inner, loc);
@@ -1929,6 +2098,9 @@ postprocess ()
 
       current_function_decl = NULL;
     }
+    else
+      /* Add to cgraph to output aliases: */
+      rest_of_decl_compilation (m_inner_fndecl, true, 0);
 }
 
 /* Don't leak vec's internal buffer (in non-GC heap) when we are
@@ -2301,6 +2473,20 @@ block (function *func,
   m_label_expr = NULL;
 }
 
+// This is basically std::lock_guard but it can call the private lock/unlock
+// members of playback::context.
+struct playback::context::scoped_lock
+{
+  scoped_lock (context &ctx) : m_ctx (&ctx) { m_ctx->lock (); }
+  ~scoped_lock () { m_ctx->unlock (); }
+
+  context *m_ctx;
+
+  // Not movable or copyable.
+  scoped_lock (scoped_lock &&) = delete;
+  scoped_lock &operator= (scoped_lock &&) = delete;
+};
+
 /* Compile a playback::context:
 
    - Use the context's options to cconstruct command-line options, and
@@ -2352,15 +2538,12 @@ compile ()
   m_recording_ctxt->get_all_requested_dumps (&requested_dumps);
 
   /* Acquire the JIT mutex and set "this" as the active playback ctxt.  */
-  acquire_mutex ();
+  scoped_lock lock(*this);
 
   auto_string_vec fake_args;
   make_fake_args (&fake_args, ctxt_progname, &requested_dumps);
   if (errors_occurred ())
-    {
-      release_mutex ();
-      return;
-    }
+    return;
 
   /* This runs the compiler.  */
   toplev toplev (get_timer (), /* external_timer */
@@ -2387,10 +2570,7 @@ compile ()
      followup activities use timevars, which are global state.  */
 
   if (errors_occurred ())
-    {
-      release_mutex ();
-      return;
-    }
+    return;
 
   if (get_bool_option (GCC_JIT_BOOL_OPTION_DUMP_GENERATED_CODE))
     dump_generated_code ();
@@ -2402,8 +2582,6 @@ compile ()
      convert the .s file to the requested output format, and copy it to a
      given file (playback::compile_to_file).  */
   postprocess (ctxt_progname);
-
-  release_mutex ();
 }
 
 /* Implementation of class gcc::jit::playback::compile_to_memory,
@@ -2661,18 +2839,18 @@ playback::compile_to_file::copy_file (const char *src_path,
 /* This mutex guards gcc::jit::recording::context::compile, so that only
    one thread can be accessing the bulk of GCC's state at once.  */
 
-static pthread_mutex_t jit_mutex = PTHREAD_MUTEX_INITIALIZER;
+static std::mutex jit_mutex;
 
 /* Acquire jit_mutex and set "this" as the active playback ctxt.  */
 
 void
-playback::context::acquire_mutex ()
+playback::context::lock ()
 {
   auto_timevar tv (get_timer (), TV_JIT_ACQUIRING_MUTEX);
 
   /* Acquire the big GCC mutex. */
   JIT_LOG_SCOPE (get_logger ());
-  pthread_mutex_lock (&jit_mutex);
+  jit_mutex.lock ();
   gcc_assert (active_playback_ctxt == NULL);
   active_playback_ctxt = this;
 }
@@ -2680,13 +2858,13 @@ playback::context::acquire_mutex ()
 /* Release jit_mutex and clear the active playback ctxt.  */
 
 void
-playback::context::release_mutex ()
+playback::context::unlock ()
 {
   /* Release the big GCC mutex. */
   JIT_LOG_SCOPE (get_logger ());
   gcc_assert (active_playback_ctxt == this);
   active_playback_ctxt = NULL;
-  pthread_mutex_unlock (&jit_mutex);
+  jit_mutex.unlock ();
 }
 
 /* Callback used by gcc::jit::playback::context::make_fake_args when
@@ -3000,7 +3178,7 @@ invoke_driver (const char *ctxt_progname,
   ADD_ARG ("-fno-use-linker-plugin");
 
 #if defined (DARWIN_X86) || defined (DARWIN_PPC)
-  /* OS X's linker defaults to treating undefined symbols as errors.
+  /* macOS's linker defaults to treating undefined symbols as errors.
      If the context has any imported functions or globals they will be
      undefined until the .so is dynamically-linked into the process.
      Ensure that the driver passes in "-undefined dynamic_lookup" to the
@@ -3341,7 +3519,7 @@ void
 playback::context::
 init_types ()
 {
-  /* See lto_init() in lto-lang.cc or void visit (TypeBasic *t) in D's types.cc 
+  /* See lto_init () in lto-lang.cc or void visit (TypeBasic *t) in D's types.cc
      for reference. If TYPE_NAME is not set, debug info will not contain types */
 #define NAME_TYPE(t,n) \
 if (t) \
@@ -3369,7 +3547,7 @@ if (t) \
   NAME_TYPE (complex_float_type_node, "complex float");
   NAME_TYPE (complex_double_type_node, "complex double");
   NAME_TYPE (complex_long_double_type_node, "complex long double");
-  
+
   m_const_char_ptr = build_pointer_type(
     build_qualified_type (char_type_node, TYPE_QUAL_CONST));
 
@@ -3488,8 +3666,8 @@ add_error_va (location *loc, const char *fmt, va_list ap)
 
 void
 playback::context::
-add_diagnostic (struct diagnostic_context *diag_context,
-		struct diagnostic_info *diagnostic)
+add_diagnostic (diagnostic_context *diag_context,
+		const diagnostic_info &diagnostic)
 {
   /* At this point the text has been formatted into the pretty-printer's
      output buffer.  */
@@ -3502,7 +3680,7 @@ add_diagnostic (struct diagnostic_context *diag_context,
      from the file/line/column since any playback location instances
      may have been garbage-collected away by now, so instead we create
      another recording::location directly.  */
-  location_t gcc_loc = diagnostic_location (diagnostic);
+  location_t gcc_loc = diagnostic_location (&diagnostic);
   recording::location *rec_loc = NULL;
   if (gcc_loc)
     {

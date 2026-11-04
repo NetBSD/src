@@ -1,6 +1,6 @@
 /* Internal to rs6000 type, variable, and function declarations and
    definitons shared between the various rs6000 source files.
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
    This file is part of GCC.
@@ -22,6 +22,8 @@
 #ifndef GCC_RS6000_INTERNAL_H
 #define GCC_RS6000_INTERNAL_H
 
+#include "rs6000-builtins.h"
+
 /* Structure used to define the rs6000 stack */
 typedef struct rs6000_stack {
   int reload_completed;		/* stack info won't change from here on */
@@ -32,13 +34,14 @@ typedef struct rs6000_stack {
   int cr_save_p;		/* true if the CR reg needs to be saved */
   unsigned int vrsave_mask;	/* mask of vec registers to save */
   int push_p;			/* true if we need to allocate stack space */
-  int calls_p;			/* true if the function makes any calls */
+  int calls_p;			/* true if there are non-sibling calls */
   int world_save_p;		/* true if we're saving *everything*:
 				   r13-r31, cr, f14-f31, vrsave, v20-v31  */
   enum rs6000_abi abi;		/* which ABI to use */
   int gp_save_offset;		/* offset to save GP regs from initial SP */
   int fp_save_offset;		/* offset to save FP regs from initial SP */
   int altivec_save_offset;	/* offset to save AltiVec regs from initial SP */
+  int rop_hash_save_offset;	/* offset to save ROP hash from initial SP */
   int lr_save_offset;		/* offset to save LR from initial SP */
   int cr_save_offset;		/* offset to save CR from initial SP */
   int vrsave_save_offset;	/* offset to save VRSAVE from initial SP */
@@ -53,6 +56,7 @@ typedef struct rs6000_stack {
   int gp_size;			/* size of saved GP registers */
   int fp_size;			/* size of saved FP registers */
   int altivec_size;		/* size of saved AltiVec registers */
+  int rop_hash_size;		/* size of ROP hash slot */
   int cr_size;			/* size to hold CR if not in fixed area */
   int vrsave_size;		/* size to hold VRSAVE */
   int altivec_padding_size;	/* size of altivec alignment padding */
@@ -74,8 +78,8 @@ extern const char *rs6000_machine;
 #define ALTIVEC_REG_BIT(REGNO) (0x80000000 >> ((REGNO) - FIRST_ALTIVEC_REGNO))
 
 
-/* Declare functions in rs6000-logue.c or called in rs6000.c
-   from rs6000-logue.c  */
+/* Declare functions in rs6000-logue.cc or called in rs6000.cc
+   from rs6000-logue.cc  */
 
 extern int uses_TOC (void);
 extern bool rs6000_global_entry_point_needed_p (void);
@@ -109,7 +113,7 @@ quad_address_offset_p (HOST_WIDE_INT offset)
   return (IN_RANGE (offset, -32768, 32767) && ((offset) & 0xf) == 0);
 }
 
-/* Mach-O (Darwin) support for longcalls, emitted from  rs6000-logue.c.  */
+/* Mach-O (Darwin) support for longcalls, emitted from  rs6000-logue.cc.  */
 
 #if TARGET_MACHO
 
@@ -123,8 +127,8 @@ extern vec<branch_island, va_gc> *branch_islands;
 
 #endif
 
-/* Declare functions in rs6000-call.c or called in rs6000.c
-   from rs6000-call.c  */
+/* Declare functions in rs6000-call.cc or called in rs6000.cc
+   from rs6000-call.cc  */
 extern int rs6000_darwin64_struct_check_p (machine_mode mode, const_tree type);
 extern bool rs6000_discover_homogeneous_aggregate (machine_mode mode,
 						   const_tree type,
@@ -138,6 +142,7 @@ extern void rs6000_output_mi_thunk (FILE *file,
 extern bool rs6000_output_addr_const_extra (FILE *file, rtx x);
 extern bool rs6000_gimple_fold_builtin (gimple_stmt_iterator *gsi);
 extern tree rs6000_build_builtin_va_list (void);
+extern void rs6000_invalid_builtin (rs6000_gen_builtins fncode);
 extern void rs6000_va_start (tree valist, rtx nextarg);
 extern tree rs6000_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
 				    gimple_seq *post_p);
@@ -178,9 +183,6 @@ extern tree rs6000_fold_builtin (tree fndecl ATTRIBUTE_UNUSED,
 			         tree *args ATTRIBUTE_UNUSED,
 			         bool ignore ATTRIBUTE_UNUSED);
 
-#if TARGET_ELF
-extern bool rs6000_passes_ieee128;
-#endif
 extern bool rs6000_passes_float;
 extern bool rs6000_passes_long_double;
 extern bool rs6000_passes_vector;

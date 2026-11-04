@@ -1,6 +1,6 @@
 // Random number extensions -*- C++ -*-
 
-// Copyright (C) 2012-2022 Free Software Foundation, Inc.
+// Copyright (C) 2012-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -31,6 +31,8 @@
 #define _EXT_RANDOM_TCC 1
 
 #pragma GCC system_header
+
+#include <bits/requires_hosted.h> // GNU extensions are currently omitted
 
 namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 {
@@ -738,7 +740,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      __px(__p.nu(), __p.sigma()), __py(result_type(0), __p.sigma());
 	    result_type __x = this->_M_ndx(__px, __urng);
 	    result_type __y = this->_M_ndy(__py, __urng);
-#if _GLIBCXX_USE_C99_MATH_TR1
+#if _GLIBCXX_USE_C99_MATH_FUNCS
 	    *__f++ = std::hypot(__x, __y);
 #else
 	    *__f++ = std::sqrt(__x * __x + __y * __y);
@@ -1285,7 +1287,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  }
 
 	result_type __res = std::acos(__f);
-#if _GLIBCXX_USE_C99_MATH_TR1
+#if _GLIBCXX_USE_C99_MATH_FUNCS
 	__res = std::copysign(__res, __aurng() - result_type(0.5));
 #else
 	if (__aurng() < result_type(0.5))
@@ -1621,7 +1623,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    }
 	  while (__sq == _RealType(0) || __sq > _RealType(1));
 
-#if _GLIBCXX_USE_C99_MATH_TR1
+#if _GLIBCXX_USE_C99_MATH_FUNCS
 	  // Yes, we do not just use sqrt(__sq) because hypot() is more
 	  // accurate.
 	  auto __norm = std::hypot(__ret[0], __ret[1]);

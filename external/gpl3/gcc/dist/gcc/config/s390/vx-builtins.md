@@ -1,5 +1,5 @@
 ;;- Instruction patterns for the System z vector facility builtins.
-;;  Copyright (C) 2015-2022 Free Software Foundation, Inc.
+;;  Copyright (C) 2015-2024 Free Software Foundation, Inc.
 ;;  Contributed by Andreas Krebbel (Andreas.Krebbel@de.ibm.com)
 
 ;; This file is part of GCC.
@@ -145,7 +145,7 @@
   DONE;
 })
 
-(define_expand "vec_splats<mode>"
+(define_expand "@vec_splats<mode>"
   [(set (match_operand:VEC_HW                          0 "register_operand" "")
 	(vec_duplicate:VEC_HW (match_operand:<non_vec> 1 "general_operand"  "")))]
   "TARGET_VX")
@@ -424,7 +424,7 @@
 
 
 ; Replicate from vector element
-(define_expand "vec_splat<mode>"
+(define_expand "@vec_splat<mode>"
   [(set (match_operand:V_HW                      0 "register_operand"  "")
 	(vec_duplicate:V_HW (vec_select:<non_vec>
 			     (match_operand:V_HW 1 "register_operand"  "")
@@ -440,12 +440,13 @@
 (define_insn "vec_scatter_element<V_HW_4:mode>_DI"
   [(set (mem:<non_vec>
 	 (plus:DI (zero_extend:DI
-		   (unspec:SI [(match_operand:V4SI 1 "register_operand"   "v")
-			       (match_operand:QI   3 "const_mask_operand" "C")]
-			      UNSPEC_VEC_EXTRACT))
-		  (match_operand:SI                2 "address_operand"   "ZQ")))
-	(unspec:<non_vec> [(match_operand:V_HW_4          0 "register_operand"   "v")
-			   (match_dup 3)] UNSPEC_VEC_EXTRACT))]
+		   (vec_select:SI
+		    (match_operand:V4SI           1 "register_operand"   "v")
+		    (parallel [(match_operand:QI  3 "const_mask_operand" "C")])))
+	  (match_operand:SI                       2 "address_operand"    "ZQ")))
+	(vec_select:<non_vec>
+	 (match_operand:V_HW_4                    0 "register_operand"   "v")
+	 (parallel [(match_dup 3)])))]
   "TARGET_VX && TARGET_64BIT && UINTVAL (operands[3]) < 4"
   "vscef\t%v0,%O2(%v1,%R2),%3"
   [(set_attr "op_type" "VRV")])
@@ -455,12 +456,13 @@
 (define_insn "vec_scatter_element<V_HW_2:mode>_SI"
   [(set (mem:<non_vec>
 	 (plus:SI (subreg:SI
-		   (unspec:<non_vec_int> [(match_operand:V_HW_2 1 "register_operand"   "v")
-					  (match_operand:QI     3 "const_mask_operand" "C")]
-					 UNSPEC_VEC_EXTRACT) 4)
-		  (match_operand:SI                             2 "address_operand"   "ZQ")))
-	(unspec:<non_vec> [(match_operand:V_HW_2                0 "register_operand"   "v")
-			   (match_dup 3)] UNSPEC_VEC_EXTRACT))]
+		   (vec_select:<non_vec_int>
+		    (match_operand:<TOINTVEC>     1 "register_operand"   "v")
+		    (parallel [(match_operand:QI  3 "const_mask_operand" "C")])) 4)
+	  (match_operand:SI                       2 "address_operand"    "ZQ")))
+    (vec_select:<non_vec>
+     (match_operand:V_HW_2                        0 "register_operand"   "v")
+     (parallel [(match_dup 3)])))]
   "TARGET_VX && !TARGET_64BIT && UINTVAL (operands[3]) < GET_MODE_NUNITS (<V_HW_2:MODE>mode)"
   "vsce<V_HW_2:bhfgq>\t%v0,%O2(%v1,%R2),%3"
   [(set_attr "op_type" "VRV")])
@@ -469,13 +471,14 @@
 ; vscef, vsceg
 (define_insn "vec_scatter_element<mode>_<non_vec_int>"
   [(set (mem:<non_vec>
-	 (plus:<non_vec_int> (unspec:<non_vec_int>
-			      [(match_operand:<TOINTVEC> 1 "register_operand"   "v")
-			       (match_operand:QI         3 "const_mask_operand" "C")]
-			      UNSPEC_VEC_EXTRACT)
-			     (match_operand:DI           2 "address_operand"   "ZQ")))
-	(unspec:<non_vec> [(match_operand:V_HW_32_64     0 "register_operand"   "v")
-			   (match_dup 3)] UNSPEC_VEC_EXTRACT))]
+	 (plus:<non_vec_int>
+	  (vec_select:<non_vec_int>
+	   (match_operand:<TOINTVEC>      1 "register_operand"   "v")
+	    (parallel [(match_operand:QI  3 "const_mask_operand" "C")]))
+	  (match_operand:DI               2 "address_operand"   "ZQ")))
+	(vec_select:<non_vec>
+	 (match_operand:V_HW_32_64        0 "register_operand"   "v")
+	 (parallel [(match_dup 3)])))]
   "TARGET_VX && UINTVAL (operands[3]) < GET_MODE_NUNITS (<V_HW_32_64:MODE>mode)"
   "vsce<bhfgq>\t%v0,%O2(%v1,%R2),%3"
   [(set_attr "op_type" "VRV")])
@@ -525,6 +528,17 @@
 		      (match_operand:V_HW_FT 2 "register_operand"  "v"))))]
   "TARGET_VX"
   "vsel\t%v0,%1,%2,%3"
+  [(set_attr "op_type" "VRR")])
+
+(define_insn "*vsel<mode>_swapped"
+  [(set (match_operand:V_HW_FT               0 "register_operand" "=v")
+	(ior:V_HW_FT
+	 (and:V_HW_FT (not:V_HW_FT (match_operand:V_HW_FT 3 "register_operand"  "v"))
+		      (match_operand:V_HW_FT 1 "register_operand"  "v"))
+	 (and:V_HW_FT (match_dup 3)
+		      (match_operand:V_HW_FT 2 "register_operand"  "v"))))]
+  "TARGET_VX"
+  "vsel\t%v0,%2,%1,%3"
   [(set_attr "op_type" "VRR")])
 
 
@@ -1889,9 +1903,11 @@
 		      (const_int VEC_RND_CURRENT)]
 		     UNSPEC_VEC_VFLR))
    (set (match_operand:SF 1 "memory_operand" "")
-	(unspec:SF [(match_dup 2) (const_int 0)] UNSPEC_VEC_EXTRACT))
+	(vec_select:SF (match_dup 2)
+	 (parallel [(const_int 0)])))
    (set (match_dup 3)
-	(unspec:SF [(match_dup 2) (const_int 2)] UNSPEC_VEC_EXTRACT))]
+	(vec_select:SF (match_dup 2)
+	 (parallel [(const_int 2)])))]
   "TARGET_VX"
 {
   operands[2] = gen_reg_rtx (V4SFmode);
@@ -2147,87 +2163,6 @@
   "<vw>fmax<sdx>b\t%v0,%v1,%v2,%b3"
   [(set_attr "op_type" "VRR")])
 
-; The element reversal builtins introduced with z15 have been made
-; available also for older CPUs down to z13.
-(define_expand "eltswap<mode>"
-  [(set (match_operand:VEC_HW                 0 "nonimmediate_operand" "")
-	(unspec:VEC_HW [(match_operand:VEC_HW 1 "nonimmediate_operand" "")]
-		       UNSPEC_VEC_ELTSWAP))]
-  "TARGET_VX")
-
-; The byte element reversal is implemented as 128 bit byte swap.
-; Alternatively this could be emitted as bswap:V1TI but the required
-; subregs appear to confuse combine.
-(define_insn "*eltswapv16qi"
-  [(set (match_operand:V16QI                0 "nonimmediate_operand" "=v,v,R")
-	(unspec:V16QI [(match_operand:V16QI 1 "nonimmediate_operand"  "v,R,v")]
-		      UNSPEC_VEC_ELTSWAP))]
-  "TARGET_VXE2"
-  "@
-   #
-   vlbrq\t%v0,%v1
-   vstbrq\t%v1,%v0"
-  [(set_attr "op_type" "*,VRX,VRX")])
-
-; vlerh, vlerf, vlerg, vsterh, vsterf, vsterg
-(define_insn "*eltswap<mode>"
-  [(set (match_operand:V_HW_HSD                   0 "nonimmediate_operand" "=v,v,R")
-	(unspec:V_HW_HSD [(match_operand:V_HW_HSD 1 "nonimmediate_operand"  "v,R,v")]
-			 UNSPEC_VEC_ELTSWAP))]
-  "TARGET_VXE2"
-  "@
-   #
-   vler<bhfgq>\t%v0,%v1
-   vster<bhfgq>\t%v1,%v0"
-  [(set_attr "op_type" "*,VRX,VRX")])
-
-; z15 has instructions for doing element reversal from mem to reg
-; or the other way around.  For reg to reg or on pre z15 machines
-; we have to emulate it with vector permute.
-(define_insn_and_split "*eltswap<mode>_emu"
-  [(set (match_operand:VEC_HW                 0 "nonimmediate_operand" "=vR")
-	(unspec:VEC_HW [(match_operand:VEC_HW 1 "nonimmediate_operand" "vR")]
-		       UNSPEC_VEC_ELTSWAP))]
-  "TARGET_VX && can_create_pseudo_p ()"
-  "#"
-  "&& ((!memory_operand (operands[0], <MODE>mode)
-        && !memory_operand (operands[1], <MODE>mode))
-       || !TARGET_VXE2)"
-  [(set (match_dup 3)
-	(unspec:V16QI [(match_dup 4)
-		       (match_dup 4)
-		       (match_dup 2)]
-		      UNSPEC_VEC_PERM))
-   (set (match_dup 0) (subreg:VEC_HW (match_dup 3) 0))]
-{
-  static char p[4][16] =
-    { { 15, 14, 13, 12, 11, 10, 9,  8,  7,  6,  5,  4,  3,  2,  1,  0 },   /* Q */
-      { 14, 15, 12, 13, 10, 11, 8,  9,  6,  7,  4,  5,  2,  3,  0,  1 },   /* H */
-      { 12, 13, 14, 15, 8,  9,  10, 11, 4,  5,  6,  7,  0,  1,  2,  3 },   /* S */
-      { 8,  9,  10, 11, 12, 13, 14, 15, 0,  1,  2,  3,  4,  5,  6,  7 } }; /* D */
-  char *perm;
-  rtx perm_rtx[16], constv;
-
-  switch (GET_MODE_SIZE (GET_MODE_INNER (<MODE>mode)))
-    {
-    case 1: perm = p[0]; break;
-    case 2: perm = p[1]; break;
-    case 4: perm = p[2]; break;
-    case 8: perm = p[3]; break;
-    default: gcc_unreachable ();
-    }
-
-  for (int i = 0; i < 16; i++)
-    perm_rtx[i] = GEN_INT (perm[i]);
-
-  operands[1] = force_reg (<MODE>mode, operands[1]);
-  operands[2] = gen_reg_rtx (V16QImode);
-  operands[3] = gen_reg_rtx (V16QImode);
-  operands[4] = simplify_gen_subreg (V16QImode, operands[1], <MODE>mode, 0);
-  constv = force_const_mem (V16QImode, gen_rtx_CONST_VECTOR (V16QImode, gen_rtvec_v (16, perm_rtx)));
-  emit_move_insn (operands[2], constv);
-})
-
 ; vec_insert (__builtin_bswap32 (*a), b, 1)        set-element-bswap-2.c
 ; b[1] = __builtin_bswap32 (*a)                    set-element-bswap-3.c
 ; vlebrh, vlebrf, vlebrg
@@ -2259,10 +2194,10 @@
 ; *a = vec_revb (b)[1];                            get-element-bswap-4.c
 ; vstebrh, vstebrf, vstebrg
 (define_insn "*vec_extract_bswap_vec<mode>"
-  [(set (match_operand:<non_vec>                                    0 "memory_operand"   "=R")
-	(unspec:<non_vec> [(bswap:V_HW_HSD (match_operand:V_HW_HSD  1 "register_operand"  "v"))
-			   (match_operand:SI                        2 "const_int_operand" "C")]
-			   UNSPEC_VEC_EXTRACT))]
+  [(set (match_operand:<non_vec>                  0 "memory_operand"   "=R")
+	(vec_select:<non_vec>
+	 (bswap:V_HW_HSD (match_operand:V_HW_HSD  1 "register_operand"  "v"))
+	 (parallel [(match_operand:SI             2 "const_int_operand" "C")])))]
   "TARGET_VXE2 && UINTVAL (operands[2]) < GET_MODE_NUNITS (<V_HW_HSD:MODE>mode)"
   "vstebr<bhfgq>\t%v1,%0,%2"
   [(set_attr "op_type" "VRX")])
@@ -2271,11 +2206,11 @@
 ; *a = __builtin_bswap32 (b[1]);                   get-element-bswap-2.c
 ; vstebrh, vstebrf, vstebrg
 (define_insn "*vec_extract_bswap_elem<mode>"
-  [(set (match_operand:<non_vec>                     0 "memory_operand"   "=R")
+  [(set (match_operand:<non_vec>                  0 "memory_operand"   "=R")
 	(bswap:<non_vec>
-	 (unspec:<non_vec> [(match_operand:V_HW_HSD  1 "register_operand"  "v")
-			    (match_operand:SI        2 "const_int_operand" "C")]
-			   UNSPEC_VEC_EXTRACT)))]
+	 (vec_select:<non_vec>
+	  (match_operand:V_HW_HSD                 1 "register_operand"  "v")
+	  (parallel [(match_operand:SI            2 "const_int_operand" "C")]))))]
   "TARGET_VXE2 && UINTVAL (operands[2]) < GET_MODE_NUNITS (<V_HW_HSD:MODE>mode)"
   "vstebr<bhfgq>\t%v1,%0,%2"
   [(set_attr "op_type" "VRX")])

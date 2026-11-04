@@ -1,5 +1,5 @@
 /* Generic implementation of the SPREAD intrinsic
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Paul Brook <paul@nowt.org>
 
 This file is part of the GNU Fortran runtime library (libgfortran).
@@ -54,6 +54,8 @@ spread_internal (gfc_array_char *ret, const gfc_array_char *source,
   size = GFC_DESCRIPTOR_SIZE(source);
 
   srank = GFC_DESCRIPTOR_RANK(source);
+
+  sstride[0] = 0; /* Avoid warnings if not initialized.  */
 
   rrank = srank + 1;
   if (rrank > GFC_MAX_DIMENSIONS)
@@ -320,7 +322,7 @@ spread (gfc_array_char *ret, const gfc_array_char *source,
 /* FIXME: This here is a hack, which will have to be removed when
    the array descriptor is reworked.  Currently, we don't store the
    kind value for the type, but only the size.  Because on targets with
-   __float128, we have sizeof(logn double) == sizeof(__float128),
+   _Float128, we have sizeof(long double) == sizeof(_Float128),
    we cannot discriminate here and have to fall back to the generic
    handling (which is suboptimal).  */
 #if !defined(GFC_REAL_16_IS_FLOAT128)
@@ -352,7 +354,7 @@ spread (gfc_array_char *ret, const gfc_array_char *source,
 /* FIXME: This here is a hack, which will have to be removed when
    the array descriptor is reworked.  Currently, we don't store the
    kind value for the type, but only the size.  Because on targets with
-   __float128, we have sizeof(logn double) == sizeof(__float128),
+   _Float128, we have sizeof(long double) == sizeof(_Float128),
    we cannot discriminate here and have to fall back to the generic
    handling (which is suboptimal).  */
 #if !defined(GFC_REAL_16_IS_FLOAT128)
@@ -524,7 +526,7 @@ spread_scalar (gfc_array_char *ret, const char *source,
 /* FIXME: This here is a hack, which will have to be removed when
    the array descriptor is reworked.  Currently, we don't store the
    kind value for the type, but only the size.  Because on targets with
-   __float128, we have sizeof(logn double) == sizeof(__float128),
+   _Float128, we have sizeof(long double) == sizeof(_Float128),
    we cannot discriminate here and have to fall back to the generic
    handling (which is suboptimal).  */
 #if !defined(GFC_REAL_16_IS_FLOAT128)
@@ -556,7 +558,7 @@ spread_scalar (gfc_array_char *ret, const char *source,
 /* FIXME: This here is a hack, which will have to be removed when
    the array descriptor is reworked.  Currently, we don't store the
    kind value for the type, but only the size.  Because on targets with
-   __float128, we have sizeof(logn double) == sizeof(__float128),
+   _Float128, we have sizeof(long double) == sizeof(_Float128),
    we cannot discriminate here and have to fall back to the generic
    handling (which is suboptimal).  */
 #if !defined(GFC_REAL_16_IS_FLOAT128)

@@ -1,5 +1,5 @@
 /* Base configuration file for all NetBSD targets.
-   Copyright (C) 1997-2022 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -63,7 +63,7 @@ along with GCC; see the file COPYING3.  If not see
  * XXX figure out a better way to do this
  */
 #undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include/gcc-12"
+#define GCC_INCLUDE_DIR "/usr/include/gcc-14"
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
@@ -229,3 +229,6 @@ along with GCC; see the file COPYING3.  If not see
   LD_STATIC_OPTION " --whole-archive -llsan --no-whole-archive " \
   LD_DYNAMIC_OPTION "}}%{!static-liblsan:-llsan}"
 #endif
+
+/* NetBSD CTF doesn't handle DWARF 5 yet.  */
+#define DWARF_VERSION_DEFAULT 4

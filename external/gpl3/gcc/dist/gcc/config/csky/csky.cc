@@ -1,5 +1,5 @@
 /* GCC backend functions for C-SKY targets.
-   Copyright (C) 2018-2022 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of GCC.
@@ -172,7 +172,7 @@ enum reg_class regno_reg_class[FIRST_PSEUDO_REGISTER] =
 /* Arrays that map GCC register numbers to debugger register numbers,
    '-1' means that is INVALID_REGNUM.
    TODO: which rules according to here ?  */
-const int csky_dbx_regno[FIRST_PSEUDO_REGISTER] =
+const int csky_debugger_regno[FIRST_PSEUDO_REGISTER] =
 {
   0,  1,  2,  3,  4,  5,  6,  7,
   8,  9,  10, 11, 12, 13, 14, 15,
@@ -211,16 +211,15 @@ const int csky_dbx_regno[FIRST_PSEUDO_REGISTER] =
 /* Table of machine attributes.  */
 static tree csky_handle_fndecl_attribute (tree *, tree, tree, int, bool *);
 static tree csky_handle_isr_attribute (tree *, tree, tree, int, bool *);
-static const struct attribute_spec csky_attribute_table[] =
+TARGET_GNU_ATTRIBUTES (csky_attribute_table,
 {
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
        affects_type_identity, handler, exclude } */
   { "naked",	 0, 0, true,  false, false, false, csky_handle_fndecl_attribute, NULL },
   /* Interrupt Service Routines have special prologue and epilogue requirements.  */
   { "interrupt", 0, 1, false, false, false, false, csky_handle_isr_attribute,	 NULL },
-  { "isr",	 0, 1, false, false, false, false, csky_handle_isr_attribute,	 NULL },
-  { NULL,	 0, 0, false, false, false, false, NULL,			 NULL }
-};
+  { "isr",	 0, 1, false, false, false, false, csky_handle_isr_attribute,	 NULL }
+});
 
 /* A C structure for machine-specific, per-function data.
    This is added to the cfun structure.  */
@@ -395,6 +394,11 @@ csky_cpu_cpp_builtins (cpp_reader *pfile)
 	{
 	  builtin_define ("__csky_hard_float_abi__");
 	  builtin_define ("__CSKY_HARD_FLOAT_ABI__");
+	}
+      else
+	{
+	  builtin_define ("__csky_soft_float_abi__");
+	  builtin_define ("__CSKY_SOFT_FLOAT_ABI__");
 	}
       if (TARGET_SINGLE_FPU)
 	{
@@ -2086,7 +2090,9 @@ csky_setup_incoming_varargs (cumulative_args_t pcum_v,
 
   cfun->machine->uses_anonymous_args = 1;
   local_cum = *pcum;
-  csky_function_arg_advance (local_cum_v, arg);
+  if (!TYPE_NO_NAMED_ARGS_STDARG_P (TREE_TYPE (current_function_decl))
+      || arg.type != NULL_TREE)
+    csky_function_arg_advance (local_cum_v, arg);
   regs_to_push = CSKY_NPARM_REGS - local_cum.reg;
   if (regs_to_push)
     *pretend_size  = regs_to_push * UNITS_PER_WORD;
@@ -3180,7 +3186,8 @@ csky_legitimate_index_p (machine_mode mode, rtx index, int strict_p)
    be recognized.  */
 
 static bool
-csky_legitimate_address_p (machine_mode mode, rtx addr, bool strict_p)
+csky_legitimate_address_p (machine_mode mode, rtx addr, bool strict_p,
+			   code_helper = ERROR_MARK)
 {
   enum rtx_code code = GET_CODE (addr);
 
@@ -6342,9 +6349,7 @@ csky_emit_compare_float (enum rtx_code code, rtx op0, rtx op1)
     case GT:
     case LT:
     case LE:
-      if (op1 == CONST0_RTX (mode) && (CSKY_ISA_FEATURE_GET(fpv2_sf)
-				       || CSKY_ISA_FEATURE_GET(fpv2_df)
-				       || CSKY_ISA_FEATURE_GET(fpv2_divd)))
+      if (op1 == CONST0_RTX (mode) && TARGET_SUPPORT_FPV2)
 	op1 = force_reg (mode, op1);
       break;
     case ORDERED:
@@ -6486,8 +6491,7 @@ csky_handle_isr_attribute (tree *node, tree name, tree args, int flags,
     }
   else
     {
-      if (TREE_CODE (*node) == FUNCTION_TYPE
-	  || TREE_CODE (*node) == METHOD_TYPE)
+      if (FUNC_OR_METHOD_TYPE_P (*node))
 	{
 	  if (csky_isr_value (args) == CSKY_FT_UNKNOWN)
 	    {
@@ -6496,8 +6500,7 @@ csky_handle_isr_attribute (tree *node, tree name, tree args, int flags,
 	    }
 	}
       else if (TREE_CODE (*node) == POINTER_TYPE
-	       && (TREE_CODE (TREE_TYPE (*node)) == FUNCTION_TYPE
-		   || TREE_CODE (TREE_TYPE (*node)) == METHOD_TYPE)
+	       && FUNC_OR_METHOD_TYPE_P (TREE_TYPE (*node))
 	       && csky_isr_value (args) != CSKY_FT_UNKNOWN)
 	{
 	  *node = build_variant_type_copy (*node);
@@ -7302,7 +7305,7 @@ csky_init_cumulative_args (CUMULATIVE_ARGS *pcum, tree fntype,
 void
 csky_init_builtins (void)
 {
-  /* Inint fp16.  */
+  /* Init fp16.  */
   static tree csky_floatHF_type_node = make_node (REAL_TYPE);
   TYPE_PRECISION (csky_floatHF_type_node) = GET_MODE_PRECISION (HFmode);
   layout_type (csky_floatHF_type_node);
@@ -7315,10 +7318,10 @@ csky_init_builtins (void)
 static const char *
 csky_mangle_type (const_tree type)
 {
-  if (TYPE_NAME (type) && TREE_CODE (TYPE_NAME (type)) == TYPE_DECL
-      && DECL_NAME (TYPE_NAME (type))
-      && !strcmp (IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (type))), "__fp16"))
-    return "__fp16";
+  if (SCALAR_FLOAT_TYPE_P (type)
+      && TYPE_PRECISION (type) == 16
+      && TYPE_MAIN_VARIANT (type) != float16_type_node)
+    return "Dh";
 
   /* Use the default mangling.  */
   return NULL;

@@ -1,6 +1,6 @@
 /* An experimental state machine, for tracking exposure of sensitive
    data (e.g. through logging).
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -31,6 +31,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "diagnostic-path.h"
 #include "diagnostic-metadata.h"
 #include "function.h"
+#include "json.h"
 #include "analyzer/analyzer.h"
 #include "diagnostic-event-id.h"
 #include "analyzer/analyzer-logging.h"
@@ -57,17 +58,7 @@ public:
 		const supernode *node,
 		const gimple *stmt) const FINAL OVERRIDE;
 
-  void on_condition (sm_context *sm_ctxt,
-		     const supernode *node,
-		     const gimple *stmt,
-		     tree lhs,
-		     enum tree_code op,
-		     tree rhs) const FINAL OVERRIDE;
-
   bool can_purge_p (state_t s) const FINAL OVERRIDE;
-
-  /* Start state.  */
-  state_t m_start;
 
   /* State for "sensitive" data, such as a password.  */
   state_t m_sensitive;
@@ -100,13 +91,17 @@ public:
     return same_tree_p (m_arg, other.m_arg);
   }
 
+  int get_controlling_option () const FINAL OVERRIDE
+  {
+    return OPT_Wanalyzer_exposure_through_output_file;
+  }
+
   bool emit (rich_location *rich_loc) FINAL OVERRIDE
   {
     diagnostic_metadata m;
     /* CWE-532: Information Exposure Through Log Files */
     m.add_cwe (532);
-    return warning_meta (rich_loc, m,
-			 OPT_Wanalyzer_exposure_through_output_file,
+    return warning_meta (rich_loc, m, get_controlling_option (),
 			 "sensitive value %qE written to output file",
 			 m_arg);
   }
@@ -163,7 +158,6 @@ private:
 sensitive_state_machine::sensitive_state_machine (logger *logger)
 : state_machine ("sensitive", logger)
 {
-  m_start = add_state ("start");
   m_sensitive = add_state ("sensitive");
   m_stop = add_state ("stop");
 }
@@ -177,8 +171,12 @@ sensitive_state_machine::warn_for_any_exposure (sm_context *sm_ctxt,
 						const gimple *stmt,
 						tree arg) const
 {
-  sm_ctxt->warn_for_state (node, stmt, arg, m_sensitive,
-			   new exposure_through_output_file (*this, arg));
+  if (sm_ctxt->get_state (stmt, arg) == m_sensitive)
+    {
+      tree diag_arg = sm_ctxt->get_diagnostic_tree (arg);
+      sm_ctxt->warn (node, stmt, arg,
+		     new exposure_through_output_file (*this, diag_arg));
+    }
 }
 
 /* Implementation of state_machine::on_stmt vfunc for
@@ -219,17 +217,6 @@ sensitive_state_machine::on_stmt (sm_context *sm_ctxt,
 	// TODO: ...etc.  This is just a proof-of-concept at this point.
       }
   return false;
-}
-
-void
-sensitive_state_machine::on_condition (sm_context *sm_ctxt ATTRIBUTE_UNUSED,
-				       const supernode *node ATTRIBUTE_UNUSED,
-				       const gimple *stmt ATTRIBUTE_UNUSED,
-				       tree lhs ATTRIBUTE_UNUSED,
-				       enum tree_code op ATTRIBUTE_UNUSED,
-				       tree rhs ATTRIBUTE_UNUSED) const
-{
-  /* Empty.  */
 }
 
 bool

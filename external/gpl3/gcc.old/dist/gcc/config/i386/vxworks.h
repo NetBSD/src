@@ -1,5 +1,5 @@
 /* IA32 VxWorks target definitions for GNU compiler.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
    Updated by CodeSourcery, LLC.
 
 This file is part of GCC.
@@ -18,15 +18,41 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* VxWorks after 7 SR0600 use the ELF ABI and the system environment is llvm
+   based.  Earlier versions have GNU based environment components and use the
+   same ABI as Solaris 2.  */
+
+#if TARGET_VXWORKS7
+
+#undef VXWORKS_PERSONALITY
+#define VXWORKS_PERSONALITY "llvm"
+
+#else
+
 #undef ASM_OUTPUT_ALIGNED_BSS
 #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
   asm_output_aligned_bss (FILE, DECL, NAME, SIZE, ALIGN)
 
-/* VxWorks uses the same ABI as Solaris 2, so use i386/sol2.h version.  */
-
 #undef TARGET_SUBTARGET_DEFAULT
 #define TARGET_SUBTARGET_DEFAULT \
 	(MASK_80387 | MASK_IEEE_FP | MASK_FLOAT_RETURNS | MASK_VECT8_RETURNS)
+
+#undef PTRDIFF_TYPE
+#define PTRDIFF_TYPE (TARGET_LP64 ? "long int" : "int")
+
+#undef SIZE_TYPE
+#define SIZE_TYPE (TARGET_LP64 ? "long unsigned int" : "unsigned int")
+
+/* We cannot use PC-relative accesses for VxWorks PIC because there is no
+   fixed gap between segments.  */
+#undef ASM_PREFERRED_EH_DATA_FORMAT
+
+#if TARGET_64BIT_DEFAULT
+#undef VXWORKS_SYSCALL_LIBS_RTP
+#define VXWORKS_SYSCALL_LIBS_RTP "-lsyscall"
+#endif
+
+#endif
 
 /* Provide our target specific DBX_REGISTER_NUMBER.  VxWorks relies on
    the SVR4 numbering.  */
@@ -35,49 +61,62 @@ along with GCC; see the file COPYING3.  If not see
 #define DBX_REGISTER_NUMBER(n) \
   (TARGET_64BIT ? dbx64_register_map[n] : svr4_dbx_register_map[n])
 
-#undef PTRDIFF_TYPE
-#define PTRDIFF_TYPE (TARGET_LP64 ? "long int" : "int")
+/* CPU macro definitions, ordered to account for VxWorks 7 not
+   supporting CPUs older than PENTIUM4 since SR0650.  */
 
-#undef SIZE_TYPE
-#define SIZE_TYPE (TARGET_LP64 ? "long unsigned int" : "unsigned int")
-
-#if TARGET_64BIT_DEFAULT
-#undef VXWORKS_SYSCALL_LIBS_RTP
-#define VXWORKS_SYSCALL_LIBS_RTP "-lsyscall"
-#endif
+#define VX_CPUDEF(CPU) builtin_define(VX_CPU_PREFIX "CPU=" #CPU)
+#define VX_CPUVDEF(CPU) builtin_define(VX_CPU_PREFIX "CPU_VARIANT=" #CPU)
 
 #define TARGET_OS_CPP_BUILTINS()			\
   do							\
     {							\
       VXWORKS_OS_CPP_BUILTINS ();			\
-      if (TARGET_386)					\
-        builtin_define ("CPU=I80386");			\
-      else if (TARGET_486)				\
-        builtin_define ("CPU=I80486");			\
-      else if (TARGET_PENTIUM)				\
-        {						\
-          builtin_define ("CPU=PENTIUM");		\
-          builtin_define ("CPU_VARIANT=PENTIUM");	\
-        }						\
-      else if (TARGET_PENTIUMPRO)			\
-        {						\
-          builtin_define ("CPU=PENTIUM2");		\
-          builtin_define ("CPU_VARIANT=PENTIUMPRO");	\
-        }						\
-      else if (TARGET_PENTIUM4)				\
-        {						\
-          builtin_define ("CPU=PENTIUM4");		\
-          builtin_define ("CPU_VARIANT=PENTIUM4");	\
-        }						\
-      else if (TARGET_64BIT)				\
-          builtin_define ("CPU=X86_64");		\
+      if (TARGET_64BIT)					\
+	VX_CPUDEF (X86_64);				\
+      else if (TARGET_CPU_P (PENTIUM4))			\
+	{						\
+	  VX_CPUDEF (PENTIUM4);				\
+	  VX_CPUVDEF (PENTIUM4);			\
+	}						\
+      else if (TARGET_CPU_P (CORE2))			\
+	VX_CPUDEF (CORE2);				\
+      else if (TARGET_CPU_P (NEHALEM))			\
+	VX_CPUDEF (NEHALEM);				\
+      else if (TARGET_CPU_P (SANDYBRIDGE))		\
+	VX_CPUDEF (SANDYBRIDGE);			\
+      else if (TARGET_CPU_P (HASWELL))			\
+	VX_CPUDEF (HASWELL);				\
+      else if (TARGET_CPU_P (SILVERMONT))		\
+	VX_CPUDEF (SILVERMONT);				\
+      else if (TARGET_CPU_P (SKYLAKE) || TARGET_CPU_P (SKYLAKE_AVX512)) \
+	VX_CPUDEF (SKYLAKE);				\
+      else if (TARGET_CPU_P (GOLDMONT))			\
+	VX_CPUDEF (GOLDMONT);				\
+      else if (TARGET_VXWORKS7)				\
+	VX_CPUDEF (PENTIUM4);				\
+      else if (TARGET_CPU_P (I386))			\
+	VX_CPUDEF (I80386);				\
+      else if (TARGET_CPU_P (I486))			\
+	VX_CPUDEF (I80486);				\
+      else if (TARGET_CPU_P (PENTIUM))			\
+	{						\
+	  VX_CPUDEF (PENTIUM);				\
+	  VX_CPUVDEF (PENTIUM);				\
+	}						\
+      else if (TARGET_CPU_P (PENTIUMPRO))		\
+	{						\
+	  VX_CPUDEF (PENTIUM2);				\
+	  VX_CPUVDEF (PENTIUMPRO);			\
+	}						\
       else						\
-          builtin_define ("CPU=I80386");		\
-    } 							\
+	VX_CPUDEF (I80386);				\
+    }							\
   while (0)
 
 #undef  CPP_SPEC
 #define CPP_SPEC VXWORKS_ADDITIONAL_CPP_SPEC
+#undef  CC1_SPEC
+#define CC1_SPEC VXWORKS_CC1_SPEC
 #undef  LIB_SPEC
 #define LIB_SPEC VXWORKS_LIB_SPEC
 #undef  STARTFILE_SPEC
@@ -97,18 +136,11 @@ along with GCC; see the file COPYING3.  If not see
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE,LABELNO) VXWORKS_FUNCTION_PROFILER(FILE,LABELNO)
 
-/* We cannot use PC-relative accesses for VxWorks PIC because there is no
-   fixed gap between segments.  */
-#undef ASM_PREFERRED_EH_DATA_FORMAT
-
 /* Define this to be nonzero if static stack checking is supported.  */
 #define STACK_CHECK_STATIC_BUILTIN 1
 
 /* This platform supports the probing method of stack checking (RTP mode).
-   8K is reserved in the stack to propagate exceptions in case of overflow. 
+   8K is reserved in the stack to propagate exceptions in case of overflow.
    On 64-bit targets, we double that size.  */
-#if TARGET_64BIT_DEFAULT
-#define STACK_CHECK_PROTECT 16384
-#else
-#define STACK_CHECK_PROTECT 8192
-#endif
+
+#define STACK_CHECK_PROTECT (TARGET_64BIT_DEFAULT ? 16 * 1024 : 8 * 1024)

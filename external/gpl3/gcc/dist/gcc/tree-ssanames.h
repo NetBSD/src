@@ -1,5 +1,5 @@
 /* SSA name expresssons routines
-   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -45,16 +45,6 @@ struct GTY(()) ptr_info_def
   unsigned int misalign;
 };
 
-/* Value range information for SSA_NAMEs representing non-pointer variables.  */
-
-struct GTY ((variable_size)) range_info_def {
-  /* Minimum, maximum and nonzero bits.  */
-  TRAILING_WIDE_INT_ACCESSOR (min, ints, 0)
-  TRAILING_WIDE_INT_ACCESSOR (max, ints, 1)
-  TRAILING_WIDE_INT_ACCESSOR (nonzero_bits, ints, 2)
-  trailing_wide_ints <3> ints;
-};
-
 
 #define SSANAMES(fun) (fun)->gimple_df->ssa_names
 #define DEFAULT_DEFS(fun) (fun)->gimple_df->default_defs
@@ -67,10 +57,9 @@ struct GTY ((variable_size)) range_info_def {
     if (VAR)
 
 /* Sets the value range to SSA.  */
-extern void set_range_info (tree, enum value_range_kind, const wide_int_ref &,
-			    const wide_int_ref &);
-extern void set_range_info (tree, const value_range &);
-extern void set_nonzero_bits (tree, const wide_int_ref &);
+extern bool set_range_info (tree, const vrange &);
+extern void set_nonzero_bits (tree, const wide_int &);
+extern void set_bitmask (tree, const wide_int &value, const wide_int &mask);
 extern wide_int get_nonzero_bits (const_tree);
 extern bool ssa_name_has_boolean_range (tree);
 extern void init_ssanames (struct function *, int);
@@ -90,10 +79,10 @@ extern struct ptr_info_def *get_ptr_info (tree);
 extern void set_ptr_nonnull (tree);
 
 extern tree copy_ssa_name_fn (struct function *, tree, gimple *);
-extern void duplicate_ssa_name_ptr_info (tree, struct ptr_info_def *);
 extern tree duplicate_ssa_name_fn (struct function *, tree, gimple *);
-extern void duplicate_ssa_name_range_info (tree, enum value_range_kind,
-					   struct range_info_def *);
+extern void duplicate_ssa_name_ptr_info (tree, struct ptr_info_def *);
+extern void duplicate_ssa_name_range_info (tree dest, tree src);
+extern void maybe_duplicate_ssa_info_at_copy (tree dest, tree src);
 extern void reset_flow_sensitive_info (tree);
 extern void reset_flow_sensitive_info_in_bb (basic_block);
 extern void release_defs (gimple *);
@@ -104,7 +93,7 @@ extern void flush_ssaname_freelist (void);
 /* Return an SSA_NAME node for variable VAR defined in statement STMT
    in function cfun.  */
 
-static inline tree
+inline tree
 make_ssa_name (tree var, gimple *stmt = NULL)
 {
   return make_ssa_name_fn (cfun, var, stmt);
@@ -113,7 +102,7 @@ make_ssa_name (tree var, gimple *stmt = NULL)
 /* Return an SSA_NAME node using the template SSA name NAME defined in
    statement STMT in function cfun.  */
 
-static inline tree
+inline tree
 copy_ssa_name (tree var, gimple *stmt = NULL)
 {
   return copy_ssa_name_fn (cfun, var, stmt);
@@ -122,7 +111,7 @@ copy_ssa_name (tree var, gimple *stmt = NULL)
 /*  Creates a duplicate of a SSA name NAME tobe defined by statement STMT
     in function cfun.  */
 
-static inline tree
+inline tree
 duplicate_ssa_name (tree var, gimple *stmt)
 {
   return duplicate_ssa_name_fn (cfun, var, stmt);
@@ -130,7 +119,7 @@ duplicate_ssa_name (tree var, gimple *stmt)
 
 /* Release the SSA name NAME used in function cfun.  */
 
-static inline void
+inline void
 release_ssa_name (tree name)
 {
   release_ssa_name_fn (cfun, name);
@@ -139,7 +128,7 @@ release_ssa_name (tree name)
 /* Return an anonymous SSA_NAME node for type TYPE defined in statement STMT
    in function cfun.  Arrange so that it uses NAME in dumps.  */
 
-static inline tree
+inline tree
 make_temp_ssa_name (tree type, gimple *stmt, const char *name)
 {
   tree ssa_name;
@@ -149,5 +138,26 @@ make_temp_ssa_name (tree type, gimple *stmt, const char *name)
   return ssa_name;
 }
 
+/* A class which is used to save/restore the flow sensitive information.  */
+class flow_sensitive_info_storage
+{
+public:
+  void save (tree);
+  void save_and_clear (tree);
+  void restore (tree);
+  void clear_storage ();
+private:
+  /* 0 means there is nothing saved.
+     1 means non pointer is saved.
+     -1 means a pointer type is saved.
+     -2 means a pointer type is saved but no information was saved. */
+  int state = 0;
+  /* The range info for non pointers */
+  vrange_storage *range_info = nullptr;
+  /* Flow sensitive pointer information. */
+  unsigned int align = 0;
+  unsigned int misalign = 0;
+  bool null = true;
+};
 
 #endif /* GCC_TREE_SSANAMES_H */

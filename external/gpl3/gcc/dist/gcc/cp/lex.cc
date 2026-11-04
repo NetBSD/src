@@ -1,5 +1,5 @@
 /* Separate lexical analyzer for GNU C++.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
    Hacked by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GCC.
@@ -35,6 +35,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "langhooks.h"
 
 static int interface_strcmp (const char *);
+static void init_cp_traits (void);
 static void init_cp_pragma (void);
 
 static tree parse_strconst_pragma (const char *, int);
@@ -96,6 +97,19 @@ ovl_op_info_t ovl_op_info[2][OVL_OP_MAX] =
   };
 unsigned char ovl_op_mapping[MAX_TREE_CODES];
 unsigned char ovl_op_alternate[OVL_OP_MAX];
+
+/* The trait table, declared in cp-tree.h.  */
+const cp_trait cp_traits[] =
+{
+#define DEFTRAIT(TCC, CODE, NAME, ARITY) \
+  { NAME, CPTK_##CODE, ARITY, (TCC == tcc_type) },
+#include "cp-trait.def"
+#undef DEFTRAIT
+};
+/* The trait table cannot have more than 255 (addr_space_t) entries since
+   the index is retrieved through IDENTIFIER_CP_INDEX.  */
+static_assert(ARRAY_SIZE (cp_traits) <= 255,
+	      "cp_traits array cannot have more than 255 entries");
 
 /* Get the name of the kind of identifier T.  */
 
@@ -241,9 +255,9 @@ init_reswords (void)
   if (!flag_char8_t)
     mask |= D_CXX_CHAR8_T;
   if (flag_no_asm)
-    mask |= D_ASM | D_EXT;
+    mask |= D_ASM | D_EXT | D_EXT11;
   if (flag_no_gnu_keywords)
-    mask |= D_EXT;
+    mask |= D_EXT | D_EXT11;
 
   /* The Objective-C keywords are all context-dependent.  */
   mask |= D_OBJC;
@@ -273,6 +287,33 @@ init_reswords (void)
       C_SET_RID_CODE (id, RID_FIRST_INT_N + i);
       set_identifier_kind (id, cik_keyword);
     }
+
+  if (flag_openmp)
+    {
+      id = get_identifier ("omp_all_memory");
+      C_SET_RID_CODE (id, RID_OMP_ALL_MEMORY);
+      set_identifier_kind (id, cik_keyword);
+      ridpointers [RID_OMP_ALL_MEMORY] = id;
+    }
+}
+
+/* Initialize the C++ traits.  */
+static void
+init_cp_traits (void)
+{
+  tree id;
+
+  for (unsigned int i = 0; i < ARRAY_SIZE (cp_traits); ++i)
+    {
+      id = get_identifier (cp_traits[i].name);
+      IDENTIFIER_CP_INDEX (id) = cp_traits[i].kind;
+      set_identifier_kind (id, cik_trait);
+    }
+
+  /* An alias for __is_same.  */
+  id = get_identifier ("__is_same_as");
+  IDENTIFIER_CP_INDEX (id) = CPTK_IS_SAME;
+  set_identifier_kind (id, cik_trait);
 }
 
 static void
@@ -316,6 +357,7 @@ cxx_init (void)
   input_location = BUILTINS_LOCATION;
 
   init_reswords ();
+  init_cp_traits ();
   init_tree ();
   init_cp_semantics ();
   init_operators ();
@@ -1008,8 +1050,8 @@ cxx_dup_lang_specific_decl (tree node)
      (module_purview_p still does).  */
   ld->u.base.module_entity_p = false;
   ld->u.base.module_import_p = false;
-  ld->u.base.module_attached_p = false;
-  
+  ld->u.base.module_keyed_decls_p = false;
+
   if (GATHER_STATISTICS)
     {
       tree_node_counts[(int)lang_decl] += 1;

@@ -217,3 +217,17 @@ _gcc_jit_context_set_bool_print_errors_to_stderr
 # LIBGCCJIT_ABI_24
 _gcc_jit_lvalue_set_alignment
 _gcc_jit_lvalue_get_alignment
+
+# LIBGCCJIT_ABI_25
+_gcc_jit_type_get_restrict
+
+# LIBGCCJIT_ABI_26 
+_gcc_jit_function_add_attribute
+_gcc_jit_function_add_string_attribute
+_gcc_jit_lvalue_add_string_attribute
+_gcc_jit_function_add_integer_array_attribute
+
+# LIBGCCJIT_ABI_27
+_gcc_jit_context_new_sizeof
+
+

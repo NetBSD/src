@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.53 2023/08/01 05:57:56 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.53.2.1 2026/11/04 22:52:30 perseant Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -7,6 +7,30 @@ GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
 .if exists(${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}/defs.mk"
 .endif
+.endif
+
+# Override libgcc_s included sources (m68k) to make it possibile to build
+# all three(3) variants (hardfloat / libgcc_s softfloat / libc softfloat ).
+.if ${LIBGCC_MACHINE_ARCH} == "m68k" && ${MKSOFTFLOAT} != "no" && \
+    ${MKLIBCSOFTFLOAT} != "no"
+EXCLUDE_FUNCS=	_mulsi3 _udivsi3 _divsi3 _umodsi3 _modsi3 _floatex _float
+EXCLUDE_FUNCS+=	_double _eqdf2 _nedf2 _gtdf2 _gedf2 _ltdf2 _ledf2 _eqsf2
+EXCLUDE_FUNCS+=	_nesf2 _gtsf2 _gesf2 _ltsf2 _lesf2
+NG_LIB1ASMFUNCS:=	${G_LIB1ASMFUNCS:${EXCLUDE_FUNCS:@f@S,$f,,@:ts:}}
+
+NG_LIB1ASMSRC:=		${G_LIB1ASMSRC:S,m68k/lb1sf68.S,,}
+
+EXCLUDE_FUNCS=	_divdi3 _moddi3 _divmoddi4 _udivdi3 _umoddi3 _udivmoddi4
+EXCLUDE_FUNCS+=	_udiv_w_sdiv
+NG_LIB2_DIVMOD_FUNCS:=	${G_LIB2_DIVMOD_FUNCS:${EXCLUDE_FUNCS:@f@S,$f,,@:ts:}}
+
+G_LIB1ASMFUNCS=
+G_LIB1ASMSRC=
+G_LIB2_DIVMOD_FUNCS=
+
+G_LIB1ASMFUNCS:=	${NG_LIB1ASMFUNCS}
+G_LIB1ASMSRC:=		${NG_LIB1ASMSRC}
+G_LIB2_DIVMOD_FUNCS:=	${NG_LIB2_DIVMOD_FUNCS}
 .endif
 
 UNSUPPORTED_COMPILER.clang=	# defined
@@ -153,6 +177,10 @@ CPICFLAGS:=
 BUILDSYMLINKS+=	${DIST}/libgcc/config/m68k/fpgnulib.c fpgnulib.c
 BUILDSYMLINKS+=	${DIST}/libgcc/config/m68k/fpgnulib.c xfgnulib.c
 CPPFLAGS.xfgnulib.c+=	-DEXTFLOAT=1
+.  if ${MKLIBCSOFTFLOAT} != "no"
+CPPFLAGS.fpgnulib.c+=-DLIBCSOFTFLOAT=1
+CPPFLAGS.xfgnulib.c+=-DLIBCSOFTFLOAT=1
+.  endif
 .endif
 
 ${LIB2FUNCS} ${LIB2FUNCS_ST}: ${.CURDIR}/Makefile
@@ -215,11 +243,33 @@ G_LIB2ADD+=	${GNUHOSTDIST}/libgcc/config/aarch64/lse-init.c
 MSSE_FILES=	fixhfti.c fixunshfti.c floattihf.c floatunstihf.c
 .endif
 
-.if ${LIBGCC_MACHINE_ARCH} == "i386"
-MSSE_FILES=	extendhfsf2.c extendhfdf2.c extendhftf2.c extendhfxf2.c \
-		truncsfhf2.c truncdfhf2.c truncxfhf2.c trunctfhf2.c \
-		eqhf2.c _divhc3.c _mulhc3.c
-
+.if ${LIBGCC_MACHINE_ARCH} == "i386" # {
+MSSE_FILES= \
+	extendhfsf2.c \
+	extendhfdf2.c \
+	extendhftf2.c \
+	extendhfxf2.c \
+	extendbfsf2.c \
+	truncsfhf2.c \
+	truncdfhf2.c \
+	truncxfhf2.c \
+	trunctfhf2.c \
+	truncsfbf2.c \
+	truncdfbf2.c \
+	truncxfbf2.c \
+	trunctfbf2.c \
+	trunchfbf2.c \
+	floatbitintbf.c \
+	floatbitinthf.c \
+	eqhf2.c \
+	_divhc3.c \
+	_mulhc3.c \
+	_hf_to_sd.c\
+	_hf_to_dd.c \
+	_hf_to_td.c \
+	_sd_to_hf.c \
+	_dd_to_hf.c \
+	_td_to_hf.c 
 .endif # } i386
 
 .for _f in ${MSSE_FILES}

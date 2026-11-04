@@ -1,5 +1,5 @@
 /* Language-dependent hooks for LTO.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Contributed by CodeSourcery, Inc.
 
 This file is part of GCC.
@@ -94,7 +94,7 @@ static const struct attribute_spec::exclusions attr_const_pure_exclusions[] =
 };
 
 /* Table of machine-independent attributes supported in GIMPLE.  */
-const struct attribute_spec lto_attribute_table[] =
+static const attribute_spec lto_gnu_attributes[] =
 {
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
        affects_type_identity, handler, exclude } */
@@ -135,14 +135,18 @@ const struct attribute_spec lto_attribute_table[] =
   /* For internal use only.  The leading '*' both prevents its usage in
      source code and signals that it may be overridden by machine tables.  */
   { "*tm regparm",            0, 0, false, true, true, false,
-			      ignore_attribute, NULL },
-  { NULL,                     0, 0, false, false, false, false, NULL, NULL }
+			      ignore_attribute, NULL }
+};
+
+static const scoped_attribute_specs lto_gnu_attribute_table =
+{
+  "gnu", { lto_gnu_attributes }
 };
 
 /* Give the specifications for the format attributes, used by C and all
    descendants.  */
 
-const struct attribute_spec lto_format_attribute_table[] =
+static const attribute_spec lto_format_attributes[] =
 {
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
        affects_type_identity, handler, exclude } */
@@ -150,7 +154,17 @@ const struct attribute_spec lto_format_attribute_table[] =
 			      handle_format_attribute, NULL },
   { "format_arg",             1, 1, false, true,  true, false,
 			      handle_format_arg_attribute, NULL },
-  { NULL,                     0, 0, false, false, false, false, NULL, NULL }
+};
+
+static const scoped_attribute_specs lto_format_attribute_table =
+{
+  "gnu", { lto_format_attributes }
+};
+
+static const scoped_attribute_specs *const lto_attribute_table[] =
+{
+  &lto_gnu_attribute_table,
+  &lto_format_attribute_table
 };
 
 enum built_in_attribute
@@ -247,7 +261,7 @@ static GTY(()) tree signed_size_type_node;
 int flag_isoc94;
 int flag_isoc99;
 int flag_isoc11;
-int flag_isoc2x;
+int flag_isoc23;
 
 /* Attribute handlers.  */
 
@@ -901,7 +915,6 @@ lto_post_options (const char **pfilename ATTRIBUTE_UNUSED)
       break;
 
     case LTO_LINKER_OUTPUT_NOLTOREL: /* .o: incremental link producing asm  */
-      flag_whole_program = 0;
       flag_incremental_link = INCREMENTAL_LINK_NOLTO;
       break;
 
@@ -1005,6 +1018,11 @@ lto_type_for_mode (machine_mode mode, int unsigned_p)
   if (mode == TYPE_MODE (long_double_type_node))
     return long_double_type_node;
 
+  for (i = 0; i < NUM_FLOATN_NX_TYPES; i++)
+    if (FLOATN_NX_TYPE_NODE (i) != NULL_TREE
+	&& mode == TYPE_MODE (FLOATN_NX_TYPE_NODE (i)))
+      return FLOATN_NX_TYPE_NODE (i);
+
   if (mode == TYPE_MODE (void_type_node))
     return void_type_node;
 
@@ -1030,6 +1048,11 @@ lto_type_for_mode (machine_mode mode, int unsigned_p)
       if (mode == TYPE_MODE (complex_long_double_type_node))
 	return complex_long_double_type_node;
 
+      for (i = 0; i < NUM_FLOATN_NX_TYPES; i++)
+	if (COMPLEX_FLOATN_NX_TYPE_NODE (i) != NULL_TREE
+	    && mode == TYPE_MODE (COMPLEX_FLOATN_NX_TYPE_NODE (i)))
+	  return COMPLEX_FLOATN_NX_TYPE_NODE (i);
+
       if (mode == TYPE_MODE (complex_integer_type_node) && !unsigned_p)
 	return complex_integer_type_node;
 
@@ -1041,7 +1064,7 @@ lto_type_for_mode (machine_mode mode, int unsigned_p)
   else if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL
 	   && valid_vector_subparts_p (GET_MODE_NUNITS (mode)))
     {
-      unsigned int elem_bits = vector_element_size (GET_MODE_BITSIZE (mode),
+      unsigned int elem_bits = vector_element_size (GET_MODE_PRECISION (mode),
 						    GET_MODE_NUNITS (mode));
       tree bool_type = build_nonstandard_boolean_type (elem_bits);
       return build_vector_type_for_mode (bool_type, mode);
@@ -1155,9 +1178,13 @@ lto_type_for_mode (machine_mode mode, int unsigned_p)
     }
 
   for (t = registered_builtin_types; t; t = TREE_CHAIN (t))
-    if (TYPE_MODE (TREE_VALUE (t)) == mode)
-      return TREE_VALUE (t);
-
+    {
+      tree type = TREE_VALUE (t);
+      if (TYPE_MODE (type) == mode
+	  && VECTOR_TYPE_P (type) == VECTOR_MODE_P (mode)
+	  && !!unsigned_p == !!TYPE_UNSIGNED (type))
+	return type;
+    }
   return NULL_TREE;
 }
 
@@ -1239,7 +1266,6 @@ lto_build_c_type_nodes (void)
 {
   gcc_assert (void_type_node);
 
-  void_list_node = build_tree_list (NULL_TREE, void_type_node);
   string_type_node = build_pointer_type (char_type_node);
   const_string_type_node
     = build_pointer_type (build_qualified_type (char_type_node, TYPE_QUAL_CONST));
@@ -1319,9 +1345,7 @@ lto_init (void)
      distinction should only be relevant to the front-end, so we
      always use the C definition here in lto1.
      Likewise for const struct tm*.  */
-  for (unsigned i = 0;
-       i < sizeof (builtin_structptr_types) / sizeof (builtin_structptr_type);
-       ++i)
+  for (unsigned i = 0; i < ARRAY_SIZE (builtin_structptr_types); ++i)
     {
       gcc_assert (builtin_structptr_types[i].node
 		  == builtin_structptr_types[i].base);
@@ -1453,10 +1477,8 @@ static void lto_init_ts (void)
 #define LANG_HOOKS_EH_PERSONALITY lto_eh_personality
 
 /* Attribute hooks.  */
-#undef LANG_HOOKS_COMMON_ATTRIBUTE_TABLE
-#define LANG_HOOKS_COMMON_ATTRIBUTE_TABLE lto_attribute_table
-#undef LANG_HOOKS_FORMAT_ATTRIBUTE_TABLE
-#define LANG_HOOKS_FORMAT_ATTRIBUTE_TABLE lto_format_attribute_table
+#undef LANG_HOOKS_ATTRIBUTE_TABLE
+#define LANG_HOOKS_ATTRIBUTE_TABLE lto_attribute_table
 
 #undef LANG_HOOKS_BEGIN_SECTION
 #define LANG_HOOKS_BEGIN_SECTION lto_obj_begin_section

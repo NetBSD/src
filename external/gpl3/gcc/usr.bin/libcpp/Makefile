@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.1 2024/07/01 01:01:12 perseant Exp $
+#	$NetBSD: Makefile,v 1.11.2.2 2026/11/04 22:53:25 perseant Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -21,7 +21,8 @@ COPTS.directives.cc +=	-Wno-error=stack-protector
 COPTS.files.cc +=	-Wno-error=stack-protector
 COPTS.macro.cc +=	-Wno-error=stack-protector
 COPTS.mkdeps.cc +=	-Wno-error=stack-protector
-COPTS.pch.cc +=	-Wno-error=stack-protector
+COPTS.pch.cc +=		-Wno-error=stack-protector
+COPTS.lex.cc +=		${CC_WNO_MAYBE_UNINITIALIZED}
 
 # Force using C++ for this
 HOST_CC:=	${HOST_CXX}

@@ -1,6 +1,6 @@
 // <future> -*- C++ -*-
 
-// Copyright (C) 2009-2022 Free Software Foundation, Inc.
+// Copyright (C) 2009-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -30,6 +30,8 @@
 #define _GLIBCXX_FUTURE 1
 
 #pragma GCC system_header
+
+#include <bits/requires_hosted.h> // concurrency
 
 #if __cplusplus < 201103L
 # include <bits/c++0x_warning.h>
@@ -150,33 +152,40 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     deferred = 2
   };
 
+  [[__nodiscard__]]
   constexpr launch operator&(launch __x, launch __y) noexcept
   {
     return static_cast<launch>(
 	static_cast<int>(__x) & static_cast<int>(__y));
   }
 
+  [[__nodiscard__]]
   constexpr launch operator|(launch __x, launch __y) noexcept
   {
     return static_cast<launch>(
 	static_cast<int>(__x) | static_cast<int>(__y));
   }
 
+  [[__nodiscard__]]
   constexpr launch operator^(launch __x, launch __y) noexcept
   {
     return static_cast<launch>(
 	static_cast<int>(__x) ^ static_cast<int>(__y));
   }
 
+  [[__nodiscard__]]
   constexpr launch operator~(launch __x) noexcept
   { return static_cast<launch>(~static_cast<int>(__x)); }
 
+  _GLIBCXX14_CONSTEXPR
   inline launch& operator&=(launch& __x, launch __y) noexcept
   { return __x = __x & __y; }
 
+  _GLIBCXX14_CONSTEXPR
   inline launch& operator|=(launch& __x, launch __y) noexcept
   { return __x = __x | __y; }
 
+  _GLIBCXX14_CONSTEXPR
   inline launch& operator^=(launch& __x, launch __y) noexcept
   { return __x = __x ^ __y; }
 
@@ -312,7 +321,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     // Keep it simple for std::allocator.
     template<typename _Res, typename _Tp>
       static _Ptr<_Result<_Res>>
-      _S_allocate_result(const std::allocator<_Tp>& __a)
+      _S_allocate_result(const std::allocator<_Tp>&)
       {
 	return _Ptr<_Result<_Res>>(new _Result<_Res>);
       }
@@ -1556,7 +1565,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	packaged_task(_Fn&& __fn)
 	: _M_state(
 	    __create_task_state<_Res(_ArgTypes...)>(std::forward<_Fn>(__fn)))
-	{ }
+	{
+#ifdef __cpp_lib_is_invocable // C++ >= 17
+	  // _GLIBCXX_RESOLVE_LIB_DEFECTS
+	  // 4154. The Mandates for std::packaged_task's constructor
+	  // from a callable entity should consider decaying
+	  static_assert(is_invocable_r_v<_Res, decay_t<_Fn>&, _ArgTypes...>);
+#endif
+	}
 
 #if __cplusplus < 201703L
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -1572,7 +1588,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // 2095.  missing constructors needed for uses-allocator construction
       template<typename _Allocator>
-	packaged_task(allocator_arg_t, const _Allocator& __a) noexcept
+	packaged_task(allocator_arg_t, const _Allocator&) noexcept
 	{ }
 
       template<typename _Allocator>
@@ -1649,8 +1665,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Res, typename... _ArgTypes>
     packaged_task(_Res(*)(_ArgTypes...)) -> packaged_task<_Res(_ArgTypes...)>;
 
-  template<typename _Fun, typename _Signature = typename
-	   __function_guide_helper<decltype(&_Fun::operator())>::type>
+  template<typename _Fun, typename _Signature
+	     = __function_guide_t<_Fun, decltype(&_Fun::operator())>>
     packaged_task(_Fun) -> packaged_task<_Signature>;
 #endif
 

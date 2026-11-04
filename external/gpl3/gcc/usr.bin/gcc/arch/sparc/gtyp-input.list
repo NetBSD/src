@@ -1,13 +1,15 @@
 SRCDIR/gcc/../libcpp/include/line-map.h
+SRCDIR/gcc/../libcpp/include/rich-location.h
 SRCDIR/gcc/../libcpp/include/cpplib.h
 SRCDIR/gcc/input.h
 SRCDIR/gcc/coretypes.h
 auto-host.h
 SRCDIR/gcc/../include/ansidecl.h
+
+SRCDIR/gcc/config/sparc/sparc-opts.h
 options.h
 SRCDIR/gcc/config/vxworks-dummy.h
 SRCDIR/gcc/config/sparc/sparc.h
-SRCDIR/gcc/config/dbxelf.h
 SRCDIR/gcc/config/elfos.h
 SRCDIR/gcc/config/sparc/sysv4.h
 SRCDIR/gcc/config/netbsd.h
@@ -52,6 +54,7 @@ SRCDIR/gcc/reload.h
 SRCDIR/gcc/caller-save.cc
 SRCDIR/gcc/symtab.cc
 SRCDIR/gcc/alias.cc
+SRCDIR/gcc/attribs.cc
 SRCDIR/gcc/bitmap.cc
 SRCDIR/gcc/cselib.cc
 SRCDIR/gcc/cgraph.cc
@@ -60,7 +63,6 @@ SRCDIR/gcc/ipa-cp.cc
 SRCDIR/gcc/ipa-utils.h
 SRCDIR/gcc/ipa-param-manipulation.h
 SRCDIR/gcc/ipa-sra.cc
-SRCDIR/gcc/dbxout.cc
 SRCDIR/gcc/ipa-modref.h
 SRCDIR/gcc/ipa-modref.cc
 SRCDIR/gcc/ipa-modref-tree.h
@@ -126,6 +128,7 @@ SRCDIR/gcc/tree-ssa-alias.h
 SRCDIR/gcc/tree-ssanames.h
 SRCDIR/gcc/tree-vrp.h
 SRCDIR/gcc/value-range.h
+SRCDIR/gcc/value-range-storage.h
 SRCDIR/gcc/ipa-prop.h
 SRCDIR/gcc/trans-mem.cc
 SRCDIR/gcc/lto-streamer.h
@@ -139,9 +142,11 @@ SRCDIR/gcc/tsan.cc
 SRCDIR/gcc/sanopt.cc
 SRCDIR/gcc/sancov.cc
 SRCDIR/gcc/ipa-devirt.cc
+SRCDIR/gcc/ipa-strub.cc
 SRCDIR/gcc/internal-fn.h
 SRCDIR/gcc/calls.cc
 SRCDIR/gcc/omp-general.h
+SRCDIR/gcc/analyzer/analyzer-language.cc
 [c]
 SRCDIR/gcc/c/c-lang.cc
 SRCDIR/gcc/c/c-tree.h
@@ -172,6 +177,7 @@ SRCDIR/gcc/c-family/c-pragma.cc
 SRCDIR/gcc/cp/call.cc
 SRCDIR/gcc/cp/class.cc
 SRCDIR/gcc/cp/constexpr.cc
+SRCDIR/gcc/cp/contracts.cc
 SRCDIR/gcc/cp/constraint.cc
 SRCDIR/gcc/cp/coroutines.cc
 SRCDIR/gcc/cp/cp-gimplify.cc
@@ -197,11 +203,6 @@ SRCDIR/gcc/cp/tree.cc
 SRCDIR/gcc/cp/typeck2.cc
 SRCDIR/gcc/cp/vtable-class-hierarchy.cc
 
-[d]
-SRCDIR/gcc/d/d-tree.h
-SRCDIR/gcc/d/d-builtins.cc
-SRCDIR/gcc/d/d-lang.cc
-SRCDIR/gcc/d/typeinfo.cc
 [fortran]
 SRCDIR/gcc/fortran/f95-lang.cc
 SRCDIR/gcc/fortran/trans-decl.cc
@@ -258,6 +259,7 @@ SRCDIR/gcc/c-family/c-pragma.cc
 SRCDIR/gcc/cp/call.cc
 SRCDIR/gcc/cp/class.cc
 SRCDIR/gcc/cp/constexpr.cc
+SRCDIR/gcc/cp/contracts.cc
 SRCDIR/gcc/cp/constraint.cc
 SRCDIR/gcc/cp/coroutines.cc
 SRCDIR/gcc/cp/cp-gimplify.cc

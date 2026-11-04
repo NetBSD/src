@@ -17,6 +17,7 @@
 
 #include <sys/capsicum.h>
 #include <sys/consio.h>
+#include <sys/cpuset.h>
 #include <sys/filio.h>
 #include <sys/ipc.h>
 #include <sys/kbio.h>
@@ -103,6 +104,7 @@ void *__sanitizer_get_link_map_by_dlopen_handle(void *handle) {
   return internal_dlinfo(handle, RTLD_DI_LINKMAP, &p) == 0 ? p : nullptr;
 }
 
+unsigned struct_cpuset_sz = sizeof(cpuset_t);
 unsigned struct_cap_rights_sz = sizeof(cap_rights_t);
 unsigned struct_utsname_sz = sizeof(struct utsname);
 unsigned struct_stat_sz = sizeof(struct stat);
@@ -130,7 +132,7 @@ unsigned struct_sigevent_sz = sizeof(struct sigevent);
 unsigned struct_sched_param_sz = sizeof(struct sched_param);
 unsigned struct_statfs_sz = sizeof(struct statfs);
 unsigned struct_sockaddr_sz = sizeof(struct sockaddr);
-unsigned ucontext_t_sz = sizeof(ucontext_t);
+unsigned ucontext_t_sz(void *ctx) { return sizeof(ucontext_t); }
 unsigned struct_rlimit_sz = sizeof(struct rlimit);
 unsigned struct_timespec_sz = sizeof(struct timespec);
 unsigned struct_utimbuf_sz = sizeof(struct utimbuf);
@@ -173,6 +175,12 @@ uptr __sanitizer_in_addr_sz(int af) {
     return 0;
 }
 
+// For FreeBSD the actual size of a directory entry is not always in d_reclen.
+// Use the appropriate macro to get the correct size for all cases (e.g. NFS).
+u16 __sanitizer_dirsiz(const __sanitizer_dirent *dp) {
+  return _GENERIC_DIRSIZ(dp);
+}
+
 unsigned struct_ElfW_Phdr_sz = sizeof(Elf_Phdr);
 int glob_nomatch = GLOB_NOMATCH;
 int glob_altdirfunc = GLOB_ALTDIRFUNC;
@@ -205,6 +213,10 @@ unsigned struct_audio_buf_info_sz = sizeof(struct audio_buf_info);
 unsigned struct_ppp_stats_sz = sizeof(struct ppp_stats);
 unsigned struct_sioc_sg_req_sz = sizeof(struct sioc_sg_req);
 unsigned struct_sioc_vif_req_sz = sizeof(struct sioc_vif_req);
+unsigned struct_procctl_reaper_status_sz = sizeof(struct __sanitizer_procctl_reaper_status);
+unsigned struct_procctl_reaper_pidinfo_sz = sizeof(struct __sanitizer_procctl_reaper_pidinfo);
+unsigned struct_procctl_reaper_pids_sz = sizeof(struct __sanitizer_procctl_reaper_pids);
+unsigned struct_procctl_reaper_kill_sz = sizeof(struct __sanitizer_procctl_reaper_kill);
 const unsigned long __sanitizer_bufsiz = BUFSIZ;
 
 const unsigned IOCTL_NOT_PRESENT = 0;
@@ -554,4 +566,5 @@ COMPILER_CHECK(__sanitizer_XDR_FREE == XDR_FREE);
 CHECK_TYPE_SIZE(sem_t);
 
 COMPILER_CHECK(sizeof(__sanitizer_cap_rights_t) >= sizeof(cap_rights_t));
+COMPILER_CHECK(sizeof(__sanitizer_cpuset_t) >= sizeof(cpuset_t));
 #endif  // SANITIZER_FREEBSD

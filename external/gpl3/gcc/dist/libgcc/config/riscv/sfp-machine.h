@@ -1,6 +1,6 @@
 /* Software floating-point machine description for RISC-V.
 
-   Copyright (C) 2016-2022 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -41,6 +41,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define _FP_DIV_MEAT_D(R,X,Y)	_FP_DIV_MEAT_2_udiv(D,R,X,Y)
 #define _FP_DIV_MEAT_Q(R,X,Y)	_FP_DIV_MEAT_4_udiv(Q,R,X,Y)
 
+#define _FP_NANFRAC_H		_FP_QNANBIT_H
 #define _FP_NANFRAC_S		_FP_QNANBIT_S
 #define _FP_NANFRAC_D		_FP_QNANBIT_D, 0
 #define _FP_NANFRAC_Q		_FP_QNANBIT_Q, 0, 0, 0
@@ -63,6 +64,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define _FP_DIV_MEAT_D(R,X,Y)	_FP_DIV_MEAT_1_udiv_norm(D,R,X,Y)
 #define _FP_DIV_MEAT_Q(R,X,Y)	_FP_DIV_MEAT_2_udiv(Q,R,X,Y)
 
+#define _FP_NANFRAC_H		_FP_QNANBIT_H
 #define _FP_NANFRAC_S		_FP_QNANBIT_S
 #define _FP_NANFRAC_D		_FP_QNANBIT_D
 #define _FP_NANFRAC_Q		_FP_QNANBIT_Q, 0
@@ -80,6 +82,7 @@ typedef unsigned int UTItype __attribute__ ((mode (TI)));
 typedef int __gcc_CMPtype __attribute__ ((mode (__libgcc_cmp_return__)));
 #define CMPtype __gcc_CMPtype
 
+#define _FP_NANSIGN_H		0
 #define _FP_NANSIGN_S		0
 #define _FP_NANSIGN_D		0
 #define _FP_NANSIGN_Q		0
@@ -110,7 +113,7 @@ typedef int __gcc_CMPtype __attribute__ ((mode (__libgcc_cmp_return__)));
 
 #define _FP_TININESS_AFTER_ROUNDING 1
 
-#ifdef __riscv_flen
+#if defined(__riscv_flen) || defined(__riscv_zfinx)
 #define FP_INIT_ROUNDMODE			\
 do {						\
   __asm__ volatile ("frrm %0" : "=r" (_frm));	\

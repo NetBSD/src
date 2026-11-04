@@ -1,5 +1,5 @@
 /* Helper functions in C for IEEE modules
-   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
    Contributed by Francois-Xavier Coudert <fxcoudert@gcc.gnu.org>
 
 This file is part of the GNU Fortran runtime library (libgfortran).
@@ -24,13 +24,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */
 
 #include "libgfortran.h"
-
-
-/* Check support for issignaling macro.  If not, we include our own
-   fallback implementation.  */
-#ifndef issignaling
-# include "issignaling_fallback.h"
-#endif
 
 
 /* Prototypes.  */
@@ -74,7 +67,7 @@ internal_proto(ieee_class_helper_16);
  \
     if (res == IEEE_QUIET_NAN) \
     { \
-      if (issignaling (*value)) \
+      if (__builtin_issignaling (*value)) \
 	return IEEE_SIGNALING_NAN; \
       else \
 	return IEEE_QUIET_NAN; \

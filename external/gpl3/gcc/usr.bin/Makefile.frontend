@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile.frontend,v 1.7 2019/10/24 18:48:43 christos Exp $
+#	$NetBSD: Makefile.frontend,v 1.7.10.1 2026/11/04 22:53:07 perseant Exp $
 
 BINDIR=		/usr/bin
 
 CPPFLAGS+=	-I${GCCARCH} -I${FRONTENDOBJ} \
-		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
-		-DIN_GCC_FRONTEND
+		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 
 NOCTF=		# defined
 .include <bsd.init.mk>

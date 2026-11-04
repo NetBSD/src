@@ -1,5 +1,5 @@
 /* Data structure definitions for a generic GCC target.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -68,19 +68,9 @@ union cumulative_args_t { void *p; };
 
 #endif /* !CHECKING_P */
 
-/* Types used by the record_gcc_switches() target function.  */
-enum print_switch_type
-{
-  SWITCH_TYPE_PASSED,		/* A switch passed on the command line.  */
-  SWITCH_TYPE_ENABLED,		/* An option that is currently enabled.  */
-  SWITCH_TYPE_DESCRIPTIVE,	/* Descriptive text, not a switch or option.  */
-  SWITCH_TYPE_LINE_START,	/* Please emit any necessary text at the start of a line.  */
-  SWITCH_TYPE_LINE_END		/* Please emit a line terminator.  */
-};
-
 /* Types of memory operation understood by the "by_pieces" infrastructure.
    Used by the TARGET_USE_BY_PIECES_INFRASTRUCTURE_P target hook and
-   internally by the functions in expr.c.  */
+   internally by the functions in expr.cc.  */
 
 enum by_pieces_operation
 {
@@ -96,10 +86,8 @@ extern unsigned HOST_WIDE_INT by_pieces_ninsns (unsigned HOST_WIDE_INT,
 						unsigned int,
 						by_pieces_operation);
 
-typedef int (* print_switch_fn_type) (print_switch_type, const char *);
-
-/* An example implementation for ELF targets.  Defined in varasm.c  */
-extern int elf_record_gcc_switches (print_switch_type type, const char *);
+/* An example implementation for ELF targets.  Defined in varasm.cc  */
+extern void elf_record_gcc_switches (const char *);
 
 /* Some places still assume that all pointer or address modes are the
    standard Pmode and ptr_mode.  These optimizations become invalid if
@@ -155,9 +143,9 @@ class function_arg_info;
 /* This is defined in function-abi.h.  */
 class predefined_function_abi;
 
-/* These are defined in tree-vect-stmts.c.  */
+/* These are defined in tree-vect-stmts.cc.  */
 extern tree stmt_vectype (class _stmt_vec_info *);
-extern bool stmt_in_inner_loop_p (class _stmt_vec_info *);
+extern bool stmt_in_inner_loop_p (class vec_info *, class _stmt_vec_info *);
 
 /* Assembler instructions for creating various kinds of integer object.  */
 
@@ -264,6 +252,13 @@ enum type_context_kind {
   TCTX_CAPTURE_BY_COPY
 };
 
+enum poly_value_estimate_kind
+{
+  POLY_VALUE_MIN,
+  POLY_VALUE_MAX,
+  POLY_VALUE_LIKELY
+};
+
 extern bool verify_type_context (location_t, type_context_kind, const_tree,
 				 bool = false);
 
@@ -284,12 +279,13 @@ extern struct gcc_target targetm;
    provides a rough guess.  */
 
 static inline HOST_WIDE_INT
-estimated_poly_value (poly_int64 x)
+estimated_poly_value (poly_int64 x,
+		      poly_value_estimate_kind kind = POLY_VALUE_LIKELY)
 {
   if (NUM_POLY_INT_COEFFS == 1)
     return x.coeffs[0];
   else
-    return targetm.estimated_poly_value (x);
+    return targetm.estimated_poly_value (x, kind);
 }
 
 #ifdef GCC_TM_H

@@ -34,7 +34,8 @@ This status table is based on the table of contents of ISO/IEC 14882:2011.
 </para>
 
 <para>
-This section describes the C++11 support in the GCC 12 release series.
+This section describes the C++11 support in
+the GCC 14 release series.
 </para>
 
 <!-- Status is Yes or No, Broken/Partial-->
@@ -2610,6 +2611,11 @@ This section describes the C++11 support in the GCC 12 release series.
    <para>
       <emphasis>20.7.2.0 [util.smartptr.weakptr]</emphasis>
       <code>what()</code> returns <literal>"bad_weak_ptr"</literal>.
+   </para>
+
+   <para>
+      <emphasis>20.8.11.1 [func.wrap.badcall]</emphasis>
+      <code>what()</code> returns <literal>"bad_function_call"</literal>.
    </para>
 
    <para>

@@ -1,5 +1,5 @@
 ;; Machine Description for shared bits common to IWMMXT and Neon.
-;; Copyright (C) 2006-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2022 Free Software Foundation, Inc.
 ;; Written by CodeSourcery.
 ;;
 ;; This file is part of GCC.
@@ -86,104 +86,56 @@
 ;; patterns separately for Neon, IWMMXT and MVE.
 
 (define_expand "add<mode>3"
-  [(set (match_operand:VNIM 0 "s_register_operand")
-	(plus:VNIM (match_operand:VNIM 1 "s_register_operand")
-		   (match_operand:VNIM 2 "s_register_operand")))]
-  "(TARGET_NEON && ((<MODE>mode != V2SFmode && <MODE>mode != V4SFmode)
-		    || flag_unsafe_math_optimizations))
-   || (TARGET_REALLY_IWMMXT && VALID_IWMMXT_REG_MODE (<MODE>mode))
-   || (TARGET_HAVE_MVE && VALID_MVE_SI_MODE(<MODE>mode))
-   || (TARGET_HAVE_MVE_FLOAT && VALID_MVE_SF_MODE(<MODE>mode))"
-{
-})
-
-;; Vector arithmetic.  Expanders are blank, then unnamed insns implement
-;; patterns separately for Neon and MVE.
-
-(define_expand "addv8hf3"
-  [(set (match_operand:V8HF 0 "s_register_operand")
-	(plus:V8HF (match_operand:V8HF 1 "s_register_operand")
-		   (match_operand:V8HF 2 "s_register_operand")))]
-  "(TARGET_HAVE_MVE_FLOAT && VALID_MVE_SF_MODE(V8HFmode))
-   || (TARGET_NEON_FP16INST && flag_unsafe_math_optimizations)"
-{
-  if (TARGET_NEON_FP16INST && flag_unsafe_math_optimizations)
-    emit_insn (gen_addv8hf3_neon (operands[0], operands[1], operands[2]));
-})
-
-;; Vector arithmetic.  Expanders are blank, then unnamed insns implement
-;; patterns separately for Neon and IWMMXT.
-
-(define_expand "add<mode>3"
-  [(set (match_operand:VNINOTM 0 "s_register_operand")
-	(plus:VNINOTM (match_operand:VNINOTM 1 "s_register_operand")
-		      (match_operand:VNINOTM 2 "s_register_operand")))]
-  "(TARGET_NEON && ((<MODE>mode != V2SFmode && <MODE>mode != V4SFmode)
-		    || flag_unsafe_math_optimizations))
-   || (TARGET_REALLY_IWMMXT && VALID_IWMMXT_REG_MODE (<MODE>mode))"
-{
-})
-
-;; Vector arithmetic. Expanders are blank, then unnamed insns implement
-;; patterns separately for IWMMXT and Neon.
+  [(set (match_operand:VDQ 0 "s_register_operand")
+	(plus:VDQ (match_operand:VDQ 1 "s_register_operand")
+		  (match_operand:VDQ 2 "s_register_operand")))]
+  "ARM_HAVE_<MODE>_ARITH"
+)
 
 (define_expand "sub<mode>3"
-  [(set (match_operand:VALL 0 "s_register_operand")
-        (minus:VALL (match_operand:VALL 1 "s_register_operand")
-                    (match_operand:VALL 2 "s_register_operand")))]
-  "(TARGET_NEON && ((<MODE>mode != V2SFmode && <MODE>mode != V4SFmode)
-		    || flag_unsafe_math_optimizations))
-   || (TARGET_REALLY_IWMMXT && VALID_IWMMXT_REG_MODE (<MODE>mode))"
-{
-})
+  [(set (match_operand:VDQ 0 "s_register_operand")
+	(minus:VDQ (match_operand:VDQ 1 "s_register_operand")
+		   (match_operand:VDQ 2 "s_register_operand")))]
+  "ARM_HAVE_<MODE>_ARITH"
+)
 
 (define_expand "mul<mode>3"
-  [(set (match_operand:VALLW 0 "s_register_operand")
-        (mult:VALLW (match_operand:VALLW 1 "s_register_operand")
-		    (match_operand:VALLW 2 "s_register_operand")))]
-  "(TARGET_NEON && ((<MODE>mode != V2SFmode && <MODE>mode != V4SFmode)
-		    || flag_unsafe_math_optimizations))
-   || (<MODE>mode == V4HImode && TARGET_REALLY_IWMMXT)"
-{
-})
+  [(set (match_operand:VDQWH 0 "s_register_operand")
+	(mult:VDQWH (match_operand:VDQWH 1 "s_register_operand")
+		    (match_operand:VDQWH 2 "s_register_operand")))]
+  "ARM_HAVE_<MODE>_ARITH
+   && (!TARGET_REALLY_IWMMXT
+       || <MODE>mode == V4HImode
+       || <MODE>mode == V2SImode)"
+)
 
 (define_expand "smin<mode>3"
   [(set (match_operand:VALLW 0 "s_register_operand")
 	(smin:VALLW (match_operand:VALLW 1 "s_register_operand")
 		    (match_operand:VALLW 2 "s_register_operand")))]
-  "(TARGET_NEON && ((<MODE>mode != V2SFmode && <MODE>mode != V4SFmode)
-		    || flag_unsafe_math_optimizations))
-   || (TARGET_REALLY_IWMMXT && VALID_IWMMXT_REG_MODE (<MODE>mode))"
-{
-})
+   "ARM_HAVE_<MODE>_ARITH"
+)
 
 (define_expand "umin<mode>3"
   [(set (match_operand:VINTW 0 "s_register_operand")
 	(umin:VINTW (match_operand:VINTW 1 "s_register_operand")
 		    (match_operand:VINTW 2 "s_register_operand")))]
-  "TARGET_NEON
-   || (TARGET_REALLY_IWMMXT && VALID_IWMMXT_REG_MODE (<MODE>mode))"
-{
-})
+   "ARM_HAVE_<MODE>_ARITH"
+)
 
 (define_expand "smax<mode>3"
   [(set (match_operand:VALLW 0 "s_register_operand")
 	(smax:VALLW (match_operand:VALLW 1 "s_register_operand")
 		    (match_operand:VALLW 2 "s_register_operand")))]
-  "(TARGET_NEON && ((<MODE>mode != V2SFmode && <MODE>mode != V4SFmode)
-		    || flag_unsafe_math_optimizations))
-   || (TARGET_REALLY_IWMMXT && VALID_IWMMXT_REG_MODE (<MODE>mode))"
-{
-})
+   "ARM_HAVE_<MODE>_ARITH"
+)
 
 (define_expand "umax<mode>3"
   [(set (match_operand:VINTW 0 "s_register_operand")
 	(umax:VINTW (match_operand:VINTW 1 "s_register_operand")
 		    (match_operand:VINTW 2 "s_register_operand")))]
-  "TARGET_NEON
-   || (TARGET_REALLY_IWMMXT && VALID_IWMMXT_REG_MODE (<MODE>mode))"
-{
-})
+   "ARM_HAVE_<MODE>_ARITH"
+)
 
 (define_expand "vec_perm<mode>"
   [(match_operand:VE 0 "s_register_operand")
@@ -226,5 +178,465 @@
   else
     emit_insn (gen_mve_vec_set<mode>_internal (operands[0], operands[1],
 					       GEN_INT (elem), operands[0]));
+  DONE;
+})
+
+(define_expand "and<mode>3"
+  [(set (match_operand:VDQ 0 "s_register_operand" "")
+	(and:VDQ (match_operand:VDQ 1 "s_register_operand" "")
+		 (match_operand:VDQ 2 "neon_inv_logic_op2" "")))]
+  "ARM_HAVE_<MODE>_ARITH"
+)
+
+(define_expand "ior<mode>3"
+  [(set (match_operand:VDQ 0 "s_register_operand" "")
+	(ior:VDQ (match_operand:VDQ 1 "s_register_operand" "")
+		 (match_operand:VDQ 2 "neon_logic_op2" "")))]
+  "ARM_HAVE_<MODE>_ARITH"
+)
+
+(define_expand "xor<mode>3"
+  [(set (match_operand:VDQ 0 "s_register_operand" "")
+	(xor:VDQ (match_operand:VDQ 1 "s_register_operand" "")
+		 (match_operand:VDQ 2 "s_register_operand" "")))]
+  "ARM_HAVE_<MODE>_ARITH"
+)
+
+(define_expand "one_cmpl<mode>2"
+  [(set (match_operand:VDQ 0 "s_register_operand")
+	(not:VDQ (match_operand:VDQ 1 "s_register_operand")))]
+  "ARM_HAVE_<MODE>_ARITH && !TARGET_REALLY_IWMMXT"
+)
+
+(define_expand "<absneg_str><mode>2"
+  [(set (match_operand:VDQWH 0 "s_register_operand" "")
+	(ABSNEG:VDQWH (match_operand:VDQWH 1 "s_register_operand" "")))]
+  "ARM_HAVE_<MODE>_ARITH && !TARGET_REALLY_IWMMXT"
+)
+
+(define_expand "cadd<rot><mode>3"
+  [(set (match_operand:VF 0 "register_operand")
+	(unspec:VF [(match_operand:VF 1 "register_operand")
+		    (match_operand:VF 2 "register_operand")]
+		   VCADD))]
+  "(TARGET_COMPLEX || (TARGET_HAVE_MVE && TARGET_HAVE_MVE_FLOAT
+		      && ARM_HAVE_<MODE>_ARITH)) && !BYTES_BIG_ENDIAN"
+)
+
+;; The complex mul operations always need to expand to two instructions.
+;; The first operation does half the computation and the second does the
+;; remainder.  Because of this, expand early.
+(define_expand "cmul<conj_op><mode>3"
+  [(set (match_operand:VQ_HSF 0 "register_operand")
+        (unspec:VQ_HSF [(match_operand:VQ_HSF 1 "register_operand")
+			(match_operand:VQ_HSF 2 "register_operand")]
+		       VCMUL_OP))]
+  "(TARGET_COMPLEX || (TARGET_HAVE_MVE && TARGET_HAVE_MVE_FLOAT))
+   && !BYTES_BIG_ENDIAN"
+{
+  rtx res1 = gen_reg_rtx (<MODE>mode);
+  if (TARGET_COMPLEX)
+    {
+      rtx tmp = force_reg (<MODE>mode, CONST0_RTX (<MODE>mode));
+      emit_insn (gen_arm_vcmla<rotsplit1><mode> (res1, tmp,
+						 operands[2], operands[1]));
+    }
+  else
+    emit_insn (gen_arm_vcmla<rotsplit1><mode> (res1, CONST0_RTX (<MODE>mode),
+					       operands[2], operands[1]));
+
+  emit_insn (gen_arm_vcmla<rotsplit2><mode> (operands[0], res1,
+					     operands[2], operands[1]));
+  DONE;
+})
+
+(define_expand "arm_vcmla<rot><mode>"
+  [(set (match_operand:VF 0 "register_operand")
+	(plus:VF (match_operand:VF 1 "register_operand")
+		 (unspec:VF [(match_operand:VF 2 "register_operand")
+			     (match_operand:VF 3 "register_operand")]
+			     VCMLA)))]
+  "(TARGET_COMPLEX || (TARGET_HAVE_MVE && TARGET_HAVE_MVE_FLOAT
+		      && ARM_HAVE_<MODE>_ARITH)) && !BYTES_BIG_ENDIAN"
+)
+
+;; The complex mla/mls operations always need to expand to two instructions.
+;; The first operation does half the computation and the second does the
+;; remainder.  Because of this, expand early.
+(define_expand "cml<fcmac1><conj_op><mode>4"
+  [(set (match_operand:VF 0 "register_operand")
+	(plus:VF (unspec:VF [(match_operand:VF 1 "register_operand")
+			     (match_operand:VF 2 "register_operand")]
+			    VCMLA_OP)
+		 (match_operand:VF 3 "register_operand")))]
+  "(TARGET_COMPLEX || (TARGET_HAVE_MVE && TARGET_HAVE_MVE_FLOAT
+		      && ARM_HAVE_<MODE>_ARITH)) && !BYTES_BIG_ENDIAN"
+{
+  rtx tmp = gen_reg_rtx (<MODE>mode);
+  emit_insn (gen_arm_vcmla<rotsplit1><mode> (tmp, operands[3],
+					     operands[2], operands[1]));
+  emit_insn (gen_arm_vcmla<rotsplit2><mode> (operands[0], tmp,
+					     operands[2], operands[1]));
+  DONE;
+})
+
+(define_expand "@movmisalign<mode>"
+ [(set (match_operand:VDQ 0 "nonimmediate_operand")
+	(unspec:VDQ [(match_operand:VDQ 1 "general_operand")]
+	 UNSPEC_MISALIGNED_ACCESS))]
+ "ARM_HAVE_<MODE>_LDST && !BYTES_BIG_ENDIAN
+  && unaligned_access && !TARGET_REALLY_IWMMXT"
+{
+  rtx *memloc;
+  bool for_store = false;
+  /* This pattern is not permitted to fail during expansion: if both arguments
+     are non-registers (e.g. memory := constant, which can be created by the
+     auto-vectorizer), force operand 1 into a register.  */
+  if (!s_register_operand (operands[0], <MODE>mode)
+      && !s_register_operand (operands[1], <MODE>mode))
+    operands[1] = force_reg (<MODE>mode, operands[1]);
+
+  if (s_register_operand (operands[0], <MODE>mode))
+    memloc = &operands[1];
+  else
+    {
+      memloc = &operands[0];
+      for_store = true;
+    }
+
+  /* For MVE, vector loads/stores must be aligned to the element size.  If the
+     alignment is less than that convert the load/store to a suitable mode.  */
+  if (TARGET_HAVE_MVE
+      && (MEM_ALIGN (*memloc)
+	  < GET_MODE_ALIGNMENT (GET_MODE_INNER (<MODE>mode))))
+    {
+      scalar_mode new_smode;
+      switch (MEM_ALIGN (*memloc))
+	{
+	case 64:
+	case 32:
+	  new_smode = SImode;
+	  break;
+	case 16:
+	  new_smode = HImode;
+	  break;
+	default:
+	  new_smode = QImode;
+	  break;
+	}
+      machine_mode new_mode
+	= mode_for_vector (new_smode,
+			   GET_MODE_SIZE (<MODE>mode)
+			   / GET_MODE_SIZE (new_smode)).require ();
+      rtx new_mem = adjust_address (*memloc, new_mode, 0);
+
+      if (!for_store)
+	{
+	  rtx reg = gen_reg_rtx (new_mode);
+	  emit_insn (gen_movmisalign (new_mode, reg, new_mem));
+	  emit_move_insn (operands[0], gen_lowpart (<MODE>mode, reg));
+	  DONE;
+	}
+      emit_insn (gen_movmisalign (new_mode, new_mem,
+				  gen_lowpart (new_mode, operands[1])));
+      DONE;
+    }
+
+  /* Legitimize address.  */
+  if ((TARGET_HAVE_MVE
+       && !mve_vector_mem_operand (<MODE>mode, XEXP (*memloc, 0), false))
+      || (!TARGET_HAVE_MVE
+	  && !neon_vector_mem_operand (*memloc, 2, false)))
+    {
+      rtx new_mem
+	= replace_equiv_address (*memloc,
+				 force_reg (Pmode, XEXP (*memloc, 0)),
+				 false);
+      gcc_assert (MEM_ALIGN (new_mem) == MEM_ALIGN (*memloc));
+      *memloc = new_mem;
+    }
+})
+
+(define_insn "mve_vshlq_<supf><mode>"
+  [(set (match_operand:VDQIW 0 "s_register_operand" "=w,w")
+	(unspec:VDQIW [(match_operand:VDQIW 1 "s_register_operand" "w,w")
+		       (match_operand:VDQIW 2 "imm_lshift_or_reg_neon" "w,Ds")]
+	 VSHLQ))]
+  "ARM_HAVE_<MODE>_ARITH && !TARGET_REALLY_IWMMXT"
+  "@
+   vshl.<supf>%#<V_sz_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2
+   * return neon_output_shift_immediate (\"vshl\", 'i', &operands[2], <MODE>mode, VALID_NEON_QREG_MODE (<MODE>mode), true);"
+  [(set_attr "type" "neon_shift_reg<q>, neon_shift_imm<q>")]
+)
+
+(define_expand "vashl<mode>3"
+  [(set (match_operand:VDQIW 0 "s_register_operand" "")
+	(ashift:VDQIW (match_operand:VDQIW 1 "s_register_operand" "")
+		      (match_operand:VDQIW 2 "imm_lshift_or_reg_neon" "")))]
+  "ARM_HAVE_<MODE>_ARITH && !TARGET_REALLY_IWMMXT"
+{
+  emit_insn (gen_mve_vshlq_u<mode> (operands[0], operands[1], operands[2]));
+  DONE;
+})
+
+;; When operand 2 is an immediate, use the normal expansion to match
+;; gen_vashr<mode>3_imm for Neon and gen_mve_vshrq_n_s<mode>_imm for
+;; MVE.
+(define_expand "vashr<mode>3"
+  [(set (match_operand:VDQIW 0 "s_register_operand")
+	(ashiftrt:VDQIW (match_operand:VDQIW 1 "s_register_operand")
+			(match_operand:VDQIW 2 "imm_rshift_or_reg_neon")))]
+  "ARM_HAVE_<MODE>_ARITH && !TARGET_REALLY_IWMMXT"
+{
+  if (s_register_operand (operands[2], <MODE>mode))
+    {
+      rtx neg = gen_reg_rtx (<MODE>mode);
+      emit_insn (gen_neg<mode>2 (neg, operands[2]));
+      emit_insn (gen_mve_vshlq_s<mode> (operands[0], operands[1], neg));
+      DONE;
+    }
+})
+
+;; When operand 2 is an immediate, use the normal expansion to match
+;; gen_vashr<mode>3_imm for Neon and gen_mve_vshrq_n_u<mode>_imm for
+;; MVE.
+(define_expand "vlshr<mode>3"
+  [(set (match_operand:VDQIW 0 "s_register_operand")
+	(lshiftrt:VDQIW (match_operand:VDQIW 1 "s_register_operand")
+			(match_operand:VDQIW 2 "imm_rshift_or_reg_neon")))]
+  "ARM_HAVE_<MODE>_ARITH && !TARGET_REALLY_IWMMXT"
+{
+  if (s_register_operand (operands[2], <MODE>mode))
+    {
+      rtx neg = gen_reg_rtx (<MODE>mode);
+      emit_insn (gen_neg<mode>2 (neg, operands[2]));
+      emit_insn (gen_mve_vshlq_u<mode> (operands[0], operands[1], neg));
+      DONE;
+    }
+})
+
+;; Conditional instructions.  These are comparisons with conditional moves for
+;; vectors.  They perform the assignment:
+;;
+;;     Vop0 = (Vop4 <op3> Vop5) ? Vop1 : Vop2;
+;;
+;; where op3 is <, <=, ==, !=, >= or >.  Operations are performed
+;; element-wise.
+
+(define_expand "vcond<mode><mode>"
+  [(set (match_operand:VDQWH 0 "s_register_operand")
+	(if_then_else:VDQWH
+	  (match_operator 3 "comparison_operator"
+	    [(match_operand:VDQWH 4 "s_register_operand")
+	     (match_operand:VDQWH 5 "reg_or_zero_operand")])
+	  (match_operand:VDQWH 1 "s_register_operand")
+	  (match_operand:VDQWH 2 "s_register_operand")))]
+  "ARM_HAVE_<MODE>_ARITH
+   && !TARGET_REALLY_IWMMXT
+   && (!<Is_float_mode> || flag_unsafe_math_optimizations)"
+{
+  arm_expand_vcond (operands, <V_cmp_result>mode);
+  DONE;
+})
+
+(define_expand "vcond<V_cvtto><mode>"
+  [(set (match_operand:<V_CVTTO> 0 "s_register_operand")
+	(if_then_else:<V_CVTTO>
+	  (match_operator 3 "comparison_operator"
+	    [(match_operand:V32 4 "s_register_operand")
+	     (match_operand:V32 5 "reg_or_zero_operand")])
+	  (match_operand:<V_CVTTO> 1 "s_register_operand")
+	  (match_operand:<V_CVTTO> 2 "s_register_operand")))]
+  "ARM_HAVE_<MODE>_ARITH
+   && !TARGET_REALLY_IWMMXT
+   && (!<Is_float_mode> || flag_unsafe_math_optimizations)"
+{
+  arm_expand_vcond (operands, <V_cmp_result>mode);
+  DONE;
+})
+
+(define_expand "vcond<VH_cvtto><mode>"
+  [(set (match_operand:<VH_CVTTO> 0 "s_register_operand")
+	(if_then_else:<VH_CVTTO>
+	  (match_operator 3 "comparison_operator"
+	    [(match_operand:V16 4 "s_register_operand")
+	     (match_operand:V16 5 "reg_or_zero_operand")])
+	  (match_operand:<VH_CVTTO> 1 "s_register_operand")
+	  (match_operand:<VH_CVTTO> 2 "s_register_operand")))]
+  "ARM_HAVE_<MODE>_ARITH
+   && !TARGET_REALLY_IWMMXT
+   && (!<Is_float_mode> || flag_unsafe_math_optimizations)"
+{
+  arm_expand_vcond (operands, <V_cmp_result>mode);
+  DONE;
+})
+
+(define_expand "vcondu<mode><v_cmp_result>"
+  [(set (match_operand:VDQW 0 "s_register_operand")
+	(if_then_else:VDQW
+	  (match_operator 3 "arm_comparison_operator"
+	    [(match_operand:<V_cmp_result> 4 "s_register_operand")
+	     (match_operand:<V_cmp_result> 5 "reg_or_zero_operand")])
+	  (match_operand:VDQW 1 "s_register_operand")
+	  (match_operand:VDQW 2 "s_register_operand")))]
+  "ARM_HAVE_<MODE>_ARITH
+   && !TARGET_REALLY_IWMMXT"
+{
+  arm_expand_vcond (operands, <V_cmp_result>mode);
+  DONE;
+})
+
+(define_expand "vec_load_lanesoi<mode>"
+  [(set (match_operand:OI 0 "s_register_operand")
+        (unspec:OI [(match_operand:OI 1 "neon_struct_operand")
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+		   UNSPEC_VLD2))]
+  "TARGET_NEON || TARGET_HAVE_MVE"
+{
+  if (TARGET_NEON)
+    emit_insn (gen_neon_vld2<mode> (operands[0], operands[1]));
+  else
+    emit_insn (gen_mve_vld2q<mode> (operands[0], operands[1]));
+  DONE;
+})
+
+(define_expand "vec_store_lanesoi<mode>"
+  [(set (match_operand:OI 0 "neon_struct_operand")
+	(unspec:OI [(match_operand:OI 1 "s_register_operand")
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                   UNSPEC_VST2))]
+  "TARGET_NEON || TARGET_HAVE_MVE"
+{
+  if (TARGET_NEON)
+    emit_insn (gen_neon_vst2<mode> (operands[0], operands[1]));
+  else
+    emit_insn (gen_mve_vst2q<mode> (operands[0], operands[1]));
+  DONE;
+})
+
+(define_expand "vec_load_lanesxi<mode>"
+  [(match_operand:XI 0 "s_register_operand")
+   (match_operand:XI 1 "neon_struct_operand")
+   (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+  "TARGET_NEON || TARGET_HAVE_MVE"
+{
+  if (TARGET_NEON)
+    emit_insn (gen_neon_vld4<mode> (operands[0], operands[1]));
+  else
+    emit_insn (gen_mve_vld4q<mode> (operands[0], operands[1]));
+  DONE;
+})
+
+(define_expand "vec_store_lanesxi<mode>"
+  [(match_operand:XI 0 "neon_struct_operand")
+   (match_operand:XI 1 "s_register_operand")
+   (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+  "TARGET_NEON || TARGET_HAVE_MVE"
+{
+  if (TARGET_NEON)
+    emit_insn (gen_neon_vst4<mode> (operands[0], operands[1]));
+  else
+    emit_insn (gen_mve_vst4q<mode> (operands[0], operands[1]));
+  DONE;
+})
+
+(define_expand "reduc_plus_scal_<mode>"
+  [(match_operand:<V_elem> 0 "nonimmediate_operand")
+   (match_operand:VQ 1 "s_register_operand")]
+  "ARM_HAVE_<MODE>_ARITH
+   && !(TARGET_HAVE_MVE && FLOAT_MODE_P (<MODE>mode))
+   && !BYTES_BIG_ENDIAN"
+{
+  if (TARGET_NEON)
+    {
+      rtx step1 = gen_reg_rtx (<V_HALF>mode);
+
+      emit_insn (gen_quad_halves_plus<mode> (step1, operands[1]));
+      emit_insn (gen_reduc_plus_scal_<V_half> (operands[0], step1));
+    }
+  else
+    {
+      /* vaddv generates a 32 bits accumulator.  */
+      rtx op0 = gen_reg_rtx (SImode);
+
+      emit_insn (gen_mve_vaddvq (VADDVQ_S, <MODE>mode, op0, operands[1]));
+      emit_move_insn (operands[0], gen_lowpart (<V_elem>mode, op0));
+    }
+
+  DONE;
+})
+
+(define_expand "avg<mode>3_floor"
+  [(match_operand:MVE_2 0 "s_register_operand")
+   (match_operand:MVE_2 1 "s_register_operand")
+   (match_operand:MVE_2 2 "s_register_operand")]
+  "ARM_HAVE_<MODE>_ARITH"
+{
+  if (TARGET_HAVE_MVE)
+    emit_insn (gen_mve_vhaddq (VHADDQ_S, <MODE>mode,
+			       operands[0], operands[1], operands[2]));
+  else
+    emit_insn (gen_neon_vhadd (UNSPEC_VHADD_S, UNSPEC_VHADD_S, <MODE>mode,
+			       operands[0], operands[1], operands[2]));
+  DONE;
+})
+
+(define_expand "uavg<mode>3_floor"
+  [(match_operand:MVE_2 0 "s_register_operand")
+   (match_operand:MVE_2 1 "s_register_operand")
+   (match_operand:MVE_2 2 "s_register_operand")]
+  "ARM_HAVE_<MODE>_ARITH"
+{
+  if (TARGET_HAVE_MVE)
+    emit_insn (gen_mve_vhaddq (VHADDQ_U, <MODE>mode,
+			       operands[0], operands[1], operands[2]));
+  else
+    emit_insn (gen_neon_vhadd (UNSPEC_VHADD_U, UNSPEC_VHADD_U, <MODE>mode,
+			       operands[0], operands[1], operands[2]));
+  DONE;
+})
+
+(define_expand "avg<mode>3_ceil"
+  [(match_operand:MVE_2 0 "s_register_operand")
+   (match_operand:MVE_2 1 "s_register_operand")
+   (match_operand:MVE_2 2 "s_register_operand")]
+  "ARM_HAVE_<MODE>_ARITH"
+{
+  if (TARGET_HAVE_MVE)
+    emit_insn (gen_mve_vrhaddq (VRHADDQ_S, <MODE>mode,
+				operands[0], operands[1], operands[2]));
+  else
+    emit_insn (gen_neon_vhadd (UNSPEC_VRHADD_S, UNSPEC_VRHADD_S, <MODE>mode,
+			       operands[0], operands[1], operands[2]));
+  DONE;
+})
+
+(define_expand "uavg<mode>3_ceil"
+  [(match_operand:MVE_2 0 "s_register_operand")
+   (match_operand:MVE_2 1 "s_register_operand")
+   (match_operand:MVE_2 2 "s_register_operand")]
+  "ARM_HAVE_<MODE>_ARITH"
+{
+  if (TARGET_HAVE_MVE)
+    emit_insn (gen_mve_vrhaddq (VRHADDQ_U, <MODE>mode,
+				operands[0], operands[1], operands[2]));
+  else
+    emit_insn (gen_neon_vhadd (UNSPEC_VRHADD_U, UNSPEC_VRHADD_U, <MODE>mode,
+			       operands[0], operands[1], operands[2]));
+  DONE;
+})
+
+(define_expand "clz<mode>2"
+ [(set (match_operand:VDQIW 0 "s_register_operand")
+       (clz:VDQIW (match_operand:VDQIW 1 "s_register_operand")))]
+  "ARM_HAVE_<MODE>_ARITH
+   && !TARGET_REALLY_IWMMXT"
+)
+(define_expand "vec_init<mode><V_elem_l>"
+  [(match_operand:VDQX 0 "s_register_operand")
+   (match_operand 1 "" "")]
+  "TARGET_NEON || (TARGET_HAVE_MVE && VALID_MVE_MODE (<MODE>mode))"
+{
+  neon_expand_vector_init (operands[0], operands[1]);
   DONE;
 })

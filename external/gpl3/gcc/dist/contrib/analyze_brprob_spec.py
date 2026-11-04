@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Copyright (C) 2016-2024 Free Software Foundation, Inc.
+#
 # This file is part of GCC.
 #
 # GCC is free software; you can redistribute it and/or modify it under
@@ -14,7 +16,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with GCC; see the file COPYING3.  If not see
-# <http://www.gnu.org/licenses/>.  */
+# <http://www.gnu.org/licenses/>.
 
 import sys
 import os

@@ -1,6 +1,6 @@
 /* An experimental state machine, for tracking exposure of sensitive
    data (e.g. through logging).
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -20,18 +20,16 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
+#define INCLUDE_MEMORY
 #include "system.h"
 #include "coretypes.h"
+#include "make-unique.h"
 #include "tree.h"
-#include "function.h"
 #include "function.h"
 #include "basic-block.h"
 #include "gimple.h"
 #include "options.h"
 #include "diagnostic-path.h"
-#include "diagnostic-metadata.h"
-#include "function.h"
-#include "json.h"
 #include "analyzer/analyzer.h"
 #include "diagnostic-event-id.h"
 #include "analyzer/analyzer-logging.h"
@@ -52,13 +50,13 @@ class sensitive_state_machine : public state_machine
 public:
   sensitive_state_machine (logger *logger);
 
-  bool inherited_state_p () const FINAL OVERRIDE { return true; }
+  bool inherited_state_p () const final override { return true; }
 
   bool on_stmt (sm_context *sm_ctxt,
 		const supernode *node,
-		const gimple *stmt) const FINAL OVERRIDE;
+		const gimple *stmt) const final override;
 
-  bool can_purge_p (state_t s) const FINAL OVERRIDE;
+  bool can_purge_p (state_t s) const final override;
 
   /* State for "sensitive" data, such as a password.  */
   state_t m_sensitive;
@@ -81,7 +79,7 @@ public:
   : m_sm (sm), m_arg (arg)
   {}
 
-  const char *get_kind () const FINAL OVERRIDE
+  const char *get_kind () const final override
   {
     return "exposure_through_output_file";
   }
@@ -91,23 +89,21 @@ public:
     return same_tree_p (m_arg, other.m_arg);
   }
 
-  int get_controlling_option () const FINAL OVERRIDE
+  int get_controlling_option () const final override
   {
     return OPT_Wanalyzer_exposure_through_output_file;
   }
 
-  bool emit (rich_location *rich_loc) FINAL OVERRIDE
+  bool emit (diagnostic_emission_context &ctxt) final override
   {
-    diagnostic_metadata m;
     /* CWE-532: Information Exposure Through Log Files */
-    m.add_cwe (532);
-    return warning_meta (rich_loc, m, get_controlling_option (),
-			 "sensitive value %qE written to output file",
-			 m_arg);
+    ctxt.add_cwe (532);
+    return ctxt.warn ("sensitive value %qE written to output file",
+		      m_arg);
   }
 
   label_text describe_state_change (const evdesc::state_change &change)
-    FINAL OVERRIDE
+    final override
   {
     if (change.m_new_state == m_sm.m_sensitive)
       {
@@ -117,8 +113,17 @@ public:
     return label_text ();
   }
 
+  diagnostic_event::meaning
+  get_meaning_for_state_change (const evdesc::state_change &change)
+    const final override
+  {
+    if (change.m_new_state == m_sm.m_sensitive)
+      return diagnostic_event::meaning (diagnostic_event::VERB_acquire,
+					diagnostic_event::NOUN_sensitive);
+    return diagnostic_event::meaning ();
+  }
   label_text describe_call_with_state (const evdesc::call_with_state &info)
-    FINAL OVERRIDE
+    final override
   {
     if (info.m_state == m_sm.m_sensitive)
       return info.formatted_print
@@ -128,7 +133,7 @@ public:
   }
 
   label_text describe_return_of_state (const evdesc::return_of_state &info)
-    FINAL OVERRIDE
+    final override
   {
     if (info.m_state == m_sm.m_sensitive)
       return info.formatted_print ("returning sensitive value to %qE from %qE",
@@ -136,7 +141,7 @@ public:
     return label_text ();
   }
 
-  label_text describe_final_event (const evdesc::final_event &ev) FINAL OVERRIDE
+  label_text describe_final_event (const evdesc::final_event &ev) final override
   {
     if (m_first_sensitive_event.known_p ())
       return ev.formatted_print ("sensitive value %qE written to output file"
@@ -156,10 +161,10 @@ private:
 /* sensitive_state_machine's ctor.  */
 
 sensitive_state_machine::sensitive_state_machine (logger *logger)
-: state_machine ("sensitive", logger)
+: state_machine ("sensitive", logger),
+  m_sensitive (add_state ("sensitive")),
+  m_stop (add_state ("stop"))
 {
-  m_sensitive = add_state ("sensitive");
-  m_stop = add_state ("stop");
 }
 
 /* Warn about an exposure at NODE and STMT if ARG is in the "sensitive"
@@ -175,7 +180,8 @@ sensitive_state_machine::warn_for_any_exposure (sm_context *sm_ctxt,
     {
       tree diag_arg = sm_ctxt->get_diagnostic_tree (arg);
       sm_ctxt->warn (node, stmt, arg,
-		     new exposure_through_output_file (*this, diag_arg));
+		     make_unique<exposure_through_output_file> (*this,
+								diag_arg));
     }
 }
 

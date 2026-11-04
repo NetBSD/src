@@ -1,6 +1,6 @@
 /* Data structures and functions for streaming trees.
 
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@google.com>
 
 This file is part of GCC.
@@ -75,7 +75,7 @@ void streamer_write_tree_body (struct output_block *, tree);
 void streamer_write_integer_cst (struct output_block *, tree);
 
 /* In tree-streamer.cc.  */
-extern unsigned char streamer_mode_table[1 << 8];
+extern unsigned char streamer_mode_table[MAX_MACHINE_MODE];
 void streamer_check_handled_ts_structures (void);
 bool streamer_tree_cache_insert (struct streamer_tree_cache_d *, tree,
 				 hashval_t, unsigned *);
@@ -90,7 +90,7 @@ void streamer_tree_cache_delete (struct streamer_tree_cache_d *);
 
 /* Return the tree node at slot IX in CACHE.  */
 
-static inline tree
+inline tree
 streamer_tree_cache_get_tree (struct streamer_tree_cache_d *cache, unsigned ix)
 {
   return cache->nodes[ix];
@@ -98,25 +98,30 @@ streamer_tree_cache_get_tree (struct streamer_tree_cache_d *cache, unsigned ix)
 
 /* Return the tree hash value at slot IX in CACHE.  */
 
-static inline hashval_t
+inline hashval_t
 streamer_tree_cache_get_hash (struct streamer_tree_cache_d *cache, unsigned ix)
 {
   return cache->hashes[ix];
 }
 
-static inline void
+inline void
 bp_pack_machine_mode (struct bitpack_d *bp, machine_mode mode)
 {
   streamer_mode_table[mode] = 1;
-  bp_pack_enum (bp, machine_mode, 1 << 8, mode);
+  int last = 1 << ceil_log2 (MAX_MACHINE_MODE);
+  bp_pack_enum (bp, machine_mode, last, mode);
 }
 
-static inline machine_mode
+inline machine_mode
 bp_unpack_machine_mode (struct bitpack_d *bp)
 {
-  return (machine_mode)
-	   ((class lto_input_block *)
-	    bp->stream)->mode_table[bp_unpack_enum (bp, machine_mode, 1 << 8)];
+  lto_input_block *ib = (class lto_input_block *) bp->stream;
+  int last = 1 << ib->file_data->mode_bits;
+  unsigned ix = bp_unpack_enum (bp, machine_mode, last);
+  if (ib->file_data->mode_table)
+    return (machine_mode) ib->file_data->mode_table[ix];
+  else
+    return (machine_mode) ix;
 }
 
 #endif  /* GCC_TREE_STREAMER_H  */

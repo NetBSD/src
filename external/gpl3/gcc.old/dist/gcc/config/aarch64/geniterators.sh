@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2022 Free Software Foundation, Inc.
 # Contributed by ARM Ltd.
 #
 # This file is part of GCC.
@@ -64,14 +64,14 @@ iterdef {
 	gsub(/ *"[^"]*" *\)/, "", s)
 	gsub(/\( */, "", s)
 
-	if (s !~ /^[A-Za-z0-9_]+ \[[A-Z0-9 ]*\]$/)
+	if (s !~ /^[A-Za-z0-9_]+ \[[A-Za-z0-9 ]*\]$/)
 		next
 	sub(/\[ */, "", s)
 	sub(/ *\]/, "", s)
 
 	n = split(s, a)
-	printf "#define BUILTIN_" a[1] "(T, N, MAP) \\\n"
-	printf "  VAR" (n-1) " (T, N, MAP"
+	printf "#define BUILTIN_" a[1] "(T, N, MAP, FLAG) \\\n"
+	printf "  VAR" (n-1) " (T, N, MAP, FLAG"
 	for (i = 2; i <= n; i++)
 		printf ", "  tolower(a[i])
 	printf ")\n"

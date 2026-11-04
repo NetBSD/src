@@ -1,5 +1,5 @@
 /* Passes for transactional memory support.
-   Copyright (C) 2008-2022 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>
    and Aldy Hernandez <aldyh@redhat.com>.
 
@@ -637,6 +637,9 @@ diagnose_tm_1 (gimple_stmt_iterator *gsi, bool *handled_ops_p,
     {
     case GIMPLE_CALL:
       {
+	if (gimple_call_internal_p (stmt))
+	  break;
+
 	tree fn = gimple_call_fn (stmt);
 
 	if ((d->summary_flags & DIAG_TM_OUTER) == 0
@@ -864,8 +867,11 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return flag_tm; }
-  virtual unsigned int execute (function *) { return diagnose_tm_blocks (); }
+  bool gate (function *) final override { return flag_tm; }
+  unsigned int execute (function *) final override
+  {
+    return diagnose_tm_blocks ();
+  }
 
 }; // class pass_diagnose_tm_blocks
 
@@ -1059,7 +1065,7 @@ tm_log_delete (void)
 static bool
 transaction_invariant_address_p (const_tree mem, basic_block region_entry_block)
 {
-  if ((TREE_CODE (mem) == INDIRECT_REF || TREE_CODE (mem) == MEM_REF)
+  if ((INDIRECT_REF_P (mem) || TREE_CODE (mem) == MEM_REF)
       && TREE_CODE (TREE_OPERAND (mem, 0)) == SSA_NAME)
     {
       basic_block def_bb;
@@ -1850,8 +1856,11 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return flag_tm; }
-  virtual unsigned int execute (function *) { return execute_lower_tm (); }
+  bool gate (function *) final override { return flag_tm; }
+  unsigned int execute (function *) final override
+  {
+    return execute_lower_tm ();
+  }
 
 }; // class pass_lower_tm
 
@@ -2051,7 +2060,7 @@ tm_region_init (struct tm_region *region)
       region = tm_region_init_1 (region, bb);
 
       /* Check for the last statement in the block beginning a new region.  */
-      g = last_stmt (bb);
+      g = last_nondebug_stmt (bb);
       old_region = region;
       if (g)
 	if (gtransaction *trans_stmt = dyn_cast <gtransaction *> (g))
@@ -2144,7 +2153,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return gate_tm_init (); }
+  bool gate (function *) final override { return gate_tm_init (); }
 
 }; // class pass_tm_init
 
@@ -3162,7 +3171,10 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *) { return execute_tm_mark (); }
+  unsigned int execute (function *) final override
+  {
+    return execute_tm_mark ();
+  }
 
 }; // class pass_tm_mark
 
@@ -3206,7 +3218,7 @@ split_bb_make_tm_edge (gimple *stmt, basic_block dest_bb,
   struct tm_restart_node *n = *slot;
   if (n == NULL)
     {
-      n = ggc_alloc<tm_restart_node> ();
+      *slot = n = ggc_alloc<tm_restart_node> ();
       *n = dummy;
     }
   else
@@ -3324,7 +3336,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_tm_edges
 
@@ -4085,8 +4097,11 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return flag_tm && optimize > 0; }
-  virtual unsigned int execute (function *) { return execute_tm_memopt (); }
+  bool gate (function *) final override { return flag_tm && optimize > 0; }
+  unsigned int execute (function *) final override
+  {
+    return execute_tm_memopt ();
+  }
 
 }; // class pass_tm_memopt
 
@@ -5667,8 +5682,8 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return flag_tm; }
-  virtual unsigned int execute (function *) { return ipa_tm_execute (); }
+  bool gate (function *) final override { return flag_tm; }
+  unsigned int execute (function *) final override { return ipa_tm_execute (); }
 
 }; // class pass_ipa_tm
 

@@ -1,5 +1,5 @@
 # Top level -*- makefile -*- fragment for libgccjit.so.
-#   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 #This file is part of GCC.
 
@@ -62,14 +62,14 @@ ifneq (,$(findstring darwin,$(host)))
 # options).  Fortunately, for Darwin we can safely hard-code the relevant
 # host options, since all usable linkers support them).
 
-LIBGCCJIT_CURRENT = 24
+LIBGCCJIT_CURRENT = 26
 LIBGCCJIT_REVISION = 0
-LIBGCCJIT_AGE = 24
+LIBGCCJIT_AGE = 26
 LIBGCCJIT_COMPAT = 0
 LIBGCCJIT_BASENAME = libgccjit
 
 LIBGCCJIT_SONAME = \
-  ${libdir}/$(LIBGCCJIT_BASENAME).$(LIBGCCJIT_VERSION_NUM).dylib
+  $(DARWIN_RPATH)/$(LIBGCCJIT_BASENAME).$(LIBGCCJIT_VERSION_NUM).dylib
 LIBGCCJIT_FILENAME = $(LIBGCCJIT_BASENAME).$(LIBGCCJIT_VERSION_NUM).dylib
 LIBGCCJIT_LINKER_NAME = $(LIBGCCJIT_BASENAME).dylib
 
@@ -170,18 +170,23 @@ LIBGCCJIT_EXTRA_OPTS = $(LIBGCCJIT_VERSION_SCRIPT_OPTION) \
 endif
 endif
 
+# Only link objects from $(EXTRA_GCC_OBJS) that's not already
+# included in libbackend.a ($(EXTRA_OBJS)).
+EXTRA_GCC_OBJS_EXCLUSIVE = $(foreach _obj1, $(EXTRA_GCC_OBJS), \
+	$(if $(filter $(_obj1), $(EXTRA_OBJS)),, $(_obj1)))
+
 # We avoid using $(BACKEND) from Makefile.in in order to avoid pulling
 # in main.o
 $(LIBGCCJIT_FILENAME): $(jit_OBJS) \
 	libbackend.a libcommon-target.a libcommon.a \
 	$(CPPLIB) $(LIBDECNUMBER) \
 	$(LIBDEPS) $(srcdir)/jit/libgccjit.map \
-	$(EXTRA_GCC_OBJS) $(jit.prev)
+	$(EXTRA_GCC_OBJS_EXCLUSIVE) $(jit.prev)
 	@$(call LINK_PROGRESS,$(INDEX.jit),start)
 	+$(LLINKER) $(ALL_LINKERFLAGS) $(JIT_LDFLAGS) -o $@ -shared \
 	     $(jit_OBJS) libbackend.a libcommon-target.a libcommon.a \
 	     $(CPPLIB) $(LIBDECNUMBER) $(EXTRA_GCC_LIBS) $(LIBS) $(BACKENDLIBS) \
-	     $(EXTRA_GCC_OBJS) \
+	     $(EXTRA_GCC_OBJS_EXCLUSIVE) \
 	     $(LIBGCCJIT_EXTRA_OPTS)
 	@$(call LINK_PROGRESS,$(INDEX.jit),end)
 

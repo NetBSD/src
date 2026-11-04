@@ -1,7 +1,7 @@
 /* Pass to free or clear language-specific data structures from
    the IL before they reach the middle end.
 
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -234,7 +234,7 @@ fld_decl_context (tree ctx)
   return ctx;
 }
 
-/* For T being aggregate type try to turn it into a incomplete variant.
+/* For T being aggregate type try to turn it into an incomplete variant.
    Return T if no simplification is possible.  */
 
 static tree
@@ -1122,9 +1122,7 @@ free_lang_data (void)
   free_lang_data_in_cgraph (&fld);
 
   /* Create gimple variants for common types.  */
-  for (unsigned i = 0;
-       i < sizeof (builtin_structptr_types) / sizeof (builtin_structptr_type);
-       ++i)
+  for (unsigned i = 0; i < ARRAY_SIZE (builtin_structptr_types); ++i)
     builtin_structptr_types[i].node = builtin_structptr_types[i].base;
 
   /* Reset some langhooks.  Do not reset types_compatible_p, it may
@@ -1188,7 +1186,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *) { return free_lang_data (); }
+  unsigned int execute (function *) final override { return free_lang_data (); }
 
 }; // class pass_ipa_free_lang_data
 

@@ -1,5 +1,5 @@
 /* Definitions for PA_RISC with ELF format
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -134,8 +134,3 @@ along with GCC; see the file COPYING3.  If not see
 /* NetBSD always uses 128 bits / 16 byte alignment.  */
 #undef MALLOC_ABI_ALIGNMENT
 #define MALLOC_ABI_ALIGNMENT 128
-
-#if 0
-#undef TARGET_SYNC_LIBCALL
-#define TARGET_SYNC_LIBCALL 1
-#endif

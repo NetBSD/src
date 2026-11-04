@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Offloading and Multi Processing Library
@@ -148,32 +148,6 @@ omp_get_supported_active_levels (void)
   return gomp_supported_active_levels;
 }
 
-void
-omp_set_num_teams (int num_teams)
-{
-  if (num_teams >= 0)
-    gomp_nteams_var = num_teams;
-}
-
-int
-omp_get_max_teams (void)
-{
-  return gomp_nteams_var;
-}
-
-void
-omp_set_teams_thread_limit (int thread_limit)
-{
-  if (thread_limit >= 0)
-    gomp_teams_thread_limit_var = thread_limit;
-}
-
-int
-omp_get_teams_thread_limit (void)
-{
-  return gomp_teams_thread_limit_var;
-}
-
 int
 omp_get_cancellation (void)
 {
@@ -274,10 +248,6 @@ ialias (omp_get_thread_limit)
 ialias (omp_set_max_active_levels)
 ialias (omp_get_max_active_levels)
 ialias (omp_get_supported_active_levels)
-ialias (omp_set_num_teams)
-ialias (omp_get_max_teams)
-ialias (omp_set_teams_thread_limit)
-ialias (omp_get_teams_thread_limit)
 ialias (omp_get_cancellation)
 ialias (omp_get_proc_bind)
 ialias (omp_get_max_task_priority)

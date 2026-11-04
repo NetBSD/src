@@ -1,5 +1,5 @@
 /* A memory statistics tracking infrastructure.
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2022 Free Software Foundation, Inc.
    Contributed by Martin Liska  <mliska@suse.cz>
 
 This file is part of GCC.
@@ -70,7 +70,7 @@ public:
 
   /* Return true if the memory location is equal to OTHER.  */
   int
-  equal (mem_location &other)
+  equal (const mem_location &other)
   {
     return m_filename == other.m_filename && m_function == other.m_function
       && m_line == other.m_line;
@@ -203,7 +203,7 @@ public:
 
   /* Dump usage coupled to LOC location, where TOTAL is sum of all rows.  */
   inline void
-  dump (mem_location *loc, mem_usage &total) const
+  dump (mem_location *loc, const mem_usage &total) const
   {
     char *location_string = loc->to_string ();
 

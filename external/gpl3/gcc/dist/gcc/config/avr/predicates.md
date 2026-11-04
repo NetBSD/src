@@ -1,5 +1,5 @@
 ;; Predicate definitions for ATMEL AVR micro controllers.
-;; Copyright (C) 2006-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2024 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -50,10 +50,20 @@
 ;; Return true if OP is a valid address for lower half of I/O space.
 (define_special_predicate "low_io_address_operand"
   (ior (and (match_code "const_int")
-	    (match_test "IN_RANGE (INTVAL (op) - avr_arch->sfr_offset,
-				   0, 0x1F)"))
+            (match_test "IN_RANGE (INTVAL (op) - avr_arch->sfr_offset,
+                                   0, 0x1F)"))
        (and (match_code "symbol_ref")
-	    (match_test "SYMBOL_REF_FLAGS (op) & SYMBOL_FLAG_IO_LOW"))))
+            (match_test "SYMBOL_REF_FLAGS (op) & SYMBOL_FLAG_IO_LOW"))))
+
+;; Return true if OP is a register_operand or low_io_operand.
+(define_predicate "reg_or_low_io_operand"
+  (ior (match_operand 0 "register_operand")
+       (and (match_code "mem")
+            ; Deliberately only allow QImode no matter what the mode of
+            ; the operand is.  This effectively disallows and I/O that
+            ; is not QImode for that operand.
+            (match_test "GET_MODE (op) == QImode")
+            (match_test "low_io_address_operand (XEXP (op, 0), Pmode)"))))
 
 ;; Return true if OP is a valid address for high half of I/O space.
 (define_predicate "high_io_address_operand"
@@ -64,10 +74,10 @@
 ;; Return true if OP is a valid address of I/O space.
 (define_special_predicate "io_address_operand"
   (ior (and (match_code "const_int")
-	    (match_test "IN_RANGE (INTVAL (op) - avr_arch->sfr_offset,
-				   0, 0x3F)"))
+            (match_test "IN_RANGE (INTVAL (op) - avr_arch->sfr_offset,
+                                   0, 0x3F)"))
        (and (match_code "symbol_ref")
-	    (match_test "SYMBOL_REF_FLAGS (op) & SYMBOL_FLAG_IO"))))
+            (match_test "SYMBOL_REF_FLAGS (op) & SYMBOL_FLAG_IO"))))
 
 ;; Return 1 if OP is a general operand not in flash memory
 (define_predicate "nop_general_operand"
@@ -91,11 +101,46 @@
   (and (match_code "const_int")
        (match_test "op == CONST1_RTX (mode)")))
 
+;; Return 1 if OP is the constant integer 7 for MODE.
+(define_predicate "const7_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL(op) == 7")))
+
+;; Return 1 if OP is the constant integer 15 for MODE.
+(define_predicate "const15_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL(op) == 15")))
+
+;; Return 1 if OP is the constant integer 23 for MODE.
+(define_predicate "const23_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL(op) == 23")))
+
+;; Return 1 if OP is the constant integer 31 for MODE.
+(define_predicate "const31_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL(op) == 31")))
+
 
 ;; Return 1 if OP is constant integer 0..7 for MODE.
 (define_predicate "const_0_to_7_operand"
   (and (match_code "const_int")
        (match_test "IN_RANGE (INTVAL (op), 0, 7)")))
+
+;; Return 1 if OP is constant integer 0..15 for MODE.
+(define_predicate "const_0_to_15_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, 15)")))
+
+;; Return 1 if OP is constant integer 0..23 for MODE.
+(define_predicate "const_0_to_23_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, 23)")))
+
+;; Return 1 if OP is constant integer 0..31 for MODE.
+(define_predicate "const_0_to_31_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, 31)")))
 
 ;; Return 1 if OP is constant integer 2..7 for MODE.
 (define_predicate "const_2_to_7_operand"
@@ -140,8 +185,8 @@
     case SYMBOL_REF :
       return SYMBOL_REF_FUNCTION_P (op);
     case PLUS :
-      /* Assume canonical format of symbol + constant.
-	 Fall through.  */
+      // Assume canonical format of symbol + constant.
+      // Fall through.
     case CONST :
       return text_segment_operand (XEXP (op, 0), VOIDmode);
     default :

@@ -1,5 +1,5 @@
 /* Implementation of the degree trignometric functions COSD, SIND, TAND.
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
    Contributed by Steven G. Kargl <kargl@gcc.gnu.org>
 
 This file is part of the GNU Fortran runtime library (libgfortran).
@@ -260,6 +260,24 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #endif
 
 #endif /* HAVE_FABSL && HAVE_FMODL && HAVE_COPYSIGNL */
+
+#elif defined(GFC_REAL_16_USE_IEC_60559)
+
+#if defined(HAVE_FABSF128) && defined(HAVE_FMODF128) && defined(HAVE_COPYSIGNF128)
+
+#ifdef HAVE_SINF128
+#define ENABLE_SIND
+#endif
+
+#ifdef HAVE_COSF128
+#define ENABLE_COSD
+#endif
+
+#ifdef HAVE_TANF128
+#define ENABLE_TAND
+#endif
+
+#endif /* HAVE_FABSF128 && HAVE_FMODF128 && HAVE_COPYSIGNF128 */
 
 #else
 

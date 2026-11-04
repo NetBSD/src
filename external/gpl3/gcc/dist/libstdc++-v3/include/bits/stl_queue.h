@@ -1,6 +1,6 @@
 // Queue implementation -*- C++ -*-
 
-// Copyright (C) 2001-2022 Free Software Foundation, Inc.
+// Copyright (C) 2001-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -194,10 +194,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       template<typename _Alloc, typename _Requires = _Uses<_Alloc>>
 	queue(queue&& __q, const _Alloc& __a)
 	: c(std::move(__q.c), __a) { }
+#endif
 
-#if __cplusplus > 202002L
-#define __cpp_lib_adaptor_iterator_pair_constructor 202106L
-
+#ifdef __glibcxx_adaptor_iterator_pair_constructor // C++ >= 23 && HOSTED
       template<typename _InputIterator,
 	       typename = _RequireInputIter<_InputIterator>>
 	queue(_InputIterator __first, _InputIterator __last)
@@ -208,7 +207,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	       typename = _Uses<_Alloc>>
 	queue(_InputIterator __first, _InputIterator __last, const _Alloc& __a)
 	: c(__first, __last, __a) { }
-#endif
 #endif
 
       /**
@@ -346,7 +344,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     queue(_Container, _Allocator)
     -> queue<typename _Container::value_type, _Container>;
 
-#ifdef __cpp_lib_adaptor_iterator_pair_constructor
+#ifdef __glibcxx_adaptor_iterator_pair_constructor
   template<typename _InputIterator,
 	   typename _ValT
 	     = typename iterator_traits<_InputIterator>::value_type,
@@ -566,6 +564,26 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       : c(std::move(__s)), comp(__x)
       { std::make_heap(c.begin(), c.end(), comp); }
 
+      priority_queue(const priority_queue&) = default;
+      priority_queue& operator=(const priority_queue&) = default;
+
+      priority_queue(priority_queue&& __q)
+      noexcept(__and_<is_nothrow_move_constructible<_Sequence>,
+		      is_nothrow_move_constructible<_Compare>>::value)
+      : c(std::move(__q.c)), comp(std::move(__q.comp))
+      { __q.c.clear(); }
+
+      priority_queue&
+      operator=(priority_queue&& __q)
+      noexcept(__and_<is_nothrow_move_assignable<_Sequence>,
+		      is_nothrow_move_assignable<_Compare>>::value)
+      {
+	c = std::move(__q.c);
+	__q.c.clear();
+	comp = std::move(__q.comp);
+	return *this;
+      }
+
       template<typename _Alloc, typename _Requires = _Uses<_Alloc>>
 	explicit
 	priority_queue(const _Alloc& __a)
@@ -594,7 +612,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       template<typename _Alloc, typename _Requires = _Uses<_Alloc>>
 	priority_queue(priority_queue&& __q, const _Alloc& __a)
-	: c(std::move(__q.c), __a), comp(std::move(__q.comp)) { }
+	: c(std::move(__q.c), __a), comp(std::move(__q.comp))
+	{ __q.c.clear(); }
 #endif
 
       /**
@@ -609,8 +628,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
        *  the copy according to @a __x.
        *
        *  For more information on function objects, see the
-       *  documentation on @link functors functor base
-       *  classes@endlink.
+       *  documentation on @link functors functor base classes@endlink.
        */
 #if __cplusplus < 201103L
       template<typename _InputIterator>

@@ -1,5 +1,5 @@
 /* Gimple range edge header file.
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
    Contributed by Andrew MacLeod <amacleod@redhat.com>
    and Aldy Hernandez <aldyh@redhat.com>.
 
@@ -27,7 +27,7 @@ along with GCC; see the file COPYING3.  If not see
 // For a COND_EXPR, the TRUE edge will return [1,1] and the false edge a [0,0].
 //
 // For SWITCH_EXPR, it is awkward to calculate ranges.  When a request
-// is made, the entire switch is evalauted and the results cached. 
+// is made, the entire switch is evaluated and the results cached. 
 // Any future requests to that switch will use the cached value, providing
 // dramatic decrease in computation time.
 //
@@ -43,11 +43,11 @@ public:
   gimple *edge_range_p (irange &r, edge e);
 private:
   void calc_switch_ranges (gswitch *sw);
-  bool get_edge_range (irange &r, gimple *s, edge e);
+  bool switch_edge_range (irange &r, gswitch *sw, edge e);
 
   int m_max_edges;
-  hash_map<edge, irange *> *m_edge_table;
-  irange_allocator m_range_allocator;
+  hash_map<edge, vrange_storage *> *m_edge_table;
+  class vrange_allocator *m_range_allocator;
 };
 
 // If there is a range control statement at the end of block BB, return it.

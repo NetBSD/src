@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+# Copyright (C) 2020-2024 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -14,7 +16,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with GCC; see the file COPYING3.  If not see
-# <http://www.gnu.org/licenses/>.  */
+# <http://www.gnu.org/licenses/>.
 
 import os
 import re
@@ -37,14 +39,15 @@ unidiff_supports_renaming = hasattr(PatchedFile(), 'is_rename')
 class GitEmail(GitCommit):
     def __init__(self, filename):
         self.filename = filename
-        diff = PatchSet.from_filename(filename)
         date = None
         author = None
         subject = ''
 
         subject_last = False
-        with open(self.filename, 'r') as f:
-            lines = f.read().splitlines()
+        with open(self.filename, newline='\n') as f:
+            data = f.read()
+            diff = PatchSet(data)
+            lines = data.splitlines()
         lines = list(takewhile(lambda line: line != '---', lines))
         for line in lines:
             if line.startswith(DATE_PREFIX):
@@ -86,8 +89,7 @@ class GitEmail(GitCommit):
                 t = 'M'
             modified_files.append((target if t != 'D' else source, t))
         git_info = GitInfo(None, date, author, message, modified_files)
-        super().__init__(git_info,
-                         commit_to_info_hook=lambda x: None)
+        super().__init__(git_info, commit_to_info_hook=None)
 
 
 def show_help():
@@ -116,11 +118,13 @@ if __name__ == '__main__':
 
         success = 0
         for full in sorted(allfiles):
-            email = GitEmail(full, False)
+            email = GitEmail(full)
             print(email.filename)
             if email.success:
                 success += 1
                 print('  OK')
+                for warning in email.warnings:
+                    print('  WARN: %s' % warning)
             else:
                 for error in email.errors:
                     print('  ERR: %s' % error)
@@ -132,6 +136,7 @@ if __name__ == '__main__':
         if email.success:
             print('OK')
             email.print_output()
+            email.print_warnings()
         else:
             if not email.info.lines:
                 print('Error: patch contains no parsed lines', file=sys.stderr)

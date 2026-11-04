@@ -1,5 +1,5 @@
 /* C-compiler utilities for types and variables storage layout
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -476,6 +476,32 @@ bitwise_type_for_mode (machine_mode mode)
   return inner_type;
 }
 
+/* Find a mode that can be used for efficient bitwise operations on SIZE
+   bits, if one exists.  */
+
+opt_machine_mode
+bitwise_mode_for_size (poly_uint64 size)
+{
+  if (known_le (size, (unsigned int) MAX_FIXED_MODE_SIZE))
+    return mode_for_size (size, MODE_INT, true);
+
+  machine_mode mode, ret = VOIDmode;
+  FOR_EACH_MODE_FROM (mode, MIN_MODE_VECTOR_INT)
+    if (known_eq (GET_MODE_BITSIZE (mode), size)
+	&& (ret == VOIDmode || GET_MODE_INNER (mode) == QImode)
+	&& have_regs_of_mode[mode]
+	&& targetm.vector_mode_supported_p (mode))
+      {
+	if (GET_MODE_INNER (mode) == QImode)
+	  return mode;
+	else if (ret == VOIDmode)
+	  ret = mode;
+      }
+  if (ret != VOIDmode)
+    return ret;
+  return opt_machine_mode ();
+}
+
 /* Find a mode that is suitable for representing a vector with NUNITS
    elements of mode INNERMODE, if one exists.  The returned mode can be
    either an integer mode or a vector mode.  */
@@ -499,11 +525,13 @@ mode_for_vector (scalar_mode innermode, poly_uint64 nunits)
   else
     mode = MIN_MODE_VECTOR_INT;
 
-  /* Do not check vector_mode_supported_p here.  We'll do that
-     later in vector_type_mode.  */
+  /* Only check the broader vector_mode_supported_any_target_p here.
+     We'll filter through target-specific availability and
+     vector_mode_supported_p later in vector_type_mode.  */
   FOR_EACH_MODE_FROM (mode, mode)
     if (known_eq (GET_MODE_NUNITS (mode), nunits)
-	&& GET_MODE_INNER (mode) == innermode)
+	&& GET_MODE_INNER (mode) == innermode
+	&& targetm.vector_mode_supported_any_target_p (mode))
       return mode;
 
   /* For integers, try mapping it to a same-sized scalar mode.  */
@@ -1781,7 +1809,12 @@ finalize_record_size (record_layout_info rli)
       && simple_cst_equal (unpadded_size, TYPE_SIZE (rli->t)) == 0
       && input_location != BUILTINS_LOCATION
       && !TYPE_ARTIFICIAL (rli->t))
-    warning (OPT_Wpadded, "padding struct size to alignment boundary");
+  {
+	tree pad_size
+	  = size_binop (MINUS_EXPR, TYPE_SIZE_UNIT (rli->t), unpadded_size_unit);
+	  warning (OPT_Wpadded,
+		"padding struct size to alignment boundary with %E bytes", pad_size);
+  }
 
   if (warn_packed && TREE_CODE (rli->t) == RECORD_TYPE
       && TYPE_PACKED (rli->t) && ! rli->packed_maybe_necessary
@@ -1991,6 +2024,7 @@ finalize_type_size (tree type)
       unsigned int user_align = TYPE_USER_ALIGN (type);
       machine_mode mode = TYPE_MODE (type);
       bool empty_p = TYPE_EMPTY_P (type);
+      bool typeless = AGGREGATE_TYPE_P (type) && TYPE_TYPELESS_STORAGE (type);
 
       /* Copy it into all variants.  */
       for (variant = TYPE_MAIN_VARIANT (type);
@@ -2015,6 +2049,8 @@ finalize_type_size (tree type)
 	  TYPE_PRECISION (variant) = precision;
 	  SET_TYPE_MODE (variant, mode);
 	  TYPE_EMPTY_P (variant) = empty_p;
+	  if (AGGREGATE_TYPE_P (variant))
+	    TYPE_TYPELESS_STORAGE (variant) = typeless;
 	}
     }
 }
@@ -2138,6 +2174,24 @@ finish_bitfield_representative (tree repr, tree field)
       || GET_MODE_BITSIZE (mode) > maxbitsize
       || GET_MODE_BITSIZE (mode) > MAX_FIXED_MODE_SIZE)
     {
+      if (TREE_CODE (TREE_TYPE (field)) == BITINT_TYPE)
+	{
+	  struct bitint_info info;
+	  unsigned prec = TYPE_PRECISION (TREE_TYPE (field));
+	  bool ok = targetm.c.bitint_type_info (prec, &info);
+	  gcc_assert (ok);
+	  scalar_int_mode limb_mode
+	    = as_a <scalar_int_mode> (info.abi_limb_mode);
+	  unsigned lprec = GET_MODE_PRECISION (limb_mode);
+	  if (prec > lprec)
+	    {
+	      /* For middle/large/huge _BitInt prefer bitsize being a multiple
+		 of limb precision.  */
+	      unsigned HOST_WIDE_INT bsz = CEIL (bitsize, lprec) * lprec;
+	      if (bsz <= maxbitsize)
+		bitsize = bsz;
+	    }
+	}
       /* We really want a BLKmode representative only as a last resort,
          considering the member b in
 	   struct { int a : 7; int b : 17; int c; } __attribute__((packed));
@@ -2383,6 +2437,69 @@ layout_type (tree type)
 	break;
       }
 
+    case BITINT_TYPE:
+      {
+	struct bitint_info info;
+	int cnt;
+	bool ok = targetm.c.bitint_type_info (TYPE_PRECISION (type), &info);
+	gcc_assert (ok);
+	scalar_int_mode limb_mode
+	  = as_a <scalar_int_mode> (info.abi_limb_mode);
+	if (TYPE_PRECISION (type) <= GET_MODE_PRECISION (limb_mode))
+	  {
+	    SET_TYPE_MODE (type, limb_mode);
+	    gcc_assert (info.abi_limb_mode == info.limb_mode);
+	    cnt = 1;
+	  }
+	else
+	  {
+	    SET_TYPE_MODE (type, BLKmode);
+	    cnt = CEIL (TYPE_PRECISION (type), GET_MODE_PRECISION (limb_mode));
+	    gcc_assert (info.abi_limb_mode == info.limb_mode
+			|| !info.big_endian == !WORDS_BIG_ENDIAN);
+	  }
+	TYPE_SIZE (type) = bitsize_int (cnt * GET_MODE_BITSIZE (limb_mode));
+	TYPE_SIZE_UNIT (type) = size_int (cnt * GET_MODE_SIZE (limb_mode));
+	SET_TYPE_ALIGN (type, GET_MODE_ALIGNMENT (limb_mode));
+	if (cnt > 1)
+	  {
+	    /* Use same mode as compute_record_mode would use for a structure
+	       containing cnt limb_mode elements.  */
+	    machine_mode mode = mode_for_size_tree (TYPE_SIZE (type),
+						    MODE_INT, 1).else_blk ();
+	    if (mode == BLKmode)
+	      break;
+	    finalize_type_size (type);
+	    SET_TYPE_MODE (type, mode);
+	    if (STRICT_ALIGNMENT
+		&& !(TYPE_ALIGN (type) >= BIGGEST_ALIGNMENT
+		     || TYPE_ALIGN (type) >= GET_MODE_ALIGNMENT (mode)))
+	      {
+		/* If this is the only reason this type is BLKmode, then
+		   don't force containing types to be BLKmode.  */
+		TYPE_NO_FORCE_BLK (type) = 1;
+		SET_TYPE_MODE (type, BLKmode);
+	      }
+	    if (TYPE_NEXT_VARIANT (type) || type != TYPE_MAIN_VARIANT (type))
+	      for (tree variant = TYPE_MAIN_VARIANT (type);
+		   variant != NULL_TREE;
+		   variant = TYPE_NEXT_VARIANT (variant))
+		{
+		  SET_TYPE_MODE (variant, mode);
+		  if (STRICT_ALIGNMENT
+		      && !(TYPE_ALIGN (variant) >= BIGGEST_ALIGNMENT
+			   || (TYPE_ALIGN (variant)
+			       >= GET_MODE_ALIGNMENT (mode))))
+		    {
+		      TYPE_NO_FORCE_BLK (variant) = 1;
+		      SET_TYPE_MODE (variant, BLKmode);
+		    }
+		}
+	    return;
+	  }
+	break;
+      }
+
     case REAL_TYPE:
       {
 	/* Allow the caller to choose the type mode, which is how decimal
@@ -2407,6 +2524,18 @@ layout_type (tree type)
 
     case COMPLEX_TYPE:
       TYPE_UNSIGNED (type) = TYPE_UNSIGNED (TREE_TYPE (type));
+      if (TYPE_MODE (TREE_TYPE (type)) == BLKmode)
+	{
+	  gcc_checking_assert (TREE_CODE (TREE_TYPE (type)) == BITINT_TYPE);
+	  SET_TYPE_MODE (type, BLKmode);
+	  TYPE_SIZE (type)
+	    = int_const_binop (MULT_EXPR, TYPE_SIZE (TREE_TYPE (type)),
+			       bitsize_int (2));
+	  TYPE_SIZE_UNIT (type)
+	    = int_const_binop (MULT_EXPR, TYPE_SIZE_UNIT (TREE_TYPE (type)),
+			       bitsize_int (2));
+	  break;
+	}
       SET_TYPE_MODE (type,
 		     GET_MODE_COMPLEX_MODE (TYPE_MODE (TREE_TYPE (type))));
 

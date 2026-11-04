@@ -1,5 +1,5 @@
 /* Symbolic values.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -19,6 +19,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
+#define INCLUDE_MEMORY
 #include "system.h"
 #include "coretypes.h"
 #include "tree.h"
@@ -38,22 +39,16 @@ along with GCC; see the file COPYING3.  If not see
 #include "target.h"
 #include "fold-const.h"
 #include "tree-pretty-print.h"
-#include "tristate.h"
 #include "bitmap.h"
-#include "selftest.h"
-#include "function.h"
-#include "json.h"
 #include "analyzer/analyzer.h"
 #include "analyzer/analyzer-logging.h"
-#include "options.h"
-#include "cgraph.h"
-#include "cfg.h"
-#include "digraph.h"
 #include "analyzer/call-string.h"
 #include "analyzer/program-point.h"
 #include "analyzer/store.h"
 #include "analyzer/svalue.h"
 #include "analyzer/region-model.h"
+#include "diagnostic.h"
+#include "tree-diagnostic.h"
 
 #if ENABLE_ANALYZER
 
@@ -96,9 +91,116 @@ json::value *
 svalue::to_json () const
 {
   label_text desc = get_desc (true);
-  json::value *sval_js = new json::string (desc.m_buffer);
-  desc.maybe_free ();
+  json::value *sval_js = new json::string (desc.get ());
   return sval_js;
+}
+
+/* Class for optionally adding open/close paren pairs within
+   svalue::maybe_print_for_user.  */
+
+class auto_add_parens
+{
+public:
+  auto_add_parens (pretty_printer *pp,
+		   const svalue *outer_sval,
+		   const svalue &inner_sval)
+  : m_pp (pp),
+    m_needs_parens (needs_parens_p (outer_sval, inner_sval))
+  {
+    if (m_needs_parens)
+      pp_string (m_pp, "(");
+  }
+  ~auto_add_parens ()
+  {
+    if (m_needs_parens)
+      pp_string (m_pp, ")");
+  }
+
+private:
+  static bool needs_parens_p (const svalue *outer_sval,
+			      const svalue &inner_sval)
+  {
+    if (!outer_sval)
+      return false;
+    if (inner_sval.get_kind () == SK_BINOP)
+      return true;
+    return false;
+  }
+
+  pretty_printer *m_pp;
+  bool m_needs_parens;
+};
+
+/* Attempt to print a user-facing description of this svalue to PP,
+   using MODEL for extracting representative tree values if necessary.
+   Use OUTER_SVAL (which can be null) to determine if we need to wrap
+   this value in parentheses.  */
+
+bool
+svalue::maybe_print_for_user (pretty_printer *pp,
+			      const region_model &model,
+			      const svalue *outer_sval) const
+{
+  auto_add_parens p (pp, outer_sval, *this);
+
+  switch (get_kind ())
+    {
+    default:
+      break;
+    case SK_CONSTANT:
+      {
+	const constant_svalue *sval = (const constant_svalue *)this;
+	pp_printf (pp, "%E", sval->get_constant ());
+	return true;
+      }
+    case SK_INITIAL:
+      {
+	const initial_svalue *sval = (const initial_svalue *)this;
+	return sval->get_region ()->maybe_print_for_user (pp, model);
+      }
+    case SK_UNARYOP:
+      {
+	const unaryop_svalue *sval = (const unaryop_svalue *)this;
+	if (sval->get_op () == NOP_EXPR)
+	  {
+	    if (!sval->get_arg ()->maybe_print_for_user (pp, model, outer_sval))
+	      return false;
+	    return true;
+	  }
+      }
+      break;
+    case SK_BINOP:
+      {
+	const binop_svalue *sval = (const binop_svalue *)this;
+	switch (sval->get_op ())
+	  {
+	  default:
+	    break;
+
+	  case PLUS_EXPR:
+	  case MINUS_EXPR:
+	  case MULT_EXPR:
+	    {
+	      if (!sval->get_arg0 ()->maybe_print_for_user (pp, model, this))
+		return false;
+	      pp_printf (pp, " %s ", op_symbol_code (sval->get_op ()));
+	      if (!sval->get_arg1 ()->maybe_print_for_user (pp, model, this))
+		return false;
+	      return true;
+	    }
+	  }
+      }
+      break;
+    }
+
+  if (tree expr = model.get_representative_tree (this))
+    {
+      expr = remove_ssa_names (expr);
+      print_expr_for_user (pp, expr);
+      return true;
+    }
+
+  return false;
 }
 
 /* If this svalue is a constant_svalue, return the underlying tree constant.
@@ -208,7 +310,7 @@ svalue::can_merge_p (const svalue *other,
   if (maybe_get_constant () && other->maybe_get_constant ())
     {
       return mgr->get_or_create_widening_svalue (other->get_type (),
-						 merger->m_point,
+						 merger->get_function_point (),
 						 other, this);
     }
 
@@ -221,7 +323,7 @@ svalue::can_merge_p (const svalue *other,
 	&& binop_sval->get_arg1 ()->get_kind () == SK_CONSTANT
 	&& other->get_kind () != SK_WIDENING)
       return mgr->get_or_create_widening_svalue (other->get_type (),
-						 merger->m_point,
+						 merger->get_function_point (),
 						 other, this);
 
   /* Merge: (Widen(existing_val, V), existing_val) -> Widen (existing_val, V)
@@ -257,6 +359,7 @@ svalue::can_merge_p (const svalue *other,
 	   a descending chain of constraints.  */
 	if (other == widen_arg0)
 	  {
+	    merger->on_widening_reuse (widen_arg0);
 	    return widen_arg0;
 	  }
 
@@ -394,7 +497,9 @@ svalue::cmp_ptr (const svalue *sval1, const svalue *sval2)
 	const constant_svalue *constant_sval2 = (const constant_svalue *)sval2;
 	const_tree cst1 = constant_sval1->get_constant ();
 	const_tree cst2 = constant_sval2->get_constant ();
-	return cmp_csts_same_type (cst1, cst2);
+	/* The svalues have the same type, but the underlying trees
+	   might not (for the case where both svalues are typeless).  */
+	return cmp_csts_and_types (cst1, cst2);
       }
       break;
     case SK_UNKNOWN:
@@ -600,13 +705,19 @@ public:
   involvement_visitor (const svalue *needle)
   : m_needle (needle), m_found (false) {}
 
-  void visit_initial_svalue (const initial_svalue *candidate)
+  void visit_initial_svalue (const initial_svalue *candidate) final override
   {
     if (candidate == m_needle)
       m_found = true;
   }
 
-  void visit_conjured_svalue (const conjured_svalue *candidate)
+  void visit_conjured_svalue (const conjured_svalue *candidate) final override
+  {
+    if (candidate == m_needle)
+      m_found = true;
+  }
+
+  void visit_widening_svalue (const widening_svalue *candidate) final override
   {
     if (candidate == m_needle)
       m_found = true;
@@ -626,7 +737,8 @@ svalue::involves_p (const svalue *other) const
 {
   /* Currently only implemented for these kinds.  */
   gcc_assert (other->get_kind () == SK_INITIAL
-	      || other->get_kind () == SK_CONJURED);
+	      || other->get_kind () == SK_CONJURED
+	      || other->get_kind () == SK_WIDENING);
 
   involvement_visitor v (other);
   accept (&v);
@@ -720,8 +832,11 @@ region_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
   else
     {
       pp_string (pp, "region_svalue(");
-      print_quoted_type (pp, get_type ());
-      pp_string (pp, ", ");
+      if (get_type ())
+	{
+	  print_quoted_type (pp, get_type ());
+	  pp_string (pp, ", ");
+	}
       m_reg->dump_to_pp (pp, simple);
       pp_string (pp, ")");
     }
@@ -732,8 +847,8 @@ region_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
 void
 region_svalue::accept (visitor *v) const
 {
-  v->visit_region_svalue (this);
   m_reg->accept (v);
+  v->visit_region_svalue (this);
 }
 
 /* Implementation of svalue::implicitly_live_p vfunc for region_svalue.  */
@@ -817,8 +932,11 @@ constant_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
   else
     {
       pp_string (pp, "constant_svalue(");
-      print_quoted_type (pp, get_type ());
-      pp_string (pp, ", ");
+      if (get_type ())
+	{
+	  print_quoted_type (pp, get_type ());
+	  pp_string (pp, ", ");
+	}
       dump_tree (pp, m_cst_expr);
       pp_string (pp, ")");
     }
@@ -842,14 +960,31 @@ constant_svalue::implicitly_live_p (const svalue_set *,
   return true;
 }
 
+/* Given EXPR, a non-NULL expression of boolean type, convert to
+   a tristate based on whether this is known to be true, false,
+   or is not known.  */
+
+static tristate
+tristate_from_boolean_tree_node (tree expr)
+{
+  gcc_assert (TREE_TYPE (expr) == boolean_type_node);
+
+  if (expr == boolean_true_node)
+    return tristate (tristate::TS_TRUE);
+  else if (expr == boolean_false_node)
+    return tristate (tristate::TS_FALSE);
+  else
+    return tristate (tristate::TS_UNKNOWN);
+}
+
 /* Evaluate the condition LHS OP RHS.
    Subroutine of region_model::eval_condition for when we have a pair of
    constants.  */
 
 tristate
 constant_svalue::eval_condition (const constant_svalue *lhs,
-				  enum tree_code op,
-				  const constant_svalue *rhs)
+				 enum tree_code op,
+				 const constant_svalue *rhs)
 {
   tree lhs_const = lhs->get_constant ();
   tree rhs_const = rhs->get_constant ();
@@ -857,15 +992,28 @@ constant_svalue::eval_condition (const constant_svalue *lhs,
   gcc_assert (CONSTANT_CLASS_P (lhs_const));
   gcc_assert (CONSTANT_CLASS_P (rhs_const));
 
+  if ((lhs->get_type () == NULL_TREE || rhs->get_type () == NULL_TREE)
+      && TREE_CODE (lhs_const) == INTEGER_CST
+      && TREE_CODE (rhs_const) == INTEGER_CST
+      )
+    {
+     if (tree tree_cmp = const_binop (op, boolean_type_node,
+				      lhs_const, rhs_const))
+       {
+	 tristate ts = tristate_from_boolean_tree_node (tree_cmp);
+	 if (ts.is_known ())
+	   return ts;
+       }
+    }
+
   /* Check for comparable types.  */
   if (types_compatible_p (TREE_TYPE (lhs_const), TREE_TYPE (rhs_const)))
     {
-      tree comparison
+      tree tree_cmp
 	= fold_binary (op, boolean_type_node, lhs_const, rhs_const);
-      if (comparison == boolean_true_node)
-	return tristate (tristate::TS_TRUE);
-      if (comparison == boolean_false_node)
-	return tristate (tristate::TS_FALSE);
+      tristate ts = tristate_from_boolean_tree_node (tree_cmp);
+      if (ts.is_known ())
+	return ts;
     }
   return tristate::TS_UNKNOWN;
 }
@@ -875,7 +1023,7 @@ constant_svalue::eval_condition (const constant_svalue *lhs,
 
 const svalue *
 constant_svalue::maybe_fold_bits_within (tree type,
-					 const bit_range &,
+					 const bit_range &bits,
 					 region_model_manager *mgr) const
 {
   /* Bits within an all-zero value are also all zero.  */
@@ -886,6 +1034,22 @@ constant_svalue::maybe_fold_bits_within (tree type,
       else
 	return this;
     }
+
+  /* Handle the case of extracting a single bit. */
+  if (bits.m_size_in_bits == 1
+      && TREE_CODE (m_cst_expr) == INTEGER_CST
+      && type
+      && INTEGRAL_TYPE_P (type)
+      && tree_fits_uhwi_p (m_cst_expr))
+    {
+      unsigned HOST_WIDE_INT bit = bits.m_start_bit_offset.to_uhwi ();
+      unsigned HOST_WIDE_INT mask = (1 << bit);
+      unsigned HOST_WIDE_INT val_as_hwi = tree_to_uhwi (m_cst_expr);
+      unsigned HOST_WIDE_INT masked_val = val_as_hwi & mask;
+      int result = masked_val ? 1 : 0;
+      return mgr->get_or_create_int_cst (type, result);
+    }
+
   /* Otherwise, don't fold.  */
   return NULL;
 }
@@ -954,6 +1118,8 @@ poison_kind_to_str (enum poison_kind kind)
       return "uninit";
     case POISON_KIND_FREED:
       return "freed";
+    case POISON_KIND_DELETED:
+      return "deleted";
     case POISON_KIND_POPPED_STACK:
       return "popped stack";
     }
@@ -1019,8 +1185,11 @@ initial_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
   else
     {
       pp_string (pp, "initial_svalue(");
-      print_quoted_type (pp, get_type ());
-      pp_string (pp, ", ");
+      if (get_type ())
+	{
+	  print_quoted_type (pp, get_type ());
+	  pp_string (pp, ", ");
+	}
       m_reg->dump_to_pp (pp, simple);
       pp_string (pp, ")");
     }
@@ -1031,8 +1200,8 @@ initial_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
 void
 initial_svalue::accept (visitor *v) const
 {
-  v->visit_initial_svalue (this);
   m_reg->accept (v);
+  v->visit_initial_svalue (this);
 }
 
 /* Implementation of svalue::implicitly_live_p vfunc for initial_svalue.  */
@@ -1123,8 +1292,8 @@ unaryop_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
 void
 unaryop_svalue::accept (visitor *v) const
 {
-  v->visit_unaryop_svalue (this);
   m_arg->accept (v);
+  v->visit_unaryop_svalue (this);
 }
 
 /* Implementation of svalue::implicitly_live_p vfunc for unaryop_svalue.  */
@@ -1225,9 +1394,9 @@ binop_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
 void
 binop_svalue::accept (visitor *v) const
 {
-  v->visit_binop_svalue (this);
   m_arg0->accept (v);
   m_arg1->accept (v);
+  v->visit_binop_svalue (this);
 }
 
 /* Implementation of svalue::implicitly_live_p vfunc for binop_svalue.  */
@@ -1244,10 +1413,12 @@ binop_svalue::implicitly_live_p (const svalue_set *live_svalues,
 
 /* sub_svalue'c ctor.  */
 
-sub_svalue::sub_svalue (tree type, const svalue *parent_svalue,
+sub_svalue::sub_svalue (symbol::id_t id,
+			tree type, const svalue *parent_svalue,
 			const region *subregion)
 : svalue (complexity::from_pair (parent_svalue->get_complexity (),
 				 subregion->get_complexity ()),
+	  id,
 	  type),
   m_parent_svalue (parent_svalue), m_subregion (subregion)
 {
@@ -1283,9 +1454,9 @@ sub_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
 void
 sub_svalue::accept (visitor *v) const
 {
-  v->visit_sub_svalue (this);
   m_parent_svalue->accept (v);
   m_subregion->accept (v);
+  v->visit_sub_svalue (this);
 }
 
 /* Implementation of svalue::implicitly_live_p vfunc for sub_svalue.  */
@@ -1301,10 +1472,11 @@ sub_svalue::implicitly_live_p (const svalue_set *live_svalues,
 
 /* repeated_svalue'c ctor.  */
 
-repeated_svalue::repeated_svalue (tree type,
+repeated_svalue::repeated_svalue (symbol::id_t id,
+				  tree type,
 				  const svalue *outer_size,
 				  const svalue *inner_svalue)
-: svalue (complexity::from_pair (outer_size, inner_svalue), type),
+: svalue (complexity::from_pair (outer_size, inner_svalue), id, type),
   m_outer_size (outer_size),
   m_inner_svalue (inner_svalue)
 {
@@ -1352,8 +1524,8 @@ repeated_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
 void
 repeated_svalue::accept (visitor *v) const
 {
-  v->visit_repeated_svalue (this);
   m_inner_svalue->accept (v);
+  v->visit_repeated_svalue (this);
 }
 
 /* Implementation of svalue::all_zeroes_p for repeated_svalue.  */
@@ -1428,10 +1600,11 @@ repeated_svalue::maybe_fold_bits_within (tree type,
 
 /* bits_within_svalue'c ctor.  */
 
-bits_within_svalue::bits_within_svalue (tree type,
+bits_within_svalue::bits_within_svalue (symbol::id_t id,
+					tree type,
 					const bit_range &bits,
 					const svalue *inner_svalue)
-: svalue (complexity (inner_svalue), type),
+: svalue (complexity (inner_svalue), id, type),
   m_bits (bits),
   m_inner_svalue (inner_svalue)
 {
@@ -1494,8 +1667,8 @@ bits_within_svalue::maybe_fold_bits_within (tree type,
 void
 bits_within_svalue::accept (visitor *v) const
 {
-  v->visit_bits_within_svalue (this);
   m_inner_svalue->accept (v);
+  v->visit_bits_within_svalue (this);
 }
 
 /* Implementation of svalue::implicitly_live_p vfunc for bits_within_svalue.  */
@@ -1544,9 +1717,9 @@ widening_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
 void
 widening_svalue::accept (visitor *v) const
 {
-  v->visit_widening_svalue (this);
   m_base_sval->accept (v);
   m_iter_sval->accept (v);
+  v->visit_widening_svalue (this);
 }
 
 /* Attempt to determine in which direction this value is changing
@@ -1711,8 +1884,8 @@ unmergeable_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
 void
 unmergeable_svalue::accept (visitor *v) const
 {
-  v->visit_unmergeable_svalue (this);
   m_arg->accept (v);
+  v->visit_unmergeable_svalue (this);
 }
 
 /* Implementation of svalue::implicitly_live_p vfunc for unmergeable_svalue.  */
@@ -1726,16 +1899,22 @@ unmergeable_svalue::implicitly_live_p (const svalue_set *live_svalues,
 
 /* class compound_svalue : public svalue.  */
 
-compound_svalue::compound_svalue (tree type, const binding_map &map)
-: svalue (calc_complexity (map), type), m_map (map)
+compound_svalue::compound_svalue (symbol::id_t id,
+				  tree type,
+				  const binding_map &map)
+: svalue (calc_complexity (map), id, type), m_map (map)
 {
-  /* All keys within the underlying binding_map are required to be concrete,
-     not symbolic.  */
 #if CHECKING_P
   for (iterator_t iter = begin (); iter != end (); ++iter)
     {
+      /* All keys within the underlying binding_map are required to be concrete,
+	 not symbolic.  */
       const binding_key *key = (*iter).first;
       gcc_assert (key->concrete_p ());
+
+      /* We don't nest compound svalues.  */
+      const svalue *sval = (*iter).second;
+      gcc_assert (sval->get_kind () != SK_COMPOUND);
     }
 #endif
 }
@@ -1776,13 +1955,13 @@ compound_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
 void
 compound_svalue::accept (visitor *v) const
 {
-  v->visit_compound_svalue (this);
   for (binding_map::iterator_t iter = m_map.begin ();
        iter != m_map.end (); ++iter)
     {
       //(*iter).first.accept (v);
       (*iter).second->accept (v);
     }
+  v->visit_compound_svalue (this);
 }
 
 /* Calculate what the complexity of a compound_svalue instance for MAP
@@ -1890,7 +2069,11 @@ conjured_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
   else
     {
       pp_string (pp, "conjured_svalue (");
-      pp_string (pp, ", ");
+      if (get_type ())
+	{
+	  print_quoted_type (pp, get_type ());
+	  pp_string (pp, ", ");
+	}
       pp_gimple_stmt_1 (pp, m_stmt, 0, (dump_flags_t)0);
       pp_string (pp, ", ");
       m_id_reg->dump_to_pp (pp, simple);
@@ -1903,8 +2086,19 @@ conjured_svalue::dump_to_pp (pretty_printer *pp, bool simple) const
 void
 conjured_svalue::accept (visitor *v) const
 {
-  v->visit_conjured_svalue (this);
   m_id_reg->accept (v);
+  v->visit_conjured_svalue (this);
+}
+
+/* Return true iff this conjured_svalue is for the LHS of the
+   stmt that conjured it.  */
+
+bool
+conjured_svalue::lhs_value_p () const
+{
+  if (tree decl = m_id_reg->maybe_get_decl ())
+    return decl == gimple_get_lhs (m_stmt);
+  return false;
 }
 
 /* class asm_output_svalue : public svalue.  */
@@ -1968,9 +2162,9 @@ asm_output_svalue::input_idx_to_asm_idx (unsigned input_idx) const
 void
 asm_output_svalue::accept (visitor *v) const
 {
-  v->visit_asm_output_svalue (this);
   for (unsigned i = 0; i < m_num_inputs; i++)
     m_input_arr[i]->accept (v);
+  v->visit_asm_output_svalue (this);
 }
 
 /* class const_fn_result_svalue : public svalue.  */
@@ -2021,9 +2215,9 @@ const_fn_result_svalue::dump_input (pretty_printer *pp,
 void
 const_fn_result_svalue::accept (visitor *v) const
 {
-  v->visit_const_fn_result_svalue (this);
   for (unsigned i = 0; i < m_num_inputs; i++)
     m_input_arr[i]->accept (v);
+  v->visit_const_fn_result_svalue (this);
 }
 
 } // namespace ana

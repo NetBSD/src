@@ -1,5 +1,5 @@
 /* Target Code for R8C/M16C/M32C
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -75,8 +75,11 @@ static int m32c_comp_type_attributes (const_tree, const_tree);
 static bool m32c_fixed_condition_code_regs (unsigned int *, unsigned int *);
 static struct machine_function *m32c_init_machine_status (void);
 static void m32c_insert_attributes (tree, tree *);
-static bool m32c_legitimate_address_p (machine_mode, rtx, bool);
-static bool m32c_addr_space_legitimate_address_p (machine_mode, rtx, bool, addr_space_t);
+static bool m32c_legitimate_address_p (machine_mode, rtx, bool,
+				       code_helper = ERROR_MARK);
+static bool m32c_addr_space_legitimate_address_p (machine_mode, rtx, bool,
+						  addr_space_t,
+						  code_helper = ERROR_MARK);
 static rtx m32c_function_arg (cumulative_args_t, const function_arg_info &);
 static bool m32c_pass_by_reference (cumulative_args_t,
 				    const function_arg_info &);
@@ -1013,7 +1016,7 @@ m32c_eh_return_stackadj_rtx (void)
 
 /* Registers That Address the Stack Frame */
 
-/* Implements DWARF_FRAME_REGNUM and DBX_REGISTER_NUMBER.  Note that
+/* Implements DWARF_FRAME_REGNUM and DEBUGGER_REGNO.  Note that
    the original spec called for dwarf numbers to vary with register
    width as well, for example, r0l, r0, and r2r0 would each have
    different dwarf numbers.  GCC doesn't support this, and we don't do
@@ -1090,7 +1093,7 @@ static struct
   { FB_REGNO, 0x01, 2, 4 }
 };
 
-#define PUSHM_N (sizeof(pushm_info)/sizeof(pushm_info[0]))
+#define PUSHM_N (ARRAY_SIZE (pushm_info))
 
 /* Returns TRUE if we need to save/restore the given register.  We
    save everything for exception handlers, so that any register can be
@@ -1648,7 +1651,7 @@ m32c_trampoline_init (rtx m_tramp, tree fndecl, rtx chainval)
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P m32c_legitimate_address_p
 bool
-m32c_legitimate_address_p (machine_mode mode, rtx x, bool strict)
+m32c_legitimate_address_p (machine_mode mode, rtx x, bool strict, code_helper)
 {
   int mode_adjust;
   if (CONSTANT_P (x))
@@ -1966,8 +1969,8 @@ m32c_addr_space_address_mode (addr_space_t addrspace)
 #define TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P \
   m32c_addr_space_legitimate_address_p
 static bool
-m32c_addr_space_legitimate_address_p (machine_mode mode, rtx x,
-				      bool strict, addr_space_t as)
+m32c_addr_space_legitimate_address_p (machine_mode mode, rtx x, bool strict,
+				      addr_space_t as, code_helper ch)
 {
   if (as == ADDR_SPACE_FAR)
     {
@@ -2048,7 +2051,7 @@ m32c_addr_space_legitimate_address_p (machine_mode mode, rtx x,
   else if (as != ADDR_SPACE_GENERIC)
     gcc_unreachable ();
 
-  return m32c_legitimate_address_p (mode, x, strict);
+  return m32c_legitimate_address_p (mode, x, strict, ch);
 }
 
 /* Like m32c_legitimate_address, except with named address support.  */
@@ -2996,7 +2999,7 @@ current_function_special_page_vector (rtx x)
 
 #undef TARGET_ATTRIBUTE_TABLE
 #define TARGET_ATTRIBUTE_TABLE m32c_attribute_table
-static const struct attribute_spec m32c_attribute_table[] = {
+TARGET_GNU_ATTRIBUTES (m32c_attribute_table, {
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
        affects_type_identity, handler, exclude } */
   { "interrupt", 0, 0, false, false, false, false, interrupt_handler, NULL },
@@ -3004,9 +3007,8 @@ static const struct attribute_spec m32c_attribute_table[] = {
   { "fast_interrupt", 0, 0, false, false, false, false,
     interrupt_handler, NULL },
   { "function_vector", 1, 1, true,  false, false, false,
-    function_vector_handler, NULL },
-  { NULL, 0, 0, false, false, false, false, NULL, NULL }
-};
+    function_vector_handler, NULL }
+});
 
 #undef TARGET_COMP_TYPE_ATTRIBUTES
 #define TARGET_COMP_TYPE_ATTRIBUTES m32c_comp_type_attributes
@@ -3027,7 +3029,7 @@ m32c_insert_attributes (tree node ATTRIBUTE_UNUSED,
   unsigned addr;
   /* See if we need to make #pragma address variables volatile.  */
 
-  if (TREE_CODE (node) == VAR_DECL)
+  if (VAR_P (node))
     {
       const char *name = IDENTIFIER_POINTER (DECL_NAME (node));
       if (m32c_get_pragma_address  (name, &addr))

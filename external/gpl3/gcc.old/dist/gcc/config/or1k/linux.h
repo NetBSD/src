@@ -1,5 +1,5 @@
 /* Linux Definitions for OpenRISC.
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2022 Free Software Foundation, Inc.
    Contributed by Stafford Horne.
 
    This file is part of GCC.
@@ -32,6 +32,8 @@
 #undef MUSL_DYNAMIC_LINKER
 #define MUSL_DYNAMIC_LINKER  "/lib/ld-musl-or1k.so.1"
 
+#define CPP_SPEC "%{pthread:-D_REENTRANT}"
+
 #undef LINK_SPEC
 #define LINK_SPEC "%{h*}			\
    %{static:-Bstatic}				\
@@ -41,5 +43,7 @@
      %{rdynamic:-export-dynamic}		\
      %{!shared:-dynamic-linker " GNU_USER_DYNAMIC_LINKER "}}} \
    %{static-pie:-Bstatic -pie --no-dynamic-linker -z text}"
+
+#define TARGET_ASM_FILE_END file_end_indicate_exec_stack
 
 #endif /* GCC_OR1K_LINUX_H */

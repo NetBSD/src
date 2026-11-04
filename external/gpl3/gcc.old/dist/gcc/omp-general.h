@@ -1,7 +1,7 @@
 /* General types and functions that are uselful for processing of OpenMP,
    OpenACC and similar directivers at various stages of compilation.
 
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -32,9 +32,10 @@ enum oacc_loop_flags {
   OLF_INDEPENDENT = 1u << 2,	/* Iterations are known independent.  */
   OLF_GANG_STATIC = 1u << 3,	/* Gang partitioning is static (has op). */
   OLF_TILE	= 1u << 4,	/* Tiled loop. */
+  OLF_REDUCTION = 1u << 5,	/* Reduction loop.  */
   
   /* Explicitly specified loop axes.  */
-  OLF_DIM_BASE = 5,
+  OLF_DIM_BASE = 6,
   OLF_DIM_GANG   = 1u << (OLF_DIM_BASE + GOMP_DIM_GANG),
   OLF_DIM_WORKER = 1u << (OLF_DIM_BASE + GOMP_DIM_WORKER),
   OLF_DIM_VECTOR = 1u << (OLF_DIM_BASE + GOMP_DIM_VECTOR),
@@ -43,12 +44,20 @@ enum oacc_loop_flags {
 };
 
 /* A structure holding the elements of:
-   for (V = N1; V cond N2; V += STEP) [...] */
+   for (V = N1; V cond N2; V += STEP) [...]
+   or for non-rectangular loops:
+   for (V = M1 * W + N1; V cond M2 * W + N2; V += STEP;
+   where W is V of the OUTER-th loop (e.g. for OUTER 1 it is the
+   the index of the immediately surrounding loop).
+   NON_RECT_REFERENCED is true for loops referenced by loops
+   with non-NULL M1 or M2.  */
 
 struct omp_for_data_loop
 {
-  tree v, n1, n2, step;
+  tree v, n1, n2, step, m1, m2;
   enum tree_code cond_code;
+  int outer;
+  bool non_rect_referenced;
 };
 
 /* A structure describing the main elements of a parallel loop.  */
@@ -62,12 +71,22 @@ struct omp_for_data
   tree tiling;  /* Tiling values (if non null).  */
   int collapse;  /* Collapsed loops, 1 for a non-collapsed loop.  */
   int ordered;
+  int first_nonrect, last_nonrect;
   bool have_nowait, have_ordered, simd_schedule, have_reductemp;
   bool have_pointer_condtemp, have_scantemp, have_nonctrl_scantemp;
+  bool non_rect;
   int lastprivate_conditional;
   unsigned char sched_modifiers;
   enum omp_clause_schedule_kind sched_kind;
   struct omp_for_data_loop *loops;
+  /* The following are relevant only for non-rectangular loops
+     where only a single loop depends on an outer loop iterator.  */
+  tree first_inner_iterations; /* Number of iterations of the inner
+				  loop with the first outer iterator
+				  (or adjn1, if that is non-NULL).  */
+  tree factor; /* (m2 - m1) * outer_step / inner_step.  */
+  /* Adjusted n1 of the outer loop in such loop nests (if needed).  */
+  tree adjn1;
 };
 
 #define OACC_FN_ATTRIB "oacc function"
@@ -75,7 +94,7 @@ struct omp_for_data
 extern tree omp_find_clause (tree clauses, enum omp_clause_code kind);
 extern bool omp_is_allocatable_or_ptr (tree decl);
 extern tree omp_check_optional_argument (tree decl, bool for_present_check);
-extern bool omp_is_reference (tree decl);
+extern bool omp_privatize_by_reference (tree decl);
 extern void omp_adjust_for_condition (location_t loc, enum tree_code *cond_code,
 				      tree *n2, tree v, tree step);
 extern tree omp_get_for_step_from_incr (location_t loc, tree incr);
@@ -86,6 +105,9 @@ extern tree find_combined_omp_for (tree *, int *, void *);
 extern poly_uint64 omp_max_vf (void);
 extern int omp_max_simt_vf (void);
 extern int omp_constructor_traits_to_codes (tree, enum tree_code *);
+extern tree omp_check_context_selector (location_t loc, tree ctx);
+extern void omp_mark_declare_variant (location_t loc, tree variant,
+				      tree construct);
 extern int omp_context_selector_matches (tree);
 extern int omp_context_selector_set_compare (const char *, tree, tree);
 extern tree omp_get_context_selector (tree, const char *, const char *);
@@ -113,5 +135,20 @@ enum omp_requires {
 };
 
 extern GTY(()) enum omp_requires omp_requires_mask;
+
+static inline dump_flags_t
+get_openacc_privatization_dump_flags ()
+{
+  dump_flags_t l_dump_flags = MSG_NOTE;
+
+  /* For '--param=openacc-privatization=quiet', diagnostics only go to dump
+     files.  */
+  if (param_openacc_privatization == OPENACC_PRIVATIZATION_QUIET)
+    l_dump_flags |= MSG_PRIORITY_INTERNALS;
+
+  return l_dump_flags;
+}
+
+extern tree omp_build_component_ref (tree obj, tree field);
 
 #endif /* GCC_OMP_GENERAL_H */

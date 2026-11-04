@@ -1,5 +1,5 @@
 /* Subclasses of custom_edge_info for describing outcomes of function calls.
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -30,9 +30,9 @@ namespace ana {
 class call_info : public custom_edge_info
 {
 public:
-  void print (pretty_printer *pp) const FINAL OVERRIDE;
+  void print (pretty_printer *pp) const final override;
   void add_events_to_path (checker_path *emission_path,
-			   const exploded_edge &eedge) const FINAL OVERRIDE;
+			   const exploded_edge &eedge) const final override;
 
   const gcall *get_call_stmt () const { return m_call_stmt; }
   tree get_fndecl () const { return m_fndecl; }
@@ -44,6 +44,7 @@ public:
 
 protected:
   call_info (const call_details &cd);
+  call_info (const call_details &cd, const function &called_fn);
 
 private:
   const gcall *m_call_stmt;
@@ -51,17 +52,36 @@ private:
 };
 
 /* Subclass of call_info for a "success" outcome of a call,
+   adding either a
+     "when `FNDECL' succeeds" message (when 'success' is true)
+   or a
+     "when `FNDECL' fails" message    (when 'success' is false).
+   This is still abstract: the custom_edge_info::update_model vfunc
+   must be implemented.  */
+
+class succeed_or_fail_call_info : public call_info
+{
+public:
+  label_text get_desc (bool can_colorize) const final override;
+
+protected:
+  succeed_or_fail_call_info (const call_details &cd, bool success)
+   : call_info (cd), m_success (success) {}
+
+  bool m_success;
+};
+
+/* Subclass of call_info for a "success" outcome of a call,
    adding a "when `FNDECL' succeeds" message.
    This is still abstract: the custom_edge_info::update_model vfunc
    must be implemented.  */
 
-class success_call_info : public call_info
+class success_call_info : public succeed_or_fail_call_info
 {
-public:
-  label_text get_desc (bool can_colorize) const FINAL OVERRIDE;
-
 protected:
-  success_call_info (const call_details &cd) : call_info (cd) {}
+  success_call_info (const call_details &cd)
+  : succeed_or_fail_call_info (cd, true)
+  {}
 };
 
 /* Subclass of call_info for a "failure" outcome of a call,
@@ -69,13 +89,12 @@ protected:
    This is still abstract: the custom_edge_info::update_model vfunc
    must be implemented.  */
 
-class failed_call_info : public call_info
+class failed_call_info : public succeed_or_fail_call_info
 {
-public:
-  label_text get_desc (bool can_colorize) const FINAL OVERRIDE;
-
 protected:
-  failed_call_info (const call_details &cd) : call_info (cd) {}
+  failed_call_info (const call_details &cd)
+  : succeed_or_fail_call_info (cd, false)
+  {}
 };
 
 } // namespace ana

@@ -1,4 +1,4 @@
-#  Copyright (C) 2003-2022 Free Software Foundation, Inc.
+#  Copyright (C) 2003-2024 Free Software Foundation, Inc.
 #  Contributed by Kelley Cook, June 2004.
 #  Original code from Neil Booth, May 2003.
 #
@@ -341,6 +341,13 @@ for (i = 0; i < n_opts; i++) {
 
 	len = length (opts[i]);
 	enum = opt_enum(opts[i])
+
+	# Do not allow Joined and Separate properties if
+	# an options ends with '='.
+	if (flag_set_p("Joined", flags[i]) && flag_set_p("Separate", flags[i]) && opts[i] ~ "=$") {
+		print "#error Option '" opts[i] "' ending with '=' cannot have " \
+			"both Joined and Separate properties"
+	}
 
 	# If this switch takes joined arguments, back-chain all
 	# subsequent switches to it for which it is a prefix.  If

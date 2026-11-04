@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.1 2024/07/01 01:01:06 perseant Exp $
+#	$NetBSD: Makefile,v 1.8.2.2 2026/11/04 22:53:09 perseant Exp $
 
 PROG=		gplusplus
 PROGNAME=	g++
@@ -15,6 +15,7 @@ LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 
 .include "../Makefile.frontend"
+.include "../Makefile.options"
 
 ${SRCS}: ${GCCARCH}/defs.mk
 

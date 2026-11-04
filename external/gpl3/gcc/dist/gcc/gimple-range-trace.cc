@@ -1,5 +1,5 @@
 /* Code for GIMPLE range trace and debugging related routines.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Contributed by Andrew MacLeod <amacleod@redhat.com>
    and Aldy Hernandez <aldyh@redhat.com>.
 
@@ -73,7 +73,7 @@ range_tracer::print_prefix (unsigned idx, bool blanks)
 
 }
 // If dumping, return the next call index and print the prefix for the next
-// output line.  If not, retrurn 0.
+// output line.  If not, return 0.
 // Counter is static to monotonically increase across the compilation unit.
 
 unsigned
@@ -102,7 +102,7 @@ range_tracer::print (unsigned counter, const char *str)
 
 void
 range_tracer::trailer (unsigned counter, const char *caller, bool result,
-		      tree name, const irange &r)
+		      tree name, const vrange &r)
 {
   gcc_checking_assert (tracing && counter != 0);
 
@@ -141,7 +141,6 @@ debug_seed_ranger (gimple_ranger &ranger)
     }
 
   basic_block bb;
-  int_range_max r;
   gimple_stmt_iterator gsi;
   FOR_EACH_BB_FN (bb, cfun)
     for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
@@ -151,7 +150,11 @@ debug_seed_ranger (gimple_ranger &ranger)
 	if (is_gimple_debug (stmt))
 	  continue;
 
-	ranger.range_of_stmt (r, stmt);
+	if (tree type = gimple_range_type (stmt))
+	  {
+	    Value_Range r (type);
+	    ranger.range_of_stmt (r, stmt);
+	  }
       }
 }
 

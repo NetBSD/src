@@ -54,7 +54,8 @@
 #define SIGNBIT		0x80000000L
 #define HIDDEN		(1L << 23L)
 #define SIGN(fp)	((fp) & SIGNBIT)
-#define EXP(fp)		(((fp) >> 23L) & 0xFF)
+#define EXPMASK		0xFFL
+#define EXP(fp)		(((fp) >> 23L) & EXPMASK)
 #define MANT(fp)	(((fp) & 0x7FFFFFL) | HIDDEN)
 #define PACK(s,e,m)	((s) | ((e) << 23L) | (m))
 
@@ -63,7 +64,7 @@
 #define HIDDEND		(1L << 20L)
 #define EXPDBITS	11
 #define EXPDMASK	0x7FFL
-#define EXPD(fp)	(((fp.l.upper) >> 20L) & 0x7FFL)
+#define EXPD(fp)	(((fp.l.upper) >> 20L) & EXPDMASK)
 #define SIGND(fp)	((fp.l.upper) & SIGNBIT)
 #define MANTD(fp)	(((((fp.l.upper) & 0xFFFFF) | HIDDEND) << 10) | \
 				(fp.l.lower >> 22))
@@ -135,6 +136,7 @@ __unorddf2(double a, double b)
   return 0;
 }
 
+#ifndef LIBCSOFTFLOAT
 /* convert unsigned int to double */
 double
 __floatunsidf (unsigned long a1)
@@ -262,6 +264,9 @@ __extendsfdf2 (float a1)
       mant &= ~HIDDEN;
     }
   exp = exp - EXCESS + EXCESSD;
+  /* Handle inf and NaN */
+  if (exp == EXPMASK - EXCESS + EXCESSD)
+    exp = EXPDMASK;
   dl.l.upper |= exp << 20;
   dl.l.upper |= mant >> 3;
   dl.l.lower = mant << 29;
@@ -295,40 +300,52 @@ __truncdfsf2 (double a1)
   /* shift double mantissa 6 bits so we can round */
   sticky |= mant & ((1 << 6) - 1);
   mant >>= 6;
-
-  /* Check for underflow and denormals.  */
-  if (exp <= 0)
+  if (exp == EXPDMASK - EXCESSD + EXCESS)
     {
-      if (exp < -24)
+      exp = EXPMASK;
+      mant = (mant >> 1) | (mant & 1) | (!!sticky);
+    }
+  else
+    {
+      /* Check for underflow and denormals.  */
+      if (exp <= 0)
 	{
-	  sticky |= mant;
+	  if (exp < -24)
+	    {
+	      sticky |= mant;
+	      mant = 0;
+	    }
+	  else
+	    {
+	      sticky |= mant & ((1 << (1 - exp)) - 1);
+	      mant >>= 1 - exp;
+	    }
+	  exp = 0;
+	}
+
+      /* now round */
+      shift = 1;
+      if ((mant & 1) && (sticky || (mant & 2)))
+	{
+	  int rounding = exp ? 2 : 1;
+
+	  mant += 1;
+
+	  /* did the round overflow? */
+	  if (mant >= (HIDDEN << rounding))
+	    {
+	      exp++;
+	      shift = rounding;
+	    }
+	}
+      /* shift down */
+      mant >>= shift;
+      if (exp >= EXPMASK)
+	{
+	  exp = EXPMASK;
 	  mant = 0;
 	}
-      else
-	{
-	  sticky |= mant & ((1 << (1 - exp)) - 1);
-	  mant >>= 1 - exp;
-	}
-      exp = 0;
     }
-  
-  /* now round */
-  shift = 1;
-  if ((mant & 1) && (sticky || (mant & 2)))
-    {
-      int rounding = exp ? 2 : 1;
-
-      mant += 1;
-
-      /* did the round overflow? */
-      if (mant >= (HIDDEN << rounding))
-	{
-	  exp++;
-	  shift = rounding;
-	}
-    }
-  /* shift down */
-  mant >>= shift;
 
   mant &= ~HIDDEN;
 
@@ -377,6 +394,7 @@ __fixsfsi (float a1)
   return __fixdfsi (foo);
 }
 
+#endif
 #else /* EXTFLOAT */
 
 /* We do not need these routines for coldfire, as it has no extended
@@ -387,6 +405,7 @@ __fixsfsi (float a1)
 
    We assume all numbers are normalized, don't do any rounding, etc.  */
 
+#ifndef LIBCSOFTFLOAT
 /* Prototypes for the above in case we use them.  */
 double __floatunsidf (unsigned long);
 double __floatsidf (long);
@@ -396,6 +415,7 @@ float __truncdfsf2 (double);
 long __fixdfsi (double);
 long __fixsfsi (float);
 long __cmpdf2 (double, double);
+#endif
 
 int
 __unordxf2(long double a, long double b)
@@ -413,6 +433,7 @@ __unordxf2(long double a, long double b)
   return 0;
 }
 
+#ifndef LIBCSOFTFLOAT
 /* convert double to long double */
 long double
 __extenddfxf2 (double d)
@@ -433,6 +454,30 @@ __extenddfxf2 (double d)
     }
 
   exp = EXPD (dl) - EXCESSD + EXCESSX;
+  /* Check for underflow and denormals. */
+  if (exp < 0)
+    {
+      if (exp < -53)
+	{
+	  ldl.l.middle = 0;
+	  ldl.l.lower = 0;
+	}
+      else if (exp < -30)
+	{
+	  ldl.l.lower = (ldl.l.middle & MANTXMASK) >> ((1 - exp) - 32);
+	  ldl.l.middle &= ~MANTXMASK;
+	}
+      else
+	{
+	  ldl.l.lower >>= 1 - exp;
+	  ldl.l.lower |= (ldl.l.middle & MANTXMASK) << (32 - (1 - exp));
+	  ldl.l.middle = (ldl.l.middle & ~MANTXMASK) | (ldl.l.middle & MANTXMASK >> (1 - exp));
+	}
+      exp = 0;
+    }
+  /* Handle inf and NaN */
+  if (exp == EXPDMASK - EXCESSD + EXCESSX)
+    exp = EXPXMASK;
   ldl.l.upper |= exp << 16;
   ldl.l.middle = HIDDENX;
   /* 31-20: # mantissa bits in ldl.l.middle - # mantissa bits in dl.l.upper */
@@ -465,9 +510,38 @@ __truncxfdf2 (long double ld)
     }
 
   exp = EXPX (ldl) - EXCESSX + EXCESSD;
-  /* ??? quick and dirty: keep `exp' sane */
-  if (exp >= EXPDMASK)
-    exp = EXPDMASK - 1;
+  /* Check for underflow and denormals. */
+  if (exp <= 0)
+    {
+      if (exp < -53)
+	{
+	  ldl.l.middle = 0;
+	  ldl.l.lower = 0;
+	}
+      else if (exp < -30)
+	{
+	  ldl.l.lower = (ldl.l.middle & MANTXMASK) >> ((1 - exp) - 32);
+	  ldl.l.middle &= ~MANTXMASK;
+	}
+      else
+	{
+	  ldl.l.lower >>= 1 - exp;
+	  ldl.l.lower |= (ldl.l.middle & MANTXMASK) << (32 - (1 - exp));
+	  ldl.l.middle = (ldl.l.middle & ~MANTXMASK) | (ldl.l.middle & MANTXMASK >> (1 - exp));
+	}
+      exp = 0;
+    }
+  else if (exp == EXPXMASK - EXCESSX + EXCESSD)
+    {
+      exp = EXPDMASK;
+      ldl.l.middle |= ldl.l.lower;
+    }
+  else if (exp >= EXPDMASK)
+    {
+      exp = EXPDMASK;
+      ldl.l.middle = 0;
+      ldl.l.lower = 0;
+    }
   dl.l.upper |= exp << (32 - (EXPDBITS + 1));
   /* +1-1: add one for sign bit, but take one off for explicit-integer-bit */
   dl.l.upper |= (ldl.l.middle & MANTXMASK) >> (EXPDBITS + 1 - 1);
@@ -512,10 +586,40 @@ __floatunsixf (unsigned long l)
 
 /* convert a long double to an int */
 long
-__fixxfsi (long double ld)
+__fixxfsi (long double a)
 {
-  long foo = __fixdfsi ((double) ld);
-  return foo;
+  union long_double_long ldl;
+  long exp;
+  long l;
+
+  ldl.ld = a;
+
+  exp = EXPX (ldl);
+  if (exp == 0 && ldl.l.middle == 0 && ldl.l.lower == 0)
+    return 0;
+
+  exp = exp - EXCESSX - 63;
+
+  if (exp > 0)
+    {
+      /* Return largest integer.  */
+      return SIGNX (ldl) ? 0x80000000L : 0x7fffffffL;
+    }
+
+  if (exp <= -64)
+    return 0;
+
+  if (exp <= -32)
+    {
+      ldl.l.lower = ldl.l.middle >> (-exp - 32);
+    }
+  else if (exp < 0)
+    {
+      ldl.l.lower = ldl.l.lower >> -exp;
+      ldl.l.lower |= ldl.l.middle << (32 + exp);
+    }
+
+  return SIGNX (ldl) ? -ldl.l.lower : ldl.l.lower;
 }
 
 /* The remaining provide crude math support by working in double precision.  */
@@ -592,5 +696,6 @@ __gexf2 (long double x1, long double x2)
   return __cmpdf2 ((double) x1, (double) x2);
 }
 
+#endif
 #endif /* !__mcoldfire__ */
 #endif /* EXTFLOAT */

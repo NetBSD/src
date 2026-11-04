@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, Synopsys DesignWare ARC cpu.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -50,6 +50,7 @@ extern void arc_split_ior (rtx *);
 extern bool arc_check_mov_const (HOST_WIDE_INT );
 extern bool arc_split_mov_const (rtx *);
 extern bool arc_can_use_return_insn (void);
+extern bool arc_split_move_p (rtx *);
 #endif /* RTX_CODE */
 
 extern bool arc_ccfsm_branch_deleted_p (void);
@@ -96,7 +97,7 @@ extern bool arc_text_label (rtx_insn *insn);
 extern bool arc_short_comparison_p (rtx, int);
 extern bool arc_epilogue_uses (int regno);
 extern bool arc_eh_uses (int regno);
-/* insn-attrtab.c doesn't include reload.h, which declares regno_clobbered_p. */
+/* insn-attrtab.cc doesn't include reload.h, which declares regno_clobbered_p. */
 extern int regno_clobbered_p (unsigned int, rtx_insn *, machine_mode, int);
 extern bool arc_legitimize_reload_address (rtx *, machine_mode, int, int);
 extern void arc_secondary_reload_conv (rtx, rtx, rtx, bool);

@@ -1,5 +1,5 @@
 /* Support for thunks in symbol table.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -71,10 +71,10 @@ public:
     function_summary<thunk_info *> (table, ggc) { }
 
   /* Hook that is called by summary when a node is duplicated.  */
-  virtual void duplicate (cgraph_node *node,
-			  cgraph_node *node2,
-			  thunk_info *data,
-			  thunk_info *data2);
+  void duplicate (cgraph_node *node,
+		  cgraph_node *node2,
+		  thunk_info *data,
+		  thunk_info *data2) final override;
 };
 
 /* Duplication hook.  */
@@ -479,21 +479,15 @@ expand_thunk (cgraph_node *node, bool output_asm_thunks,
 				 resdecl,
 				 build_int_cst (TREE_TYPE (resdecl), 0));
 	    }
-	  else if (!is_gimple_reg_type (restype))
+	  else if (aggregate_value_p (resdecl, TREE_TYPE (thunk_fndecl)))
 	    {
-	      if (aggregate_value_p (resdecl, TREE_TYPE (thunk_fndecl)))
-		{
-		  restmp = resdecl;
+	      restmp = resdecl;
 
-		  if (VAR_P (restmp))
-		    {
-		      add_local_decl (cfun, restmp);
-		      BLOCK_VARS (DECL_INITIAL (current_function_decl))
-			= restmp;
-		    }
+	      if (VAR_P (restmp))
+		{
+		  add_local_decl (cfun, restmp);
+		  BLOCK_VARS (DECL_INITIAL (current_function_decl)) = restmp;
 		}
-	      else
-		restmp = create_tmp_var (restype, "retval");
 	    }
 	  else
 	    restmp = create_tmp_reg (restype, "retval");
@@ -579,11 +573,11 @@ expand_thunk (cgraph_node *node, bool output_asm_thunks,
 		     adjustment, because that's why we're emitting a
 		     thunk.  */
 		  then_bb = create_basic_block (NULL, bb);
-		  then_bb->count = cfg_count - cfg_count.apply_scale (1, 16);
+		  then_bb->count = cfg_count - cfg_count / 16;
 		  return_bb = create_basic_block (NULL, then_bb);
 		  return_bb->count = cfg_count;
 		  else_bb = create_basic_block (NULL, else_bb);
-		  else_bb->count = cfg_count.apply_scale (1, 16);
+		  else_bb->count = cfg_count / 16;
 		  add_bb_to_loop (then_bb, bb->loop_father);
 		  add_bb_to_loop (return_bb, bb->loop_father);
 		  add_bb_to_loop (else_bb, bb->loop_father);
@@ -594,11 +588,9 @@ expand_thunk (cgraph_node *node, bool output_asm_thunks,
 					    NULL_TREE, NULL_TREE);
 		  gsi_insert_after (&bsi, stmt, GSI_NEW_STMT);
 		  e = make_edge (bb, then_bb, EDGE_TRUE_VALUE);
-		  e->probability = profile_probability::guessed_always ()
-					.apply_scale (1, 16);
+		  e->probability = profile_probability::guessed_always () / 16;
 		  e = make_edge (bb, else_bb, EDGE_FALSE_VALUE);
-		  e->probability = profile_probability::guessed_always ()
-					.apply_scale (1, 16);
+		  e->probability = profile_probability::guessed_always () / 16;
 		  make_single_succ_edge (return_bb,
 					 EXIT_BLOCK_PTR_FOR_FN (cfun), 0);
 		  make_single_succ_edge (then_bb, return_bb, EDGE_FALLTHRU);
@@ -637,6 +629,7 @@ expand_thunk (cgraph_node *node, bool output_asm_thunks,
 	}
       else
 	{
+	  gimple_call_set_ctrl_altering (call, true);
 	  gimple_call_set_tail (call, true);
 	  cfun->tail_call_marked = true;
 	  remove_edge (single_succ_edge (bb));
@@ -649,6 +642,7 @@ expand_thunk (cgraph_node *node, bool output_asm_thunks,
 	  ? PROFILE_READ : PROFILE_GUESSED;
       /* FIXME: C++ FE should stop setting TREE_ASM_WRITTEN on thunks.  */
       TREE_ASM_WRITTEN (thunk_fndecl) = false;
+      cfun->cfg->full_profile = true;
       delete_unreachable_blocks ();
       update_ssa (TODO_update_ssa);
       checking_verify_flow_info ();

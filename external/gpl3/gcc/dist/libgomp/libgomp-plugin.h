@@ -1,6 +1,6 @@
 /* The libgomp plugin API.
 
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    Contributed by Mentor Embedded.
 
@@ -49,7 +49,6 @@ enum offload_target_type
   OFFLOAD_TARGET_TYPE_HOST = 2,
   /* OFFLOAD_TARGET_TYPE_HOST_NONSHM = 3 removed.  */
   OFFLOAD_TARGET_TYPE_NVIDIA_PTX = 5,
-  OFFLOAD_TARGET_TYPE_INTEL_MIC = 6,
   OFFLOAD_TARGET_TYPE_HSA = 7,
   OFFLOAD_TARGET_TYPE_GCN = 8
 };
@@ -102,11 +101,13 @@ struct addr_pair
   uintptr_t end;
 };
 
-/* This symbol is to name a target side variable that holds the designated
-   'device number' of the target device. The symbol needs to be available to
-   libgomp code and the offload plugin (which in the latter case must be
-   stringified).  */
-#define GOMP_DEVICE_NUM_VAR __gomp_device_num
+/* This following symbol is used to name the target side variable struct that
+   holds the designated ICVs of the target device. The symbol needs to be
+   available to libgomp code and the offload plugin (which in the latter case
+   must be stringified).  */
+#define GOMP_ADDITIONAL_ICVS __gomp_additional_icvs
+
+#define GOMP_INDIRECT_ADDR_MAP __gomp_indirect_addr_map
 
 /* Miscellaneous functions.  */
 extern void *GOMP_PLUGIN_malloc (size_t) __attribute__ ((malloc));
@@ -121,22 +122,33 @@ extern void GOMP_PLUGIN_error (const char *, ...)
 extern void GOMP_PLUGIN_fatal (const char *, ...)
 	__attribute__ ((noreturn, format (printf, 1, 2)));
 
+extern void GOMP_PLUGIN_target_rev (uint64_t, uint64_t, uint64_t, uint64_t,
+				    uint64_t, int, struct goacc_asyncqueue *);
+
 /* Prototypes for functions implemented by libgomp plugins.  */
 extern const char *GOMP_OFFLOAD_get_name (void);
 extern unsigned int GOMP_OFFLOAD_get_caps (void);
 extern int GOMP_OFFLOAD_get_type (void);
-extern int GOMP_OFFLOAD_get_num_devices (void);
+extern int GOMP_OFFLOAD_get_num_devices (unsigned int);
 extern bool GOMP_OFFLOAD_init_device (int);
 extern bool GOMP_OFFLOAD_fini_device (int);
 extern unsigned GOMP_OFFLOAD_version (void);
 extern int GOMP_OFFLOAD_load_image (int, unsigned, const void *,
-				    struct addr_pair **);
+				    struct addr_pair **, uint64_t **,
+				    uint64_t *);
 extern bool GOMP_OFFLOAD_unload_image (int, unsigned, const void *);
 extern void *GOMP_OFFLOAD_alloc (int, size_t);
 extern bool GOMP_OFFLOAD_free (int, void *);
 extern bool GOMP_OFFLOAD_dev2host (int, void *, const void *, size_t);
 extern bool GOMP_OFFLOAD_host2dev (int, void *, const void *, size_t);
 extern bool GOMP_OFFLOAD_dev2dev (int, void *, const void *, size_t);
+extern int GOMP_OFFLOAD_memcpy2d (int, int, size_t, size_t,
+				  void*, size_t, size_t, size_t,
+				  const void*, size_t, size_t, size_t);
+extern int GOMP_OFFLOAD_memcpy3d (int, int, size_t, size_t, size_t, void *,
+				  size_t, size_t, size_t, size_t, size_t,
+				  const void *, size_t, size_t, size_t, size_t,
+				  size_t);
 extern bool GOMP_OFFLOAD_can_run (void *);
 extern void GOMP_OFFLOAD_run (int, void *, void *, void **);
 extern void GOMP_OFFLOAD_async_run (int, void *, void *, void **, void *);

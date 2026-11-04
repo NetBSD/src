@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.1 2024/07/01 01:01:06 perseant Exp $
+#	$NetBSD: Makefile,v 1.12.2.2 2026/11/04 22:53:08 perseant Exp $
 
 .include <bsd.init.mk>
 
@@ -7,6 +7,7 @@ SRCS=		cppspec.cc ${G_GCC_OBJS:.o=.cc}
 
 .include "../Makefile.driver"
 .include "../Makefile.target-defines"
+.include "../Makefile.options"
 
 COPTS+=		-Wno-stack-protector
 

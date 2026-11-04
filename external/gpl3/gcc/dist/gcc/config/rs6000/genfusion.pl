@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # Generate fusion.md
 #
-# Copyright (C) 2020-2022 Free Software Foundation, Inc.
+# Copyright (C) 2020-2024 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -25,7 +25,7 @@ use strict;
 print <<'EOF';
 ;; Generated automatically by genfusion.pl
 
-;; Copyright (C) 2020-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2020-2024 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -370,6 +370,3 @@ EOF
 gen_ld_cmpi_p10();
 gen_logical_addsubf();
 gen_addadd;
-
-exit(0);
-

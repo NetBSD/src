@@ -1,5 +1,5 @@
 /* Code sinking for trees
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
    Contributed by Daniel Berlin <dan@dberlin.org>
 
 This file is part of GCC.
@@ -35,6 +35,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-cfg.h"
 #include "cfgloop.h"
 #include "tree-eh.h"
+#include "tree-ssa-live.h"
 #include "tree-dfa.h"
 
 /* TODO:
@@ -209,11 +210,29 @@ select_best_block (basic_block early_bb,
       temp_bb = get_immediate_dominator (CDI_DOMINATORS, temp_bb);
     }
 
+  /* Placing a statement before a setjmp-like function would be invalid
+     (it cannot be reevaluated when execution follows an abnormal edge).
+     If we selected a block with abnormal predecessors, just punt.  */
+  if (bb_has_abnormal_pred (best_bb))
+    return early_bb;
+
   /* If we found a shallower loop nest, then we always consider that
      a win.  This will always give us the most control dependent block
      within that loop nest.  */
   if (bb_loop_depth (best_bb) < bb_loop_depth (early_bb))
     return best_bb;
+
+  /* Avoid turning an unconditional read into a conditional one when we
+     still might want to perform vectorization.  */
+  if (best_bb->loop_father == early_bb->loop_father
+      && loop_outer (best_bb->loop_father)
+      && !best_bb->loop_father->inner
+      && gimple_vuse (stmt)
+      && flag_tree_loop_vectorize
+      && !(cfun->curr_properties & PROP_loop_opts_done)
+      && dominated_by_p (CDI_DOMINATORS, best_bb->loop_father->latch, early_bb)
+      && !dominated_by_p (CDI_DOMINATORS, best_bb->loop_father->latch, best_bb))
+    return early_bb;
 
   /* Get the sinking threshold.  If the statement to be moved has memory
      operands, then increase the threshold by 7% as those are even more
@@ -231,8 +250,7 @@ select_best_block (basic_block early_bb,
   if (bb_loop_depth (best_bb) == bb_loop_depth (early_bb)
       /* If result of comparsion is unknown, prefer EARLY_BB.
 	 Thus use !(...>=..) rather than (...<...)  */
-      && !(best_bb->count.apply_scale (100, 1)
-	   >= early_bb->count.apply_scale (threshold, 1)))
+      && !(best_bb->count * 100 >= early_bb->count * threshold))
     return best_bb;
 
   /* No better block found, so return EARLY_BB, which happens to be the
@@ -247,7 +265,8 @@ select_best_block (basic_block early_bb,
 
 static bool
 statement_sink_location (gimple *stmt, basic_block frombb,
-			 gimple_stmt_iterator *togsi, bool *zero_uses_p)
+			 gimple_stmt_iterator *togsi, bool *zero_uses_p,
+			 virtual_operand_live &vop_live)
 {
   gimple *use;
   use_operand_p one_use = NULL_USE_OPERAND_P;
@@ -259,12 +278,13 @@ statement_sink_location (gimple *stmt, basic_block frombb,
 
   *zero_uses_p = false;
 
-  /* We only can sink assignments and non-looping const/pure calls.  */
+  /* We only can sink assignments and const/pure calls that are guaranteed
+     to return exactly once.  */
   int cf;
   if (!is_gimple_assign (stmt)
       && (!is_gimple_call (stmt)
 	  || !((cf = gimple_call_flags (stmt)) & (ECF_CONST|ECF_PURE))
-	  || (cf & ECF_LOOPING_CONST_OR_PURE)))
+	  || (cf & (ECF_LOOPING_CONST_OR_PURE|ECF_RETURNS_TWICE))))
     return false;
 
   /* We only can sink stmts with a single definition.  */
@@ -369,63 +389,23 @@ statement_sink_location (gimple *stmt, basic_block frombb,
       if (commondom == frombb)
 	return false;
 
-      /* If this is a load then do not sink past any stores.
-	 Look for virtual definitions in the path from frombb to the sink
-	 location computed from the real uses and if found, adjust
-	 that it a common dominator.  */
+      /* If this is a load then do not sink past any stores.  */
       if (gimple_vuse (stmt))
 	{
 	  /* Do not sink loads from hard registers.  */
 	  if (gimple_assign_single_p (stmt)
-	      && TREE_CODE (gimple_assign_rhs1 (stmt)) == VAR_DECL
+	      && VAR_P (gimple_assign_rhs1 (stmt))
 	      && DECL_HARD_REGISTER (gimple_assign_rhs1 (stmt)))
 	    return false;
 
-	  imm_use_iterator imm_iter;
-	  use_operand_p use_p;
-	  FOR_EACH_IMM_USE_FAST (use_p, imm_iter, gimple_vuse (stmt))
-	    {
-	      gimple *use_stmt = USE_STMT (use_p);
-	      basic_block bb = gimple_bb (use_stmt);
-	      /* For PHI nodes the block we know sth about is the incoming block
-		 with the use.  */
-	      if (gimple_code (use_stmt) == GIMPLE_PHI)
-		{
-		  /* If the PHI defines the virtual operand, ignore it.  */
-		  if (gimple_phi_result (use_stmt) == gimple_vuse (stmt))
-		    continue;
-		  /* In case the PHI node post-dominates the current insert
-		     location we can disregard it.  But make sure it is not
-		     dominating it as well as can happen in a CFG cycle.  */
-		  if (commondom != bb
-		      && !dominated_by_p (CDI_DOMINATORS, commondom, bb)
-		      && dominated_by_p (CDI_POST_DOMINATORS, commondom, bb)
-		      /* If the blocks are possibly within the same irreducible
-			 cycle the above check breaks down.  */
-		      && !((bb->flags & commondom->flags & BB_IRREDUCIBLE_LOOP)
-			   && bb->loop_father == commondom->loop_father)
-		      && !((commondom->flags & BB_IRREDUCIBLE_LOOP)
-			   && flow_loop_nested_p (commondom->loop_father,
-						  bb->loop_father))
-		      && !((bb->flags & BB_IRREDUCIBLE_LOOP)
-			   && flow_loop_nested_p (bb->loop_father,
-						  commondom->loop_father)))
-		    continue;
-		  bb = EDGE_PRED (bb, PHI_ARG_INDEX_FROM_USE (use_p))->src;
-		}
-	      else if (!gimple_vdef (use_stmt))
-		continue;
-	      /* If the use is not dominated by the path entry it is not on
-		 the path.  */
-	      if (!dominated_by_p (CDI_DOMINATORS, bb, frombb))
-		continue;
-	      /* There is no easy way to disregard defs not on the path from
-		 frombb to commondom so just consider them all.  */
-	      commondom = nearest_common_dominator (CDI_DOMINATORS,
-						    bb, commondom);
-	      if (commondom == frombb)
-		return false;
-	    }
+	  /* When the live virtual operand at the intended sink location is
+	     not the same as the one from the load walk up the dominator tree
+	     for a new candidate location.  */
+	  while (commondom != frombb
+		 && vop_live.get_live_in (commondom) != gimple_vuse (stmt))
+	    commondom = get_immediate_dominator (CDI_DOMINATORS, commondom);
+	  if (commondom == frombb)
+	    return false;
 	}
 
       /* Our common dominator has to be dominated by frombb in order to be a
@@ -665,9 +645,8 @@ sink_common_stores_to_bb (basic_block bb)
 /* Perform code sinking on BB */
 
 static unsigned
-sink_code_in_bb (basic_block bb)
+sink_code_in_bb (basic_block bb, virtual_operand_live &vop_live)
 {
-  basic_block son;
   gimple_stmt_iterator gsi;
   edge_iterator ei;
   edge e;
@@ -680,12 +659,12 @@ sink_code_in_bb (basic_block bb)
   /* If this block doesn't dominate anything, there can't be any place to sink
      the statements to.  */
   if (first_dom_son (CDI_DOMINATORS, bb) == NULL)
-    goto earlyout;
+    return todo;
 
   /* We can't move things across abnormal edges, so don't try.  */
   FOR_EACH_EDGE (e, ei, bb->succs)
     if (e->flags & EDGE_ABNORMAL)
-      goto earlyout;
+      return todo;
 
   for (gsi = gsi_last_bb (bb); !gsi_end_p (gsi);)
     {
@@ -693,7 +672,7 @@ sink_code_in_bb (basic_block bb)
       gimple_stmt_iterator togsi;
       bool zero_uses_p;
 
-      if (!statement_sink_location (stmt, bb, &togsi, &zero_uses_p))
+      if (!statement_sink_location (stmt, bb, &togsi, &zero_uses_p, vop_live))
 	{
 	  gimple_stmt_iterator saved = gsi;
 	  if (!gsi_end_p (gsi))
@@ -758,13 +737,6 @@ sink_code_in_bb (basic_block bb)
       if (!gsi_end_p (gsi))
 	gsi_prev (&gsi);
 
-    }
- earlyout:
-  for (son = first_dom_son (CDI_POST_DOMINATORS, bb);
-       son;
-       son = next_dom_son (CDI_POST_DOMINATORS, son))
-    {
-      todo |= sink_code_in_bb (son);
     }
 
   return todo;
@@ -831,10 +803,10 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return flag_tree_sink != 0; }
-  virtual unsigned int execute (function *);
-  opt_pass *clone (void) { return new pass_sink_code (m_ctxt); }
-  void set_pass_param (unsigned n, bool param)
+  bool gate (function *) final override { return flag_tree_sink != 0; }
+  unsigned int execute (function *) final override;
+  opt_pass *clone (void) final override { return new pass_sink_code (m_ctxt); }
+  void set_pass_param (unsigned n, bool param) final override
     {
       gcc_assert (n == 0);
       unsplit_edges = param;
@@ -852,13 +824,20 @@ pass_sink_code::execute (function *fun)
   /* Arrange for the critical edge splitting to be undone if requested.  */
   unsigned todo = unsplit_edges ? TODO_cleanup_cfg : 0;
   connect_infinite_loops_to_exit ();
+  mark_dfs_back_edges (fun);
   memset (&sink_stats, 0, sizeof (sink_stats));
   calculate_dominance_info (CDI_DOMINATORS);
-  calculate_dominance_info (CDI_POST_DOMINATORS);
-  todo |= sink_code_in_bb (EXIT_BLOCK_PTR_FOR_FN (fun));
+
+  virtual_operand_live vop_live;
+
+  int *rpo = XNEWVEC (int, n_basic_blocks_for_fn (cfun));
+  int n = inverted_rev_post_order_compute (fun, rpo);
+  for (int i = 0; i < n; ++i)
+    todo |= sink_code_in_bb (BASIC_BLOCK_FOR_FN (fun, rpo[i]), vop_live);
+  free (rpo);
+
   statistics_counter_event (fun, "Sunk statements", sink_stats.sunk);
   statistics_counter_event (fun, "Commoned stores", sink_stats.commoned);
-  free_dominance_info (CDI_POST_DOMINATORS);
   remove_fake_exit_edges ();
   loop_optimizer_finalize ();
 

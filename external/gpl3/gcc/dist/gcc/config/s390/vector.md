@@ -1,5 +1,5 @@
 ;;- Instruction patterns for the System z vector facility
-;;  Copyright (C) 2015-2022 Free Software Foundation, Inc.
+;;  Copyright (C) 2015-2024 Free Software Foundation, Inc.
 ;;  Contributed by Andreas Krebbel (Andreas.Krebbel@de.ibm.com)
 
 ;; This file is part of GCC.
@@ -30,7 +30,7 @@
 ; V_HW2 is for having two iterators expanding independently e.g. vcond.
 ; It's similar to V_HW, but not fully identical: V1TI is not included, because
 ; there are no 128-bit compares.
-(define_mode_iterator V_HW  [V16QI V8HI V4SI V2DI (V1TI "TARGET_VXE") V2DF
+(define_mode_iterator V_HW  [V16QI V8HI V4SI V2DI V1TI TI V2DF
 			     (V4SF "TARGET_VXE") (V1TF "TARGET_VXE")
 			     (TF "TARGET_VXE")])
 (define_mode_iterator V_HW2 [V16QI V8HI V4SI V2DI V2DF (V4SF "TARGET_VXE")
@@ -47,8 +47,10 @@
 (define_mode_iterator VI_HW     [V16QI V8HI V4SI V2DI])
 (define_mode_iterator VI_HW_QHS [V16QI V8HI V4SI])
 (define_mode_iterator VI_HW_HSD [V8HI  V4SI V2DI])
+(define_mode_iterator VI_HW_HSDT [V8HI V4SI V2DI V1TI TI])
 (define_mode_iterator VI_HW_HS  [V8HI  V4SI])
 (define_mode_iterator VI_HW_QH  [V16QI V8HI])
+(define_mode_iterator VI_HW_T   [V1TI TI])
 
 ; Directly supported vector modes with a certain number of elements
 (define_mode_iterator V_HW_2   [V2DI V2DF])
@@ -85,7 +87,6 @@
 
 ; 32 bit int<->fp vector conversion instructions are available since VXE2 (z15).
 (define_mode_iterator VX_VEC_CONV_BFP [V2DF (V4SF "TARGET_VXE2")])
-(define_mode_iterator VX_VEC_CONV_INT [V2DI (V4SI "TARGET_VXE2")])
 
 ; Empty string for all but TImode.  This is used to hide the TImode
 ; expander name in case it is defined already.  See addti3 for an
@@ -149,7 +150,7 @@
 			    (V1HI "V1HI") (V2HI "V2HI") (V4HI "V4HI") (V8HI "V8HI")
 			    (V1SI "V1SI") (V2SI "V2SI") (V4SI "V4SI")
 			    (V1DI "V1DI") (V2DI "V2DI")
-			    (V1TI "V1TI")
+			    (V1TI "V1TI") (TI "V1TI")
 			    (V1SF "V1SI") (V2SF "V2SI") (V4SF "V4SI")
 			    (V1DF "V1DI") (V2DF "V2DI")
 			    (V1TF "V1TI") (TF "V1TI")])
@@ -158,7 +159,7 @@
 			    (V1HI "v1hi") (V2HI "v2hi") (V4HI "v4hi") (V8HI "v8hi")
 			    (V1SI "v1si") (V2SI "v2si") (V4SI "v4si")
 			    (V1DI "v1di") (V2DI "v2di")
-			    (V1TI "v1ti")
+			    (V1TI "v1ti") (TI "v1ti")
 			    (V1SF "v1si") (V2SF "v2si") (V4SF "v4si")
 			    (V1DF "v1di") (V2DF "v2di")
 			    (V1TF "v1ti") (TF   "v1ti")])
@@ -270,11 +271,13 @@
 	(match_operand:V_128 1 "register_operand" ""))]
   "TARGET_VX && GENERAL_REG_P (operands[0]) && VECTOR_REG_P (operands[1])"
   [(set (match_dup 2)
-	(unspec:DI [(subreg:V2DI (match_dup 1) 0)
-		    (const_int 0)] UNSPEC_VEC_EXTRACT))
+       (vec_select:DI
+         (subreg:V2DI (match_dup 1) 0)
+           (parallel [(const_int 0)])))
    (set (match_dup 3)
-	(unspec:DI [(subreg:V2DI (match_dup 1) 0)
-		    (const_int 1)] UNSPEC_VEC_EXTRACT))]
+       (vec_select:DI
+         (subreg:V2DI (match_dup 1) 0)
+           (parallel [(const_int 1)])))]
 {
   operands[2] = operand_subword (operands[0], 0, 0, <MODE>mode);
   operands[3] = operand_subword (operands[0], 1, 0, <MODE>mode);
@@ -511,37 +514,41 @@
   [(set_attr "op_type" "VRS")])
 
 
-; FIXME: Support also vector mode operands for 0
-; FIXME: This should be (vec_select ..) or something but it does only allow constant selectors :(
-; This is used via RTL standard name as well as for expanding the builtin
+;; FIXME: Support also vector mode operands for 0
+;; This is used via RTL standard name as well as for expanding the builtin
 (define_expand "vec_extract<mode><non_vec_l>"
-  [(set (match_operand:<non_vec> 0 "nonimmediate_operand" "")
-	(unspec:<non_vec> [(match_operand:V  1 "register_operand" "")
-			   (match_operand:SI 2 "nonmemory_operand" "")]
-			  UNSPEC_VEC_EXTRACT))]
-  "TARGET_VX")
+  [(set (match_operand:<non_vec>    0 "nonimmediate_operand" "")
+       (vec_select:<non_vec>
+         (match_operand:V           1 "register_operand" "")
+         (parallel
+          [(match_operand:SI        2 "nonmemory_operand" "")])))]
+  "TARGET_VX"
+)
 
 ; vlgvb, vlgvh, vlgvf, vlgvg, vsteb, vsteh, vstef, vsteg
 (define_insn "*vec_extract<mode>"
-  [(set (match_operand:<non_vec> 0 "nonimmediate_operand"          "=d,R")
-	(unspec:<non_vec> [(match_operand:V  1 "register_operand"   "v,v")
-			   (match_operand:SI 2 "nonmemory_operand" "an,I")]
-			  UNSPEC_VEC_EXTRACT))]
-  "TARGET_VX
-   && (!CONST_INT_P (operands[2])
-       || UINTVAL (operands[2]) < GET_MODE_NUNITS (<V:MODE>mode))"
-  "@
-   vlgv<bhfgq>\t%0,%v1,%Y2
-   vste<bhfgq>\t%v1,%0,%2"
+  [(set (match_operand:<non_vec> 0 "nonimmediate_operand" "=d,R")
+       (vec_select:<non_vec>
+         (match_operand:V        1 "nonmemory_operand"  "v,v")
+         (parallel
+          [(match_operand:SI     2 "nonmemory_operand" "an,I")])))]
+  "TARGET_VX"
+  {
+    if (CONST_INT_P (operands[2]))
+	  operands[2] = GEN_INT (UINTVAL (operands[2]) & (GET_MODE_NUNITS (<V:MODE>mode) - 1));
+    if (which_alternative == 0)
+      return "vlgv<bhfgq>\t%0,%v1,%Y2";
+	return "vste<bhfgq>\t%v1,%0,%2";
+  }
   [(set_attr "op_type" "VRS,VRX")])
 
 ; vlgvb, vlgvh, vlgvf, vlgvg
 (define_insn "*vec_extract<mode>_plus"
-  [(set (match_operand:<non_vec>                      0 "nonimmediate_operand" "=d")
-	(unspec:<non_vec> [(match_operand:V           1 "register_operand"      "v")
-			   (plus:SI (match_operand:SI 2 "nonmemory_operand"     "a")
-				    (match_operand:SI 3 "const_int_operand"     "n"))]
-			   UNSPEC_VEC_EXTRACT))]
+  [(set (match_operand:<non_vec>       0 "nonimmediate_operand" "=d")
+	(vec_select:<non_vec>
+	 (match_operand:V              1 "register_operand"      "v")
+	 (plus:SI (match_operand:SI    2 "nonmemory_operand"     "a")
+	  (parallel [(match_operand:SI 3 "const_int_operand"     "n")]))))]
   "TARGET_VX"
   "vlgv<bhfgq>\t%0,%v1,%Y3(%2)"
   [(set_attr "op_type" "VRS")])
@@ -797,6 +804,17 @@
   "vpdi\t%v0,%v1,%v2,4"
   [(set_attr "op_type" "VRR")])
 
+; Second DW of op1 and first DW of op2 (when interpreted as 2-element vector).
+(define_insn "@vpdi4_2<mode>"
+  [(set (match_operand:V_HW_4   0 "register_operand" "=v")
+	(vec_select:V_HW_4
+	 (vec_concat:<vec_2x_nelts>
+	  (match_operand:V_HW_4 1 "register_operand"  "v")
+	  (match_operand:V_HW_4 2 "register_operand"  "v"))
+	 (parallel [(const_int 2) (const_int 3) (const_int 4) (const_int 5)])))]
+  "TARGET_VX"
+  "vpdi\t%v0,%v1,%v2,4"
+  [(set_attr "op_type" "VRR")])
 
 (define_insn "*vmrhb"
   [(set (match_operand:V16QI                     0 "register_operand" "=v")
@@ -941,6 +959,152 @@
     }
 })
 
+;; VECTOR REVERSE ELEMENTS V16QI
+
+(define_expand "eltswapv16qi"
+  [(parallel
+    [(set (match_operand:V16QI  0 "nonimmediate_operand")
+	  (vec_select:V16QI
+	   (match_operand:V16QI 1 "nonimmediate_operand")
+	   (match_dup 2)))
+     (use (match_dup 3))])]
+  "TARGET_VX"
+{
+  rtvec vec = rtvec_alloc (16);
+  for (int i = 0; i < 16; ++i)
+    RTVEC_ELT (vec, i) = GEN_INT (15 - i);
+  operands[2] = gen_rtx_PARALLEL (VOIDmode, vec);
+  operands[3] = gen_rtx_CONST_VECTOR (V16QImode, vec);
+})
+
+(define_insn_and_split "*eltswapv16qi"
+  [(set (match_operand:V16QI  0 "nonimmediate_operand" "=v,^R,^v")
+	(vec_select:V16QI
+	 (match_operand:V16QI 1 "nonimmediate_operand"  "v,^v,^R")
+	 (parallel [(const_int 15)
+		    (const_int 14)
+		    (const_int 13)
+		    (const_int 12)
+		    (const_int 11)
+		    (const_int 10)
+		    (const_int 9)
+		    (const_int 8)
+		    (const_int 7)
+		    (const_int 6)
+		    (const_int 5)
+		    (const_int 4)
+		    (const_int 3)
+		    (const_int 2)
+		    (const_int 1)
+		    (const_int 0)])))
+   (use (match_operand:V16QI 2 "permute_pattern_operand" "v,X,X"))]
+  "TARGET_VX"
+  "@
+   #
+   vstbrq\t%v1,%0
+   vlbrq\t%v0,%1"
+  "&& reload_completed && REG_P (operands[0]) && REG_P (operands[1])"
+  [(set (match_dup 0)
+	(unspec:V16QI [(match_dup 1)
+		       (match_dup 1)
+		       (match_dup 2)]
+		      UNSPEC_VEC_PERM))]
+  ""
+  [(set_attr "cpu_facility" "*,vxe2,vxe2")
+   (set_attr "op_type" "*,VRX,VRX")])
+
+;; VECTOR REVERSE ELEMENTS V8HI
+
+(define_insn_and_split "eltswapv8hi"
+  [(set (match_operand:V8HI  0 "nonimmediate_operand" "=v,R,v")
+	(vec_select:V8HI
+	 (match_operand:V8HI 1 "nonimmediate_operand"  "v,v,R")
+	 (parallel [(const_int 7)
+		    (const_int 6)
+		    (const_int 5)
+		    (const_int 4)
+		    (const_int 3)
+		    (const_int 2)
+		    (const_int 1)
+		    (const_int 0)])))
+   (clobber (match_scratch:V2DI 2 "=&v,X,X"))
+   (clobber (match_scratch:V4SI 3 "=&v,X,X"))]
+  "TARGET_VX"
+  "@
+   #
+   vsterh\t%v1,%0
+   vlerh\t%v0,%1"
+  "&& reload_completed && REG_P (operands[0]) && REG_P (operands[1])"
+  [(set (match_dup 2)
+	(subreg:V2DI (match_dup 1) 0))
+   (set (match_dup 2)
+	(vec_select:V2DI
+	 (match_dup 2)
+	 (parallel [(const_int 1) (const_int 0)])))
+   (set (match_dup 2)
+	(rotate:V2DI
+	 (match_dup 2)
+	 (const_int 32)))
+   (set (match_dup 3)
+	(subreg:V4SI (match_dup 2) 0))
+   (set (match_dup 3)
+	(rotate:V4SI
+	 (match_dup 3)
+	 (const_int 16)))
+   (set (match_dup 0)
+	(subreg:V8HI (match_dup 3) 0))]
+  ""
+  [(set_attr "cpu_facility" "*,vxe2,vxe2")
+   (set_attr "op_type" "*,VRX,VRX")])
+
+;; VECTOR REVERSE ELEMENTS V4SI / V4SF
+
+(define_insn_and_split "eltswap<mode>"
+  [(set (match_operand:V_HW_4  0 "nonimmediate_operand" "=v,R,v")
+	(vec_select:V_HW_4
+	 (match_operand:V_HW_4 1 "nonimmediate_operand"  "v,v,R")
+	 (parallel [(const_int 3)
+		    (const_int 2)
+		    (const_int 1)
+		    (const_int 0)])))
+   (clobber (match_scratch:V2DI 2 "=&v,X,X"))]
+  "TARGET_VX"
+  "@
+   #
+   vsterf\t%v1,%0
+   vlerf\t%v0,%1"
+  "&& reload_completed && REG_P (operands[0]) && REG_P (operands[1])"
+  [(set (match_dup 2)
+	(subreg:V2DI (match_dup 1) 0))
+   (set (match_dup 2)
+	(vec_select:V2DI
+	 (match_dup 2)
+	 (parallel [(const_int 1) (const_int 0)])))
+   (set (match_dup 2)
+	(rotate:V2DI
+	 (match_dup 2)
+	 (const_int 32)))
+   (set (match_dup 0)
+	(subreg:V_HW_4 (match_dup 2) 0))]
+  ""
+  [(set_attr "cpu_facility" "*,vxe2,vxe2")
+   (set_attr "op_type" "*,VRX,VRX")])
+
+;; VECTOR REVERSE ELEMENTS V2DI / V2DF
+
+(define_insn "eltswap<mode>"
+  [(set (match_operand:V_HW_2  0 "nonimmediate_operand" "=v,R,v")
+	(vec_select:V_HW_2
+	 (match_operand:V_HW_2 1 "nonimmediate_operand"  "v,v,R")
+	 (parallel [(const_int 1)
+		    (const_int 0)])))]
+  "TARGET_VX"
+  "@
+   vpdi\t%v0,%v1,%v1,4
+   vsterg\t%v1,%0
+   vlerg\t%v0,%1"
+  [(set_attr "cpu_facility" "vx,vxe2,vxe2")
+   (set_attr "op_type" "VRR,VRX,VRX")])
 
 ;;
 ;; Vector integer arithmetic instructions
@@ -1147,14 +1311,14 @@
 	(plus:V16QI (match_dup 2) (match_dup 3)))
    ; Generate mask for the odd numbered byte elements
    (set (match_dup 3)
-	(const_vector:V16QI [(const_int 0) (const_int 255)
-			     (const_int 0) (const_int 255)
-			     (const_int 0) (const_int 255)
-			     (const_int 0) (const_int 255)
-			     (const_int 0) (const_int 255)
-			     (const_int 0) (const_int 255)
-			     (const_int 0) (const_int 255)
-			     (const_int 0) (const_int 255)]))
+	(const_vector:V16QI [(const_int 0) (const_int -1)
+			     (const_int 0) (const_int -1)
+			     (const_int 0) (const_int -1)
+			     (const_int 0) (const_int -1)
+			     (const_int 0) (const_int -1)
+			     (const_int 0) (const_int -1)
+			     (const_int 0) (const_int -1)
+			     (const_int 0) (const_int -1)]))
    ; Zero out the even indexed bytes
    (set (match_operand:V8HI 0 "register_operand" "=v")
 	(and:V8HI (subreg:V8HI (match_dup 2) 0)
@@ -1264,6 +1428,23 @@
   "<vec_shifts_mnem><bhfgq>\t%v0,%v1,%Y2"
   [(set_attr "op_type" "VRS")])
 
+; verllg for V4SI/V4SF.  This swaps the first and the second two
+; elements of a vector and is only valid in that context.
+(define_expand "rotl<mode>3_di"
+ [
+ (set (match_dup 2)
+  (subreg:V2DI (match_operand:V_HW_4 1) 0))
+ (set (match_dup 3)
+  (rotate:V2DI
+   (match_dup 2)
+   (const_int 32)))
+ (set (match_operand:V_HW_4 0)
+  (subreg:V_HW_4 (match_dup 3) 0))]
+ "TARGET_VX"
+ {
+  operands[2] = gen_reg_rtx (V2DImode);
+  operands[3] = gen_reg_rtx (V2DImode);
+ })
 
 ; Shift each element by corresponding vector element
 
@@ -1765,11 +1946,11 @@
   DONE;
 })
 
-(define_expand "vec_cmpu<VI_HW:mode><VI_HW:mode>"
-  [(set (match_operand:VI_HW    0 "register_operand" "")
-	(match_operator:VI_HW   1 ""
-	  [(match_operand:VI_HW 2 "register_operand" "")
-	   (match_operand:VI_HW 3 "register_operand" "")]))]
+(define_expand "vec_cmpu<VIT_HW:mode><VIT_HW:mode>"
+  [(set (match_operand:VIT_HW    0 "register_operand" "")
+	(match_operator:VIT_HW   1 ""
+	  [(match_operand:VIT_HW 2 "register_operand" "")
+	   (match_operand:VIT_HW 3 "register_operand" "")]))]
   "TARGET_VX"
 {
   s390_expand_vec_compare (operands[0], GET_CODE(operands[1]), operands[2], operands[3]);
@@ -1783,6 +1964,94 @@
   "TARGET_VX"
   "vc<VICMP_HW_OP:insn_cmp_op><VI:bhfgq>\t%v2,%v0,%v1"
   [(set_attr "op_type" "VRR")])
+
+(define_insn_and_split "*vec_cmpeq<mode><mode>_nocc_emu"
+  [(set (match_operand:VI_HW_T             0 "register_operand" "=v")
+	(eq:VI_HW_T (match_operand:VI_HW_T 1 "register_operand"  "v")
+		    (match_operand:VI_HW_T 2 "register_operand"  "v")))]
+  "TARGET_VX"
+  "#"
+  "&& can_create_pseudo_p ()"
+  [(set (match_dup 3)
+	(eq:V2DI (match_dup 1) (match_dup 2)))
+   (set (match_dup 4)
+	(vec_select:V2DI (match_dup 3) (parallel [(const_int 1) (const_int 0)])))
+   (set (match_dup 3)
+	(and:V2DI (match_dup 3) (match_dup 4)))
+   (set (match_dup 0)
+	(subreg:<MODE> (match_dup 3) 0))]
+{
+  operands[1] = simplify_gen_subreg (V2DImode, operands[1], <MODE>mode, 0);
+  operands[2] = simplify_gen_subreg (V2DImode, operands[2], <MODE>mode, 0);
+  operands[3] = gen_reg_rtx (V2DImode);
+  operands[4] = gen_reg_rtx (V2DImode);
+})
+
+(define_insn_and_split "*vec_cmpgt<mode><mode>_nocc_emu"
+  [(set (match_operand:VI_HW_T             0 "register_operand" "=v")
+	(gt:VI_HW_T (match_operand:VI_HW_T 1 "register_operand"  "v")
+		    (match_operand:VI_HW_T 2 "register_operand"  "v")))]
+  "TARGET_VX"
+  "#"
+  "&& can_create_pseudo_p ()"
+  [(set (match_dup 3)
+	(gt:V2DI (match_dup 1) (match_dup 2)))
+   (set (match_dup 4)
+	(eq:V2DI (match_dup 1) (match_dup 2)))
+   (set (match_dup 5)
+	(gtu:V2DI (match_dup 1) (match_dup 2)))
+   (set (match_dup 5)
+	(vec_select:V2DI (match_dup 5) (parallel [(const_int 1) (const_int 0)])))
+   (set (match_dup 4)
+	(and:V2DI (match_dup 4) (match_dup 5)))
+   (set (match_dup 4)
+	(ior:V2DI (match_dup 3) (match_dup 4)))
+   (set (match_dup 4)
+	(vec_duplicate:V2DI
+	 (vec_select:DI
+	  (match_dup 4)
+	  (parallel [(const_int 1)]))))
+   (set (match_dup 0)
+	(subreg:<MODE> (match_dup 4) 0))]
+{
+  operands[1] = simplify_gen_subreg (V2DImode, operands[1], <MODE>mode, 0);
+  operands[2] = simplify_gen_subreg (V2DImode, operands[2], <MODE>mode, 0);
+  operands[3] = gen_reg_rtx (V2DImode);
+  operands[4] = gen_reg_rtx (V2DImode);
+  operands[5] = gen_reg_rtx (V2DImode);
+})
+
+(define_insn_and_split "*vec_cmpgtu<mode><mode>_nocc_emu"
+  [(set (match_operand:VI_HW_T              0 "register_operand" "=v")
+	(gtu:VI_HW_T (match_operand:VI_HW_T 1 "register_operand"  "v")
+		     (match_operand:VI_HW_T 2 "register_operand"  "v")))]
+  "TARGET_VX"
+  "#"
+  "&& can_create_pseudo_p ()"
+  [(set (match_dup 3)
+	(gtu:V2DI (match_dup 1) (match_dup 2)))
+   (set (match_dup 4)
+	(eq:V2DI (match_dup 1) (match_dup 2)))
+   (set (match_dup 5)
+	(vec_select:V2DI (match_dup 3) (parallel [(const_int 1) (const_int 0)])))
+   (set (match_dup 4)
+	(and:V2DI (match_dup 4) (match_dup 5)))
+   (set (match_dup 4)
+	(ior:V2DI (match_dup 3) (match_dup 4)))
+   (set (match_dup 4)
+	(vec_duplicate:V2DI
+	 (vec_select:DI
+	  (match_dup 4)
+	  (parallel [(const_int 1)]))))
+   (set (match_dup 0)
+	(subreg:<MODE> (match_dup 4) 0))]
+{
+  operands[1] = simplify_gen_subreg (V2DImode, operands[1], <MODE>mode, 0);
+  operands[2] = simplify_gen_subreg (V2DImode, operands[2], <MODE>mode, 0);
+  operands[3] = gen_reg_rtx (V2DImode);
+  operands[4] = gen_reg_rtx (V2DImode);
+  operands[5] = gen_reg_rtx (V2DImode);
+})
 
 
 ;;
@@ -2120,12 +2389,12 @@
 
 ; op0 = op3 == 0 ? op1 : op2
 (define_insn "*vec_sel0<mode>"
-  [(set (match_operand:V 0 "register_operand" "=v")
-	(if_then_else:V
+  [(set (match_operand:VT 0 "register_operand" "=v")
+	(if_then_else:VT
 	 (eq (match_operand:<TOINTVEC> 3 "register_operand" "v")
 	     (match_operand:<TOINTVEC> 4 "const0_operand" ""))
-	 (match_operand:V 1 "register_operand" "v")
-	 (match_operand:V 2 "register_operand" "v")))]
+	 (match_operand:VT 1 "register_operand" "v")
+	 (match_operand:VT 2 "register_operand" "v")))]
   "TARGET_VX"
   "vsel\t%v0,%2,%1,%3"
   [(set_attr "op_type" "VRR")])
@@ -2484,12 +2753,11 @@
 ; op2: inexact exception not suppressed (IEEE 754 2008)
 ; op3: according to current rounding mode
 ; vcdgb, vcefb
-(define_insn "float<VX_VEC_CONV_INT:mode><VX_VEC_CONV_BFP:mode>2"
-  [(set (match_operand:VX_VEC_CONV_BFP                        0 "register_operand" "=v")
-	(float:VX_VEC_CONV_BFP (match_operand:VX_VEC_CONV_INT 1 "register_operand"  "v")))]
-  "TARGET_VX
-   && GET_MODE_UNIT_SIZE (<VX_VEC_CONV_INT:MODE>mode) == GET_MODE_UNIT_SIZE (<VX_VEC_CONV_BFP:MODE>mode)"
-  "vc<VX_VEC_CONV_BFP:xde><VX_VEC_CONV_INT:bhfgq>b\t%v0,%v1,0,0"
+(define_insn "float<tointvec><mode>2"
+  [(set (match_operand:VX_VEC_CONV_BFP                   0 "register_operand" "=v")
+	(float:VX_VEC_CONV_BFP (match_operand:<TOINTVEC> 1 "register_operand"  "v")))]
+  "TARGET_VX"
+  "vc<xde><bhfgq>b\t%v0,%v1,0,0"
   [(set_attr "op_type" "VRR")])
 
 ; There is no instruction for loading a signed integer into an extended BFP
@@ -2515,12 +2783,11 @@
 ; op2: inexact exception not suppressed (IEEE 754 2008)
 ; op3: according to current rounding mode
 ; vcdlgb, vcelfb
-(define_insn "floatuns<VX_VEC_CONV_INT:mode><VX_VEC_CONV_BFP:mode>2"
-  [(set (match_operand:VX_VEC_CONV_BFP                                 0 "register_operand" "=v")
-	(unsigned_float:VX_VEC_CONV_BFP (match_operand:VX_VEC_CONV_INT 1 "register_operand"  "v")))]
-  "TARGET_VX
-   && GET_MODE_UNIT_SIZE (<VX_VEC_CONV_INT:MODE>mode) == GET_MODE_UNIT_SIZE (<VX_VEC_CONV_BFP:MODE>mode)"
-  "vc<VX_VEC_CONV_BFP:xde>l<VX_VEC_CONV_INT:bhfgq>b\t%v0,%v1,0,0"
+(define_insn "floatuns<tointvec><mode>2"
+  [(set (match_operand:VX_VEC_CONV_BFP                            0 "register_operand" "=v")
+	(unsigned_float:VX_VEC_CONV_BFP (match_operand:<TOINTVEC> 1 "register_operand"  "v")))]
+  "TARGET_VX"
+  "vc<xde>l<bhfgq>b\t%v0,%v1,0,0"
   [(set_attr "op_type" "VRR")])
 
 ; There is no instruction for loading an unsigned integer into an extended BFP
@@ -2546,12 +2813,11 @@
 ; op2: inexact exception not suppressed (IEEE 754 2008)
 ; op3: rounding mode 5 (round towards 0 C11 6.3.1.4)
 ; vcgdb, vcfeb
-(define_insn "fix_trunc<VX_VEC_CONV_BFP:mode><VX_VEC_CONV_INT:mode>2"
-  [(set (match_operand:VX_VEC_CONV_INT                      0 "register_operand" "=v")
-	(fix:VX_VEC_CONV_INT (match_operand:VX_VEC_CONV_BFP 1 "register_operand"  "v")))]
-  "TARGET_VX
-   && GET_MODE_UNIT_SIZE (<VX_VEC_CONV_INT:MODE>mode) == GET_MODE_UNIT_SIZE (<VX_VEC_CONV_BFP:MODE>mode)"
-  "vc<VX_VEC_CONV_INT:bhfgq><VX_VEC_CONV_BFP:xde>b\t%v0,%v1,0,5"
+(define_insn "fix_trunc<mode><tointvec>2"
+  [(set (match_operand:<TOINTVEC>                      0 "register_operand" "=v")
+	(fix:<TOINTVEC> (match_operand:VX_VEC_CONV_BFP 1 "register_operand"  "v")))]
+  "TARGET_VX"
+  "vc<bhfgq><xde>b\t%v0,%v1,0,5"
   [(set_attr "op_type" "VRR")])
 
 ; There is no instruction for rounding an extended BFP operand in a VR into
@@ -2579,12 +2845,11 @@
 ; op2: inexact exception not suppressed (IEEE 754 2008)
 ; op3: rounding mode 5 (round towards 0 C11 6.3.1.4)
 ; vclgdb, vclfeb
-(define_insn "fixuns_trunc<VX_VEC_CONV_BFP:mode><VX_VEC_CONV_INT:mode>2"
-  [(set (match_operand:VX_VEC_CONV_INT                               0 "register_operand" "=v")
-	(unsigned_fix:VX_VEC_CONV_INT (match_operand:VX_VEC_CONV_BFP 1 "register_operand"  "v")))]
-  "TARGET_VX
-   && GET_MODE_UNIT_SIZE (<VX_VEC_CONV_INT:MODE>mode) == GET_MODE_UNIT_SIZE (<VX_VEC_CONV_BFP:MODE>mode)"
-  "vcl<VX_VEC_CONV_INT:bhfgq><VX_VEC_CONV_BFP:xde>b\t%v0,%v1,0,5"
+(define_insn "fixuns_trunc<VX_VEC_CONV_BFP:mode><tointvec>2"
+  [(set (match_operand:<TOINTVEC>                               0 "register_operand" "=v")
+	(unsigned_fix:<TOINTVEC> (match_operand:VX_VEC_CONV_BFP 1 "register_operand"  "v")))]
+  "TARGET_VX"
+  "vcl<bhfgq><xde>b\t%v0,%v1,0,5"
   [(set_attr "op_type" "VRR")])
 
 ; There is no instruction for rounding an extended BFP operand in a VR into
@@ -2851,12 +3116,12 @@
      (use (match_dup 2))])]
   "TARGET_VX"
 {
-  static char p[4][16] =
+  static const char p[4][16] =
     { { 1,  0,  3,  2,  5,  4,  7, 6, 9,  8,  11, 10, 13, 12, 15, 14 },   /* H */
       { 3,  2,  1,  0,  7,  6,  5, 4, 11, 10, 9,  8,  15, 14, 13, 12 },   /* S */
       { 7,  6,  5,  4,  3,  2,  1, 0, 15, 14, 13, 12, 11, 10, 9,  8  },   /* D */
       { 15, 14, 13, 12, 11, 10, 9, 8, 7,  6,  5,  4,  3,  2,  1,  0  } }; /* T */
-  char *perm;
+  const char *perm;
   rtx perm_rtx[16];
 
   switch (GET_MODE_SIZE (GET_MODE_INNER (<MODE>mode)))
@@ -2908,8 +3173,8 @@
   "TARGET_VXE2"
   "@
    #
-   vlbr<bhfgq>\t%v0,%v1
-   vstbr<bhfgq>\t%v1,%v0"
+   vlbr<bhfgq>\t%v0,%1
+   vstbr<bhfgq>\t%v1,%0"
   "&& reload_completed
    && !memory_operand (operands[0], <MODE>mode)
    && !memory_operand (operands[1], <MODE>mode)"
@@ -2921,6 +3186,48 @@
 		       UNSPEC_VEC_PERM) 0))]
   ""
   [(set_attr "op_type"      "*,VRX,VRX")])
+
+(define_insn "*vstbr<mode>"
+  [(set (match_operand:VI_HW_HSDT                   0 "memory_operand"  "=R")
+	(bswap:VI_HW_HSDT (match_operand:VI_HW_HSDT 1 "register_operand" "v")))]
+  "TARGET_VXE2"
+  "vstbr<bhfgq>\t%v1,%0"
+  [(set_attr "op_type" "VRX")])
+
+;
+; Implement len_load/len_store optabs with vll/vstl.
+(define_expand "len_load_v16qi"
+  [(match_operand:V16QI 0 "register_operand")
+   (match_operand:V16QI 1 "memory_operand")
+   (match_operand:QI 2 "register_operand")
+   (match_operand:QI 3 "vll_bias_operand")
+  ]
+  "TARGET_VX && TARGET_64BIT"
+{
+  rtx mem = adjust_address (operands[1], BLKmode, 0);
+
+  rtx len = gen_reg_rtx (SImode);
+  emit_move_insn (len, gen_rtx_ZERO_EXTEND (SImode, operands[2]));
+  emit_insn (gen_vllv16qi (operands[0], len, mem));
+  DONE;
+})
+
+(define_expand "len_store_v16qi"
+  [(match_operand:V16QI 0 "memory_operand")
+   (match_operand:V16QI 1 "register_operand")
+   (match_operand:QI 2 "register_operand")
+   (match_operand:QI 3 "vll_bias_operand")
+  ]
+  "TARGET_VX && TARGET_64BIT"
+{
+  rtx mem = adjust_address (operands[0], BLKmode, 0);
+
+  rtx len = gen_reg_rtx (SImode);
+  emit_move_insn (len, gen_rtx_ZERO_EXTEND (SImode, operands[2]));
+  emit_insn (gen_vstlv16qi (operands[1], len, mem));
+  DONE;
+});;
+
 
 ; reduc_smin
 ; reduc_smax

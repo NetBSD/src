@@ -1,5 +1,5 @@
 /* SSA operands management for trees.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -896,7 +896,6 @@ operands_scanner::get_expr_operands (tree *expr_p, int flags)
     case BIT_INSERT_EXPR:
     case COMPOUND_EXPR:
     case OBJ_TYPE_REF:
-    case ASSERT_EXPR:
     do_binary:
       {
 	get_expr_operands (&TREE_OPERAND (expr, 0), flags);

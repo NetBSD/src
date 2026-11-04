@@ -1,5 +1,5 @@
 /* High-level loop manipulation functions.
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -47,7 +47,9 @@ along with GCC; see the file COPYING3.  If not see
    so that we can free them all at once.  */
 static bitmap_obstack loop_renamer_obstack;
 
-/* Creates an induction variable with value BASE + STEP * iteration in LOOP.
+/* Creates an induction variable with value BASE (+/-) STEP * iteration in LOOP.
+   If INCR_OP is PLUS_EXPR, the induction variable is BASE + STEP * iteration.
+   If INCR_OP is MINUS_EXPR, the induction variable is BASE - STEP * iteration.
    It is expected that neither BASE nor STEP are shared with other expressions
    (unless the sharing rules allow this).  Use VAR as a base var_decl for it
    (if NULL, a new temporary will be created).  The increment will occur at
@@ -57,16 +59,16 @@ static bitmap_obstack loop_renamer_obstack;
    VAR_AFTER (unless they are NULL).  */
 
 void
-create_iv (tree base, tree step, tree var, class loop *loop,
-	   gimple_stmt_iterator *incr_pos, bool after,
-	   tree *var_before, tree *var_after)
+create_iv (tree base, tree_code incr_op, tree step, tree var, class loop *loop,
+	   gimple_stmt_iterator *incr_pos, bool after, tree *var_before,
+	   tree *var_after)
 {
   gassign *stmt;
   gphi *phi;
   tree initial, step1;
   gimple_seq stmts;
   tree vb, va;
-  enum tree_code incr_op = PLUS_EXPR;
+  gcc_assert (incr_op == PLUS_EXPR || incr_op == MINUS_EXPR);
   edge pe = loop_preheader_edge (loop);
 
   if (var != NULL_TREE)
@@ -93,7 +95,7 @@ create_iv (tree base, tree step, tree var, class loop *loop,
 	  step1 = fold_build1 (NEGATE_EXPR, TREE_TYPE (step), step);
 	  if (tree_int_cst_lt (step1, step))
 	    {
-	      incr_op = MINUS_EXPR;
+	      incr_op = (incr_op == PLUS_EXPR ? MINUS_EXPR : PLUS_EXPR);
 	      step = step1;
 	    }
 	}
@@ -104,7 +106,7 @@ create_iv (tree base, tree step, tree var, class loop *loop,
 	  if (!tree_expr_nonnegative_warnv_p (step, &ovf)
 	      && may_negate_without_overflow_p (step))
 	    {
-	      incr_op = MINUS_EXPR;
+	      incr_op = (incr_op == PLUS_EXPR ? MINUS_EXPR : PLUS_EXPR);
 	      step = fold_build1 (NEGATE_EXPR, TREE_TYPE (step), step);
 	    }
 	}
@@ -129,10 +131,10 @@ create_iv (tree base, tree step, tree var, class loop *loop,
      immediately after a statement whose location is known.  */
   if (after)
     {
-      if (gsi_end_p (*incr_pos)
-	  || (is_gimple_debug (gsi_stmt (*incr_pos))
-	      && gsi_bb (*incr_pos)
-	      && gsi_end_p (gsi_last_nondebug_bb (gsi_bb (*incr_pos)))))
+      gimple_stmt_iterator gsi = *incr_pos;
+      if (!gsi_end_p (gsi))
+	gsi_next_nondebug (&gsi);
+      if (gsi_end_p (gsi))
 	{
 	  edge e = single_succ_edge (gsi_bb (*incr_pos));
 	  gimple_set_location (stmt, e->goto_locus);
@@ -183,12 +185,14 @@ find_sibling_superloop (class loop *use_loop, class loop *def_loop)
 /* DEF_BB is a basic block containing a DEF that needs rewriting into
    loop-closed SSA form.  USE_BLOCKS is the set of basic blocks containing
    uses of DEF that "escape" from the loop containing DEF_BB (i.e. blocks in
-   USE_BLOCKS are dominated by DEF_BB but not in the loop father of DEF_B).
+   USE_BLOCKS are dominated by DEF_BB but not in the loop father of DEF_BB).
    ALL_EXITS[I] is the set of all basic blocks that exit loop I.
+   DEF_LOOP_EXITS is a bitmap of loop exit blocks that exit the loop
+   containing DEF_BB or its outer loops.
 
-   Compute the subset of LOOP_EXITS that exit the loop containing DEF_BB
-   or one of its loop fathers, in which DEF is live.  This set is returned
-   in the bitmap LIVE_EXITS.
+   Compute the subset of loop exit destinations that exit the loop
+   containing DEF_BB or one of its loop fathers, in which DEF is live.
+   This set is returned in the bitmap LIVE_EXITS.
 
    Instead of computing the complete livein set of the def, we use the loop
    nesting tree as a form of poor man's structure analysis.  This greatly
@@ -197,18 +201,17 @@ find_sibling_superloop (class loop *use_loop, class loop *def_loop)
 
 static void
 compute_live_loop_exits (bitmap live_exits, bitmap use_blocks,
-			 bitmap *loop_exits, basic_block def_bb)
+			 basic_block def_bb, bitmap def_loop_exits)
 {
   unsigned i;
   bitmap_iterator bi;
   class loop *def_loop = def_bb->loop_father;
   unsigned def_loop_depth = loop_depth (def_loop);
-  bitmap def_loop_exits;
 
   /* Normally the work list size is bounded by the number of basic
      blocks in the largest loop.  We don't know this number, but we
      can be fairly sure that it will be relatively small.  */
-  auto_vec<basic_block> worklist (MAX (8, n_basic_blocks_for_fn (cfun) / 128));
+  auto_vec<basic_block, 8> worklist (MAX (8, n_basic_blocks_for_fn (cfun) / 128));
 
   EXECUTE_IF_SET_IN_BITMAP (use_blocks, 0, i, bi)
     {
@@ -272,13 +275,7 @@ compute_live_loop_exits (bitmap live_exits, bitmap use_blocks,
 	}
     }
 
-  def_loop_exits = BITMAP_ALLOC (&loop_renamer_obstack);
-  for (class loop *loop = def_loop;
-       loop != current_loops->tree_root;
-       loop = loop_outer (loop))
-    bitmap_ior_into (def_loop_exits, loop_exits[loop->num]);
   bitmap_and_into (live_exits, def_loop_exits);
-  BITMAP_FREE (def_loop_exits);
 }
 
 /* Add a loop-closing PHI for VAR in basic block EXIT.  */
@@ -319,59 +316,85 @@ add_exit_phi (basic_block exit, tree var)
 }
 
 /* Add exit phis for VAR that is used in LIVEIN.
-   Exits of the loops are stored in LOOP_EXITS.  */
+   Exits of the loops are stored in LOOP_EXITS.  Returns the number
+   of PHIs added for VAR.  */
 
-static void
-add_exit_phis_var (tree var, bitmap use_blocks, bitmap *loop_exits)
+static unsigned
+add_exit_phis_var (tree var, bitmap use_blocks, bitmap def_loop_exits)
 {
   unsigned index;
   bitmap_iterator bi;
   basic_block def_bb = gimple_bb (SSA_NAME_DEF_STMT (var));
-  bitmap live_exits = BITMAP_ALLOC (&loop_renamer_obstack);
 
   gcc_checking_assert (! bitmap_bit_p (use_blocks, def_bb->index));
 
-  compute_live_loop_exits (live_exits, use_blocks, loop_exits, def_bb);
+  auto_bitmap live_exits (&loop_renamer_obstack);
+  compute_live_loop_exits (live_exits, use_blocks, def_bb, def_loop_exits);
 
+  unsigned cnt = 0;
   EXECUTE_IF_SET_IN_BITMAP (live_exits, 0, index, bi)
     {
       add_exit_phi (BASIC_BLOCK_FOR_FN (cfun, index), var);
+      cnt++;
     }
+  return cnt;
+}
 
-  BITMAP_FREE (live_exits);
+static int
+loop_name_cmp (const void *p1, const void *p2)
+{
+  auto l1 = (const std::pair<int, int> *)p1;
+  auto l2 = (const std::pair<int, int> *)p2;
+  if (l1->first < l2->first)
+    return -1;
+  else if (l1->first > l2->first)
+    return 1;
+  return 0;
 }
 
 /* Add exit phis for the names marked in NAMES_TO_RENAME.
    Exits of the loops are stored in EXITS.  Sets of blocks where the ssa
-   names are used are stored in USE_BLOCKS.  */
+   names are used are stored in USE_BLOCKS.  Returns whether any name
+   required multiple LC PHI nodes.  */
 
-static void
-add_exit_phis (bitmap names_to_rename, bitmap *use_blocks, bitmap *loop_exits)
+static bool
+add_exit_phis (bitmap names_to_rename, bitmap *use_blocks)
 {
   unsigned i;
   bitmap_iterator bi;
+  bool multiple_p = false;
 
+  /* Sort names_to_rename after definition loop so we can avoid re-computing
+     def_loop_exits.  */
+  auto_vec<std::pair<int, int> > names (bitmap_count_bits (names_to_rename));
   EXECUTE_IF_SET_IN_BITMAP (names_to_rename, 0, i, bi)
     {
-      add_exit_phis_var (ssa_name (i), use_blocks[i], loop_exits);
+      tree name = ssa_name (i);
+      loop_p def_loop = gimple_bb (SSA_NAME_DEF_STMT (name))->loop_father;
+      names.quick_push (std::make_pair (def_loop->num, i));
     }
-}
+  names.qsort (loop_name_cmp);
 
-/* Fill the array of bitmaps LOOP_EXITS with all loop exit edge targets.  */
-
-static void
-get_loops_exits (bitmap *loop_exits)
-{
-  unsigned j;
-  edge e;
-
-  for (auto loop : loops_list (cfun, 0))
+  auto_bitmap def_loop_exits (&loop_renamer_obstack);
+  loop_p last_def_loop = NULL;
+  for (auto p : names)
     {
-      auto_vec<edge> exit_edges = get_loop_exit_edges (loop);
-      loop_exits[loop->num] = BITMAP_ALLOC (&loop_renamer_obstack);
-      FOR_EACH_VEC_ELT (exit_edges, j, e)
-        bitmap_set_bit (loop_exits[loop->num], e->dest->index);
+      loop_p def_loop = get_loop (cfun, p.first);
+      if (def_loop != last_def_loop)
+	{
+	  bitmap_clear (def_loop_exits);
+	  last_def_loop = def_loop;
+	  for (class loop *loop = def_loop; loop != current_loops->tree_root;
+	       loop = loop_outer (loop))
+	    for (auto exit = loop->exits->next; exit->e; exit = exit->next)
+	      bitmap_set_bit (def_loop_exits, exit->e->dest->index);
+	}
+      if (add_exit_phis_var (ssa_name (p.second), use_blocks[p.second],
+			     def_loop_exits) > 1)
+	multiple_p = true;
     }
+
+  return multiple_p;
 }
 
 /* For USE in BB, if it is used outside of the loop it is defined in,
@@ -498,94 +521,6 @@ find_uses_to_rename (bitmap changed_bbs, bitmap *use_blocks, bitmap need_phis,
       find_uses_to_rename_bb (bb, use_blocks, need_phis, use_flags);
 }
 
-/* Mark uses of DEF that are used outside of the loop they are defined in for
-   rewrite.  Record the set of blocks in which the ssa names are used to
-   USE_BLOCKS.  Record the SSA names that will need exit PHIs in NEED_PHIS.  */
-
-static void
-find_uses_to_rename_def (tree def, bitmap *use_blocks, bitmap need_phis)
-{
-  gimple *use_stmt;
-  imm_use_iterator imm_iter;
-
-  FOR_EACH_IMM_USE_STMT (use_stmt, imm_iter, def)
-    {
-      if (is_gimple_debug (use_stmt))
-	continue;
-
-      basic_block use_bb = gimple_bb (use_stmt);
-
-      use_operand_p use_p;
-      FOR_EACH_IMM_USE_ON_STMT (use_p, imm_iter)
-	{
-	  if (gimple_code (use_stmt) == GIMPLE_PHI)
-	    {
-	      edge e = gimple_phi_arg_edge (as_a <gphi *> (use_stmt),
-					    PHI_ARG_INDEX_FROM_USE (use_p));
-	      use_bb = e->src;
-	    }
-	  find_uses_to_rename_use (use_bb, USE_FROM_PTR (use_p), use_blocks,
-				   need_phis);
-	}
-    }
-}
-
-/* Marks names matching USE_FLAGS that are defined in LOOP and used outside of
-   it for rewrite.  Records the set of blocks in which the ssa names are used to
-   USE_BLOCKS.  Record the SSA names that will need exit PHIs in NEED_PHIS.  */
-
-static void
-find_uses_to_rename_in_loop (class loop *loop, bitmap *use_blocks,
-			     bitmap need_phis, int use_flags)
-{
-  bool do_virtuals = (use_flags & SSA_OP_VIRTUAL_USES) != 0;
-  bool do_nonvirtuals = (use_flags & SSA_OP_USE) != 0;
-  int def_flags = ((do_virtuals ? SSA_OP_VIRTUAL_DEFS : 0)
-		   | (do_nonvirtuals ? SSA_OP_DEF : 0));
-
-
-  basic_block *bbs = get_loop_body (loop);
-
-  for (unsigned int i = 0; i < loop->num_nodes; i++)
-    {
-      basic_block bb = bbs[i];
-
-      for (gphi_iterator bsi = gsi_start_phis (bb); !gsi_end_p (bsi);
-	   gsi_next (&bsi))
-	{
-	  gphi *phi = bsi.phi ();
-	  tree res = gimple_phi_result (phi);
-	  bool virtual_p = virtual_operand_p (res);
-	  if ((virtual_p && do_virtuals)
-	      || (!virtual_p && do_nonvirtuals))
-	    find_uses_to_rename_def (res, use_blocks, need_phis);
-      }
-
-      for (gimple_stmt_iterator bsi = gsi_start_bb (bb); !gsi_end_p (bsi);
-	   gsi_next (&bsi))
-	{
-	  gimple *stmt = gsi_stmt (bsi);
-	  /* FOR_EACH_SSA_TREE_OPERAND iterator does not allows
-	     SSA_OP_VIRTUAL_DEFS only.  */
-	  if (def_flags == SSA_OP_VIRTUAL_DEFS)
-	    {
-	      tree vdef = gimple_vdef (stmt);
-	      if (vdef != NULL)
-		find_uses_to_rename_def (vdef, use_blocks, need_phis);
-	    }
-	  else
-	    {
-	      tree var;
-	      ssa_op_iter iter;
-	      FOR_EACH_SSA_TREE_OPERAND (var, stmt, iter, def_flags)
-		find_uses_to_rename_def (var, use_blocks, need_phis);
-	    }
-	}
-    }
-
-  XDELETEVEC (bbs);
-}
-
 /* Rewrites the program into a loop closed ssa form -- i.e. inserts extra
    phi nodes to ensure that no variable is used outside the loop it is
    defined in.
@@ -615,8 +550,7 @@ find_uses_to_rename_in_loop (class loop *loop, bitmap *use_blocks,
       is not well-behaved, while the second one is an induction variable with
       base 99 and step 1.
 
-      If LOOP is non-null, only rewrite uses that have defs in LOOP.  Otherwise,
-      if CHANGED_BBS is not NULL, we look for uses outside loops only in the
+      If CHANGED_BBS is not NULL, we look for uses outside loops only in the
       basic blocks in this set.
 
       USE_FLAGS allows us to specify whether we want virtual, non-virtual or
@@ -625,9 +559,9 @@ find_uses_to_rename_in_loop (class loop *loop, bitmap *use_blocks,
       UPDATE_FLAG is used in the call to update_ssa.  See
       TODO_update_ssa* for documentation.  */
 
-void
+static void
 rewrite_into_loop_closed_ssa_1 (bitmap changed_bbs, unsigned update_flag,
-				int use_flags, class loop *loop)
+				int use_flags)
 {
   bitmap *use_blocks;
   bitmap names_to_rename;
@@ -651,59 +585,47 @@ rewrite_into_loop_closed_ssa_1 (bitmap changed_bbs, unsigned update_flag,
      because we know that we will only have entries for the SSA names
      in NAMES_TO_RENAME.  */
   use_blocks = XNEWVEC (bitmap, num_ssa_names);
-
-  if (loop != NULL)
-    {
-      gcc_assert (changed_bbs == NULL);
-      find_uses_to_rename_in_loop (loop, use_blocks, names_to_rename,
-				   use_flags);
-    }
-  else
-    {
-      gcc_assert (loop == NULL);
-      find_uses_to_rename (changed_bbs, use_blocks, names_to_rename, use_flags);
-    }
+  find_uses_to_rename (changed_bbs, use_blocks, names_to_rename, use_flags);
 
   if (!bitmap_empty_p (names_to_rename))
     {
-      /* An array of bitmaps where LOOP_EXITS[I] is the set of basic blocks
-	 that are the destination of an edge exiting loop number I.  */
-      bitmap *loop_exits = XNEWVEC (bitmap, number_of_loops (cfun));
-      get_loops_exits (loop_exits);
+      bool release_recorded_exits_p = false;
+      if (!loops_state_satisfies_p (LOOPS_HAVE_RECORDED_EXITS))
+	{
+	  /* Doing one scan over the whole function is cheaper than
+	     traversing the loop tree and gathering BBs of each loop.  */
+	  record_loop_exits ();
+	  release_recorded_exits_p = true;
+	}
 
       /* Add the PHI nodes on exits of the loops for the names we need to
-	 rewrite.  */
-      add_exit_phis (names_to_rename, use_blocks, loop_exits);
+	 rewrite.  When no variable required multiple LC PHI nodes to be
+	 inserted then we know that all uses outside of the loop are
+	 dominated by the single LC SSA definition and no further PHI
+	 node insertions are required.  */
+      bool need_phis_p = add_exit_phis (names_to_rename, use_blocks);
 
-      free (loop_exits);
+      if (release_recorded_exits_p)
+	release_recorded_exits (cfun);
 
       /* Fix up all the names found to be used outside their original
 	 loops.  */
-      update_ssa (TODO_update_ssa);
+      update_ssa (need_phis_p ? TODO_update_ssa : TODO_update_ssa_no_phi);
     }
 
   bitmap_obstack_release (&loop_renamer_obstack);
   free (use_blocks);
 }
 
-/* Rewrites the non-virtual defs and uses into a loop closed ssa form.  If
-   CHANGED_BBS is not NULL, we look for uses outside loops only in the basic
+/* Rewrites the defs and uses into a loop closed ssa form.
+   If CHANGED_BBS is not NULL, we look for uses outside loops only in the basic
    blocks in this set.  UPDATE_FLAG is used in the call to update_ssa.  See
    TODO_update_ssa* for documentation.  */
 
 void
 rewrite_into_loop_closed_ssa (bitmap changed_bbs, unsigned update_flag)
 {
-  rewrite_into_loop_closed_ssa_1 (changed_bbs, update_flag, SSA_OP_USE, NULL);
-}
-
-/* Rewrites virtual defs and uses with def in LOOP into loop closed ssa
-   form.  */
-
-void
-rewrite_virtuals_into_loop_closed_ssa (class loop *loop)
-{
-  rewrite_into_loop_closed_ssa_1 (NULL, 0, SSA_OP_VIRTUAL_USES, loop);
+  rewrite_into_loop_closed_ssa_1 (changed_bbs, update_flag, SSA_OP_ALL_USES);
 }
 
 /* Check invariants of the loop closed ssa form for the def in DEF_BB.  */
@@ -736,8 +658,7 @@ check_loop_closed_ssa_bb (basic_block bb)
     {
       gphi *phi = bsi.phi ();
 
-      if (!virtual_operand_p (PHI_RESULT (phi)))
-	check_loop_closed_ssa_def (bb, PHI_RESULT (phi));
+      check_loop_closed_ssa_def (bb, PHI_RESULT (phi));
     }
 
   for (gimple_stmt_iterator bsi = gsi_start_nondebug_bb (bb); !gsi_end_p (bsi);
@@ -747,7 +668,7 @@ check_loop_closed_ssa_bb (basic_block bb)
       tree var;
       gimple *stmt = gsi_stmt (bsi);
 
-      FOR_EACH_SSA_TREE_OPERAND (var, stmt, iter, SSA_OP_DEF)
+      FOR_EACH_SSA_TREE_OPERAND (var, stmt, iter, SSA_OP_ALL_DEFS)
 	check_loop_closed_ssa_def (bb, var);
     }
 }
@@ -762,14 +683,14 @@ verify_loop_closed_ssa (bool verify_ssa_p, class loop *loop)
   if (number_of_loops (cfun) <= 1)
     return;
 
-  if (verify_ssa_p)
-    verify_ssa (false, true);
-
   timevar_push (TV_VERIFY_LOOP_CLOSED);
 
   if (loop == NULL)
     {
       basic_block bb;
+
+      if (verify_ssa_p)
+	verify_ssa (false, true);
 
       FOR_EACH_BB_FN (bb, cfun)
 	if (bb->loop_father && bb->loop_father->num > 0)
@@ -778,6 +699,11 @@ verify_loop_closed_ssa (bool verify_ssa_p, class loop *loop)
   else
     {
       basic_block *bbs = get_loop_body (loop);
+
+      /* We do not have loop-local SSA verification so just
+	 check there's no update queued.  */
+      if (verify_ssa_p)
+	gcc_assert (!need_ssa_update_p (cfun));
 
       for (unsigned i = 0; i < loop->num_nodes; ++i)
 	check_loop_closed_ssa_bb (bbs[i]);
@@ -844,7 +770,6 @@ ip_end_pos (class loop *loop)
 basic_block
 ip_normal_pos (class loop *loop)
 {
-  gimple *last;
   basic_block bb;
   edge exit;
 
@@ -852,9 +777,7 @@ ip_normal_pos (class loop *loop)
     return NULL;
 
   bb = single_pred (loop->latch);
-  last = last_stmt (bb);
-  if (!last
-      || gimple_code (last) != GIMPLE_COND)
+  if (!safe_is_a <gcond *> (*gsi_last_bb (bb)))
     return NULL;
 
   exit = EDGE_SUCC (bb, 0);
@@ -877,7 +800,7 @@ standard_iv_increment_position (class loop *loop, gimple_stmt_iterator *bsi,
 				bool *insert_after)
 {
   basic_block bb = ip_normal_pos (loop), latch = ip_end_pos (loop);
-  gimple *last = last_stmt (latch);
+  gimple *last = last_nondebug_stmt (latch);
 
   if (!bb
       || (last && gimple_code (last) != GIMPLE_LABEL))
@@ -1086,7 +1009,7 @@ determine_exit_conditions (class loop *loop, class tree_niter_desc *desc,
       /* Convert the latch count to an iteration count.  */
       tree niter = fold_build2 (PLUS_EXPR, type, desc->niter,
 				build_one_cst (type));
-      if (multiple_of_p (type, niter, bigstep))
+      if (multiple_of_p (type, niter, build_int_cst (type, factor)))
 	return;
     }
 
@@ -1096,7 +1019,7 @@ determine_exit_conditions (class loop *loop, class tree_niter_desc *desc,
   /* cond now may be a gimple comparison, which would be OK, but also any
      other gimple rhs (say a && b).  In this case we need to force it to
      operand.  */
-  if (!is_gimple_condexpr (cond))
+  if (!is_gimple_condexpr_for_cond (cond))
     {
       cond = force_gimple_operand (cond, &stmts, true, NULL_TREE);
       if (stmts)
@@ -1115,71 +1038,6 @@ determine_exit_conditions (class loop *loop, class tree_niter_desc *desc,
   *exit_step = bigstep;
   *exit_cmp = cmp;
   *exit_bound = bound;
-}
-
-/* Scales the frequencies of all basic blocks in LOOP that are strictly
-   dominated by BB by NUM/DEN.  */
-
-static void
-scale_dominated_blocks_in_loop (class loop *loop, basic_block bb,
-				profile_count num, profile_count den)
-{
-  basic_block son;
-
-  if (!den.nonzero_p () && !(num == profile_count::zero ()))
-    return;
-
-  for (son = first_dom_son (CDI_DOMINATORS, bb);
-       son;
-       son = next_dom_son (CDI_DOMINATORS, son))
-    {
-      if (!flow_bb_inside_loop_p (loop, son))
-	continue;
-      scale_bbs_frequencies_profile_count (&son, 1, num, den);
-      scale_dominated_blocks_in_loop (loop, son, num, den);
-    }
-}
-
-/* Return estimated niter for LOOP after unrolling by FACTOR times.  */
-
-gcov_type
-niter_for_unrolled_loop (class loop *loop, unsigned factor)
-{
-  gcc_assert (factor != 0);
-  bool profile_p = false;
-  gcov_type est_niter = expected_loop_iterations_unbounded (loop, &profile_p);
-  /* Note that this is really CEIL (est_niter + 1, factor) - 1, where the
-     "+ 1" converts latch iterations to loop iterations and the "- 1"
-     converts back.  */
-  gcov_type new_est_niter = est_niter / factor;
-
-  if (est_niter == -1)
-    return -1;
-
-  /* Without profile feedback, loops for which we do not know a better estimate
-     are assumed to roll 10 times.  When we unroll such loop, it appears to
-     roll too little, and it may even seem to be cold.  To avoid this, we
-     ensure that the created loop appears to roll at least 5 times (but at
-     most as many times as before unrolling).  Don't do adjustment if profile
-     feedback is present.  */
-  if (new_est_niter < 5 && !profile_p)
-    {
-      if (est_niter < 5)
-	new_est_niter = est_niter;
-      else
-	new_est_niter = 5;
-    }
-
-  if (loop->any_upper_bound)
-    {
-      /* As above, this is really CEIL (upper_bound + 1, factor) - 1.  */
-      widest_int bound = wi::udiv_floor (loop->nb_iterations_upper_bound,
-					 factor);
-      if (wi::ltu_p (bound, new_est_niter))
-	new_est_niter = bound.to_uhwi ();
-    }
-
-  return new_est_niter;
 }
 
 /* Unroll LOOP FACTOR times.  LOOP is known to have a single exit edge
@@ -1246,50 +1104,42 @@ tree_transform_and_unroll_loop (class loop *loop, unsigned factor,
 				transform_callback transform,
 				void *data)
 {
-  gcov_type new_est_niter = niter_for_unrolled_loop (loop, factor);
   unsigned irr = loop_preheader_edge (loop)->flags & EDGE_IRREDUCIBLE_LOOP;
 
   enum tree_code exit_cmp;
   tree enter_main_cond, exit_base, exit_step, exit_bound;
+  bool flat = maybe_flat_loop_profile (loop);
   determine_exit_conditions (loop, desc, factor,
 			     &enter_main_cond, &exit_base, &exit_step,
 			     &exit_cmp, &exit_bound);
   bool single_loop_p = !exit_base;
-
-  /* Let us assume that the unrolled loop is quite likely to be entered.  */
-  profile_probability prob_entry;
-  if (integer_nonzerop (enter_main_cond))
-    prob_entry = profile_probability::always ();
-  else
-    prob_entry = profile_probability::guessed_always ()
-			.apply_scale (PROB_UNROLLED_LOOP_ENTERED, 100);
 
   gcond *exit_if = nullptr;
   class loop *new_loop = nullptr;
   edge new_exit;
   if (!single_loop_p)
     {
-      edge exit = single_dom_exit (loop);
+      profile_count entry_count = loop_preheader_edge (loop)->src->count;
+      /* Let us assume that the unrolled loop is quite likely to be entered.  */
+      profile_probability prob_entry;
+      if (integer_nonzerop (enter_main_cond))
+	prob_entry = profile_probability::always ();
+      else
+	prob_entry = profile_probability::guessed_always ()
+			    .apply_scale (PROB_UNROLLED_LOOP_ENTERED, 100);
+
 
       /* The values for scales should keep profile consistent, and somewhat
-	 close to correct.
-
-	 TODO: The current value of SCALE_REST makes it appear that the loop
-	 that is created by splitting the remaining iterations of the unrolled
-	 loop is executed the same number of times as the original loop, and
-	 with the same frequencies, which is obviously wrong.  This does not
-	 appear to cause problems, so we do not bother with fixing it for now.
-	 To make the profile correct, we would need to change the probability
-	 of the exit edge of the loop, and recompute the distribution of
-	 frequencies in its body because of this change (scale the frequencies
-	 of blocks before and after the exit by appropriate factors).  */
-      profile_probability scale_unrolled = prob_entry;
+	 close to correct.  */
       new_loop = loop_version (loop, enter_main_cond, NULL, prob_entry,
-			       prob_entry.invert (), scale_unrolled,
-			       profile_probability::guessed_always (),
+			       prob_entry.invert (),
+			       prob_entry,
+			       /* We will later redirect exit from vectorized
+				  loop to new_loop.  */
+			       profile_probability::always (),
 			       true);
       gcc_assert (new_loop != NULL);
-      update_ssa (TODO_update_ssa);
+      update_ssa (TODO_update_ssa_no_phi);
 
       /* Prepare the cfg and update the phi nodes.  Move the loop exit to the
 	 loop latch (and make its condition dummy, for the moment).  */
@@ -1297,18 +1147,16 @@ tree_transform_and_unroll_loop (class loop *loop, unsigned factor,
       edge precond_edge = single_pred_edge (rest);
       split_edge (loop_latch_edge (loop));
       basic_block exit_bb = single_pred (loop->latch);
+      edge exit = single_dom_exit (loop);
 
       /* Since the exit edge will be removed, the frequency of all the blocks
-	 in the loop that are dominated by it must be scaled by
-	 1 / (1 - exit->probability).  */
+	 in the loop that are dominated by it must be scaled.  */
       if (exit->probability.initialized_p ())
 	scale_dominated_blocks_in_loop (loop, exit->src,
 					/* We are scaling up here so
 					   probability does not fit.  */
-					loop->header->count,
-					loop->header->count
-					- loop->header->count.apply_probability
-					    (exit->probability));
+					exit->src->count,
+					exit->src->count - exit->count ());
 
       gimple_stmt_iterator bsi = gsi_last_bb (exit_bb);
       exit_if = gimple_build_cond (EQ_EXPR, integer_zero_node,
@@ -1320,14 +1168,14 @@ tree_transform_and_unroll_loop (class loop *loop, unsigned factor,
       rescan_loop_exit (new_exit, true, false);
 
       /* Set the probability of new exit to the same of the old one.  Fix
-	 the frequency of the latch block, by scaling it back by
-	 1 - exit->probability.  */
+	 the count of the latch block.  */
       new_exit->probability = exit->probability;
       edge new_nonexit = single_pred_edge (loop->latch);
       new_nonexit->probability = exit->probability.invert ();
       new_nonexit->flags = EDGE_TRUE_VALUE;
-      if (new_nonexit->probability.initialized_p ())
-	scale_bbs_frequencies (&loop->latch, 1, new_nonexit->probability);
+      set_edge_probability_and_rescale_others
+	      (exit, profile_probability::never ());
+      loop->latch->count = new_nonexit->count ();
 
       edge old_entry = loop_preheader_edge (loop);
       edge new_entry = loop_preheader_edge (new_loop);
@@ -1373,6 +1221,21 @@ tree_transform_and_unroll_loop (class loop *loop, unsigned factor,
 	}
 
       remove_path (exit);
+      /* We will later redirect exit from vectorized loop to new_loop.  */
+      loop_preheader_edge (new_loop)->src->count = entry_count;
+
+      /* The epilog loop latch executes at most factor - 1 times.
+	 Since the epilog is entered unconditionally it will need to handle
+	 up to factor executions of its body.  */
+      new_loop->any_upper_bound = true;
+      new_loop->nb_iterations_upper_bound = factor - 1;
+      /* We do not really know estimate on number of iterations, since we do not
+	 track any estimates modulo unroll factor.
+	 Drop estimate from loop_info and scale loop profile.
+	 It may be more realistic to scale loop profile to factor / 2 - 1,
+	 but vectorizer also uses factor - 1.  */
+      new_loop->any_estimate = false;
+      scale_loop_profile (new_loop, profile_probability::always (), factor - 1);
     }
   else
     new_exit = single_dom_exit (loop);
@@ -1389,10 +1252,10 @@ tree_transform_and_unroll_loop (class loop *loop, unsigned factor,
 
   auto_vec<edge> to_remove;
   bool ok
-    = gimple_duplicate_loop_body_to_header_edge (loop, loop_latch_edge (loop),
-						 factor - 1, wont_exit,
-						 new_exit, &to_remove,
-						 DLTHE_FLAG_UPDATE_FREQ);
+    = gimple_duplicate_loop_body_to_header_edge
+	    (loop, loop_latch_edge (loop), factor - 1, wont_exit,
+	     new_exit, &to_remove,
+	     DLTHE_FLAG_UPDATE_FREQ | (flat ? DLTHE_FLAG_FLAT_PROFILE : 0));
   gcc_assert (ok);
 
   for (edge e : to_remove)
@@ -1403,114 +1266,41 @@ tree_transform_and_unroll_loop (class loop *loop, unsigned factor,
   update_ssa (TODO_update_ssa);
 
   new_exit = single_dom_exit (loop);
+  /* gimple_duplicate_loop_body_to_header_edge depending on
+     DLTHE_FLAG_UPDATE_FREQ either keeps original frequency of the loop header
+     or scales it down accordingly.
+     However exit edge probability is kept as original.  Fix it if needed
+     and compensate.  */
+  update_loop_exit_probability_scale_dom_bbs (loop, new_exit);
   if (!single_loop_p)
     {
-      /* Ensure that the frequencies in the loop match the new estimated
-	 number of iterations, and change the probability of the new
-	 exit edge.  */
-
-      profile_count freq_h = loop->header->count;
-      profile_count freq_e = (loop_preheader_edge (loop))->count ();
-      if (freq_h.nonzero_p ())
-	{
-	  /* Avoid dropping loop body profile counter to 0 because of zero
-	     count in loop's preheader.  */
-	  if (freq_h.nonzero_p () && !(freq_e == profile_count::zero ()))
-	    freq_e = freq_e.force_nonzero ();
-	  scale_loop_frequencies (loop, freq_e.probability_in (freq_h));
-	}
-
-      basic_block rest = new_exit->dest;
-      new_exit->probability = profile_probability::always ()
-	.apply_scale (1, new_est_niter + 1);
-
-      rest->count += new_exit->count ();
-
-      edge new_nonexit = single_pred_edge (loop->latch);
-      profile_probability prob = new_nonexit->probability;
-      new_nonexit->probability = new_exit->probability.invert ();
-      prob = new_nonexit->probability / prob;
-      if (prob.initialized_p ())
-	scale_bbs_frequencies (&loop->latch, 1, prob);
-
       /* Finally create the new counter for number of iterations and add
 	 the new exit instruction.  */
       tree ctr_before, ctr_after;
       gimple_stmt_iterator bsi = gsi_last_nondebug_bb (new_exit->src);
       exit_if = as_a <gcond *> (gsi_stmt (bsi));
-      create_iv (exit_base, exit_step, NULL_TREE, loop,
+      create_iv (exit_base, PLUS_EXPR, exit_step, NULL_TREE, loop,
 		 &bsi, false, &ctr_before, &ctr_after);
       gimple_cond_set_code (exit_if, exit_cmp);
       gimple_cond_set_lhs (exit_if, ctr_after);
       gimple_cond_set_rhs (exit_if, exit_bound);
       update_stmt (exit_if);
     }
-  else
-    {
-      /* gimple_duplicate_loop_to_header_edge has adjusted the loop body's
-	 original profile counts in line with the unroll factor.  However,
-	 the old counts might not have been consistent with the old
-	 iteration count.
-
-	 Therefore, if the iteration count is known exactly, make sure that the
-	 profile counts of the loop header (and any other blocks that might be
-	 executed in the final iteration) are consistent with the combination
-	 of (a) the incoming profile count and (b) the new iteration count.  */
-      profile_count in_count = loop_preheader_edge (loop)->count ();
-      profile_count old_header_count = loop->header->count;
-      if (in_count.nonzero_p ()
-	  && old_header_count.nonzero_p ()
-	  && TREE_CODE (desc->niter) == INTEGER_CST)
-	{
-	  /* The + 1 converts latch counts to iteration counts.  */
-	  profile_count new_header_count
-	    = (in_count.apply_scale (new_est_niter + 1, 1));
-	  basic_block *body = get_loop_body (loop);
-	  scale_bbs_frequencies_profile_count (body, loop->num_nodes,
-					       new_header_count,
-					       old_header_count);
-	  free (body);
-	}
-
-      /* gimple_duplicate_loop_to_header_edge discarded FACTOR - 1
-	 exit edges and adjusted the loop body's profile counts for the
-	 new probabilities of the remaining non-exit edges.  However,
-	 the remaining exit edge still has the same probability as it
-	 did before, even though it is now more likely.
-
-	 Therefore, all blocks executed after a failed exit test now have
-	 a profile count that is too high, and the sum of the profile counts
-	 for the header's incoming edges is greater than the profile count
-	 of the header itself.
-
-	 Adjust the profile counts of all code in the loop body after
-	 the exit test so that the sum of the counts on entry to the
-	 header agree.  */
-      profile_count old_latch_count = loop_latch_edge (loop)->count ();
-      profile_count new_latch_count = loop->header->count - in_count;
-      if (old_latch_count.nonzero_p () && new_latch_count.nonzero_p ())
-	scale_dominated_blocks_in_loop (loop, new_exit->src, new_latch_count,
-					old_latch_count);
-
-      /* Set the probability of the exit edge based on NEW_EST_NITER
-	 (which estimates latch counts rather than iteration counts).
-	 Update the probabilities of other edges to match.
-
-	 If the profile counts are large enough to give the required
-	 precision, the updates above will have made
-
-	    e->dest->count / e->src->count ~= new e->probability
-
-	 for every outgoing edge e of NEW_EXIT->src.  */
-      profile_probability new_exit_prob = profile_probability::always ()
-	.apply_scale (1, new_est_niter + 1);
-      change_edge_frequency (new_exit, new_exit_prob);
-    }
+  if (loop->any_upper_bound)
+    loop->nb_iterations_upper_bound = wi::udiv_floor
+		(loop->nb_iterations_upper_bound + 1, factor) - 1;
+  if (loop->any_likely_upper_bound)
+    loop->nb_iterations_likely_upper_bound = wi::udiv_floor
+		(loop->nb_iterations_likely_upper_bound + 1, factor) - 1;
+  if (loop->any_estimate)
+    loop->nb_iterations_estimate = wi::udiv_floor
+		(loop->nb_iterations_estimate + 1, factor) - 1;
 
   checking_verify_flow_info ();
   checking_verify_loop_structure ();
   checking_verify_loop_closed_ssa (true, loop);
-  checking_verify_loop_closed_ssa (true, new_loop);
+  if (new_loop)
+    checking_verify_loop_closed_ssa (true, new_loop);
 }
 
 /* Wrapper over tree_transform_and_unroll_loop for case we do not
@@ -1653,12 +1443,12 @@ canonicalize_loop_ivs (class loop *loop, tree *nit, bool bump_in_latch)
     gsi = gsi_last_bb (loop->latch);
   else
     gsi = gsi_last_nondebug_bb (loop->header);
-  create_iv (build_int_cst_type (type, 0), build_int_cst (type, 1), NULL_TREE,
-	     loop, &gsi, bump_in_latch, &var_before, NULL);
+  create_iv (build_int_cst_type (type, 0), PLUS_EXPR, build_int_cst (type, 1),
+	     NULL_TREE, loop, &gsi, bump_in_latch, &var_before, NULL);
 
   rewrite_all_phi_nodes_with_iv (loop, var_before);
 
-  stmt = as_a <gcond *> (last_stmt (exit->src));
+  stmt = as_a <gcond *> (*gsi_last_bb (exit->src));
   /* Make the loop exit if the control condition is not satisfied.  */
   if (exit->flags & EDGE_TRUE_VALUE)
     {

@@ -1,4 +1,4 @@
-/* Copyright (C) 1989-2022 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -87,6 +87,21 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    Just ignore it.  */
 #if defined (__sequent__) && defined (_PTRDIFF_T_)
 #undef _PTRDIFF_T_
+#endif
+
+/* When modular code is enabled with macOS SDKs from version 15, the
+   include guards are set in the includers of this code, rather than as
+   part of it.  This means the we must unset them or the intended code
+   here will be bypassed (resulting in undefined values).  */
+#if defined (__APPLE__)
+# if defined(__has_feature) && __has_feature(modules)
+#  if defined (__need_ptrdiff_t)
+#   undef __PTRDIFF_T
+#  endif
+#  if defined (__need_size_t)
+#   undef __SIZE_T
+#  endif
+# endif
 #endif
 
 /* On VxWorks, <type/vxTypesBase.h> may have defined macros like
@@ -412,6 +427,7 @@ typedef __WINT_TYPE__ wint_t;
 #ifdef _STDDEF_H
 
 /* Offset of member MEMBER in a struct of type TYPE. */
+#undef offsetof		/* in case a system header has defined it. */
 #define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER)
 
 #if (defined (__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) \
@@ -447,6 +463,17 @@ typedef struct {
   typedef decltype(nullptr) nullptr_t;
 #endif
 #endif /* C++11.  */
+
+#if defined (__STDC_VERSION__) && __STDC_VERSION__ > 201710L
+#ifndef _GCC_NULLPTR_T
+#define _GCC_NULLPTR_T
+  typedef __typeof__(nullptr) nullptr_t;
+#endif
+#ifndef __STDC_VERSION_STDDEF_H__
+#define unreachable() (__builtin_unreachable ())
+#define __STDC_VERSION_STDDEF_H__	202311L
+#endif
+#endif /* C23.  */
 
 #endif /* _STDDEF_H was defined this time */
 

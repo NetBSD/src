@@ -1,5 +1,5 @@
 /* Classes for purging state at function_points.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -112,7 +112,8 @@ public:
       return NULL;
   }
 
-  state_purge_per_decl &get_or_create_data_for_decl (function *fun, tree decl);
+  state_purge_per_decl &
+  get_or_create_data_for_decl (const function &fun, tree decl);
 
   const supergraph &get_sg () const { return m_sg; }
 
@@ -135,19 +136,19 @@ private:
 class state_purge_per_tree
 {
 public:
-  function *get_function () const { return m_fun; }
-  tree get_fndecl () const { return m_fun->decl; }
+  const function &get_function () const { return m_fun; }
+  tree get_fndecl () const { return m_fun.decl; }
 
 protected:
   typedef hash_set<function_point> point_set_t;
 
-  state_purge_per_tree (function *fun)
+  state_purge_per_tree (const function &fun)
   : m_fun (fun)
   {
   }
 
 private:
-  function *m_fun;
+  const function &m_fun;
 };
 
 /* The part of a state_purge_map relating to a specific SSA name.
@@ -162,7 +163,7 @@ class state_purge_per_ssa_name : public state_purge_per_tree
 public:
   state_purge_per_ssa_name (const state_purge_map &map,
 			    tree name,
-			    function *fun);
+			    const function &fun);
 
   bool needed_at_point_p (const function_point &point) const;
 
@@ -194,7 +195,7 @@ class state_purge_per_decl : public state_purge_per_tree
 public:
   state_purge_per_decl (const state_purge_map &map,
 			tree decl,
-			function *fun);
+			const function &fun);
 
   bool needed_at_point_p (const function_point &point) const;
 
@@ -236,11 +237,11 @@ public:
   state_purge_annotator (const state_purge_map *map) : m_map (map) {}
 
   bool add_node_annotations (graphviz_out *gv, const supernode &n, bool)
-    const FINAL OVERRIDE;
+    const final override;
 
   void add_stmt_annotations (graphviz_out *gv, const gimple *stmt,
 			     bool within_row)
-    const FINAL OVERRIDE;
+    const final override;
 
 private:
   void print_needed (graphviz_out *gv,

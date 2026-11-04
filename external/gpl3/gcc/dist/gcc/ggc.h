@@ -1,6 +1,6 @@
 /* Garbage collection for the GNU compiler.
 
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -44,7 +44,8 @@ typedef void (*gt_handle_reorder) (void *, void *, gt_pointer_operator,
 				   void *);
 
 /* Used by the gt_pch_n_* routines.  Register an object in the hash table.  */
-extern int gt_pch_note_object (void *, void *, gt_note_pointers);
+extern int gt_pch_note_object (void *, void *, gt_note_pointers,
+			       size_t length_override = (size_t)-1);
 
 /* Used by the gt_pch_p_* routines.  Register address of a callback
    pointer.  */
@@ -89,18 +90,19 @@ extern const struct ggc_root_tab * const gt_pch_scalar_rtab[];
 
 /* Actually set the mark on a particular region of memory, but don't
    follow pointers.  This function is called by ggc_mark_*.  It
-   returns zero if the object was not previously marked; nonzero if
+   returns false if the object was not previously marked; true if
    the object was already marked, or if, for any other reason,
    pointers in this data structure should not be traversed.  */
-extern int ggc_set_mark	(const void *);
+extern bool ggc_set_mark (const void *);
 
-/* Return 1 if P has been marked, zero otherwise.
+/* Return true if P has been marked, zero otherwise.
    P must have been allocated by the GC allocator; it mustn't point to
    static objects, stack variables, or memory allocated with malloc.  */
-extern int ggc_marked_p	(const void *);
+extern bool ggc_marked_p (const void *);
 
 /* PCH and GGC handling for strings, mostly trivial.  */
 extern void gt_pch_n_S (const void *);
+extern void gt_pch_n_S2 (const void *, size_t);
 extern void gt_ggc_m_S (const void *);
 
 /* End of GTY machinery API.  */
@@ -365,5 +367,7 @@ inline void gt_ggc_mx (long int) { }
 inline void gt_ggc_mx (unsigned long int) { }
 inline void gt_ggc_mx (long long int) { }
 inline void gt_ggc_mx (unsigned long long int) { }
+
+extern void ggc_common_finalize ();
 
 #endif

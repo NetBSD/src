@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 # Makefile.am -- Backtrace in libstdc++ Makefile.
-# Copyright (C) 2012-2013 Free Software Foundation, Inc.
+# Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -135,7 +135,6 @@ am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
 	$(top_srcdir)/../config/multi.m4 \
 	$(top_srcdir)/../config/no-executables.m4 \
 	$(top_srcdir)/../config/override.m4 \
-	$(top_srcdir)/../config/stdint.m4 \
 	$(top_srcdir)/../config/toolexeclibdir.m4 \
 	$(top_srcdir)/../config/unwind_ipinfo.m4 \
 	$(top_srcdir)/../libtool.m4 $(top_srcdir)/../ltoptions.m4 \
@@ -151,40 +150,12 @@ DIST_COMMON = $(srcdir)/Makefile.am
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES = backtrace-supported.h
 CONFIG_CLEAN_VPATH_FILES =
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
-am__install_max = 40
-am__nobase_strip_setup = \
-  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
-am__nobase_strip = \
-  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
-am__nobase_list = $(am__nobase_strip_setup); \
-  for p in $$list; do echo "$$p $$p"; done | \
-  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
-  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
-    if (++n[$$2] == $(am__install_max)) \
-      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
-    END { for (dir in files) print dir, files[dir] }'
-am__base_list = \
-  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
-  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__uninstall_files_from_dir = { \
-  test -z "$$files" \
-    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
-    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
-         $(am__cd) "$$dir" && rm -f $$files; }; \
-  }
-am__installdirs = "$(DESTDIR)$(toolexeclibdir)"
-LTLIBRARIES = $(toolexeclib_LTLIBRARIES)
+LTLIBRARIES = $(noinst_LTLIBRARIES)
 am_libstdc___libbacktrace_la_OBJECTS = $(obj_prefix)-atomic.lo \
-	$(obj_prefix)-dwarf.lo $(obj_prefix)-fileline.lo \
-	$(obj_prefix)-posix.lo $(obj_prefix)-sort.lo \
-	$(obj_prefix)-simple.lo $(obj_prefix)-state.lo \
-	$(obj_prefix)-cp-demangle.lo
+	$(obj_prefix)-backtrace.lo $(obj_prefix)-dwarf.lo \
+	$(obj_prefix)-fileline.lo $(obj_prefix)-posix.lo \
+	$(obj_prefix)-sort.lo $(obj_prefix)-simple.lo \
+	$(obj_prefix)-state.lo $(obj_prefix)-cp-demangle.lo
 libstdc___libbacktrace_la_OBJECTS =  \
 	$(am_libstdc___libbacktrace_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -302,6 +273,7 @@ ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
+EH_POOL_FLAGS = @EH_POOL_FLAGS@
 ERROR_CONSTANTS_SRCDIR = @ERROR_CONSTANTS_SRCDIR@
 EXEEXT = @EXEEXT@
 EXTRA_CFLAGS = @EXTRA_CFLAGS@
@@ -484,7 +456,9 @@ WARN_CXXFLAGS = \
 
 # -I/-D flags to pass when compiling.
 AM_CPPFLAGS = $(GLIBCXX_INCLUDES) $(CPPFLAGS)
-toolexeclib_LTLIBRARIES = libstdc++_libbacktrace.la
+
+# Convenience library for C++23 runtime.
+noinst_LTLIBRARIES = libstdc++_libbacktrace.la
 ACLOCAL_AMFLAGS = -I ../.. -I ../../config
 
 # This will be used instead of the common AM_CPPFLAGS from fragment.am
@@ -499,7 +473,7 @@ libstdc___libbacktrace_la_CPPFLAGS = \
 C_WARN_FLAGS = $(WARN_FLAGS) -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition -Wno-unused-but-set-variable
 CXX_WARN_FLAGS = $(WARN_FLAGS) -Wno-unused-parameter
 AM_CFLAGS = $(glibcxx_lt_pic_flag) $(glibcxx_compiler_shared_flag) \
-	$(C_WARN_FLAGS) $(EXTRA_CFLAGS)
+	$(C_WARN_FLAGS) -funwind-tables $(EXTRA_CFLAGS)
 AM_CXXFLAGS = $(glibcxx_lt_pic_flag) $(glibcxx_compiler_shared_flag) \
 	$(CXX_WARN_FLAGS) -fno-rtti -fno-exceptions $(EXTRA_CXXFLAGS)
 obj_prefix = std_stacktrace
@@ -508,6 +482,7 @@ obj_prefix = std_stacktrace
 libstdc___libbacktrace_la_SHORTNAME = $(obj_prefix)
 libstdc___libbacktrace_la_SOURCES = \
 	atomic.c \
+	backtrace.c \
 	dwarf.c \
 	fileline.c \
 	posix.c \
@@ -518,6 +493,7 @@ libstdc___libbacktrace_la_SOURCES = \
 
 FORMAT_FILES = \
 	elf.c \
+	pecoff.c \
 	unknown.c
 
 VIEW_FILES = \
@@ -592,33 +568,9 @@ $(am__aclocal_m4_deps):
 backtrace-supported.h: $(top_builddir)/config.status $(srcdir)/backtrace-supported.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
-install-toolexeclibLTLIBRARIES: $(toolexeclib_LTLIBRARIES)
-	@$(NORMAL_INSTALL)
-	@list='$(toolexeclib_LTLIBRARIES)'; test -n "$(toolexeclibdir)" || list=; \
-	list2=; for p in $$list; do \
-	  if test -f $$p; then \
-	    list2="$$list2 $$p"; \
-	  else :; fi; \
-	done; \
-	test -z "$$list2" || { \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(toolexeclibdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(toolexeclibdir)" || exit 1; \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(toolexeclibdir)'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(toolexeclibdir)"; \
-	}
-
-uninstall-toolexeclibLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(toolexeclib_LTLIBRARIES)'; test -n "$(toolexeclibdir)" || list=; \
-	for p in $$list; do \
-	  $(am__strip_dir) \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(toolexeclibdir)/$$f'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(toolexeclibdir)/$$f"; \
-	done
-
-clean-toolexeclibLTLIBRARIES:
-	-test -z "$(toolexeclib_LTLIBRARIES)" || rm -f $(toolexeclib_LTLIBRARIES)
-	@list='$(toolexeclib_LTLIBRARIES)'; \
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; \
 	locs=`for p in $$list; do echo $$p; done | \
 	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
 	      sort -u`; \
@@ -628,7 +580,7 @@ clean-toolexeclibLTLIBRARIES:
 	}
 
 libstdc++_libbacktrace.la: $(libstdc___libbacktrace_la_OBJECTS) $(libstdc___libbacktrace_la_DEPENDENCIES) $(EXTRA_libstdc___libbacktrace_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(LINK) -rpath $(toolexeclibdir) $(libstdc___libbacktrace_la_OBJECTS) $(libstdc___libbacktrace_la_LIBADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK)  $(libstdc___libbacktrace_la_OBJECTS) $(libstdc___libbacktrace_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -647,6 +599,9 @@ distclean-compile:
 
 $(obj_prefix)-atomic.lo: atomic.c
 	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libstdc___libbacktrace_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o $(obj_prefix)-atomic.lo `test -f 'atomic.c' || echo '$(srcdir)/'`atomic.c
+
+$(obj_prefix)-backtrace.lo: backtrace.c
+	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libstdc___libbacktrace_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o $(obj_prefix)-backtrace.lo `test -f 'backtrace.c' || echo '$(srcdir)/'`backtrace.c
 
 $(obj_prefix)-dwarf.lo: dwarf.c
 	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libstdc___libbacktrace_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o $(obj_prefix)-dwarf.lo `test -f 'dwarf.c' || echo '$(srcdir)/'`dwarf.c
@@ -671,6 +626,9 @@ $(obj_prefix)-cp-demangle.lo: cp-demangle.c
 
 $(obj_prefix)-elf.lo: elf.c
 	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libstdc___libbacktrace_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o $(obj_prefix)-elf.lo `test -f 'elf.c' || echo '$(srcdir)/'`elf.c
+
+$(obj_prefix)-pecoff.lo: pecoff.c
+	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libstdc___libbacktrace_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o $(obj_prefix)-pecoff.lo `test -f 'pecoff.c' || echo '$(srcdir)/'`pecoff.c
 
 $(obj_prefix)-unknown.lo: unknown.c
 	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libstdc___libbacktrace_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o $(obj_prefix)-unknown.lo `test -f 'unknown.c' || echo '$(srcdir)/'`unknown.c
@@ -748,9 +706,6 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(LTLIBRARIES)
 installdirs:
-	for dir in "$(DESTDIR)$(toolexeclibdir)"; do \
-	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
-	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -783,7 +738,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-toolexeclibLTLIBRARIES \
+clean-am: clean-generic clean-libtool clean-noinstLTLIBRARIES \
 	mostlyclean-am
 
 distclean: distclean-am
@@ -809,7 +764,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-toolexeclibLTLIBRARIES
+install-exec-am:
 
 install-html: install-html-am
 
@@ -848,24 +803,23 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-toolexeclibLTLIBRARIES
+uninstall-am:
 
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean clean-generic \
-	clean-libtool clean-toolexeclibLTLIBRARIES cscopelist-am ctags \
+	clean-libtool clean-noinstLTLIBRARIES cscopelist-am ctags \
 	ctags-am distclean distclean-compile distclean-generic \
 	distclean-libtool distclean-tags dvi dvi-am html html-am info \
 	info-am install install-am install-data install-data-am \
 	install-dvi install-dvi-am install-exec install-exec-am \
 	install-html install-html-am install-info install-info-am \
 	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip install-toolexeclibLTLIBRARIES \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am \
-	uninstall-toolexeclibLTLIBRARIES
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am
 
 .PRECIOUS: Makefile
 

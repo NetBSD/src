@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
 This file is part of GCC.
@@ -29,8 +29,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #define MD_DEMANGLE_RETURN_ADDR(context, fs, addr) \
   aarch64_demangle_return_addr (context, fs, addr)
-#define MD_FROB_UPDATE_CONTEXT(context, fs) \
-  aarch64_frob_update_context (context, fs)
 
 static inline int
 aarch64_cie_signed_with_b_key (struct _Unwind_Context *context)
@@ -42,8 +40,9 @@ aarch64_cie_signed_with_b_key (struct _Unwind_Context *context)
       const struct dwarf_cie *cie = get_cie (fde);
       if (cie != NULL)
 	{
-	  char *aug_str = cie->augmentation;
-	  return strchr (aug_str, 'B') == NULL ? 0 : 1;
+	  const unsigned char *aug_str = cie->augmentation;
+	  return __builtin_strchr ((const char *) aug_str,
+				   'B') == NULL ? 0 : 1;
 	}
     }
   return 0;
@@ -55,36 +54,44 @@ aarch64_cie_signed_with_b_key (struct _Unwind_Context *context)
 
 static inline void *
 aarch64_demangle_return_addr (struct _Unwind_Context *context,
-			      _Unwind_FrameState *fs ATTRIBUTE_UNUSED,
+			      _Unwind_FrameState *fs,
 			      _Unwind_Word addr_word)
 {
   void *addr = (void *)addr_word;
-  if (context->flags & RA_SIGNED_BIT)
+  const int reg = DWARF_REGNUM_AARCH64_RA_STATE;
+
+  if (fs->regs.how[reg] == REG_UNSAVED)
+    return addr;
+
+  /* Return-address signing state is toggled by DW_CFA_GNU_window_save (where
+     REG_UNSAVED/REG_UNSAVED_ARCHEXT means RA signing is disabled/enabled),
+     or set by a DW_CFA_expression.  */
+  if (fs->regs.how[reg] == REG_UNSAVED_ARCHEXT
+      || (_Unwind_GetGR (context, reg) & 0x1) != 0)
     {
       _Unwind_Word salt = (_Unwind_Word) context->cfa;
       if (aarch64_cie_signed_with_b_key (context) != 0)
 	return __builtin_aarch64_autib1716 (addr, salt);
       return __builtin_aarch64_autia1716 (addr, salt);
     }
-  else
-    return addr;
+
+  return addr;
 }
 
-/* Do AArch64 private initialization on CONTEXT based on frame info FS.  Mark
-   CONTEXT as return address signed if bit 0 of DWARF_REGNUM_AARCH64_RA_STATE is
-   set.  */
+/* SME runtime function local to libgcc, streaming compatible
+   and preserves more registers than the base PCS requires, but
+   we don't rely on that here.  */
+__attribute__ ((visibility ("hidden")))
+void __libgcc_arm_za_disable (void);
 
-static inline void
-aarch64_frob_update_context (struct _Unwind_Context *context,
-			     _Unwind_FrameState *fs)
-{
-  if (fs->regs.reg[DWARF_REGNUM_AARCH64_RA_STATE].loc.offset & 0x1)
-    /* The flag is used for re-authenticating EH handler's address.  */
-    context->flags |= RA_SIGNED_BIT;
-  else
-    context->flags &= ~RA_SIGNED_BIT;
-
-  return;
-}
+/* Disable the SME ZA state in case an unwound frame used the ZA
+   lazy saving scheme.  */
+#undef _Unwind_Frames_Extra
+#define _Unwind_Frames_Extra(x)				\
+  do							\
+    {							\
+      __libgcc_arm_za_disable ();			\
+    }							\
+  while (0)
 
 #endif /* defined AARCH64_UNWIND_H && defined __ILP32__ */

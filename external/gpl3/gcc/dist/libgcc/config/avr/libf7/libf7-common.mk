@@ -8,7 +8,7 @@ F7_C_PARTS += set_float get_float get_double set_double set_pdouble
 F7_C_PARTS += fabs neg fmin fmax minmax truncx trunc floor ceil round lround
 F7_C_PARTS += horner logx log log10 log2 exp pow10 pow powi
 F7_C_PARTS += sin cos tan cotan sincos sinh cosh tanh sinhcosh
-F7_C_PARTS += asinacos asin acos atan atan2
+F7_C_PARTS += asinacos asin acos atan atan2 fdim
 F7_C_PARTS += abscmp_msb_ge cmp cmp_abs cmp_unordered
 
 F7_C_PARTS += const_1 const_1_2 const_1_3
@@ -22,19 +22,33 @@ F7_ASM_PARTS += addsub_mant_scaled store load
 F7_ASM_PARTS += to_integer to_unsigned clz normalize_with_carry normalize
 F7_ASM_PARTS += store_expo sqrt16 sqrt_approx div
 
-F7_ASM_PARTS += D_class
+F7_ASM_PARTS += D_class D_fma D_powi D_sincos
 F7_ASM_PARTS += D_isnan D_isinf D_isfinite D_signbit D_copysign D_neg D_fabs
+F7_ASM_PARTS += D_cmp D_eq D_ne D_ge D_gt D_le D_lt D_unord D_fminfmax
 
 F7_ASM_PARTS += call_dd call_ddd
+
+# Fixed-point -> double conversions
+F7_ASM_PARTS += qq2D uqq2D            sq2D usq2D dq2D udq2D
+F7_ASM_PARTS +=            ha2D uha2D sa2D usa2D da2D uda2D ta2D uta2D
+F7_ASM_PARTS += fx2D
+
+# Double -> fixed-point conversions
+F7_ASM_PARTS += D2qq D2uqq D2hq D2uhq
+F7_ASM_PARTS +=            D2ha D2uha D2sa D2usa
+F7_ASM_PARTS += D2fx
+
+# Integer -> double conversions
+F7_ASM_PARTS += D_floatsidf D_floatunsidf
 
 # Stuff that will be wrapped in f7-wraps.h (included by libf7-asm.sx)
 # and give f7_asm_D_*.o modules.
 g_ddd += add sub mul div
-g_xdd_cmp += le lt ge gt ne eq unord
-g_dx += floatunsidf floatsidf extendsfdf2
+g_xdd_cmp +=
+g_dx += extendsfdf2
 g_xd += fixdfsi fixdfdi fixunsdfdi fixunsdfsi truncdfsf2
 
-m_ddd += pow fmin fmax fmod hypot atan2
+m_ddd += pow fmod hypot atan2 fdim
 m_ddx += ldexp frexp
 m_dd += sqrt cbrt exp exp10 pow10 log log10 log2 sin cos tan cotan asin acos atan
 m_dd += ceil floor trunc round sinh cosh tanh
@@ -43,7 +57,7 @@ m_xd += lrint lround
 # -mcall-prologues
 CALL_PROLOGUES += divx sqrt cbrt get_double set_double logx exp exp10 pow10
 CALL_PROLOGUES += put_C truncx round minmax sincos tan cotan pow powi fmod
-CALL_PROLOGUES += atan asinacos madd_msub hypot init horner sinhcosh tanh
+CALL_PROLOGUES += atan atan2 asinacos madd_msub hypot init horner sinhcosh tanh
 
 # -mstrict-X
 STRICT_X += log addsub truncx ldexp exp
@@ -59,7 +73,7 @@ F7F += lrint ldexp frexp exp logx log log10 log2
 F7F += minmax fmax fmin floor ceil round lround trunc truncx
 F7F += horner pow10 exp10 pow powi
 F7F += sin cos tan cotan sincos sinh cosh tanh sinhcosh
-F7F += asinacos asin acos atan atan2
+F7F += asinacos asin acos atan atan2 fdim
 F7F += mul_noround sqrt16_round sqrt16_floor
 F7F += clr_mant_lsbs abscmp_msb_ge lshrdi3 ashldi3
 F7F += assert
@@ -82,7 +96,7 @@ F7F += set_eps set_1pow2
 
 # Renames for ALIASes without own module.
 F7F += min max exp10
-F7F += floatunsidf floatsidf extendsfdf2
+F7F += extendsfdf2
 F7F += fixdfsi fixdfdi fixunsdfdi fixunsdfsi truncdfsf2
 
 # Renames for f7-const.def.
@@ -95,7 +109,7 @@ F7F_asm += set_u64 set_s64 addsub_mant_scaled mul_mant
 F7F_asm += to_integer to_unsigned clr_mant_lsbs
 F7F_asm += div sqrt_approx sqrt16_round sqrt16_floor
 F7F_asm += lshrdi3 ashldi3
-
+F7F_asm += d_to_fx64 ufx64_to_d sfx64_to_d
 F7F_asm += class_D
 
 F7F_asm += call_ddd call_xdd call_ddx

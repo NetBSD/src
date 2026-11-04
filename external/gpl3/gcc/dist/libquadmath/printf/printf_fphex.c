@@ -366,7 +366,7 @@ __quadmath_printf_fphex (struct __quadmath_printf_file *fp,
 		  				   think about it!  */
 		  break;
 		}
-	      else if (tolower (ch) < 'f')
+	      else if (tolower ((unsigned char)ch) < 'f')
 		{
 		  ++numstr[cnt];
 		  ++wnumstr[cnt];
@@ -385,7 +385,7 @@ __quadmath_printf_fphex (struct __quadmath_printf_file *fp,
 		 get an overflow.  */
 	      if (leading == '9')
 		leading = info->spec;
-	      else if (tolower (leading) < 'f')
+	      else if (tolower ((unsigned char)leading) < 'f')
 		++leading;
 	      else
 		{

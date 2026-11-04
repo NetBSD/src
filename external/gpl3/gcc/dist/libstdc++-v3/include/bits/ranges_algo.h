@@ -1,6 +1,6 @@
 // Core algorithmic facilities -*- C++ -*-
 
-// Copyright (C) 2020-2022 Free Software Foundation, Inc.
+// Copyright (C) 2020-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -32,11 +32,14 @@
 
 #if __cplusplus > 201703L
 
+#if __cplusplus > 202002L
+#include <optional>
+#endif
 #include <bits/ranges_algobase.h>
 #include <bits/ranges_util.h>
 #include <bits/uniform_int_dist.h> // concept uniform_random_bit_generator
 
-#if __cpp_lib_concepts
+#if __glibcxx_concepts
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
@@ -506,43 +509,7 @@ namespace ranges
 
   inline constexpr __find_end_fn find_end{};
 
-  struct __adjacent_find_fn
-  {
-    template<forward_iterator _Iter, sentinel_for<_Iter> _Sent,
-	     typename _Proj = identity,
-	     indirect_binary_predicate<projected<_Iter, _Proj>,
-				       projected<_Iter, _Proj>> _Pred
-	       = ranges::equal_to>
-      constexpr _Iter
-      operator()(_Iter __first, _Sent __last,
-		 _Pred __pred = {}, _Proj __proj = {}) const
-      {
-	if (__first == __last)
-	  return __first;
-	auto __next = __first;
-	for (; ++__next != __last; __first = __next)
-	  {
-	    if (std::__invoke(__pred,
-			      std::__invoke(__proj, *__first),
-			      std::__invoke(__proj, *__next)))
-	      return __first;
-	  }
-	return __next;
-      }
-
-    template<forward_range _Range, typename _Proj = identity,
-	     indirect_binary_predicate<
-	       projected<iterator_t<_Range>, _Proj>,
-	       projected<iterator_t<_Range>, _Proj>> _Pred = ranges::equal_to>
-      constexpr borrowed_iterator_t<_Range>
-      operator()(_Range&& __r, _Pred __pred = {}, _Proj __proj = {}) const
-      {
-	return (*this)(ranges::begin(__r), ranges::end(__r),
-		       std::move(__pred), std::move(__proj));
-      }
-  };
-
-  inline constexpr __adjacent_find_fn adjacent_find{};
+  // adjacent_find is defined in <bits/ranges_util.h>.
 
   struct __is_permutation_fn
   {
@@ -594,9 +561,12 @@ namespace ranges
 
 	for (auto __scan = __first1; __scan != __last1; ++__scan)
 	  {
-	    auto&& __proj_scan = std::__invoke(__proj1, *__scan);
+	    auto&& __scan_deref = *__scan;
+	    auto&& __proj_scan =
+	      std::__invoke(__proj1, std::forward<decltype(__scan_deref)>(__scan_deref));
 	    auto __comp_scan = [&] <typename _Tp> (_Tp&& __arg) -> bool {
-	      return std::__invoke(__pred, __proj_scan,
+	      return std::__invoke(__pred,
+				   std::forward<decltype(__proj_scan)>(__proj_scan),
 				   std::forward<_Tp>(__arg));
 	    };
 	    if (__scan != ranges::find_if(__first1, __scan,
@@ -622,6 +592,13 @@ namespace ranges
       operator()(_Range1&& __r1, _Range2&& __r2, _Pred __pred = {},
 		 _Proj1 __proj1 = {}, _Proj2 __proj2 = {}) const
       {
+	// _GLIBCXX_RESOLVE_LIB_DEFECTS
+	// 3560. ranges::is_permutation should short-circuit for sized_ranges
+	if constexpr (sized_range<_Range1>)
+	  if constexpr (sized_range<_Range2>)
+	    if (ranges::distance(__r1) != ranges::distance(__r2))
+	      return false;
+
 	return (*this)(ranges::begin(__r1), ranges::end(__r1),
 		       ranges::begin(__r2), ranges::end(__r2),
 		       std::move(__pred),
@@ -1597,7 +1574,6 @@ namespace ranges
 
   inline constexpr __sample_fn sample{};
 
-#ifdef _GLIBCXX_USE_C99_STDINT_TR1
   struct __shuffle_fn
   {
     template<random_access_iterator _Iter, sentinel_for<_Iter> _Sent,
@@ -1624,7 +1600,6 @@ namespace ranges
   };
 
   inline constexpr __shuffle_fn shuffle{};
-#endif
 
   struct __push_heap_fn
   {
@@ -2362,6 +2337,7 @@ namespace ranges
 
   inline constexpr __partition_fn partition{};
 
+#if _GLIBCXX_HOSTED
   struct __stable_partition_fn
   {
     template<bidirectional_iterator _Iter, sentinel_for<_Iter> _Sent,
@@ -2392,6 +2368,7 @@ namespace ranges
   };
 
   inline constexpr __stable_partition_fn stable_partition{};
+#endif
 
   template<typename _Iter, typename _Out1, typename _Out2>
     struct in_out_out_result
@@ -2902,59 +2879,7 @@ namespace ranges
 
   inline constexpr __set_symmetric_difference_fn set_symmetric_difference{};
 
-  struct __min_fn
-  {
-    template<typename _Tp, typename _Proj = identity,
-	     indirect_strict_weak_order<projected<const _Tp*, _Proj>>
-	       _Comp = ranges::less>
-      constexpr const _Tp&
-      operator()(const _Tp& __a, const _Tp& __b,
-		 _Comp __comp = {}, _Proj __proj = {}) const
-      {
-	if (std::__invoke(__comp,
-			  std::__invoke(__proj, __b),
-			  std::__invoke(__proj, __a)))
-	  return __b;
-	else
-	  return __a;
-      }
-
-    template<input_range _Range, typename _Proj = identity,
-	     indirect_strict_weak_order<projected<iterator_t<_Range>, _Proj>>
-	       _Comp = ranges::less>
-      requires indirectly_copyable_storable<iterator_t<_Range>,
-					    range_value_t<_Range>*>
-      constexpr range_value_t<_Range>
-      operator()(_Range&& __r, _Comp __comp = {}, _Proj __proj = {}) const
-      {
-	auto __first = ranges::begin(__r);
-	auto __last = ranges::end(__r);
-	__glibcxx_assert(__first != __last);
-	auto __result = *__first;
-	while (++__first != __last)
-	  {
-	    auto __tmp = *__first;
-	    if (std::__invoke(__comp,
-			      std::__invoke(__proj, __tmp),
-			      std::__invoke(__proj, __result)))
-	      __result = std::move(__tmp);
-	  }
-	return __result;
-      }
-
-    template<copyable _Tp, typename _Proj = identity,
-	     indirect_strict_weak_order<projected<const _Tp*, _Proj>>
-	       _Comp = ranges::less>
-      constexpr _Tp
-      operator()(initializer_list<_Tp> __r,
-		 _Comp __comp = {}, _Proj __proj = {}) const
-      {
-	return (*this)(ranges::subrange(__r),
-		       std::move(__comp), std::move(__proj));
-      }
-  };
-
-  inline constexpr __min_fn min{};
+  // min is defined in <bits/ranges_util.h>.
 
   struct __max_fn
   {
@@ -2987,11 +2912,11 @@ namespace ranges
 	auto __result = *__first;
 	while (++__first != __last)
 	  {
-	    auto __tmp = *__first;
+	    auto&& __tmp = *__first;
 	    if (std::__invoke(__comp,
 			      std::__invoke(__proj, __result),
 			      std::__invoke(__proj, __tmp)))
-	      __result = std::move(__tmp);
+	      __result = std::forward<decltype(__tmp)>(__tmp);
 	  }
 	return __result;
       }
@@ -3023,9 +2948,13 @@ namespace ranges
 					 std::__invoke(__proj, __hi),
 					 std::__invoke(__proj, __lo))));
 	auto&& __proj_val = std::__invoke(__proj, __val);
-	if (std::__invoke(__comp, __proj_val, std::__invoke(__proj, __lo)))
+	if (std::__invoke(__comp,
+			  std::forward<decltype(__proj_val)>(__proj_val),
+			  std::__invoke(__proj, __lo)))
 	  return __lo;
-	else if (std::__invoke(__comp, std::__invoke(__proj, __hi), __proj_val))
+	else if (std::__invoke(__comp,
+			       std::__invoke(__proj, __hi),
+			       std::forward<decltype(__proj_val)>(__proj_val)))
 	  return __hi;
 	else
 	  return __val;
@@ -3550,9 +3479,442 @@ namespace ranges
 
   inline constexpr __prev_permutation_fn prev_permutation{};
 
+#if __glibcxx_ranges_contains >= 202207L // C++ >= 23
+  struct __contains_fn
+  {
+    template<input_iterator _Iter, sentinel_for<_Iter> _Sent,
+	    typename _Tp, typename _Proj = identity>
+      requires indirect_binary_predicate<ranges::equal_to,
+					 projected<_Iter, _Proj>, const _Tp*>
+      constexpr bool
+      operator()(_Iter __first, _Sent __last, const _Tp& __value, _Proj __proj = {}) const
+      { return ranges::find(std::move(__first), __last, __value, std::move(__proj)) != __last; }
+
+    template<input_range _Range, typename _Tp, typename _Proj = identity>
+      requires indirect_binary_predicate<ranges::equal_to,
+					 projected<iterator_t<_Range>, _Proj>, const _Tp*>
+      constexpr bool
+      operator()(_Range&& __r, const _Tp& __value, _Proj __proj = {}) const
+      { return (*this)(ranges::begin(__r), ranges::end(__r), __value, std::move(__proj)); }
+  };
+
+  inline constexpr __contains_fn contains{};
+
+  struct __contains_subrange_fn
+  {
+    template<forward_iterator _Iter1, sentinel_for<_Iter1> _Sent1,
+	     forward_iterator _Iter2, sentinel_for<_Iter2> _Sent2,
+	     typename _Pred = ranges::equal_to,
+	     typename _Proj1 = identity, typename _Proj2 = identity>
+      requires indirectly_comparable<_Iter1, _Iter2, _Pred, _Proj1, _Proj2>
+      constexpr bool
+      operator()(_Iter1 __first1, _Sent1 __last1, _Iter2 __first2, _Sent2 __last2,
+		 _Pred __pred = {}, _Proj1 __proj1 = {}, _Proj2 __proj2 = {}) const
+      {
+	return __first2 == __last2
+	  || !ranges::search(__first1, __last1, __first2, __last2,
+			     std::move(__pred), std::move(__proj1), std::move(__proj2)).empty();
+      }
+
+    template<forward_range _Range1, forward_range _Range2,
+	     typename _Pred = ranges::equal_to,
+	     typename _Proj1 = identity, typename _Proj2 = identity>
+      requires indirectly_comparable<iterator_t<_Range1>, iterator_t<_Range2>,
+				     _Pred, _Proj1, _Proj2>
+      constexpr bool
+      operator()(_Range1&& __r1, _Range2&& __r2, _Pred __pred = {},
+		 _Proj1 __proj1 = {}, _Proj2 __proj2 = {}) const
+      {
+	return (*this)(ranges::begin(__r1), ranges::end(__r1),
+		       ranges::begin(__r2), ranges::end(__r2),
+		       std::move(__pred), std::move(__proj1), std::move(__proj2));
+      }
+  };
+
+  inline constexpr __contains_subrange_fn contains_subrange{};
+
+#endif // __glibcxx_ranges_contains
+
+#if __glibcxx_ranges_find_last >= 202207L // C++ >= 23
+
+  struct __find_last_fn
+  {
+    template<forward_iterator _Iter, sentinel_for<_Iter> _Sent, typename _Tp, typename _Proj = identity>
+      requires indirect_binary_predicate<ranges::equal_to, projected<_Iter, _Proj>, const _Tp*>
+      constexpr subrange<_Iter>
+      operator()(_Iter __first, _Sent __last, const _Tp& __value, _Proj __proj = {}) const
+      {
+	if constexpr (same_as<_Iter, _Sent> && bidirectional_iterator<_Iter>)
+	  {
+	    _Iter __found = ranges::find(reverse_iterator<_Iter>{__last},
+					 reverse_iterator<_Iter>{__first},
+					 __value, std::move(__proj)).base();
+	    if (__found == __first)
+	      return {__last, __last};
+	    else
+	      return {ranges::prev(__found), __last};
+	  }
+	else
+	  {
+	    _Iter __found = ranges::find(__first, __last, __value, __proj);
+	    if (__found == __last)
+	      return {__found, __found};
+	    __first = __found;
+	    for (;;)
+	      {
+		__first = ranges::find(ranges::next(__first), __last, __value, __proj);
+		if (__first == __last)
+		  return {__found, __first};
+		__found = __first;
+	      }
+	  }
+      }
+
+    template<forward_range _Range, typename _Tp, typename _Proj = identity>
+      requires indirect_binary_predicate<ranges::equal_to, projected<iterator_t<_Range>, _Proj>, const _Tp*>
+      constexpr borrowed_subrange_t<_Range>
+      operator()(_Range&& __r, const _Tp& __value, _Proj __proj = {}) const
+      { return (*this)(ranges::begin(__r), ranges::end(__r), __value, std::move(__proj)); }
+  };
+
+  inline constexpr __find_last_fn find_last{};
+
+  struct __find_last_if_fn
+  {
+    template<forward_iterator _Iter, sentinel_for<_Iter> _Sent, typename _Proj = identity,
+	     indirect_unary_predicate<projected<_Iter, _Proj>> _Pred>
+      constexpr subrange<_Iter>
+      operator()(_Iter __first, _Sent __last, _Pred __pred, _Proj __proj = {}) const
+      {
+	if constexpr (same_as<_Iter, _Sent> && bidirectional_iterator<_Iter>)
+	  {
+	    _Iter __found = ranges::find_if(reverse_iterator<_Iter>{__last},
+					    reverse_iterator<_Iter>{__first},
+					    std::move(__pred), std::move(__proj)).base();
+	    if (__found == __first)
+	      return {__last, __last};
+	    else
+	      return {ranges::prev(__found), __last};
+	  }
+	else
+	  {
+	    _Iter __found = ranges::find_if(__first, __last, __pred, __proj);
+	    if (__found == __last)
+	      return {__found, __found};
+	    __first = __found;
+	    for (;;)
+	      {
+		__first = ranges::find_if(ranges::next(__first), __last, __pred, __proj);
+		if (__first == __last)
+		  return {__found, __first};
+		__found = __first;
+	      }
+	  }
+      }
+
+    template<forward_range _Range, typename _Proj = identity,
+	     indirect_unary_predicate<projected<iterator_t<_Range>, _Proj>> _Pred>
+      constexpr borrowed_subrange_t<_Range>
+      operator()(_Range&& __r, _Pred __pred, _Proj __proj = {}) const
+      { return (*this)(ranges::begin(__r), ranges::end(__r), std::move(__pred), std::move(__proj)); }
+  };
+
+  inline constexpr __find_last_if_fn find_last_if{};
+
+  struct __find_last_if_not_fn
+  {
+    template<forward_iterator _Iter, sentinel_for<_Iter> _Sent, typename _Proj = identity,
+	     indirect_unary_predicate<projected<_Iter, _Proj>> _Pred>
+      constexpr subrange<_Iter>
+      operator()(_Iter __first, _Sent __last, _Pred __pred, _Proj __proj = {}) const
+      {
+	if constexpr (same_as<_Iter, _Sent> && bidirectional_iterator<_Iter>)
+	  {
+	    _Iter __found = ranges::find_if_not(reverse_iterator<_Iter>{__last},
+						reverse_iterator<_Iter>{__first},
+						std::move(__pred), std::move(__proj)).base();
+	    if (__found == __first)
+	      return {__last, __last};
+	    else
+	      return {ranges::prev(__found), __last};
+	  }
+	else
+	  {
+	    _Iter __found = ranges::find_if_not(__first, __last, __pred, __proj);
+	    if (__found == __last)
+	      return {__found, __found};
+	    __first = __found;
+	    for (;;)
+	      {
+		__first = ranges::find_if_not(ranges::next(__first), __last, __pred, __proj);
+		if (__first == __last)
+		  return {__found, __first};
+		__found = __first;
+	      }
+	  }
+      }
+
+    template<forward_range _Range, typename _Proj = identity,
+	     indirect_unary_predicate<projected<iterator_t<_Range>, _Proj>> _Pred>
+      constexpr borrowed_subrange_t<_Range>
+      operator()(_Range&& __r, _Pred __pred, _Proj __proj = {}) const
+      { return (*this)(ranges::begin(__r), ranges::end(__r), std::move(__pred), std::move(__proj)); }
+  };
+
+  inline constexpr __find_last_if_not_fn find_last_if_not{};
+
+#endif // __glibcxx_ranges_find_last
+
+#if __glibcxx_ranges_fold >= 202207L // C++ >= 23
+
+  template<typename _Iter, typename _Tp>
+    struct in_value_result
+    {
+      [[no_unique_address]] _Iter in;
+      [[no_unique_address]] _Tp value;
+
+      template<typename _Iter2, typename _Tp2>
+	requires convertible_to<const _Iter&, _Iter2>
+	  && convertible_to<const _Tp&, _Tp2>
+      constexpr
+      operator in_value_result<_Iter2, _Tp2>() const &
+      { return {in, value}; }
+
+      template<typename _Iter2, typename _Tp2>
+	requires convertible_to<_Iter, _Iter2>
+	  && convertible_to<_Tp, _Tp2>
+      constexpr
+      operator in_value_result<_Iter2, _Tp2>() &&
+      { return {std::move(in), std::move(value)}; }
+    };
+
+  namespace __detail
+  {
+    template<typename _Fp>
+      class __flipped
+      {
+	_Fp _M_f;
+
+      public:
+	template<typename _Tp, typename _Up>
+	  requires invocable<_Fp&, _Up, _Tp>
+	invoke_result_t<_Fp&, _Up, _Tp>
+	operator()(_Tp&&, _Up&&); // not defined
+      };
+
+      template<typename _Fp, typename _Tp, typename _Iter, typename _Up>
+      concept __indirectly_binary_left_foldable_impl = movable<_Tp> && movable<_Up>
+	&& convertible_to<_Tp, _Up>
+	&& invocable<_Fp&, _Up, iter_reference_t<_Iter>>
+	&& assignable_from<_Up&, invoke_result_t<_Fp&, _Up, iter_reference_t<_Iter>>>;
+
+      template<typename _Fp, typename _Tp, typename _Iter>
+      concept __indirectly_binary_left_foldable = copy_constructible<_Fp>
+	&& indirectly_readable<_Iter>
+	&& invocable<_Fp&, _Tp, iter_reference_t<_Iter>>
+	&& convertible_to<invoke_result_t<_Fp&, _Tp, iter_reference_t<_Iter>>,
+			  decay_t<invoke_result_t<_Fp&, _Tp, iter_reference_t<_Iter>>>>
+	&& __indirectly_binary_left_foldable_impl
+	    <_Fp, _Tp, _Iter, decay_t<invoke_result_t<_Fp&, _Tp, iter_reference_t<_Iter>>>>;
+
+      template <typename _Fp, typename _Tp, typename _Iter>
+      concept __indirectly_binary_right_foldable
+	= __indirectly_binary_left_foldable<__flipped<_Fp>, _Tp, _Iter>;
+  } // namespace __detail
+
+  template<typename _Iter, typename _Tp>
+    using fold_left_with_iter_result = in_value_result<_Iter, _Tp>;
+
+  struct __fold_left_with_iter_fn
+  {
+    template<typename _Ret_iter,
+	     typename _Iter, typename _Sent, typename _Tp, typename _Fp>
+      static constexpr auto
+      _S_impl(_Iter __first, _Sent __last, _Tp __init, _Fp __f)
+      {
+	using _Up = decay_t<invoke_result_t<_Fp&, _Tp, iter_reference_t<_Iter>>>;
+	using _Ret = fold_left_with_iter_result<_Ret_iter, _Up>;
+
+	if (__first == __last)
+	  return _Ret{std::move(__first), _Up(std::move(__init))};
+
+	_Up __accum = std::__invoke(__f, std::move(__init), *__first);
+	for (++__first; __first != __last; ++__first)
+	  __accum = std::__invoke(__f, std::move(__accum), *__first);
+	return _Ret{std::move(__first), std::move(__accum)};
+      }
+
+    template<input_iterator _Iter, sentinel_for<_Iter> _Sent, typename _Tp,
+	     __detail::__indirectly_binary_left_foldable<_Tp, _Iter> _Fp>
+      constexpr auto
+      operator()(_Iter __first, _Sent __last, _Tp __init, _Fp __f) const
+      {
+	using _Ret_iter = _Iter;
+	return _S_impl<_Ret_iter>(std::move(__first), __last,
+				  std::move(__init), std::move(__f));
+      }
+
+    template<input_range _Range, typename _Tp,
+	     __detail::__indirectly_binary_left_foldable<_Tp, iterator_t<_Range>> _Fp>
+      constexpr auto
+      operator()(_Range&& __r, _Tp __init, _Fp __f) const
+      {
+	using _Ret_iter = borrowed_iterator_t<_Range>;
+	return _S_impl<_Ret_iter>(ranges::begin(__r), ranges::end(__r),
+				  std::move(__init), std::move(__f));
+      }
+  };
+
+  inline constexpr __fold_left_with_iter_fn fold_left_with_iter{};
+
+  struct __fold_left_fn
+  {
+    template<input_iterator _Iter, sentinel_for<_Iter> _Sent, typename _Tp,
+	     __detail::__indirectly_binary_left_foldable<_Tp, _Iter> _Fp>
+      constexpr auto
+      operator()(_Iter __first, _Sent __last, _Tp __init, _Fp __f) const
+      {
+	return ranges::fold_left_with_iter(std::move(__first), __last,
+					   std::move(__init), std::move(__f)).value;
+      }
+
+    template<input_range _Range, typename _Tp,
+	     __detail::__indirectly_binary_left_foldable<_Tp, iterator_t<_Range>> _Fp>
+      constexpr auto
+      operator()(_Range&& __r, _Tp __init, _Fp __f) const
+      { return (*this)(ranges::begin(__r), ranges::end(__r), std::move(__init), std::move(__f)); }
+  };
+
+  inline constexpr __fold_left_fn fold_left{};
+
+  template<typename _Iter, typename _Tp>
+    using fold_left_first_with_iter_result = in_value_result<_Iter, _Tp>;
+
+  struct __fold_left_first_with_iter_fn
+  {
+    template<typename _Ret_iter, typename _Iter, typename _Sent, typename _Fp>
+      static constexpr auto
+      _S_impl(_Iter __first, _Sent __last, _Fp __f)
+      {
+	using _Up = decltype(ranges::fold_left(std::move(__first), __last,
+					       iter_value_t<_Iter>(*__first), __f));
+	using _Ret = fold_left_first_with_iter_result<_Ret_iter, optional<_Up>>;
+
+	if (__first == __last)
+	  return _Ret{std::move(__first), optional<_Up>()};
+
+	optional<_Up> __init(in_place, *__first);
+	for (++__first; __first != __last; ++__first)
+	  *__init = std::__invoke(__f, std::move(*__init), *__first);
+	return _Ret{std::move(__first), std::move(__init)};
+      }
+
+    template<input_iterator _Iter, sentinel_for<_Iter> _Sent,
+	     __detail::__indirectly_binary_left_foldable<iter_value_t<_Iter>, _Iter> _Fp>
+      requires constructible_from<iter_value_t<_Iter>, iter_reference_t<_Iter>>
+      constexpr auto
+      operator()(_Iter __first, _Sent __last, _Fp __f) const
+      {
+	using _Ret_iter = _Iter;
+	return _S_impl<_Ret_iter>(std::move(__first), __last, std::move(__f));
+      }
+
+    template<input_range _Range,
+	     __detail::__indirectly_binary_left_foldable<range_value_t<_Range>, iterator_t<_Range>> _Fp>
+      requires constructible_from<range_value_t<_Range>, range_reference_t<_Range>>
+      constexpr auto
+      operator()(_Range&& __r, _Fp __f) const
+      {
+	using _Ret_iter = borrowed_iterator_t<_Range>;
+	return _S_impl<_Ret_iter>(ranges::begin(__r), ranges::end(__r), std::move(__f));
+      }
+  };
+
+  inline constexpr __fold_left_first_with_iter_fn fold_left_first_with_iter{};
+
+  struct __fold_left_first_fn
+  {
+    template<input_iterator _Iter, sentinel_for<_Iter> _Sent,
+	     __detail::__indirectly_binary_left_foldable<iter_value_t<_Iter>, _Iter> _Fp>
+      requires constructible_from<iter_value_t<_Iter>, iter_reference_t<_Iter>>
+      constexpr auto
+      operator()(_Iter __first, _Sent __last, _Fp __f) const
+      {
+	return ranges::fold_left_first_with_iter(std::move(__first), __last,
+						 std::move(__f)).value;
+      }
+
+    template<input_range _Range,
+	     __detail::__indirectly_binary_left_foldable<range_value_t<_Range>, iterator_t<_Range>> _Fp>
+      requires constructible_from<range_value_t<_Range>, range_reference_t<_Range>>
+      constexpr auto
+      operator()(_Range&& __r, _Fp __f) const
+      { return (*this)(ranges::begin(__r), ranges::end(__r), std::move(__f)); }
+  };
+
+  inline constexpr __fold_left_first_fn fold_left_first{};
+
+  struct __fold_right_fn
+  {
+    template<bidirectional_iterator _Iter, sentinel_for<_Iter> _Sent, typename _Tp,
+	     __detail::__indirectly_binary_right_foldable<_Tp, _Iter> _Fp>
+      constexpr auto
+      operator()(_Iter __first, _Sent __last, _Tp __init, _Fp __f) const
+      {
+	using _Up = decay_t<invoke_result_t<_Fp&, iter_reference_t<_Iter>, _Tp>>;
+
+	if (__first == __last)
+	  return _Up(std::move(__init));
+
+	_Iter __tail = ranges::next(__first, __last);
+	_Up __accum = std::__invoke(__f, *--__tail, std::move(__init));
+	while (__first != __tail)
+	  __accum = std::__invoke(__f, *--__tail, std::move(__accum));
+	return __accum;
+      }
+
+    template<bidirectional_range _Range, typename _Tp,
+	     __detail::__indirectly_binary_right_foldable<_Tp, iterator_t<_Range>> _Fp>
+      constexpr auto
+      operator()(_Range&& __r, _Tp __init, _Fp __f) const
+      { return (*this)(ranges::begin(__r), ranges::end(__r), std::move(__init), std::move(__f)); }
+  };
+
+  inline constexpr __fold_right_fn fold_right{};
+
+  struct __fold_right_last_fn
+  {
+    template<bidirectional_iterator _Iter, sentinel_for<_Iter> _Sent,
+	     __detail::__indirectly_binary_right_foldable<iter_value_t<_Iter>, _Iter> _Fp>
+      requires constructible_from<iter_value_t<_Iter>, iter_reference_t<_Iter>>
+      constexpr auto
+      operator()(_Iter __first, _Sent __last, _Fp __f) const
+      {
+	using _Up = decltype(ranges::fold_right(__first, __last,
+						iter_value_t<_Iter>(*__first), __f));
+
+	if (__first == __last)
+	  return optional<_Up>();
+
+	_Iter __tail = ranges::prev(ranges::next(__first, std::move(__last)));
+	return optional<_Up>(in_place,
+			     ranges::fold_right(std::move(__first), __tail,
+						iter_value_t<_Iter>(*__tail),
+						std::move(__f)));
+      }
+
+    template<bidirectional_range _Range,
+	     __detail::__indirectly_binary_right_foldable<range_value_t<_Range>, iterator_t<_Range>> _Fp>
+      requires constructible_from<range_value_t<_Range>, range_reference_t<_Range>>
+      constexpr auto
+      operator()(_Range&& __r, _Fp __f) const
+      { return (*this)(ranges::begin(__r), ranges::end(__r), std::move(__f)); }
+  };
+
+  inline constexpr __fold_right_last_fn fold_right_last{};
+#endif // __glibcxx_ranges_fold
 } // namespace ranges
 
-#define __cpp_lib_shift 201806L
   template<typename _ForwardIterator>
     constexpr _ForwardIterator
     shift_left(_ForwardIterator __first, _ForwardIterator __last,

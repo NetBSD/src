@@ -1,5 +1,5 @@
 /* Declaration statement matcher
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Andy Vaught
 
 This file is part of GCC.
@@ -115,6 +115,41 @@ static gfc_expr *saved_kind_expr = NULL;
    in the typespec of a PDT variable or component.  */
 static gfc_actual_arglist *decl_type_param_list;
 static gfc_actual_arglist *type_param_spec_list;
+
+/* Drop an unattached gfc_charlen node from the current namespace.  This is
+   used when declaration processing created a length node for a symbol that is
+   rejected before the node is attached to any surviving symbol.  */
+static void
+discard_pending_charlen (gfc_charlen *cl)
+{
+  if (!cl || !gfc_current_ns || gfc_current_ns->cl_list != cl)
+    return;
+
+  gfc_current_ns->cl_list = cl->next;
+  gfc_free_expr (cl->length);
+  free (cl);
+}
+
+/* Drop the charlen nodes created while matching a declaration that is about
+   to be rejected.  Callers must clear any surviving owners before using this
+   helper, so only the statement-local nodes remain on the namespace list.  */
+
+static void
+discard_pending_charlens (gfc_charlen *saved_cl)
+{
+  if (!gfc_current_ns)
+    return;
+
+  while (gfc_current_ns->cl_list != saved_cl)
+    {
+      gfc_charlen *cl = gfc_current_ns->cl_list;
+
+      gcc_assert (cl);
+      gfc_current_ns->cl_list = cl->next;
+      gfc_free_expr (cl->length);
+      free (cl);
+    }
+}
 
 /********************* DATA statement subroutines *********************/
 
@@ -424,7 +459,8 @@ match_data_constant (gfc_expr **result)
 	 data-pointer-initialization compatible (7.5.4.6) with the initial
 	 data target; the data statement object is initially associated
 	 with the target.  */
-      if ((*result)->symtree->n.sym->attr.save
+      if ((*result)->symtree
+	  && (*result)->symtree->n.sym->attr.save
 	  && (*result)->symtree->n.sym->attr.target)
 	return m;
       gfc_free_expr (*result);
@@ -1058,6 +1094,7 @@ static match
 char_len_param_value (gfc_expr **expr, bool *deferred)
 {
   match m;
+  gfc_expr *p;
 
   *expr = NULL;
   *deferred = false;
@@ -1083,10 +1120,12 @@ char_len_param_value (gfc_expr **expr, bool *deferred)
   if (!gfc_expr_check_typed (*expr, gfc_current_ns, false))
     return MATCH_ERROR;
 
-  /* If gfortran gets an EXPR_OP, try to simplifiy it.  This catches things
-     like CHARACTER(([1])).   */
-  if ((*expr)->expr_type == EXPR_OP)
-    gfc_simplify_expr (*expr, 1);
+  /* Try to simplify the expression to catch things like CHARACTER(([1])).   */
+  p = gfc_copy_expr (*expr);
+  if (gfc_is_constant_expr (p) && gfc_simplify_expr (p, 1))
+    gfc_replace_expr (*expr, p);
+  else
+    gfc_free_expr (p);
 
   if ((*expr)->expr_type == EXPR_FUNCTION)
     {
@@ -1403,7 +1442,9 @@ get_proc_name (const char *name, gfc_symbol **result, bool module_fcn_entry)
       /* Trap declarations of attributes in encompassing scope.  The
 	 signature for this is that ts.kind is nonzero for no-CLASS
 	 entity.  For a CLASS entity, ts.kind is zero.  */
-      if ((sym->ts.kind != 0 || sym->ts.type == BT_CLASS)
+      if ((sym->ts.kind != 0
+	   || sym->ts.type == BT_CLASS
+	   || sym->ts.type == BT_DERIVED)
 	  && !sym->attr.implicit_type
 	  && sym->attr.proc == 0
 	  && gfc_current_ns->parent != NULL
@@ -1578,7 +1619,7 @@ gfc_verify_c_interop_param (gfc_symbol *sym)
 	    }
 
           /* Character strings are only C interoperable if they have a
-	     length of 1.  However, as an argument they are also iteroperable
+	     length of 1.  However, as an argument they are also interoperable
 	     when passed as descriptor (which requires len=: or len=*).  */
 	  if (sym->ts.type == BT_CHARACTER)
 	    {
@@ -1710,7 +1751,7 @@ gfc_verify_c_interop_param (gfc_symbol *sym)
 /* Function called by variable_decl() that adds a name to the symbol table.  */
 
 static bool
-build_sym (const char *name, gfc_charlen *cl, bool cl_deferred,
+build_sym (const char *name, int elem, gfc_charlen *cl, bool cl_deferred,
 	   gfc_array_spec **as, locus *var_locus)
 {
   symbol_attribute attr;
@@ -1771,11 +1812,27 @@ build_sym (const char *name, gfc_charlen *cl, bool cl_deferred,
       && (sym->attr.implicit_type == 0
 	  || !gfc_compare_types (&sym->ts, &current_ts))
       && !gfc_add_type (sym, &current_ts, var_locus))
-    return false;
+    {
+      /* Duplicate-type rejection can leave a fresh CHARACTER length node on
+	 the namespace list before it is attached to any surviving symbol.
+	 Drop only that unattached node; shared constant charlen nodes are
+	 already reachable from earlier declarations.  PR82721.  */
+      if (current_ts.type == BT_CHARACTER && cl && elem == 1)
+	{
+	  discard_pending_charlen (cl);
+	  gfc_clear_ts (&current_ts);
+	}
+      else if (current_ts.type == BT_CHARACTER && cl && cl != current_ts.u.cl)
+	discard_pending_charlen (cl);
+      return false;
+    }
 
   if (sym->ts.type == BT_CHARACTER)
     {
-      sym->ts.u.cl = cl;
+      if (elem > 1)
+	sym->ts.u.cl = gfc_new_charlen (sym->ns, cl);
+      else
+	sym->ts.u.cl = cl;
       sym->ts.deferred = cl_deferred;
     }
 
@@ -1959,11 +2016,51 @@ gfc_free_enum_history (void)
 }
 
 
+/* Function to fix initializer character length if the length of the
+   symbol or component is constant.  */
+
+static bool
+fix_initializer_charlen (gfc_typespec *ts, gfc_expr *init)
+{
+  if (!gfc_specification_expr (ts->u.cl->length))
+    return false;
+
+  int k = gfc_validate_kind (BT_INTEGER, gfc_charlen_int_kind, false);
+
+  /* resolve_charlen will complain later on if the length
+     is too large.  Just skip the initialization in that case.  */
+  if (mpz_cmp (ts->u.cl->length->value.integer,
+	       gfc_integer_kinds[k].huge) <= 0)
+    {
+      HOST_WIDE_INT len
+		= gfc_mpz_get_hwi (ts->u.cl->length->value.integer);
+
+      if (init->expr_type == EXPR_CONSTANT)
+	gfc_set_constant_character_len (len, init, -1);
+      else if (init->expr_type == EXPR_ARRAY)
+	{
+	  gfc_constructor *cons;
+
+	  /* Build a new charlen to prevent simplification from
+	     deleting the length before it is resolved.  */
+	  init->ts.u.cl = gfc_new_charlen (gfc_current_ns, NULL);
+	  init->ts.u.cl->length = gfc_copy_expr (ts->u.cl->length);
+	  cons = gfc_constructor_first (init->value.constructor);
+	  for (; cons; cons = gfc_constructor_next (cons))
+	    gfc_set_constant_character_len (len, cons->expr, -1);
+	}
+    }
+
+  return true;
+}
+
+
 /* Function called by variable_decl() that adds an initialization
    expression to a symbol.  */
 
 static bool
-add_init_expr_to_sym (const char *name, gfc_expr **initp, locus *var_locus)
+add_init_expr_to_sym (const char *name, gfc_expr **initp, locus *var_locus,
+		      gfc_charlen *saved_cl_list)
 {
   symbol_attribute attr;
   gfc_symbol *sym;
@@ -2051,6 +2148,16 @@ add_init_expr_to_sym (const char *name, gfc_expr **initp, locus *var_locus)
 					 "at %L "
 					 "with variable length elements",
 					 &sym->declared_at);
+
+			      /* This rejection path can leave several
+				 declaration-local charlens on cl_list,
+				 including the replacement symbol charlen and
+				 the array-constructor typespec charlen.
+				 Clear the surviving owners first, then drop
+				 only the nodes created by this declaration.  */
+			      sym->ts.u.cl = NULL;
+			      init->ts.u.cl = NULL;
+			      discard_pending_charlens (saved_cl_list);
 			      return false;
 			    }
 			  clen = mpz_get_si (length->value.integer);
@@ -2072,40 +2179,10 @@ add_init_expr_to_sym (const char *name, gfc_expr **initp, locus *var_locus)
 				gfc_copy_expr (init->ts.u.cl->length);
 		}
 	    }
-	  /* Update initializer character length according symbol.  */
-	  else if (sym->ts.u.cl->length->expr_type == EXPR_CONSTANT)
-	    {
-	      if (!gfc_specification_expr (sym->ts.u.cl->length))
-		return false;
-
-	      int k = gfc_validate_kind (BT_INTEGER, gfc_charlen_int_kind,
-					 false);
-	      /* resolve_charlen will complain later on if the length
-		 is too large.  Just skeep the initialization in that case.  */
-	      if (mpz_cmp (sym->ts.u.cl->length->value.integer,
-			   gfc_integer_kinds[k].huge) <= 0)
-		{
-		  HOST_WIDE_INT len
-		    = gfc_mpz_get_hwi (sym->ts.u.cl->length->value.integer);
-
-		  if (init->expr_type == EXPR_CONSTANT)
-		    gfc_set_constant_character_len (len, init, -1);
-		  else if (init->expr_type == EXPR_ARRAY)
-		    {
-		      gfc_constructor *c;
-
-		      /* Build a new charlen to prevent simplification from
-			 deleting the length before it is resolved.  */
-		      init->ts.u.cl = gfc_new_charlen (gfc_current_ns, NULL);
-		      init->ts.u.cl->length
-			= gfc_copy_expr (sym->ts.u.cl->length);
-
-		      for (c = gfc_constructor_first (init->value.constructor);
-			   c; c = gfc_constructor_next (c))
-			gfc_set_constant_character_len (len, c->expr, -1);
-		    }
-		}
-	    }
+	  /* Update initializer character length according to symbol.  */
+	  else if (sym->ts.u.cl->length->expr_type == EXPR_CONSTANT
+		   && !fix_initializer_charlen (&sym->ts, init))
+	    return false;
 	}
 
       if (sym->attr.flavor == FL_PARAMETER && sym->attr.dimension && sym->as
@@ -2241,8 +2318,7 @@ add_init_expr_to_sym (const char *name, gfc_expr **initp, locus *var_locus)
 	      && gfc_is_constant_expr (init)
 	      && (init->expr_type == EXPR_CONSTANT
 		  || init->expr_type == EXPR_STRUCTURE)
-	      && spec_size (sym->as, &size)
-	      && mpz_cmp_si (size, 0) > 0)
+	      && spec_size (sym->as, &size))
 	    {
 	      array = gfc_get_array_expr (init->ts.type, init->ts.kind,
 					  &init->where);
@@ -2369,6 +2445,13 @@ build_struct (const char *name, gfc_charlen *cl, gfc_expr **init,
   c->initializer = *init;
   *init = NULL;
 
+  /* Update initializer character length according to component.  */
+  if (c->ts.type == BT_CHARACTER && c->ts.u.cl->length
+      && c->ts.u.cl->length->expr_type == EXPR_CONSTANT
+      && c->initializer && c->initializer->ts.type == BT_CHARACTER
+      && !fix_initializer_charlen (&c->ts, c->initializer))
+    return false;
+
   c->as = *as;
   if (c->as != NULL)
     {
@@ -2396,11 +2479,24 @@ build_struct (const char *name, gfc_charlen *cl, gfc_expr **init,
     }
   else if (c->attr.allocatable)
     {
+      const char *err = G_("Allocatable component of structure at %C must have "
+			   "a deferred shape");
       if (c->as->type != AS_DEFERRED)
 	{
-	  gfc_error ("Allocatable component of structure at %C must have a "
-		     "deferred shape");
-	  return false;
+	  if (c->ts.type == BT_CLASS || c->ts.type == BT_DERIVED)
+	    {
+	      /* Issue an immediate error and allow this component to pass for
+		 the sake of clean error recovery.  Set the error flag for the
+		 containing derived type so that finalizers are not built.  */
+	      gfc_error_now (err);
+	      s->sym->error = 1;
+	      c->as->type = AS_DEFERRED;
+	    }
+	  else
+	    {
+	      gfc_error (err);
+	      return false;
+	    }
 	}
     }
   else
@@ -2591,6 +2687,7 @@ variable_decl (int elem)
   gfc_array_spec *as;
   gfc_array_spec *cp_as; /* Extra copy for Cray Pointees.  */
   gfc_charlen *cl;
+  gfc_charlen *saved_cl_list;
   bool cl_deferred;
   locus var_locus;
   match m;
@@ -2601,6 +2698,7 @@ variable_decl (int elem)
   initializer = NULL;
   as = NULL;
   cp_as = NULL;
+  saved_cl_list = gfc_current_ns->cl_list;
 
   /* When we get here, we've just matched a list of attributes and
      maybe a type and a double colon.  The next thing we expect to see
@@ -2700,7 +2798,7 @@ variable_decl (int elem)
 	}
 
       gfc_seen_div0 = false;
-      
+
       /* F2018:C830 (R816) An explicit-shape-spec whose bounds are not
 	 constant expressions shall appear only in a subprogram, derived
 	 type definition, BLOCK construct, or interface body.  */
@@ -2771,7 +2869,7 @@ variable_decl (int elem)
 	      if (e->expr_type != EXPR_CONSTANT)
 		{
 		  n = gfc_copy_expr (e);
-		  if (!gfc_simplify_expr (n, 1)  && gfc_seen_div0) 
+		  if (!gfc_simplify_expr (n, 1)  && gfc_seen_div0)
 		    {
 		      m = MATCH_ERROR;
 		      goto cleanup;
@@ -2786,12 +2884,12 @@ variable_decl (int elem)
 	      if (e->expr_type != EXPR_CONSTANT)
 		{
 		  n = gfc_copy_expr (e);
-		  if (!gfc_simplify_expr (n, 1)  && gfc_seen_div0) 
+		  if (!gfc_simplify_expr (n, 1)  && gfc_seen_div0)
 		    {
 		      m = MATCH_ERROR;
 		      goto cleanup;
 		    }
-		  
+
 		  if (n->expr_type == EXPR_CONSTANT)
 		    gfc_replace_expr (e, n);
 		  else
@@ -2849,7 +2947,7 @@ variable_decl (int elem)
 	}
     }
 
-  /* The dummy arguments and result of the abreviated form of MODULE
+  /* The dummy arguments and result of the abbreviated form of MODULE
      PROCEDUREs, used in SUBMODULES should not be redefined.  */
   if (gfc_current_ns->proc_name
       && gfc_current_ns->proc_name->abr_modproc_decl)
@@ -2942,7 +3040,7 @@ variable_decl (int elem)
      create a symbol for those yet.  If we fail to create the symbol,
      bail out.  */
   if (!gfc_comp_struct (gfc_current_state ())
-      && !build_sym (name, cl, cl_deferred, &as, &var_locus))
+      && !build_sym (name, elem, cl, cl_deferred, &as, &var_locus))
     {
       m = MATCH_ERROR;
       goto cleanup;
@@ -3119,7 +3217,7 @@ variable_decl (int elem)
 	}
     }
 
-  /* Before adding a possible initilizer, do a simple check for compatibility
+  /* Before adding a possible initializer, do a simple check for compatibility
      of lhs and rhs types.  Assigning a REAL value to a derived type is not a
      good thing.  */
   if (current_ts.type == BT_DERIVED && initializer
@@ -3139,7 +3237,8 @@ variable_decl (int elem)
      NULL here, because we sometimes also need to check if a
      declaration *must* have an initialization expression.  */
   if (!gfc_comp_struct (gfc_current_state ()))
-    t = add_init_expr_to_sym (name, &initializer, &var_locus);
+    t = add_init_expr_to_sym (name, &initializer, &var_locus,
+			      saved_cl_list);
   else
     {
       if (current_ts.type == BT_DERIVED
@@ -3369,6 +3468,7 @@ close_brackets:
       else
 	gfc_error ("Missing right parenthesis at %C");
       m = MATCH_ERROR;
+      goto no_match;
     }
   else
      /* All tests passed.  */
@@ -4064,6 +4164,21 @@ gfc_get_pdt_instance (gfc_actual_arglist *param_list, gfc_symbol **sym,
 	  continue;
 	}
 
+      /* Addressing PR82943, this will fix the issue where a function or
+	 subroutine is declared as not a member of the PDT instance.
+	 The reason for this is because the PDT instance did not have access
+	 to its template's f2k_derived namespace in order to find the
+	 typebound procedures.
+
+	 The number of references to the PDT template's f2k_derived will
+	 ensure that f2k_derived is properly freed later on.  */
+
+      if (!instance->f2k_derived && pdt->f2k_derived)
+	{
+	  instance->f2k_derived = pdt->f2k_derived;
+	  instance->f2k_derived->refs++;
+	}
+
       /* Set the component kind using the parameterized expression.  */
       if ((c1->ts.kind == 0 || c1->ts.type == BT_CHARACTER)
 	   && c1->kind_expr != NULL)
@@ -4706,6 +4821,9 @@ get_kind:
     }
 
   m = gfc_match_kind_spec (ts, false);
+  if (m == MATCH_ERROR)
+    return MATCH_ERROR;
+
   if (m == MATCH_NO && ts->type != BT_CHARACTER)
     {
       m = gfc_match_old_kind_spec (ts);
@@ -6000,10 +6118,14 @@ verify_bind_c_sym (gfc_symbol *tmp_sym, gfc_typespec *ts,
 	    }
 	  else
 	    {
-              if (tmp_sym->ts.type == BT_DERIVED || ts->type == BT_DERIVED)
-                gfc_error ("Type declaration %qs at %L is not C "
-                           "interoperable but it is BIND(C)",
-                           tmp_sym->name, &(tmp_sym->declared_at));
+	      if (tmp_sym->ts.type == BT_DERIVED || ts->type == BT_DERIVED
+		  || tmp_sym->ts.type == BT_CLASS || ts->type == BT_CLASS)
+		{
+		  gfc_error ("Type declaration %qs at %L is not C "
+			     "interoperable but it is BIND(C)",
+			     tmp_sym->name, &(tmp_sym->declared_at));
+		  retval = false;
+		}
               else if (warn_c_binding_type)
                 gfc_warning (OPT_Wc_binding_type, "Variable %qs at %L "
                              "may not be a C interoperable "
@@ -6056,9 +6178,7 @@ verify_bind_c_sym (gfc_symbol *tmp_sym, gfc_typespec *ts,
 
       /* BIND(C) functions cannot return a character string.  */
       if (bind_c_function && tmp_sym->ts.type == BT_CHARACTER)
-	if (tmp_sym->ts.u.cl == NULL || tmp_sym->ts.u.cl->length == NULL
-	    || tmp_sym->ts.u.cl->length->expr_type != EXPR_CONSTANT
-	    || mpz_cmp_si (tmp_sym->ts.u.cl->length->value.integer, 1) != 0)
+	if (!gfc_length_one_character_type_p (&tmp_sym->ts))
 	  gfc_error ("Return type of BIND(C) function %qs of character "
 		     "type at %L must have length 1", tmp_sym->name,
 			 &(tmp_sym->declared_at));
@@ -6253,11 +6373,27 @@ gfc_match_data_decl (void)
   gfc_symbol *sym;
   match m;
   int elem;
+  gfc_component *comp_tail = NULL;
 
   type_param_spec_list = NULL;
   decl_type_param_list = NULL;
 
   num_idents_on_line = 0;
+
+  /* Record the last component before we start, so that we can roll back
+     any components added during this statement on error.  PR106946.
+     Must be set before any 'goto cleanup' with m == MATCH_ERROR.  */
+  if (gfc_comp_struct (gfc_current_state ()))
+    {
+      gfc_symbol *block = gfc_current_block ();
+      if (block)
+	{
+	  comp_tail = block->components;
+	  if (comp_tail)
+	    while (comp_tail->next)
+	      comp_tail = comp_tail->next;
+	}
+    }
 
   m = gfc_match_decl_type_spec (&current_ts, 0);
   if (m != MATCH_YES)
@@ -6378,6 +6514,80 @@ ok:
   gfc_free_data_all (gfc_current_ns);
 
 cleanup:
+  /* If we failed inside a derived type definition, remove any CLASS
+     components that were added during this failed statement.  For CLASS
+     components, gfc_build_class_symbol creates an extra container symbol in
+     the namespace outside the normal undo machinery.  When reject_statement
+     later calls gfc_undo_symbols, the declaration state is rolled back but
+     that helper symbol survives and leaves the component dangling.  Ordinary
+     components do not create that extra helper symbol, so leave them in
+     place for the usual follow-up diagnostics.  PR106946.
+
+     CLASS containers are shared between components of the same class type
+     and attributes (gfc_build_class_symbol reuses existing containers).
+     We must not free a container that is still referenced by a previously
+     committed component.  Unlink and free the components first, then clean
+     up only orphaned containers.  PR124482.  */
+  if (m == MATCH_ERROR && gfc_comp_struct (gfc_current_state ()))
+    {
+      gfc_symbol *block = gfc_current_block ();
+      if (block)
+	{
+	  gfc_component **prev;
+	  if (comp_tail)
+	    prev = &comp_tail->next;
+	  else
+	    prev = &block->components;
+
+	  /* Record the CLASS container from the removed components.
+	     Normally all components in one declaration share a single
+	     container, but per-variable array specs can produce
+	     additional ones; any beyond the first are harmlessly
+	     leaked until namespace destruction.  */
+	  gfc_symbol *fclass_container = NULL;
+
+	  while (*prev)
+	    {
+	      gfc_component *c = *prev;
+	      if (c->ts.type == BT_CLASS && c->ts.u.derived
+		  && c->ts.u.derived->attr.is_class)
+		{
+		  *prev = c->next;
+		  if (!fclass_container)
+		    fclass_container = c->ts.u.derived;
+		  c->ts.u.derived = NULL;
+		  gfc_free_component (c);
+		}
+	      else
+		prev = &c->next;
+	    }
+
+	  /* Free the container only if no remaining component still
+	     references it.  CLASS containers are shared between
+	     components of the same class type and attributes
+	     (gfc_build_class_symbol reuses existing ones).  */
+	  if (fclass_container)
+	    {
+	      bool shared = false;
+	      for (gfc_component *q = block->components; q; q = q->next)
+		if (q->ts.type == BT_CLASS
+		    && q->ts.u.derived == fclass_container)
+		  {
+		    shared = true;
+		    break;
+		  }
+	      if (!shared)
+		{
+		  if (gfc_find_symtree (fclass_container->ns->sym_root,
+					fclass_container->name))
+		    gfc_delete_symtree (&fclass_container->ns->sym_root,
+					fclass_container->name);
+		  gfc_release_symbol (fclass_container);
+		}
+	    }
+	}
+    }
+
   if (saved_kind_expr)
     gfc_free_expr (saved_kind_expr);
   if (type_param_spec_list)
@@ -6772,12 +6982,25 @@ ok:
 	      || (p->next == NULL && q->next != NULL))
 	    arg_count_mismatch = true;
 	  else if ((p->sym == NULL && q->sym == NULL)
-		    || strcmp (p->sym->name, q->sym->name) == 0)
+		    || (p->sym && q->sym
+			&& strcmp (p->sym->name, q->sym->name) == 0))
 	    continue;
 	  else
-	    gfc_error_now ("Mismatch in MODULE PROCEDURE formal "
-			   "argument names (%s/%s) at %C",
-			   p->sym->name, q->sym->name);
+	    {
+	      if (q->sym == NULL)
+		gfc_error_now ("MODULE PROCEDURE formal argument %qs "
+			       "conflicts with alternate return at %C",
+			       p->sym->name);
+	      else if (p->sym == NULL)
+		gfc_error_now ("MODULE PROCEDURE formal argument is "
+			       "alternate return and conflicts with "
+			       "%qs in the separate declaration at %C",
+			       q->sym->name);
+	      else
+		gfc_error_now ("Mismatch in MODULE PROCEDURE formal "
+			       "argument names (%s/%s) at %C",
+			       p->sym->name, q->sym->name);
+	    }
 	}
 
       if (arg_count_mismatch)
@@ -7181,7 +7404,9 @@ match_procedure_decl (void)
 	  if (m != MATCH_YES)
 	    goto cleanup;
 
-	  if (!add_init_expr_to_sym (sym->name, &initializer, &gfc_current_locus))
+	  if (!add_init_expr_to_sym (sym->name, &initializer,
+				     &gfc_current_locus,
+				     gfc_current_ns->cl_list))
 	    goto cleanup;
 
 	}
@@ -8346,7 +8571,7 @@ gfc_match_end (gfc_statement *st)
   match m;
   gfc_namespace *parent_ns, *ns, *prev_ns;
   gfc_namespace **nsp;
-  bool abreviated_modproc_decl = false;
+  bool abbreviated_modproc_decl = false;
   bool got_matching_end = false;
 
   old_loc = gfc_current_locus;
@@ -8370,7 +8595,7 @@ gfc_match_end (gfc_statement *st)
       state = gfc_state_stack->previous->state;
       block_name = gfc_state_stack->previous->sym == NULL
 		 ? NULL : gfc_state_stack->previous->sym->name;
-      abreviated_modproc_decl = gfc_state_stack->previous->sym
+      abbreviated_modproc_decl = gfc_state_stack->previous->sym
 		&& gfc_state_stack->previous->sym->abr_modproc_decl;
       break;
 
@@ -8378,8 +8603,8 @@ gfc_match_end (gfc_statement *st)
       break;
     }
 
-  if (!abreviated_modproc_decl)
-    abreviated_modproc_decl = gfc_current_block ()
+  if (!abbreviated_modproc_decl)
+    abbreviated_modproc_decl = gfc_current_block ()
 			      && gfc_current_block ()->abr_modproc_decl;
 
   switch (state)
@@ -8393,7 +8618,7 @@ gfc_match_end (gfc_statement *st)
 
     case COMP_SUBROUTINE:
       *st = ST_END_SUBROUTINE;
-      if (!abreviated_modproc_decl)
+      if (!abbreviated_modproc_decl)
       target = " subroutine";
       else
 	target = " procedure";
@@ -8402,7 +8627,7 @@ gfc_match_end (gfc_statement *st)
 
     case COMP_FUNCTION:
       *st = ST_END_FUNCTION;
-      if (!abreviated_modproc_decl)
+      if (!abbreviated_modproc_decl)
       target = " function";
       else
 	target = " procedure";
@@ -8531,7 +8756,7 @@ gfc_match_end (gfc_statement *st)
 	{
 	  if (!gfc_notify_std (GFC_STD_F2008, "END statement "
 			       "instead of %s statement at %L",
-			       abreviated_modproc_decl ? "END PROCEDURE"
+			       abbreviated_modproc_decl ? "END PROCEDURE"
 			       : gfc_ascii_statement(*st), &old_loc))
 	    goto cleanup;
 	}
@@ -8549,7 +8774,7 @@ gfc_match_end (gfc_statement *st)
   /* Verify that we've got the sort of end-block that we're expecting.  */
   if (gfc_match (target) != MATCH_YES)
     {
-      gfc_error ("Expecting %s statement at %L", abreviated_modproc_decl
+      gfc_error ("Expecting %s statement at %L", abbreviated_modproc_decl
 		 ? "END PROCEDURE" : gfc_ascii_statement(*st), &old_loc);
       goto cleanup;
     }
@@ -9411,8 +9636,11 @@ do_parm (void)
 {
   gfc_symbol *sym;
   gfc_expr *init;
+  gfc_charlen *saved_cl_list;
   match m;
   bool t;
+
+  saved_cl_list = gfc_current_ns->cl_list;
 
   m = gfc_match_symbol (&sym, 0);
   if (m == MATCH_NO)
@@ -9454,7 +9682,8 @@ do_parm (void)
       goto cleanup;
     }
 
-  t = add_init_expr_to_sym (sym->name, &init, &gfc_current_locus);
+  t = add_init_expr_to_sym (sym->name, &init, &gfc_current_locus,
+			    saved_cl_list);
   return (t) ? MATCH_YES : MATCH_ERROR;
 
 cleanup:
@@ -10865,6 +11094,7 @@ enumerator_decl (void)
   char name[GFC_MAX_SYMBOL_LEN + 1];
   gfc_expr *initializer;
   gfc_array_spec *as = NULL;
+  gfc_charlen *saved_cl_list;
   gfc_symbol *sym;
   locus var_locus;
   match m;
@@ -10872,6 +11102,7 @@ enumerator_decl (void)
   locus old_locus;
 
   initializer = NULL;
+  saved_cl_list = gfc_current_ns->cl_list;
   old_locus = gfc_current_locus;
 
   /* When we get here, we've just matched a list of attributes and
@@ -10886,7 +11117,7 @@ enumerator_decl (void)
   /* OK, we've successfully matched the declaration.  Now put the
      symbol in the current namespace. If we fail to create the symbol,
      bail out.  */
-  if (!build_sym (name, NULL, false, &as, &var_locus))
+  if (!build_sym (name, 1, NULL, false, &as, &var_locus))
     {
       m = MATCH_ERROR;
       goto cleanup;
@@ -10928,7 +11159,8 @@ enumerator_decl (void)
      to be parsed.  add_init_expr_to_sym() zeros initializer, so we
      use last_initializer below.  */
   last_initializer = initializer;
-  t = add_init_expr_to_sym (name, &initializer, &var_locus);
+  t = add_init_expr_to_sym (name, &initializer, &var_locus,
+			    saved_cl_list);
 
   /* Maintain enumerator history.  */
   gfc_find_symbol (name, NULL, 0, &sym);
@@ -11635,8 +11867,9 @@ gfc_match_final_decl (void)
   block = gfc_state_stack->previous->sym;
   gcc_assert (block);
 
-  if (!gfc_state_stack->previous || !gfc_state_stack->previous->previous
-      || gfc_state_stack->previous->previous->state != COMP_MODULE)
+  if (gfc_state_stack->previous->previous
+      && gfc_state_stack->previous->previous->state != COMP_MODULE
+      && gfc_state_stack->previous->previous->state != COMP_SUBMODULE)
     {
       gfc_error ("Derived type declaration with FINAL at %C must be in the"
 		 " specification part of a MODULE");
@@ -11727,6 +11960,9 @@ const ext_attr_t ext_attr_list[] = {
   { "fastcall",     EXT_ATTR_FASTCALL,     "fastcall"  },
   { "no_arg_check", EXT_ATTR_NO_ARG_CHECK, NULL        },
   { "deprecated",   EXT_ATTR_DEPRECATED,   NULL	       },
+  { "noinline",     EXT_ATTR_NOINLINE,     NULL	       },
+  { "noreturn",     EXT_ATTR_NORETURN,     NULL	       },
+  { "weak",	    EXT_ATTR_WEAK,	   NULL	       },
   { NULL,           EXT_ATTR_LAST,         NULL        }
 };
 

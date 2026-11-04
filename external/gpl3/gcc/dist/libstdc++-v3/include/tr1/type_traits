@@ -1,6 +1,6 @@
 // TR1 type_traits -*- C++ -*-
 
-// Copyright (C) 2004-2022 Free Software Foundation, Inc.
+// Copyright (C) 2004-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -30,6 +30,8 @@
 #define _GLIBCXX_TR1_TYPE_TRAITS 1
 
 #pragma GCC system_header
+
+#include <bits/requires_hosted.h> // TR1
 
 #include <bits/c++config.h>
 
@@ -116,8 +118,11 @@ namespace tr1
   _DEFINE_SPEC(0, __is_integral_helper, unsigned int, true)
   _DEFINE_SPEC(0, __is_integral_helper, long, true)
   _DEFINE_SPEC(0, __is_integral_helper, unsigned long, true)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wlong-long"
   _DEFINE_SPEC(0, __is_integral_helper, long long, true)
   _DEFINE_SPEC(0, __is_integral_helper, unsigned long long, true)
+#pragma GCC diagnostic pop
 
   /// is_integral
   template<typename _Tp>
@@ -537,6 +542,8 @@ namespace tr1
     : public integral_constant<bool, is_pod<_Tp>::value>
     { };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wlong-long"
   template<typename>
     struct __is_signed_helper
     : public false_type { };
@@ -560,6 +567,7 @@ namespace tr1
   _DEFINE_SPEC(0, __is_unsigned_helper, unsigned int, true)
   _DEFINE_SPEC(0, __is_unsigned_helper, unsigned long, true)
   _DEFINE_SPEC(0, __is_unsigned_helper, unsigned long long, true)
+#pragma GCC diagnostic pop
 
   template<typename _Tp>
     struct is_unsigned

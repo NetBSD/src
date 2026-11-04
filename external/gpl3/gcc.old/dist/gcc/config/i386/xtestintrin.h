@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -21,8 +21,8 @@
    see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifndef _IMMINTRIN_H_INCLUDED
-# error "Never use <xtestintrin.h> directly; include <immintrin.h> instead."
+#ifndef _X86GPRINTRIN_H_INCLUDED
+# error "Never use <xtestintrin.h> directly; include <x86gprintrin.h> instead."
 #endif
 
 #ifndef _XTESTINTRIN_H_INCLUDED

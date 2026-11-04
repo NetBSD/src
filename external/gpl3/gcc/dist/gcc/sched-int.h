@@ -1,6 +1,6 @@
 /* Instruction scheduling pass.  This file contains definitions used
    internally in the scheduler.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -87,7 +87,7 @@ extern struct common_sched_info_def *common_sched_info;
 extern const struct common_sched_info_def haifa_common_sched_info;
 
 /* Return true if selective scheduling pass is working.  */
-static inline bool
+inline bool
 sel_sched_p (void)
 {
   return common_sched_info->sched_pass_id == SCHED_SEL_PASS;
@@ -471,7 +471,9 @@ public:
   /* An INSN_LIST containing all insns with pending read operations.  */
   rtx_insn_list *pending_read_insns;
 
-  /* An EXPR_LIST containing all MEM rtx's which are pending reads.  */
+  /* An EXPR_LIST containing all MEM rtx's which are pending reads.  The list
+     can contain stack pointer instead of memory.  This is a special case (see
+     sched-deps.cc::sched_analyze_1).  */
   rtx_expr_list *pending_read_mems;
 
   /* An INSN_LIST containing all insns with pending write operations.  */
@@ -585,11 +587,11 @@ struct haifa_sched_info
   /* Add all insns that are initially ready to the ready list.  Called once
      before scheduling a set of insns.  */
   void (*init_ready_list) (void);
-  /* Called after taking an insn from the ready list.  Returns nonzero if
-     this insn can be scheduled, nonzero if we should silently discard it.  */
-  int (*can_schedule_ready_p) (rtx_insn *);
-  /* Return nonzero if there are more insns that should be scheduled.  */
-  int (*schedule_more_p) (void);
+  /* Called after taking an insn from the ready list.  Returns true if
+     this insn can be scheduled, false if we should silently discard it.  */
+  bool (*can_schedule_ready_p) (rtx_insn *);
+  /* Return true if there are more insns that should be scheduled.  */
+  bool (*schedule_more_p) (void);
   /* Called after an insn has all its hard dependencies resolved.
      Adjusts status of instruction (which is passed through second parameter)
      to indicate if instruction should be moved to the ready list or the
@@ -605,9 +607,9 @@ struct haifa_sched_info
      static buffer for this.  The ALIGNED parameter should cause the string
      to be formatted so that multiple output lines will line up nicely.  */
   const char *(*print_insn) (const rtx_insn *, int);
-  /* Return nonzero if an insn should be included in priority
+  /* Return true if an insn should be included in priority
      calculations.  */
-  int (*contributes_to_priority) (rtx_insn *, rtx_insn *);
+  bool (*contributes_to_priority) (rtx_insn *, rtx_insn *);
 
   /* Return true if scheduling insn (passed as the parameter) will trigger
      finish of scheduling current block.  */
@@ -1397,7 +1399,7 @@ extern void free_global_sched_pressure_data (void);
 extern int haifa_classify_insn (const_rtx);
 extern void get_ebb_head_tail (basic_block, basic_block,
 			       rtx_insn **, rtx_insn **);
-extern int no_real_insns_p (const rtx_insn *, const rtx_insn *);
+extern bool no_real_insns_p (const rtx_insn *, const rtx_insn *);
 
 extern int insn_sched_cost (rtx_insn *);
 extern int dep_cost_1 (dep_t, dw_t);
@@ -1509,7 +1511,7 @@ extern void dump_rgn_dependencies_dot (FILE *);
 extern void dump_rgn_dependencies_dot (const char *);
 
 extern void free_rgn_deps (void);
-extern int contributes_to_priority (rtx_insn *, rtx_insn *);
+extern bool contributes_to_priority (rtx_insn *, rtx_insn *);
 extern void extend_rgns (int *, int *, sbitmap, int *);
 extern void deps_join (class deps_desc *, class deps_desc *);
 
@@ -1588,7 +1590,7 @@ typedef struct _sd_iterator sd_iterator_def;
    struct _deps_link.  */
 
 /* Return initialized iterator.  */
-static inline sd_iterator_def
+inline sd_iterator_def
 sd_iterator_start (rtx insn, sd_list_types_def types)
 {
   /* Some dep_link a pointer to which will return NULL.  */
@@ -1607,7 +1609,7 @@ sd_iterator_start (rtx insn, sd_list_types_def types)
 }
 
 /* Return the current element.  */
-static inline bool
+inline bool
 sd_iterator_cond (sd_iterator_def *it_ptr, dep_t *dep_ptr)
 {
   while (true)
@@ -1645,7 +1647,7 @@ sd_iterator_cond (sd_iterator_def *it_ptr, dep_t *dep_ptr)
 }
 
 /* Advance iterator.  */
-static inline void
+inline void
 sd_iterator_next (sd_iterator_def *it_ptr)
 {
   it_ptr->linkp = &DEP_LINK_NEXT (*it_ptr->linkp);
@@ -1676,6 +1678,8 @@ extern void sd_unresolve_dep (sd_iterator_def);
 extern void sd_copy_back_deps (rtx_insn *, rtx_insn *, bool);
 extern void sd_delete_dep (sd_iterator_def);
 extern void sd_debug_lists (rtx, sd_list_types_def);
+
+extern int dep_list_size (rtx_insn *, sd_list_types_def);
 
 /* Macros and declarations for scheduling fusion.  */
 #define FUSION_MAX_PRIORITY (INT_MAX)

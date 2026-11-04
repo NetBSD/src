@@ -1,5 +1,5 @@
 /* Target Code for TI C6X
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Contributed by Andrew Jenner <andrew@codesourcery.com>
    Contributed by Bernd Schmidt <bernds@codesourcery.com>
 
@@ -195,7 +195,7 @@ typedef int unit_req_table[2][UNIT_REQ_MAX];
 static unit_req_table unit_reqs;
 
 /* Register map for debugging.  */
-unsigned const dbx_register_map[FIRST_PSEUDO_REGISTER] =
+unsigned const debugger_register_map[FIRST_PSEUDO_REGISTER] =
 {
   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,	/* A0 - A15.  */
   37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,	/* A16 - A32.  */
@@ -855,10 +855,10 @@ c6x_in_small_data_p (const_tree exp)
   if (TREE_CODE (exp) == FUNCTION_DECL)
     return false;
 
-  if (TREE_CODE (exp) == VAR_DECL && DECL_WEAK (exp))
+  if (VAR_P (exp) && DECL_WEAK (exp))
     return false;
 
-  if (TREE_CODE (exp) == VAR_DECL && DECL_SECTION_NAME (exp))
+  if (VAR_P (exp) && DECL_SECTION_NAME (exp))
     {
       const char *section = DECL_SECTION_NAME (exp);
 
@@ -2444,7 +2444,8 @@ c6x_legitimate_address_p_1 (machine_mode mode, rtx x, bool strict,
 }
 
 static bool
-c6x_legitimate_address_p (machine_mode mode, rtx x, bool strict)
+c6x_legitimate_address_p (machine_mode mode, rtx x, bool strict,
+			  code_helper = ERROR_MARK)
 {
   return c6x_legitimate_address_p_1 (mode, x, strict, false);
 }
@@ -2580,7 +2581,7 @@ static unsigned reg_save_order[] =
   REG_B14, REG_A15
 };
 
-#define N_SAVE_ORDER (sizeof reg_save_order / sizeof *reg_save_order)
+#define N_SAVE_ORDER (ARRAY_SIZE (reg_save_order))
 
 /* Compute the layout of the stack frame and store it in FRAME.  */
 

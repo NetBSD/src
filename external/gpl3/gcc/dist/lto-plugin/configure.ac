@@ -25,6 +25,17 @@ LDFLAGS="$saved_LDFLAGS"
 if test "x$have_static_libgcc" = xyes; then
    ac_lto_plugin_ldflags="-Wc,-static-libgcc"
 fi
+
+# Enable --enable-host-bind-now
+AC_ARG_ENABLE(host-bind-now,
+[AS_HELP_STRING([--enable-host-bind-now],
+       [link host code as BIND_NOW])])
+AC_SUBST(enable_host_bind_now)
+
+if test x$enable_host_bind_now = xyes; then
+  ac_lto_plugin_ldflags="$ac_lto_plugin_ldflags -Wl,-z,now"
+fi
+
 AC_SUBST(ac_lto_plugin_ldflags)
 
 GCC_CET_HOST_FLAGS(CET_HOST_FLAGS)
@@ -87,7 +98,30 @@ AM_CONDITIONAL(LTO_PLUGIN_USE_SYMVER, [test "x$lto_plugin_use_symver" != xno])
 AM_CONDITIONAL(LTO_PLUGIN_USE_SYMVER_GNU, [test "x$lto_plugin_use_symver" = xgnu])
 AM_CONDITIONAL(LTO_PLUGIN_USE_SYMVER_SUN, [test "x$lto_plugin_use_symver" = xsun])
 
+# Check for thread headers.
+use_locking=no
+ac_lto_plugin_extra_ldflags=
+
+case $host in
+  riscv*)
+    # do not use locking as pthread depends on libatomic
+    ;;
+  *-linux*)
+    use_locking=yes
+    ;;
+esac
+
+if test x$use_locking = xyes; then
+  AC_CHECK_HEADER(pthread.h,
+    [AC_DEFINE(HAVE_PTHREAD_LOCKING, 1, [Define if the system provides pthread locking mechanism.])])
+
+  ac_lto_plugin_extra_ldflags="-pthread"
+fi
+
+AC_SUBST(ac_lto_plugin_extra_ldflags)
+
 AM_PROG_LIBTOOL
+AM_CONDITIONAL([ENABLE_DARWIN_AT_RPATH], [test x$enable_darwin_at_rpath = xyes])
 ACX_LT_HOST_FLAGS
 AC_SUBST(target_noncanonical)
 AC_TYPE_INT64_T

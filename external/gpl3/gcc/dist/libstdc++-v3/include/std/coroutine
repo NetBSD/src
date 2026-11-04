@@ -1,6 +1,6 @@
 // <coroutine> -*- C++ -*-
 
-// Copyright (C) 2019-2022 Free Software Foundation, Inc.
+// Copyright (C) 2019-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -31,15 +31,21 @@
 
 #pragma GCC system_header
 
-// It is very likely that earlier versions would work, but they are untested.
-#if __cplusplus >= 201402L
+#define __glibcxx_want_coroutine
+#include <bits/version.h>
+
+#if !__cpp_impl_coroutine
+# error "the <coroutine> header requires -fcoroutines"
+#endif
+
+#ifdef __cpp_lib_coroutine // C++ >= 14 && impl_coroutine
 
 #include <type_traits>
 #if __cplusplus > 201703L
 # include <compare>
 #endif
 
-#if !defined __cpp_lib_three_way_comparison && _GLIBCXX_HOSTED
+#if !defined __cpp_lib_three_way_comparison
 # include <bits/stl_function.h> // for std::less
 #endif
 
@@ -54,10 +60,6 @@
 namespace std _GLIBCXX_VISIBILITY (default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
-
-#if __cpp_impl_coroutine
-
-#define __cpp_lib_coroutine 201902L
 
   inline namespace __n4861 {
 
@@ -97,7 +99,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     {
     public:
       // [coroutine.handle.con], construct/reset
-      constexpr coroutine_handle() noexcept : _M_fr_ptr(0) {}
+      constexpr coroutine_handle() noexcept : _M_fr_ptr(nullptr) {}
 
       constexpr coroutine_handle(std::nullptr_t __h) noexcept
 	: _M_fr_ptr(__h)
@@ -165,11 +167,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   constexpr bool
   operator<(coroutine_handle<> __a, coroutine_handle<> __b) noexcept
   {
-#if _GLIBCXX_HOSTED
     return less<void*>()(__a.address(), __b.address());
-#else
-    return (__UINTPTR_TYPE__)__a.address() < (__UINTPTR_TYPE__)__b.address();
-#endif
   }
 
   constexpr bool
@@ -343,7 +341,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   } // namespace __n4861
 
-#if _GLIBCXX_HOSTED
   template<typename _Tp> struct hash;
 
   template<typename _Promise>
@@ -355,15 +352,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	return reinterpret_cast<size_t>(__h.address());
       }
     };
-#endif
-
-#else
-#error "the coroutine header requires -fcoroutines"
-#endif
 
   _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std
 
-#endif // C++14 (we are allowing use from at least this)
+#endif // __cpp_lib_coroutine
 
 #endif // _GLIBCXX_COROUTINE

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.2.1 2024/07/01 01:01:06 perseant Exp $
+#	$NetBSD: Makefile,v 1.13.2.2 2026/11/04 22:53:07 perseant Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -9,7 +9,7 @@ LIBISPRIVATE=	yes
 LIB=		common
 
 .include "${.CURDIR}/defs.mk"
-SRCS=	${G_OBJS-libcommon:S/memory-block.o/memory-block.cc/:S/diagnostic-format-json.o/diagnostic-format-json.cc/:S/sort.o/sort.cc/:S/json.o/json.cc/:.o=.cc}
+SRCS=	${G_OBJS-libcommon:S/text-art\///:.o=.cc}
 
 # XXX make sure this doesn't have more than it needs
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
@@ -39,4 +39,4 @@ HOST_CFLAGS:=	${HOST_CXXFLAGS}
 CC:=		${CXX}
 CFLAGS:=	${CXXFLAGS}
 
-.PATH: ${DIST}/gcc
+.PATH: ${DIST}/gcc ${DIST}/gcc/text-art

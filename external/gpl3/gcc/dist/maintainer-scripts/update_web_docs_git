@@ -14,6 +14,17 @@ export GITROOT
 
 PATH=/usr/local/bin:$PATH
 
+makeinfo_git=/home/gccadmin/texinfo/install-git/bin/
+if [ -x "${makeinfo_git}"/makeinfo ]; then
+    : "${MAKEINFO:=${makeinfo_git}/makeinfo}"
+    : "${TEXI2DVI:=${makeinfo_git}/texi2dvi}"
+    : "${TEXI2PDF:=${makeinfo_git}/texi2pdf}"
+else
+    : "${MAKEINFO:=makeinfo}"
+    : "${TEXI2DVI:=texi2dvi}"
+    : "${TEXI2PDF:=texi2pdf}"
+fi
+
 MANUALS="cpp
   cppinternals
   fastjar
@@ -21,8 +32,10 @@ MANUALS="cpp
   gccgo
   gccint
   gcj
+  gdc
   gfortran
   gfc-internals
+  gm2
   gnat_ugn
   gnat-style
   gnat_rm
@@ -32,7 +45,8 @@ MANUALS="cpp
   libiberty
   porting"
 
-CSS=/gcc.css
+BUGURL="http://gcc.gnu.org/bugs/"
+CSS=/texinfo-manuals.css
 
 WWWBASE=${WWWBASE:-"/www/gcc/htdocs"}
 WWWBASE_PREFORMATTED=/www/gcc/htdocs-preformatted
@@ -153,11 +167,11 @@ includedir=gcc/gcc/doc/include
    fi
    echo "@set srcdir $WORKDIR/gcc/gcc"
    echo "@set VERSION_PACKAGE (GCC)"
-   echo "@set BUGURL @uref{http://gcc.gnu.org/bugs/}"
+   echo "@set BUGURL @uref{$BUGURL}"
 ) > $includedir/gcc-vers.texi
 
 # Generate libquadmath-vers.texi.
-echo "@set BUGURL @uref{http://gcc.gnu.org/bugs/}" \
+echo "@set BUGURL @uref{$BUGURL}" \
   > $includedir/libquadmath-vers.texi
 
 # Now convert the relevant files from texi to HTML, PDF and PostScript.
@@ -165,34 +179,28 @@ for file in $MANUALS; do
   filename=`find . -name ${file}.texi`
   if [ "${filename}" ]; then
     includes="-I ${includedir} -I `dirname ${filename}`"
-    if [ "$file" = "gnat_ugn" ]; then
+    if [ "$file" = "gm2" ]; then
+      includes="$includes -I gcc/gcc/m2/target-independent"
+      includes="$includes -I gcc/gcc/m2/target-independent/m2"
+    elif [ "$file" = "gnat_ugn" ]; then
       includes="$includes -I gcc/gcc/ada -I gcc/gcc/ada/doc/gnat_ugn"
     fi
-    makeinfo --html --css-ref $CSS $includes -o ${file} ${filename}
+    "${MAKEINFO}" --html -c CONTENTS_OUTPUT_LOCATION=inline --css-ref $CSS $includes -o ${file} ${filename}
     tar cf ${file}-html.tar ${file}/*.html
-    texi2dvi $includes -o ${file}.dvi ${filename} </dev/null >/dev/null && dvips -o ${file}.ps ${file}.dvi
-    texi2pdf $includes -o ${file}.pdf ${filename} </dev/null
+    "${TEXI2DVI}" $includes -o ${file}.dvi ${filename} </dev/null >/dev/null && dvips -o ${file}.ps ${file}.dvi
+    "${TEXI2PDF}" $includes -o ${file}.pdf ${filename} </dev/null
     mkdir -p $DOCSDIR/$file
   fi
 done
 
-# The jit is a special-case, using sphinx rather than texinfo.
-# Specifically, the jit docs need sphinx 1.0 or later.
+# The jit is a special-case, using Sphinx rather than texinfo.
+# Specifically, the jit docs need Sphinx 3.0 or later.
 #
-# The jit/docs Makefile uses the executable $(SPHINXBUILD),
-# defaulting to "sphinx-build".
-#
-# sphinx is packaged in Fedora and EPEL 6 within "python-sphinx",
-# in RHEL 8 within "python3-sphinx",
-# and in openSUSE within "python-Sphinx".
-#
-# For EPEL6, python-sphinx is sphinx 0.6.6, which is missing various
-# directives (e.g. ":c:macro:"), so we need the variant
-# python-sphinx10 package.  The latter installs its executable as
-#   /usr/bin/sphinx-1.0-build
-# so we needed to override SPHINXBUILD with this when invoking "make".
+# Use the Sphinx installed in a virtual environment so that
+# we don't depend on a system package.
+
 pushd gcc/gcc/jit/docs
-make html || true
+make html SPHINXBUILD=/home/gccadmin/venv/bin/sphinx-build || true
 popd
 cp -a gcc/gcc/jit/docs/_build/html jit
 mkdir -p $DOCSDIR/jit

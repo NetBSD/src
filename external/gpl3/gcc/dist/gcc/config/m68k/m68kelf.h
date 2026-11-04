@@ -1,7 +1,7 @@
 /* m68kelf support, derived from m68kv4.h */
 
 /* Target definitions for GNU compiler for mc680x0 running System V.4
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    Written by Ron Guilmette (rfg@netcom.com) and Fred Fish (fnf@cygnus.com).
 
@@ -59,12 +59,12 @@ along with GCC; see the file COPYING3.  If not see
 	if (ADDRESS_REG_P (operands[0]))		\
 	  return "jmp %%pc@(2,%0:l)";			\
 	else if (TARGET_LONG_JUMP_TABLE_OFFSETS)	\
-	  return "jmp %%pc@(2,%0:l)";			\
+	  return "jmp %%pc@(%l1,%0:l)";			\
 	else						\
 	  return "ext%.l %0\n\tjmp %%pc@(2,%0:l)";	\
       }							\
     else if (TARGET_LONG_JUMP_TABLE_OFFSETS)		\
-      return "jmp %%pc@(2,%0:l)";			\
+      return "jmp %%pc@(%l1,%0:l)";			\
     else						\
       return "jmp %%pc@(2,%0:w)";			\
   } while (0)
@@ -100,8 +100,8 @@ do {								\
    SVR4 debugger in the m68k/SVR4 reference port, where d0-d7
    are 0-7, a0-a8 are 8-15, and fp0-fp7 are 16-23.  */
 
-#undef DBX_REGISTER_NUMBER
-#define DBX_REGISTER_NUMBER(REGNO) (REGNO)
+#undef DEBUGGER_REGNO
+#define DEBUGGER_REGNO(REGNO) (REGNO)
 
 #if 0
 /* SVR4 m68k assembler is bitching on the `comm i,1,1' which askes for 

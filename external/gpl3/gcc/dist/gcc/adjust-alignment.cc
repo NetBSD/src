@@ -1,5 +1,5 @@
 /* Adjust alignment for local variable.
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
    Contributed by Kito Cheng <kito.cheng@sifive.com>
 
 This file is part of GCC.
@@ -50,7 +50,7 @@ public:
     : gimple_opt_pass (pass_data_adjust_alignment, ctxt)
   {}
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 }; // class pass_adjust_alignment
 
 } // anon namespace

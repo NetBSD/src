@@ -1,6 +1,6 @@
 // Utilities for representing and manipulating ranges -*- C++ -*-
 
-// Copyright (C) 2019-2022 Free Software Foundation, Inc.
+// Copyright (C) 2019-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -33,8 +33,9 @@
 #if __cplusplus > 201703L
 # include <bits/ranges_base.h>
 # include <bits/utility.h>
+# include <bits/invoke.h>
 
-#ifdef __cpp_lib_ranges
+#ifdef __glibcxx_ranges
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
@@ -53,9 +54,7 @@ namespace ranges
       concept __has_arrow = input_iterator<_It>
 	&& (is_pointer_v<_It> || requires(_It __it) { __it.operator->(); });
 
-    template<typename _Tp, typename _Up>
-      concept __different_from
-	= !same_as<remove_cvref_t<_Tp>, remove_cvref_t<_Up>>;
+    using std::__detail::__different_from;
   } // namespace __detail
 
   /// The ranges::view_interface class template
@@ -97,14 +96,26 @@ namespace ranges
       constexpr bool
       empty()
       noexcept(noexcept(_S_empty(_M_derived())))
-      requires forward_range<_Derived>
+      requires forward_range<_Derived> && (!sized_range<_Derived>)
       { return _S_empty(_M_derived()); }
+
+      constexpr bool
+      empty()
+      noexcept(noexcept(ranges::size(_M_derived()) == 0))
+      requires sized_range<_Derived>
+      { return ranges::size(_M_derived()) == 0; }
 
       constexpr bool
       empty() const
       noexcept(noexcept(_S_empty(_M_derived())))
-      requires forward_range<const _Derived>
+      requires forward_range<const _Derived> && (!sized_range<const _Derived>)
       { return _S_empty(_M_derived()); }
+
+      constexpr bool
+      empty() const
+      noexcept(noexcept(ranges::size(_M_derived()) == 0))
+      requires sized_range<const _Derived>
+      { return ranges::size(_M_derived()) == 0; }
 
       constexpr explicit
       operator bool() noexcept(noexcept(ranges::empty(_M_derived())))
@@ -180,6 +191,24 @@ namespace ranges
 	constexpr decltype(auto)
 	operator[](range_difference_t<_Range> __n) const
 	{ return ranges::begin(_M_derived())[__n]; }
+
+#if __cplusplus > 202002L
+      constexpr auto
+      cbegin() requires input_range<_Derived>
+      { return ranges::cbegin(_M_derived()); }
+
+      constexpr auto
+      cbegin() const requires input_range<const _Derived>
+      { return ranges::cbegin(_M_derived()); }
+
+      constexpr auto
+      cend() requires input_range<_Derived>
+      { return ranges::cend(_M_derived()); }
+
+      constexpr auto
+      cend() const requires input_range<const _Derived>
+      { return ranges::cend(_M_derived()); }
+#endif
     };
 
   namespace __detail
@@ -195,6 +224,10 @@ namespace ranges
 	&& !__uses_nonqualification_pointer_conversion<decay_t<_From>,
 						       decay_t<_To>>;
 
+#if __glibcxx_tuple_like // >= C++23
+    // P2165R4 version of __pair_like is defined in <bits/stl_pair.h>.
+#else
+    // C++20 version of __pair_like from P2321R2.
     template<typename _Tp>
       concept __pair_like
 	= !is_reference_v<_Tp> && requires(_Tp __t)
@@ -206,10 +239,11 @@ namespace ranges
 	  { get<0>(__t) } -> convertible_to<const tuple_element_t<0, _Tp>&>;
 	  { get<1>(__t) } -> convertible_to<const tuple_element_t<1, _Tp>&>;
 	};
+#endif
 
     template<typename _Tp, typename _Up, typename _Vp>
       concept __pair_like_convertible_from
-	= !range<_Tp> && __pair_like<_Tp>
+	= !range<_Tp> && !is_reference_v<_Tp> && __pair_like<_Tp>
 	&& constructible_from<_Tp, _Up, _Vp>
 	&& __convertible_to_non_slicing<_Up, tuple_element_t<0, _Tp>>
 	&& convertible_to<_Vp, tuple_element_t<1, _Tp>>;
@@ -239,13 +273,21 @@ namespace ranges
       using __size_type
 	= __detail::__make_unsigned_like_t<iter_difference_t<_It>>;
 
-      template<typename, bool = _S_store_size>
+      template<typename _Tp, bool = _S_store_size>
 	struct _Size
-	{ };
+	{
+	  [[__gnu__::__always_inline__]]
+	  constexpr _Size(_Tp = {}) { }
+	};
 
       template<typename _Tp>
 	struct _Size<_Tp, true>
-	{ _Tp _M_size; };
+	{
+	  [[__gnu__::__always_inline__]]
+	  constexpr _Size(_Tp __s = {}) : _M_size(__s) { }
+
+	  _Tp _M_size;
+	};
 
       [[no_unique_address]] _Size<__size_type> _M_size = {};
 
@@ -266,11 +308,8 @@ namespace ranges
       noexcept(is_nothrow_constructible_v<_It, decltype(__i)>
 	       && is_nothrow_constructible_v<_Sent, _Sent&>)
 	requires (_Kind == subrange_kind::sized)
-      : _M_begin(std::move(__i)), _M_end(__s)
-      {
-	if constexpr (_S_store_size)
-	  _M_size._M_size = __n;
-      }
+      : _M_begin(std::move(__i)), _M_end(__s), _M_size(__n)
+      { }
 
       template<__detail::__different_from<subrange> _Rng>
 	requires borrowed_range<_Rng>
@@ -432,7 +471,17 @@ namespace ranges
     using borrowed_subrange_t = __conditional_t<borrowed_range<_Range>,
 						subrange<iterator_t<_Range>>,
 						dangling>;
+
+  // __is_subrange is defined in <bits/utility.h>.
+  template<typename _Iter, typename _Sent, subrange_kind _Kind>
+    inline constexpr bool __detail::__is_subrange<subrange<_Iter, _Sent, _Kind>> = true;
 } // namespace ranges
+
+#if __glibcxx_tuple_like // >= C++23
+  // __is_tuple_like_v is defined in <bits/stl_pair.h>.
+  template<typename _It, typename _Sent, ranges::subrange_kind _Kind>
+    inline constexpr bool __is_tuple_like_v<ranges::subrange<_It, _Sent, _Kind>> = true;
+#endif
 
 // The following ranges algorithms are used by <ranges>, and are defined here
 // so that <ranges> can avoid including all of <bits/ranges_algo.h>.
@@ -652,6 +701,99 @@ namespace ranges
   };
 
   inline constexpr __search_fn search{};
+
+  struct __min_fn
+  {
+    template<typename _Tp, typename _Proj = identity,
+	     indirect_strict_weak_order<projected<const _Tp*, _Proj>>
+	       _Comp = ranges::less>
+      constexpr const _Tp&
+      operator()(const _Tp& __a, const _Tp& __b,
+		 _Comp __comp = {}, _Proj __proj = {}) const
+      {
+	if (std::__invoke(__comp,
+			  std::__invoke(__proj, __b),
+			  std::__invoke(__proj, __a)))
+	  return __b;
+	else
+	  return __a;
+      }
+
+    template<input_range _Range, typename _Proj = identity,
+	     indirect_strict_weak_order<projected<iterator_t<_Range>, _Proj>>
+	       _Comp = ranges::less>
+      requires indirectly_copyable_storable<iterator_t<_Range>,
+					    range_value_t<_Range>*>
+      constexpr range_value_t<_Range>
+      operator()(_Range&& __r, _Comp __comp = {}, _Proj __proj = {}) const
+      {
+	auto __first = ranges::begin(__r);
+	auto __last = ranges::end(__r);
+	__glibcxx_assert(__first != __last);
+	auto __result = *__first;
+	while (++__first != __last)
+	  {
+	    auto&& __tmp = *__first;
+	    if (std::__invoke(__comp,
+			      std::__invoke(__proj, __tmp),
+			      std::__invoke(__proj, __result)))
+	      __result = std::forward<decltype(__tmp)>(__tmp);
+	  }
+	return __result;
+      }
+
+    template<copyable _Tp, typename _Proj = identity,
+	     indirect_strict_weak_order<projected<const _Tp*, _Proj>>
+	       _Comp = ranges::less>
+      constexpr _Tp
+      operator()(initializer_list<_Tp> __r,
+		 _Comp __comp = {}, _Proj __proj = {}) const
+      {
+	return (*this)(ranges::subrange(__r),
+		       std::move(__comp), std::move(__proj));
+      }
+  };
+
+  inline constexpr __min_fn min{};
+
+  struct __adjacent_find_fn
+  {
+    template<forward_iterator _Iter, sentinel_for<_Iter> _Sent,
+	     typename _Proj = identity,
+	     indirect_binary_predicate<projected<_Iter, _Proj>,
+				       projected<_Iter, _Proj>> _Pred
+	       = ranges::equal_to>
+      constexpr _Iter
+      operator()(_Iter __first, _Sent __last,
+		 _Pred __pred = {}, _Proj __proj = {}) const
+      {
+	if (__first == __last)
+	  return __first;
+	auto __next = __first;
+	for (; ++__next != __last; __first = __next)
+	  {
+	    if (std::__invoke(__pred,
+			      std::__invoke(__proj, *__first),
+			      std::__invoke(__proj, *__next)))
+	      return __first;
+	  }
+	return __next;
+      }
+
+    template<forward_range _Range, typename _Proj = identity,
+	     indirect_binary_predicate<
+	       projected<iterator_t<_Range>, _Proj>,
+	       projected<iterator_t<_Range>, _Proj>> _Pred = ranges::equal_to>
+      constexpr borrowed_iterator_t<_Range>
+      operator()(_Range&& __r, _Pred __pred = {}, _Proj __proj = {}) const
+      {
+	return (*this)(ranges::begin(__r), ranges::end(__r),
+		       std::move(__pred), std::move(__proj));
+      }
+  };
+
+  inline constexpr __adjacent_find_fn adjacent_find{};
+
 } // namespace ranges
 
   using ranges::get;

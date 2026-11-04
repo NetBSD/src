@@ -1,5 +1,5 @@
 /* Definitions for code generation pass of GNU compiler.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -37,7 +37,8 @@ enum expand_operand_type {
   EXPAND_CONVERT_TO,
   EXPAND_CONVERT_FROM,
   EXPAND_ADDRESS,
-  EXPAND_INTEGER
+  EXPAND_INTEGER,
+  EXPAND_UNDEFINED_INPUT
 };
 
 /* Information about an operand for instruction expansion.  */
@@ -70,7 +71,7 @@ public:
 /* Initialize OP with the given fields.  Initialise the other fields
    to their default values.  */
 
-static inline void
+inline void
 create_expand_operand (class expand_operand *op,
 		       enum expand_operand_type type,
 		       rtx value, machine_mode mode,
@@ -87,7 +88,7 @@ create_expand_operand (class expand_operand *op,
 
 /* Make OP describe an operand that must use rtx X, even if X is volatile.  */
 
-static inline void
+inline void
 create_fixed_operand (class expand_operand *op, rtx x)
 {
   create_expand_operand (op, EXPAND_FIXED, x, VOIDmode, false);
@@ -98,7 +99,7 @@ create_fixed_operand (class expand_operand *op, rtx x)
    It is OK for VALUE to be inconsistent with MODE, although it will just
    be ignored in that case.  */
 
-static inline void
+inline void
 create_output_operand (class expand_operand *op, rtx x,
 		       machine_mode mode)
 {
@@ -110,17 +111,27 @@ create_output_operand (class expand_operand *op, rtx x,
    VALUE be copied into a different kind of rtx before being passed
    as an operand.  */
 
-static inline void
+inline void
 create_input_operand (class expand_operand *op, rtx value,
 		      machine_mode mode)
 {
   create_expand_operand (op, EXPAND_INPUT, value, mode, false);
 }
 
+/* Make OP describe an undefined input operand of mode MODE.  MODE cannot
+   be null.  */
+
+inline void
+create_undefined_input_operand (class expand_operand *op, machine_mode mode)
+{
+  create_expand_operand (op, EXPAND_UNDEFINED_INPUT, gen_rtx_SCRATCH (mode),
+			 mode, false);
+}
+
 /* Like create_input_operand, except that VALUE must first be converted
    to mode MODE.  UNSIGNED_P says whether VALUE is unsigned.  */
 
-static inline void
+inline void
 create_convert_operand_to (class expand_operand *op, rtx value,
 			   machine_mode mode, bool unsigned_p)
 {
@@ -136,7 +147,7 @@ create_convert_operand_to (class expand_operand *op, rtx value,
    conversion (as for convert_modes) and duplicating a scalar to fill
    a vector (if VALUE is a scalar but the operand is a vector).  */
 
-static inline void
+inline void
 create_convert_operand_from (class expand_operand *op, rtx value,
 			     machine_mode mode, bool unsigned_p)
 {
@@ -147,7 +158,7 @@ create_convert_operand_from (class expand_operand *op, rtx value,
 /* Make OP describe an input Pmode address operand.  VALUE is the value
    of the address, but it may need to be converted to Pmode first.  */
 
-static inline void
+inline void
 create_address_operand (class expand_operand *op, rtx value)
 {
   create_expand_operand (op, EXPAND_ADDRESS, value, Pmode, false);
@@ -200,10 +211,10 @@ extern rtx sign_expand_binop (machine_mode, optab, optab, rtx, rtx,
 			      rtx, int, enum optab_methods);
 
 /* Generate code to perform an operation on one operand with two results.  */
-extern int expand_twoval_unop (optab, rtx, rtx, rtx, int);
+extern bool expand_twoval_unop (optab, rtx, rtx, rtx, int);
 
 /* Generate code to perform an operation on two operands with two results.  */
-extern int expand_twoval_binop (optab, rtx, rtx, rtx, rtx, int);
+extern bool expand_twoval_binop (optab, rtx, rtx, rtx, rtx, int);
 
 /* Generate code to perform an operation on two operands with two
    results, using a library function.  */
@@ -243,8 +254,8 @@ enum can_compare_purpose
 
 /* Nonzero if a compare of mode MODE can be done straightforwardly
    (without splitting it into pieces).  */
-extern int can_compare_p (enum rtx_code, machine_mode,
-			  enum can_compare_purpose);
+extern bool can_compare_p (enum rtx_code, machine_mode,
+			   enum can_compare_purpose);
 
 /* Return whether the backend can emit a vector comparison (vec_cmp/vec_cmpu)
    for code CODE, comparing operands of mode VALUE_MODE and producing a result
@@ -259,6 +270,7 @@ extern bool can_vcond_compare_p (enum rtx_code, machine_mode, machine_mode);
 /* Return whether the backend can emit vector set instructions for inserting
    element into vector at variable index position.  */
 extern bool can_vec_set_var_idx_p (machine_mode);
+extern bool can_vec_extract_var_idx_p (machine_mode, machine_mode);
 
 extern rtx prepare_operand (enum insn_code, rtx, int, machine_mode,
 			    machine_mode, int);
@@ -266,6 +278,10 @@ extern rtx prepare_operand (enum insn_code, rtx, int, machine_mode,
    to a label if the comparison is true.  */
 extern void emit_cmp_and_jump_insns (rtx, rtx, enum rtx_code, rtx,
 				     machine_mode, int, rtx,
+				     profile_probability prob
+					= profile_probability::uninitialized ());
+extern void emit_cmp_and_jump_insns (rtx, rtx, enum rtx_code, rtx,
+				     machine_mode, int, tree, rtx,
 				     profile_probability prob
 					= profile_probability::uninitialized ());
 
@@ -294,12 +310,12 @@ rtx emit_conditional_add (rtx, enum rtx_code, rtx, rtx, machine_mode,
    Likewise for subtraction and for just copying.  */
 extern rtx_insn *gen_add2_insn (rtx, rtx);
 extern rtx_insn *gen_add3_insn (rtx, rtx, rtx);
-extern int have_add2_insn (rtx, rtx);
+extern bool have_add2_insn (rtx, rtx);
 extern rtx_insn *gen_addptr3_insn (rtx, rtx, rtx);
-extern int have_addptr3_insn (rtx, rtx, rtx);
+extern bool have_addptr3_insn (rtx, rtx, rtx);
 extern rtx_insn *gen_sub2_insn (rtx, rtx);
 extern rtx_insn *gen_sub3_insn (rtx, rtx, rtx);
-extern int have_sub2_insn (rtx, rtx);
+extern bool have_sub2_insn (rtx, rtx);
 
 /* Generate the body of an insn to extend Y (with mode MFROM)
    into X (with mode MTO).  Do zero-extension if UNSIGNEDP is nonzero.  */
@@ -319,7 +335,7 @@ extern bool expand_sfix_optab (rtx, rtx, convert_optab);
 
 /* Report whether the machine description contains an insn which can
    perform the operation described by CODE and MODE.  */
-extern int have_insn_for (enum rtx_code, machine_mode);
+extern bool have_insn_for (enum rtx_code, machine_mode);
 
 /* Generate a conditional trap instruction.  */
 extern rtx_insn *gen_cond_trap (enum rtx_code, rtx, rtx, rtx);

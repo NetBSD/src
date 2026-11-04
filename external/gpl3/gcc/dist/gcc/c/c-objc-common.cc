@@ -1,5 +1,5 @@
 /* Some code common to C and ObjC front ends.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -30,16 +30,53 @@ along with GCC; see the file COPYING3.  If not see
 #include "gcc-rich-location.h"
 #include "stringpool.h"
 #include "attribs.h"
+#include "dwarf2.h"
 
 static bool c_tree_printer (pretty_printer *, text_info *, const char *,
 			    int, bool, bool, bool, bool *, const char **);
 
+/* Info for C language features which can be queried through
+   __has_{feature,extension}.  */
+
+struct c_feature_info
+{
+  const char *ident;
+  const int *enable_flag;
+};
+
+static const c_feature_info c_feature_table[] =
+{
+  { "c_alignas", &flag_isoc11 },
+  { "c_alignof", &flag_isoc11 },
+  { "c_atomic", &flag_isoc11 },
+  { "c_generic_selections", &flag_isoc11 },
+  { "c_static_assert", &flag_isoc11 },
+  { "c_thread_local", &flag_isoc11 },
+  { "cxx_binary_literals", &flag_isoc23 }
+};
+
+/* Register features specific to the C language.  */
+
+void
+c_register_features ()
+{
+  for (unsigned i = 0; i < ARRAY_SIZE (c_feature_table); i++)
+    {
+      const c_feature_info *info = c_feature_table + i;
+      const bool feat_p = !info->enable_flag || *info->enable_flag;
+      c_common_register_feature (info->ident, feat_p);
+    }
+}
+
 bool
 c_missing_noreturn_ok_p (tree decl)
 {
-  /* A missing noreturn is not ok for freestanding implementations and
-     ok for the `main' function in hosted implementations.  */
-  return flag_hosted && MAIN_NAME_P (DECL_ASSEMBLER_NAME (decl));
+  /* A missing noreturn is ok for the `main' function.  */
+  if (!MAIN_NAME_P (DECL_ASSEMBLER_NAME (decl)))
+    return false;
+
+  return flag_hosted
+    || TYPE_MAIN_VARIANT (TREE_TYPE (TREE_TYPE (decl))) == integer_type_node;
 }
 
 /* Called from check_global_declaration.  */
@@ -269,7 +306,7 @@ c_tree_printer (pretty_printer *pp, text_info *text, const char *spec,
 
   if (*spec != 'v')
     {
-      t = va_arg (*text->args_ptr, tree);
+      t = va_arg (*text->m_args_ptr, tree);
       if (set_locus)
 	text->set_location (0, DECL_SOURCE_LOCATION (t),
 			    SHOW_RANGE_WITH_CARET);
@@ -313,7 +350,7 @@ c_tree_printer (pretty_printer *pp, text_info *text, const char *spec,
       return true;
 
     case 'v':
-      pp_c_cv_qualifiers (cpp, va_arg (*text->args_ptr, int), hash);
+      pp_c_cv_qualifiers (cpp, va_arg (*text->m_args_ptr, int), hash);
       return true;
 
     default:
@@ -368,12 +405,12 @@ c_types_compatible_p (tree x, tree y)
   return comptypes (TYPE_MAIN_VARIANT (x), TYPE_MAIN_VARIANT (y));
 }
 
-/* Determine if the type is a vla type for the backend.  */
+/* Determine if the type is a variably modified type for the backend.  */
 
 bool
-c_vla_unspec_p (tree x, tree fn ATTRIBUTE_UNUSED)
+c_var_mod_p (tree x, tree fn ATTRIBUTE_UNUSED)
 {
-  return c_vla_type_p (x);
+  return C_TYPE_VARIABLY_MODIFIED (x);
 }
 
 /* Special routine to get the alias set of T for C.  */
@@ -384,15 +421,23 @@ c_get_alias_set (tree t)
   /* Allow aliasing between enumeral types and the underlying
      integer type.  This is required since those are compatible types.  */
   if (TREE_CODE (t) == ENUMERAL_TYPE)
-    {
-      tree t1 = c_common_type_for_size (tree_to_uhwi (TYPE_SIZE (t)),
-					/* short-cut commoning to signed
-					   type.  */
-					false);
-      return get_alias_set (t1);
-    }
+    return get_alias_set (ENUM_UNDERLYING_TYPE (t));
+
+  /* Structs with variable size can alias different incompatible
+     structs.  Let them alias anything.   */
+  if (RECORD_OR_UNION_TYPE_P (t) && C_TYPE_VARIABLE_SIZE (t))
+    return 0;
 
   return c_common_get_alias_set (t);
+}
+
+/* In C there are no invisible parameters like in C++ (this, in-charge, VTT,
+   etc.).  */
+
+int
+maybe_adjust_arg_pos_for_attribute (const_tree)
+{
+  return 0;
 }
 
 /* In C, no expression is dependent.  */
@@ -401,4 +446,26 @@ bool
 instantiation_dependent_expression_p (tree)
 {
   return false;
+}
+
+/* Return -1 if dwarf ATTR shouldn't be added for TYPE, or the attribute
+   value otherwise.  */
+int
+c_type_dwarf_attribute (const_tree type, int attr)
+{
+  if (type == NULL_TREE)
+    return -1;
+
+  switch (attr)
+    {
+    case DW_AT_export_symbols:
+      if (RECORD_OR_UNION_TYPE_P (type) && TYPE_NAME (type) == NULL_TREE)
+	return 1;
+      break;
+
+    default:
+      break;
+    }
+
+  return -1;
 }

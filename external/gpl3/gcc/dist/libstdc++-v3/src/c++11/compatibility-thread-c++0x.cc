@@ -1,6 +1,6 @@
 // Compatibility symbols for previous versions, C++0x bits -*- C++ -*-
 
-// Copyright (C) 2009-2022 Free Software Foundation, Inc.
+// Copyright (C) 2009-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -39,12 +39,8 @@
 # error "compatibility-thread-c++0x.cc is not needed for gnu-versioned-namespace"
 #endif
 
-#ifdef _GLIBCXX_COMPAT_
 #define _GLIBCXX_ASM_SYMVER(cur, old, version) \
    asm (".symver " #cur "," #old "@@@" #version);
-#else
-#define _GLIBCXX_ASM_SYMVER(cur, old, version)
-#endif
 
 // XXX GLIBCXX_ABI Deprecated
 // gcc-4.6.0

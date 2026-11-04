@@ -1,5 +1,5 @@
 /* Parser header
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
    Contributed by Steven Bosscher
 
 This file is part of GCC.
@@ -63,10 +63,10 @@ extern gfc_state_data *gfc_state_stack;
 #define gfc_comp_struct(s) \
   ((s) == COMP_DERIVED || (s) == COMP_STRUCTURE || (s) == COMP_MAP)
 
-int gfc_check_do_variable (gfc_symtree *);
+bool gfc_check_do_variable (gfc_symtree *);
 bool gfc_find_state (gfc_compile_state);
 gfc_state_data *gfc_enclosing_unit (gfc_compile_state *);
-const char *gfc_ascii_statement (gfc_statement);
+const char *gfc_ascii_statement (gfc_statement, bool strip_sentinel = false) ;
 match gfc_match_enum (void);
 match gfc_match_enumerator_def (void);
 void gfc_free_enum_history (void);

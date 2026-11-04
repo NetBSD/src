@@ -1,5 +1,5 @@
 /* Callgraph construction.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -26,11 +26,12 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple.h"
 #include "tree-pass.h"
 #include "cgraph.h"
-#include "gimple-fold.h"
 #include "gimple-iterator.h"
+#include "gimple-fold.h"
 #include "gimple-walk.h"
 #include "ipa-utils.h"
 #include "except.h"
+#include "gimplify.h"
 
 /* Context of record_reference.  */
 struct record_reference_ctx
@@ -79,6 +80,17 @@ record_reference (tree *tp, int *walk_subtrees, void *data)
 
       if (VAR_P (decl))
 	{
+	  /* Replace vars with their DECL_VALUE_EXPR if any.
+	     This is normally done during gimplification, but
+	     static var initializers are never gimplified.  */
+	  if (DECL_HAS_VALUE_EXPR_P (decl))
+	    {
+	      tree *p;
+	      for (p = tp; *p != decl; p = &TREE_OPERAND (*p, 0))
+		;
+	      *p = unshare_expr (DECL_VALUE_EXPR (decl));
+	      return record_reference (tp, walk_subtrees, data);
+	    }
 	  varpool_node *vnode = varpool_node::get_create (decl);
 	  ctx->varpool_node->create_reference (vnode, IPA_REF_ADDR);
 	}
@@ -290,7 +302,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_build_cgraph_edges
 
@@ -484,8 +496,11 @@ public:
   {}
 
   /* opt_pass methods: */
-  opt_pass * clone () { return new pass_rebuild_cgraph_edges (m_ctxt); }
-  virtual unsigned int execute (function *)
+  opt_pass * clone () final override
+  {
+    return new pass_rebuild_cgraph_edges (m_ctxt);
+  }
+  unsigned int execute (function *) final override
   {
     return cgraph_edge::rebuild_edges ();
   }
@@ -524,10 +539,10 @@ public:
   {}
 
   /* opt_pass methods: */
-  opt_pass * clone () {
+  opt_pass * clone () final override {
     return new pass_remove_cgraph_callee_edges (m_ctxt);
   }
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_remove_cgraph_callee_edges
 

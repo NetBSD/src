@@ -1,6 +1,6 @@
 // Allocator that wraps "C" malloc -*- C++ -*-
 
-// Copyright (C) 2001-2022 Free Software Foundation, Inc.
+// Copyright (C) 2001-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -28,6 +28,8 @@
 
 #ifndef _MALLOC_ALLOCATOR_H
 #define _MALLOC_ALLOCATOR_H 1
+
+#include <bits/requires_hosted.h> // malloc
 
 #include <cstdlib>
 #include <cstddef>
@@ -118,7 +120,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  }
 
 	_Tp* __ret = 0;
-#if __cpp_aligned_new
+#if __cpp_aligned_new && __cplusplus >= 201103L
 #if __cplusplus > 201402L && _GLIBCXX_HAVE_ALIGNED_ALLOC
 	if (alignof(_Tp) > alignof(std::max_align_t))
 	  {
@@ -159,7 +161,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       template<typename _Up, typename... _Args>
         void
         construct(_Up* __p, _Args&&... __args)
-	noexcept(std::is_nothrow_constructible<_Up, _Args...>::value)
+	noexcept(std::__is_nothrow_new_constructible<_Up, _Args...>)
 	{ ::new((void *)__p) _Up(std::forward<_Args>(__args)...); }
 
       template<typename _Up>

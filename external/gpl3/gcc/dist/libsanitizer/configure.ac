@@ -85,6 +85,8 @@ esac
 AC_SUBST(enable_shared)
 AC_SUBST(enable_static)
 
+AM_CONDITIONAL([ENABLE_DARWIN_AT_RPATH], [test x$enable_darwin_at_rpath = xyes])
+
 AC_CHECK_SIZEOF([void *])
 
 if test "${multilib}" = "yes"; then
@@ -211,6 +213,19 @@ if test "$libsanitizer_cv_sys_atomic" = "yes"; then
   AC_DEFINE([HAVE_ATOMIC_FUNCTIONS], 1,
 	    [Define to 1 if you have the __atomic functions])
 fi
+
+# Check if assembler supports symbol assignment.
+AC_CACHE_CHECK([assembler symbol assignment],
+[libsanitizer_cv_as_sym_assign],
+[AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([],
+		   [asm("a = b");])],
+  [libsanitizer_cv_as_sym_assign=yes],
+  [libsanitizer_cv_as_sym_assign=no])])
+if test "$libsanitizer_cv_as_sym_assign" = "yes"; then
+  as_sym_assign_defs=-DHAVE_AS_SYM_ASSIGN=1
+fi
+AC_SUBST(AS_SYM_ASSIGN_DEFS, [$as_sym_assign_defs])
 
 # The library needs to be able to read the executable itself.  Compile
 # a file to determine the executable format.  The awk script
@@ -416,8 +431,16 @@ GCC_BASE_VER
 
 # Add CET specific flags if Intel CET is enabled.
 GCC_CET_FLAGS(CET_FLAGS)
-EXTRA_CFLAGS="$EXTRA_CFLAGS $CET_FLAGS"
-EXTRA_CXXFLAGS="$EXTRA_CXXFLAGS $CET_FLAGS"
+
+# Always set -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 to sync with LLVM,
+# and keep struct *stat* have the same size.
+case "${host}" in
+  mips*-*) FILE64_FLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" ;;
+  *) FILE64_FLAGS="" ;;
+esac
+
+EXTRA_CFLAGS="$EXTRA_CFLAGS $CET_FLAGS $FILE64_FLAGS"
+EXTRA_CXXFLAGS="$EXTRA_CXXFLAGS $CET_FLAGS $FILE64_FLAGS"
 EXTRA_ASFLAGS=$CET_FLAGS
 AC_SUBST(EXTRA_ASFLAGS)
 AC_SUBST(EXTRA_CFLAGS)

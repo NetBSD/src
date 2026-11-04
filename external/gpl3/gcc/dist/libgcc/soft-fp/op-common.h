@@ -1,10 +1,6 @@
 /* Software floating-point emulation. Common operations.
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
-   Contributed by Richard Henderson (rth@cygnus.com),
-		  Jakub Jelinek (jj@ultra.linux.cz),
-		  David S. Miller (davem@redhat.com) and
-		  Peter Maydell (pmaydell@chiark.greenend.org.uk).
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -27,7 +23,7 @@
 
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
-   <http://www.gnu.org/licenses/>.  */
+   <https://www.gnu.org/licenses/>.  */
 
 #ifndef SOFT_FP_OP_COMMON_H
 #define SOFT_FP_OP_COMMON_H	1
@@ -1804,7 +1800,7 @@
 	  if ((X##_s = ((r) < 0)))					\
 	    _FP_FROM_INT_ur = -_FP_FROM_INT_ur;				\
 									\
-	  _FP_STATIC_ASSERT ((rsize) <= 2 * _FP_W_TYPE_SIZE,		\
+	  _FP_STATIC_ASSERT ((rsize) <= 4 * _FP_W_TYPE_SIZE,		\
 			     "rsize too large");			\
 	  (void) (((rsize) <= _FP_W_TYPE_SIZE)				\
 		  ? ({							\
@@ -1814,13 +1810,38 @@
 		      X##_e = (_FP_EXPBIAS_##fs + _FP_W_TYPE_SIZE - 1	\
 			       - _FP_FROM_INT_lz);			\
 		    })							\
-		  : ({						\
+		  : ((rsize) <= 2 * _FP_W_TYPE_SIZE)			\
+		  ? ({							\
 		      int _FP_FROM_INT_lz;				\
 		      __FP_CLZ_2 (_FP_FROM_INT_lz,			\
 				  (_FP_W_TYPE) (_FP_FROM_INT_ur		\
 						>> _FP_W_TYPE_SIZE),	\
 				  (_FP_W_TYPE) _FP_FROM_INT_ur);	\
-		      X##_e = (_FP_EXPBIAS_##fs + 2 * _FP_W_TYPE_SIZE - 1 \
+		      X##_e = (_FP_EXPBIAS_##fs				\
+			       + 2 * _FP_W_TYPE_SIZE - 1		\
+			       - _FP_FROM_INT_lz);			\
+		    })							\
+		  : ({							\
+		      int _FP_FROM_INT_lz;				\
+		      if (_FP_FROM_INT_ur >> (2 * _FP_W_TYPE_SIZE))	\
+			{						\
+			  rtype _FP_FROM_INT_uru			\
+			    = _FP_FROM_INT_ur >> (2 * _FP_W_TYPE_SIZE);	\
+			  __FP_CLZ_2 (_FP_FROM_INT_lz,			\
+				      (_FP_W_TYPE) (_FP_FROM_INT_uru	\
+						    >> _FP_W_TYPE_SIZE),\
+				      (_FP_W_TYPE) _FP_FROM_INT_uru);	\
+			}						\
+		      else						\
+			{						\
+			  __FP_CLZ_2 (_FP_FROM_INT_lz,			\
+				      (_FP_W_TYPE) (_FP_FROM_INT_ur	\
+						    >> _FP_W_TYPE_SIZE),\
+				      (_FP_W_TYPE) _FP_FROM_INT_ur);	\
+			  _FP_FROM_INT_lz += 2 * _FP_W_TYPE_SIZE;	\
+			}						\
+		      X##_e = (_FP_EXPBIAS_##fs				\
+			       + 4 * _FP_W_TYPE_SIZE - 1		\
 			       - _FP_FROM_INT_lz);			\
 		    }));						\
 									\

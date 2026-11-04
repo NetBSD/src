@@ -1,5 +1,5 @@
 /* Default language-specific hooks.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
 This file is part of GCC.
@@ -369,7 +369,7 @@ lhd_handle_option (size_t code ATTRIBUTE_UNUSED,
    an error.  */
 void
 lhd_print_error_function (diagnostic_context *context, const char *file,
-			  diagnostic_info *diagnostic)
+			  const diagnostic_info *diagnostic)
 {
   if (diagnostic_last_function_changed (context, diagnostic))
     {
@@ -444,7 +444,7 @@ lhd_print_error_function (diagnostic_context *context, const char *file,
 		  pp_newline (context->printer);
 		  if (s.file != NULL)
 		    {
-		      if (context->show_column)
+		      if (context->m_show_column)
 			pp_printf (context->printer,
 				   _("    inlined from %qs at %r%s:%d:%d%R"),
 				   identifier_to_locale (lang_hooks.decl_printable_name (fndecl, 2)),
@@ -634,6 +634,14 @@ lhd_omp_finish_clause (tree, gimple_seq *, bool)
 {
 }
 
+/* Return array size; cf. omp_array_data.  */
+
+tree
+lhd_omp_array_size (tree, gimple_seq *)
+{
+  return NULL_TREE;
+}
+
 /* Return true if DECL is a scalar variable (for the purpose of
    implicit firstprivatization & mapping). Only if alloc_ptr_ok
    are allocatables and pointers accepted. */
@@ -676,17 +684,6 @@ void
 lhd_omp_firstprivatize_type_sizes (struct gimplify_omp_ctx *c ATTRIBUTE_UNUSED,
 				   tree t ATTRIBUTE_UNUSED)
 {
-}
-
-/* Return true if TYPE is an OpenMP mappable type.  */
-
-bool
-lhd_omp_mappable_type (tree type)
-{
-  /* Mappable type has to be complete.  */
-  if (type == error_mark_node || !COMPLETE_TYPE_P (type))
-    return false;
-  return true;
 }
 
 /* Common function for add_builtin_function, add_builtin_function_ext_scope
@@ -915,6 +912,14 @@ lhd_finalize_early_debug (void)
   struct cgraph_node *cnode;
   FOR_EACH_FUNCTION_WITH_GIMPLE_BODY (cnode)
     (*debug_hooks->early_global_decl) (cnode->decl);
+}
+
+/* Default implementation of LANG_HOOKS_GET_SARIF_SOURCE_LANGUAGE.  */
+
+const char *
+lhd_get_sarif_source_language (const char *)
+{
+  return NULL;
 }
 
 /* Returns true if the current lang_hooks represents the GNU C frontend.  */

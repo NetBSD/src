@@ -1,5 +1,5 @@
 /* Interprocedural Identical Code Folding pass
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    Contributed by Jan Hubicka <hubicka@ucw.cz> and Martin Liska <mliska@suse.cz>
 
@@ -73,6 +73,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple-iterator.h"
 #include "tree-cfg.h"
 #include "symbol-summary.h"
+#include "sreal.h"
+#include "ipa-cp.h"
 #include "ipa-prop.h"
 #include "ipa-fnsummary.h"
 #include "except.h"
@@ -218,6 +220,7 @@ sem_item::target_supports_symbol_aliases_p (void)
 #if !defined (ASM_OUTPUT_DEF) || (!defined(ASM_OUTPUT_WEAK_ALIAS) && !defined (ASM_WEAKEN_DECL))
   return false;
 #else
+  gcc_checking_assert (TARGET_SUPPORTS_ALIASES);
   return true;
 #endif
 }
@@ -1384,6 +1387,23 @@ sem_function::init (ipa_icf_gimple::func_checker *checker)
 	  cfg_checksum = iterative_hash_host_wide_int (e->flags,
 			 cfg_checksum);
 
+	/* TODO: We should be able to match PHIs with different order of
+	   parameters.  This needs to be also updated in
+	   sem_function::compare_phi_node.  */
+	gphi_iterator si;
+	for (si = gsi_start_nonvirtual_phis (bb); !gsi_end_p (si);
+	     gsi_next_nonvirtual_phi (&si))
+	  {
+	    hstate.add_int (GIMPLE_PHI);
+	    gphi *phi = si.phi ();
+	    m_checker->hash_operand (gimple_phi_result (phi), hstate, 0,
+				     func_checker::OP_NORMAL);
+	    hstate.add_int (gimple_phi_num_args (phi));
+	    for (unsigned int i = 0; i < gimple_phi_num_args (phi); i++)
+	      m_checker->hash_operand (gimple_phi_arg_def (phi, i),
+				       hstate, 0, func_checker::OP_NORMAL);
+	  }
+
 	for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
 	     gsi_next (&gsi))
 	  {
@@ -1576,6 +1596,8 @@ sem_function::compare_phi_node (basic_block bb1, basic_block bb2)
       if (size1 != size2)
 	return return_false ();
 
+      /* TODO: We should be able to match PHIs with different order of
+	 parameters.  This needs to be also updated in sem_function::init.  */
       for (i = 0; i < size1; ++i)
 	{
 	  t1 = gimple_phi_arg (phi1, i)->def;
@@ -1664,6 +1686,10 @@ sem_variable::equals_wpa (sem_item *item,
 
   if (DECL_IN_TEXT_SECTION (decl) != DECL_IN_TEXT_SECTION (item->decl))
     return return_false_with_msg ("text section");
+
+  if (TYPE_ADDR_SPACE (TREE_TYPE (decl))
+      != TYPE_ADDR_SPACE (TREE_TYPE (item->decl)))
+    return return_false_with_msg ("address-space");
 
   ipa_ref *ref = NULL, *ref2 = NULL;
   for (unsigned i = 0; node->iterate_reference (i, ref); i++)
@@ -2204,7 +2230,7 @@ sem_item_optimizer::read_section (lto_file_decl_data *file_data,
   unsigned int count;
 
   lto_input_block ib_main ((const char *) data + main_offset, 0,
-			   header->main_size, file_data->mode_table);
+			   header->main_size, file_data);
 
   data_in
     = lto_data_in_create (file_data, (const char *) data + string_offset,
@@ -3186,8 +3212,9 @@ sem_item_optimizer::process_cong_reduction (void)
 	worklist_push ((*it)->classes[i]);
 
   if (dump_file)
-    fprintf (dump_file, "Worklist has been filled with: %lu\n",
-	     (unsigned long) worklist.nodes ());
+    fprintf (dump_file, "Worklist has been filled with: "
+			HOST_SIZE_T_PRINT_UNSIGNED "\n",
+	     (fmt_size_t) worklist.nodes ());
 
   if (dump_file && (dump_flags & TDF_DETAILS))
     fprintf (dump_file, "Congruence class reduction\n");
@@ -3234,8 +3261,9 @@ sem_item_optimizer::dump_cong_classes (void)
       }
 
   fprintf (dump_file,
-	   "Congruence classes: %lu with total: %u items (in a non-singular "
-	   "class: %u)\n", (unsigned long) m_classes.elements (),
+	   "Congruence classes: " HOST_SIZE_T_PRINT_UNSIGNED " with total: "
+	   "%u items (in a non-singular class: %u)\n",
+	   (fmt_size_t) m_classes.elements (),
 	   m_items.length (), m_items.length () - single_element_classes);
   fprintf (dump_file,
 	   "Class size histogram [number of members]: number of classes\n");
@@ -3418,7 +3446,8 @@ sem_item_optimizer::merge_classes (unsigned int prev_class_count,
 				 alias->node->dump_asm_name ());
 	      }
 
-	    if (lookup_attribute ("no_icf", DECL_ATTRIBUTES (alias->decl)))
+	    if (lookup_attribute ("no_icf", DECL_ATTRIBUTES (alias->decl))
+		|| lookup_attribute ("no_icf", DECL_ATTRIBUTES (source->decl)))
 	      {
 		if (dump_enabled_p ())
 		  dump_printf_loc (MSG_OPTIMIZED_LOCATIONS, loc,
@@ -3535,6 +3564,7 @@ sem_item_optimizer::fixup_points_to_sets (void)
 	    && SSA_NAME_PTR_INFO (name))
 	  fixup_pt_set (&SSA_NAME_PTR_INFO (name)->pt);
       fixup_pt_set (&fn->gimple_df->escaped);
+      fixup_pt_set (&fn->gimple_df->escaped_return);
 
        /* The above gets us to 99% I guess, at least catching the
 	  address compares.  Below also gets us aliasing correct
@@ -3668,12 +3698,12 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *)
+  bool gate (function *) final override
   {
     return in_lto_p || flag_ipa_icf_variables || flag_ipa_icf_functions;
   }
 
-  virtual unsigned int execute (function *)
+  unsigned int execute (function *) final override
   {
     return ipa_icf_driver();
   }
@@ -3685,4 +3715,13 @@ ipa_opt_pass_d *
 make_pass_ipa_icf (gcc::context *ctxt)
 {
   return new ipa_icf::pass_ipa_icf (ctxt);
+}
+
+/* Reset all state within ipa-icf.cc so that we can rerun the compiler
+   within the same process.  For use by toplev::finalize.  */
+
+void
+ipa_icf_cc_finalize (void)
+{
+  ipa_icf::optimizer = NULL;
 }

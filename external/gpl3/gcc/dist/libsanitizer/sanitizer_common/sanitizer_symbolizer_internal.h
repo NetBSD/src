@@ -13,8 +13,8 @@
 #ifndef SANITIZER_SYMBOLIZER_INTERNAL_H
 #define SANITIZER_SYMBOLIZER_INTERNAL_H
 
-#include "sanitizer_symbolizer.h"
 #include "sanitizer_file.h"
+#include "sanitizer_symbolizer.h"
 #include "sanitizer_vector.h"
 
 namespace __sanitizer {
@@ -70,11 +70,6 @@ class SymbolizerTool {
     return nullptr;
   }
 
-  // Called during the LateInitialize phase of Sanitizer initialization.
-  // Usually this is a safe place to call code that might need to use user
-  // memory allocators.
-  virtual void LateInitialize() {}
-
  protected:
   ~SymbolizerTool() {}
 };
@@ -91,13 +86,14 @@ class SymbolizerProcess {
   ~SymbolizerProcess() {}
 
   /// The maximum number of arguments required to invoke a tool process.
-  static const unsigned kArgVMax = 6;
+  static const unsigned kArgVMax = 16;
 
   // Customizable by subclasses.
   virtual bool StartSymbolizerSubprocess();
-  virtual bool ReadFromSymbolizer(char *buffer, uptr max_length);
+  virtual bool ReadFromSymbolizer();
   // Return the environment to run the symbolizer in.
   virtual char **GetEnvP() { return GetEnviron(); }
+  InternalMmapVector<char> &GetBuff() { return buffer_; }
 
  private:
   virtual bool ReachedEndOfOutput(const char *buffer, uptr length) const {
@@ -118,8 +114,7 @@ class SymbolizerProcess {
   fd_t input_fd_;
   fd_t output_fd_;
 
-  static const uptr kBufferSize = 16 * 1024;
-  char buffer_[kBufferSize];
+  InternalMmapVector<char> buffer_;
 
   static const uptr kMaxTimesRestarted = 5;
   static const int kSymbolizerStartupTimeMillis = 10;
@@ -164,6 +159,15 @@ void ParseSymbolizePCOutput(const char *str, SymbolizedStack *res);
 //   <start_address> <size>
 // Used by LLVMSymbolizer and InternalSymbolizer.
 void ParseSymbolizeDataOutput(const char *str, DataInfo *info);
+
+// Parses repeated strings in the following format:
+//   <function_name>
+//   <var_name>
+//   <file_name>:<line_number>[:<column_number>]
+//   [<frame_offset>|??] [<size>|??] [<tag_offset>|??]
+// Used by LLVMSymbolizer and InternalSymbolizer.
+void ParseSymbolizeFrameOutput(const char *str,
+                               InternalMmapVector<LocalInfo> *locals);
 
 }  // namespace __sanitizer
 

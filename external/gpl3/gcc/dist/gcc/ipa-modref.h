@@ -1,5 +1,5 @@
 /* Search for references that a functions loads or stores.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -66,7 +66,7 @@ struct GTY(()) modref_summary
 
   modref_summary ();
   ~modref_summary ();
-  void dump (FILE *);
+  void dump (FILE *) const;
   bool useful_p (int ecf_flags, bool check_flags = true);
   void finalize (tree);
 };
@@ -108,7 +108,7 @@ static const int implicit_retslot_eaf_flags
    MODREF_FLAGS are flags determined by analysis of function body while
    FLAGS are flags known otherwise (i.e. by fnspec, pure/const attributes
    etc.)  */
-static inline int
+inline int
 interposable_eaf_flags (int modref_flags, int flags)
 {
   /* If parameter was previously unused, we know it is only read

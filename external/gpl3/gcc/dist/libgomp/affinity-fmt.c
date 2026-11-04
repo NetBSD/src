@@ -1,4 +1,4 @@
-/* Copyright (C) 2018-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2018-2024 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of the GNU Offloading and Multi Processing Library
@@ -327,7 +327,7 @@ gomp_display_affinity (char *buffer, size_t size,
 	      }
 	  if (c == '{')
 	    {
-	      char *q = strchr (p + 1, '}');
+	      const char *q = strchr (p + 1, '}');
 	      if (q)
 		gomp_fatal ("unsupported long type name '%.*s' in affinity "
 			    "format", (int) (q - (p + 1)), p + 1);

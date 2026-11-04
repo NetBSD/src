@@ -1,5 +1,5 @@
 /* Definitions for the shared dumpfile.
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -208,27 +208,27 @@ enum dump_flag : uint32_t
 
 typedef enum dump_flag dump_flags_t;
 
-static inline dump_flags_t
+inline dump_flags_t
 operator| (dump_flags_t lhs, dump_flags_t rhs)
 {
   return (dump_flags_t)((std::underlying_type<dump_flags_t>::type)lhs
 			| (std::underlying_type<dump_flags_t>::type)rhs);
 }
 
-static inline dump_flags_t
+inline dump_flags_t
 operator& (dump_flags_t lhs, dump_flags_t rhs)
 {
   return (dump_flags_t)((std::underlying_type<dump_flags_t>::type)lhs
 			& (std::underlying_type<dump_flags_t>::type)rhs);
 }
 
-static inline dump_flags_t
+inline dump_flags_t
 operator~ (dump_flags_t flags)
 {
   return (dump_flags_t)~((std::underlying_type<dump_flags_t>::type)flags);
 }
 
-static inline dump_flags_t &
+inline dump_flags_t &
 operator|= (dump_flags_t &lhs, dump_flags_t rhs)
 {
   lhs = (dump_flags_t)((std::underlying_type<dump_flags_t>::type)lhs
@@ -236,7 +236,7 @@ operator|= (dump_flags_t &lhs, dump_flags_t rhs)
   return lhs;
 }
 
-static inline dump_flags_t &
+inline dump_flags_t &
 operator&= (dump_flags_t &lhs, dump_flags_t rhs)
 {
   lhs = (dump_flags_t)((std::underlying_type<dump_flags_t>::type)lhs
@@ -276,14 +276,14 @@ enum optgroup_flag
 
 typedef enum optgroup_flag optgroup_flags_t;
 
-static inline optgroup_flags_t
+inline optgroup_flags_t
 operator| (optgroup_flags_t lhs, optgroup_flags_t rhs)
 {
   return (optgroup_flags_t)((std::underlying_type<dump_flags_t>::type)lhs
 			    | (std::underlying_type<dump_flags_t>::type)rhs);
 }
 
-static inline optgroup_flags_t &
+inline optgroup_flags_t &
 operator|= (optgroup_flags_t &lhs, optgroup_flags_t rhs)
 {
   lhs = (optgroup_flags_t)((std::underlying_type<dump_flags_t>::type)lhs
@@ -528,7 +528,7 @@ extern bool dumps_are_enabled;
 extern void set_dump_file (FILE *new_dump_file);
 
 /* Return true if any of the dumps is enabled, false otherwise. */
-static inline bool
+inline bool
 dump_enabled_p (void)
 {
   return dumps_are_enabled;
@@ -574,7 +574,7 @@ extern void dump_printf (const dump_metadata_t &, const char *, ...)
 
 extern void dump_printf_loc (const dump_metadata_t &, const dump_user_location_t &,
 			     const char *, ...)
-  ATTRIBUTE_GCC_DUMP_PRINTF (3, 0);
+  ATTRIBUTE_GCC_DUMP_PRINTF (3, 4);
 extern void dump_function (int phase, tree fn);
 extern void dump_basic_block (dump_flags_t, basic_block, int);
 extern void dump_generic_expr_loc (const dump_metadata_t &,
@@ -647,14 +647,11 @@ class auto_dump_scope
   auto_dump_scope scope (NAME, USER_LOC)
 
 extern void dump_function (int phase, tree fn);
-extern void print_combine_total_stats (void);
 extern bool enable_rtl_dump_file (void);
 
 /* In tree-dump.cc  */
 extern void dump_node (const_tree, dump_flags_t, FILE *);
 
-/* In combine.cc  */
-extern void dump_combine_total_stats (FILE *);
 /* In cfghooks.cc  */
 extern void dump_bb (FILE *, basic_block, int, dump_flags_t);
 

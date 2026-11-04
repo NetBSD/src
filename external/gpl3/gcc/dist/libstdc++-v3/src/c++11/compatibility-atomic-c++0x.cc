@@ -1,6 +1,6 @@
 // <atomic> compatibility -*- C++ -*-
 
-// Copyright (C) 2008-2022 Free Software Foundation, Inc.
+// Copyright (C) 2008-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -22,7 +22,6 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-#include "gstdint.h"
 #include <atomic>
 #include <mutex>
 
@@ -119,13 +118,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   _GLIBCXX_CONST __atomic_flag_base*
   __atomic_flag_for_address(const volatile void* __z) _GLIBCXX_NOTHROW
   {
-    uintptr_t __u = reinterpret_cast<uintptr_t>(__z);
+    using guintptr_t = __UINTPTR_TYPE__;
+    guintptr_t __u = reinterpret_cast<guintptr_t>(__z);
     __u += (__u >> 2) + (__u << 4);
     __u += (__u >> 7) + (__u << 5);
     __u += (__u >> 17) + (__u << 13);
-    if (sizeof(uintptr_t) > 4)
+    if (sizeof(guintptr_t) > 4)
       __u += (__u >> 31);
-    __u &= ~((~uintptr_t(0)) << LOGSIZE);
+    __u &= ~((~guintptr_t(0)) << LOGSIZE);
     return flag_table + __u;
   }
 
@@ -150,12 +150,8 @@ _GLIBCXX_END_NAMESPACE_VERSION
     && defined(_GLIBCXX_HAVE_AS_SYMVER_DIRECTIVE) \
     && defined(_GLIBCXX_HAVE_SYMVER_SYMBOL_RENAMING_RUNTIME_SUPPORT)
 
-#ifdef _GLIBCXX_COMPAT_
 #define _GLIBCXX_ASM_SYMVER(cur, old, version) \
    asm (".symver " #cur "," #old "@@" #version);
-#else
-#define _GLIBCXX_ASM_SYMVER(cur, old, version)
-#endif
 
 _GLIBCXX_ASM_SYMVER(_ZNSt9__atomic011atomic_flag5clearESt12memory_order, _ZNVSt9__atomic011atomic_flag5clearESt12memory_order, GLIBCXX_3.4.11)
 

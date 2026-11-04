@@ -1,6 +1,6 @@
 /* This file contains the definitions and documentation for the
    machine modes used in the GNU compiler.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -142,17 +142,18 @@ along with GCC; see the file COPYING3.  If not see
 	than two bytes (if CLASS is FLOAT).  CLASS must be INT or
 	FLOAT.  The names follow the same rule as VECTOR_MODE uses.
 
-     VECTOR_MODES_WITH_PREFIX (PREFIX, CLASS, WIDTH);
+     VECTOR_MODES_WITH_PREFIX (PREFIX, CLASS, WIDTH, ORDER);
 	Like VECTOR_MODES, but start the mode names with PREFIX instead
-	of the usual "V".
+	of the usual "V".  ORDER is the top-level sorting order of the
+	mode, with smaller numbers indicating a higher priority.
 
      VECTOR_BOOL_MODE (NAME, COUNT, COMPONENT, BYTESIZE)
-        Create a vector mode called NAME that contains COUNT boolean
-        elements and occupies BYTESIZE bytes in total.  Each boolean
-        element is of COMPONENT type and occupies (COUNT * BITS_PER_UNIT) /
-        BYTESIZE bits, with the element at index 0 occupying the lsb of the
-        first byte in memory.  Only the lowest bit of each element is
-        significant.
+	Create a vector mode called NAME that contains COUNT boolean
+	elements and occupies BYTESIZE bytes in total.  Each boolean
+	element is of COMPONENT type and occupies ((BYTESIZE * BITS_PER_UNIT)
+	/ COUNT) bits, with the element at index 0 occupying the lsb of the
+	first byte in memory.  Only the lowest bit of each element is
+	significant.
 
      OPAQUE_MODE (NAME, BYTESIZE)
         Create an opaque mode called NAME that is BYTESIZE bytes wide.

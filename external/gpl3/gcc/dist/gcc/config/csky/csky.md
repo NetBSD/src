@@ -1,5 +1,5 @@
 ;; Machine description for C-SKY processors.
-;; Copyright (C) 2018-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2018-2024 Free Software Foundation, Inc.
 ;; Contributed by C-SKY Microsystems and Mentor Graphics.
 ;;
 ;; This file is part of GCC.
@@ -573,7 +573,7 @@
 	(ior:SI (match_operand:SI 1 "register_operand"	"0")
 		(ashift:SI (const_int 1)
 			   (match_operand:SI 2 "csky_literal_K_operand" "K"))))]
-  "TARGET_MINI_REGISTERS"
+  "CSKY_ISA_FEATURE (E1)"
   "bseti\t%0, %2"
   [(set_attr "length" "2")])
 
@@ -582,7 +582,7 @@
 	(ior:SI (match_operand:SI 1 "register_operand"	"0,r")
 		(ashift:SI (const_int 1)
 			   (match_operand:SI 2 "csky_literal_K_operand" "K,K"))))]
-  "!TARGET_MINI_REGISTERS"
+  "CSKY_ISA_FEATURE (E2)"
   "bseti\t%0, %1, %2"
   [(set_attr "length" "2,4")])
 
@@ -599,7 +599,7 @@
 	(and:SI (match_operand:SI 1 "register_operand"	"0")
 		(not:SI (ashift:SI (const_int 1)
 				   (match_operand:SI 2 "csky_literal_K_operand" "K")))))]
-  "TARGET_MINI_REGISTERS"
+  "CSKY_ISA_FEATURE (E1)"
   "bclri\t%0, %2"
   [(set_attr "length" "2")])
 
@@ -608,7 +608,7 @@
 	(and:SI (match_operand:SI 1 "register_operand"	"0,r")
 		(not:SI (ashift:SI (const_int 1)
 				   (match_operand:SI 2 "csky_literal_K_operand" "K,K")))))]
-  "!TARGET_MINI_REGISTERS"
+  "CSKY_ISA_FEATURE (E2)"
   "bclri\t%0, %1, %2"
   [(set_attr "length" "2,4")])
 
@@ -1279,7 +1279,8 @@
   "reload_completed && !rtx_equal_p (operands[0], operands[1])"
   [(set (match_dup 0)
 	(if_then_else:SI (ne (reg:CC CSKY_CC_REGNUM) (const_int 0))
-			 (plus:SI (match_dup 0) (match_dup 2))))]
+			 (plus:SI (match_dup 0) (match_dup 2))
+			 (match_dup 0)))]
   {
     emit_insn (gen_movf (copy_rtx (operands[0]),
 			 copy_rtx (operands[1]),
@@ -1305,7 +1306,8 @@
   "reload_completed && !rtx_equal_p (operands[0], operands[1])"
   [(set (match_dup 0)
 	(if_then_else:SI (eq (reg:CC CSKY_CC_REGNUM) (const_int 0))
-			 (plus:SI (match_dup 0) (match_dup 2))))]
+			 (plus:SI (match_dup 0) (match_dup 2))
+			 (match_dup 0)))]
   {
     emit_insn (gen_movt (copy_rtx (operands[0]),
 			 copy_rtx (operands[1]),
@@ -3012,7 +3014,7 @@
   [(set (reg:CC CSKY_CC_REGNUM)
 	(ne:CC (match_operand:SI 0 "register_operand"	    "r")
 	       (match_operand:SI 1 "csky_literal_I_operand" "I")))]
-  "!TARGET_MINI_REGISTERS && CSKY_ISA_FEATURE (E2)"
+  "CSKY_ISA_FEATURE (E2)"
   "cmpnei\t%0, %1"
   [(set_attr "type" "cmp")]
 )
@@ -3054,7 +3056,7 @@
   [(set (reg:CC CSKY_CC_REGNUM)
 	(lt:CC (match_operand:SI 0 "register_operand"	     "a,r")
 	       (match_operand:SI 1 "csky_literal_Uk_operand" "J,Uk")))]
-  "!TARGET_MINI_REGISTERS && CSKY_ISA_FEATURE (E2)"
+  "CSKY_ISA_FEATURE (E2)"
   "cmplti\t%0, %1"
   [(set_attr "length" "2,4")
    (set_attr "type" "cmp")]
@@ -3147,7 +3149,7 @@
   [(set (reg:CC CSKY_CC_REGNUM)
 	(geu:CC (match_operand:SI 0 "register_operand"	      "a,r")
 		(match_operand:SI 1 "csky_literal_Uk_operand" "J,Uk")))]
-  "!TARGET_MINI_REGISTERS && CSKY_ISA_FEATURE (E2)"
+  "CSKY_ISA_FEATURE (E2)"
   "cmphsi\t%0, %1"
   [(set_attr "length" "2,4")
    (set_attr "type" "cmp")]

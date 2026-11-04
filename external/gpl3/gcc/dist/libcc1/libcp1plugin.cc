@@ -1,5 +1,5 @@
 /* Library interface to C++ front end.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GCC.  As it interacts with GDB through libcc1,
    they all become a single program as regards the GNU GPL's requirements.
@@ -467,7 +467,7 @@ plugin_pragma_push_user_expression (cpp_reader *)
 	}
     }
 
-  if (unchanged_cfun || DECL_NONSTATIC_MEMBER_FUNCTION_P (changed_func_decl))
+  if (unchanged_cfun || DECL_OBJECT_MEMBER_FUNCTION_P (changed_func_decl))
     {
       /* Check whether the oracle supplies us with a "this", and if
 	 so, arrange for data members and this itself to be
@@ -712,7 +712,7 @@ plugin_reactivate_decl (cc1_plugin::connection *,
 {
   tree decl = convert_in (decl_in);
   tree scope = convert_in (scope_in);
-  gcc_assert (TREE_CODE (decl) == VAR_DECL
+  gcc_assert (VAR_P (decl)
 	      || TREE_CODE (decl) == FUNCTION_DECL
 	      || TREE_CODE (decl) == TYPE_DECL);
   cp_binding_level *b;
@@ -1654,7 +1654,8 @@ plugin_start_closure_class_type (cc1_plugin::connection *self,
 
   /* Instead of calling record_lambda_scope, do this:  */
   LAMBDA_EXPR_EXTRA_SCOPE (lambda_expr) = extra_scope;
-  LAMBDA_EXPR_DISCRIMINATOR (lambda_expr) = discriminator;
+  LAMBDA_EXPR_SCOPE_ONLY_DISCRIMINATOR (lambda_expr) = discriminator;
+  LAMBDA_EXPR_SCOPE_SIG_DISCRIMINATOR (lambda_expr) = discriminator;
 
   tree decl = TYPE_NAME (type);
   determine_visibility (decl);
@@ -2638,7 +2639,7 @@ plugin_build_unary_expr (cc1_plugin::connection *self,
       break;
 
     case THROW_EXPR:
-      result = build_throw (input_location, op0);
+      result = build_throw (input_location, op0, tf_error);
       break;
 
     case TYPEID_EXPR:
@@ -2662,7 +2663,7 @@ plugin_build_unary_expr (cc1_plugin::connection *self,
       result = make_pack_expansion (op0);
       break;
 
-      // We're using this for sizeof...(pack).  */
+      /* We're using this for sizeof...(pack).  */
     case TYPE_PACK_EXPANSION:
       result = make_pack_expansion (op0);
       PACK_EXPANSION_SIZEOF_P (result) = true;
@@ -3294,7 +3295,7 @@ plugin_get_float_type (cc1_plugin::connection *,
       if (!result)
 	return convert_out (error_mark_node);
 
-      gcc_assert (TREE_CODE (result) == REAL_TYPE);
+      gcc_assert (SCALAR_FLOAT_TYPE_P (result));
       gcc_assert (BITS_PER_UNIT * size_in_bytes == TYPE_PRECISION (result));
 
       return convert_out (result);

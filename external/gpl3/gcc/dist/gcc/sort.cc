@@ -1,5 +1,5 @@
 /* Platform-independent deterministic sort function.
-   Copyright (C) 2018-2022 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
    Contributed by Alexander Monakov.
 
 This file is part of GCC.
@@ -25,7 +25,7 @@ along with GCC; see the file COPYING3.  If not see
    - deterministic (but not necessarily stable)
    - fast, especially for common cases (0-5 elements of size 8 or 4)
 
-   The implementation uses a network sort for up to 5 elements and
+   The implementation uses sorting networks for up to 5 elements and
    a merge sort on top of that.  Neither stage has branches depending on
    comparator result, trading extra arithmetic for branch mispredictions.  */
 
@@ -36,8 +36,6 @@ along with GCC; see the file COPYING3.  If not see
 #endif
 
 #include "system.h"
-
-#define likely(cond) __builtin_expect ((cond), 1)
 
 #ifdef __GNUC__
 #define noinline __attribute__ ((__noinline__))
@@ -55,7 +53,7 @@ struct sort_ctx
   char   *out; // output buffer
   size_t n;    // number of elements
   size_t size; // element size
-  size_t nlim; // limit for network sort
+  size_t nlim; // limit for using sorting networks
 };
 
 /* Like sort_ctx, but for use with qsort_r-style comparators.  Several
@@ -86,15 +84,15 @@ do {                                                     \
   memcpy (&t0, e0 + OFFSET, sizeof (TYPE));              \
   memcpy (&t1, e1 + OFFSET, sizeof (TYPE));              \
   char *out = c->out + OFFSET;                           \
-  if (likely (c->n == 3))                                \
+  if (LIKELY (c->n == 3))                                \
     memmove (out + 2*STRIDE, e2 + OFFSET, sizeof (TYPE));\
   memcpy (out, &t0, sizeof (TYPE)); out += STRIDE;       \
   memcpy (out, &t1, sizeof (TYPE));                      \
 } while (0)
 
-  if (likely (c->size == sizeof (size_t)))
+  if (LIKELY (c->size == sizeof (size_t)))
     REORDER_23 (size_t, sizeof (size_t), 0);
-  else if (likely (c->size == sizeof (int)))
+  else if (LIKELY (c->size == sizeof (int)))
     REORDER_23 (int, sizeof (int), 0);
   else
     {
@@ -119,7 +117,7 @@ do {                                                     \
   memcpy (&t2, e2 + OFFSET, sizeof (TYPE));              \
   memcpy (&t3, e3 + OFFSET, sizeof (TYPE));              \
   char *out = c->out + OFFSET;                           \
-  if (likely (c->n == 5))                                \
+  if (LIKELY (c->n == 5))                                \
     memmove (out + 4*STRIDE, e4 + OFFSET, sizeof (TYPE));\
   memcpy (out, &t0, sizeof (TYPE)); out += STRIDE;       \
   memcpy (out, &t1, sizeof (TYPE)); out += STRIDE;       \
@@ -127,9 +125,9 @@ do {                                                     \
   memcpy (out, &t3, sizeof (TYPE));                      \
 } while (0)
 
-  if (likely (c->size == sizeof (size_t)))
+  if (LIKELY (c->size == sizeof (size_t)))
     REORDER_45 (size_t, sizeof (size_t), 0);
-  else if (likely(c->size == sizeof (int)))
+  else if (LIKELY (c->size == sizeof (int)))
     REORDER_45 (int,  sizeof (int), 0);
   else
     {
@@ -153,7 +151,7 @@ cmp1 (char *e0, char *e1, sort_ctx *c)
   return x & (c->cmp (e0, e1) >> 31);
 }
 
-/* Execute network sort on 2 to 5 elements from IN, placing them into C->OUT.
+/* Apply a sorting network to 2 to 5 elements from IN, placing them into C->OUT.
    IN may be equal to C->OUT, in which case elements are sorted in place.  */
 template<typename sort_ctx>
 static void
@@ -168,7 +166,7 @@ do {                                  \
 
   char *e0 = in, *e1 = e0 + c->size, *e2 = e1 + c->size;
   CMP (e0, e1);
-  if (likely (c->n == 3))
+  if (LIKELY (c->n == 3))
     {
       CMP (e1, e2);
       CMP (e0, e1);
@@ -176,13 +174,13 @@ do {                                  \
   if (c->n <= 3)
     return reorder23 (c, e0, e1, e2);
   char *e3 = e2 + c->size, *e4 = e3 + c->size;
-  if (likely (c->n == 5))
+  if (LIKELY (c->n == 5))
     {
       CMP (e3, e4);
       CMP (e2, e4);
     }
   CMP (e2, e3);
-  if (likely (c->n == 5))
+  if (LIKELY (c->n == 5))
     {
       CMP (e0, e3);
       CMP (e1, e4);
@@ -200,7 +198,7 @@ template<typename sort_ctx>
 static void
 mergesort (char *in, sort_ctx *c, size_t n, char *out, char *tmp)
 {
-  if (likely (n <= c->nlim))
+  if (LIKELY (n <= c->nlim))
     {
       c->out = out;
       c->n = n;
@@ -225,12 +223,12 @@ do {                                            \
   l += ~mr & SIZE;                              \
 } while (r != end)
 
-  if (likely (c->cmp(r, l + (r - out) - c->size) < 0))
+  if (LIKELY (c->cmp (r, l + (r - out) - c->size) < 0))
     {
       char *end = out + n * c->size;
-      if (sizeof (size_t) == 8 && likely (c->size == 8))
+      if (sizeof (size_t) == 8 && LIKELY (c->size == 8))
 	MERGE_ELTSIZE (8);
-      else if (likely (c->size == 4))
+      else if (LIKELY (c->size == 4))
 	MERGE_ELTSIZE (4);
       else
 	MERGE_ELTSIZE (c->size);
@@ -239,6 +237,10 @@ do {                                            \
 }
 
 #if CHECKING_P
+  /* Don't complain about cast from void* to function pointer.  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconditionally-supported"
+
 /* Adapter for using two-argument comparators in functions expecting the
    three-argument sort_r_cmp_fn type.  */
 static int
@@ -268,6 +270,7 @@ gcc_qsort (void *vbase, size_t n, size_t size, cmp_fn *cmp)
     free (buf);
 #if CHECKING_P
   qsort_chk (vbase, n, size, cmp2to3, (void*)cmp);
+#pragma GCC diagnostic pop
 #endif
 }
 

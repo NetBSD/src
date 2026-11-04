@@ -1,5 +1,5 @@
 /* Debug hooks for GCC.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -238,7 +238,6 @@ extern void debug_nothing_tree_charstar_uhwi (tree, const char *,
 
 /* Hooks for various debug formats.  */
 extern const struct gcc_debug_hooks do_nothing_debug_hooks;
-extern const struct gcc_debug_hooks dbx_debug_hooks;
 extern const struct gcc_debug_hooks xcoff_debug_hooks;
 extern const struct gcc_debug_hooks dwarf2_debug_hooks;
 extern const struct gcc_debug_hooks dwarf2_lineno_debug_hooks;
@@ -271,7 +270,7 @@ extern decl_to_instance_map_t *decl_to_instance_map;
 /* Allocate decl_to_instance_map with COUNT slots to begin wtih, if it
  * hasn't been allocated yet.  */
 
-static inline decl_to_instance_map_t *
+inline decl_to_instance_map_t *
 maybe_create_decl_to_instance_map (int count = 13)
 {
   if (!decl_to_instance_map)

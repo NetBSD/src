@@ -1,5 +1,5 @@
 /* read-rtl-function.cc - Reader for RTL function dumps
-   Copyright (C) 2016-2022 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -77,13 +77,13 @@ class function_reader : public rtx_reader
   ~function_reader ();
 
   /* Overridden vfuncs of class md_reader.  */
-  void handle_unknown_directive (file_location, const char *) FINAL OVERRIDE;
+  void handle_unknown_directive (file_location, const char *) final override;
 
   /* Overridden vfuncs of class rtx_reader.  */
-  rtx read_rtx_operand (rtx x, int idx) FINAL OVERRIDE;
-  void handle_any_trailing_information (rtx x) FINAL OVERRIDE;
-  rtx postprocess (rtx) FINAL OVERRIDE;
-  const char *finalize_string (char *stringbuf) FINAL OVERRIDE;
+  rtx read_rtx_operand (rtx x, int idx) final override;
+  void handle_any_trailing_information (rtx x) final override;
+  rtx postprocess (rtx) final override;
+  const char *finalize_string (char *stringbuf) final override;
 
   rtx_insn **get_insn_by_uid (int uid);
   tree parse_mem_expr (const char *desc);
@@ -188,7 +188,7 @@ class fixup_insn_uid : public operand_fixup
       m_insn_uid (insn_uid)
   {}
 
-  void apply (function_reader *reader) const;
+  void apply (function_reader *reader) const final override;
 
  private:
   int m_insn_uid;
@@ -206,7 +206,7 @@ class fixup_note_insn_basic_block : public operand_fixup
       m_bb_idx (bb_idx)
   {}
 
-  void apply (function_reader *reader) const;
+  void apply (function_reader *reader) const final override;
 
  private:
   int m_bb_idx;
@@ -225,7 +225,7 @@ class fixup_expr : public fixup
 
   ~fixup_expr () { free (m_desc); }
 
-  void apply (function_reader *reader) const;
+  void apply (function_reader *reader) const final override;
 
  private:
   char *m_desc;
@@ -622,10 +622,11 @@ function_reader::parse_block ()
 
      These can get out-of-sync when basic blocks are optimized away.
      They get back in sync by "compact_blocks".
-     We reconstruct cfun->cfg->x_basic_block_info->m_vecdata with NULL
-     values in it for any missing basic blocks, so that (a) == (b) for
-     all of the blocks we create.  The doubly-linked list of basic
-     blocks (next_bb/prev_bb) skips over these "holes".  */
+     We reconstruct cfun->cfg->x_basic_block_info->address () pointed
+     vector elements with NULL values in it for any missing basic blocks,
+     so that (a) == (b) for all of the blocks we create.  The
+     doubly-linked list of basic blocks (next_bb/prev_bb) skips over
+     these "holes".  */
 
   if (m_highest_bb_idx < bb_idx)
     m_highest_bb_idx = bb_idx;

@@ -1,6 +1,6 @@
 /* Subroutines used to generate function prologues and epilogues
    on IBM RS/6000.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -47,10 +47,6 @@
 #include "diagnostic-core.h"
 #include "alias.h"
 #include "rs6000-internal.h"
-#if TARGET_MACHO
-#include "gstab.h"  /* for N_SLINE */
-#include "dbxout.h" /* dbxout_ */
-#endif
 
 static int rs6000_ra_ever_killed (void);
 static void is_altivec_return_reg (rtx, void *);
@@ -925,9 +921,6 @@ rs6000_stack_info (void)
   else if (frame_pointer_needed)
     info->push_p = 1;
 
-  else if (TARGET_XCOFF && write_symbols != NO_DEBUG && !flag_compare_debug)
-    info->push_p = 1;
-
   else
     info->push_p = non_fixed_size > (TARGET_32BIT ? 220 : 288);
 
@@ -1168,12 +1161,12 @@ rs6000_function_ok_for_sibcall (tree decl, tree exp)
 	 prototype, so the argument type info must be available
 	 here.  */
       FOREACH_FUNCTION_ARGS(fntype, type, args_iter)
-	if (TREE_CODE (type) == VECTOR_TYPE
+	if (VECTOR_TYPE_P (type)
 	    && ALTIVEC_OR_VSX_VECTOR_MODE (TYPE_MODE (type)))
 	  nvreg++;
 
       FOREACH_FUNCTION_ARGS(TREE_TYPE (current_function_decl), type, args_iter)
-	if (TREE_CODE (type) == VECTOR_TYPE
+	if (VECTOR_TYPE_P (type)
 	    && ALTIVEC_OR_VSX_VECTOR_MODE (TYPE_MODE (type)))
 	  nvreg--;
 
@@ -3021,6 +3014,11 @@ rs6000_emit_prologue (void)
                            && (lookup_attribute ("no_split_stack",
                                                  DECL_ATTRIBUTES (cfun->decl))
                                == NULL));
+  /* If we are inserting ROP-protect hash instructions, disable shrink-wrap
+     until the bug where the hashst insn is emitted in the wrong location
+     is fixed.  See PR101324 for details.  */
+  if (info->rop_hash_size)
+    flag_shrink_wrap = 0;
 
   frame_pointer_needed_indeed
     = frame_pointer_needed && df_regs_ever_live_p (HARD_FRAME_POINTER_REGNUM);
@@ -4007,11 +4005,43 @@ rs6000_output_function_prologue (FILE *file)
 	  fprintf (file, "\tadd 2,2,12\n");
 	}
 
+      unsigned short patch_area_size = crtl->patch_area_size;
+      unsigned short patch_area_entry = crtl->patch_area_entry;
+      /* Need to emit the patching area.  */
+      if (patch_area_size > 0)
+	{
+	  cfun->machine->global_entry_emitted = true;
+	  /* As ELFv2 ABI shows, the allowable bytes between the global
+	     and local entry points are 0, 4, 8, 16, 32 and 64 when
+	     there is a local entry point.  Considering there are two
+	     non-prefixed instructions for global entry point prologue
+	     (8 bytes), the count for patchable nops before local entry
+	     point would be 2, 6 and 14.  It's possible to support those
+	     other counts of nops by not making a local entry point, but
+	     we don't have clear use cases for them, so leave them
+	     unsupported for now.  */
+	  if (patch_area_entry > 0)
+	    {
+	      if (patch_area_entry != 2
+		  && patch_area_entry != 6
+		  && patch_area_entry != 14)
+		error ("unsupported number of nops before function entry (%u)",
+		       patch_area_entry);
+	      rs6000_print_patchable_function_entry (file, patch_area_entry,
+						     true);
+	      patch_area_size -= patch_area_entry;
+	    }
+	}
+
       fputs ("\t.localentry\t", file);
       assemble_name (file, name);
       fputs (",.-", file);
       assemble_name (file, name);
       fputs ("\n", file);
+      /* Emit the nops after local entry.  */
+      if (patch_area_size > 0)
+	rs6000_print_patchable_function_entry (file, patch_area_size,
+					       patch_area_entry == 0);
     }
 
   else if (rs6000_pcrel_p ())
@@ -5134,10 +5164,6 @@ macho_branch_islands (void)
 	}
       strcpy (tmp_buf, "\n");
       strcat (tmp_buf, label);
-#if defined (DBX_DEBUGGING_INFO) || defined (XCOFF_DEBUGGING_INFO)
-      if (write_symbols == DBX_DEBUG || write_symbols == XCOFF_DEBUG)
-	dbxout_stabd (N_SLINE, bi->line_number);
-#endif /* DBX_DEBUGGING_INFO || XCOFF_DEBUGGING_INFO */
       if (flag_pic)
 	{
 	  strcat (tmp_buf, ":\n\tmflr r0\n\tbcl 20,31,");
@@ -5171,10 +5197,6 @@ macho_branch_islands (void)
 	  strcat (tmp_buf, ")\n\tmtctr r12\n\tbctr");
 	}
       output_asm_insn (tmp_buf, 0);
-#if defined (DBX_DEBUGGING_INFO) || defined (XCOFF_DEBUGGING_INFO)
-      if (write_symbols == DBX_DEBUG || write_symbols == XCOFF_DEBUG)
-	dbxout_stabd (N_SLINE, bi->line_number);
-#endif /* DBX_DEBUGGING_INFO || XCOFF_DEBUGGING_INFO */
       branch_islands->pop ();
     }
 }
@@ -5320,6 +5342,7 @@ rs6000_output_function_epilogue (FILE *file)
 	  || ! strcmp (language_string, "GNU GIMPLE")
 	  || ! strcmp (language_string, "GNU Go")
 	  || ! strcmp (language_string, "GNU D")
+	  || ! strcmp (language_string, "GNU Rust")
 	  || ! strcmp (language_string, "libgccjit"))
 	i = 0;
       else if (! strcmp (language_string, "GNU F77")

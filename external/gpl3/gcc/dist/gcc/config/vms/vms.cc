@@ -1,5 +1,5 @@
 /* Definitions of target machine GNU compiler. 32bit VMS version.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Contributed by Douglas B Rupp (rupp@gnat.com).
 
 This file is part of GCC.
@@ -99,7 +99,7 @@ static const struct vms_crtl_name vms_crtl_names[] =
 
 /* Number of entires in the above array.  */
 
-#define NBR_CRTL_NAMES (sizeof (vms_crtl_names) / sizeof (*vms_crtl_names))
+#define NBR_CRTL_NAMES (ARRAY_SIZE (vms_crtl_names))
 
 /* List of aliased identifiers.  They must be persistent across gc.  */
 

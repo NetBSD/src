@@ -1,5 +1,5 @@
 ;; Constraint definitions for RS6000
-;; Copyright (C) 2006-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2024 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -29,7 +29,7 @@
   "A base register.  Like @code{r}, but @code{r0} is not allowed, so
    @code{r1}@dots{}@code{r31}.")
 
-(define_register_constraint "f" "rs6000_constraints[RS6000_CONSTRAINT_f]"
+(define_register_constraint "f" "rs6000_constraints[RS6000_CONSTRAINT_d]"
   "A floating point register (FPR), @code{f0}@dots{}@code{f31}.")
 
 (define_register_constraint "d" "rs6000_constraints[RS6000_CONSTRAINT_d]"
@@ -37,7 +37,7 @@
    historically @code{f} was for single-precision and @code{d} was for
    double-precision floating point.")
 
-(define_register_constraint "v" "ALTIVEC_REGS"
+(define_register_constraint "v" "rs6000_constraints[RS6000_CONSTRAINT_v]"
   "An Altivec vector register (VR), @code{v0}@dots{}@code{v31}.")
 
 (define_register_constraint "wa" "rs6000_constraints[RS6000_CONSTRAINT_wa]"
@@ -78,8 +78,8 @@
 ;; It is currently used for that purpose in LLVM.
 
 (define_register_constraint "we" "rs6000_constraints[RS6000_CONSTRAINT_we]"
-  "@internal Like @code{wa}, if @option{-mpower9-vector} and @option{-m64} are
-   used; otherwise, @code{NO_REGS}.")
+  "@internal Like @code{wa}, if this is a POWER9 or later and @option{-mvsx}
+   and @option{-m64} are used; otherwise, @code{NO_REGS}.")
 
 ;; NO_REGs register constraint, used to merge mov{sd,sf}, since movsd can use
 ;; direct move directly, and movsf can't to move between the register sets.
@@ -106,12 +106,6 @@
   (and (match_code "const_int")
        (match_test "TARGET_P8_VECTOR")
        (match_operand 0 "s5bit_cint_operand")))
-
-(define_constraint "wD"
-  "@internal Int constant that is the element number of the 64-bit scalar
-   in a vector."
-  (and (match_code "const_int")
-       (match_test "TARGET_VSX && (ival == VECTOR_ELEMENT_SCALAR_64BIT)")))
 
 (define_constraint "wE"
   "@internal Vector constant that can be loaded with the XXSPLTIB instruction."
@@ -263,7 +257,7 @@
        (match_test "REG_P (XEXP (op, 0))")))
 
 (define_memory_constraint "Y"
-  "@internal A memory operand for a DQ-form instruction."
+  "@internal A memory operand for a DS-form instruction."
   (and (match_code "mem")
        (match_test "mem_operand_gpr (op, mode)")))
 

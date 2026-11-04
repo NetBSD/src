@@ -1,0 +1,115 @@
+$NetBSD: README.gcc14,v 1.36.2.2 2026/11/04 22:46:36 perseant Exp $
+
+arch/feature list.
+
+tools:		does build.sh tools work?
+kernels:	does a kernel run?  y (yes), b (builds/ready), p (partially), ? (not ready)
+libgcc:		does libgcc build?
+native-gcc:	does a full mknative-gcc complete?
+sani:		has sanitizer been ported to this CPU again for GCC 14?  b (build) y (works)
+make release:	does build.sh release complete?  (before sanitizer - bs)
+runs:		does the system boot with a full world?
+atf:		does atf run / compare well
+switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
+
+
+architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
+------------	-----	-------	------	---------------	------------	----	---	--------
+aarch64		y	y	y	y	y	y		y	y	y
+aarch64eb	y	y	y	y	y	y		y	y	y
+alpha		y	b	y	y	y	y[11]		y[14]	y[15]	?
+earmv4		y	b	y	y	y	y		?	?	y
+earmv4eb	y	b	y	y	y	y		?	?	y
+earmv5		y	y	y	y	y	y		y	y	y
+earmv5eb	y	y	y	y	y	y		y	y	y
+earmv5hf	y	b	y	y	y	y		?	?	y
+earmv5hfeb	y	b	y	y	y	y		?	?	y
+earmv6		y	b	y	y	y	y		?	?	y
+earmv6eb	y	b	y	y	y	y		?	?	y
+earmv6hf	y	y	y	y	y	y		y	y	y
+earmv6hfeb	y	y	y	y	y	y		y	y	y
+earmv7		y	b	y	y	y	y		?	?	y
+earmv7eb	y	b	y	y	y	y		?	?	y
+earmv7hf	y	y	y	y	y	y		y	y	y
+earmv7hfeb	y	y	y	y	y	y		y	y	y
+hppa		y	b	y	y	y	y		y	y	y
+i386		y	b	y	y	y	y		?	?	y
+ia64		y	y[8]	y	y	y	y		y	?	y
+m68000		y	b	y	y	y	n[9]		?	?	?
+m68k		y	b	y	y	y	y		y[2]	?	?
+mipseb		y	b	y	y	y	y		?	?	y
+mipsel		y	b	y	y	y	y		?	?	y
+mips64eb	y	y	y	y	y	y		y	y	y
+mips64el	y	b	y	y	y	y		?	?	y
+mipsn64eb	y	b	y	y	y	y		?	y	y
+mipsn64el	y	b	y	y	y	y		?	?	y
+powerpc		y	b	y	y	y	y		y	?	y
+powerpc64	y	b	y	y	y	y		?	?	y
+sh3eb		y	b	y	y	y	y		?	?	?
+sh3el		y	b	y	y	y	y		y	y	y
+sparc		y	y	y	y	y	y		y	y	y
+sparc64		y	y	y	y	y	y		y	y	y
+vax		y	y	y	y	y	y		y	y	y
+x86_64		y	y	y	y	y	y		y	y	y
+riscv32		y	n[7]	y	y	y	y		?	?	y
+riscv64		y	y	y	y	y	y		y	y	y
+------------	-----	-------	------	---------------	------------	----	---
+architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
+
+[2]: GCC isn't stable building pkgsrc nbcompat:
+     gcc  -D__DBINTERFACE_PRIVATE -I. -I.  -O2 -fno-reorder-blocks -DHAVE_CONFIG_H -c .../libnbcompat-20251029/db/btree/bt_conv.c
+     during GIMPLE pass: slp
+     .../libnbcompat-20251029/db/btree/bt_conv.c: In function '__bt_pgin':
+     .../libnbcompat-20251029/db/btree/bt_conv.c:60:1: internal compiler error: Segmentation fault
+	60 | __bt_pgin(void *t, pgno_t pg, void *pp)
+[7]: riscv32 kernels are not really implemented yet, not GCC 12 issue.
+[8]: GENERIC.SKI boots just as well as GCC 10.
+[9]: ramdisk wants 4 more KB:
+     Calculated size of `ramdisk.fs.tmp': 614400 bytes, 167 inodes
+     ...
+      32,nbmakefs: Writing inode 151 (work/./etc/protocols), bytes 0 + 118: No space left on device
+[11]: alpha needs an -O0 for mopd's file.c to avoid an ICE.
+[14]: cc1 crashes when compiling pkgsrc's --> worked around by PR toolchain/60843.
+[15]: some pic_profile variants of tests in usr.bin/c++ crash. --> worked around by PR toolchain/60842.
+
+
+CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
+values:		y (yes), k (kernels only), n (failed), r (running), ? (not attempted), nx (yes, no x11), nk (no kernels available)
+
+CPU		platform list
+---		-------- ----
+		acorn32		cats	epoc32	evbarm-eb	evbarm-el	hpcarm		iyonix		netwinder	shark 		zaurus
+earmv4:		k		k	k	y		y		k		 		k		y		 
+earm:		 		 	 	y		y		 		k		 		 		k
+earmhf:		 		 	 	y		y		 		 		 		 		 
+earmv6:		 		 	 	y		y
+earmv6hf:	 		 	 	y		y
+earmv7:		 		 	 	y		y
+earmv7hf:	 		 	 	y		y
+
+		amiga	atari	cesfic	hp300	luna68k		mac68k		mvme68k		news68k		next68k		sun3	virt68k		x68k
+m68k:		y	k	k	k	k		k		k		k		k		k 	k		k
+
+		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
+mipseb:		k		k		k		k		k		k
+
+		evbmips		algor		arc		cobalt		hpcmips		pmax
+mipsel:		k		k		k		k		k		k
+
+		algor		evbmips		pmax
+mips64eb:	 		y		 
+mips64el:	y		y		y
+
+		algor		evbmips		pmax
+mipsn64eb:	 		k		 
+mipsn64el:	k		k		k
+
+		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
+powerpc:	k		k	k	k		y		k		k		k		k		k
+
+		evbppc		macppc		ofppc
+powerpc64:	y		k		n
+
+		dreamcast	evbsh3		hpcsh		landisk		mmeye
+sh3eb:		 		k		 		 		k
+sh3el:		k		k		k		k

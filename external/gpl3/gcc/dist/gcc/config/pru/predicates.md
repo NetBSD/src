@@ -1,5 +1,5 @@
 ;; Predicate definitions for TI PRU.
-;; Copyright (C) 2014-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2024 Free Software Foundation, Inc.
 ;; Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 ;;
 ;; This file is part of GCC.
@@ -21,6 +21,10 @@
 (define_predicate "const_1_operand"
   (and (match_code "const_int")
        (match_test "INTVAL (op) == 1")))
+
+(define_predicate "const_0_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 0")))
 
 ; Note: Always pass a valid mode!
 (define_predicate "const_ubyte_operand"
@@ -48,6 +52,10 @@
 ;; FP Comparisons handled by pru_expand_pru_compare.
 (define_predicate "pru_fp_comparison_operator"
   (match_code "eq,ne,lt,gt,le,ge"))
+
+;; TRUE for comparisons supported by PRU's cstore.
+(define_predicate "pru_cstore_comparison_operator"
+  (match_code "eq,ne,gtu"))
 
 ;; Return true if OP is a constant that contains only one 1 in its
 ;; binary representation.
@@ -303,4 +311,26 @@
 	return false;
     }
   return true;
+})
+
+;; Return true if OP is a constant integer with one single consecutive
+;; range of bytes with value 0xff, and the rest of the bytes are 0x00.
+(define_predicate "const_fillbytes_operand"
+  (match_code "const_int")
+{
+  gcc_assert (mode != VOIDmode);
+
+  pru_byterange r = pru_calc_byterange (INTVAL (op), mode);
+  return r.start >=0 && r.nbytes > 0;
+})
+
+;; Return true if OP is a constant integer with one single consecutive
+;; range of bytes with value 0x00, and the rest of the bytes are 0xff.
+(define_predicate "const_zerobytes_operand"
+  (match_code "const_int")
+{
+  gcc_assert (mode != VOIDmode);
+
+  pru_byterange r = pru_calc_byterange (~INTVAL (op), mode);
+  return r.start >=0 && r.nbytes > 0;
 })

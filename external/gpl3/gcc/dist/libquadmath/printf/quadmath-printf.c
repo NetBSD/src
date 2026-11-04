@@ -189,7 +189,7 @@ quadmath_snprintf (char *str, size_t size, const char *format, ...)
       ++format;
       info.width = va_arg (ap, int);
     }
-  else if (isdigit (*format))
+  else if (isdigit ((unsigned char)*format))
     /* Constant width specification.  */
     info.width = read_int (&format);
 
@@ -206,7 +206,7 @@ quadmath_snprintf (char *str, size_t size, const char *format, ...)
 
 	  info.prec = va_arg (ap, int);
 	}
-      else if (isdigit (*format))
+      else if (isdigit ((unsigned char)*format))
 	info.prec = read_int (&format);
       else
 	/* "%.?" is treated like "%.0?".  */

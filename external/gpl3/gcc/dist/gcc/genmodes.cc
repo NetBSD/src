@@ -1,5 +1,5 @@
 /* Generate the machine mode enumeration and associated tables.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -114,6 +114,7 @@ static struct mode_adjust *adj_alignment;
 static struct mode_adjust *adj_format;
 static struct mode_adjust *adj_ibit;
 static struct mode_adjust *adj_fbit;
+static struct mode_adjust *adj_precision;
 
 /* Mode class operations.  */
 static enum mode_class
@@ -819,6 +820,7 @@ make_vector_mode (enum mode_class bclass,
 #define ADJUST_NUNITS(M, X)    _ADD_ADJUST (nunits, M, X, RANDOM, RANDOM)
 #define ADJUST_BYTESIZE(M, X)  _ADD_ADJUST (bytesize, M, X, RANDOM, RANDOM)
 #define ADJUST_ALIGNMENT(M, X) _ADD_ADJUST (alignment, M, X, RANDOM, RANDOM)
+#define ADJUST_PRECISION(M, X) _ADD_ADJUST (precision, M, X, RANDOM, RANDOM)
 #define ADJUST_FLOAT_FORMAT(M, X)    _ADD_ADJUST (format, M, X, FLOAT, FLOAT)
 #define ADJUST_IBIT(M, X)  _ADD_ADJUST (ibit, M, X, ACCUM, UACCUM)
 #define ADJUST_FBIT(M, X)  _ADD_ADJUST (fbit, M, X, FRACT, UACCUM)
@@ -978,7 +980,7 @@ calc_wider_mode (void)
     }
 }
 
-/* Text to add to the constant part of a poly_int_pod initializer in
+/* Text to add to the constant part of a poly_int initializer in
    order to fill out te whole structure.  */
 #if NUM_POLY_INT_COEFFS == 1
 #define ZERO_COEFFS ""
@@ -1078,7 +1080,7 @@ extern __inline__ __attribute__((__always_inline__, __gnu_inline__))\n\
 poly_uint16\n\
 mode_size_inline (machine_mode mode)\n\
 {\n\
-  extern %spoly_uint16_pod mode_size[NUM_MACHINE_MODES];\n\
+  extern %spoly_uint16 mode_size[NUM_MACHINE_MODES];\n\
   gcc_assert (mode >= 0 && mode < NUM_MACHINE_MODES);\n\
   switch (mode)\n\
     {\n", adj_nunits || adj_bytesize ? "" : "const ");
@@ -1112,7 +1114,7 @@ extern __inline__ __attribute__((__always_inline__, __gnu_inline__))\n\
 poly_uint16\n\
 mode_nunits_inline (machine_mode mode)\n\
 {\n\
-  extern %spoly_uint16_pod mode_nunits[NUM_MACHINE_MODES];\n\
+  extern %spoly_uint16 mode_nunits[NUM_MACHINE_MODES];\n\
   switch (mode)\n\
     {\n", adj_nunits ? "" : "const ");
 
@@ -1139,10 +1141,10 @@ inline __attribute__((__always_inline__))\n\
 #else\n\
 extern __inline__ __attribute__((__always_inline__, __gnu_inline__))\n\
 #endif\n\
-unsigned char\n\
+unsigned short\n\
 mode_inner_inline (machine_mode mode)\n\
 {\n\
-  extern const unsigned char mode_inner[NUM_MACHINE_MODES];\n\
+  extern const unsigned short mode_inner[NUM_MACHINE_MODES];\n\
   gcc_assert (mode >= 0 && mode < NUM_MACHINE_MODES);\n\
   switch (mode)\n\
     {");
@@ -1478,7 +1480,7 @@ emit_mode_precision (void)
   int c;
   struct mode_data *m;
 
-  print_maybe_const_decl ("%spoly_uint16_pod", "mode_precision",
+  print_maybe_const_decl ("%spoly_uint16", "mode_precision",
 			  "NUM_MACHINE_MODES", adj_nunits);
 
   for_all_modes (c, m)
@@ -1497,7 +1499,7 @@ emit_mode_size (void)
   int c;
   struct mode_data *m;
 
-  print_maybe_const_decl ("%spoly_uint16_pod", "mode_size",
+  print_maybe_const_decl ("%spoly_uint16", "mode_size",
 			  "NUM_MACHINE_MODES", adj_nunits || adj_bytesize);
 
   for_all_modes (c, m)
@@ -1512,7 +1514,7 @@ emit_mode_nunits (void)
   int c;
   struct mode_data *m;
 
-  print_maybe_const_decl ("%spoly_uint16_pod", "mode_nunits",
+  print_maybe_const_decl ("%spoly_uint16", "mode_nunits",
 			  "NUM_MACHINE_MODES", adj_nunits);
 
   for_all_modes (c, m)
@@ -1527,7 +1529,7 @@ emit_mode_wider (void)
   int c;
   struct mode_data *m;
 
-  print_decl ("unsigned char", "mode_wider", "NUM_MACHINE_MODES");
+  print_decl ("unsigned short", "mode_next", "NUM_MACHINE_MODES");
 
   for_all_modes (c, m)
     tagged_printf ("E_%smode",
@@ -1535,7 +1537,38 @@ emit_mode_wider (void)
 		   m->name);
 
   print_closer ();
-  print_decl ("unsigned char", "mode_2xwider", "NUM_MACHINE_MODES");
+  print_decl ("unsigned short", "mode_wider", "NUM_MACHINE_MODES");
+
+  for_all_modes (c, m)
+    {
+      struct mode_data *m2 = 0;
+
+      if (m->cl == MODE_INT
+	  || m->cl == MODE_PARTIAL_INT
+	  || m->cl == MODE_FLOAT
+	  || m->cl == MODE_DECIMAL_FLOAT
+	  || m->cl == MODE_COMPLEX_FLOAT
+	  || m->cl == MODE_FRACT
+	  || m->cl == MODE_UFRACT
+	  || m->cl == MODE_ACCUM
+	  || m->cl == MODE_UACCUM)
+	for (m2 = m->wider; m2 && m2 != void_mode; m2 = m2->wider)
+	  {
+	    if (m2->bytesize == m->bytesize
+		&& m2->precision == m->precision)
+	      continue;
+	    break;
+	  }
+
+      if (m2 == void_mode)
+	m2 = 0;
+      tagged_printf ("E_%smode",
+		     m2 ? m2->name : void_mode->name,
+		     m->name);
+    }
+
+  print_closer ();
+  print_decl ("unsigned short", "mode_2xwider", "NUM_MACHINE_MODES");
 
   for_all_modes (c, m)
     {
@@ -1592,7 +1625,7 @@ emit_mode_complex (void)
   int c;
   struct mode_data *m;
 
-  print_decl ("unsigned char", "mode_complex", "NUM_MACHINE_MODES");
+  print_decl ("unsigned short", "mode_complex", "NUM_MACHINE_MODES");
 
   for_all_modes (c, m)
     tagged_printf ("E_%smode",
@@ -1632,7 +1665,7 @@ emit_mode_inner (void)
   int c;
   struct mode_data *m;
 
-  print_decl ("unsigned char", "mode_inner", "NUM_MACHINE_MODES");
+  print_decl ("unsigned short", "mode_inner", "NUM_MACHINE_MODES");
 
   for_all_modes (c, m)
     tagged_printf ("E_%smode",
@@ -1705,7 +1738,7 @@ emit_class_narrowest_mode (void)
 {
   int c;
 
-  print_decl ("unsigned char", "class_narrowest_mode", "MAX_MODE_CLASS");
+  print_decl ("unsigned short", "class_narrowest_mode", "MAX_MODE_CLASS");
 
   for (c = 0; c < MAX_MODE_CLASS; c++)
     {
@@ -1763,6 +1796,7 @@ emit_real_format_for_mode (void)
 static void
 emit_mode_adjustments (void)
 {
+  int c;
   struct mode_adjust *a;
   struct mode_data *m;
 
@@ -1798,8 +1832,9 @@ emit_mode_adjustments (void)
 	      " (mode_precision[E_%smode], mode_nunits[E_%smode]);\n",
 	      m->name, m->name);
       printf ("    mode_precision[E_%smode] = ps * old_factor;\n", m->name);
-      printf ("    mode_size[E_%smode] = exact_div (mode_precision[E_%smode],"
-	      " BITS_PER_UNIT);\n", m->name, m->name);
+      printf ("    if (!multiple_p (mode_precision[E_%smode],"
+	      " BITS_PER_UNIT, &mode_size[E_%smode]))\n", m->name, m->name);
+      printf ("      mode_size[E_%smode] = -1;\n", m->name);
       printf ("    mode_nunits[E_%smode] = ps;\n", m->name);
       printf ("    adjust_mode_mask (E_%smode);\n", m->name);
       printf ("  }\n");
@@ -1931,6 +1966,26 @@ emit_mode_adjustments (void)
   for (a = adj_format; a; a = a->next)
     printf ("\n  /* %s:%d */\n  REAL_MODE_FORMAT (E_%smode) = %s;\n",
 	    a->file, a->line, a->mode->name, a->adjustment);
+
+  /* Adjust precision to the actual bits size.  */
+  for (a = adj_precision; a; a = a->next)
+    switch (a->mode->cl)
+      {
+	case MODE_VECTOR_BOOL:
+	  printf ("\n  /* %s:%d.  */\n  ps = %s;\n", a->file, a->line,
+		  a->adjustment);
+	  printf ("  mode_precision[E_%smode] = ps;\n", a->mode->name);
+	  break;
+	default:
+	  internal_error ("invalid use of ADJUST_PRECISION for mode %s",
+			  a->mode->name);
+	  /* NOTREACHED.  */
+      }
+
+  /* Ensure there is no mode size equals -1.  */
+  for_all_modes (c, m)
+    printf ("\n  gcc_assert (maybe_ne (mode_size[E_%smode], -1));\n",
+	    m->name);
 
   puts ("}");
 }

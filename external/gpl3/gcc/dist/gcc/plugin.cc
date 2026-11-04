@@ -1,5 +1,5 @@
 /* Support for GCC plugin mechanism.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,6 +21,7 @@ along with GCC; see the file COPYING3.  If not see
    APIs described in doc/plugin.texi.  */
 
 #include "config.h"
+#define INCLUDE_DLFCN_H
 #include "system.h"
 #include "coretypes.h"
 #include "options.h"
@@ -41,6 +42,7 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
 
@@ -128,7 +130,7 @@ static const char *str_license = "plugin_is_GPL_compatible";
    structure to be inserted into the hash table.  */
 
 static hashval_t
-htab_hash_plugin (const PTR p)
+htab_hash_plugin (const void *p)
 {
   const struct plugin_name_args *plugin = (const struct plugin_name_args *) p;
   return htab_hash_string (plugin->base_name);
@@ -189,10 +191,10 @@ add_new_plugin (const char* plugin_name)
 #if defined(__MINGW32__)
       static const char plugin_ext[] = ".dll";
 #elif defined(__APPLE__)
-      /* Mac OS has two types of libraries: dynamic libraries (.dylib) and
+      /* macOS has two types of libraries: dynamic libraries (.dylib) and
          plugins (.bundle). Both can be used with dlopen()/dlsym() but the
          former cannot be linked at build time (i.e., with the -lfoo linker
-         option). A GCC plugin is therefore probably a Mac OS plugin but their
+         option). A GCC plugin is therefore probably a macOS plugin but their
          use seems to be quite rare and the .bundle extension is more of a
          recommendation rather than the rule. This raises the questions of how
          well they are supported by tools (e.g., libtool). So to avoid
@@ -813,6 +815,44 @@ finalize_plugins (void)
   /* PLUGIN_NAME_ARGS_TAB is no longer needed, just delete it.  */
   htab_delete (plugin_name_args_tab);
   plugin_name_args_tab = NULL;
+}
+
+/* Implementation detail of for_each_plugin.  */
+
+struct for_each_plugin_closure
+{
+  void (*cb) (const plugin_name_args *,
+	      void *user_data);
+  void *user_data;
+};
+
+/* Implementation detail of for_each_plugin: callback for htab_traverse_noresize
+   that calls the user-provided callback.  */
+
+static int
+for_each_plugin_cb (void **slot, void *info)
+{
+  struct plugin_name_args *plugin = (struct plugin_name_args *) *slot;
+  for_each_plugin_closure *c = (for_each_plugin_closure *)info;
+  c->cb (plugin, c->user_data);
+  return 1;
+}
+
+/* Call CB with USER_DATA on each plugin.  */
+
+void
+for_each_plugin (void (*cb) (const plugin_name_args *,
+			     void *user_data),
+		 void *user_data)
+{
+  if (!plugin_name_args_tab)
+    return;
+
+  for_each_plugin_closure c;
+  c.cb = cb;
+  c.user_data = user_data;
+
+  htab_traverse_noresize (plugin_name_args_tab, for_each_plugin_cb, &c);
 }
 
 /* Used to pass options to htab_traverse callbacks. */

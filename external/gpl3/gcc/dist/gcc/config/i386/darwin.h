@@ -1,5 +1,5 @@
 /* Target definitions for x86 running Darwin.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -110,7 +110,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC \
-  "%{mdaz-ftz:crtfastmath.o%s;Ofast|ffast-math|funsafe-math-optimizations:%{!mno-daz-ftz:crtfastmath.o%s}} \
+  "%{mdaz-ftz:crtfastmath.o%s;Ofast|ffast-math|funsafe-math-optimizations:%{!shared:%{!mno-daz-ftz:crtfastmath.o%s}}} \
    %{mpc32:crtprec32.o%s} \
    %{mpc64:crtprec64.o%s} \
    %{mpc80:crtprec80.o%s}" TM_DESTRUCTOR
@@ -120,6 +120,9 @@ along with GCC; see the file COPYING3.  If not see
 #define DARWIN_ARCH_SPEC "x86_64"
 #define DARWIN_SUBARCH_SPEC DARWIN_ARCH_SPEC
 #endif
+
+#undef DARWIN_HEAP_T_LIB
+#define DARWIN_HEAP_T_LIB " -lheapt_w "
 
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS                                   \
@@ -237,11 +240,11 @@ along with GCC; see the file COPYING3.  If not see
 /* Darwin uses the standard DWARF register numbers but the default
    register numbers for STABS.  Fortunately for 64-bit code the
    default and the standard are the same.  */
-#undef DBX_REGISTER_NUMBER
-#define DBX_REGISTER_NUMBER(n) 					\
-  (TARGET_64BIT ? dbx64_register_map[n]				\
-   : dwarf_debuginfo_p () ? svr4_dbx_register_map[n]		\
-   : dbx_register_map[n])
+#undef DEBUGGER_REGNO
+#define DEBUGGER_REGNO(n) 					\
+  (TARGET_64BIT ? debugger64_register_map[n]				\
+   : dwarf_debuginfo_p () ? svr4_debugger_register_map[n]		\
+   : debugger_register_map[n])
 
 /* Unfortunately, the 32-bit EH information also doesn't use the standard
    DWARF register numbers.  */
@@ -308,3 +311,9 @@ along with GCC; see the file COPYING3.  If not see
 #define CLEAR_INSN_CACHE(beg, end)				\
   extern void sys_icache_invalidate(void *start, size_t len);	\
   sys_icache_invalidate ((beg), (size_t)((end)-(beg)))
+
+/* Disable custom function descriptors for Darwin when we have off-stack
+   trampolines.  */
+#undef X86_CUSTOM_FUNCTION_TEST
+#define X86_CUSTOM_FUNCTION_TEST \
+  (flag_trampolines && flag_trampoline_impl == TRAMPOLINE_IMPL_HEAP) ? 0 : 1

@@ -1,6 +1,6 @@
 ; Options for the HP PA-RISC port of the compiler.
 
-; Copyright (C) 2005-2022 Free Software Foundation, Inc.
+; Copyright (C) 2005-2024 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -37,6 +37,10 @@ march=2.0
 Target RejectNegative
 Generate PA2.0 code (requires binutils 2.10 or later).
 
+matomic-libcalls
+Target Var(TARGET_ATOMIC_LIBCALLS) Init(1)
+Generate libcalls for atomic loads and stores when sync libcalls are disabled.
+
 mbig-switch
 Target Ignore
 Does nothing.  Preserved for backward compatibility.
@@ -46,7 +50,7 @@ Target Mask(CALLER_COPIES)
 Caller copies function arguments passed by hidden reference.
 
 mcoherent-ldcw
-Target Var(TARGET_COHERENT_LDCW) Init(1)
+Target Var(TARGET_COHERENT_LDCW) Init(0)
 Use ldcw/ldcd coherent cache-control hint.
 
 mdisable-fpregs

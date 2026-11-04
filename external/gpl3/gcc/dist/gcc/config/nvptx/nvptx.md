@@ -1,5 +1,5 @@
 ;; Machine description for NVPTX.
-;; Copyright (C) 2014-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2024 Free Software Foundation, Inc.
 ;; Contributed by Bernd Schmidt <bernds@codesourcery.com>
 ;;
 ;; This file is part of GCC.
@@ -34,8 +34,6 @@
    UNSPEC_FPINT_CEIL
    UNSPEC_FPINT_NEARBYINT
 
-   UNSPEC_BITREV
-
    UNSPEC_ALLOCA
 
    UNSPEC_SET_SOFTSTACK
@@ -58,6 +56,9 @@
    UNSPECV_CAS_LOCAL
    UNSPECV_XCHG
    UNSPECV_ST
+   UNSPECV_BARRED_AND
+   UNSPECV_BARRED_OR
+   UNSPECV_BARRED_POPC
    UNSPECV_BARSYNC
    UNSPECV_WARPSYNC
    UNSPECV_UNIFORM_WARP_CHECK
@@ -633,8 +634,7 @@
 
 (define_insn "bitrev<mode>2"
   [(set (match_operand:SDIM 0 "nvptx_register_operand" "=R")
-	(unspec:SDIM [(match_operand:SDIM 1 "nvptx_register_operand" "R")]
-		     UNSPEC_BITREV))]
+	(bitreverse:SDIM (match_operand:SDIM 1 "nvptx_register_operand" "R")))]
   ""
   "%.\\tbrev.b%T0\\t%0, %1;")
 
@@ -2273,6 +2273,35 @@
   [(unspec_volatile [(const_int 0)] UNSPECV_WARPSYNC)]
   "TARGET_PTX_6_0"
   "%.\\tbar.warp.sync\\t0xffffffff;")
+
+(define_int_iterator BARRED
+  [UNSPECV_BARRED_AND
+   UNSPECV_BARRED_OR
+   UNSPECV_BARRED_POPC])
+(define_int_attr barred_op
+  [(UNSPECV_BARRED_AND      "and")
+   (UNSPECV_BARRED_OR       "or")
+   (UNSPECV_BARRED_POPC     "popc")])
+(define_int_attr barred_mode
+  [(UNSPECV_BARRED_AND      "BI")
+   (UNSPECV_BARRED_OR       "BI")
+   (UNSPECV_BARRED_POPC     "SI")])
+(define_int_attr barred_ptxtype
+  [(UNSPECV_BARRED_AND      "pred")
+   (UNSPECV_BARRED_OR       "pred")
+   (UNSPECV_BARRED_POPC     "u32")])
+
+(define_insn "nvptx_barred_<barred_op>"
+  [(set (match_operand:<barred_mode> 0 "nvptx_register_operand" "=R")
+        (unspec_volatile
+	  [(match_operand:SI 1 "nvptx_nonmemory_operand" "Ri")
+           (match_operand:SI 2 "nvptx_nonmemory_operand" "Ri")
+	   (match_operand:SI 3 "const_int_operand" "i")
+           (match_operand:BI 4 "nvptx_register_operand" "R")]
+          BARRED))]
+  ""
+  "\\tbar.red.<barred_op>.<barred_ptxtype> \\t%0, %1, %2, %p3%4;";"
+  [(set_attr "predicable" "no")])
 
 (define_insn "nvptx_uniform_warp_check"
   [(unspec_volatile [(const_int 0)] UNSPECV_UNIFORM_WARP_CHECK)]

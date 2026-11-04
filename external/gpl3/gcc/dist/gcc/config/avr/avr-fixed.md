@@ -1,6 +1,6 @@
 ;;   This file contains instructions that support fixed-point operations
 ;;   for Atmel AVR micro controllers.
-;;   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+;;   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 ;;
 ;;   Contributed by Sean D'Epagnier  (sean@depagnier.com)
 ;;                  Georg-Johann Lay (avr@gjlay.de)
@@ -44,9 +44,9 @@
    SQ USQ SA USA
    DQ UDQ DA UDA
    TA UTA
-   QI HI SI DI])
+   QI HI PSI SI DI])
 
-;; Same so that be can build cross products
+;; Same so that we can build cartesian products.
 
 (define_mode_iterator FIXED_B
   [QQ UQQ
@@ -54,7 +54,7 @@
    SQ USQ SA USA
    DQ UDQ DA UDA
    TA UTA
-   QI HI SI DI])
+   QI HI PSI SI DI])
 
 (define_insn_and_split "fract<FIXED_B:mode><FIXED_A:mode>2"
   [(set (match_operand:FIXED_A 0 "register_operand" "=r")

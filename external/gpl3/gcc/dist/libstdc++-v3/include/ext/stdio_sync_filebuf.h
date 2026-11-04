@@ -1,6 +1,6 @@
 // Iostreams wrapper for stdio FILE* -*- C++ -*-
 
-// Copyright (C) 2003-2022 Free Software Foundation, Inc.
+// Copyright (C) 2003-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -30,6 +30,8 @@
 #define _STDIO_SYNC_FILEBUF_H 1
 
 #pragma GCC system_header
+
+#include <bits/requires_hosted.h> // GNU extensions are currently omitted
 
 #include <streambuf>
 #include <cstdio>
@@ -306,10 +308,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #endif
 
 #if _GLIBCXX_EXTERN_TEMPLATE
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++11-extensions"
   extern template class stdio_sync_filebuf<char>;
 #ifdef _GLIBCXX_USE_WCHAR_T
   extern template class stdio_sync_filebuf<wchar_t>;
 #endif
+#pragma GCC diagnostic pop
 #endif
 
 _GLIBCXX_END_NAMESPACE_VERSION

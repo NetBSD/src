@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.cc for Motorola 68000 family.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -158,9 +158,11 @@ static int m68k_sched_first_cycle_multipass_dfa_lookahead (void);
 
 static bool m68k_can_eliminate (const int, const int);
 static void m68k_conditional_register_usage (void);
-static bool m68k_legitimate_address_p (machine_mode, rtx, bool);
+static bool m68k_legitimate_address_p (machine_mode, rtx, bool,
+				       code_helper = ERROR_MARK);
 static void m68k_option_override (void);
 static void m68k_override_options_after_change (void);
+static void m68k_init_builtins (void);
 static rtx find_addr_reg (rtx);
 static const char *singlemove_string (rtx *);
 static void m68k_output_mi_thunk (FILE *, tree, HOST_WIDE_INT,
@@ -196,6 +198,7 @@ static bool m68k_modes_tieable_p (machine_mode, machine_mode);
 static machine_mode m68k_promote_function_mode (const_tree, machine_mode,
 						int *, const_tree, int);
 static void m68k_asm_final_postscan_insn (FILE *, rtx_insn *insn, rtx [], int);
+static HARD_REG_SET m68k_zero_call_used_regs (HARD_REG_SET);
 
 /* Initialize the GCC target structure.  */
 
@@ -268,6 +271,9 @@ static void m68k_asm_final_postscan_insn (FILE *, rtx_insn *insn, rtx [], int);
 
 #undef TARGET_OPTION_OVERRIDE
 #define TARGET_OPTION_OVERRIDE m68k_option_override
+
+#undef TARGET_INIT_BUILTINS
+#define TARGET_INIT_BUILTINS m68k_init_builtins
 
 #undef TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE
 #define TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE m68k_override_options_after_change
@@ -360,7 +366,10 @@ static void m68k_asm_final_postscan_insn (FILE *, rtx_insn *insn, rtx [], int);
 #undef TARGET_ASM_FINAL_POSTSCAN_INSN
 #define TARGET_ASM_FINAL_POSTSCAN_INSN m68k_asm_final_postscan_insn
 
-static const struct attribute_spec m68k_attribute_table[] =
+#undef TARGET_ZERO_CALL_USED_REGS
+#define TARGET_ZERO_CALL_USED_REGS m68k_zero_call_used_regs
+
+TARGET_GNU_ATTRIBUTES (m68k_attribute_table,
 {
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
        affects_type_identity, handler, exclude } */
@@ -369,9 +378,8 @@ static const struct attribute_spec m68k_attribute_table[] =
   { "interrupt_handler", 0, 0, true,  false, false, false,
     m68k_handle_fndecl_attribute, NULL },
   { "interrupt_thread", 0, 0, true,  false, false, false,
-    m68k_handle_fndecl_attribute, NULL },
-  { NULL, 0, 0, false, false, false, false, NULL, NULL }
-};
+    m68k_handle_fndecl_attribute, NULL }
+});
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -712,6 +720,16 @@ m68k_option_override (void)
       else
 	m68k_sched_mac = MAC_NO;
     }
+}
+
+/* Implement TARGET_INIT_BUILTINS.  */
+
+static void
+m68k_init_builtins (void)
+{
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
 }
 
 /* Implement TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE.  */
@@ -2311,7 +2329,7 @@ m68k_decompose_address (machine_mode mode, rtx x,
    STRICT_P says whether strict checking is needed.  */
 
 bool
-m68k_legitimate_address_p (machine_mode mode, rtx x, bool strict_p)
+m68k_legitimate_address_p (machine_mode mode, rtx x, bool strict_p, code_helper)
 {
   struct m68k_address address;
 
@@ -2548,6 +2566,18 @@ m68k_adjust_decorated_operand (rtx op)
 	  iter.skip_subrtxes ();
 	}
     }
+}
+
+/* Prescan insn before outputing assembler for it.  */
+
+void
+m68k_final_prescan_insn (rtx_insn *insn ATTRIBUTE_UNUSED,
+			 rtx *operands, int n_operands)
+{
+  int i;
+
+  for (i = 0; i < n_operands; ++i)
+    m68k_adjust_decorated_operand (operands[i]);
 }
 
 /* Move X to a register and add REG_EQUAL note pointing to ORIG.
@@ -3658,6 +3688,7 @@ handle_move_double (rtx operands[2],
 
   /* Normal case: do the two words, low-numbered first.  */
 
+  m68k_final_prescan_insn (NULL, operands, 2);
   handle_movsi (operands);
 
   /* Do the middle one of the three words for long double */
@@ -3668,6 +3699,7 @@ handle_move_double (rtx operands[2],
       if (addreg1)
 	handle_reg_adjust (addreg1, 4);
 
+      m68k_final_prescan_insn (NULL, middlehalf, 2);
       handle_movsi (middlehalf);
     }
 
@@ -3678,6 +3710,7 @@ handle_move_double (rtx operands[2],
     handle_reg_adjust (addreg1, 4);
 
   /* Do that word.  */
+  m68k_final_prescan_insn (NULL, latehalf, 2);
   handle_movsi (latehalf);
 
   /* Undo the adds we just did.  */
@@ -5456,7 +5489,7 @@ output_andsi3 (rtx *operands)
 	operands[1] = GEN_INT (logval);
       else
         {
-	  operands[0] = adjust_address (operands[0], SImode, 3 - (logval / 8));
+	  operands[0] = adjust_address (operands[0], QImode, 3 - (logval / 8));
 	  operands[1] = GEN_INT (logval % 8);
         }
       return "bclr %1,%0";
@@ -5495,7 +5528,7 @@ output_iorsi3 (rtx *operands)
 	operands[1] = GEN_INT (logval);
       else
         {
-	  operands[0] = adjust_address (operands[0], SImode, 3 - (logval / 8));
+	  operands[0] = adjust_address (operands[0], QImode, 3 - (logval / 8));
 	  operands[1] = GEN_INT (logval % 8);
 	}
       return "bset %1,%0";
@@ -5533,7 +5566,7 @@ output_xorsi3 (rtx *operands)
 	operands[1] = GEN_INT (logval);
       else
         {
-	  operands[0] = adjust_address (operands[0], SImode, 3 - (logval / 8));
+	  operands[0] = adjust_address (operands[0], QImode, 3 - (logval / 8));
 	  operands[1] = GEN_INT (logval % 8);
 	}
       return "bchg %1,%0";
@@ -7149,6 +7182,48 @@ m68k_promote_function_mode (const_tree type, machine_mode mode,
   if (type == NULL_TREE && !for_return && (mode == QImode || mode == HImode))
     return SImode;
   return mode;
+}
+
+/* Implement TARGET_ZERO_CALL_USED_REGS.  */
+
+static HARD_REG_SET
+m68k_zero_call_used_regs (HARD_REG_SET need_zeroed_hardregs)
+{
+  rtx zero_fpreg = NULL_RTX;
+
+  for (unsigned int regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
+    if (TEST_HARD_REG_BIT (need_zeroed_hardregs, regno))
+      {
+	rtx reg, zero;
+
+	if (INT_REGNO_P (regno))
+	  {
+	    reg = regno_reg_rtx[regno];
+	    zero = CONST0_RTX (SImode);
+	  }
+	else if (FP_REGNO_P (regno))
+	  {
+	    reg = gen_raw_REG (SFmode, regno);
+	    if (zero_fpreg == NULL_RTX)
+	      {
+		/* On the 040/060 clearing an FP reg loads a large
+		   immediate.  To reduce code size use the first
+		   cleared FP reg to clear remaining ones.  Don't do
+		   this on cores which use fmovecr.  */
+		zero = CONST0_RTX (SFmode);
+		if (TUNE_68040_60)
+		  zero_fpreg = reg;
+	      }
+	    else
+	      zero = zero_fpreg;
+	  }
+	else
+	  gcc_unreachable ();
+
+	emit_move_insn (reg, zero);
+      }
+
+  return need_zeroed_hardregs;
 }
 
 #include "gt-m68k.h"

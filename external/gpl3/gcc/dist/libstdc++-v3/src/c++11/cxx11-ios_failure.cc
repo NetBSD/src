@@ -1,6 +1,6 @@
 // Iostreams base classes -*- C++ -*-
 
-// Copyright (C) 2014-2022 Free Software Foundation, Inc.
+// Copyright (C) 2014-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -42,56 +42,9 @@
 # error This file should not be compiled for this configuration.
 #endif
 
-#if __has_cpp_attribute(clang::require_constant_initialization)
-#  define __constinit [[clang::require_constant_initialization]]
-#endif
-
-namespace
-{
-  struct io_error_category final : std::error_category
-  {
-    const char*
-    name() const noexcept final
-    { return "iostream"; }
-
-    _GLIBCXX_DEFAULT_ABI_TAG
-    std::string
-    message(int __ec) const final
-    {
-      std::string __msg;
-      switch (std::io_errc(__ec))
-      {
-      case std::io_errc::stream:
-          __msg = "iostream error";
-          break;
-      default:
-          __msg = "Unknown error";
-          break;
-      }
-      return __msg;
-    }
-  };
-
-  struct constant_init
-  {
-    union {
-      unsigned char unused;
-      io_error_category cat;
-    };
-    constexpr constant_init() : cat() { }
-    ~constant_init() { /* do nothing, union member is not destroyed */ }
-  };
-
-  __constinit constant_init io_category_instance{};
-} // namespace
-
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
-
-  const error_category&
-  iostream_category() noexcept
-  { return io_category_instance.cat; }
 
   ios_base::failure::failure(const string& __str)
   : system_error(io_errc::stream, __str) { }
@@ -140,6 +93,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   class __iosfail_type_info : __cxxabiv1::__si_class_type_info
   {
     ~__iosfail_type_info();
+
+    using __si_class_type_info::__do_upcast;
 
     bool
     __do_upcast (const __class_type_info *dst_type,

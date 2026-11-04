@@ -1,5 +1,5 @@
 /* Definitions of Objective-C front-end entry points used for C and C++.
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -44,6 +44,8 @@ enum objc_property_attribute_group
   OBJC_PROPATTR_GROUP_READWRITE,
   OBJC_PROPATTR_GROUP_ASSIGN,
   OBJC_PROPATTR_GROUP_ATOMIC,
+  OBJC_PROPATTR_GROUP_NULLABLE,
+  OBJC_PROPATTR_GROUP_CLASS,
   OBJC_PROPATTR_GROUP_MAX
 };
 
@@ -59,6 +61,11 @@ enum objc_property_attribute_kind
   OBJC_PROPERTY_ATTR_COPY =		( 7 << 8)|OBJC_PROPATTR_GROUP_ASSIGN,
   OBJC_PROPERTY_ATTR_ATOMIC =		( 8 << 8)|OBJC_PROPATTR_GROUP_ATOMIC,
   OBJC_PROPERTY_ATTR_NONATOMIC =	( 9 << 8)|OBJC_PROPATTR_GROUP_ATOMIC,
+  OBJC_PROPERTY_ATTR_NULL_UNSPECIFIED = (12 << 8)|OBJC_PROPATTR_GROUP_NULLABLE,
+  OBJC_PROPERTY_ATTR_NULLABLE =		(13 << 8)|OBJC_PROPATTR_GROUP_NULLABLE,
+  OBJC_PROPERTY_ATTR_NONNULL =		(14 << 8)|OBJC_PROPATTR_GROUP_NULLABLE,
+  OBJC_PROPERTY_ATTR_NULL_RESETTABLE =	(15 << 8)|OBJC_PROPATTR_GROUP_NULLABLE,
+  OBJC_PROPERTY_ATTR_CLASS =		(16 << 8)|OBJC_PROPATTR_GROUP_CLASS,
   OBJC_PROPERTY_ATTR_MAX =		(255 << 8|OBJC_PROPATTR_GROUP_MAX)
 };
 
@@ -68,6 +75,7 @@ enum objc_property_attribute_kind
    attribute.  */
 struct property_attribute_info
 {
+  property_attribute_info () = default;
   property_attribute_info (tree name, location_t loc,
 			   enum objc_property_attribute_kind k)
    : name (name), ident (NULL_TREE), prop_loc (loc), prop_kind (k),
@@ -91,7 +99,7 @@ extern enum objc_property_attribute_kind objc_prop_attr_kind_for_rid (enum rid);
 /* Objective-C / Objective-C++ entry points.  */
 
 /* The following ObjC/ObjC++ functions are called by the C and/or C++
-   front-ends; they all must have corresponding stubs in stub-objc.c.  */
+   front-ends; they all must have corresponding stubs in stub-objc.cc.  */
 extern void objc_write_global_declarations (void);
 extern tree objc_is_class_name (tree);
 extern tree objc_is_object_ptr (tree);
@@ -121,7 +129,7 @@ extern tree objc_get_protocol_qualified_type (tree, tree);
 extern tree objc_get_class_reference (tree);
 extern tree objc_get_class_ivars (tree);
 extern bool objc_detect_field_duplicates (bool);
-extern void objc_start_class_interface (tree, tree, tree, tree);
+extern void objc_start_class_interface (tree, location_t, tree, tree, tree);
 extern void objc_start_category_interface (tree, tree, tree, tree);
 extern void objc_start_protocol (tree, tree, tree);
 extern void objc_continue_interface (void);

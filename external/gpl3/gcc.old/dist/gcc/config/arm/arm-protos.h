@@ -1,5 +1,5 @@
-/* Prototypes for exported functions defined in arm.c and pe.c
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+/* Prototypes for exported functions defined in arm.cc and pe.c
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rearnsha@arm.com)
    Minor hacks by Nick Clifton (nickc@cygnus.com)
 
@@ -62,6 +62,7 @@ extern void arm_emit_speculation_barrier_function (void);
 extern void arm_decompose_di_binop (rtx, rtx, rtx *, rtx *, rtx *, rtx *);
 extern bool arm_q_bit_access (void);
 extern bool arm_ge_bits_access (void);
+extern bool arm_target_insn_ok_for_lob (rtx);
 
 #ifdef RTX_CODE
 enum reg_class
@@ -73,7 +74,8 @@ extern bool arm_small_register_classes_for_mode_p (machine_mode);
 extern int const_ok_for_arm (HOST_WIDE_INT);
 extern int const_ok_for_op (HOST_WIDE_INT, enum rtx_code);
 extern int const_ok_for_dimode_op (HOST_WIDE_INT, enum rtx_code);
-extern void thumb1_gen_const_int (rtx, HOST_WIDE_INT);
+extern void thumb1_gen_const_int_rtl (rtx, HOST_WIDE_INT);
+extern void thumb1_gen_const_int_print (rtx, HOST_WIDE_INT);
 extern int arm_split_constant (RTX_CODE, machine_mode, rtx,
 			       HOST_WIDE_INT, rtx, rtx, int);
 extern int legitimate_pic_operand_p (rtx);
@@ -99,6 +101,7 @@ extern char *neon_output_shift_immediate (const char *, char, rtx *,
 					  machine_mode, int, bool);
 extern void neon_pairwise_reduce (rtx, rtx, machine_mode,
 				  rtx (*) (rtx, rtx, rtx));
+extern rtx mve_bool_vec_to_const (rtx const_vec);
 extern rtx neon_make_constant (rtx, bool generate = true);
 extern tree arm_builtin_vectorized_function (unsigned int, tree, tree);
 extern void neon_expand_vector_init (rtx, rtx);
@@ -120,6 +123,7 @@ extern int arm_coproc_mem_operand_wb (rtx, int);
 extern int neon_vector_mem_operand (rtx, int, bool);
 extern int mve_vector_mem_operand (machine_mode, rtx, bool);
 extern int neon_struct_mem_operand (rtx);
+extern int mve_struct_mem_operand (rtx);
 
 extern rtx *neon_vcmla_lane_prepare_operands (rtx *);
 
@@ -193,14 +197,22 @@ extern void arm_split_atomic_op (enum rtx_code, rtx, rtx, rtx, rtx, rtx, rtx);
 extern rtx arm_load_tp (rtx);
 extern bool arm_coproc_builtin_available (enum unspecv);
 extern bool arm_coproc_ldc_stc_legitimate_address (rtx);
+extern rtx arm_stack_protect_tls_canary_mem (bool);
+
 
 #if defined TREE_CODE
 extern void arm_init_cumulative_args (CUMULATIVE_ARGS *, tree, rtx, tree);
 extern bool arm_pad_reg_upward (machine_mode, tree, int);
 #endif
 extern int arm_apply_result_size (void);
+extern opt_machine_mode arm_get_mask_mode (machine_mode mode);
 
 #endif /* RTX_CODE */
+
+/* MVE functions.  */
+namespace arm_mve {
+  void handle_arm_mve_types_h ();
+}
 
 /* Thumb functions.  */
 extern void arm_init_expanders (void);
@@ -370,9 +382,11 @@ extern void arm_emit_coreregs_64bit_shift (enum rtx_code, rtx, rtx, rtx, rtx,
 extern bool arm_fusion_enabled_p (tune_params::fuse_ops);
 extern bool arm_valid_symbolic_address_p (rtx);
 extern bool arm_validize_comparison (rtx *, rtx *, rtx *);
+extern bool arm_expand_vector_compare (rtx, rtx_code, rtx, rtx, bool);
 #endif /* RTX_CODE */
 
 extern bool arm_gen_setmem (rtx *);
+extern void arm_expand_vcond (rtx *, machine_mode);
 extern void arm_expand_vec_perm (rtx target, rtx op0, rtx op1, rtx sel);
 
 extern bool arm_autoinc_modes_ok_p (machine_mode, enum arm_auto_incmodes);
@@ -382,16 +396,13 @@ extern void arm_emit_eabi_attribute (const char *, int, int);
 extern void arm_reset_previous_fndecl (void);
 extern void save_restore_target_globals (tree);
 
-/* Defined in gcc/common/config/arm-common.c.  */
+/* Defined in gcc/common/config/arm-common.cc.  */
 extern const char *arm_rewrite_selected_cpu (const char *name);
 
-/* Defined in gcc/common/config/arm-c.c.  */
+/* Defined in gcc/common/config/arm-c.cc.  */
 extern void arm_lang_object_attributes_init (void);
 extern void arm_register_target_pragmas (void);
 extern void arm_cpu_cpp_builtins (struct cpp_reader *);
-
-/* Defined in arm-d.c  */
-extern void arm_d_target_versions (void);
 
 extern bool arm_is_constant_pool_ref (rtx);
 

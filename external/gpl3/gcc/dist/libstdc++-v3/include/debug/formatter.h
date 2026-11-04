@@ -1,6 +1,6 @@
 // Debug-mode error formatting implementation -*- C++ -*-
 
-// Copyright (C) 2003-2022 Free Software Foundation, Inc.
+// Copyright (C) 2003-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -30,6 +30,22 @@
 #define _GLIBCXX_DEBUG_FORMATTER_H 1
 
 #include <bits/c++config.h>
+
+#if _GLIBCXX_HAVE_STACKTRACE
+extern "C"
+{
+  struct __glibcxx_backtrace_state*
+  __glibcxx_backtrace_create_state(const char*, int,
+				   void(*)(void*, const char*, int),
+				   void*);
+  int
+  __glibcxx_backtrace_full(
+    struct __glibcxx_backtrace_state*, int,
+    int (*)(void*, __UINTPTR_TYPE__, const char *, int, const char*),
+    void (*)(void*, const char*, int),
+    void*);
+}
+#endif
 
 #if __cpp_rtti
 # include <typeinfo>
@@ -185,6 +201,7 @@ namespace __gnu_debug
       __rbegin,		// dereferenceable, and at the reverse-beginning
       __rmiddle,	// reverse-dereferenceable, not at the reverse-beginning
       __rend,		// reverse-past-the-end
+      __singular_value_init,	// singular, value initialized
       __last_state
     };
 
@@ -280,7 +297,12 @@ namespace __gnu_debug
 	  _M_variant._M_iterator._M_seq_type = _GLIBCXX_TYPEID(_Sequence);
 
 	  if (__it._M_singular())
-	    _M_variant._M_iterator._M_state = __singular;
+	    {
+	      if (__it._M_value_initialized())
+		_M_variant._M_iterator._M_state = __singular_value_init;
+	      else
+		_M_variant._M_iterator._M_state = __singular;
+	    }
 	  else
 	    {
 	      if (__it._M_is_before_begin())
@@ -308,7 +330,12 @@ namespace __gnu_debug
 	  _M_variant._M_iterator._M_seq_type = _GLIBCXX_TYPEID(_Sequence);
 
 	  if (__it._M_singular())
-	    _M_variant._M_iterator._M_state = __singular;
+	    {
+	      if (__it._M_value_initialized())
+		_M_variant._M_iterator._M_state = __singular_value_init;
+	      else
+		_M_variant._M_iterator._M_state = __singular;
+	    }
 	  else
 	    {
 	      if (__it._M_is_end())
@@ -565,6 +592,14 @@ namespace __gnu_debug
 		     const char* __function)
     : _M_file(__file), _M_line(__line), _M_num_parameters(0), _M_text(0)
     , _M_function(__function)
+#if _GLIBCXX_HAVE_STACKTRACE
+# ifdef _GLIBCXX_DEBUG_BACKTRACE
+    , _M_backtrace_state(__glibcxx_backtrace_create_state(0, 1, _S_err, 0))
+    , _M_backtrace_full(&__glibcxx_backtrace_full)
+# else
+    , _M_backtrace_state(0)
+# endif
+#endif
     { }
 
 #if !_GLIBCXX_INLINE_VERSION
@@ -580,6 +615,14 @@ namespace __gnu_debug
     unsigned int	_M_num_parameters;
     const char*		_M_text;
     const char*		_M_function;
+#if _GLIBCXX_HAVE_STACKTRACE
+    struct __glibcxx_backtrace_state*		_M_backtrace_state;
+    // TODO: Remove _M_backtrace_full after __glibcxx_backtrace_full is moved
+    // from libstdc++_libbacktrace.a to libstdc++.so:
+    __decltype(&__glibcxx_backtrace_full)	_M_backtrace_full;
+
+    static void _S_err(void*, const char*, int) { }
+#endif
 
   public:
     static _Error_formatter&

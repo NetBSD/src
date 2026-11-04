@@ -1,5 +1,5 @@
 /* Various declarations for language-independent pretty-print subroutines.
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@integrable-solutions.net>
 
 This file is part of GCC.
@@ -22,6 +22,7 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_PRETTY_PRINT_H
 
 #include "obstack.h"
+#include "rich-location.h"
 #include "diagnostic-url.h"
 
 /* Maximum number of format string arguments.  */
@@ -31,15 +32,29 @@ along with GCC; see the file COPYING3.  If not see
    along with a list of things.  */
 struct text_info
 {
-  const char *format_spec;
-  va_list *args_ptr;
-  int err_no;  /* for %m */
-  void **x_data;
-  rich_location *m_richloc;
+  text_info () = default;
+  text_info (const char *format_spec,
+	     va_list *args_ptr,
+	     int err_no,
+	     void **data = nullptr,
+	     rich_location *rich_loc = nullptr)
+  : m_format_spec (format_spec),
+    m_args_ptr (args_ptr),
+    m_err_no (err_no),
+    m_data (data),
+    m_richloc (rich_loc)
+  {
+  }
 
   void set_location (unsigned int idx, location_t loc,
 		     enum range_display_kind range_display_kind);
   location_t get_location (unsigned int index_of_location) const;
+
+  const char *m_format_spec;
+  va_list *m_args_ptr;
+  int m_err_no;  /* for %m */
+  void **m_data;
+  rich_location *m_richloc;
 };
 
 /* How often diagnostics are prefixed by their locations:
@@ -53,6 +68,8 @@ enum diagnostic_prefixing_rule_t
   DIAGNOSTICS_SHOW_PREFIX_NEVER      = 0x1,
   DIAGNOSTICS_SHOW_PREFIX_EVERY_LINE = 0x2
 };
+
+class quoting_info;
 
 /* The chunk_info data structure forms a stack of the results from the
    first phase of formatting (pp_format) which have not yet been
@@ -71,6 +88,10 @@ struct chunk_info
      text, and the third phase simply emits all the chunks in sequence
      with appropriate line-wrapping.  */
   const char *args[PP_NL_ARGMAX * 2];
+
+  /* If non-null, information on quoted text runs within the chunks
+     for use by a urlifier.  */
+  quoting_info *m_quotes;
 };
 
 /* The output buffer datatype.  This is best seen as an abstract datatype
@@ -113,7 +134,7 @@ public:
 
 /* Finishes constructing a NULL-terminated character string representing
    the buffered text.  */
-static inline const char *
+inline const char *
 output_buffer_formatted_text (output_buffer *buff)
 {
   obstack_1grow (buff->obstack, '\0');
@@ -122,7 +143,7 @@ output_buffer_formatted_text (output_buffer *buff)
 
 /* Append to the output buffer a string specified by its
    STARTing character and LENGTH.  */
-static inline void
+inline void
 output_buffer_append_r (output_buffer *buff, const char *start, int length)
 {
   gcc_checking_assert (start);
@@ -136,7 +157,7 @@ output_buffer_append_r (output_buffer *buff, const char *start, int length)
 
 /*  Return a pointer to the last character emitted in the
     output_buffer.  A NULL pointer means no character available.  */
-static inline const char *
+inline const char *
 output_buffer_last_position_in_text (const output_buffer *buff)
 {
   const char *p = NULL;
@@ -214,6 +235,8 @@ class format_postprocessor
 /* True if colors should be shown.  */
 #define pp_show_color(PP) (PP)->show_color
 
+class urlifier;
+
 /* The data structure that contains the bare minimum required to do
    proper pretty-printing.  Clients may derived from this structure
    and add additional fields they need.  */
@@ -281,9 +304,13 @@ public:
 
   /* Whether URLs should be emitted, and which terminator to use.  */
   diagnostic_url_format url_format;
+
+  /* If true, then we've had a pp_begin_url (nullptr), and so the
+     next pp_end_url should be a no-op.  */
+  bool m_skipping_null_url;
 };
 
-static inline const char *
+inline const char *
 pp_get_prefix (const pretty_printer *pp) { return pp->prefix; }
 
 #define pp_space(PP)            pp_character (PP, ' ')
@@ -333,11 +360,11 @@ pp_get_prefix (const pretty_printer *pp) { return pp->prefix; }
 #define pp_decimal_int(PP, I)  pp_scalar (PP, "%d", I)
 #define pp_unsigned_wide_integer(PP, I) \
    pp_scalar (PP, HOST_WIDE_INT_PRINT_UNSIGNED, (unsigned HOST_WIDE_INT) I)
-#define pp_wide_int(PP, W, SGN)					\
+#define pp_vrange(PP, R)					\
   do								\
     {								\
-      print_dec (W, pp_buffer (PP)->digit_buffer, SGN);		\
-      pp_string (PP, pp_buffer (PP)->digit_buffer);		\
+      vrange_printer vrange_pp (PP);				\
+      (R)->accept (vrange_pp);					\
     }								\
   while (0)
 #define pp_double(PP, F)       pp_scalar (PP, "%f", F)
@@ -386,14 +413,17 @@ extern void pp_verbatim (pretty_printer *, const char *, ...)
      ATTRIBUTE_GCC_PPDIAG(2,3);
 extern void pp_flush (pretty_printer *);
 extern void pp_really_flush (pretty_printer *);
-extern void pp_format (pretty_printer *, text_info *);
-extern void pp_output_formatted_text (pretty_printer *);
+extern void pp_format (pretty_printer *, text_info *,
+		       const urlifier * = nullptr);
+extern void pp_output_formatted_text (pretty_printer *,
+				      const urlifier * = nullptr);
 extern void pp_format_verbatim (pretty_printer *, text_info *);
 
 extern void pp_indent (pretty_printer *);
 extern void pp_newline (pretty_printer *);
 extern void pp_character (pretty_printer *, int);
 extern void pp_string (pretty_printer *, const char *);
+extern void pp_unicode_character (pretty_printer *, unsigned);
 
 extern void pp_write_text_to_stream (pretty_printer *);
 extern void pp_write_text_as_dot_label_to_stream (pretty_printer *, bool);
@@ -408,7 +438,7 @@ extern void pp_begin_url (pretty_printer *pp, const char *url);
 extern void pp_end_url (pretty_printer *pp);
 
 /* Switch into verbatim mode and return the old mode.  */
-static inline pp_wrapping_mode_t
+inline pp_wrapping_mode_t
 pp_set_verbatim_wrapping_ (pretty_printer *pp)
 {
   pp_wrapping_mode_t oldmode = pp_wrapping_mode (pp);
@@ -430,7 +460,21 @@ pp_wide_integer (pretty_printer *pp, HOST_WIDE_INT i)
   pp_scalar (pp, HOST_WIDE_INT_PRINT_DEC, i);
 }
 
+inline void
+pp_wide_int (pretty_printer *pp, const wide_int_ref &w, signop sgn)
+{
+  unsigned int len;
+  print_dec_buf_size (w, sgn, &len);
+  if (UNLIKELY (len > sizeof (pp_buffer (pp)->digit_buffer)))
+    pp_wide_int_large (pp, w, sgn);
+  else
+    {
+      print_dec (w, pp_buffer (pp)->digit_buffer, sgn);
+      pp_string (pp, pp_buffer (pp)->digit_buffer);
+    }
+}
+
 template<unsigned int N, typename T>
-void pp_wide_integer (pretty_printer *pp, const poly_int_pod<N, T> &);
+void pp_wide_integer (pretty_printer *pp, const poly_int<N, T> &);
 
 #endif /* GCC_PRETTY_PRINT_H */

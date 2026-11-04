@@ -1,5 +1,5 @@
 ;; microblaze.md -- Machine description for Xilinx MicroBlaze processors.
-;; Copyright (C) 2009-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
 ;; Contributed by Michael Eager <eager@eagercon.com>.
 
@@ -1138,7 +1138,7 @@
   (set_attr "mode"	"QI")
   (set_attr "length"	"4,4,8,4,8,4,8")])
 
-;; Block moves, see microblaze.c for more details.
+;; Block moves, see microblaze.cc for more details.
 ;; Argument 0 is the destination
 ;; Argument 1 is the source
 ;; Argument 2 is the length
@@ -2107,8 +2107,8 @@
   (use (reg:SI R_GOT))]
   "flag_pic"
   {
-    register rtx target2 = gen_rtx_REG (Pmode, 
-			      GP_REG_FIRST + MB_ABI_SUB_RETURN_ADDR_REGNUM);
+    rtx target2
+      = gen_rtx_REG (Pmode, GP_REG_FIRST + MB_ABI_SUB_RETURN_ADDR_REGNUM);
     gen_rtx_CLOBBER (VOIDmode, target2);
     return "brlid\tr15,%0\;%#";
   }
@@ -2122,9 +2122,9 @@
   (clobber (reg:SI R_SR))]
   ""
   {
-    register rtx target = operands[0];
-    register rtx target2 = gen_rtx_REG (Pmode,
-			      GP_REG_FIRST + MB_ABI_SUB_RETURN_ADDR_REGNUM);
+    rtx target = operands[0];
+    rtx target2
+      = gen_rtx_REG (Pmode, GP_REG_FIRST + MB_ABI_SUB_RETURN_ADDR_REGNUM);
     if (GET_CODE (target) == SYMBOL_REF) {
         if (microblaze_break_function_p (SYMBOL_REF_DECL (target))) {
             gen_rtx_CLOBBER (VOIDmode, target2);
@@ -2147,7 +2147,7 @@
   (set_attr "mode"	"none")
   (set_attr "length"	"4")])
 
-;; calls.c now passes a fourth argument, make saber happy
+;; calls.cc now passes a fourth argument, make saber happy
 
 (define_expand "call_value"
   [(parallel [(set (match_operand 0 "register_operand" "=d")
@@ -2216,7 +2216,8 @@
    (use (match_operand:SI 4 "register_operand"))]
   "flag_pic"
   { 
-    register rtx target2=gen_rtx_REG (Pmode,GP_REG_FIRST + MB_ABI_SUB_RETURN_ADDR_REGNUM);
+    rtx target2
+      = gen_rtx_REG (Pmode,GP_REG_FIRST + MB_ABI_SUB_RETURN_ADDR_REGNUM);
 
     gen_rtx_CLOBBER (VOIDmode,target2);
     return "brlid\tr15,%1\;%#";
@@ -2232,8 +2233,9 @@
    (clobber (match_operand:SI 3 "register_operand" "=d"))]
   ""
   { 
-    register rtx target = operands[1];
-    register rtx target2=gen_rtx_REG (Pmode,GP_REG_FIRST + MB_ABI_SUB_RETURN_ADDR_REGNUM);
+    rtx target = operands[1];
+    rtx target2
+      = gen_rtx_REG (Pmode,GP_REG_FIRST + MB_ABI_SUB_RETURN_ADDR_REGNUM);
 
     if (GET_CODE (target) == SYMBOL_REF)
     {

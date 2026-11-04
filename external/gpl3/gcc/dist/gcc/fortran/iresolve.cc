@@ -1,5 +1,5 @@
 /* Intrinsic function resolution.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Andy Vaught & Katherine Holcomb
 
 This file is part of GCC.
@@ -101,6 +101,25 @@ check_charlen_present (gfc_expr *source)
       if (source->ts.u.cl->length == NULL)
 	gfc_internal_error ("check_charlen_present(): length not set");
     }
+}
+
+static gfc_intrinsic_sym *
+copy_intrinsic_sym (const gfc_intrinsic_sym *src)
+{
+  gfc_intrinsic_sym *copy = XCNEW (gfc_intrinsic_sym);
+  gfc_intrinsic_arg *head = NULL;
+  gfc_intrinsic_arg **tail = &head;
+
+  *copy = *src;
+  for (const gfc_intrinsic_arg *arg = src->formal; arg; arg = arg->next)
+    {
+      *tail = XCNEW (gfc_intrinsic_arg);
+      **tail = *arg;
+      (*tail)->next = NULL;
+      tail = &(*tail)->next;
+    }
+  copy->formal = head;
+  return copy;
 }
 
 /* Helper function for resolving the "mask" argument.  */
@@ -230,7 +249,9 @@ gfc_resolve_adjustl (gfc_expr *f, gfc_expr *string)
 {
   f->ts.type = BT_CHARACTER;
   f->ts.kind = string->ts.kind;
-  if (string->ts.u.cl)
+  if (string->ts.deferred)
+    f->ts = string->ts;
+  else if (string->ts.u.cl)
     f->ts.u.cl = gfc_new_charlen (gfc_current_ns, string->ts.u.cl);
 
   f->value.function.name = gfc_get_string ("__adjustl_s%d", f->ts.kind);
@@ -242,7 +263,9 @@ gfc_resolve_adjustr (gfc_expr *f, gfc_expr *string)
 {
   f->ts.type = BT_CHARACTER;
   f->ts.kind = string->ts.kind;
-  if (string->ts.u.cl)
+  if (string->ts.deferred)
+    f->ts = string->ts;
+  else if (string->ts.u.cl)
     f->ts.u.cl = gfc_new_charlen (gfc_current_ns, string->ts.u.cl);
 
   f->value.function.name = gfc_get_string ("__adjustr_s%d", f->ts.kind);
@@ -2359,7 +2382,15 @@ gfc_resolve_repeat (gfc_expr *f, gfc_expr *string,
     }
 
   if (tmp)
-    f->ts.u.cl->length = gfc_multiply (tmp, gfc_copy_expr (ncopies));
+    {
+      /* Force-convert to gfc_charlen_int_kind before gfc_multiply.  */
+      gfc_expr *e = gfc_copy_expr (ncopies);
+      gfc_typespec ts = tmp->ts;
+      ts.kind = gfc_charlen_int_kind;
+      gfc_convert_type_warn (e, &ts, 2, 0);
+      gfc_convert_type_warn (tmp, &ts, 2, 0);
+      f->ts.u.cl->length = gfc_multiply (tmp, e);
+    }
 }
 
 
@@ -2420,7 +2451,7 @@ gfc_resolve_reshape (gfc_expr *f, gfc_expr *source, gfc_expr *shape,
       break;
     }
 
-  if (shape->expr_type == EXPR_ARRAY && gfc_is_constant_expr (shape))
+  if (shape->expr_type == EXPR_ARRAY && gfc_is_constant_array_expr (shape))
     {
       gfc_constructor *c;
       f->shape = gfc_get_shape (f->rank);
@@ -2633,7 +2664,11 @@ gfc_resolve_spread (gfc_expr *f, gfc_expr *source, gfc_expr *dim,
     gfc_resolve_substring_charlen (source);
 
   if (source->ts.type == BT_CHARACTER)
-    check_charlen_present (source);
+    {
+      check_charlen_present (source);
+      f->value.function.isym = copy_intrinsic_sym (f->value.function.isym);
+      f->value.function.isym->formal->ts = source->ts;
+    }
 
   f->ts = source->ts;
   f->rank = source->rank + 1;
@@ -3013,6 +3048,10 @@ gfc_resolve_transfer (gfc_expr *f, gfc_expr *source ATTRIBUTE_UNUSED,
 	}
     }
 
+  if (UNLIMITED_POLY (mold))
+    gfc_error ("TODO: unlimited polymorphic MOLD in TRANSFER intrinsic at %L",
+	       &mold->where);
+
   f->ts = mold->ts;
 
   if (size == NULL && mold->rank == 0)
@@ -3100,7 +3139,7 @@ gfc_resolve_trim (gfc_expr *f, gfc_expr *string)
 }
 
 
-/* Resolve the degree trignometric functions.  This amounts to setting
+/* Resolve the degree trigonometric functions.  This amounts to setting
    the function return type-spec from its argument and building a
    library function names of the form _gfortran_sind_r4.  */
 
@@ -3361,7 +3400,7 @@ gfc_resolve_mvbits (gfc_code *c)
 }
 
 
-/* Set up the call to RANDOM_INIT.  */ 
+/* Set up the call to RANDOM_INIT.  */
 
 void
 gfc_resolve_random_init (gfc_code *c)

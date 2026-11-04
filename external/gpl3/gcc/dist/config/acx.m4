@@ -393,9 +393,13 @@ AC_DEFUN([ACX_PROG_GNAT],
 AC_REQUIRE([AC_PROG_CC])
 AC_CHECK_TOOL(GNATBIND, gnatbind, no)
 AC_CHECK_TOOL(GNATMAKE, gnatmake, no)
-AC_CACHE_CHECK([whether compiler driver understands Ada],
+AC_CACHE_CHECK([whether compiler driver understands Ada and is recent enough],
 		 acx_cv_cc_gcc_supports_ada,
 [cat >conftest.adb <<EOF
+pragma Warnings (Off);
+with System.CRTL;
+pragma Warnings (On);
+use type System.CRTL.int64;
 procedure conftest is begin null; end conftest;
 EOF
 acx_cv_cc_gcc_supports_ada=no
@@ -419,6 +423,16 @@ else
   have_gnat=no
 fi
 ])
+
+# Test for Rust
+# We require cargo and rustc for some parts of the rust compiler.
+AC_DEFUN([ACX_PROG_CARGO],
+[AC_CHECK_PROGS(CARGO, cargo, no)
+if test "x$CARGO" != xno; then
+  have_cargo=yes
+else
+  have_cargo=no
+fi])
 
 # Test for D.
 AC_DEFUN([ACX_PROG_GDC],

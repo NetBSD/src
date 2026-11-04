@@ -1,5 +1,5 @@
 ;; GCC machine description for MMIX
-;; Copyright (C) 2000-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2022 Free Software Foundation, Inc.
 ;; Contributed by Hans-Peter Nilsson (hp@bitrange.com)
 
 ;; This file is part of GCC.
@@ -38,6 +38,8 @@
    (MMIX_rR_REGNUM 260)
    (MMIX_fp_rO_OFFSET -24)]
 )
+
+(define_mode_iterator MM [QI HI SI DI SF DF])
 
 ;; Operand and operator predicates.
 
@@ -46,10 +48,25 @@
 
 ;; FIXME: Can we remove the reg-to-reg for smaller modes?  Shouldn't they
 ;; be synthesized ok?
-(define_insn "movqi"
+(define_expand "mov<mode>"
+  [(set (match_operand:MM 0 "nonimmediate_operand")
+	(match_operand:MM 1 "general_operand"))]
+  ""
+{
+  /*  Help pre-register-allocation to use at least one register in a move.
+      FIXME: support STCO also for DFmode (storing 0.0).  */
+  if (!REG_P (operands[0]) && !REG_P (operands[1])
+      && (<MODE>mode != DImode
+	  || !memory_operand (operands[0], DImode)
+	  || !satisfies_constraint_I (operands[1])))
+    operands[1] = force_reg (<MODE>mode, operands[1]);
+})
+
+(define_insn "*movqi_expanded"
   [(set (match_operand:QI 0 "nonimmediate_operand" "=r,r ,r,x ,r,r,m,??r")
 	(match_operand:QI 1 "general_operand"	    "r,LS,K,rI,x,m,r,n"))]
-  ""
+  "register_operand (operands[0], QImode)
+   || register_operand (operands[1], QImode)"
   "@
    SET %0,%1
    %s1 %0,%v1
@@ -60,10 +77,11 @@
    STBU %1,%0
    %r0%I1")
 
-(define_insn "movhi"
+(define_insn "*movhi_expanded"
   [(set (match_operand:HI 0 "nonimmediate_operand" "=r,r ,r ,x,r,r,m,??r")
 	(match_operand:HI 1 "general_operand"	    "r,LS,K,r,x,m,r,n"))]
-  ""
+  "register_operand (operands[0], HImode)
+   || register_operand (operands[1], HImode)"
   "@
    SET %0,%1
    %s1 %0,%v1
@@ -75,10 +93,11 @@
    %r0%I1")
 
 ;; gcc.c-torture/compile/920428-2.c fails if there's no "n".
-(define_insn "movsi"
+(define_insn "*movsi_expanded"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=r,r ,r,x,r,r,m,??r")
 	(match_operand:SI 1 "general_operand"	    "r,LS,K,r,x,m,r,n"))]
-  ""
+  "register_operand (operands[0], SImode)
+   || register_operand (operands[1], SImode)"
   "@
    SET %0,%1
    %s1 %0,%v1
@@ -90,10 +109,13 @@
    %r0%I1")
 
 ;; We assume all "s" are addresses.  Does that hold?
-(define_insn "movdi"
+(define_insn "*movdi_expanded"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=r,r ,r,x,r,m,r,m,r,r,??r")
 	(match_operand:DI 1 "general_operand"	    "r,LS,K,r,x,I,m,r,R,s,n"))]
-  ""
+  "register_operand (operands[0], DImode)
+   || register_operand (operands[1], DImode)
+   || (memory_operand (operands[0], DImode)
+       && satisfies_constraint_I (operands[1]))"
   "@
    SET %0,%1
    %s1 %0,%v1
@@ -109,10 +131,11 @@
 
 ;; Note that we move around the float as a collection of bits; no
 ;; conversion to double.
-(define_insn "movsf"
+(define_insn "*movsf_expanded"
  [(set (match_operand:SF 0 "nonimmediate_operand" "=r,r,x,r,r,m,??r")
        (match_operand:SF 1 "general_operand"	   "r,G,r,x,m,r,F"))]
-  ""
+  "register_operand (operands[0], SFmode)
+   || register_operand (operands[1], SFmode)"
   "@
    SET %0,%1
    SETL %0,0
@@ -122,10 +145,11 @@
    STTU %1,%0
    %r0%I1")
 
-(define_insn "movdf"
+(define_insn "*movdf_expanded"
   [(set (match_operand:DF 0 "nonimmediate_operand" "=r,r,x,r,r,m,??r")
 	(match_operand:DF 1 "general_operand"	    "r,G,r,x,m,r,F"))]
-  ""
+  "register_operand (operands[0], DFmode)
+   || register_operand (operands[1], DFmode)"
   "@
    SET %0,%1
    SETL %0,0
@@ -880,7 +904,7 @@ DIVU %1,%1,%2\;GET %0,:rR\;NEGU %2,0,%0\;CSNN %0,$255,%2")
   ""
   "
 {
-  /* The head comment of optabs.c:can_compare_p says we're required to
+  /* The head comment of optabs.cc:can_compare_p says we're required to
      implement this, so we have to clean up the mess here.  */
   if (GET_CODE (operands[0]) == LE || GET_CODE (operands[0]) == GE)
     {
@@ -950,11 +974,9 @@ DIVU %1,%1,%2\;GET %0,:rR\;NEGU %2,0,%0\;CSNN %0,$255,%2")
   "%+B%D1 %2,%0")
 
 (define_expand "call"
-  [(parallel [(call (match_operand:QI 0 "memory_operand" "")
-		    (match_operand 1 "general_operand" ""))
-	      (use (match_operand 2 "general_operand" ""))
-	      (clobber (match_dup 4))])
-   (set (match_dup 4) (match_dup 3))]
+  [(parallel [(call (match_operand:QI 0 "memory_operand" "") (const_int 0))
+	      (clobber (match_dup 1))])
+   (set (match_dup 1) (match_dup 2))]
   ""
   "
 {
@@ -968,30 +990,24 @@ DIVU %1,%1,%2\;GET %0,:rR\;NEGU %2,0,%0\;CSNN %0,$255,%2")
       = replace_equiv_address (operands[0],
 			       force_reg (Pmode, XEXP (operands[0], 0)));
 
+  /* Note that we overwrite the generic operands[1] and operands[2]; we
+     don't use those values.  */
+  operands[1] = gen_rtx_REG (DImode, MMIX_INCOMING_RETURN_ADDRESS_REGNUM);
+
   /* Since the epilogue 'uses' the return address, and it is clobbered
      in the call, and we set it back after every call (all but one setting
      will be optimized away), integrity is maintained.  */
-  operands[3]
+  operands[2]
     = mmix_get_hard_reg_initial_val (Pmode,
 				     MMIX_INCOMING_RETURN_ADDRESS_REGNUM);
-
-  /* FIXME: There's a bug in gcc which causes NULL to be passed as
-     operand[2] when we get out of registers, which later confuses gcc.
-     Work around it by replacing it with const_int 0.  Possibly documentation
-     error too.  */
-  if (operands[2] == NULL_RTX)
-    operands[2] = const0_rtx;
-
-  operands[4] = gen_rtx_REG (DImode, MMIX_INCOMING_RETURN_ADDRESS_REGNUM);
 }")
 
 (define_expand "call_value"
   [(parallel [(set (match_operand 0 "" "")
 		   (call (match_operand:QI 1 "memory_operand" "")
-			 (match_operand 2 "general_operand" "")))
-	      (use (match_operand 3 "general_operand" ""))
-	      (clobber (match_dup 5))])
-   (set (match_dup 5) (match_dup 4))]
+			 (const_int 0)))
+	      (clobber (match_dup 2))])
+   (set (match_dup 2) (match_dup 3))]
   ""
   "
 {
@@ -1005,28 +1021,22 @@ DIVU %1,%1,%2\;GET %0,:rR\;NEGU %2,0,%0\;CSNN %0,$255,%2")
       = replace_equiv_address (operands[1],
 			       force_reg (Pmode, XEXP (operands[1], 0)));
 
+  /* Note that we overwrite the generic operands[2] and operands[3]; we
+     don't use those values.  */
+  operands[2] = gen_rtx_REG (DImode, MMIX_INCOMING_RETURN_ADDRESS_REGNUM);
+
   /* Since the epilogue 'uses' the return address, and it is clobbered
      in the call, and we set it back after every call (all but one setting
      will be optimized away), integrity is maintained.  */
-  operands[4]
+  operands[3]
     = mmix_get_hard_reg_initial_val (Pmode,
 				     MMIX_INCOMING_RETURN_ADDRESS_REGNUM);
-
-  /* FIXME: See 'call'.  */
-  if (operands[3] == NULL_RTX)
-    operands[3] = const0_rtx;
-
-  /* FIXME: Documentation bug: operands[3] (operands[2] for 'call') is the
-     *next* argument register, not the number of arguments in registers.
-     (There used to be code here where that mattered.)  */
-
-  operands[5] = gen_rtx_REG (DImode, MMIX_INCOMING_RETURN_ADDRESS_REGNUM);
 }")
 
 ;; Don't use 'p' here.  A 'p' must stand first in constraints, or reload
 ;; messes up, not registering the address for reload.  Several C++
 ;; testcases, including g++.brendan/crash40.C.  FIXME: This is arguably a
-;; bug in gcc.  Note line ~2612 in reload.c, that does things on the
+;; bug in gcc.  Note line ~2612 in reload.cc, that does things on the
 ;; condition <<else if (constraints[i][0] == 'p')>> and the comment on
 ;; ~3017 that says:
 ;; <<   case 'p':
@@ -1041,25 +1051,23 @@ DIVU %1,%1,%2\;GET %0,:rR\;NEGU %2,0,%0\;CSNN %0,$255,%2")
 (define_insn "*call_real"
   [(call (mem:QI
 	  (match_operand:DI 0 "mmix_symbolic_or_address_operand" "s,rU"))
-	 (match_operand 1 "" ""))
-   (use (match_operand 2 "" ""))
+	 (const_int 0))
    (clobber (reg:DI MMIX_rJ_REGNUM))]
   ""
   "@
-   PUSHJ $%p2,%0
-   PUSHGO $%p2,%a0")
+   PUSHJ $%!,%0
+   PUSHGO $%!,%a0")
 
 (define_insn "*call_value_real"
   [(set (match_operand 0 "register_operand" "=r,r")
 	(call (mem:QI
 	       (match_operand:DI 1 "mmix_symbolic_or_address_operand" "s,rU"))
-	      (match_operand 2 "" "")))
-  (use (match_operand 3 "" ""))
-  (clobber (reg:DI MMIX_rJ_REGNUM))]
+	      (const_int 0)))
+   (clobber (reg:DI MMIX_rJ_REGNUM))]
   ""
   "@
-   PUSHJ $%p3,%1
-   PUSHGO $%p3,%a1")
+   PUSHJ $%!,%1
+   PUSHGO $%!,%a1")
 
 ;; I hope untyped_call and untyped_return are not needed for MMIX.
 ;; Users of Objective-C will notice.

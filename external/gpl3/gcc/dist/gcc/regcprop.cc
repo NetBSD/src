@@ -1,5 +1,5 @@
 /* Copy propagation on hard registers for the GNU compiler.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -36,6 +36,7 @@
 #include "cfgrtl.h"
 #include "target.h"
 #include "function-abi.h"
+#include "cfgcleanup.h"
 
 /* The following code does forward propagation of hard register copies.
    The object is to eliminate as many dependencies as possible, so that
@@ -422,7 +423,12 @@ maybe_mode_change (machine_mode orig_mode, machine_mode copy_mode,
 
      It's unclear if we need to do the same for other special registers.  */
   if (regno == STACK_POINTER_REGNUM)
-    return NULL_RTX;
+    {
+      if (orig_mode == new_mode && new_mode == GET_MODE (stack_pointer_rtx))
+	return stack_pointer_rtx;
+      else
+	return NULL_RTX;
+    }
 
   if (orig_mode == new_mode)
     return gen_raw_REG (new_mode, regno);
@@ -482,9 +488,14 @@ find_oldest_value_reg (enum reg_class cl, rtx reg, struct value_data *vd)
       new_rtx = maybe_mode_change (oldmode, vd->e[regno].mode, mode, i, regno);
       if (new_rtx)
 	{
-	  ORIGINAL_REGNO (new_rtx) = ORIGINAL_REGNO (reg);
-	  REG_ATTRS (new_rtx) = REG_ATTRS (reg);
-	  REG_POINTER (new_rtx) = REG_POINTER (reg);
+	  /* NEW_RTX may be the global stack pointer rtx, in which case we
+	     must not modify it's attributes.  */
+	  if (new_rtx != stack_pointer_rtx)
+	    {
+	      ORIGINAL_REGNO (new_rtx) = ORIGINAL_REGNO (reg);
+	      REG_ATTRS (new_rtx) = REG_ATTRS (reg);
+	      REG_POINTER (new_rtx) = REG_POINTER (reg);
+	    }
 	  return new_rtx;
 	}
     }
@@ -816,7 +827,7 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
 	  && !side_effects_p (SET_DEST (set)))
 	{
 	  bool last = insn == BB_END (bb);
-	  delete_insn (insn);
+	  delete_insn_and_edges (insn);
 	  if (last)
 	    break;
 	  continue;
@@ -960,9 +971,14 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
 
 		  if (validate_change (insn, &SET_SRC (set), new_rtx, 0))
 		    {
-		      ORIGINAL_REGNO (new_rtx) = ORIGINAL_REGNO (src);
-		      REG_ATTRS (new_rtx) = REG_ATTRS (src);
-		      REG_POINTER (new_rtx) = REG_POINTER (src);
+		      /* NEW_RTX may be the global stack pointer rtx, in which
+			 case we must not modify it's attributes.  */
+		      if (new_rtx != stack_pointer_rtx)
+			{
+			  ORIGINAL_REGNO (new_rtx) = ORIGINAL_REGNO (src);
+			  REG_ATTRS (new_rtx) = REG_ATTRS (src);
+			  REG_POINTER (new_rtx) = REG_POINTER (src);
+			}
 		      if (dump_file)
 			fprintf (dump_file,
 				 "insn %u: replaced reg %u with %u\n",
@@ -1293,12 +1309,12 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *)
+  bool gate (function *) final override
     {
       return (optimize > 0 && (flag_cprop_registers));
     }
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_cprop_hardreg
 
@@ -1383,8 +1399,11 @@ pass_cprop_hardreg::execute (function *fun)
   auto_sbitmap visited (last_basic_block_for_fn (fun));
   bitmap_clear (visited);
 
-  auto_vec<int> worklist;
+  auto_vec<int> worklist1, worklist2;
+  auto_vec<int> *curr = &worklist1;
+  auto_vec<int> *next = &worklist2;
   bool any_debug_changes = false;
+  bool any_changes = false;
 
   /* We need accurate notes.  Earlier passes such as if-conversion may
      leave notes in an inconsistent state.  */
@@ -1404,7 +1423,10 @@ pass_cprop_hardreg::execute (function *fun)
   FOR_EACH_BB_FN (bb, fun)
     {
       if (cprop_hardreg_bb (bb, all_vd, visited))
-	worklist.safe_push (bb->index);
+	{
+	  curr->safe_push (bb->index);
+	  any_changes = true;
+	}
       if (all_vd[bb->index].n_debug_insn_changes)
 	any_debug_changes = true;
     }
@@ -1416,16 +1438,25 @@ pass_cprop_hardreg::execute (function *fun)
   if (MAY_HAVE_DEBUG_BIND_INSNS && any_debug_changes)
     cprop_hardreg_debug (fun, all_vd);
 
-  /* Second pass if we've changed anything, only for the bbs where we have
-     changed anything though.  */
-  if (!worklist.is_empty ())
+  /* Repeat pass up to PASSES times, but only processing basic blocks
+     that have changed on the previous iteration.  CURR points to the
+     current worklist, and each iteration populates the NEXT worklist,
+     swapping pointers after each cycle.  */
+
+  unsigned int passes = optimize > 1 ? 3 : 2;
+  for (unsigned int pass = 2; pass <= passes && !curr->is_empty (); pass++)
     {
       any_debug_changes = false;
       bitmap_clear (visited);
-      for (int index : worklist)
+      next->truncate (0);
+      for (int index : *curr)
 	{
 	  bb = BASIC_BLOCK_FOR_FN (fun, index);
-	  cprop_hardreg_bb (bb, all_vd, visited);
+          if (cprop_hardreg_bb (bb, all_vd, visited))
+	    {
+	      next->safe_push (bb->index);
+	      any_changes = true;
+	    }
 	  if (all_vd[bb->index].n_debug_insn_changes)
 	    any_debug_changes = true;
 	}
@@ -1433,9 +1464,19 @@ pass_cprop_hardreg::execute (function *fun)
       df_analyze ();
       if (MAY_HAVE_DEBUG_BIND_INSNS && any_debug_changes)
 	cprop_hardreg_debug (fun, all_vd);
+      std::swap (curr, next);
     }
 
   free (all_vd);
+
+  /* Copy propagation of the sp register into an mem's address
+     can cause what was a trapping instruction into
+     a non-trapping one so cleanup after that in the case of non-call
+     exceptions.  */
+  if (any_changes
+      && cfun->can_throw_non_call_exceptions
+      && purge_all_dead_edges ())
+    cleanup_cfg (0);
   return 0;
 }
 

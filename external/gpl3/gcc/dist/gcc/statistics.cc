@@ -1,5 +1,5 @@
 /* Optimization statistics functions.
-   Copyright (C) 2008-2022 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
    Contributed by Richard Guenther  <rguenther@suse.de>
 
 This file is part of GCC.
@@ -25,6 +25,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-pass.h"
 #include "context.h"
 #include "pass_manager.h"
+#include "tree.h"
 
 static int statistics_dump_nr;
 static dump_flags_t statistics_dump_flags;
@@ -87,7 +88,7 @@ static unsigned nr_statistics_hashes;
    statistics.  */
 
 static stats_counter_table_type *
-curr_statistics_hash (void)
+curr_statistics_hash (bool alloc = true)
 {
   unsigned idx;
 
@@ -97,6 +98,9 @@ curr_statistics_hash (void)
   if (idx < nr_statistics_hashes
       && statistics_hashes[idx])
     return statistics_hashes[idx];
+
+  if (!alloc)
+    return nullptr;
 
   if (idx >= nr_statistics_hashes)
     {
@@ -111,6 +115,22 @@ curr_statistics_hash (void)
   statistics_hashes[idx] = new stats_counter_table_type (15);
 
   return statistics_hashes[idx];
+}
+
+/* Helper function to return asmname or name of FN
+   depending on whether asmname option is set.  */
+
+static const char *
+get_function_name (struct function *fn)
+{
+  if ((statistics_dump_flags & TDF_ASMNAME)
+      && fn && DECL_ASSEMBLER_NAME_SET_P (fn->decl))
+    {
+      tree asmname = decl_assembler_name (fn->decl);
+      if (asmname)
+	return IDENTIFIER_POINTER (asmname);
+    }
+  return function_name (fn);
 }
 
 /* Helper for statistics_fini_pass.  Print the counter difference
@@ -152,7 +172,7 @@ statistics_fini_pass_2 (statistics_counter **slot,
 	     current_pass->static_pass_number,
 	     current_pass->name,
 	     counter->id, counter->val,
-	     current_function_name (),
+	     get_function_name (cfun),
 	     count);
   else
     fprintf (statistics_dump_file,
@@ -160,7 +180,7 @@ statistics_fini_pass_2 (statistics_counter **slot,
 	     current_pass->static_pass_number,
 	     current_pass->name,
 	     counter->id,
-	     current_function_name (),
+	     get_function_name (cfun),
 	     count);
   counter->prev_dumped_count = counter->count;
   return 1;
@@ -185,23 +205,27 @@ statistics_fini_pass (void)
   if (current_pass->static_pass_number == -1)
     return;
 
+  stats_counter_table_type *stat_hash = curr_statistics_hash (false);
+
   if (dump_file
       && dump_flags & TDF_STATS)
     {
       fprintf (dump_file, "\n");
       fprintf (dump_file, "Pass statistics of \"%s\": ", current_pass->name);
       fprintf (dump_file, "----------------\n");
-      curr_statistics_hash ()
-	->traverse_noresize <void *, statistics_fini_pass_1> (NULL);
+      if (stat_hash)
+	stat_hash->traverse_noresize <void *, statistics_fini_pass_1> (NULL);
       fprintf (dump_file, "\n");
     }
+
+  if (!stat_hash)
+    return;
+
   if (statistics_dump_file
       && !(statistics_dump_flags & TDF_STATS
 	   || statistics_dump_flags & TDF_DETAILS))
-    curr_statistics_hash ()
-      ->traverse_noresize <void *, statistics_fini_pass_2> (NULL);
-  curr_statistics_hash ()
-    ->traverse_noresize <void *, statistics_fini_pass_3> (NULL);
+    stat_hash->traverse_noresize <void *, statistics_fini_pass_2> (NULL);
+  stat_hash->traverse_noresize <void *, statistics_fini_pass_3> (NULL);
 }
 
 /* Helper for printing summary information.  */
@@ -329,7 +353,7 @@ statistics_counter_event (struct function *fn, const char *id, int incr)
 	   current_pass ? current_pass->static_pass_number : -1,
 	   current_pass ? current_pass->name : "none",
 	   id,
-	   function_name (fn),
+	   get_function_name (fn),
 	   incr);
 }
 
@@ -359,5 +383,5 @@ statistics_histogram_event (struct function *fn, const char *id, int val)
 	   current_pass->static_pass_number,
 	   current_pass->name,
 	   id, val,
-	   function_name (fn));
+	   get_function_name (fn));
 }

@@ -1,5 +1,5 @@
 /* fileline.c -- Get file and line number information in a backtrace.
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Google.
 
 Redistribution and use in source and binary forms, with or without
@@ -47,11 +47,54 @@ POSSIBILITY OF SUCH DAMAGE.  */
 #include <mach-o/dyld.h>
 #endif
 
+#ifdef __hpux__
+#include <dl.h>
+#endif
+
+#ifdef HAVE_WINDOWS_H
+#ifndef WIN32_MEAN_AND_LEAN
+#define WIN32_MEAN_AND_LEAN
+#endif
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <windows.h>
+#endif
+
 #include "backtrace.h"
 #include "internal.h"
 
 #ifndef HAVE_GETEXECNAME
 #define getexecname() NULL
+#endif
+
+#ifdef __hpux__
+static char *
+hpux_get_executable_path (struct backtrace_state *state,
+			  backtrace_error_callback error_callback, void *data)
+{
+  struct shl_descriptor *desc;
+  size_t len = sizeof (struct shl_descriptor);
+
+  desc = backtrace_alloc (state, len, error_callback, data);
+  if (desc == NULL)
+    return NULL;
+
+  if (shl_get_r (0, desc) == -1)
+    {
+      backtrace_free (state, desc, len, error_callback, data);
+      return NULL;
+    }
+
+  return desc->filename;
+}
+
+#else
+
+#define hpux_get_executable_path(state, error_callback, data) NULL
+
 #endif
 
 #if !defined (HAVE_KERN_PROC_ARGS) && !defined (HAVE_KERN_PROC)
@@ -155,6 +198,47 @@ macho_get_executable_path (struct backtrace_state *state,
 
 #endif /* !defined (HAVE_MACH_O_DYLD_H) */
 
+#if HAVE_DECL__PGMPTR
+
+#define windows_executable_filename() _pgmptr
+
+#else /* !HAVE_DECL__PGMPTR */
+
+#define windows_executable_filename() NULL
+
+#endif /* !HAVE_DECL__PGMPTR */
+
+#ifdef HAVE_WINDOWS_H
+
+#define FILENAME_BUF_SIZE (MAX_PATH)
+
+static char *
+windows_get_executable_path (char *buf, backtrace_error_callback error_callback,
+			     void *data)
+{
+  size_t got;
+  int error;
+
+  got = GetModuleFileNameA (NULL, buf, FILENAME_BUF_SIZE - 1);
+  error = GetLastError ();
+  if (got == 0
+      || (got == FILENAME_BUF_SIZE - 1 && error == ERROR_INSUFFICIENT_BUFFER))
+    {
+      error_callback (data,
+		      "could not get the filename of the current executable",
+		      error);
+      return NULL;
+    }
+  return buf;
+}
+
+#else /* !defined (HAVE_WINDOWS_H) */
+
+#define windows_get_executable_path(buf, error_callback, data) NULL
+#define FILENAME_BUF_SIZE 64
+
+#endif /* !defined (HAVE_WINDOWS_H) */
+
 /* Initialize the fileline information from the executable.  Returns 1
    on success, 0 on failure.  */
 
@@ -168,7 +252,7 @@ fileline_initialize (struct backtrace_state *state,
   int called_error_callback;
   int descriptor;
   const char *filename;
-  char buf[64];
+  char buf[FILENAME_BUF_SIZE];
 
   if (!state->threaded)
     failed = state->fileline_initialization_failed;
@@ -192,7 +276,7 @@ fileline_initialize (struct backtrace_state *state,
 
   descriptor = -1;
   called_error_callback = 0;
-  for (pass = 0; pass < 8; ++pass)
+  for (pass = 0; pass < 11; ++pass)
     {
       int does_not_exist;
 
@@ -205,24 +289,35 @@ fileline_initialize (struct backtrace_state *state,
 	  filename = getexecname ();
 	  break;
 	case 2:
-	  filename = "/proc/self/exe";
+	  /* Test this before /proc/self/exe, as the latter exists but points
+	     to the wine binary (and thus doesn't work).  */
+	  filename = windows_executable_filename ();
 	  break;
 	case 3:
-	  filename = "/proc/curproc/file";
+	  filename = "/proc/self/exe";
 	  break;
 	case 4:
+	  filename = "/proc/curproc/file";
+	  break;
+	case 5:
 	  snprintf (buf, sizeof (buf), "/proc/%ld/object/a.out",
 		    (long) getpid ());
 	  filename = buf;
 	  break;
-	case 5:
+	case 6:
 	  filename = sysctl_exec_name1 (state, error_callback, data);
 	  break;
-	case 6:
+	case 7:
 	  filename = sysctl_exec_name2 (state, error_callback, data);
 	  break;
-	case 7:
+	case 8:
 	  filename = macho_get_executable_path (state, error_callback, data);
+	  break;
+	case 9:
+	  filename = windows_get_executable_path (buf, error_callback, data);
+	  break;
+	case 10:
+	  filename = hpux_get_executable_path (state, error_callback, data);
 	  break;
 	default:
 	  abort ();

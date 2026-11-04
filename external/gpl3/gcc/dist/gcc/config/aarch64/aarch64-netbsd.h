@@ -1,5 +1,5 @@
 /* Definitions for AArch64 running NetBSD
-   Copyright (C) 2016-2022 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
    Contributed by Matthew Green (mrg@eterna23.net) and Christos Zoulas
    (christos@NetBSD.org.)
 

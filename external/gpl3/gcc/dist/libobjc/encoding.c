@@ -1,5 +1,5 @@
 /* Encoding of types for Objective C.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Contributed by Kresten Krab Thorup
    Bitfield support by Ovidiu Predescu
 
@@ -67,6 +67,11 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define UNION_TYPE      _C_UNION_B
 #define QUAL_UNION_TYPE _C_UNION_B
 #define ARRAY_TYPE      _C_ARY_B
+#define RECORD_OR_UNION_TYPE_P(TYPE)			\
+	((TREE_CODE (TYPE) == RECORD_TYPE)		\
+	 || (TREE_CODE (TYPE) == UNION_TYPE)		\
+	 || (TREE_CODE (TYPE) == QUAL_UNION_TYPE))
+#define VECTOR_TYPE_P(TYPE) (TREE_CODE (TYPE) == VECTOR_TYPE)
 
 #define REAL_TYPE       _C_DBL
 
@@ -1089,7 +1094,7 @@ objc_layout_structure (const char *type,
          && *ntype++ != '=')
     /* do nothing */;
 
-  /* If there's a "<name>=", ntype - 1 points to '='; skip the the name */
+  /* If there's a "<name>=", ntype - 1 points to '='; skip the name.  */
   if (*(ntype - 1) == '=')
     type = ntype;
 

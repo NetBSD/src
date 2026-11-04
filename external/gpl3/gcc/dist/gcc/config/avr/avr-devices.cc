@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Contributed by Anatoly Sokolov (aesok@post.ru)
 
    This file is part of GCC.
@@ -93,8 +93,8 @@ avr_texinfo[] =
     "``Enhanced'' devices with 3-byte PC, i.e.@: with more than 128@tie{}KiB "
     "of program memory." },
   { ARCH_AVRTINY,
-    "``TINY'' Tiny core devices with 512@tie{}B up to 4@tie{}KiB of "
-    "program memory." },
+    "``Reduced Tiny'' Tiny core devices with only 16 general purpose "
+    "registers and 512@tie{}B up to 4@tie{}KiB of program memory." },
   { ARCH_AVRXMEGA2,
     "``XMEGA'' devices with more than 8@tie{}KiB and up to 64@tie{}KiB "
     "of program memory." },
@@ -130,7 +130,7 @@ avr_mcu_types[] =
 
 #ifndef IN_GEN_AVR_MMCU_TEXI
 
-static char*
+static char *
 avr_archs_str (void)
 {
   char *archs = concat ("", NULL);
@@ -144,7 +144,7 @@ avr_archs_str (void)
   return archs;
 }
 
-  
+
 void
 avr_inform_core_architectures (void)
 {

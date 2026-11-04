@@ -1,5 +1,5 @@
 /* Function splitting pass
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Contributed by Jan Hubicka  <jh@suse.cz>
 
 This file is part of GCC.
@@ -95,6 +95,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimplify-me.h"
 #include "gimple-walk.h"
 #include "symbol-summary.h"
+#include "sreal.h"
+#include "ipa-cp.h"
 #include "ipa-prop.h"
 #include "tree-cfg.h"
 #include "tree-into-ssa.h"
@@ -104,6 +106,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "ipa-fnsummary.h"
 #include "cfgloop.h"
 #include "attribs.h"
+#include "ipa-strub.h"
 
 /* Per basic block info.  */
 
@@ -1715,10 +1718,11 @@ execute_split_functions (void)
   struct cgraph_node *node = cgraph_node::get (current_function_decl);
 
   if (flags_from_decl_or_type (current_function_decl)
-      & (ECF_NORETURN|ECF_MALLOC))
+      & (ECF_NORETURN|ECF_MALLOC|ECF_RETURNS_TWICE))
     {
       if (dump_file)
-	fprintf (dump_file, "Not splitting: noreturn/malloc function.\n");
+	fprintf (dump_file, "Not splitting: noreturn/malloc/returns_twice "
+			    "function.\n");
       return 0;
     }
   if (MAIN_NAME_P (DECL_NAME (current_function_decl)))
@@ -1808,6 +1812,12 @@ execute_split_functions (void)
       if (dump_file)
 	fprintf (dump_file, "Not splitting: function is in user defined "
 		 "section.\n");
+      return 0;
+    }
+  if (!strub_splittable_p (node))
+    {
+      if (dump_file)
+	fprintf (dump_file, "Not splitting: function is a strub context.\n");
       return 0;
     }
 
@@ -1915,8 +1925,8 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *);
-  virtual unsigned int execute (function *)
+  bool gate (function *) final override;
+  unsigned int execute (function *) final override
     {
       return execute_split_functions ();
     }
@@ -1929,7 +1939,7 @@ pass_split_functions::gate (function *)
   /* When doing profile feedback, we want to execute the pass after profiling
      is read.  So disable one in early optimization.  */
   return (flag_partial_inlining
-	  && !profile_arc_flag && !flag_branch_probabilities);
+      && !profile_arc_flag && !flag_branch_probabilities);
 }
 
 } // anon namespace
@@ -1974,8 +1984,8 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *);
-  virtual unsigned int execute (function *)
+  bool gate (function *) final override;
+  unsigned int execute (function *) final override
     {
       return execute_feedback_split_functions ();
     }

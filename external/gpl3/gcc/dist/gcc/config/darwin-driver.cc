@@ -1,5 +1,5 @@
 /* Additional functions for the GCC driver on Darwin native.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -64,7 +64,8 @@ validate_macosx_version_min (const char *version_str)
 
   major = strtoul (version_str, &end, 10);
 
-  /* macOS 10, 11, and 12 are known. clang accepts up to 99.  */
+  /* macOS 10, 11, 12, 13, 14, 15 and 26 are known.
+     clang accepts up to 99.  */
   if (major < 10 || major > 99)
     return NULL;
 
@@ -159,15 +160,16 @@ darwin_find_version_from_kernel (void)
   if (*version_p++ != '.')
     goto parse_failed;
 
-  /* Darwin20 sees a transition to macOS 11.  In this, it seems that the
-     mapping to macOS minor version and patch level is now always 0, 0
-     (at least for macOS 11 and 12).  */
-  if (major_vers >= 20)
-    {
-      /* Apple clang doesn't include the minor version or the patch level
-	 in the object file, nor does it pass it to ld  */
-      asprintf (&new_flag, "%d.00.00", major_vers - 9);
-    }
+  /* Darwin25 saw a transition to macOS 26.  */
+  if (major_vers >= 25)
+    /* Apple clang doesn't include the minor version or the patch level
+       in the object file, nor does it pass it to ld  */
+    asprintf (&new_flag, "%d.00.00", major_vers + 1);
+  /* Darwin20 saw a transition to macOS 11.  */
+  else if (major_vers >= 20)
+    /* Apple clang doesn't include the minor version or the patch level
+       in the object file, nor does it pass it to ld  */
+    asprintf (&new_flag, "%d.00.00", major_vers - 9);
   else if (major_vers - 4 <= 4)
     /* On 10.4 and earlier, the old linker is used which does not
        support three-component system versions.
@@ -440,7 +442,7 @@ darwin_driver_init (unsigned int *decoded_options_count,
 	}
     }
 
-  /* We will need to know the OS X version we're trying to build for here
+  /* We will need to know the macOS version we're trying to build for here
      so that we can figure out the mechanism and source for the sysroot to
      be used.  */
   if (!seen_version_min)

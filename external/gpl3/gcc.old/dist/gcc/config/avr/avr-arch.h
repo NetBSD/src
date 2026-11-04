@@ -1,6 +1,6 @@
 /* Definitions of types that are used to store AVR architecture and
    device information.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Contributed by Georg-Johann Lay (avr@gjlay.de)
 
 This file is part of GCC.
@@ -195,6 +195,7 @@ typedef struct
 
 extern const avr_arch_t avr_arch_types[];
 extern const avr_arch_t *avr_arch;
+extern const avr_arch_t *avr_get_parch (const char *mcu);
 
 extern const avr_mcu_t avr_mcu_types[];
 
