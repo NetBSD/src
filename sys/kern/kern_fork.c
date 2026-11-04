@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.236 2026/08/28 13:58:27 riastradh Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.237 2026/11/04 18:18:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.236 2026/08/28 13:58:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.237 2026/11/04 18:18:00 riastradh Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -540,6 +540,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	p2->p_oppid = p1->p_pid; /* Remember the original parent id. */
 
+	p2->p_pgrp = p1->p_pgrp;
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 

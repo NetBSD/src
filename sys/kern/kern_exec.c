@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.535 2026/08/28 12:02:15 riastradh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.536 2026/11/04 18:18:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.535 2026/08/28 12:02:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.536 2026/11/04 18:18:00 riastradh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2835,6 +2835,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 
 	p2->p_oppid = p1->p_pid;  /* Remember the original parent id. */
 
+	p2->p_pgrp = p1->p_pgrp;
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 
