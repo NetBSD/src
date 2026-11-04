@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.274 2026/09/07 08:02:15 andvar Exp $ */
+/*	$NetBSD: autoconf.c,v 1.275 2026/11/04 23:21:28 rin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.274 2026/09/07 08:02:15 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.275 2026/11/04 23:21:28 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -141,6 +141,10 @@ static	void bootpath_print(struct bootpath *);
 static	struct bootpath	*bootpath_store(int, struct bootpath *);
 static	int find_cpus(void);
 char	machine_model[100];
+
+#if defined(MODULAR)
+const vaddr_t kernbase = KERNBASE;
+#endif
 
 #ifdef DEBUG
 #define ACDB_BOOTDEV	0x1

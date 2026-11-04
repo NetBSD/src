@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.77 2026/05/10 16:07:56 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.78 2026/11/04 23:21:28 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,8 +72,11 @@
 extern int nbpg, pgofset, pgshift;
 #endif
 
-#if !(defined(PROM_AT_F0) || defined(MSIIEP))
-#define	KERNBASE	0xf0000000	/* start of kernel virtual space */
+#if defined(_MODULE)
+extern const vaddr_t kernbase;
+#define	KERNBASE	kernbase	/* start of kernel virtual space */
+#elif !(defined(PROM_AT_F0) || defined(MSIIEP))
+#define	KERNBASE	0xf0000000
 #else
 /*
  * JS1/OF has prom sitting in f000.0000..f007.ffff, modify kernel VA 
